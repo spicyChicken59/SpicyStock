@@ -37,7 +37,7 @@ def reseal(bundle):
 
 @pytest.fixture(scope="module")
 def current():
-    return research.build(raw(), objects=ROOT / "docs/evidence", generated_at=NOW)
+    return research.build(raw(), objects=ROOT / "tests/fixtures/retained-evidence", generated_at=NOW)
 
 
 @pytest.fixture(scope="module")
@@ -185,7 +185,7 @@ def test_writer_retains_first_clock_old_cohorts_and_source_bytes(produced, tmp_p
     first_raw = (tmp_path / research.RECEIPT_FILE).read_bytes()
     assert research.write_publication(publication,tmp_path,objects=objects,generated_at="2026-10-12T15:00:00Z") == first
     assert (tmp_path / research.RECEIPT_FILE).read_bytes() == first_raw
-    current = research.write_publication(raw(),tmp_path,objects=ROOT / "docs/evidence",generated_at=NOW)
+    current = research.write_publication(raw(),tmp_path,objects=ROOT / "tests/fixtures/retained-evidence",generated_at=NOW)
     assert current != first and (tmp_path / first["bundle"]["path"]).is_file()
     restored = research.write_publication(publication,tmp_path,objects=objects,generated_at="2026-10-12T15:00:00Z")
     assert restored == first and len(json.loads((tmp_path/research.INDEX_FILE).read_bytes())["objects"]) == 2
@@ -215,11 +215,11 @@ def test_optional_write_failure_keeps_previous_receipt(produced,tmp_path,monkeyp
         if path.name == research.RECEIPT_FILE: raise OSError("synthetic full disk")
         return actual(path,body)
     monkeypatch.setattr(research,"_atomic",refuse_latest)
-    with pytest.raises(OSError): research.write_publication(raw(),tmp_path,objects=ROOT/'docs/evidence',generated_at=NOW)
+    with pytest.raises(OSError): research.write_publication(raw(),tmp_path,objects=ROOT/'tests/fixtures/retained-evidence',generated_at=NOW)
     assert (tmp_path/research.RECEIPT_FILE).read_bytes()==previous
     assert (tmp_path/first['bundle']['path']).is_file()
     monkeypatch.setattr(research,"_atomic",actual)
-    final=research.write_publication(raw(),tmp_path,objects=ROOT/'docs/evidence',generated_at=NOW)
+    final=research.write_publication(raw(),tmp_path,objects=ROOT/'tests/fixtures/retained-evidence',generated_at=NOW)
     assert final['publication']['data_sha256']==hashlib.sha256(raw()).hexdigest()
 
 

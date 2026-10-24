@@ -100,7 +100,7 @@ def build():
     assert hashlib.sha256(current).hexdigest() == ACTUAL_PUBLICATION_SHA
     actual = (ROOT / "docs/stop-research" / (ACTUAL_COHORT_SHA + ".json")).read_bytes()
     assert hashlib.sha256(actual).hexdigest() == ACTUAL_COHORT_SHA
-    pending = journal.build(current, cohorts=[actual], objects=ROOT / "docs/evidence", generated_at=PENDING_CLOCK)
+    pending = journal.build(current, cohorts=[actual], objects=ROOT / "tests/fixtures/retained-evidence", generated_at=PENDING_CLOCK)
     files.update(artifact("pending", current, pending))
     with tempfile.TemporaryDirectory(prefix="journal-fixture-") as tmp:
         root = Path(tmp); initial_dir = root / "initial"

@@ -40,7 +40,9 @@ already permits a recorded ticket is not reclassified by this milestone.
 float64 OHLCV values; its source reference separately hashes the scanner and
 quality readers' normalized views. `write_objects()` writes
 `docs/evidence/<source.sha256>.json.gz`. Branch-based Pages serves `main /docs`;
-these are ordinary static files, retained independently of rotating history.
+these are ordinary static files, kept while any file under `docs/` names them
+(the publication, the 21-day recovery catalog and the rest; see
+[the provenance contract](../provenance/README.md)), and in git after that.
 The existing public `.nojekyll` and `app-chart.js` URLs returned HTTP 200 during
 this milestone; `.nojekyll` preserves the static directory. There is no live
 provenance-enabled market snapshot to test a production object against yet.

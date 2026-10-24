@@ -146,7 +146,7 @@ def test_origin_unavailable_does_not_infer_basis_from_current_publication(genera
 def test_exact_actual_source_replay_and_no_mutation():
     raw, receipt, body = fixture()
     before = journal._sha(raw)
-    journal.validate_for_publication(raw, receipt, body, cohorts=[source_of(parsed())], objects=ROOT / "docs/evidence")
+    journal.validate_for_publication(raw, receipt, body, cohorts=[source_of(parsed())], objects=ROOT / "tests/fixtures/retained-evidence")
     assert journal._sha(raw) == before
 
 

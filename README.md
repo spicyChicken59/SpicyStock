@@ -1990,7 +1990,12 @@ The detail disclosure says **Evidence recorded** and whether a ticket existed;
 technical IDs stay inside a further disclosure. Local annotations do not alter it.
 
 Full frames and exact reader inputs are deduplicated under `docs/evidence/`,
-outside the initial page payload. The chart's optional source reader verifies
+outside the initial page payload. The archive is capped at 128 MiB; before a
+night's objects are written, an object no other file under `docs/` names leaves
+the working tree (git keeps it). The rolling part -- what the publication and
+the 21-day recovery catalog name -- comes and goes; what the dated reports, the
+quality ledger, the research cohorts and the frozen cases name stays, and the
+ledger's share grows a little each night (see the provenance contract). The chart's optional source reader verifies
 one retained frame's identity; it does not replay the recommendation chain.
 Full verification calls the existing strategy
 functions offline; it never repairs evidence or requests providers/models.

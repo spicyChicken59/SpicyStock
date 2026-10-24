@@ -10,9 +10,10 @@ real evening pipeline, grader, planner, allocator, provenance and reader.
 commit `43dcb8d7c6eb0d63c1825198aa161fc4d4caec80`, evening run `38034610157`,
 measured October 9 and applicable October 12, 2026. Decompressed exact SHA-256:
 `f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d`.
-The generator checks that literal hash and all referenced sources in the
-repository's immutable `docs/evidence` store. It never follows moving
-`docs/data.json` for this input. The compressed transport uses gzip mtime 0;
+The generator checks that literal hash and all referenced sources in
+`tests/fixtures/retained-evidence/`, copied from `docs/evidence` before that
+archive began removing objects no served file names. It never follows moving
+`docs/data.json` or the archive for this input. The compressed transport uses gzip mtime 0;
 all comparison identities refer to the original decompressed bytes.
 
 `current` keeps the literal MG, KE, ZIM, SN, PSNL cohort: KE 1 share/$29.52/
