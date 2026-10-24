@@ -11746,8 +11746,30 @@ and judged by the whole guard file, all die in the test naming their rule; two
 controls (an unasserted word, a reflowed paragraph) pass 12/12. One mutant's
 anchor first missed a line break and was re-run with it, and died. gitleaks
 8.24.3 over the changed files with the repository's config: no leaks;
-`git diff --check` clean. The full suite on the committed tree and CI are
-recorded on the pull request.
+`git diff --check` clean. The full suite on the committed tree (`448f9aa4`):
+5170 passed and 34 environment-gated skips in 21 m 59 s. CI on that head passed
+all seven checks (Tests run 40070529781: pytest 06:31–06:48 UTC, page
+06:31–06:47, the gate, the native stress case 06:31–06:50 and central
+06:31–06:58; Secret scans 40070529775 and 40070469317).
+
+**The morning checks of 19 to 23 October, read.** The owner's scheduled
+dispatcher (*SpicyStock morning check (8:21 CT)*, one persistent session) was
+due each weekday, but its session answered Monday to Thursday with the
+account's weekly usage limit (*You've hit your weekly limit*), so nothing was
+dispatched on 19, 20, 21 or 22 October; on Friday it read the four queued
+firings as stale and dispatched once, run 39960745472, created 13:23:07 UTC
+(8:23 CT, inside the window), whose two receipts landed at 13:24:35 and
+13:24:41 UTC: `no_tickets` (the 22 October record admits no plan) and
+`no_research_rows`. GitHub's own morning crons for the 13:20 UTC slot were
+created between 17:52 and 19:20 UTC each day, after the 9:00 CT cutoff, and
+every collection step skipped. So #111's count of consecutive sessions with an
+in-window morning check stands at one. The dispatcher session was created on
+Haiku and was switched on 23 October to Fable 5.1 at extra-high effort with
+ultracode on; this session met the Fable usage limit at about 05:50 UTC on 24
+October. A dispatcher that runs on the account's own usage competes with every
+other session for it, so whether Monday's 13:21 UTC firing dispatches depends
+on the limit then; the owner can put that session back on Haiku with `/model`.
+Not claimable: Monday's check.
 
 **Keep / fix / defer / omit.** Keep: the spec frozen and extended by appended
 publications only; each re-read a dated directory with its own guard and a
