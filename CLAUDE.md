@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5307 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5338 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -11856,7 +11856,8 @@ fixtures reproduce byte for byte there.
 (unpinned, all four fail). Every direct runtime and test requirement is held
 below its next major (`tests/test_requirements.py`); their own dependencies are
 not -- `python-dateutil` resolves to 3.0.0 under pandas here, where
-`requirements-host.txt` pins 2.9.0.post0 -- and the sentences say so.
+`requirements-host.txt` pins 2.9.0.post0 -- and the sentences say so (they
+are pinned since 24 October, in `constraints.txt`; see that checkpoint).
 `tools/freeze_validation_cases.py --check`, which CI runs, holds each frozen
 case's source frame, system prompt and chart present in `docs/evidence`: the
 one way a branch cut before a night's removal could merge naming an object the
@@ -11896,7 +11897,7 @@ October at today's size and refuse a publication if a sidecar grows about 20%;
 the same class, not yet reached. The weekly full-history secret scan reads the
 SEC excerpts and would stay red from the first detector-shaped phrase; a scan
 before the issuer collector commits is the fix. Transitive dependencies could be
-held with a constraints file.
+held with a constraints file (done 24 October: `constraints.txt`).
 
 **Not claimable:** the first night under the rule -- Monday 26 October's
 publication; read its run log's *Evidence archive:* line and the commit's
