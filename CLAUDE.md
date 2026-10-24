@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5192 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5204 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -11611,3 +11611,153 @@ cause a record did not archive.
 
 **Not claimable:** a live night with a refused request -- the first such night
 after the merge is the test; any trading edge.
+
+## Checkpoint, 24 Oct 2026 -- PR #192 accepted; the confirmatory figure read again after 23 October, and the forty September rows the newest publications reached
+
+**PR #192, accepted.** Merged as `b4901830` on `main` with a merge commit over
+`f466932f` at 05:47 UTC on 24 October, its tree the head `cd1f5512`'s byte for
+byte. That head passed all seven checks (Tests run 40064272219: pytest
+04:55–05:18 UTC, page 04:55–05:13, the gate, the native central case
+04:56–05:44 and stress 04:56–05:47; Secret scans 40064272373 and 40064269201).
+Publisher 40067658261 waited for `app.js` and printed *Verified: every one of
+the 48 public files matches committed main* at 05:48:58 UTC; Pages 40067674802
+deployed (40067657796 cancelled as superseded, as every merge does); the merge
+commit's own Secret scan 40067658337 and Tests run 40067658289 (05:47–06:09
+UTC) passed. The first night with a refused request is still the test of the
+rule; not claimable yet.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` restarted from
+`main` at `b4901830`, pushed as **PR #193**. The 17 October
+re-read's own next action: the 16 October tickets reached their fifth session
+on 23 October, and six publications had landed since (19 October twice, then
+20, 21, 22 and 23 October). Nothing under `src/` changed and no rule moved; the
+frozen study (`tools/signal_outcomes.py`, blob `39d4f25a…`) is unchanged and
+the guard now holds the tree's file to that blob; `docs/data.json`,
+`docs/picks.json`, the compact reader, every receipt, the history, the evidence
+objects, the quality ledger, the workflows and the vendored design system are
+untouched; no run, mail, dispatch, provider call or credential. `.env.example`
+was read: nothing here is configuration.
+
+**The re-read** (`docs/input-truthfulness/2026-10-24-signal-outcomes-confirmatory.md`).
+The frozen study over thirty-seven publications under a spec that is the frozen
+file with twenty entries appended -- the 17 October extension's fourteen and
+these six (SHA-256 `ae700f197805…`; the byte-level diff against the frozen file
+retained), run under Python 3.12.3 and pandas 3.1.0 (exit 0, 15.4 s) and again
+under Python 3.13.17 and pandas 3.0.5 (exit 0, 17.0 s) to the same bytes
+(uncompressed SHA-256 `310a2fdecb3f…`), each run's record retained. **The
+confirmatory admitted stratum is 316 settled over fifteen nights (2 to 22
+October), mean −0.081R a ticket, the mean of its night means −0.051R with a 95%
+night-bootstrap interval of −0.319 to +0.251: readable, moved from −0.138R a
+night as the 12 to 16 October nights completed, and still establishing no
+sign.** Of the 78 rows still moving on 17 October, 62 settled (22 wins, 39
+losses, 1 even, −0.97R in sum), 12 became uncertain and 4 were not filled; the
+15 October night read whole is −0.463R over 61 where its 18 first-session stops
+alone read −1.000R, the early-read bias measured a second time and the night
+still the stratum's largest loss; the 14 October night went from −0.450R over 7
+to +0.267R over 21. The five nights since are all RED and carry 65 rows still
+open or pending (the 23 October night's 37 tickets enter Monday 26 October);
+the 19 October night is the stratum's best, +19.75R over 14 settled with 6
+still open; the 22 October night, 257 admitted rows, is the largest the study
+has read, 87 of its rows unsized at $2,000 and 13 withheld by the stop rule.
+Three of the sixteen confirmatory nights were YELLOW (105 settled, −0.10R in
+sum) and thirteen RED (211 settled, −25.43R, mean −0.121R); the eight
+mechanical A+ tickets that settled are 2 wins and 6 losses, −3.18R. The
+reader's own A/A+ admissions are still the two DAC rows. The exploratory
+stratum is unchanged to the figure (301 settled, −0.119R, interval −0.347 to
+−0.014).
+
+**The forty rows that moved, and why.** Every one of the 17 October run's
+11,323 rows is in this one and no settled ticket changed its R, but forty rows
+of the two oldest nights (19 of 11 September, 21 of 14 September) moved between
+buckets, 13 of them settling for the first time, none admitted. The frozen rule
+that the newest publication wins each bar worked two ways, decided by whether a
+later publication charted the symbol: the study reads bars from bursts'
+120-session series and the `observations` block alone, and each of the six
+publications lists 335 to 988 bursts but charts only its tickets, cut names,
+closest miss and top 24 by rank (`pipeline.SERIES_TOP`). Twenty-eight rows,
+over twenty-three symbols (five of them on both nights), belong to symbols one
+of the six charted: the series begins between 29 April and 5 May, so the
+September signal is walked (13 settled, 9 uncertain, 6 not filled). Twelve
+rows, twelve symbols, gained no series -- eleven listed again below the charted
+bursts and one, EDHL, only observed -- so two to five October observations move
+a signal from `unmeasured` to `basis_mismatch`. Of the forty, three are
+admitted rows: TWFG and VRDN of 14 September the second way, ROKU of 14
+September the first.
+
+**What else moved.** `tools/build_historical_findings.py` reads the 24 October
+study and lists the new report; `docs/historical-findings.json` is rebuilt
+(31 nights, 28 RED and 3 YELLOW, 11 to 23 October, `--check` current), so the
+Record view's replay carries the 19 to 23 October nights and the confirmatory
+split's 16 nights, 5 inside their hold. `tests/test_signal_outcomes_reread_24_october.py`
+is the re-read's own guard (twelve tests): the tool held to its blob, computed
+without git; each run record parsed and its code commit held, fetched by whole
+id, to a tree whose tool is that blob; the second run's two output digests held
+to this run's bytes; the spec held to the frozen file with publications
+appended and to its retained diff; the title, the appended commits and the
+frozen file's digest read off the spec files; every number the report prints
+read again off the rows, the run records, `record.SCORECARD_MIN_PLANS` and the
+publications fetched from git by whole id, anchored to its phrase; which bursts
+each publication charts read off the publication and held to
+`pipeline.SERIES_TOP`; the night table's rows held to the study's nights by
+their date cells, in order. The 17 October guard is unchanged and its report
+carries one pointer line. README, `docs/input-truthfulness/README.md` and this
+file are swept.
+
+**The review, worked.** A workflow by execution over the uncommitted re-read,
+three finders (the numbers, whether the tests can fail, the mechanism) and one
+skeptic a finding. The finders returned ten findings; all ten skeptics died on
+the session's usage limit before judging one, so each finding was reproduced
+here by execution before it was touched; the skeptic stage, resumed on
+another model, then upheld all ten. Every figure the finders re-derived from the rows matched the
+report, and the study re-ran byte-identically under both interpreters in the
+review's own directory. The two mediums on the report: the mechanism said
+twenty-eight of the forty "are symbols that burst again" and the other twelve
+were "merely observed", when 39 of the 40 rows' symbols were listed as bursts
+again -- eleven of the twelve below the bursts a publication charts -- and the
+twenty-eight are rows over twenty-three symbols (the report's numbers were
+right, its explanation was not); and the guard said the study was frozen at
+blob `39d4f25a` while holding only a string in the run record, so a modified
+tool passed it. The lows: "In the admitted stratum three rows moved ... its
+non-settled buckets read 106" labelled the exploratory admitted stratum's line
+as the stratum's (whose summary line reads 261); the index entry said the forty
+moved "between unsettled buckets" when thirteen settled; twenty-one numbers and
+identifiers the report prints were read by no test (the frozen digest, the
+appended commits and counts, the run's interpreter and wall time, the DAC
+dates, the second mentions of 65 and 371, the risk a ticket, the twenty-settled
+minimum, the last YELLOW night); the run record was held to three strings; the
+night table's row count admitted a row with any regime word but red, yellow or
+green; an assertion carried an unreachable first branch; and the count line
+was stale. One more found while fixing: "as the 13 to 16 October nights
+completed" left out 12 October, whose one moving row settled; the nights moving
+on 17 October were 12 to 16 October, and the test now reads them. The second
+interpreter's run was a claim with no record behind it; it was run again here
+and its record, with both outputs' digests, is retained.
+
+**Measured** (this sandbox, Python 3.12.3, Node 22, Chromium through Playwright
+1.63): the full suite on the staged re-read over `b4901830`, before the review's
+fixes: 5168 passed, 34 environment-gated skips and one failure, the count line
+this checkpoint moves (21 m 32 s); after them the guard 12 passed under
+`-W error::pytest.PytestWarning`, the six related test files 110 passed with
+5204 collected, `build_historical_findings.py --check` and `evidence_review.py
+--check` current, and the findings browser suite 1378/1378 with `--shots` over
+the new `main`, the phone and desktop screenshots looked at. Thirty-nine mutants
+over the report, the two run records and the tool, each in a copy of the tree
+and judged by the whole guard file, all die in the test naming their rule; two
+controls (an unasserted word, a reflowed paragraph) pass 12/12. One mutant's
+anchor first missed a line break and was re-run with it, and died. gitleaks
+8.24.3 over the changed files with the repository's config: no leaks;
+`git diff --check` clean. The full suite on the committed tree and CI are
+recorded on the pull request.
+
+**Keep / fix / defer / omit.** Keep: the spec frozen and extended by appended
+publications only; each re-read a dated directory with its own guard and a
+record for every run it cites; the findings builder reading the newest study
+and the page printing what the file writes. Fix if it bites: the frozen study's
+footer still says every ticket was refused by the RED gate, which the dated
+reports correct and only a new freeze could change; a September signal's walk
+can still change when a later publication charts its symbol, which is the
+frozen rule and is counted, never hidden. Defer: the re-read after 30 October,
+when the 23 October tickets reach their fifth session. Omit: any rule,
+threshold or account change on these numbers; an edge claim.
+
+**Not claimable:** a morning or research observation; any trading edge.

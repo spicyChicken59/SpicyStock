@@ -150,7 +150,7 @@ that did not trade); nothing more is known than the bar the provider served.
 [6 October 2026: the findings file the Record view replays](../historical-findings.json)
 is `docs/historical-findings.json`, built by `tools/build_historical_findings.py`
 from the evidence in this directory and nothing else -- the signal-outcome
-study outputs of 2 October and of the newest re-read (17 October), the publication records the study's spec
+study outputs of 2 October and of the newest re-read (24 October), the publication records the study's spec
 names (read from git by commit, held to the blob), the owner's two pasted
 backtest summaries parsed by `historical_backtest.summary_text()`'s own line
 grammar, and the pasted run-6 summary with its public receipt -- every number
@@ -167,6 +167,19 @@ policy wrote 99 A+ tickets at half size, 44 settled, a 36% win rate, +0.08R a
 ticket, net +3.72R -- the first readable rate the mechanical policy has had, the
 reader not run, its interval and costs unmeasured without the per-row files.
 Not an edge claim.
+
+[24 October 2026: the confirmatory figure, read again after 23 October](2026-10-24-signal-outcomes-confirmatory.md)
+re-runs the frozen study over thirty-seven publications under a
+[spec extended by twenty appended entries only](2026-10-24-signal-outcomes-spec-extended.json):
+the confirmatory admitted stratum is 316 settled over fifteen nights, −0.081R a
+ticket, its night-bootstrap interval −0.319 to +0.251 -- readable, and still no
+sign established. The 12 to 16 October nights completed (the 15 October night,
+read whole, is −0.463R over 61 where its first-session stops read −1.000R); the
+five RED nights since carry 65 rows still moving, to be read again after 30
+October; and forty previously unsettled rows of the two oldest nights moved
+bucket, thirteen of them settling for the first time and none admitted, because
+the newest publications' series and observations reach them; no previously
+settled ticket changed its R.
 
 [17 October 2026: the first readable confirmatory figure](2026-10-17-signal-outcomes-confirmatory.md)
 re-runs the frozen study over thirty-one publications under a

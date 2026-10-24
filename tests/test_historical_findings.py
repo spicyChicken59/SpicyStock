@@ -34,9 +34,9 @@ from tools import signal_outcomes as so
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = "docs/historical-findings.json"
 TRUTH = "docs/input-truthfulness"
-STUDY = f"{TRUTH}/2026-10-17-signal-outcomes-confirmatory-evidence/signal-outcomes.json.gz"
-STUDY_SPEC = f"{TRUTH}/2026-10-17-signal-outcomes-spec-extended.json"
-STUDY_RUN_RECORD = f"{TRUTH}/2026-10-17-signal-outcomes-confirmatory-evidence/run-record.txt"
+STUDY = f"{TRUTH}/2026-10-24-signal-outcomes-confirmatory-evidence/signal-outcomes.json.gz"
+STUDY_SPEC = f"{TRUTH}/2026-10-24-signal-outcomes-spec-extended.json"
+STUDY_RUN_RECORD = f"{TRUTH}/2026-10-24-signal-outcomes-confirmatory-evidence/run-record.txt"
 FIRST_STUDY = f"{TRUTH}/2026-10-02-signal-outcomes-evidence/signal-outcomes.json.gz"
 FIRST_SPEC = f"{TRUTH}/2026-10-02-signal-outcomes-spec.json"
 BACKTESTS = {"lookback_130": f"{TRUTH}/2026-10-06-backtest-results-evidence/lookback-130-summary.txt",

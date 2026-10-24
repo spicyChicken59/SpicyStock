@@ -56,8 +56,8 @@ from tools import signal_outcomes as so  # noqa: E402
 VERSION = "historical-findings-v1"
 OUTPUT = ROOT / "docs" / "historical-findings.json"
 TRUTH = Path("docs/input-truthfulness")
-STUDY = TRUTH / "2026-10-17-signal-outcomes-confirmatory-evidence" / "signal-outcomes.json.gz"
-STUDY_SPEC = TRUTH / "2026-10-17-signal-outcomes-spec-extended.json"
+STUDY = TRUTH / "2026-10-24-signal-outcomes-confirmatory-evidence" / "signal-outcomes.json.gz"
+STUDY_SPEC = TRUTH / "2026-10-24-signal-outcomes-spec-extended.json"
 FIRST_STUDY = TRUTH / "2026-10-02-signal-outcomes-evidence" / "signal-outcomes.json.gz"
 FIRST_SPEC = TRUTH / "2026-10-02-signal-outcomes-spec.json"
 BACKTEST_DIR = TRUTH / "2026-10-06-backtest-results-evidence"
@@ -71,6 +71,7 @@ REPORTS = (
     ("The first real-bar outcomes (2 October)", TRUTH / "2026-10-02-signal-outcomes.md"),
     ("The confirmatory read (6 October)", TRUTH / "2026-10-06-signal-outcomes-confirmatory.md"),
     ("The confirmatory read (17 October)", TRUTH / "2026-10-17-signal-outcomes-confirmatory.md"),
+    ("The confirmatory read (24 October)", TRUTH / "2026-10-24-signal-outcomes-confirmatory.md"),
     ("The owner's backtest over the run-6 archive (6 October)", TRUTH / "2026-10-06-backtest-results.md"),
     ("The mechanical backtest tool (2 October)", TRUTH / "2026-10-02-mechanical-backtest.md"),
     ("Run 6: the RED reading on fresh bars (2 October)", TRUTH / "2026-10-02-historical-run6-result.md"),
