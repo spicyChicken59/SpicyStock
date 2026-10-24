@@ -119,3 +119,227 @@ def test_pipeline_covers_every_saveable_signal_without_more_boundary_calls(marke
     assert len(claude.calls)==1
     assert (docs/"history/index.json").exists()
     assert set(history.signals(data)) <= set(data['observations']['signals'])
+
+
+# --- past its cap, the oldest records give way ------------------------------
+def small(session, published_at, n=6):
+    """A distinct authentic record: the 11 September publication's first n
+    bursts, filed under another session or publication time."""
+    data = record('2026-09-11')
+    data['bursts'] = data['bursts'][:n]
+    data['run']['session'] = session
+    data['run']['published_at'] = published_at
+    return history.encoded(data)
+
+
+def catalog_bytes(root):
+    return sum(p.stat().st_size for p in root.rglob('*.json'))
+
+
+def files_of(root, source):
+    return {p.name: p.read_bytes() for p in (root / source).glob('*.json')}
+
+
+def test_past_the_byte_cap_the_oldest_record_inside_the_window_gives_way(tmp_path, monkeypatch, caplog):
+    # the record that must give way carries the larger digest, so the order is the session's
+    r1, r2, r3 = next((a, b, c) for n in range(6, 1, -1)
+                      for a, b, c in [(small('2026-10-01', '2026-10-01T22:00:00Z', n), small('2026-10-02', '2026-10-02T22:00:00Z', n),
+                                       small('2026-10-05', '2026-10-05T22:00:00Z', n))]
+                      if history.git_blob(a) > history.git_blob(b))
+    whole = tmp_path / 'whole'
+    for raw in (r1, r2, r3):
+        history.publish(raw, whole)
+    # the catalog the eviction should leave is the one r2 and r3 make alone
+    fits = tmp_path / 'fits'
+    history.publish(r2, fits)
+    history.publish(r3, fits)
+    root = tmp_path / 'catalog'
+    history.publish(r1, root)
+    history.publish(r2, root)
+    kept = files_of(root, history.git_blob(r2))
+    monkeypatch.setattr(history, 'CATALOG_BYTES_MAX', catalog_bytes(fits))
+    assert catalog_bytes(whole) > history.CATALOG_BYTES_MAX, 'the three records would fit without eviction'
+    caplog.set_level('INFO', logger='spicystock.history')
+    index = history.publish(r3, root)
+    assert set(index['records']) == {history.git_blob(r2), history.git_blob(r3)}
+    assert not (root / history.git_blob(r1)).exists()
+    assert files_of(root, history.git_blob(r2)) == kept
+    assert (root / 'index.json').read_bytes() == (fits / 'index.json').read_bytes()
+    assert catalog_bytes(root) == catalog_bytes(fits) <= history.CATALOG_BYTES_MAX
+    assert {e['source'] for e in index['entries']} == {history.git_blob(r2), history.git_blob(r3)}
+    said = [r.getMessage() for r in caplog.records if r.name == 'spicystock.history']
+    assert any('1 record inside its 21-day window was removed, oldest first (2026-10-01)' in m for m in said), said
+
+
+def test_past_the_record_cap_the_oldest_record_gives_way(tmp_path, monkeypatch):
+    monkeypatch.setattr(history, 'RECORDS_MAX', 2)
+    raws = [small(f'2026-10-0{d}', f'2026-10-0{d}T22:00:00Z') for d in (1, 2, 5)]
+    for raw in raws:
+        index = history.publish(raw, tmp_path)
+    assert set(index['records']) == {history.git_blob(raws[1]), history.git_blob(raws[2])}
+    assert not (tmp_path / history.git_blob(raws[0])).exists()
+
+
+def test_revisions_of_one_session_leave_in_publication_order_then_by_digest(tmp_path, monkeypatch):
+    monkeypatch.setattr(history, 'RECORDS_MAX', 2)
+    # the earlier publication must carry the larger digest, so publication order and digest order disagree
+    late, early = next((late, early) for n in range(6, 1, -1)
+                       for late, early in [(small('2026-10-01', '2026-10-01T23:00:00Z', n),
+                                            small('2026-10-01', '2026-10-01T22:00:00Z', n))]
+                       if history.git_blob(early) > history.git_blob(late))
+    history.publish(late, tmp_path)
+    history.publish(early, tmp_path)
+    index = history.publish(small('2026-10-02', '2026-10-02T22:00:00Z'), tmp_path)
+    assert history.git_blob(late) in index['records'] and history.git_blob(early) not in index['records']
+    # equal sessions and publication times leave by digest
+    twin = tmp_path / 'twin'
+    a, b = small('2026-10-01', '2026-10-01T22:00:00Z', 5), small('2026-10-01', '2026-10-01T22:00:00Z', 4)
+    first, second = sorted([a, b], key=history.git_blob)
+    history.publish(second, twin)
+    history.publish(first, twin)
+    index = history.publish(small('2026-10-02', '2026-10-02T22:00:00Z'), twin)
+    assert history.git_blob(second) in index['records'] and history.git_blob(first) not in index['records']
+
+
+def test_the_older_session_gives_way_first_even_when_it_was_published_later(tmp_path, monkeypatch):
+    monkeypatch.setattr(history, 'RECORDS_MAX', 2)
+    # the older session carries the larger digest, so session order and digest order disagree
+    late_rerun, next_day = next((a, b) for n in range(6, 1, -1)
+                                for a, b in [(small('2026-10-01', '2026-10-03T09:00:00Z', n),
+                                              small('2026-10-02', '2026-10-02T22:00:00Z', n))]
+                                if history.git_blob(a) > history.git_blob(b))
+    history.publish(next_day, tmp_path)
+    history.publish(late_rerun, tmp_path)
+    index = history.publish(small('2026-10-05', '2026-10-05T22:00:00Z'), tmp_path)
+    assert history.git_blob(next_day) in index['records'] and history.git_blob(late_rerun) not in index['records']
+
+
+def test_tonight_alone_past_the_cap_refuses_and_nothing_gives_way(tmp_path, monkeypatch):
+    old = small('2026-10-01', '2026-10-01T22:00:00Z')
+    history.publish(old, tmp_path)
+    before = {p.relative_to(tmp_path): p.read_bytes() for p in tmp_path.rglob('*') if p.is_file()}
+    tonight = small('2026-10-02', '2026-10-02T22:00:00Z')
+    fits = tmp_path.parent / (tmp_path.name + '-alone')
+    history.publish(tonight, fits)
+    monkeypatch.setattr(history, 'CATALOG_BYTES_MAX', catalog_bytes(fits) - 1)
+    with pytest.raises(ValueError, match='byte bound'):
+        history.publish(tonight, tmp_path)
+    assert {p.relative_to(tmp_path): p.read_bytes() for p in tmp_path.rglob('*') if p.is_file()} == before
+
+
+def test_tonights_record_never_gives_way_even_when_it_is_the_oldest(tmp_path, monkeypatch):
+    monkeypatch.setattr(history, 'RECORDS_MAX', 1)
+    newer, older = small('2026-10-02', '2026-10-02T22:00:00Z'), small('2026-10-01', '2026-10-01T22:00:00Z')
+    history.publish(newer, tmp_path)
+    index = history.publish(older, tmp_path)
+    assert set(index['records']) == {history.git_blob(older)}
+    assert (tmp_path / history.git_blob(older) / 'record.json').exists()
+    assert not (tmp_path / history.git_blob(newer)).exists()
+
+
+def test_a_record_that_gives_way_is_pruned_whatever_an_interrupted_write_left_in_it(tmp_path, monkeypatch, caplog):
+    monkeypatch.setattr(history, 'RECORDS_MAX', 1)
+    r1, r2, r3 = (small(f'2026-10-0{d}', f'2026-10-0{d}T22:00:00Z') for d in (1, 2, 5))
+    history.publish(r1, tmp_path)
+    (tmp_path / history.git_blob(r1) / 'burst-ZZZ.tmp').write_bytes(b'half a write')
+    index = history.publish(r2, tmp_path)
+    assert set(index['records']) == {history.git_blob(r2)} and not (tmp_path / history.git_blob(r1)).exists()
+    # a directory already gone is already pruned
+    for f in (tmp_path / history.git_blob(r2)).iterdir():
+        f.unlink()
+    (tmp_path / history.git_blob(r2)).rmdir()
+    caplog.set_level('INFO', logger='spicystock.history')
+    index = history.publish(r3, tmp_path)
+    assert set(index['records']) == {history.git_blob(r3)}
+    assert not [r for r in caplog.records if 'could not be removed' in r.getMessage()]
+
+
+def test_a_stray_file_in_a_kept_record_counts_against_the_byte_cap(tmp_path, caplog):
+    history.publish(small('2026-10-01', '2026-10-01T22:00:00Z'), tmp_path)
+    stray = next(p for p in tmp_path.iterdir() if p.is_dir()) / 'burst-ZZZ.tmp'
+    stray.write_bytes(b'x' * 1000)
+    caplog.set_level('INFO', logger='spicystock.history')
+    history.publish(small('2026-10-02', '2026-10-02T22:00:00Z'), tmp_path)
+    on_disk = sum(p.stat().st_size for p in tmp_path.rglob('*') if p.is_file())
+    line = [r.getMessage() for r in caplog.records if r.getMessage().startswith('Recovery catalog: 2 of')]
+    assert line == [f'Recovery catalog: 2 of {history.RECORDS_MAX} records over 2 sessions, '
+                    f'{on_disk} of {history.CATALOG_BYTES_MAX} bytes.'], line
+
+
+def test_a_record_that_cannot_be_removed_is_named_and_the_others_are_still_pruned(tmp_path, monkeypatch, caplog):
+    raws = [small(f'2026-10-0{d}', f'2026-10-0{d}T22:00:00Z') for d in (1, 2)]
+    for raw in raws:
+        history.publish(raw, tmp_path)
+    stuck, other = sorted(map(history.git_blob, raws))
+    (tmp_path / stuck / 'nested').mkdir()
+    (tmp_path / stuck / 'nested' / 'x.json').write_text('{}')
+    monkeypatch.setattr(history, 'RECORDS_MAX', 1)
+    caplog.set_level('INFO', logger='spicystock.history')
+    tonight = small('2026-10-05', '2026-10-05T22:00:00Z')
+    index = history.publish(tonight, tmp_path)
+    assert set(index['records']) == {history.git_blob(tonight)}
+    assert not (tmp_path / other).exists()
+    assert (tmp_path / stuck / 'nested' / 'x.json').exists()
+    said = [r.getMessage() for r in caplog.records if r.name == 'spicystock.history']
+    assert f'Recovery catalog: 1 record directory could not be removed ({stuck}); it is no longer catalogued.' in said, said
+
+
+@pytest.mark.parametrize('cap,warns', [('0.79', False), ('exact', False), ('one under', True), ('0.81', True)])
+def test_the_run_log_states_the_catalog_against_its_caps(cap, warns, tmp_path, monkeypatch, caplog):
+    raw = small('2026-10-01', '2026-10-01T22:00:00Z')
+    probe = tmp_path / 'probe'
+    history.publish(raw, probe)
+    size = catalog_bytes(probe)
+    if cap in ('exact', 'one under'):
+        # at half the cap to the byte, a warning fraction of one half does not warn; a byte less of cap does
+        monkeypatch.setattr(history, 'CATALOG_WARN_FRACTION', 0.5)
+    limit = {'0.79': int(size / 0.79), 'exact': 2 * size, 'one under': 2 * size - 1, '0.81': int(size / 0.81)}[cap]
+    monkeypatch.setattr(history, 'CATALOG_BYTES_MAX', limit)
+    caplog.set_level('INFO', logger='spicystock.history')
+    history.publish(raw, tmp_path / 'catalog')
+    line = [r for r in caplog.records if r.name == 'spicystock.history' and 'Recovery catalog:' in r.getMessage()]
+    assert len(line) == 1
+    assert line[0].getMessage() == (f'Recovery catalog: 1 of {history.RECORDS_MAX} records over 1 session, '
+                                    f'{size} of {history.CATALOG_BYTES_MAX} bytes.')
+    assert line[0].levelname == ('WARNING' if warns else 'INFO')
+
+
+@pytest.mark.parametrize('records_max,warns', [(5, False), (4, True)])
+def test_the_run_log_warns_on_the_record_count_too(records_max, warns, tmp_path, monkeypatch, caplog):
+    # four records against a cap of five is 80%, which does not warn; against four it does
+    monkeypatch.setattr(history, 'RECORDS_MAX', records_max)
+    caplog.set_level('INFO', logger='spicystock.history')
+    for d in (1, 2, 5, 6):
+        history.publish(small(f'2026-10-0{d}', f'2026-10-0{d}T22:00:00Z'), tmp_path)
+    line = [r for r in caplog.records if r.name == 'spicystock.history' and 'Recovery catalog:' in r.getMessage()][-1]
+    assert line.getMessage().startswith(f'Recovery catalog: 4 of {records_max} records over 4 sessions, ')
+    assert line.levelname == ('WARNING' if warns else 'INFO')
+
+
+def test_the_catalog_log_never_fails_the_publication(tmp_path, monkeypatch, caplog):
+    raw = small('2026-10-01', '2026-10-01T22:00:00Z')
+    monkeypatch.setattr(history, 'CATALOG_WARN_FRACTION', None)
+    caplog.set_level('INFO', logger='spicystock.history')
+    index = history.publish(raw, tmp_path)
+    assert set(index['records']) == {history.git_blob(raw)}
+    assert any('Recovery catalog could not be stated (TypeError).' == r.getMessage() for r in caplog.records)
+
+
+@pytest.mark.parametrize('email', ['delivered', 'failed'])
+def test_a_catalog_that_cannot_take_tonight_still_leaves_the_night_its_ledger_entry(email, market, claude, fake_resend, tmp_path, monkeypatch, caplog):
+    from src import quality_ledger
+    if email == 'failed':
+        fake_resend.raises = RuntimeError('Resend refused')
+    monkeypatch.setattr(history, 'CATALOG_BYTES_MAX', 10)
+    caplog.set_level('ERROR', logger='spicystock.pipeline')
+    rep, data, docs = evening(tmp_path, market)
+    assert rep.published and rep.exit_code() == pipeline.EXIT_FAILED_AFTER_PUBLISH
+    failed = [r.getMessage() for r in caplog.records if r.name == 'spicystock.pipeline' and r.getMessage().startswith('run failed at')]
+    expected = ['run failed at history: ValueError: recovery byte bound exceeded; existing index left intact']
+    if email == 'failed':
+        expected.insert(0, 'run failed at email: RuntimeError: Resend refused')
+    assert failed == expected
+    assert rep.quality_ledger['status'] == 'retained', rep.quality_ledger
+    assert len(list((docs / 'quality-ledger' / 'v1').glob('*.json.gz'))) == 1
+    assert not (docs / 'history' / 'index.json').exists()
+    assert data['run']['email'] == email

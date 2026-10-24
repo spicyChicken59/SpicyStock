@@ -390,6 +390,25 @@ def test_the_readme_and_the_env_example_quote_the_reader_archives_bounds_from_th
     assert f"keep a {reader.RETENTION_DAYS}-day grace for open tabs; past the {mib} MiB cap" in env
 
 
+def test_the_readme_and_the_env_example_quote_the_recovery_catalogs_bounds_from_the_module():
+    """The recovery catalog's window, caps and warning are constants; the prose
+    that says when its oldest records give way quotes them."""
+    from src import history
+    text = re.sub(r"\s+", " ", README)
+    mib = history.CATALOG_BYTES_MAX // (1024 * 1024)
+    assert (f"It retains {history.DAYS} calendar days, up to {history.RECORDS_MAX} distinct publications "
+            f"and {history.SIGNALS_MAX:,} signals per publication, within {mib} MiB.") in text
+    assert (f"The run log states the catalog against both caps, warns past "
+            f"{history.CATALOG_WARN_FRACTION:.0%} of either, and names the sessions that gave way") in text
+    env = re.sub(r"\s*#\s*", " ", (ROOT / ".env.example").read_text())
+    assert (f"the {history.DAYS}-day recovery catalog; past its {history.RECORDS_MAX}-record or "
+            f"{mib} MiB cap its oldest records give way") in env
+    continuity = re.sub(r"\s+", " ", (ROOT / "docs/continuity/README.md").read_text())
+    assert (f"Limits: {history.RECORDS_MAX} publications; {history.SIGNALS_MAX:,} signals per publication; "
+            f"256 KiB per lazy file; {mib} MiB catalog. Past the publication or byte cap the records still "
+            f"inside their window give way, oldest first") in continuity
+
+
 def test_the_readme_and_the_env_example_quote_the_source_recovery_bounds_from_the_module():
     """The recovery's budget is four constants; the prose that tells a reader
     what one receipt may cost quotes them, and the names bound is one batch."""
