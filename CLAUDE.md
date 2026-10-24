@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5307 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5338 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -11856,7 +11856,8 @@ fixtures reproduce byte for byte there.
 (unpinned, all four fail). Every direct runtime and test requirement is held
 below its next major (`tests/test_requirements.py`); their own dependencies are
 not -- `python-dateutil` resolves to 3.0.0 under pandas here, where
-`requirements-host.txt` pins 2.9.0.post0 -- and the sentences say so.
+`requirements-host.txt` pins 2.9.0.post0 -- and the sentences say so (they
+are pinned since 24 October, in `constraints.txt`; see that checkpoint).
 `tools/freeze_validation_cases.py --check`, which CI runs, holds each frozen
 case's source frame, system prompt and chart present in `docs/evidence`: the
 one way a branch cut before a night's removal could merge naming an object the
@@ -11896,7 +11897,7 @@ October at today's size and refuse a publication if a sidecar grows about 20%;
 the same class, not yet reached. The weekly full-history secret scan reads the
 SEC excerpts and would stay red from the first detector-shaped phrase; a scan
 before the issuer collector commits is the fix. Transitive dependencies could be
-held with a constraints file.
+held with a constraints file (done 24 October: `constraints.txt`).
 
 **Not claimable:** the first night under the rule -- Monday 26 October's
 publication; read its run log's *Evidence archive:* line and the commit's
@@ -12320,3 +12321,251 @@ carries `run_id` only once published). Omit: quoting the exception.
 
 **Not claimable:** a live failure notice under the rule; the first compact
 night (Monday 26 October); a morning or research observation; any trading edge.
+
+## Checkpoint, 24 Oct 2026 -- PR #198 accepted; the evening rehearsed on the merged storage rules; the whole dependency resolution pinned
+
+**PR #198, accepted.** Merged as `446e9db1` on `main` with a merge commit over
+`0e68a112` at 20:57 UTC. The head `6c197082` passed pytest, page, the gate and
+both gitleaks runs (Tests run 40128351140, pytest to 20:35 UTC); the native
+central and stress cases passed on the code head `961a913c` (Tests run
+40128316388, to 20:56). The diff touched nothing under `docs/`, so the
+publisher did not fire, correctly (as at #64, #174, #177 and #197); Pages
+40132079280 deployed, and the merge commit's own Secret scan 40132079612 and
+Tests run 40132079573 (pytest 20:57-21:14 UTC, page 20:57-21:15; the native
+cases skipped by the gate, as a merge's are) passed.
+
+**The evening rehearsed over every storage rule merged on 24 October.** A dry
+run of `evening.yml` on `main` at `0e68a112` (run 40128552858, job
+120975138958, dispatched with `dry_run` and `session` 2026-10-23) re-ran the 23
+October session over the real archives in the runner's checkout, committing
+nothing and mailing nothing, and exited 0 (`exit 0 (ok)`), the pipeline
+20:10:28-20:13:35 UTC. 4,773 classified stocks; ACA stale, ending 22 October,
+tolerated (1 within the limit of 47); 3,587 scanned, 493 reaction candidates;
+two chart reads, both answered HTTP 200 (2 calls, 2 replies, 3,336 tokens
+written to the cache, 3,336 read, 8,040 uncached, 1,388 output). The four
+storage lines, each the rule's first reading on a real-size archive:
+- *Canonical record: 10066399 of 33554432 bytes, with 493 bursts and 5915489
+  bytes of observations.*, and the same after delivery (#197's compact record:
+  30% of the bound; the published 23 October record, indented, was 14,124,268);
+- *Reader observation archive: 16 of 84 objects, 86115379 of 134217728 bytes.*
+  (#195's rule, 64% of its cap, no object given way);
+- *Evidence archive: 13185 objects, 78218202 of 134217728 bytes; 1652 objects
+  (7978559 bytes) no file under docs/ names were removed (git keeps them).* --
+  to the object and the byte what #194 predicted from a copy of the same tree;
+- *Recovery catalog: 21 of 84 records over 16 sessions, 94719417 of 134217728
+  bytes.* (#196's rule, 71% of its byte cap, nothing given way).
+Two warnings are the dry run's own and not faults: *Stop research publication
+unavailable (ValueError)* and *Research outcomes publication unavailable
+(ValueError)*, each `ValueError('production observations require a real
+publication')`, which both companions raise for a dry run by design
+(reproduced locally); the real nights write them (the 23 October publication
+`cd239b20` updated both). A dry run captures no quality-ledger entry
+(`quality_ledger.capture()` returns `not_applicable` for one), so the log has no
+ledger line. The rehearsal says the four rules hold on today's archives; the
+first real night under all four is Monday 26 October's.
+
+**The full-history secret scan, read before it ran.** The 24 October retention
+checkpoint named a future risk: the issuer collector commits SEC excerpts, which
+the weekly scan reads over the whole history. gitleaks 8.24.3 with the
+repository's config over every commit this sandbox's clone held (`--log-opts
+--all`, 705 commits, 1.34 GB, the issuer bundles and receipts among them; the
+clone is shallow, so this is not the whole of `main`'s history): no leaks. The
+last weekly run that read the whole history (run 39245153189, 19 October, 669
+commits) found none either. The risk stays a future one, until an excerpt
+carries a detector-shaped phrase.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` restarted from
+`main` at `446e9db1`, pushed as **PR #199**. Nothing under `src/` or `docs/`
+moves and no rule moves (`rules_version` stands, no fixture regenerated); no
+run, mail, dispatch, provider call or credential. `.env.example` was read:
+nothing here is configuration.
+
+**What PyPI could still change.** #190 held anthropic below 2 after 2.0.0
+changed the API version under the evening; #194 held every direct requirement
+below its next major in a test and recorded that their own dependencies were
+not held -- `python-dateutil` resolves to 3.0.0 under pandas, where the morning
+host pins 2.9.0.post0. Each workflow installed `pip install -r
+requirements.txt`, so a release of any of the 36 packages under the eight
+direct ones (pydantic under anthropic and alpaca-py, matplotlib under
+mplfinance, python-dateutil under pandas, ...), or of a direct one inside its
+bound, reached the next night with no change in this repository, and CI
+resolved its own set at the hour it ran.
+
+**The change.** `constraints.txt` pins the whole resolution: the 44 runtime
+packages the evening's own runner installed in the rehearsal above (Python
+3.12.15, pip 26.2.1, read off its *Successfully installed* line) and the five
+the suite adds (iniconfig, pluggy, Pygments, pytest, PyYAML), 49 bare `==` pins
+in canonical-name order; a clean Python 3.12.3 venv resolves the same 49, and a
+constrained install of `requirements-dev.txt` installs exactly those 49 with
+`pip check` clean. Every workflow step that installs `requirements.txt`
+(evening, intraday, issuer-evidence, morning, source-recovery: eight jobs)
+installs `-r requirements.txt -c constraints.txt`, and so does the README's
+setup line; `requirements-dev.txt` carries `-c constraints.txt`, so `tests.yml`,
+unchanged, runs the suite against the night's own runtime set, and pip reads
+that path beside the file from any directory. `requirements.txt` carries no
+`-c`: `requirements-host.txt` reads it and pins the morning host's whole set
+(anthropic 1.15.0, pandas 3.0.6, python-dateutil 2.9.0.post0, so the suite does
+not run the host's versions); the historical jobs install
+`tools/requirements-historical*.txt`, which pin their direct requirements only
+(13 pins; the second review's clean install of `requirements-historical.txt`
+resolved 50, python-dateutil 3.0.0 among the 37 that float) and are left
+alone. The pins need CPython 3.12 (numpy 2.5.4 and contourpy 1.4.0 require
+it), which README's *Run locally* now says. The
+header's re-resolve recipe prints the pins in the order the test holds and
+removes its temporary file whether the install succeeds, fails or is
+interrupted, under bash or sh: run in a clean CPython 3.12.3 venv its output
+equals the 49 pins byte for byte, under dash and under bash; with the install
+made to fail, and with a SIGINT sent to the process group mid-install, the file
+is gone (the first recipe, under dash, left it).
+
+`tests/test_requirements.py` holds the file:
+- each line a bare pin, once, in canonical-name order, and a ranged, extra,
+  marker or option line refused (a synthetic case each);
+- every direct requirement pinned inside its own bound;
+- the installed versions equal to the pins, so a machine set up some other way
+  says so;
+- the pins closed under their own `Requires-Dist`, walked from the roots with
+  extras followed and markers read in `RUNNER`, CPython 3.12 on Linux x86_64,
+  naming a dependency without a pin, a pin outside the range a root or a
+  dependent asks and a pin nothing reaches -- over the real metadata, and over a
+  synthetic tree that drives each of those ways;
+- the walk reading `RUNNER` and never this machine's environment (a test moves
+  `RUNNER` to Windows and the walk must follow), and `RUNNER` held to the
+  workflows: every job that installs the runtime or the suite's set runs on
+  `ubuntu-*` under `setup-python` at `RUNNER`'s Python;
+- every pip invocation a workflow job or a README code block runs -- prose is
+  not read -- with continuations joined, cut at `&&`, `||`, `;`, `|`, `&` and
+  parentheses, comments and redirections dropped (`shlex` with
+  `punctuation_chars`), a script handed to another shell as one word
+  (`bash -c '...'`) read as well, and its words read by pip's own option parsers
+  (`parse_command`, then the install command's `parse_args`, isolated from this
+  machine's `PIP_*` variables and pip.conf), so every spelling pip accepts is
+  read as pip reads it: clustered `-qr`, abbreviated `--constr`, the value of
+  `--only-binary :all:`, a path to `pip3.12` with a general option before
+  `install`. It installs no package or editable by name, reads only a file the
+  test accounts for, and reads `requirements.txt` only with `constraints.txt`
+  (`install_problems()`, a pure rule driven over synthetic installs as well as
+  the real ones); words pip itself would refuse are named.
+
+**The first review, worked.** A workflow by execution over the first commit
+(`a431bf49`), three lenses (every install the repository runs, whether each test
+can fail, every sentence) and one skeptic a finding, 22 agents, none errored:
+19 findings, 15 upheld, each reproduced by its skeptic before it was touched.
+No install was wrong: the constrained installs reproduce the pins exactly with
+`pip check` clean, the `-c` line resolves beside its file from any directory
+(a decoy `constraints.txt` in the working directory is never read), the host's
+Docker build is unaffected, and an unconstrained resolve today gives the same
+49, so the change is a no-op for every job today. What was upheld:
+- *every workflow installs `-r requirements.txt -c constraints.txt`* was false:
+  the historical jobs install their own file (found by all three lenses);
+- the commit message said the test held *every install line*; it held only the
+  ones that read `requirements.txt`, by one literal spelling a line, so a second
+  job's install spelled `--requirement`, or continued onto a second line,
+  escaped it, and it refused two edits pip accepts (a trailing comment on the
+  `-c` line, the `-c` before the `-r`);
+- nothing on Linux CI held the marker rule: reading this machine's environment
+  in place of `RUNNER` left every test green;
+- a docstring said the installed-versions test held in CI *only because* of the
+  `-c` line, when today an unconstrained install gives the same set;
+- the recipe's `pip freeze` lists typing-inspection before typing_extensions,
+  so its output failed the order test, and a failed install left its temporary
+  file in the repository root;
+- the pins no longer install on Python 3.11, and README did not say 3.12;
+- README and `requirements-dev.txt` said every pin was what the evening
+  installed, when five are the suite's;
+- the suite count line (two lenses), and the two sentences of the 24 October
+  retention checkpoint that said the dependencies were not pinned and that a
+  constraints file could hold them, which now carry a pointer here.
+Not upheld: that the host's seven differing pins are this change's (they
+predate it, and the files said so; the sentence above now says it plainly), and
+that the provenance run being a dry run made *the night's own set* false (the
+scheduled 23 October night, run 40045887700, installed the same 44 at the same
+versions, unconstrained, read off its job log here).
+
+**The second review, worked.** A workflow by execution over the fixes
+(`b3c39de4`), two lenses (the tests, every sentence), a skeptic a finding:
+14 findings, 13 upheld. The install reader was still a hand parser:
+a general option before `install` (`pip --disable-pip-version-check install`)
+or a path to pip (`/usr/bin/pip3.12`) was silently skipped, so an unconstrained
+install there passed (medium); `-qr` and `--constr`, which pip accepts, were
+refused, and so were `--only-binary :all:`, `--timeout 60`, a pipe and a
+redirection; the README was read only on lines beginning `pip install`, so an
+unconstrained `python -m pip install` passed; `os.path.normpath` turned
+`tools/...` into `tools\...` on Windows. That is why the reader asks pip now
+rather than imitating it. Also upheld: *pinned on their own* was false of the
+historical files (both lenses); a `--constraint constraints.txt` line in
+`requirements-dev.txt` broke four tests; two rules had no case that fails when
+loosened (a separate-word `./requirements.txt`, the bare-pin rule); the closure
+let a root pinned outside its own bound through; the recipe's temporary file
+survived an interrupt under sh; the commit message called `tests.yml` a pinned
+source of the delivery proof, which the 10 October checkpoint says it no longer
+is; and the CLAUDE.md pointer named a checkpoint not yet written (this one).
+Not upheld: that nothing holds `RUNNER`'s own values on Linux -- there the
+machine's environment and `RUNNER` agree on every marker key the closure reads,
+so the swap changes nothing.
+
+**Mutation passes**, each mutant in a minimal copy of the files the test reads,
+judged by the whole of `tests/test_requirements.py`.
+- Over `a431bf49`: seventeen and a control, fifteen dead, **two survivors, both
+  holes** -- the closure walked without comparing a dependency's range to its
+  pin, or checking that every pin was reached, and the real metadata agreed with
+  the walk either way; the walk became a pure function (`closure_problems()`)
+  driven over a synthetic tree, and a third run killed all eighteen.
+- Over `b3c39de4`: 39 mutants and five controls (edits pip accepts, which must
+  stay green); 36 died in the test naming their rule. **Three survived, the same
+  hole one rule over** -- the install check's own clauses were exercised only on
+  today's compliant workflows -- and **one control died**: a
+  `--constraint=constraints.txt` line in `requirements-dev.txt` was read as a
+  requirement. Both fixed, and over `37845862` all 41 died with the five
+  controls alive.
+- Over the final tree (`943eaf8c`): 61 mutants and seven controls. All 61 died
+  in the test naming their rule; all seven controls lived. The mutants: a
+  transitive pin dropped, a stale one kept (and an installed one), a pin moved
+  or outside its bound, the file unsorted, in pip freeze's order, a duplicate, a
+  range, the bare-pin rule loosened; markers ignored or read on this machine,
+  `RUNNER` at another Python or on Windows, a job on 3.13 or on Windows; extras
+  unfollowed; a root's range, a dependent's range, the stale pins and an
+  unpinned dependency unchecked; option lines read as requirements, or every
+  option line skipped; general options unparsed, the install options read by
+  hand, paths unnormalized, `PIP_*` variables read, pip.conf read, the caller's
+  `PIP_CONFIG_FILE` not put back, a refusal read as nothing or not named,
+  editables accepted; comments kept, redirections kept, the descriptor of `2>&1`
+  kept, command lists uncut, continuations unjoined, a path to pip or `pip3.12`
+  unread, a script handed to another shell unread, the README's prose read or
+  the README unread; each install clause dropped; the reader blind to every
+  workflow; and as data the evening, the
+  README and the dev file without the constraint, a `-c` or `--constraint=` in
+  `requirements.txt`, a second job's `--requirement` install, a clustered `-qr`,
+  a path to pip with a general option, a continued line, a bare package, the
+  host's file in a workflow, a README `python -m pip` line, a second quiet
+  install, a `bash -c` line and a new `windows-latest` workflow on Python 3.13
+  installing with a general option before `install`, each without the
+  constraint. The controls: the dev file's `-c` before its `-r`, with a trailing
+  comment, as `--constraint=` and as `--constraint` spaced; a workflow install
+  as `python -m pip --disable-pip-version-check install --only-binary :all:
+  -qr ./requirements.txt --constr constraints.txt 2>&1 | tee pip.log`; README
+  prose naming an install; a comment. The long-spelled control first died for a
+  reason of mine -- written into a plain YAML scalar, `:all: ` made the file
+  invalid YAML, which GitHub would refuse too -- and lives written as the block
+  scalar a step would really use.
+
+**Measured** (this sandbox, Python 3.12.3): the full suite on `943eaf8c`, run
+on a committed worktree, 5304 passed and 34 environment-gated skips in
+21 m 21 s (5338 collected); `tests/test_requirements.py`, `tests/test_docs.py`
+and `tests/test_workflows.py` 137 passed under `-W error::pytest.PytestWarning`;
+actionlint 1.7.12 on the five changed workflows: clean; gitleaks 8.24.3 over the
+changed files and the branch's commit with the repository's config: no leaks.
+No record, rule or page file moved, so the fixtures, the chart check and the
+smoke are CI's, recorded on the PR.
+
+**Keep / fix / defer / omit.** Keep: a pin moves in its own change with the
+suite run against it; the host's set stays its own. Fix if it bites: a pinned
+package yanked from PyPI fails the next install loudly (a constraint cannot
+install what the index no longer serves), which is the point; a security
+release underneath waits for a change here. Defer: hashes (`--require-hashes`)
+over every wheel, which would pin the bytes as well as the versions. Omit: a
+bot that moves the pins.
+
+**Not claimable:** the first night under the constraints (the first workflow to
+install them after the merge); the first real night under the four storage
+rules (Monday 26 October); a morning or research observation; any trading edge.

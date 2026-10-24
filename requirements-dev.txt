@@ -4,6 +4,11 @@
 # pulls them in so one command sets up a machine that can run the suite.
 # .github/workflows/tests.yml installs this file and nothing else.
 -r requirements.txt
+# Every package below and under it pinned: the runtime set at the versions the
+# evening installs and the test-only ones as constraints.txt resolved them, so
+# the suite runs against the night's own runtime set (constraints.txt says how
+# it was made). pip reads this path beside this file, from any directory.
+-c constraints.txt
 
 pytest>=8.0,<10
 

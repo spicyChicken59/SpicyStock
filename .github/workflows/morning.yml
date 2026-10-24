@@ -54,7 +54,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt -c constraints.txt
       - name: Guard the scheduled morning
         id: guard
         env:
@@ -139,7 +139,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt -c constraints.txt
       # Only the artifact produced by the read-only job in this exact run and
       # attempt is accepted. The helper revalidates against committed main.
       - uses: actions/download-artifact@v4

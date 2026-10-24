@@ -43,7 +43,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt -c constraints.txt
       - name: Collect a bound source recovery
         id: recovery
         env:
@@ -78,7 +78,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt -c constraints.txt
       # Only the artifact produced by the read-only job in this exact run and
       # attempt is accepted; the helper revalidates it against main's record,
       # the quality ledger's entry for it and the prior receipt.

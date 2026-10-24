@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt -c constraints.txt
       - name: Run the intraday check
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}

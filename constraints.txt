@@ -1,0 +1,85 @@
+# The whole resolution pinned: every workflow step that installs
+# requirements.txt, and the test suite.
+#
+# requirements.txt bounds each direct requirement below its next major; this
+# file holds every package pip resolves under them, so no release on PyPI --
+# a direct one (anthropic 2.0.0, 21 Oct 2026) or one underneath (python-dateutil
+# arrives under pandas, matplotlib under mplfinance, pydantic under anthropic
+# and alpaca-py) -- changes a night's run without a change here.
+#
+# Every workflow step that installs requirements.txt (evening, intraday,
+# issuer-evidence, morning, source-recovery) installs `-r requirements.txt -c
+# constraints.txt`, and requirements-dev.txt carries the -c line, so CI runs the
+# suite against the runtime set the evening installs. A constraint only pins: it
+# installs nothing that a requirement did not ask for. Two other files are not
+# constrained by this one: requirements-host.txt, which pins the morning host's
+# whole set, and tools/requirements-historical*.txt, which the historical jobs
+# install and which pin their direct requirements only.
+#
+# Resolved 24 Oct 2026 for CPython 3.12 on Linux x86_64, the platform every one
+# of those steps runs on; numpy 2.5.4 and contourpy 1.4.0 need Python 3.12 or
+# later, so the file does not install on 3.11. The 44 runtime pins are the set
+# the evening workflow's own runner installed in run 40128552858 (Python
+# 3.12.15, pip 26.2.1); a clean venv on Python 3.12.3 resolved the same 44 and
+# the five the suite adds (iniconfig, pluggy, Pygments, pytest, PyYAML).
+#
+# Move a pin in its own change and run the suite against it. To re-resolve the
+# whole set, at the repository root in a clean CPython 3.12 venv on Linux x86_64
+# (the unconstrained copy sits beside requirements.txt, which its -r line names,
+# and is removed whether the install succeeds, fails or is interrupted, under
+# bash or sh), and paste what it prints below this header in place of the pins.
+# It prints them in canonical-name order, which the test holds and pip freeze
+# alone does not keep (pip lists typing-inspection before typing_extensions):
+#   (trap 'rm -f dev-unconstrained.txt' EXIT; trap 'exit 130' INT TERM HUP
+#    grep -v -E '^[[:space:]]*(-c|--constraint)' requirements-dev.txt > dev-unconstrained.txt
+#    pip install -q -r dev-unconstrained.txt)
+#   pip freeze | python -c 'import sys; from packaging.utils import canonicalize_name as c; sys.stdout.writelines(sorted(sys.stdin, key=lambda l: c(l.split("==")[0])))'
+alpaca-py==0.44.0
+annotated-types==0.8.0
+anthropic==1.17.0
+anyio==4.15.1
+certifi==2026.10.23
+charset-normalizer==3.5.2
+contourpy==1.4.0
+cycler==0.12.1
+docstring_parser==0.18.0
+exchange_calendars==4.13.2
+fonttools==4.67.0
+h11==0.16.0
+httpcore2==2.16.0
+httpx2==2.16.0
+idna==3.20
+iniconfig==2.3.1
+jiter==0.18.0
+kiwisolver==1.5.1
+korean_lunar_calendar==0.4.0
+matplotlib==3.11.2
+mplfinance==0.12.10b0
+msgpack==1.2.3
+numpy==2.5.4
+opentelemetry-api==1.45.1
+packaging==26.3
+pandas==3.1.0
+pillow==13.0.0
+pluggy==1.7.0
+pydantic==2.14.1
+pydantic_core==2.50.1
+Pygments==2.21.0
+pyluach==2.3.0
+pyparsing==3.3.3
+pytest==9.1.1
+python-dateutil==3.0.0
+pytz==2026.5
+PyYAML==6.0.3
+requests==2.34.2
+resend==2.50.0
+six==1.17.0
+sniffio==1.3.1
+sseclient-py==1.9.0
+toolz==1.2.0
+truststore==0.10.5
+typing_extensions==4.16.0
+typing-inspection==0.4.4
+tzdata==2026.5
+urllib3==2.8.0
+websockets==17.3

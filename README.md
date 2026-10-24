@@ -966,6 +966,20 @@ archived, and a record from before the block is asked for none. The run:
   as `transport`, the one cause it had for an answer it did not know.
   `grader.API_VERSION` names the validated version and `tests/test_grader.py`
   reads the header off the wire, so a loosened pin fails CI, not the evening.
+  The packages underneath are pinned as well: `constraints.txt` holds the 44
+  packages the evening's own runner installed on 24 October 2026
+  (python-dateutil under pandas, matplotlib under mplfinance, pydantic under
+  anthropic) and the five the suite adds. Every workflow step that installs
+  `requirements.txt` installs `-r requirements.txt -c constraints.txt`, and
+  `requirements-dev.txt` carries the same `-c` line, so CI runs the suite
+  against the night's own runtime set; `tests/test_requirements.py` holds the
+  file to one resolution of the requirements and to what the suite has
+  installed, and every pip install a workflow runs, read by pip's own option
+  parser, to a requirements file it accounts for. Two files are not
+  constrained by it: `requirements-host.txt` pins the morning host's whole set
+  (so the suite does not run against the host's versions), and the historical
+  jobs' `tools/requirements-historical*.txt` pin their direct requirements
+  only.
   Since 24 October 2026 (`run.reads` version 2, `pipeline.reads_version` in the
   archived rules) a request the API refuses as invalid is its own cause,
   `request`: the SDK's own classes for an HTTP 400 or 413 whatever the body
@@ -1839,8 +1853,11 @@ The artifact holds the record and the charts; nothing is committed or mailed.
 
 ## Run locally
 
+CPython 3.12, as every workflow runs: the pinned numpy 2.5.4 and contourpy
+1.4.0 need 3.12 or later, so the pinned set does not install on 3.11.
+
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt -c constraints.txt
 cp .env.example .env              # single-quote every value
 set -a; . ./.env; set +a
 MPLBACKEND=Agg python -m src.pipeline evening --dry-run --tickers AAPL,AMD,NVDA,SPY
