@@ -25,6 +25,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 from pathlib import Path
 
 from src import discovery, reader_authority
@@ -156,6 +157,21 @@ FATAL_AUTH_MARKERS = (
 #: call answers the same way (6 Oct 2026: six names asked twice each after
 #: it, twelve calls bought nothing). Matched as the auth markers are.
 FATAL_CREDIT_MARKERS = ("credit balance is too low",)
+#: The SDK's prefix on an answer the API refused as an INVALID REQUEST, an HTTP
+#: 400: not the account, not its balance (an empty balance is a 400 too, and
+#: is matched first as the account's answer), the request itself. The same
+#: request asked again gets the same answer -- a transport retry sends the body
+#: unchanged -- so a refused request is never retried (21 and 22 Oct 2026: under
+#: API version 2026-10-21 every chart-reader request was refused for its
+#: `temperature`, four calls for two names bought nothing, and run.reads counted
+#: them as transport, the one cause it had for an answer it did not know).
+REQUEST_REFUSAL_MARKERS = ("error code: 400 -",)
+#: After this many consecutive names' requests are refused with the SAME message
+#: (`refusal_key()`: the API's message, the per-request id removed) the run stops
+#: asking and the remaining names fall back without a call: a refusal that names
+#: one request's own content (an oversized image, a prompt too long) differs
+#: from name to name and never stops the run by itself.
+REQUEST_OUTAGE_AFTER = 2
 
 
 class ScoreFormatError(ValueError):
@@ -204,16 +220,45 @@ def is_fatal_credit_failure(error_text: str) -> bool:
     return any(marker in lowered for marker in FATAL_CREDIT_MARKERS)
 
 
+def _is_reply_error(text: str) -> bool:
+    """An error made of the reply's own text: a score that is not a number, a
+    reply the checks refused. Whatever words the reply put in it, it is never
+    the provider's answer."""
+    return any(text.startswith(error_label(c) + ":") for c in (ScoreFormatError, DiscoveryConflict,
+                                                               reader_authority.ReaderAuthorityError))
+
+
 def is_run_fatal(error_text: str) -> bool:
     """An answer every remaining call of the run would get too: a refused key
     or an empty credit balance. Neither merits a retry or another call. An
     error made of the reply's own text (a score that is not a number, a reply
     the checks refused) is never one, whatever words the reply put in it."""
     text = error_text or ""
-    if any(text.startswith(error_label(c) + ":") for c in (ScoreFormatError, DiscoveryConflict,
-                                                            reader_authority.ReaderAuthorityError)):
+    if _is_reply_error(text):
         return False
     return is_fatal_auth_failure(text) or is_fatal_credit_failure(text)
+
+
+def is_request_refusal(error_text: str) -> bool:
+    """Did the API refuse the request itself (an HTTP 400) -- not the account,
+    not its balance, and never a reply's own words? Such a request is not asked
+    again: a retry would send it unchanged and be refused the same way."""
+    text = error_text or ""
+    if _is_reply_error(text) or is_fatal_auth_failure(text) or is_fatal_credit_failure(text):
+        return False
+    lowered = text.lower()
+    return any(marker in lowered for marker in REQUEST_REFUSAL_MARKERS)
+
+
+def refusal_key(error_text: str) -> str:
+    """What two refused requests must share to be one answer: the API's own
+    `message`, read off the SDK's error text, or failing that the text with
+    the per-request id removed. Compared, never printed."""
+    text = error_text or ""
+    found = re.search(r"'message': '((?:[^'\\]|\\.)*)'", text)
+    if found:
+        return found.group(1)
+    return re.sub(r",?\s*'request_id': '[^']*'", "", text)
 
 
 def grade_for(score: float) -> str:
@@ -527,8 +572,12 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
             last_error = e
             log.warning("Claude grading attempt %d/%d failed for %s: %s",
                         attempt, attempts, ticker, _error_text(e))
-            if isinstance(e, (DiscoveryConflict, reader_authority.ReaderAuthorityError)) or is_run_fatal(_error_text(e)):
-                break  # neither an admission conflict, a rejected key nor an empty balance merits a retry
+            if isinstance(e, (DiscoveryConflict, reader_authority.ReaderAuthorityError)) or is_run_fatal(_error_text(e)) \
+                    or is_request_refusal(_error_text(e)):
+                # neither an admission conflict, a rejected key, an empty balance nor a
+                # request the API refused as invalid merits a retry: the last would be
+                # sent unchanged and refused the same way
+                break
             if isinstance(e, ScoreFormatError):
                 # Ask again, differently. A transport error keeps the
                 # original request: there was nothing wrong with it.
@@ -566,13 +615,17 @@ def grade_all(candidates: list[dict], system_prompt: str, max_calls: int,
     it) and every later one is a `not_graded` row. A credential the API
     refuses is a fact about the run: after one, the remaining candidates
     within the budget are fallback rows carrying the refusal, with no further
-    call; so is an empty credit balance. Every row carries its `ticker`. One log line says what the prompt
+    call; so is an empty credit balance; and so are `REQUEST_OUTAGE_AFTER`
+    consecutive names whose requests the API refused with one message
+    (`refusal_key()`), where a refusal naming one request's own content differs
+    from name to name and stops nothing. Every row carries its `ticker`. One log line says what the prompt
     cache did, written whenever a call was made.
     """
     cache = usage if usage is not None else {}
     rows: list[dict] = []
     outage: str | None = None
     asked = 0
+    streak, streak_key = 0, None   # consecutive asked names refused with one message
     for position, cand in enumerate(candidates):
         ticker = cand["ticker"]
         metrics = cand.get("metrics") or {}
@@ -589,6 +642,15 @@ def grade_all(candidates: list[dict], system_prompt: str, max_calls: int,
                 outage = error
                 log.error("Claude refused the account or its billing (%s) -- grading the remaining "
                           "candidates from the checklist without calling again", error)
+            elif row["provenance"]["source"] != SOURCE_CLAUDE and is_request_refusal(error):
+                key = refusal_key(error)
+                streak, streak_key = (streak + 1 if key == streak_key else 1), key
+                if streak >= REQUEST_OUTAGE_AFTER:
+                    outage = error
+                    log.error("the API refused %d consecutive names' requests the same way (%s) -- grading "
+                              "the remaining candidates from the checklist without calling again", streak, key)
+            else:
+                streak, streak_key = 0, None   # an answer of any other kind ends the streak
         rows.append({"ticker": ticker, **row})
 
     failures = [(r["ticker"], r["provenance"]["error"]) for r in rows

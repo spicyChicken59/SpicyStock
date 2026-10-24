@@ -100,6 +100,26 @@ def test_every_fixture_carries_the_block_its_record_re_derives(path):
     report.validate(data)
 
 
+def test_a_block_written_under_other_stages_is_read_for_what_it_recorded_and_held_to_nothing():
+    """Every publication before 24 Oct 2026 archived funnel version 1, whose
+    stages had no word for a request the API refused: it is not asked for
+    version 2's block, and its own block is never compared against stages it
+    could not write. A record under the current version is held as before."""
+    data = load(FIXTURES[0])
+    assert funnel.faults(data) == []
+    older = json.loads(json.dumps(data))
+    older["rules"]["funnel"]["version"] = funnel.VERSION - 1
+    assert funnel.faults(older) == [], "a record archived under older stages is not held to these"
+    del older["funnel"]
+    assert funnel.faults(older) == []
+    current = json.loads(json.dumps(data))
+    del current["funnel"]
+    assert funnel.faults(current) == ["funnel block missing"]
+    current = json.loads(json.dumps(data))
+    current["funnel"]["reaction"]["stages"]["review_request"] += 1
+    assert funnel.faults(current) == ["funnel is not the record's own"]
+
+
 @pytest.mark.parametrize("path", FIXTURES, ids=lambda p: p.stem)
 def test_the_stage_counts_are_a_partition_of_the_discovered_candidates(path):
     data = load(path)
@@ -195,6 +215,8 @@ def test_a_reviewed_candidate_without_an_accepted_reading_is_placed_by_the_reade
         grader.error_label(grader.ScoreFormatError) + ": no score": "review_format",
         "anthropic.AuthenticationError: " + grader.FATAL_AUTH_MARKERS[0]: "review_account",
         "anthropic.BadRequestError: " + grader.FATAL_CREDIT_MARKERS[0]: "review_credit",
+        "anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', "
+        "'message': 'temperature: Extra inputs are not permitted'}, 'request_id': 'req_1'}": "review_request",
         "anthropic.APIConnectionError: connection reset": "review_transport",
     }
     for error, stage in cases.items():

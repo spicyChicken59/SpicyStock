@@ -128,7 +128,7 @@ CREDIT = ("Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_reques
     (RuntimeError("Error code: 401 - invalid x-api-key"), "account"),
     (RuntimeError(CREDIT), "credit"),
     (RuntimeError("upstream connect error"), "transport"),
-    (RuntimeError("Error code: 400 - image exceeds 5 MB maximum"), "transport"),
+    (RuntimeError("Error code: 400 - image exceeds 5 MB maximum"), "request"),
 ])
 def test_failure_of_spells_the_real_classes(error, cause):
     assert reader_coverage.failure_of(grader._error_text(error)) == cause
@@ -203,6 +203,46 @@ def test_refusals_within_the_limit_are_counted_not_problems(tmp_path, monkeypatc
                                      "name stays research only, without a ticket.")
     elif reads["causes"]["refused"]:
         assert "within this run's tolerance" not in reads["sentence"], reads["sentence"]
+
+
+REFUSED_REQUEST = ("anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': "
+                   "'invalid_request_error', 'message': 'temperature: Extra inputs are not permitted'}, "
+                   "'request_id': 'req_011CgJEksUxSZ6J6uSUKyNKG'}")   # 22 Oct 2026, verbatim
+
+
+def test_a_refused_request_is_its_own_cause_under_version_two_and_transport_under_one():
+    assert reader_coverage.failure_of(REFUSED_REQUEST) == "request"
+    assert reader_coverage.failure_of(REFUSED_REQUEST, version=1) == "transport", \
+        "version 1 had no word for it: the 21 and 22 October 2026 records counted it as transport"
+    assert reader_coverage.failure_of("anthropic.BadRequestError: " + CREDIT) == "credit", \
+        "an empty balance is a 400 too, and the account's answer first"
+    with pytest.raises(ValueError):
+        reader_coverage.failure_of(REFUSED_REQUEST, version=3)
+    with pytest.raises(ValueError):
+        reader_coverage.reads([], admitted_grades=(), refusal_fraction=0.25, version=3)
+
+
+def test_every_request_refused_the_same_way_is_two_calls_and_named_by_its_cause(tmp_path, monkeypatch):
+    reads, kinds, calls, rows = four_reads(tmp_path, monkeypatch,
+                                           {t: RuntimeError(REFUSED_REQUEST) for t in "AAA BBB CCC DDD".split()},
+                                           admitted=())
+    assert len(calls) == 2, "22 Oct 2026 bought four calls for two names; two names refused alike stop the asking"
+    assert (reads["version"], reads["verdict"], reads["causes"]["request"], reads["causes"]["transport"], kinds) == \
+        (2, "unavailable", 4, 0, ["claude_unavailable"])
+    assert reads["sentence"] == ("Chart reader: 0 of 4 judgements accepted. 4 names' requests were refused by the "
+                                 "API as invalid (HTTP 400) and not asked again.")
+    assert all(rows[t]["claude"]["source"] == "fallback" and "Extra inputs are not permitted" in rows[t]["claude"]["error"]
+               for t in rows)
+    assert [len(rows[t]["claude"]["attempts"]) for t in ("AAA", "BBB", "CCC", "DDD")] == [1, 1, 0, 0]
+
+
+def test_one_refused_request_among_accepted_reads_is_partial_and_asked_once(tmp_path, monkeypatch):
+    reads, kinds, calls, rows = four_reads(tmp_path, monkeypatch, {"BBB": RuntimeError(REFUSED_REQUEST)}, admitted=())
+    assert len(calls) == 4, "one call each: the refused request was not retried"
+    assert (reads["verdict"], {k: v for k, v in reads["causes"].items() if v}, kinds) == \
+        ("partial", {"request": 1}, ["claude_partial"])
+    assert "1 name's request was refused by the API as invalid (HTTP 400) and not asked again." in reads["sentence"]
+    assert len(rows["BBB"]["claude"]["attempts"]) == 1
 
 
 def test_an_empty_credit_balance_stops_the_calls_and_says_so(tmp_path, monkeypatch):
@@ -312,9 +352,10 @@ def _reads_record(block, rules, problems):
 
 
 def test_a_record_made_before_the_floor_reads_its_limit_off_the_fraction_alone():
+    # both records predate the archived reads version, so each wrote a version-one block
     rows = _refused_rows(1, 2)
-    old = reader_coverage.reads(rows, admitted_grades=(), refusal_fraction=0.25)
-    new = reader_coverage.reads(rows, admitted_grades=(), refusal_fraction=0.25, refusal_min=1)
+    old = reader_coverage.reads(rows, admitted_grades=(), refusal_fraction=0.25, version=1)
+    new = reader_coverage.reads(rows, admitted_grades=(), refusal_fraction=0.25, refusal_min=1, version=1)
     assert (old["verdict"], new["verdict"]) == ("partial", "tolerated")
     partial = [{"kind": "claude_partial"}]
     assert reader_coverage.reads_faults(_reads_record(old, {}, partial)) == []
@@ -348,6 +389,70 @@ def test_an_open_night_re_derives_its_reads_from_the_bursts_under_the_archived_f
     d["rules"]["pipeline"] = {k: v for k, v in rules.items() if k != "reader_refusal_min"}
     assert reader_coverage.reads_faults(d) == \
         ["run.reads refusal limit is not the archived reader_refusal_fraction and reader_refusal_min"]
+
+
+def _request_rows():
+    return [{"ticker": "T0", "grade": "B", "vetoes": [], "claude": {"source": "fallback", "error": REFUSED_REQUEST}},
+            {"ticker": "T1", "grade": "B", "vetoes": [], "claude": {"source": "claude"}}]
+
+
+def test_the_validator_reads_the_block_in_the_version_the_record_archived():
+    v2 = reader_coverage.reads(_request_rows(), admitted_grades=(), refusal_fraction=0.25, refusal_min=1)
+    v1 = reader_coverage.reads(_request_rows(), admitted_grades=(), refusal_fraction=0.25, refusal_min=1, version=1)
+    assert (v2["version"], v2["causes"]["request"], v1["version"], v1["causes"]["transport"]) == (2, 1, 1, 1)
+    assert "request" not in v1["causes"] and v1["verdict"] == v2["verdict"] == "partial"
+    partial = [{"kind": "claude_partial"}]
+    archived = {"reader_refusal_min": 1, "reads_version": 2}
+    assert reader_coverage.reads_faults(_reads_record(v2, archived, partial)) == []
+    assert reader_coverage.reads_faults(_reads_record(v1, {"reader_refusal_min": 1}, partial)) == [], \
+        "a record from before the rule archived no version and wrote version 1"
+    # each block under the other's rules is refused by the version check, before any count is read
+    unknown = ["run.reads is missing or of an unknown version"]
+    assert reader_coverage.reads_faults(_reads_record(v1, archived, partial)) == unknown
+    assert reader_coverage.reads_faults(_reads_record(v2, {"reader_refusal_min": 1}, partial)) == unknown
+    # a version-two block whose causes are version one's, and the reverse, are malformed by name
+    folded = {**v2, "causes": {k: v for k, v in v2["causes"].items() if k != "request"}}
+    assert reader_coverage.reads_faults(_reads_record(folded, archived, partial)) == ["run.reads causes are malformed"]
+    widened = {**v1, "causes": {**v1["causes"], "request": 0}}
+    assert reader_coverage.reads_faults(_reads_record(widened, {"reader_refusal_min": 1}, partial)) == \
+        ["run.reads causes are malformed"]
+
+
+@pytest.mark.parametrize("bad", [True, 3, "2", 2.0, None])
+def test_an_archived_reads_version_this_rule_does_not_know_is_refused(bad):
+    block = reader_coverage.reads([], admitted_grades=(), refusal_fraction=0.25, refusal_min=1)
+    assert reader_coverage.reads_faults(_reads_record(block, {"reader_refusal_min": 1, "reads_version": bad}, [])) == \
+        ["run.reads archived reads_version is unknown"]
+
+
+def _thin_with_tslas_request_refused():
+    d = json.loads((Path(__file__).parent / "fixtures" / "page" / "thin.json").read_text())
+    rules = d["rules"]["pipeline"]
+    assert d["run"]["session_state"] == "open" and rules["reads_version"] == reader_coverage.READS_VERSION == 2
+    selected = [b for b in d["bursts"] if isinstance(b.get("claude"), dict)]
+    assert [b["ticker"] for b in selected] == ["AAPL", "TSLA"], "two selected reads, or the case tests something else"
+    selected[1]["claude"] = {**selected[1]["claude"], "source": "fallback", "error": REFUSED_REQUEST}
+    selected[1]["reader_coverage"] = "fallback"
+    d["run"]["problems"] = [{"stage": "grade", "kind": "claude_partial", "message": "1 of 2 names without an accepted reading: 1 request"}]
+    return d, rules, selected
+
+
+def test_an_open_night_re_derives_a_refused_request_in_the_words_of_its_own_version():
+    d, rules, selected = _thin_with_tslas_request_refused()
+    admitted = reader_coverage.admitted(d["breadth"]["regime"]["verdict"], rules["trade_grades"], rules["yellow_grades"])
+    kw = dict(admitted_grades=admitted, refusal_fraction=rules["reader_refusal_fraction"], refusal_min=rules["reader_refusal_min"])
+    d["run"]["reads"] = reader_coverage.reads(selected, **kw)
+    assert (d["run"]["reads"]["causes"]["request"], d["run"]["reads"]["verdict"]) == (1, "partial")
+    assert reader_coverage.reads_faults(d) == []
+    # the same bursts with the request folded into transport are not this record's block
+    folded = dict(d["run"]["reads"], causes={**d["run"]["reads"]["causes"], "request": 0, "transport": 1})
+    d["run"]["reads"] = dict(folded, sentence=reader_coverage.reads_sentence(folded))
+    assert reader_coverage.reads_faults(d) == ["run.reads is not the bursts' own"]
+    # a record published before the rule (no archived version, a version-one block): the same refusal IS transport
+    del d["rules"]["pipeline"]["reads_version"]
+    d["run"]["reads"] = reader_coverage.reads(selected, **kw, version=1)
+    assert (d["run"]["reads"]["version"], d["run"]["reads"]["causes"]["transport"]) == (1, 1)
+    assert reader_coverage.reads_faults(d) == []
 
 
 @pytest.mark.parametrize("bad", [True, -1, "1", 1.0, None])

@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "cb56153aca6e"
+  "rules_version": "5c0f45da6dde"
  },
  "cover": {
   "h1": "No new burst tickets. Reader review incomplete.",
@@ -260,12 +260,13 @@
    "requested": 4,
    "done": 0,
    "unavailable_reason": "see problems",
-   "version": 1,
+   "version": 2,
    "causes": {
     "refused": 0,
     "format": 0,
     "account": 0,
     "credit": 0,
+    "request": 0,
     "transport": 4
    },
    "refusal_limit": 1,
@@ -959,7 +960,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "0ba57e21eccb1c6b0b87dd37db5b2167bd75b18138e44bdc56bfc84b80ff8de8"
+   "context_sha256": "1d99cf84bce42624eab6b80f1c4cfe92577147ae5d95c77cfa85eb9fd47e46c6"
   },
   "sanitised": {
    "replaced": 0,
@@ -1484,7 +1485,7 @@
    "feasibility": "private per-candidate plan before reader and combined allocation"
   },
   "funnel": {
-   "version": 1,
+   "version": 2,
    "policy": "candidate_funnel_v1"
   },
   "intraday": {
@@ -1526,6 +1527,7 @@
    "reader_policy": "accepted_required_v1",
    "reader_refusal_fraction": 0.25,
    "reader_refusal_min": 1,
+   "reads_version": 2,
    "reader_usage_version": 1,
    "delivery_version": 1,
    "delivery_primary_et": "18:16",
@@ -2235,8 +2237,8 @@
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2026-09-10",
-    "rules_version": "cb56153aca6e",
-    "context_sha256": "0ba57e21eccb1c6b0b87dd37db5b2167bd75b18138e44bdc56bfc84b80ff8de8",
+    "rules_version": "5c0f45da6dde",
+    "context_sha256": "1d99cf84bce42624eab6b80f1c4cfe92577147ae5d95c77cfa85eb9fd47e46c6",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -2249,7 +2251,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "9169b0cce941e0445fa286b74c005e62924c103b40ddfc6ba3943492ba764f87"
+    "id": "bdc1f90b5af2678ca2ab270dfec6c378e5d6e83a4f60ec1a662028b17827b508"
    },
    "series": [
     {
@@ -3532,8 +3534,8 @@
     "kind": "burst",
     "ticker": "AMD",
     "session": "2026-09-10",
-    "rules_version": "cb56153aca6e",
-    "context_sha256": "0ba57e21eccb1c6b0b87dd37db5b2167bd75b18138e44bdc56bfc84b80ff8de8",
+    "rules_version": "5c0f45da6dde",
+    "context_sha256": "1d99cf84bce42624eab6b80f1c4cfe92577147ae5d95c77cfa85eb9fd47e46c6",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -3546,7 +3548,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "fe6ff9d43e3adb36a18589dc4d90db2b5dd95c859fee3f50222309db231f3c8e"
+    "id": "2b6a105f00c9a91e93c05656d9206c5e36b81d6634287deb8d63a8ba18bf5227"
    },
    "series": [
     {
@@ -4797,8 +4799,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-10",
-    "rules_version": "cb56153aca6e",
-    "context_sha256": "0ba57e21eccb1c6b0b87dd37db5b2167bd75b18138e44bdc56bfc84b80ff8de8",
+    "rules_version": "5c0f45da6dde",
+    "context_sha256": "1d99cf84bce42624eab6b80f1c4cfe92577147ae5d95c77cfa85eb9fd47e46c6",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -4811,7 +4813,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "4389e4f798f155a807d6601a33d2310cf2d9bd198517b5c6d17f08a92fdd4570"
+    "id": "30622451a79cbcba49059a3dc82f90e71ea0d4b475eefa24770c601f478f5a49"
    },
    "series": [
     {
@@ -6106,8 +6108,8 @@
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2026-09-10",
-    "rules_version": "cb56153aca6e",
-    "context_sha256": "0ba57e21eccb1c6b0b87dd37db5b2167bd75b18138e44bdc56bfc84b80ff8de8",
+    "rules_version": "5c0f45da6dde",
+    "context_sha256": "1d99cf84bce42624eab6b80f1c4cfe92577147ae5d95c77cfa85eb9fd47e46c6",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -6120,7 +6122,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "47fff3d674af7a39b0c35aa62a36f3fd3361ba1d25afc0abdcd68201b88877d9"
+    "id": "b0dd1b79ea1380465b149444341b84749c59358772dea84d262a3ea798124a99"
    },
    "series": [
     {
@@ -7354,8 +7356,8 @@
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2026-09-10",
-    "rules_version": "cb56153aca6e",
-    "context_sha256": "0ba57e21eccb1c6b0b87dd37db5b2167bd75b18138e44bdc56bfc84b80ff8de8",
+    "rules_version": "5c0f45da6dde",
+    "context_sha256": "1d99cf84bce42624eab6b80f1c4cfe92577147ae5d95c77cfa85eb9fd47e46c6",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -7368,7 +7370,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "e30e0a1949265f13f322fb338a46efcde47eebbd69a2a428daac08c77dc1125d"
+    "id": "2e9b57377775179c9d5098fb21c41f875019f35409198e94f3f8ec7b224ee597"
    },
    "series": [
     {
@@ -8602,8 +8604,8 @@
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2026-09-10",
-    "rules_version": "cb56153aca6e",
-    "context_sha256": "0ba57e21eccb1c6b0b87dd37db5b2167bd75b18138e44bdc56bfc84b80ff8de8",
+    "rules_version": "5c0f45da6dde",
+    "context_sha256": "1d99cf84bce42624eab6b80f1c4cfe92577147ae5d95c77cfa85eb9fd47e46c6",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -8616,7 +8618,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "7984993ba36f1c5465ab673f0d9c7f0fce285207c63c66f2400f4c852de1a567"
+    "id": "f3046c669c0ca65636006ce816ec562d5c08ae623a8e19833c3ff74626dd6fab"
    },
    "series": [
     {
@@ -9894,8 +9896,8 @@
      },
      "evidence_ref": {
       "version": 1,
-      "id": "2bd48844de87cf3cb3167d7a82748bd983bb1e5d1773df8cb30fbf121c36c5ec",
-      "context_sha256": "0ba57e21eccb1c6b0b87dd37db5b2167bd75b18138e44bdc56bfc84b80ff8de8",
+      "id": "084ed3d64f45bba7f137e67cac75ecf4b6a6fa1bc8182893867a9e29eb1cb861",
+      "context_sha256": "1d99cf84bce42624eab6b80f1c4cfe92577147ae5d95c77cfa85eb9fd47e46c6",
       "plan_sha256": "6afd53a2b4e72ad1d0d6e1323938a78f5af7c5b9165a60b45f9d4c83c3a09cdd",
       "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
      }
@@ -10903,8 +10905,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2026-09-10",
-     "rules_version": "cb56153aca6e",
-     "context_sha256": "0ba57e21eccb1c6b0b87dd37db5b2167bd75b18138e44bdc56bfc84b80ff8de8",
+     "rules_version": "5c0f45da6dde",
+     "context_sha256": "1d99cf84bce42624eab6b80f1c4cfe92577147ae5d95c77cfa85eb9fd47e46c6",
      "gate": {
       "regime": "green",
       "final_grade": "watch",
@@ -10913,7 +10915,7 @@
       "reason": null,
       "detail": null
      },
-     "id": "2bd48844de87cf3cb3167d7a82748bd983bb1e5d1773df8cb30fbf121c36c5ec"
+     "id": "084ed3d64f45bba7f137e67cac75ecf4b6a6fa1bc8182893867a9e29eb1cb861"
     }
    }
   ],
@@ -11166,7 +11168,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "cb56153aca6e"
+  "replay_rules_version": "5c0f45da6dde"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -11384,53 +11386,53 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:cb56153aca6e": {
+   "burst:AAPL:2026-09-10:5c0f45da6dde": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:cb56153aca6e": {
+   "burst:AMD:2026-09-10:5c0f45da6dde": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:cb56153aca6e": {
+   "burst:NVDA:2026-09-10:5c0f45da6dde": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:cb56153aca6e": {
+   "burst:TSLA:2026-09-10:5c0f45da6dde": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:cb56153aca6e": {
+   "burst:PLUG:2026-09-10:5c0f45da6dde": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:cb56153aca6e": {
+   "burst:DLLR:2026-09-10:5c0f45da6dde": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:cb56153aca6e": {
+   "anticipation:COIL:2026-09-10:5c0f45da6dde": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    }
   },
@@ -11444,7 +11446,7 @@
   "sentence": "AAPL came closest at A+ 10.0: accepted reader review missing; mechanical grade retained for research, not a measured setup failure."
  },
  "funnel": {
-  "version": 1,
+  "version": 2,
   "policy": "candidate_funnel_v1",
   "regime": "green",
   "admitted_grades": [
@@ -11476,6 +11478,7 @@
     "review_format": 0,
     "review_account": 0,
     "review_credit": 0,
+    "review_request": 0,
     "review_transport": 4,
     "review_downgraded": 0,
     "review_unknown": 0,
@@ -11563,6 +11566,7 @@
    "review_format": "review",
    "review_account": "review",
    "review_credit": "review",
+   "review_request": "review",
    "review_transport": "review",
    "review_downgraded": "review",
    "review_unknown": "review",
@@ -11593,6 +11597,7 @@
    "review_format": "review reply could not be read as a score",
    "review_account": "review stopped: the API refused the account",
    "review_credit": "review stopped: the API credit balance was too low",
+   "review_request": "review request refused by the API as invalid (HTTP 400)",
    "review_transport": "review got no usable answer from the API",
    "review_downgraded": "review lowered the grade below the admitted band",
    "review_unknown": "review state not readable from this record",

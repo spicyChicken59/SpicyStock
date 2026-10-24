@@ -918,7 +918,11 @@
   }
   // the chart reader's shortfall by cause, in the record's own counts; a record
   // made before the reads carried causes keeps the note it was published under
-  const READ_CAUSES = { refused: 'refused', format: 'unreadable', account: 'unread (account refused)', credit: 'unread (credit balance too low)', transport: 'without a reply' };
+  const READ_CAUSES = { refused: 'refused', format: 'unreadable', account: 'unread (account refused)', credit: 'unread (credit balance too low)', request: 'unread (request refused by the API)', transport: 'without a reply' };
+  // the causes a reads block of each version counts, as reader_coverage.FAILURES_BY_VERSION
+  // writes them: version 2 tells a request the API refused as invalid (HTTP 400) from an
+  // answer that never came; version 1 had no word for it and counted it as transport
+  const READ_FAILURES_BY_VERSION = { 1: ['refused', 'format', 'account', 'credit', 'transport'], 2: ['refused', 'format', 'account', 'credit', 'request', 'transport'] };
   function readsNote(reads) {
     const c = reads.causes;
     if (reads.version && c && typeof c === 'object') {
@@ -965,14 +969,15 @@
     // richer display against the rows and recorded reader outcomes; this is
     // a reading of archived facts, never another planner or order authority.
     const result = { note, detail: null }, reads = run.reads || {}, pipeline = rules.pipeline || {};
-    const failures = ['refused', 'format', 'account', 'credit', 'transport'];
+    const failures = Object.prototype.hasOwnProperty.call(READ_FAILURES_BY_VERSION, reads.version) ? READ_FAILURES_BY_VERSION[reads.version] : null;
     const blockers = ['grade_not_admitted', 'quality_veto', 'preview_unavailable', 'known_event', 'plan_withheld', 'no_whole_share', 'no_order'];
     const grades = ['A+', 'A', 'B', 'C', 'skip'], regime = ((data.breadth || {}).regime || {}).verdict;
     const semantics = { order: 'mechanical_grade,descending_score,ticker', rotation: 'sha256(policy|measured_session|ticker),ticker',
       research_pool: 'infeasible mechanical pipeline.trade_grades', feasibility: 'private per-candidate plan before reader and combined allocation' };
     if (!Object.entries(semantics).every(([key, value]) => policy[key] === value) ||
         JSON.stringify(policy.grade_order) !== JSON.stringify(grades) || !count(policy.ranked_research) || policy.ranked_research > policy.research_max ||
-        pipeline.reader_policy !== 'accepted_required_v1' || reads.version !== 1 ||
+        pipeline.reader_policy !== 'accepted_required_v1' || !failures ||
+        (pipeline.reads_version === undefined ? reads.version !== 1 : pipeline.reads_version !== reads.version) ||
         !['green', 'yellow', 'red'].includes(regime) || !Array.isArray(pipeline.trade_grades) || !Array.isArray(pipeline.yellow_grades) ||
         !pipeline.trade_grades.every(g => grades.includes(g)) || !pipeline.yellow_grades.every(g => grades.includes(g)) ||
         !isNum(pipeline.reader_refusal_fraction) || pipeline.reader_refusal_fraction < 0 || pipeline.reader_refusal_fraction > 1 ||
@@ -1023,7 +1028,10 @@
         const cause = /^src\.(DiscoveryConflict|ReaderAuthorityError):/.test(error) ? 'refused'
           : error.startsWith('src.ScoreFormatError:') ? 'format'
           : ['authenticationerror', 'permissiondeniederror', 'could not resolve authentication', 'invalid x-api-key', 'error code: 401', 'error code: 403'].some(v => lower.includes(v)) ? 'account'
-          : lower.includes('credit balance is too low') ? 'credit' : 'transport';
+          : lower.includes('credit balance is too low') ? 'credit'
+          // a request the API refused as invalid (HTTP 400): its own cause from reads version 2,
+          // folded into transport under version 1, which had no word for it
+          : lower.includes('error code: 400 -') ? (failures.includes('request') ? 'request' : 'transport') : 'transport';
         causes[cause] += 1;
         if (cause === 'refused') {
           group.refused += 1; refused.push(row.ticker);

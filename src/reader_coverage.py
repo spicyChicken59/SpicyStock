@@ -45,10 +45,17 @@ def state(row, *, selected=None):
 # read. The fraction of the night's reads that may be refused before the night
 # is degraded is a strategy number and lives in pipeline.RULES; these are the
 # block's own words.
-READS_VERSION = 1
-#: why a selected name has no accepted reading, one word each; no word names a
-#: gitleaks keyword ("credential", "key") as a JSON key
-FAILURES = ("refused", "format", "account", "credit", "transport")
+READS_VERSION = 2
+#: why a selected name has no accepted reading, one word each, by the block's
+#: version; no word names a gitleaks keyword ("credential", "key") as a JSON key.
+#: Version 2 (24 Oct 2026) tells a request the API refused as invalid (an HTTP
+#: 400, `request`) from an answer that never came (`transport`); version 1 had
+#: no word for it and counted the 21 and 22 October 2026 refusals as transport.
+FAILURES_BY_VERSION = {
+    1: ("refused", "format", "account", "credit", "transport"),
+    2: ("refused", "format", "account", "credit", "request", "transport"),
+}
+FAILURES = FAILURES_BY_VERSION[READS_VERSION]
 VERDICTS = ("not_asked", "complete", "tolerated", "partial", "unavailable")
 #: the errors that are the reply checks refusing a reply that arrived
 REFUSED_BY = (grader.DiscoveryConflict, reader_authority.ReaderAuthorityError)
@@ -60,9 +67,14 @@ def admitted(verdict, trade, yellow):
     return () if verdict == "red" else tuple(yellow) if verdict == "yellow" else tuple(trade)
 
 
-def failure_of(error):
-    """The cause a fallback's recorded error names, by its class prefix; an
-    error this does not know is ``transport`` -- which degrades: it fails safe."""
+def failure_of(error, version=READS_VERSION):
+    """The cause a fallback's recorded error names, by its class prefix, in
+    the words of the block's ``version``; an error this does not know is
+    ``transport`` -- which degrades: it fails safe. A request the API refused
+    as invalid is ``request`` under version 2 and folds into ``transport``
+    under version 1, which had no word for it."""
+    if version not in FAILURES_BY_VERSION:
+        raise ValueError(f"unknown reads version {version!r}")
     text = error if isinstance(error, str) else ""
     if any(text.startswith(grader.error_label(c) + ":") for c in REFUSED_BY):
         return "refused"
@@ -72,6 +84,8 @@ def failure_of(error):
         return "account"
     if grader.is_fatal_credit_failure(text):
         return "credit"
+    if grader.is_request_refusal(text) and "request" in FAILURES_BY_VERSION[version]:
+        return "request"
     return "transport"
 
 
@@ -99,22 +113,25 @@ def _verdict(requested, done, causes, limit, refused_admissible):
     return "partial"
 
 
-def reads(rows, *, admitted_grades, refusal_fraction, refusal_min=0):
+def reads(rows, *, admitted_grades, refusal_fraction, refusal_min=0, version=READS_VERSION):
     """The night's reads, from the selected bursts after grading. A refusal
     is tolerated -- not a run problem -- only while every other read was
     accepted, refusals are no more than the night's limit (``_limit()``: the
     fraction, at least ``refusal_min``), and none of the refused names is one
     the regime would otherwise have planned (``admitted_grades``, None for
-    every grade, no veto). ``refusal_min`` 0 is the rule before the floor."""
+    every grade, no veto). ``refusal_min`` 0 is the rule before the floor;
+    ``version`` the block's own, whose causes it counts in."""
+    if version not in FAILURES_BY_VERSION:
+        raise ValueError(f"unknown reads version {version!r}")
     requested = len(rows)
     done = sum(1 for b in rows if (b.get("claude") or {}).get("source") == grader.SOURCE_CLAUDE)
-    causes = {f: 0 for f in FAILURES}
+    causes = {f: 0 for f in FAILURES_BY_VERSION[version]}
     refused = []
     for b in rows:
         c = b.get("claude") or {}
         if c.get("source") == grader.SOURCE_CLAUDE:
             continue
-        cause = failure_of(c.get("error"))
+        cause = failure_of(c.get("error"), version)
         causes[cause] += 1
         if cause == "refused":
             refused.append(b)
@@ -125,7 +142,7 @@ def reads(rows, *, admitted_grades, refusal_fraction, refusal_min=0):
     out = {"requested": requested, "done": done,
            "unavailable_reason": None if verdict in ("not_asked", "complete") else
            "refused within the tolerance" if verdict == "tolerated" else "see problems",
-           "version": READS_VERSION, "causes": causes, "refusal_limit": limit,
+           "version": version, "causes": causes, "refusal_limit": limit,
            "refused_names": sorted(b["ticker"] for b in refused),
            "refused_admissible": refused_admissible, "verdict": verdict}
     out["sentence"] = reads_sentence(out)
@@ -163,6 +180,10 @@ def reads_sentence(r):
     if c["account"]:
         parts.append(f"The API refused the account; the run stopped asking after that answer and "
                      f"{_names(c['account'], 'name', 'names')} went unread.")
+    if c.get("request"):
+        n = c["request"]
+        parts.append(f"{n} {"name's request was" if n == 1 else "names' requests were"} refused by the API as "
+                     "invalid (HTTP 400) and not asked again.")
     if c["transport"]:
         parts.append(f"{_names(c['transport'], 'name', 'names')} got no usable answer from the API in "
                      f"{grader.ATTEMPTS} attempts each.")
@@ -322,13 +343,18 @@ def reads_faults(data):
     minimum = rules.get("reader_refusal_min", 0)
     if type(minimum) is not int or minimum < 0:
         return ["run.reads archived reader_refusal_min is not a count"]
+    # the block's version, archived beside the fraction since version 2; a
+    # record made before that archived none and wrote version 1
+    version = rules.get("reads_version", 1)
+    if type(version) is not int or version not in FAILURES_BY_VERSION:
+        return ["run.reads archived reads_version is unknown"]
     run = data.get("run") if isinstance(data.get("run"), dict) else {}
     r = run.get("reads")
     try:
-        if not isinstance(r, dict) or r.get("version") != READS_VERSION or r["verdict"] not in VERDICTS:
+        if not isinstance(r, dict) or r.get("version") != version or r["verdict"] not in VERDICTS:
             return ["run.reads is missing or of an unknown version"]
         c = r["causes"]
-        if set(c) != set(FAILURES) or any(type(v) is not int or v < 0 for v in c.values()):
+        if set(c) != set(FAILURES_BY_VERSION[version]) or any(type(v) is not int or v < 0 for v in c.values()):
             return ["run.reads causes are malformed"]
         if r["requested"] != r["done"] + sum(c.values()):
             return ["run.reads counts do not reconcile"]
@@ -342,7 +368,7 @@ def reads_faults(data):
             selected = [b for b in data["bursts"] if isinstance(b, dict) and isinstance(b.get("claude"), dict)]
             reg = (((data.get("breadth") or {}).get("regime") or {}).get("verdict"))
             again = reads(selected, admitted_grades=admitted(reg, rules["trade_grades"], rules["yellow_grades"]),
-                          refusal_fraction=rules["reader_refusal_fraction"], refusal_min=minimum)
+                          refusal_fraction=rules["reader_refusal_fraction"], refusal_min=minimum, version=version)
             if any(again[k] != r[k] for k in ("requested", "done", "causes", "refused_names", "refused_admissible", "verdict")):
                 return ["run.reads is not the bursts' own"]
         if r.get("sentence") != reads_sentence(r):

@@ -14,7 +14,7 @@ from collections import Counter
 
 from src import allocation, grader, plan, reader_coverage
 
-VERSION = 1
+VERSION = 2   # 2: review_request, a request the API refused as invalid (reads version 2)
 POLICY = "candidate_funnel_v1"
 RULES = {"funnel.version": VERSION, "funnel.policy": POLICY}
 
@@ -23,7 +23,7 @@ REACTION_STAGES = (
     "market", "grade", "veto",
     "preview_event", "preview_geometry", "preview_sizing", "preview_no_order", "preview_unavailable",
     "review_budget", "review_unselected", "review_refused", "review_format", "review_account",
-    "review_credit", "review_transport", "review_downgraded", "review_unknown",
+    "review_credit", "review_request", "review_transport", "review_downgraded", "review_unknown",
     "plan_error", "plan_unavailable",
     "event", "geometry", "sizing", "allocation_slot", "allocation_cash", "allocation_occupied",
     "allocation_unknown", "ticket", "unknown",
@@ -41,7 +41,8 @@ GROUPS = {
     "preview_no_order": "preview", "preview_unavailable": "preview",
     "review_budget": "review", "review_unselected": "review", "review_refused": "review",
     "review_format": "review", "review_account": "review", "review_credit": "review",
-    "review_transport": "review", "review_downgraded": "review", "review_unknown": "review",
+    "review_request": "review", "review_transport": "review", "review_downgraded": "review",
+    "review_unknown": "review",
     "plan_error": "plan", "plan_unavailable": "plan",
     "event": "event", "geometry": "geometry", "sizing": "sizing",
     "allocation_slot": "allocation", "allocation_cash": "allocation",
@@ -64,6 +65,7 @@ LABELS = {
     "review_format": "review reply could not be read as a score",
     "review_account": "review stopped: the API refused the account",
     "review_credit": "review stopped: the API credit balance was too low",
+    "review_request": "review request refused by the API as invalid (HTTP 400)",
     "review_transport": "review got no usable answer from the API",
     "review_downgraded": "review lowered the grade below the admitted band",
     "review_unknown": "review state not readable from this record",
@@ -290,8 +292,8 @@ def faults(data):
     it, and exactly what those rules re-derive from the record's own fields.
     A record made under older rules is not asked for one."""
     rules = data.get("rules") if isinstance(data.get("rules"), dict) else {}
-    if not isinstance(rules.get("funnel"), dict):
-        return []
+    if not isinstance(rules.get("funnel"), dict) or rules["funnel"].get("version") != VERSION:
+        return []   # no block, or one written under other stages than these
     block = data.get("funnel")
     if not isinstance(block, dict):
         return ["funnel block missing"]

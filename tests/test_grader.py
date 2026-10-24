@@ -805,6 +805,83 @@ def test_a_reply_that_writes_the_marker_into_its_own_score_cannot_stop_the_run()
     assert is_run_fatal(_error_text(RuntimeError(CREDIT)))
 
 
+REFUSED_REQUEST = ("Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': "
+                   "'temperature: Extra inputs are not permitted'}, 'request_id': 'req_011CgJEksUxSZ6J6uSUKyNKG'}")
+#: 22 Oct 2026, verbatim: CL's reply under API version 2026-10-21 (ABT's differed in its request id alone)
+
+
+def test_a_request_the_api_refused_is_told_apart_from_the_account_the_balance_and_the_reply():
+    from src.grader import ScoreFormatError, _error_text, is_request_refusal, is_run_fatal
+    text = "anthropic.BadRequestError: " + REFUSED_REQUEST
+    assert is_request_refusal(text) and not is_run_fatal(text), "a refused request is the run's to name, not to stop"
+    assert is_request_refusal("anthropic.BadRequestError: Error code: 400 - image exceeds 5 MB maximum")
+    for other in ("anthropic.BadRequestError: " + CREDIT,                       # the account's answer, matched first
+                  "anthropic.AuthenticationError: Error code: 401 - invalid x-api-key",
+                  "anthropic.PermissionDeniedError: Error code: 403 - forbidden",
+                  "anthropic.APIStatusError: Error code: 503 - overloaded",
+                  "RuntimeError: Error code: 4000 - not a status", ""):
+        assert not is_request_refusal(other), other
+    # a reply's own words are never the provider's answer
+    assert not is_request_refusal(_error_text(ScoreFormatError("score 'Error code: 400 - x' is not a number")))
+
+
+def test_refusal_key_is_the_apis_message_without_the_request_id():
+    from src.grader import refusal_key
+    a = "anthropic.BadRequestError: " + REFUSED_REQUEST
+    b = a.replace("req_011CgJEksUxSZ6J6uSUKyNKG", "req_011CgJEku2E8tqvuenUhFWxV")   # ABT's, the same night
+    assert refusal_key(a) == refusal_key(b) == "temperature: Extra inputs are not permitted"
+    assert refusal_key(a) != refusal_key(a.replace("temperature", "top_k"))
+    # no message dict: the text itself, less any request id
+    assert refusal_key("RuntimeError: Error code: 400 - image exceeds 5 MB maximum, 'request_id': 'req_1'") == \
+        "RuntimeError: Error code: 400 - image exceeds 5 MB maximum"
+    assert refusal_key("") == ""
+
+
+def test_a_refused_request_is_not_asked_again(claude):
+    """A transport retry sends the body unchanged, and a request the API
+    refused as invalid is refused the same way: one call, then the fallback,
+    with the refusal in the row and no second attempt."""
+    claude.replies(RuntimeError(REFUSED_REQUEST))
+    out = grade_candidate("AAA", metrics(), None, SYSTEM)
+    assert len(claude.calls) == 1, "22 Oct 2026 asked twice and was refused twice"
+    assert out["provenance"]["source"] == SOURCE_FALLBACK
+    assert [a["outcome"] for a in out["provenance"]["attempts"]] == ["rejected"]
+    assert "temperature: Extra inputs are not permitted" in out["provenance"]["error"]
+
+
+def test_two_consecutive_names_refused_the_same_way_stop_the_run(claude):
+    """Four names, every request refused for one reason: the first two are
+    asked (one call each), the run stops, the other two fall back without a
+    call and carry the refusal."""
+    claude.replies(RuntimeError(REFUSED_REQUEST),
+                   RuntimeError(REFUSED_REQUEST.replace("req_011CgJEksUxSZ6J6uSUKyNKG", "req_011CgJEku2E8tqvuenUhFWxV")))
+    rows = grade_all(candidates(9, 8, 7, 6), SYSTEM, max_calls=4)
+    assert len(claude.calls) == 2
+    assert [r["provenance"]["source"] for r in rows] == [SOURCE_FALLBACK] * 4
+    assert all("temperature: Extra inputs are not permitted" in r["provenance"]["error"] for r in rows)
+    # a name the run never asked carries no attempt, as a credit outage's rows carry none
+    assert [len(r["provenance"].get("attempts") or []) for r in rows] == [1, 1, 0, 0]
+
+
+def test_refusals_that_name_each_requests_own_content_do_not_stop_the_run(claude):
+    claude.replies(RuntimeError("Error code: 400 - messages.0.content.0.image: image exceeds 5 MB maximum"),
+                   RuntimeError("Error code: 400 - prompt is too long: 213456 tokens > 200000 maximum"),
+                   json.dumps(REPLY))
+    rows = grade_all(candidates(9, 8, 7), SYSTEM, max_calls=3)
+    assert len(claude.calls) == 3, "two different refusals are two requests' own faults, not the API's answer to every request"
+    assert [r["provenance"]["source"] for r in rows] == [SOURCE_FALLBACK, SOURCE_FALLBACK, SOURCE_CLAUDE]
+
+
+def test_an_answer_of_another_kind_ends_a_streak_of_refusals(claude):
+    claude.replies(RuntimeError(REFUSED_REQUEST), json.dumps(REPLY), RuntimeError(REFUSED_REQUEST),
+                   RuntimeError(REFUSED_REQUEST))
+    rows = grade_all(candidates(9, 8, 7, 6, 5), SYSTEM, max_calls=5)
+    assert len(claude.calls) == 4, "the accepted reply between them restarted the count"
+    assert [r["provenance"]["source"] for r in rows] == \
+        [SOURCE_FALLBACK, SOURCE_CLAUDE, SOURCE_FALLBACK, SOURCE_FALLBACK, SOURCE_FALLBACK]
+    assert [len(r["provenance"].get("attempts") or []) for r in rows] == [1, 1, 1, 1, 0]
+
+
 def test_an_empty_credit_balance_is_not_bought_again(claude):
     """Three candidates, the first answered with an empty balance: one call,
     three fallback rows, each carrying the answer."""

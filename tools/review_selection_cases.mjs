@@ -77,9 +77,18 @@ async function controls() {
 // Expected counters/verdicts were independently derived with unchanged
 // review_selection.receipt + reader_coverage.reads and grader._error_text.
 // In particular the actual src.* class prefixes differ from bare/wrapped text.
+// A refused request (22 Oct 2026, verbatim but for the request id) is its own
+// cause under reads version 2 and transport under version 1, which had no word
+// for it; the legacy flag rewrites the copy as a record from before the rule.
+const REFUSED_REQUEST = "anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'temperature: Extra inputs are not permitted'}, 'request_id': 'req_1'}";
+const READ_FAILURES = { 1: ['refused', 'format', 'account', 'credit', 'transport'], 2: ['refused', 'format', 'account', 'credit', 'request', 'transport'] };
 function rendererReadControls(full) {
   const cases = [
     ['partial transport', 'RuntimeError: unavailable', 'transport'],
+    ['partial request', REFUSED_REQUEST, 'request'],
+    ['all requests refused', REFUSED_REQUEST, 'request', true],
+    ['a refused request under version one is transport', REFUSED_REQUEST, 'transport', false, false, true],
+    ['every request refused under version one', REFUSED_REQUEST, 'transport', true, false, true],
     ['partial authority', 'src.ReaderAuthorityError: scope', 'refused'],
     ['partial discovery', 'src.DiscoveryConflict: scope', 'refused'],
     ['partial format', 'src.ScoreFormatError: bad score', 'format'],
@@ -91,9 +100,11 @@ function rendererReadControls(full) {
     ['all unavailable', 'RuntimeError: unavailable', 'transport', true],
     ['tolerated research refusal', 'src.ReaderAuthorityError: scope', 'refused', false, true]
   ];
-  return cases.map(([name, error, cause, all = false, veto = false]) => {
+  return cases.map(([name, error, cause, all = false, veto = false, legacy = false]) => {
     const data = structuredClone(full), s = data.run.review_selection, reads = data.run.reads;
     if (s.requested !== 4 || s.selected.at(-1).ticker !== 'TSLA' || s.by_purpose.opportunity.requested !== 3 || s.by_purpose.research_ranked.requested !== 1) throw Error('Genuine full producer control changed; rederive reader oracle');
+    if (reads.version !== 2 || data.rules.pipeline.reads_version !== 2) throw Error('Genuine full producer control is not a version-two reads block; rederive reader oracle');
+    if (legacy) { reads.version = 1; delete data.rules.pipeline.reads_version; }
     const target = data.bursts.find(row => row.ticker === 'TSLA');
     for (const row of all ? data.bursts.filter(row => row.review_selection.selected) : [target]) {
       row.claude = { source: 'fallback', error, attempts: [{}] }; row.grade = row.grade_mechanical; row.reader_coverage = 'fallback';
@@ -106,11 +117,11 @@ function rendererReadControls(full) {
     Object.assign(s.by_purpose.research_ranked, { accepted: 0, unaccepted: 1, refused: cause === 'refused' ? 1 : 0, attempts: 1 });
     s.attempts = 4;
     reads.done = all ? 0 : 3;
-    reads.causes = { refused: 0, format: 0, account: 0, credit: 0, transport: 0 }; reads.causes[cause] = all ? 4 : 1;
+    reads.causes = Object.fromEntries(READ_FAILURES[reads.version].map(k => [k, 0])); reads.causes[cause] = all ? 4 : 1;
     reads.refused_names = cause === 'refused' ? ['TSLA'] : []; reads.refused_admissible = cause === 'refused' && !veto ? ['TSLA'] : [];
     reads.verdict = all ? 'unavailable' : veto ? 'tolerated' : 'partial';
     reads.unavailable_reason = veto ? 'refused within the tolerance' : 'see problems';
-    return { name, data, cause, done: reads.done, expected: reads.verdict };
+    return { name, data, cause, done: reads.done, expected: reads.verdict, legacy };
   });
 }
 
@@ -268,6 +279,10 @@ export async function checkReviewSelection(args) {
         ['accepted total mismatch', d => { d.run.review_selection.by_purpose.research_ranked.accepted = 0; d.run.review_selection.by_purpose.research_ranked.unaccepted = 1; }],
         ['unknown batch verdict', d => { d.run.reads.verdict = 'unknown'; }],
         ['refusal cause mismatch', d => { d.run.reads.causes.refused = 1; }],
+        // the retained publication archived no reads version and wrote a version-one block
+        ['a version-two cause set under a version-one block', d => { if (d.rules.pipeline.reads_version !== undefined || d.run.reads.version !== 1) throw Error('retained control is not a version-one block'); d.run.reads.causes.request = 0; }],
+        ['a reads version the record did not archive', d => { if (d.rules.pipeline.reads_version !== undefined) throw Error('retained control archives a reads version'); d.run.reads.version = 2; d.run.reads.causes = { ...d.run.reads.causes, request: 0 }; }],
+        ['a reads version the page does not know', d => { d.run.reads.version = d.rules.pipeline.reads_version = 3; }],
         ['unselected feasible mismatch', d => { d.run.review_selection.feasible_unselected = 1; }],
         ['row selection mismatch', d => { d.bursts.find(row => row.review_selection.selected).review_selection.selected = false; }],
         ['row reader evidence mismatch', d => { d.bursts.find(row => row.review_selection.selected).reader_coverage = 'not_selected_budget'; }],
@@ -307,6 +322,24 @@ export async function checkReviewSelection(args) {
         eq('renderer-only ' + name + ': original primary verdict is not rewritten', await text(page, '#cover-h1'), full.data.cover.h1);
         eq('renderer-only ' + name + ': cover and morning present the same helper facts', [await text(page, '[data-review-selection="cover"]'), await text(page, '[data-morning="review-selection"]')], [result.detail.summary, result.detail.summary]);
         eq('renderer-only ' + name + ': display adds no raw ticket or private write', await page.evaluate(() => [SCStock.data.trades.length, window.__reviewWrites, window.__reviewCopies]), [full.data.trades.length, 0, 0]);
+        if (control.cause === 'request' || control.legacy) {
+          // the Method strip prints the night's shortfall by the record's own cause word: a
+          // refused request under version 2, and under version 1 the only word that block had
+          const note = await page.evaluate(() => { const dt = Array.from(document.querySelectorAll('#view-method .sc-stat__label')).find(n => n.textContent === 'claude'); return dt ? dt.parentNode.querySelector('.sc-stat__note').textContent : ''; });
+          const want = control.cause === 'request' ? 'unread (request refused by the API)' : 'without a reply';
+          check('renderer-only ' + name + ': the Method strip names the cause in the record\'s version\'s word', note.includes((control.done === 0 ? '4 ' : '1 ') + want) && !note.includes(control.cause === 'request' ? 'without a reply' : 'request refused'), note);
+        }
+      }
+      // the producer's version-two block, held to its archived version: a version-one cause set
+      // under it, and a version-one block under rules that archived version two, reconcile nothing
+      for (const [name, change] of [
+        ['a version-one cause set under a version-two block', d => { delete d.run.reads.causes.request; }],
+        ['a version-one block under rules that archived version two', d => { d.run.reads.version = 1; delete d.run.reads.causes.request; }]
+      ]) {
+        const data = structuredClone(full.data); change(data);
+        if (data.rules.pipeline.reads_version !== 2) throw Error('Genuine full producer control does not archive reads version 2');
+        const result = await page.evaluate(({ data, now }) => { SCStock.render(data, new Date(now)); return SCStock.reviewSelectionFacts(data); }, { data, now: full.now });
+        eq('renderer-only ' + name + ': unsupported reconciliation cannot claim completed batch', result?.detail || null, null);
       }
       eq('renderer-only helper controls: no browser errors', Array.from(tab.errors), []);
     } finally { await tab.context.close(); }

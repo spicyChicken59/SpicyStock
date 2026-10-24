@@ -951,10 +951,22 @@ archived, and a record from before the block is asked for none. The run:
   the run observes. The reader's SDK is held below 2.0 in `requirements.txt`:
   anthropic 2.x sends API version 2026-10-21, under which the Messages API
   refuses the `temperature` the grader sends on purpose, and every reply of the
-  21 and 22 October 2026 runs was an HTTP 400 that `run.reads` counted as
-  `transport`, the one cause it has for an answer it does not know.
+  21 and 22 October 2026 runs was an HTTP 400 that `run.reads` version 1 counted
+  as `transport`, the one cause it had for an answer it did not know.
   `grader.API_VERSION` names the validated version and `tests/test_grader.py`
   reads the header off the wire, so a loosened pin fails CI, not the evening.
+  Since 24 October 2026 (`run.reads` version 2, `pipeline.reads_version` in the
+  archived rules) a request the API refuses as invalid (an HTTP 400 that is not
+  the empty-balance answer) is its own cause, `request`: the request is not asked
+  again (a transport retry would send it unchanged and be refused the same way),
+  and after `grader.REQUEST_OUTAGE_AFTER` (two) consecutive names are refused with
+  one message -- the API's own, the per-request id removed (`grader.refusal_key()`)
+  -- the run stops asking and the remaining names fall back without a call, so a
+  refusal that names one request's own content (an oversized image, a prompt too
+  long) never stops the run by itself. The validator holds a record's block to
+  the version its rules archived -- version 1 and its five causes for every record
+  from before -- and the page reads each version in its own words, folding a
+  refused request into `transport` for a version-1 record as that record did.
   Every reply that arrived is billed, a reply the checks then
   refuse or cannot read included, and each attempt's own bill is kept beside the
   attempt, so `report.validate()` re-derives the block's totals from the bursts'
@@ -1162,8 +1174,8 @@ archived, and a record from before the block is asked for none. The run:
   a name the review budget never reached the selection's own recorded blockers
   (`preview_event`, `preview_geometry`, `preview_sizing`, `preview_no_order`,
   `review_budget`), for a reviewed name the reader's state (`review_refused`,
-  `review_format`, `review_account`, `review_credit`, `review_transport`,
-  `review_downgraded`), then the constructed plan's own combined allocation
+  `review_format`, `review_account`, `review_credit`, `review_request`,
+  `review_transport`, `review_downgraded`), then the constructed plan's own combined allocation
   (`event`, `geometry`, `sizing`, `allocation_slot`, `allocation_cash`,
   `allocation_occupied`, `ticket`). The stage counts sum to the discovered count
   by construction, `potentially_usable` counts the names that passed the first
