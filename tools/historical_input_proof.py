@@ -347,8 +347,12 @@ def exception_rows(day, package):
     return result
 
 
-def volume_sensitivity(originals):
+def volume_sensitivity(originals, objects=None):
+    """`objects` is the archive the source frames are read from: docs/evidence
+    when run, the frozen copies when tested (the archive keeps only what a
+    served file names)."""
     from src import plan, provenance, quality, scans
+    objects = Path(objects) if objects is not None else ROOT / "docs/evidence"
     from tools.historical_breadth_reference import reference_replay
     retained = json.loads((EVIDENCE / "volume-corroboration.json").read_bytes())
     publication = originals["2026-09-24"][1]
@@ -356,7 +360,7 @@ def volume_sensitivity(originals):
     for observation in retained:
         row = next(x for x in publication["bursts"] if x["ticker"] == observation["ticker"])
         ref = row["evidence"]["source"]["sha256"]
-        obj = json.loads(gzip.decompress((ROOT / "docs/evidence" / f"{ref}.json.gz").read_bytes()))
+        obj = json.loads(gzip.decompress((objects / f"{ref}.json.gz").read_bytes()))
         frame = provenance.frame_of(obj)
         changed = frame.copy()
         changed.loc[changed.index[-2:], "Volume"] = observation["public_volumes"]

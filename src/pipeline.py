@@ -983,7 +983,8 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         data = report.build(run_block, account_block, build_rules(uni), breadth_block, published_bursts,
                             trades, beyond_cap, budget, lists, open_plans, scorecard, nights, generated,
                             observations=observed)
-        provenance.publish_bundle(data, rec, docs, evidence_objects, dry_run=dry_run)
+        retention = provenance.publish_bundle(data, rec, docs, evidence_objects, dry_run=dry_run)
+        log_retention(retention)
         rep.published = True
         log.info("published %s: %s", session, data["cover"]["h1"])
 
@@ -1058,6 +1059,27 @@ def gather_minutes(client, docs: Path, rec: dict, frames: dict, session: date, n
         wanted = sum(1 for p in needed if intraday.key(p) not in evidence)
         return evidence, intraday.failed_block(wanted=wanted, retained=len(evidence), kind=type(exc).__name__,
                                                problems=problems)
+
+
+def log_retention(retention: dict) -> None:
+    """The evidence archive after tonight's removals, before tonight's writes:
+    what is left against the cap, and what no file under docs/ names any more.
+    A scan that refused removed nothing; a removal that failed stopped where it
+    failed, and says how far it got."""
+    if "error" in retention:
+        if retention["removed"]:
+            log.warning("Evidence retention removed %d objects (%d bytes) and stopped at an error (%s); "
+                        "the capacity check still applies.", retention["removed"],
+                        retention["removed_bytes"], retention["error"])
+        else:
+            log.warning("Evidence archive left as it was (%s); the capacity check still applies.",
+                        retention["error"])
+        if "bytes" not in retention:
+            return
+    level = logging.WARNING if retention["bytes"] > retention["cap"] * provenance.RETENTION_WARN_FRACTION else logging.INFO
+    log.log(level, "Evidence archive: %d objects, %d of %d bytes; %d objects (%d bytes) no file "
+            "under docs/ names were removed (git keeps them).", retention["objects"],
+            retention["bytes"], retention["cap"], retention["removed"], retention["removed_bytes"])
 
 
 def slots_held(open_plans: list[dict]) -> int:

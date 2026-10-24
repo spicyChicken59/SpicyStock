@@ -20,7 +20,14 @@ digests the study recorded are what verify them.
 
 Run: ``python tools/freeze_validation_cases.py`` writes what is missing;
 ``--check`` holds the committed copies (exit 2 on a missing file, a drifted
-byte or a file the study does not name). Sources: ``docs/history`` when the
+byte or a file the study does not name), and holds the archive objects each
+frozen case names -- its source frame, its reader's system prompt and the
+chart the reader saw, which the page links to -- present in ``docs/evidence``.
+That archive keeps only what a file under ``docs/`` names
+(``provenance.prune_objects()``), so a case frozen on a branch cut before a
+night removed one of its objects would merge naming an object the archive no
+longer holds; the check names it, and git still holds the object at every
+earlier commit. Sources: ``docs/history`` when the
 archive still carries the record, else git at the case's ``source.commit``.
 The committed copies were written on 16 October 2026 from the archive, which
 still carried both records that morning; the study's cases name no commit, so
@@ -30,8 +37,10 @@ its case before ``freeze`` could read it from git. ``--check`` needs no source.
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
+import zlib
 import os
 from pathlib import Path
 import re
@@ -47,6 +56,7 @@ EVIDENCE_PATH = re.compile(r"^[a-f0-9]{40}/burst-[A-Z0-9][A-Z0-9.-]{0,15}\.json$
 DIGEST = re.compile(r"^[a-f0-9]{64}$")
 COMMIT = re.compile(r"^[a-f0-9]{40}$")
 FILE_BOUND = 256 * 1024  # history.publish()'s own bound on a context or evidence file
+EVIDENCE_DIR = "evidence"   # provenance.OBJECT_DIR
 
 
 class FreezeError(ValueError):
@@ -173,9 +183,49 @@ def freeze(root: Path) -> dict[str, str]:
     return outcome
 
 
+def named_evidence(evidence) -> list[str]:
+    """The archive object files a frozen case's own evidence block names: its
+    source frame, its reader's system prompt and the chart the reader saw."""
+    if not isinstance(evidence, dict):
+        return []
+    source = evidence.get("source") if isinstance(evidence.get("source"), dict) else {}
+    reader = evidence.get("reader_input") if isinstance(evidence.get("reader_input"), dict) else {}
+    named = [(source.get("sha256"), ".json.gz"), (reader.get("system_object"), ".json.gz"),
+             (reader.get("chart_sha256"), ".png")]
+    return [name + suffix for name, suffix in named if isinstance(name, str) and DIGEST.match(name)]
+
+
+def evidence_problems(root: Path, rel: str, raw: bytes) -> list[str]:
+    """A frozen case's named objects must be in the archive, each its own bytes
+    (a chart by its SHA-256; a frame or prompt read whole, as gzip and JSON)."""
+    try:
+        evidence = (json.loads(raw).get("row") or {}).get("evidence")
+    except (ValueError, AttributeError):
+        return [f"{FROZEN_DIR}/{rel}: not a JSON object with a row"]
+    problems = []
+    archive = root / "docs" / EVIDENCE_DIR
+    for name in named_evidence(evidence):
+        path = archive / name
+        if path.is_symlink() or not path.is_file():
+            problems.append(f"{FROZEN_DIR}/{rel}: names {EVIDENCE_DIR}/{name}, which docs/{EVIDENCE_DIR} does not "
+                            f"hold (git holds it at every commit that carried it)")
+            continue
+        try:
+            body = path.read_bytes()
+            if name.endswith(".png"):
+                if sha256(body) != name[:64]:
+                    problems.append(f"{FROZEN_DIR}/{rel}: {EVIDENCE_DIR}/{name} is not its own bytes")
+            else:
+                json.loads(gzip.decompress(body))
+        except (OSError, EOFError, zlib.error, ValueError) as exc:
+            problems.append(f"{FROZEN_DIR}/{rel}: {EVIDENCE_DIR}/{name} is unreadable ({exc})")
+    return problems
+
+
 def check(root: Path) -> list[str]:
     """Problems with the committed copies: a case file missing or not the
-    study's bytes, or a file under the frozen directory the study does not name."""
+    study's bytes, a file under the frozen directory the study does not name,
+    or an archive object a frozen case names that the archive does not hold."""
     files = case_files(load_study(root))
     problems: list[str] = []
     frozen = root / "docs" / FROZEN_DIR
@@ -195,6 +245,8 @@ def check(root: Path) -> list[str]:
                 continue
             if sha256(raw) != meta["sha256"]:
                 problems.append(f"{FROZEN_DIR}/{rel}: not the study's bytes")
+            elif not rel.endswith("/record.json"):
+                problems.extend(evidence_problems(root, rel, raw))
     # Everything else under the directory is named: a file the study does not
     # name, and any link at all, whether to a file, to a directory or to
     # nothing. The walk never follows a link, and the strays are reported in

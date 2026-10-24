@@ -317,6 +317,64 @@ def test_check_names_a_missing_copy_a_drifted_copy_and_a_file_the_study_does_not
     ]
 
 
+CHART = b"\x89PNG the chart the reader saw"
+
+
+def evidence_root(tmp_path):
+    """A frozen case whose evidence names a source frame, a system prompt and a
+    chart, and an archive holding all three."""
+    names = {"source": "1" * 64, "system": "2" * 64, "chart": sha(CHART)}
+    row = {"row": {"ticker": "CRL", "evidence": {"source": {"sha256": names["source"]},
+                                                 "reader_input": {"system_object": names["system"],
+                                                                  "chart_sha256": names["chart"]}}}}
+    study, archive = synthetic(evidence={"CRL": json.dumps(row).encode(), "IQV": b'{"row": {"ticker": "IQV"}}'})
+    root = write_root(tmp_path, study, archive)
+    fz.freeze(root)
+    objects = root / "docs" / fz.EVIDENCE_DIR
+    objects.mkdir()
+    import gzip
+    (objects / (names["source"] + ".json.gz")).write_bytes(gzip.compress(b'{"type": "frame"}', mtime=0))
+    (objects / (names["system"] + ".json.gz")).write_bytes(gzip.compress(b'{"text": "prompt"}', mtime=0))
+    (objects / (names["chart"] + ".png")).write_bytes(CHART)
+    return root, objects, names
+
+
+def test_check_holds_every_archive_object_a_frozen_case_names(tmp_path):
+    root, objects, names = evidence_root(tmp_path)
+    assert fz.check(root) == []
+    assert fz.main(["--check", "--root", str(root)]) == 0
+    where = f"{fz.FROZEN_DIR}/{RECORD}/burst-CRL.json"
+    (objects / (names["chart"] + ".png")).unlink()
+    (objects / (names["system"] + ".json.gz")).write_bytes(b"not gzip")
+    unreadable, missing = fz.check(root)
+    assert unreadable.startswith(f"{where}: {fz.EVIDENCE_DIR}/{names['system']}.json.gz is unreadable (")
+    assert missing == (f"{where}: names {fz.EVIDENCE_DIR}/{names['chart']}.png, which docs/{fz.EVIDENCE_DIR} "
+                       "does not hold (git holds it at every commit that carried it)")
+    (objects / (names["chart"] + ".png")).write_bytes(CHART + b" changed")
+    (objects / (names["source"] + ".json.gz")).unlink()
+    (objects / (names["system"] + ".json.gz")).write_bytes(gzip_of(b"{}"))
+    assert fz.check(root) == [
+        f"{where}: names {fz.EVIDENCE_DIR}/{names['source']}.json.gz, which docs/{fz.EVIDENCE_DIR} does not hold "
+        "(git holds it at every commit that carried it)",
+        f"{where}: {fz.EVIDENCE_DIR}/{names['chart']}.png is not its own bytes"]
+    assert fz.main(["--check", "--root", str(root)]) == 2
+
+
+def test_an_archive_object_reached_through_a_link_is_not_held(tmp_path):
+    root, objects, names = evidence_root(tmp_path)
+    chart = objects / (names["chart"] + ".png")
+    elsewhere = tmp_path / "elsewhere.png"
+    chart.rename(elsewhere)
+    os.symlink(elsewhere, chart)
+    assert fz.check(root) == [f"{fz.FROZEN_DIR}/{RECORD}/burst-CRL.json: names {fz.EVIDENCE_DIR}/{names['chart']}.png, "
+                              f"which docs/{fz.EVIDENCE_DIR} does not hold (git holds it at every commit that carried it)"]
+
+
+def gzip_of(raw):
+    import gzip
+    return gzip.compress(raw, mtime=0)
+
+
 def test_strays_are_named_in_path_order_whatever_order_the_filesystem_lists(tmp_path, monkeypatch):
     """CI's runner listed the lookalike directory before the case's own, so the
     order of `check()`'s strays followed the filesystem and the test above

@@ -80,8 +80,8 @@ def artifacts(name, raw, objects):
 def build():
     raw = gzip.decompress((TARGET / "current-publication.json.gz").read_bytes())
     assert hashlib.sha256(raw).hexdigest() == CURRENT_SHA, "fixed actual publication changed"
-    files = artifacts("current", raw, ROOT / "docs/evidence")
-    late = stop_research.build(raw, objects=ROOT / "docs/evidence", generated_at="2026-10-12T15:00:00+00:00")
+    files = artifacts("current", raw, ROOT / "tests/fixtures/retained-evidence")
+    late = stop_research.build(raw, objects=ROOT / "tests/fixtures/retained-evidence", generated_at="2026-10-12T15:00:00+00:00")
     files.update({"current-late-receipt.json": late["receipt_bytes"], "current-late-bundle.json": late["bundle_bytes"]})
     for name in VARIANTS[1:]:
         with tempfile.TemporaryDirectory(prefix="stop-research-fixture-") as tmp:
