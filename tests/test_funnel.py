@@ -175,9 +175,33 @@ def test_a_block_is_held_to_the_version_its_record_archived_never_to_stages_it_h
 
 
 #: every publication on main that archived funnel version 1, by the commit that landed
-#: its record: 12 Oct (the #165 merge carried it) to 23 Oct 2026, the two 19 Oct revisions among them
-VERSION_ONE_PUBLICATIONS = ("279ec5a3", "8772006f", "16032f05", "0f951414", "7a1a9e49", "a34a2978",
-                            "d179f206", "0d8494fc", "2eb0e0be", "fb70e706", "cd239b20")
+#: its record: 12 Oct (the #165 merge carried it) to 23 Oct 2026, the two 19 Oct revisions among
+#: them. Whole object ids, never abbreviated: a shallow checkout can fetch a commit it does not
+#: hold only by its full id (GitHub answers an abbreviated one "couldn't find remote ref").
+VERSION_ONE_PUBLICATIONS = (
+    "279ec5a311ce8da698a5244a46232f79a8ae9f69",
+    "8772006f5a82e21d3a22c6551fc2f0a6b38b6134",
+    "16032f05e13536cac5c4e0995ff0f16053dcd0b3",
+    "0f95141450c579e86f4de657c23849217dc57cc4",
+    "7a1a9e49822578d71d2bd960bbe2aace06af63f1",
+    "a34a2978021bcb2fd0239799b1987f6ffe1cb52a",
+    "d179f2062902b248b61eab7956c3682bc6b63d68",
+    "0d8494fca679819291dca3cc4d5c7236edaea6f5",
+    "2eb0e0bedad29ecd458eb8c7cef97dbb645d7eed",
+    "fb70e70638a3488bf7fbe61c7c54012c48eb1b96",
+    "cd239b206a109a4faa7f6c29560d3d1c2d1f3478",
+)
+
+
+def test_the_version_one_publications_are_named_by_whole_object_id():
+    """The fixture below fetches a commit the checkout lacks by the id written
+    here; an abbreviated id is refused by the remote, so the first CI run of
+    this test failed at setup on eleven eight-character ids. Held here so the
+    next abbreviation fails on any checkout, shallow or not."""
+    assert len(VERSION_ONE_PUBLICATIONS) == 11
+    assert len(set(VERSION_ONE_PUBLICATIONS)) == len(VERSION_ONE_PUBLICATIONS)
+    for c in VERSION_ONE_PUBLICATIONS:
+        assert re.fullmatch(r"[0-9a-f]{40}", c), f"{c!r} is not a whole lowercase object id"
 
 
 @pytest.fixture(scope="module")
@@ -196,7 +220,7 @@ def version_one_history():
     return VERSION_ONE_PUBLICATIONS
 
 
-@pytest.mark.parametrize("commit", VERSION_ONE_PUBLICATIONS)
+@pytest.mark.parametrize("commit", VERSION_ONE_PUBLICATIONS, ids=[c[:8] for c in VERSION_ONE_PUBLICATIONS])
 def test_every_retained_version_one_publication_re_derives_its_own_block(version_one_history, commit):
     """The retained publications were built by version 1's code; version 1's
     re-derivation here must give each its archived block to the byte, so the
