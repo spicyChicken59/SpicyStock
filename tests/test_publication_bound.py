@@ -1,7 +1,8 @@
 """The canonical record is written compact and stated against its 32 MiB bound.
 
 Past the bound a night is refused before anything is installed, and the
-refusal names the size and the bound. Every copy of the bound, the browser's
+refusal names the size and the bound. A restamp after delivery that alone
+crosses it leaves the record first installed, which is still retained. Every copy of the bound, the browser's
 included, is the reader's own number.
 """
 import hashlib
@@ -48,19 +49,61 @@ def test_a_night_that_fits_only_compact_is_published(market, claude, fake_resend
     assert len((docs / "data.json").read_bytes()) <= bound
 
 
+def snapshot(docs):
+    """Every file the night writes under docs/, by its bytes. The charts are
+    drawn at grade time and gitignored, so they are left out."""
+    return {str(p.relative_to(docs)): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted(docs.rglob("*")) if p.is_file() and p.relative_to(docs).parts[0] != "charts"}
+
+
 def test_a_record_over_its_bound_is_refused_before_anything_is_installed_and_says_why(market, claude, fake_resend, tmp_path, monkeypatch, caplog):
-    _, data, _ = evening(tmp_path / "measure", market)
+    _, data, docs = evening(tmp_path, market)          # night one publishes everything a night keeps
+    before = snapshot(docs)
+    assert {"data.json", "picks.json", "reader.json", "history/index.json"} <= set(before)
+    assert any(k.startswith("evidence/") for k in before) and any(k.startswith("reader-observations/") for k in before)
+    assert any(k.startswith("quality-ledger/") for k in before)
     bound = len(compact(data)) // 2
     monkeypatch.setattr(reader, "MAX_PUBLICATION_BYTES", bound)
     caplog.set_level("INFO", logger="spicystock.reader")
-    rep, data, docs = evening(tmp_path / "night", market)
-    assert rep.exit_code() == pipeline.EXIT_FAILED and not rep.published
-    assert data is None and not (docs / "reader.json").exists() and not (docs / "picks.json").exists()
+    rep, _, _ = evening(tmp_path, market)              # night two, the same docs, over the bound
+    assert rep.exit_code() == pipeline.EXIT_FAILED and not rep.published and rep.stage == "publish"
+    assert snapshot(docs) == before                   # nothing pruned, written or installed
     said = re.search(r"canonical publication is (\d+) bytes, over its (\d+)-byte bound", rep.failure)
     assert said and int(said.group(2)) == bound and int(said.group(1)) > bound, rep.failure
-    line = [r for r in caplog.records if r.getMessage().startswith("Canonical record:")]
+    line = [r for r in caplog.records if r.getMessage().startswith("Canonical record")]
     assert len(line) == 1 and line[0].levelname == "ERROR"
     assert line[0].getMessage().startswith(f"Canonical record: {said.group(1)} of {bound} bytes, with ")
+    assert line[0].getMessage().endswith("; over its bound, so the night is refused before anything is installed.")
+
+
+def logged(caplog, name):
+    lines = [r for r in caplog.records if r.name == "spicystock.reader" and r.getMessage().startswith(name + ": ")]
+    assert len(lines) == 1, [r.getMessage() for r in caplog.records]
+    return lines[0], int(lines[0].getMessage()[len(name) + 2:].split(" ", 1)[0])
+
+
+def test_a_restamp_that_crosses_the_bound_leaves_the_first_record_installed_and_retained(market, claude, fake_resend, tmp_path, monkeypatch, caplog):
+    caplog.set_level("INFO", logger="spicystock.reader")
+    evening(tmp_path / "measure", market)
+    _, first = logged(caplog, "Canonical record")
+    _, final = logged(caplog, "Canonical record after delivery")
+    assert final > first                                # "delivered" is longer than the word first installed
+    caplog.clear()
+    monkeypatch.setattr(reader, "MAX_PUBLICATION_BYTES", first)
+    rep, data, docs = evening(tmp_path / "night", market)
+    assert rep.exit_code() == pipeline.EXIT_FAILED_AFTER_PUBLISH and rep.published, rep.failure
+    assert rep.stage == "restamp" and rep.failure == (
+        f"ValueError: canonical publication is {final} bytes, over its {first}-byte bound")
+    raw = (docs / "data.json").read_bytes()
+    assert len(raw) == first and data["run"]["email"] != "delivered"   # the record first installed stays
+    canonical = json.loads((docs / "reader.json").read_bytes())["canonical"]
+    assert canonical == {"sha256": hashlib.sha256(raw).hexdigest(), "bytes": first}
+    index = json.loads((docs / "history/index.json").read_bytes())          # retained after the refusal
+    assert hashlib.sha1(b"blob %d\0" % len(raw) + raw).hexdigest() in json.dumps(index)
+    assert rep.quality_ledger["status"] == "retained" and Path(rep.quality_ledger["path"]).exists()
+    line, size = logged(caplog, "Canonical record after delivery")
+    assert size == final and line.levelname == "ERROR"
+    assert line.getMessage().endswith("; over its bound, so this write is refused and the record first installed stays.")
 
 
 # --- the derive refusal --------------------------------------------------------
@@ -98,11 +141,34 @@ def test_the_run_log_says_one_burst(caplog):
 
 
 @pytest.mark.parametrize("data", [{}, {"bursts": None, "observations": {}}, None, {"bursts": [], "observations": float("nan")}])
-def test_the_run_log_never_fails_the_night(data, caplog):
+def test_unreadable_counts_still_state_the_size_against_the_bound(data, monkeypatch, caplog):
+    monkeypatch.setattr(reader, "MAX_PUBLICATION_BYTES", 1000)
     caplog.set_level("INFO", logger="spicystock.reader")
-    reader.log_publication(10, data)
+    for size, level in ((10, "INFO"), (2000, "ERROR")):
+        caplog.clear()
+        reader.log_publication(size, data)
+        [record] = [r for r in caplog.records if r.name == "spicystock.reader"]
+        assert record.levelname == level
+        assert re.fullmatch(rf"Canonical record: {size} of 1000 bytes, its burst and observation counts unreadable "
+                            r"\(\w+\)(; over its bound, so the night is refused before anything is installed)?\.",
+                            record.getMessage()), record.getMessage()
+
+
+def test_the_run_log_never_fails_the_night(caplog):
+    caplog.set_level("INFO", logger="spicystock.reader")
+    reader.log_publication(None, {"bursts": [], "observations": {}})
     [record] = [r for r in caplog.records if r.name == "spicystock.reader"]
-    assert record.levelname == "WARNING" and record.getMessage().startswith("Canonical record could not be measured (")
+    assert record.levelname == "WARNING" and record.getMessage() == "Canonical record could not be measured (TypeError)."
+
+
+def test_the_restamp_is_stated_in_its_own_words(monkeypatch, caplog):
+    monkeypatch.setattr(reader, "MAX_PUBLICATION_BYTES", 1000)
+    caplog.set_level("INFO", logger="spicystock.reader")
+    reader.log_publication(1001, night(2, {}), after_delivery=True)
+    [record] = caplog.records
+    assert record.levelname == "ERROR" and record.getMessage() == (
+        "Canonical record after delivery: 1001 of 1000 bytes, with 2 bursts and 2 bytes of observations; "
+        "over its bound, so this write is refused and the record first installed stays.")
 
 
 # --- every copy of the bound -------------------------------------------------

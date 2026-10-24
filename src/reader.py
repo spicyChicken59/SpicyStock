@@ -159,21 +159,34 @@ def _write(path, raw):
         os.fsync(handle.fileno())
 
 
-def log_publication(size: int, data) -> None:
-    """State the canonical record's bytes against its bound, once a night,
-    before the companions are derived from it; never raises. Past the bound
-    `derive()` refuses the night before anything is installed."""
+def log_publication(size: int, data, *, after_delivery: bool = False) -> None:
+    """State the canonical record's bytes against its bound; never raises.
+
+    Called twice a night: as the record is first staged (past the bound
+    `derive()` refuses the night before anything is installed) and as the
+    restamp after delivery writes it again (past the bound that write is
+    refused and the record first installed stays). The size line is written
+    even when the record's counts cannot be read."""
+    name = "Canonical record after delivery" if after_delivery else "Canonical record"
     try:
-        bursts = len(data["bursts"])
-        observations = len(_encode(data["observations"]))
         bound = MAX_PUBLICATION_BYTES
         over = size > bound
         level = logging.ERROR if over else logging.WARNING if size > bound * PUBLICATION_WARN_FRACTION else logging.INFO
-        log.log(level, "Canonical record: %d of %d bytes, with %d %s and %d bytes of observations%s.",
-                size, bound, bursts, "burst" if bursts == 1 else "bursts", observations,
-                "; over its bound, so the night is refused before anything is installed" if over else "")
+        try:
+            bursts = len(data["bursts"])
+            observations = len(_encode(data["observations"]))
+            counts = f", with {bursts} {'burst' if bursts == 1 else 'bursts'} and {observations} bytes of observations"
+        except Exception as exc:  # noqa: BLE001 -- the size is still stated
+            counts = f", its burst and observation counts unreadable ({type(exc).__name__})"
+        if not over:
+            tail = ""
+        elif after_delivery:
+            tail = "; over its bound, so this write is refused and the record first installed stays"
+        else:
+            tail = "; over its bound, so the night is refused before anything is installed"
+        log.log(level, "%s: %d of %d bytes%s%s.", name, size, bound, counts, tail)
     except Exception as exc:  # noqa: BLE001 -- a log line never fails the night
-        log.warning("Canonical record could not be measured (%s).", type(exc).__name__)
+        log.warning("%s could not be measured (%s).", name, type(exc).__name__)
 
 
 def stage_assets(stage: Path) -> dict:
@@ -452,13 +465,17 @@ def _log_archive(docs, evicted, index, cleaned):
 
 
 def write_publication(data: dict, docs: Path) -> None:
-    """Serialize a final/restamped canonical record and publish its companions."""
+    """Serialize a final/restamped canonical record and publish its companions.
+
+    Past the canonical bound `derive()` refuses before anything is installed,
+    so the record already installed stays."""
     from src import report
     docs = Path(docs)
     docs.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".reader-publication-", dir=docs) as tmp:
         stage = Path(tmp)
         report.write(data, stage / "data.json")
+        log_publication((stage / "data.json").stat().st_size, data, after_delivery=True)
         stage_assets(stage)
         install_publication(stage, docs, ["data.json"])
 
