@@ -176,7 +176,11 @@ def test_past_the_record_cap_the_oldest_record_gives_way(tmp_path, monkeypatch):
 
 def test_revisions_of_one_session_leave_in_publication_order_then_by_digest(tmp_path, monkeypatch):
     monkeypatch.setattr(history, 'RECORDS_MAX', 2)
-    late, early = small('2026-10-01', '2026-10-01T23:00:00Z'), small('2026-10-01', '2026-10-01T22:00:00Z')
+    # the earlier publication must carry the larger digest, so publication order and digest order disagree
+    late, early = next((late, early) for n in range(6, 1, -1)
+                       for late, early in [(small('2026-10-01', '2026-10-01T23:00:00Z', n),
+                                            small('2026-10-01', '2026-10-01T22:00:00Z', n))]
+                       if history.git_blob(early) > history.git_blob(late))
     history.publish(late, tmp_path)
     history.publish(early, tmp_path)
     index = history.publish(small('2026-10-02', '2026-10-02T22:00:00Z'), tmp_path)
