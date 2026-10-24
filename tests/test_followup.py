@@ -92,7 +92,7 @@ def test_a_late_bar_the_setting_up_list_would_have_taken_is_a_match():
     # the anticipation scan alone is not the list: GRAL's retained placeholder
     # passes the scan and the list's own stages refuse it
     address, day = RETAINED['GRAL']
-    frame = provenance.frame_of(json.loads(gzip.decompress((ROOT / 'tests' / 'fixtures' / 'retained-evidence' / f'{address}.json.gz').read_bytes())))
+    frame = provenance.frame_of(provenance._object(ROOT / 'tests' / 'fixtures' / 'retained-evidence', address))
     upto = followup._through(frame, date.fromisoformat(day))
     from src import scans, watchlist
     assert scans.anticipation(upto) is not None and not watchlist.build({'GRAL': upto})['top']

@@ -1,7 +1,10 @@
-# Every dependency is held below its next major (or pinned), so a release on
-# PyPI cannot change a night's run without a change here: anthropic 2.0.0 did
-# exactly that on 21 Oct 2026 (below). Raise a bound in its own change, with the
-# suite run against the new major.
+# Every direct requirement is held below its next major (or pinned), so a
+# release of one of these cannot change a night's run without a change here:
+# anthropic 2.0.0 did exactly that on 21 Oct 2026 (below). Raise a bound in its
+# own change, with the suite run against the new major. Their own dependencies
+# are not bounded here: pip resolves them within the ranges these packages
+# declare, which is how python-dateutil 3.0.0 (under pandas) and matplotlib
+# (under mplfinance) arrive; requirements-host.txt pins the host's full set.
 pandas>=2.0,<4
 numpy>=1.24,<3
 requests>=2.31,<3

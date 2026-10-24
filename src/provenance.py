@@ -690,18 +690,23 @@ def _expanded(raw, path):
     return bytes(out)
 
 
+def _unlistable(exc):
+    raise ValueError(f"retention scan cannot list {exc.filename}: {exc.strerror or exc}") from exc
+
+
 def named_objects(docs):
     """The object names every file under docs/ other than the archive carries.
 
-A name is any run of 64 lowercase hex digits, or any 64 in a longer run, so a
-reference is never missed for its spelling; a .gz file is read expanded. A
-link, a file over the bound or a .gz that does not expand is a refusal: a file
-the scan cannot read in full may name what it cannot see.
+A name is a full 64-character lowercase hex run; any 64 inside a longer run
+counts too. An upper-case spelling or a shortened prefix names nothing. A .gz
+file is read expanded. A link, a directory that cannot be listed, a file that
+is not regular or is over the bound, or a .gz that does not expand is a
+refusal: a file the scan cannot read in full may name what it cannot see.
 """
     docs = Path(docs)
     archive = docs / OBJECT_DIR
     exact, runs = set(), []
-    for dirpath, dirnames, filenames in os.walk(docs):
+    for dirpath, dirnames, filenames in os.walk(docs, onerror=_unlistable):
         here = Path(dirpath)
         if here == archive:
             dirnames[:] = []
@@ -729,9 +734,11 @@ the scan cannot read in full may name what it cannot see.
 def prune_objects(docs, keep=()):
     """Remove archive objects no other file under docs/ names, before a write.
 
-The names are all read before anything is removed, so a refusal removes
-nothing; `keep` is what tonight writes. Unknown entries stay. Git keeps every
-object that leaves the working tree. Returns what is left and what went.
+The names are all read before anything is removed, so a scan refusal raises
+and removes nothing; `keep` is what tonight writes. Unknown entries, a link or
+a directory included, stay. Git keeps every object that leaves the working
+tree. Returns what is left and what went; a removal that fails stops there and
+is named under "error" beside what had already gone.
 """
     archive = Path(docs) / OBJECT_DIR
     if archive.is_symlink() or (archive.exists() and not archive.is_dir()):
@@ -750,10 +757,20 @@ object that leaves the working tree. Returns what is left and what went.
         # counted as write_objects() counts the archive against its cap
         total += path.stat().st_size if path.is_file() else 0
         objects += bool(match and regular)
-    for path, _ in doomed:
-        path.unlink()
-    return {"objects": objects, "bytes": total, "cap": MAX_ARCHIVE_BYTES,
-            "removed": len(doomed), "removed_bytes": sum(size for _, size in doomed)}
+    removed, error = [], None
+    for path, size in doomed:
+        try:
+            path.unlink()
+        except OSError as exc:
+            error = f"{type(exc).__name__}: {exc}"
+            break
+        removed.append(size)
+    left = [size for _, size in doomed[len(removed):]]
+    result = {"objects": objects + len(left), "bytes": total + sum(left), "cap": MAX_ARCHIVE_BYTES,
+              "removed": len(removed), "removed_bytes": sum(removed)}
+    if error:
+        result["error"] = error
+    return result
 
 
 def publish_bundle(data, rec, docs, objects, *, dry_run=False):
@@ -778,7 +795,7 @@ process death between filesystem renames is not a multi-file transaction.
         try:
             retention = prune_objects(docs, keep=objects)
         except (OSError, ValueError) as exc:
-            retention = {"error": f"{type(exc).__name__}: {exc}"}
+            retention = {"error": f"{type(exc).__name__}: {exc}", "removed": 0, "removed_bytes": 0}
         write_objects(objects, docs / OBJECT_DIR)
         names = ["data.json"] if dry_run else ["picks.json", "data.json"]
         reader.install_publication(stage, docs, names)

@@ -1063,11 +1063,19 @@ def gather_minutes(client, docs: Path, rec: dict, frames: dict, session: date, n
 
 def log_retention(retention: dict) -> None:
     """The evidence archive after tonight's removals, before tonight's writes:
-    what is left against the cap, and what no file under docs/ names any more."""
+    what is left against the cap, and what no file under docs/ names any more.
+    A scan that refused removed nothing; a removal that failed stopped where it
+    failed, and says how far it got."""
     if "error" in retention:
-        log.warning("Evidence archive left as it was (%s); the capacity check still applies.",
-                    retention["error"])
-        return
+        if retention["removed"]:
+            log.warning("Evidence retention removed %d objects (%d bytes) and stopped at an error (%s); "
+                        "the capacity check still applies.", retention["removed"],
+                        retention["removed_bytes"], retention["error"])
+        else:
+            log.warning("Evidence archive left as it was (%s); the capacity check still applies.",
+                        retention["error"])
+        if "bytes" not in retention:
+            return
     level = logging.WARNING if retention["bytes"] > retention["cap"] * provenance.RETENTION_WARN_FRACTION else logging.INFO
     log.log(level, "Evidence archive: %d objects, %d of %d bytes; %d objects (%d bytes) no file "
             "under docs/ names were removed (git keeps them).", retention["objects"],

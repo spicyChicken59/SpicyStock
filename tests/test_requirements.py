@@ -1,4 +1,6 @@
-"""Every dependency a run installs is held below its next major, or pinned.
+"""Every direct requirement a run installs is held below its next major, or
+pinned; their own dependencies are resolved by pip within the ranges those
+packages declare, and only requirements-host.txt pins the full set.
 
 PyPI is part of the environment: anthropic 2.0.0, published on 21 Oct 2026,
 changed the API version the SDK sends and every chart read of two nights failed

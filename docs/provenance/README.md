@@ -110,15 +110,34 @@ objects are written and counted against the cap, `provenance.prune_objects()`
 removes every object that no other file under `docs/` names -- the publication
 and its compact reader, the 21-day recovery catalog, the research cohorts and
 their journal, the quality ledger, the frozen validation cases and the dated
-reports all keep what they name. A name is any 64 lowercase hex digits in a
-file's text (a `.gz` read expanded, and any 64 inside a longer run), so a
-reference is never missed for its spelling. Every file is read in full first;
-a link under `docs/`, a file over 64 MiB or a `.gz` that does not expand removes
-nothing, and the capacity check then decides as before. Unknown entries in the
-archive stay. The archive follows the catalog a night behind: a night the
-catalog drops tonight leaves the archive on the next publication. Removed
-objects stay in git at every commit that carried them. The run log states what
-is left against the cap and what went, and warns above 80% of it. Actual chart
+reports all keep what they name. A name is a full 64-character lowercase hex
+run in a file's text (a `.gz` file read expanded); any 64 inside a longer run
+counts too, while an upper-case spelling or a shortened prefix names nothing.
+Every file outside the archive is read in full first: a link, a directory that
+cannot be listed, a file that is not regular or is over 64 MiB, or a `.gz` that
+does not expand removes nothing, and the capacity check then decides as
+before. Inside the archive, unknown entries -- a link or a directory named like
+an object among them -- stay. A removal that fails stops there; the run log
+says how many objects had gone. The archive follows the catalog a night
+behind: a night the catalog drops tonight leaves the archive on the next
+publication. Removed objects stay in git at every commit that carried them.
+The run log states what is left against the cap and what went, and warns above
+80% of it.
+
+**What the rule does not bound.** Some names are permanent: the dated reports
+under `docs/input-truthfulness` (22.2 MB of objects on 23 October, none of them
+added since), the quality ledger, which names every read chart for good, the
+research cohorts and their journal, and the frozen validation cases. On a copy
+of the 23 October tree with the publication, its reader files and every
+recovery record removed, 31.9 MB stayed; the ledger's share grows by each
+night's read charts, about 0.12 MB on a night of two reads and 0.8 MB on a night
+of twelve. With the 78.2 MB the 23 October tree keeps, 56.0 MB of the cap is
+left: about 70 sessions of twelve reads, or 480 of two, if the rolling part
+stays its size, and the 80% warning comes first. What to do then -- a rule for
+ledger-named charts or a larger cap -- is a decision for that day, not this one. A frozen case added on a branch cut before a night
+removed one of its objects would merge naming an object the archive no longer
+holds; `tools/freeze_validation_cases.py --check`, which CI runs, names it, and
+git holds the object to restore. Actual chart
 sizes vary; the fixture's fixed PNG double is not a production storage estimate.
 The evening artifact includes evidence and history. There are no new settings.
 
