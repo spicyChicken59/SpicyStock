@@ -1,5 +1,9 @@
 # The signal-outcome study over thirty-one publications: the first readable confirmatory figure
 
+**Read again on 24 October over thirty-seven publications:**
+[the confirmatory figure after 23 October](2026-10-24-signal-outcomes-confirmatory.md).
+This report is kept as written.
+
 **What was run.** The frozen study, `tools/signal_outcomes.py` as PR #100
 merged it (blob `39d4f25a…`, unchanged on `main` at `2768e467`), re-run on
 17 October 2026 in the sandbox over thirty-one publications: the nineteen the
