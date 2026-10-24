@@ -398,7 +398,8 @@ def test_the_readme_and_the_env_example_quote_the_recovery_catalogs_bounds_from_
     mib = history.CATALOG_BYTES_MAX // (1024 * 1024)
     assert (f"It retains {history.DAYS} calendar days, up to {history.RECORDS_MAX} distinct publications "
             f"and {history.SIGNALS_MAX:,} signals per publication, within {mib} MiB.") in text
-    assert f"warns past {history.CATALOG_WARN_FRACTION:.0%} of either" in text
+    assert (f"The run log states the catalog against both caps, warns past "
+            f"{history.CATALOG_WARN_FRACTION:.0%} of either, and names the sessions that gave way") in text
     env = re.sub(r"\s*#\s*", " ", (ROOT / ".env.example").read_text())
     assert (f"the {history.DAYS}-day recovery catalog; past its {history.RECORDS_MAX}-record or "
             f"{mib} MiB cap its oldest records give way") in env

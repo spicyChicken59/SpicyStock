@@ -141,8 +141,14 @@ def files_of(root, source):
 
 
 def test_past_the_byte_cap_the_oldest_record_inside_the_window_gives_way(tmp_path, monkeypatch, caplog):
-    r1, r2, r3 = (small('2026-10-01', '2026-10-01T22:00:00Z'), small('2026-10-02', '2026-10-02T22:00:00Z'),
-                  small('2026-10-05', '2026-10-05T22:00:00Z'))
+    # the record that must give way carries the larger digest, so the order is the session's
+    r1, r2, r3 = next((a, b, c) for n in range(6, 1, -1)
+                      for a, b, c in [(small('2026-10-01', '2026-10-01T22:00:00Z', n), small('2026-10-02', '2026-10-02T22:00:00Z', n),
+                                       small('2026-10-05', '2026-10-05T22:00:00Z', n))]
+                      if history.git_blob(a) > history.git_blob(b))
+    whole = tmp_path / 'whole'
+    for raw in (r1, r2, r3):
+        history.publish(raw, whole)
     # the catalog the eviction should leave is the one r2 and r3 make alone
     fits = tmp_path / 'fits'
     history.publish(r2, fits)
@@ -152,7 +158,7 @@ def test_past_the_byte_cap_the_oldest_record_inside_the_window_gives_way(tmp_pat
     history.publish(r2, root)
     kept = files_of(root, history.git_blob(r2))
     monkeypatch.setattr(history, 'CATALOG_BYTES_MAX', catalog_bytes(fits))
-    assert catalog_bytes(fits) < catalog_bytes(root) + catalog_bytes(fits) - catalog_bytes(root / history.git_blob(r2))
+    assert catalog_bytes(whole) > history.CATALOG_BYTES_MAX, 'the three records would fit without eviction'
     caplog.set_level('INFO', logger='spicystock.history')
     index = history.publish(r3, root)
     assert set(index['records']) == {history.git_blob(r2), history.git_blob(r3)}
@@ -197,7 +203,11 @@ def test_revisions_of_one_session_leave_in_publication_order_then_by_digest(tmp_
 
 def test_the_older_session_gives_way_first_even_when_it_was_published_later(tmp_path, monkeypatch):
     monkeypatch.setattr(history, 'RECORDS_MAX', 2)
-    late_rerun, next_day = small('2026-10-01', '2026-10-03T09:00:00Z'), small('2026-10-02', '2026-10-02T22:00:00Z')
+    # the older session carries the larger digest, so session order and digest order disagree
+    late_rerun, next_day = next((a, b) for n in range(6, 1, -1)
+                                for a, b in [(small('2026-10-01', '2026-10-03T09:00:00Z', n),
+                                              small('2026-10-02', '2026-10-02T22:00:00Z', n))]
+                                if history.git_blob(a) > history.git_blob(b))
     history.publish(next_day, tmp_path)
     history.publish(late_rerun, tmp_path)
     index = history.publish(small('2026-10-05', '2026-10-05T22:00:00Z'), tmp_path)
@@ -225,6 +235,53 @@ def test_tonights_record_never_gives_way_even_when_it_is_the_oldest(tmp_path, mo
     assert set(index['records']) == {history.git_blob(older)}
     assert (tmp_path / history.git_blob(older) / 'record.json').exists()
     assert not (tmp_path / history.git_blob(newer)).exists()
+
+
+def test_a_record_that_gives_way_is_pruned_whatever_an_interrupted_write_left_in_it(tmp_path, monkeypatch, caplog):
+    monkeypatch.setattr(history, 'RECORDS_MAX', 1)
+    r1, r2, r3 = (small(f'2026-10-0{d}', f'2026-10-0{d}T22:00:00Z') for d in (1, 2, 5))
+    history.publish(r1, tmp_path)
+    (tmp_path / history.git_blob(r1) / 'burst-ZZZ.tmp').write_bytes(b'half a write')
+    index = history.publish(r2, tmp_path)
+    assert set(index['records']) == {history.git_blob(r2)} and not (tmp_path / history.git_blob(r1)).exists()
+    # a directory already gone is already pruned
+    for f in (tmp_path / history.git_blob(r2)).iterdir():
+        f.unlink()
+    (tmp_path / history.git_blob(r2)).rmdir()
+    caplog.set_level('INFO', logger='spicystock.history')
+    index = history.publish(r3, tmp_path)
+    assert set(index['records']) == {history.git_blob(r3)}
+    assert not [r for r in caplog.records if 'could not be removed' in r.getMessage()]
+
+
+def test_a_stray_file_in_a_kept_record_counts_against_the_byte_cap(tmp_path, caplog):
+    history.publish(small('2026-10-01', '2026-10-01T22:00:00Z'), tmp_path)
+    stray = next(p for p in tmp_path.iterdir() if p.is_dir()) / 'burst-ZZZ.tmp'
+    stray.write_bytes(b'x' * 1000)
+    caplog.set_level('INFO', logger='spicystock.history')
+    history.publish(small('2026-10-02', '2026-10-02T22:00:00Z'), tmp_path)
+    on_disk = sum(p.stat().st_size for p in tmp_path.rglob('*') if p.is_file())
+    line = [r.getMessage() for r in caplog.records if r.getMessage().startswith('Recovery catalog: 2 of')]
+    assert line == [f'Recovery catalog: 2 of {history.RECORDS_MAX} records over 2 sessions, '
+                    f'{on_disk} of {history.CATALOG_BYTES_MAX} bytes.'], line
+
+
+def test_a_record_that_cannot_be_removed_is_named_and_the_others_are_still_pruned(tmp_path, monkeypatch, caplog):
+    raws = [small(f'2026-10-0{d}', f'2026-10-0{d}T22:00:00Z') for d in (1, 2)]
+    for raw in raws:
+        history.publish(raw, tmp_path)
+    stuck, other = sorted(map(history.git_blob, raws))
+    (tmp_path / stuck / 'nested').mkdir()
+    (tmp_path / stuck / 'nested' / 'x.json').write_text('{}')
+    monkeypatch.setattr(history, 'RECORDS_MAX', 1)
+    caplog.set_level('INFO', logger='spicystock.history')
+    tonight = small('2026-10-05', '2026-10-05T22:00:00Z')
+    index = history.publish(tonight, tmp_path)
+    assert set(index['records']) == {history.git_blob(tonight)}
+    assert not (tmp_path / other).exists()
+    assert (tmp_path / stuck / 'nested' / 'x.json').exists()
+    said = [r.getMessage() for r in caplog.records if r.name == 'spicystock.history']
+    assert f'Recovery catalog: 1 record directory could not be removed ({stuck}); it is no longer catalogued.' in said, said
 
 
 @pytest.mark.parametrize('cap,warns', [('0.79', False), ('exact', False), ('one under', True), ('0.81', True)])

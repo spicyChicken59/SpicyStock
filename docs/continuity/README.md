@@ -40,9 +40,10 @@ beyond each publication's existing series (at most 120 bars).
 
 Limits: 84 publications; 10,000 signals per publication; 256 KiB per lazy file;
 128 MiB catalog. Past the publication or byte cap the records still inside their
-window give way, oldest first, and are pruned as expired ones are; only a single
-publication that cannot fit alone, or a file over its own bound, refuses a new
-index and retains the old one. Expiration prunes only catalog-owned source files. Local saves do
+window give way, oldest first, and are pruned as expired ones are. Of the caps,
+only a single publication that cannot fit alone refuses; invalid or unsafe
+evidence, a file over its own bound or the signal bound refuses as before. A
+refusal retains the old index. Expiration prunes only catalog-owned source files. Local saves do
 not expire. Backfill currently covers September 11 and 14, with two September 11
 revisions. Search loads one index; inspection loads context and one original.
 Measurements and their replay limitations are in `measurements.json`.

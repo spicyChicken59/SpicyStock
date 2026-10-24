@@ -137,8 +137,9 @@ def publish(raw, root, *, source_commit=None):
     Past either cap (``RECORDS_MAX`` records, ``CATALOG_BYTES_MAX`` bytes) the
     records still inside their window give way, oldest session first, then
     the earlier publication, then the digest, until tonight's fits; tonight's
-    record never does. Only tonight's record alone past the byte cap refuses,
-    with the existing index and every file left as they were. An evicted
+    record never does. Of the caps, only tonight's record alone past the byte
+    cap refuses; the evidence and identity checks above refuse as before. Each
+    refusal leaves the existing index and every file as they were. An evicted
     record's originals stay in git; the page reads it as unavailable, as it
     does an expired one.
     """
@@ -197,7 +198,7 @@ def publish(raw, root, *, source_commit=None):
                         "sha256": hashlib.sha256(evidence).hexdigest(), "chart": bool(series)})
         if row.get("evidence"):
             entries[-1]["evidence_id"] = row["evidence"]["id"]
-    kept_bytes = {k: sum(p.stat().st_size for p in (root / k).glob('*.json')) for k in records if k != source}
+    kept_bytes = {k: sum(p.stat().st_size for p in (root / k).glob('*') if p.is_file()) for k in records if k != source}
     oldest_first = sorted(kept_bytes, key=lambda k: (records[k]["session"], records[k].get("published_at") or "", k))
     evicted = []
     while True:
@@ -225,19 +226,37 @@ def publish(raw, root, *, source_commit=None):
         temp = path.with_suffix('.tmp')
         temp.write_bytes(body)
         temp.replace(path)
-    # Only source IDs formerly owned by our index can be pruned.
-    for expired in set(old["records"]) - set(records):
-        if re.fullmatch(r"[a-f0-9]{40}", expired):
-            for p in (root / expired).glob('*.json'):
-                p.unlink()
-            (root / expired).rmdir()
-    _log_catalog(index, size, evicted)
+    # Only source IDs formerly owned by our index can be pruned. Every file in
+    # such a directory is the catalog's own (an interrupted write leaves a .tmp),
+    # a directory already gone is already pruned, and one that cannot be removed
+    # is named without stopping the others.
+    stranded = []
+    for expired in sorted(set(old["records"]) - set(records)):
+        if not re.fullmatch(r"[a-f0-9]{40}", expired):
+            continue
+        folder = root / expired
+        try:
+            if folder.is_symlink():
+                folder.unlink()
+            elif folder.is_dir():
+                for p in folder.iterdir():
+                    if p.is_symlink() or not p.is_dir():
+                        p.unlink()
+                folder.rmdir()
+        except OSError:
+            stranded.append(expired)
+    _log_catalog(index, size, evicted, stranded)
     return index
 
 
-def _log_catalog(index, size, evicted):
+def _log_catalog(index, size, evicted, stranded=()):
     """State the catalog against both caps, once a night; never raises."""
     try:
+        if stranded:
+            one = len(stranded) == 1
+            log.warning("Recovery catalog: %d record %s could not be removed (%s); %s no longer catalogued.",
+                        len(stranded), "directory" if one else "directories", ", ".join(stranded),
+                        "it is" if one else "they are")
         if evicted:
             one = len(evicted) == 1
             log.warning("Recovery catalog: %d %s inside %s %d-day window %s removed, oldest first (%s), "

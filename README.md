@@ -735,8 +735,10 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    per publication, within 128 MiB. Past the publication or byte cap the records
    still inside their window give way, oldest session first (then the earlier
    publication of a session, then the digest), until the night's own record fits;
-   that record never gives way, and only a record too large to fit alone refuses
-   the catalog, leaving the old one. The run log states the catalog against both
+   that record never gives way. Of the caps, only a record too large to fit
+   alone refuses the catalog; an invalid or unsafe original, a file over 256 KiB
+   or more than 10,000 signals refuses as before. Each refusal leaves the old
+   catalog. The run log states the catalog against both
    caps, warns past 80% of either, and names the sessions that gave way; the
    catalog is written before the quality ledger, which captures the night
    whatever the catalog did. Originals load only when selected; chart
