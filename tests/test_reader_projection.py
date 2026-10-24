@@ -145,6 +145,8 @@ def test_fixed_publication_rollback_and_sidecar_installation_order(previous, fai
             if Path(name) in old_files: assert (docs / name).read_bytes() == old_files[Path(name)]
             else: assert not (docs / name).exists()
         for name, body in old_files.items(): assert (docs / name).read_bytes() == body
+        # Tonight's object leaves with the rollback: nothing is left unowned.
+        assert {p.relative_to(docs) for p in docs.rglob("*.json")} == set(old_files)
     else:
         expected = (stage / "data.json").read_bytes()
         reader.install_publication(stage, docs, ["picks.json", "data.json"])
@@ -383,10 +385,418 @@ def test_cleanup_manifest_failure_does_not_accumulate_already_deleted_ownership(
     stage = staged(tmp_path, dated_source(date(2026, 2, 2), 5), "recovery-stage")
     reader_raw = (stage / reader.READER_FILE).read_bytes()
     ref = reader.parse_reader(reader_raw)["retained_observations"]
-    index, expired, additions = reader._retention(stage, docs, ref, (stage / "data.json").read_bytes())
+    index, expired, additions, evicted = reader._retention(stage, docs, ref, (stage / "data.json").read_bytes())
+    assert evicted == []
     assert first["sha256"] not in index["objects"] and second["sha256"] not in index["objects"]
     assert len(index["objects"]) == 3
     reader.install_publication(stage, docs, ["picks.json", "data.json"])
+    reader.check_assets(docs)
+
+
+def archive_files(docs):
+    return {p.name: p.read_bytes() for p in (docs / reader.OBSERVATION_DIR).iterdir()}
+
+
+def five_days(tmp_path, docs):
+    """Five daily publications, every superseded object inside its grace."""
+    return [publish_dated(tmp_path, docs, date(2026, 3, 2) + timedelta(days=n), n + 1) for n in range(5)]
+
+
+@pytest.mark.parametrize("bound", ["count", "bytes"])
+def test_past_the_capacity_the_oldest_objects_inside_their_grace_give_way(bound, tmp_path, monkeypatch, caplog):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    refs = five_days(tmp_path, docs)
+    held = {name: len(body) for name, body in archive_files(docs).items() if name != "retention.json"}
+    assert len(held) == 5
+    # The archive is full as it stands: tonight's object needs room.
+    if bound == "count": monkeypatch.setattr(reader, "MAX_SIDECARS", 5)
+    else: monkeypatch.setattr(reader, "MAX_ARCHIVE_BYTES", sum(held.values()))
+    caplog.set_level("INFO", logger="spicystock.reader")
+    tonight = publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    gone, kept = refs[:1], refs[1:] + [tonight]
+    if bound == "bytes":
+        # Every object here is the same length, so one leaves for one.
+        assert len({len((docs / r["path"]).read_bytes()) for r in kept}) == 1
+    for ref in gone: assert not (docs / ref["path"]).exists()
+    for ref in kept: assert (docs / ref["path"]).exists()
+    index = json.loads((docs / reader.RETENTION_FILE).read_bytes())
+    assert set(index["objects"]) == {r["sha256"] for r in kept}
+    reader.check_assets(docs)
+    warned = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
+    size = len((docs / refs[1]["path"]).read_bytes())
+    assert (f"Reader observation archive: 1 object inside its 21-day grace was removed, oldest first, "
+            f"so the publication fits the cap of {reader.MAX_SIDECARS} objects and "
+            f"{reader.MAX_ARCHIVE_BYTES} bytes ({size} bytes; git keeps it).") in warned
+
+
+def test_the_served_and_the_replaced_object_never_give_way_and_nothing_moves_on_refusal(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    five_days(tmp_path, docs)
+    before = {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")}
+    # Room for tonight's object alone: the one it replaces cannot leave, so
+    # the others the loop chose stay too, since nothing leaves before the
+    # fixed files are installed.
+    tonight = staged(tmp_path, dated_source(date(2026, 3, 7), 6), "tonight-size")
+    ref = reader.parse_reader((tonight / reader.READER_FILE).read_bytes())["retained_observations"]
+    monkeypatch.setattr(reader, "MAX_ARCHIVE_BYTES", ref["bytes"] + 1)
+    with pytest.raises(ValueError, match="explicit retention decision"):
+        publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    assert {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")} == before
+
+
+def test_an_object_served_again_is_the_served_object_and_never_gives_way(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    first = publish_dated(tmp_path, docs, date(2026, 3, 2), 1)
+    middle = publish_dated(tmp_path, docs, date(2026, 3, 3), 2)
+    publish_dated(tmp_path, docs, date(2026, 3, 4), 3)
+    # An owner's file the archive does not own holds most of the room.
+    unknown = docs / reader.OBSERVATION_DIR / "owner-kept-copy.json"
+    unknown.write_bytes(b"x" * 10_000)
+    held = sum(len(b) for n, b in archive_files(docs).items() if n != "retention.json")
+    # Tonight serves the first day's object again: it is on disk already.
+    # Only the middle object may leave, and it frees too little.
+    size = len((docs / first["path"]).read_bytes())
+    assert len((docs / middle["path"]).read_bytes()) == size
+    monkeypatch.setattr(reader, "MAX_ARCHIVE_BYTES", held - size - 1)
+    before = {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")}
+    with pytest.raises(ValueError, match="explicit retention decision"):
+        publish_dated(tmp_path, docs, date(2026, 3, 5), 1)
+    assert {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")} == before
+    assert (docs / first["path"]).exists() and (docs / middle["path"]).exists()
+
+
+def test_objects_sharing_a_last_session_leave_in_digest_order(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    day = date(2026, 3, 2)
+    revisions = [publish_dated(tmp_path, docs, day, close) for close in (1, 2, 3)]
+    # The first two were superseded on the same session.
+    index = json.loads((docs / reader.RETENTION_FILE).read_bytes())
+    assert index["objects"][revisions[0]["sha256"]]["last_session"] == \
+        index["objects"][revisions[1]["sha256"]]["last_session"]
+    # The manifest lists them in the other order from their digests, so an
+    # order that read the session alone would keep the manifest's.
+    tied = [sha for sha in index["objects"] if sha in {r["sha256"] for r in revisions[:2]}]
+    assert tied != sorted(tied)
+    monkeypatch.setattr(reader, "MAX_SIDECARS", 3)
+    publish_dated(tmp_path, docs, day + timedelta(days=1), 4)
+    first, second = sorted(revisions[:2], key=lambda r: r["sha256"])
+    assert not (docs / first["path"]).exists() and (docs / second["path"]).exists()
+    assert (docs / revisions[2]["path"]).exists()
+
+
+def test_an_owned_object_whose_bytes_differ_is_refused_not_removed_for_capacity(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    refs = five_days(tmp_path, docs)
+    oldest = docs / refs[0]["path"]
+    body = oldest.read_bytes()
+    oldest.write_bytes(body[:-2] + b" }")  # Same length, other bytes.
+    assert len(oldest.read_bytes()) == len(body)
+    before = {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")}
+    monkeypatch.setattr(reader, "MAX_SIDECARS", 5)
+    with pytest.raises(ValueError, match="ownership differs; nothing was removed"):
+        publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    assert {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")} == before
+
+
+def test_an_unknown_file_counts_against_the_capacity_but_never_gives_way(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    refs = five_days(tmp_path, docs)
+    unknown = docs / reader.OBSERVATION_DIR / "owner-kept-copy.json"
+    unknown.write_bytes(b"never delete unknown files")
+    monkeypatch.setattr(reader, "MAX_SIDECARS", 6)
+    tonight = publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    assert unknown.read_bytes() == b"never delete unknown files"
+    assert not (docs / refs[0]["path"]).exists()
+    assert all((docs / r["path"]).exists() for r in refs[1:] + [tonight])
+
+
+def test_objects_removed_for_capacity_stay_when_the_fixed_publication_rolls_back(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    refs = five_days(tmp_path, docs)
+    before = {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")}
+    monkeypatch.setattr(reader, "MAX_SIDECARS", 5)
+    replace = reader.os.replace
+    def fault(source, target):
+        if Path(target) == docs / "data.json":
+            raise OSError("fixed publication failed")
+        return replace(source, target)
+    with monkeypatch.context() as patch:
+        patch.setattr(reader.os, "replace", fault)
+        with pytest.raises(OSError, match="fixed publication"):
+            publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    assert (docs / refs[0]["path"]).exists()
+    for path, body in before.items(): assert (docs / path).read_bytes() == body
+
+
+@pytest.mark.parametrize("full", [False, True])
+def test_the_run_log_states_the_archive_against_its_cap(full, tmp_path, monkeypatch, caplog):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    five_days(tmp_path, docs)
+    held = sum(len(b) for n, b in archive_files(docs).items() if n != "retention.json")
+    size = len((docs / json.loads((docs / reader.READER_FILE).read_bytes())
+                ["retained_observations"]["path"]).read_bytes())
+    # An owner's file counts in the archive's figures as on its disk.
+    (docs / reader.OBSERVATION_DIR / "owner-kept-copy.json").write_bytes(b"kept")
+    held += len(b"kept")
+    # The sixth object brings the archive to ``held + size`` bytes.
+    cap = (held + size) * 2 if not full else int((held + size) / reader.RETENTION_WARN_FRACTION) - 1
+    monkeypatch.setattr(reader, "MAX_ARCHIVE_BYTES", cap)
+    caplog.set_level("INFO", logger="spicystock.reader")
+    publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    lines = [(r.levelname, r.getMessage()) for r in caplog.records if r.name == "spicystock.reader"]
+    after = sum(len(b) for n, b in archive_files(docs).items() if n != "retention.json")
+    assert after == held + size
+    assert ("WARNING" if full else "INFO",
+            f"Reader observation archive: 7 of {reader.MAX_SIDECARS} objects, {after} of {cap} bytes.") in lines
+    assert not any("grace" in m for _, m in lines)
+
+
+@pytest.mark.parametrize("fraction, warned", [(0.6, False), (0.59, True)])
+def test_the_run_log_warns_on_the_object_count_too(fraction, warned, tmp_path, monkeypatch, caplog):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    five_days(tmp_path, docs)
+    # Six objects of ten: at exactly the fraction the log does not warn, since
+    # it warns past it (with the real 80%, nine of ten would warn, eight not).
+    count = 10
+    monkeypatch.setattr(reader, "MAX_SIDECARS", count)
+    monkeypatch.setattr(reader, "RETENTION_WARN_FRACTION", fraction)
+    caplog.set_level("INFO", logger="spicystock.reader")
+    publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    lines = [(r.levelname, r.getMessage()) for r in caplog.records if r.name == "spicystock.reader"]
+    assert [level for level, m in lines if m.startswith(f"Reader observation archive: 6 of {count} objects")] \
+        == ["WARNING" if warned else "INFO"]
+
+
+def test_a_manifest_update_that_failed_after_the_removals_is_said_as_such(tmp_path, monkeypatch, caplog, capsys):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    refs = five_days(tmp_path, docs)
+    monkeypatch.setattr(reader, "MAX_SIDECARS", 5)
+    caplog.set_level("INFO", logger="spicystock.reader")
+    with monkeypatch.context() as patch:
+        fail_cleanup_rename(docs, patch)
+        publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    assert "verified publication is intact" in capsys.readouterr().out
+    assert not (docs / refs[0]["path"]).exists()
+    size = len((docs / refs[1]["path"]).read_bytes())
+    assert ("WARNING", f"Reader observation archive: 1 object inside its 21-day grace was removed, oldest first, "
+            f"so the publication fits the cap of 5 objects and {reader.MAX_ARCHIVE_BYTES} bytes ({size} bytes; "
+            f"git keeps it). The manifest update failed; the next publication retires it.") in \
+        [(r.levelname, r.getMessage()) for r in caplog.records if r.name == "spicystock.reader"]
+
+
+def test_an_archive_the_log_cannot_measure_never_fails_the_installed_publication(tmp_path, monkeypatch, caplog):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    five_days(tmp_path, docs)
+    listings = []
+    iterdir = Path.iterdir
+    def fail(path):
+        if path == docs / reader.OBSERVATION_DIR:
+            listings.append(path)
+            if len(listings) == 2: raise OSError("injected listing failure")
+        return iterdir(path)
+    caplog.set_level("INFO", logger="spicystock.reader")
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "iterdir", fail)
+        tonight = publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    # The plan listed the archive once; the log's listing was the second.
+    assert len(listings) == 2 and (docs / tonight["path"]).exists()
+    reader.check_assets(docs)
+    assert ("WARNING", "Reader observation archive could not be measured (injected listing failure).") in \
+        [(r.levelname, r.getMessage()) for r in caplog.records if r.name == "spicystock.reader"]
+
+
+def test_an_owners_file_past_the_working_set_sends_the_planned_removals_first(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    refs = five_days(tmp_path, docs)
+    monkeypatch.setattr(reader, "MAX_SIDECARS", 5)
+    unknown = docs / reader.OBSERVATION_DIR / "owner-kept-copy.json"
+    unknown.write_bytes(b"never delete unknown files")
+    replace = reader.os.replace
+    def fault(source, target):
+        if Path(target) == docs / "data.json": raise OSError("fixed publication failed")
+        return replace(source, target)
+    with monkeypatch.context() as patch:
+        patch.setattr(reader.os, "replace", fault)
+        with pytest.raises(OSError, match="fixed publication"):
+            publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    # Six files and tonight's would be past the working set: the two oldest,
+    # planned for removal, went first and the rollback keeps the rest.
+    assert unknown.read_bytes() == b"never delete unknown files"
+    assert not (docs / refs[0]["path"]).exists() and not (docs / refs[1]["path"]).exists()
+    assert all((docs / r["path"]).exists() for r in refs[2:])
+    tonight = publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    on_disk = {p.stem for p in (docs / reader.OBSERVATION_DIR).iterdir()
+               if p.name not in ("retention.json", unknown.name)}
+    assert set(json.loads((docs / reader.RETENTION_FILE).read_bytes())["objects"]) == on_disk
+    assert tonight["sha256"] in on_disk
+    reader.check_assets(docs)
+
+
+def test_an_expired_object_and_one_inside_its_grace_leave_on_the_same_night(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    start = date(2026, 3, 2)
+    refs = [publish_dated(tmp_path, docs, start + timedelta(days=n), n + 1) for n in range(23)]
+    tonight_day = start + timedelta(days=23)
+    # refs[0] was superseded on day 1: tonight it passes the 21-day cutoff.
+    cutoff = (tonight_day - timedelta(days=reader.RETENTION_DAYS)).isoformat()
+    index = json.loads((docs / reader.RETENTION_FILE).read_bytes())
+    assert index["objects"][refs[0]["sha256"]]["last_session"] < cutoff
+    assert index["objects"][refs[1]["sha256"]]["last_session"] >= cutoff
+    stage = staged(tmp_path, dated_source(tonight_day, 24), "tonight-size")
+    size = reader.parse_reader((stage / reader.READER_FILE).read_bytes())["retained_observations"]["bytes"]
+    # Room for refs[2:] and tonight's object: refs[1], inside its grace, goes too.
+    monkeypatch.setattr(reader, "MAX_ARCHIVE_BYTES",
+                        sum(len((docs / r["path"]).read_bytes()) for r in refs[2:]) + size)
+    tonight = publish_dated(tmp_path, docs, tonight_day, 24)
+    assert not (docs / refs[0]["path"]).exists() and not (docs / refs[1]["path"]).exists()
+    assert all((docs / r["path"]).exists() for r in refs[2:] + [tonight])
+    index = json.loads((docs / reader.RETENTION_FILE).read_bytes())
+    assert set(index["objects"]) == {r["sha256"] for r in refs[2:] + [tonight]}
+    reader.check_assets(docs)
+
+
+def test_the_oldest_leaves_first_whatever_the_sizes(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    # The oldest object is neither the smallest nor the largest.
+    closes = [1000, 1, 1000000000, 10, 100]
+    refs = [publish_dated(tmp_path, docs, date(2026, 3, 2) + timedelta(days=n), close)
+            for n, close in enumerate(closes)]
+    sizes = [len((docs / r["path"]).read_bytes()) for r in refs]
+    assert min(sizes[1:4]) < sizes[0] < max(sizes[1:4])
+    stage = staged(tmp_path, dated_source(date(2026, 3, 7), 2), "tonight-size")
+    size = reader.parse_reader((stage / reader.READER_FILE).read_bytes())["retained_observations"]["bytes"]
+    # Room for everything but the oldest object.
+    monkeypatch.setattr(reader, "MAX_ARCHIVE_BYTES", sum(sizes[1:]) + size)
+    tonight = publish_dated(tmp_path, docs, date(2026, 3, 7), 2)
+    assert not (docs / refs[0]["path"]).exists()
+    assert all((docs / r["path"]).exists() for r in refs[1:] + [tonight])
+
+
+def test_an_owned_object_whose_length_differs_from_its_manifest_is_refused(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    refs = five_days(tmp_path, docs)
+    index_path = docs / reader.RETENTION_FILE
+    index = json.loads(index_path.read_bytes())
+    # The file still hashes to its name; the manifest's length does not match it.
+    index["objects"][refs[0]["sha256"]]["bytes"] -= 1
+    index_path.write_bytes(json.dumps(index, separators=(",", ":")).encode())
+    before = {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")}
+    monkeypatch.setattr(reader, "MAX_SIDECARS", 5)
+    with pytest.raises(ValueError, match="ownership differs; nothing was removed"):
+        publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    assert {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")} == before
+
+
+def fail_cleanup_rename(docs, monkeypatch):
+    """The manifest rename after the removals fails, once."""
+    replace = reader.os.replace
+    renames = []
+    def fault(source, target):
+        if Path(target) == docs / reader.RETENTION_FILE:
+            renames.append(True)
+            if len(renames) == 2: raise OSError("cleanup manifest rename failed")
+        return replace(source, target)
+    monkeypatch.setattr(reader.os, "replace", fault)
+
+
+def test_an_object_removed_for_capacity_whose_manifest_write_failed_is_retired_next_night(
+        tmp_path, monkeypatch, capsys):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    refs = five_days(tmp_path, docs)
+    monkeypatch.setattr(reader, "MAX_SIDECARS", 5)
+    with monkeypatch.context() as patch:
+        fail_cleanup_rename(docs, patch)
+        sixth = publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    assert "verified publication is intact" in capsys.readouterr().out
+    # The file is gone, and the manifest still owns it, inside its grace.
+    assert not (docs / refs[0]["path"]).exists()
+    assert refs[0]["sha256"] in json.loads((docs / reader.RETENTION_FILE).read_bytes())["objects"]
+    seventh = publish_dated(tmp_path, docs, date(2026, 3, 8), 7)
+    index = json.loads((docs / reader.RETENTION_FILE).read_bytes())
+    on_disk = {p.stem for p in (docs / reader.OBSERVATION_DIR).iterdir() if p.name != "retention.json"}
+    assert set(index["objects"]) == on_disk
+    assert on_disk == {r["sha256"] for r in refs[2:] + [sixth, seventh]}
+    reader.check_assets(docs)
+
+
+def test_two_failed_cleanups_in_a_row_leave_a_manifest_the_next_night_still_reads(tmp_path, monkeypatch, capsys):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    refs = five_days(tmp_path, docs)
+    monkeypatch.setattr(reader, "MAX_SIDECARS", 5)
+    original = Path.unlink
+    def fail(path, *args, **kwargs):
+        if path.parent == docs / reader.OBSERVATION_DIR: raise OSError("injected cleanup failure")
+        return original(path, *args, **kwargs)
+    # Night six: the removal fails and leaves its file.
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "unlink", fail)
+        sixth = publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    # Night seven: the early retry removes the files; the manifest rename fails.
+    with monkeypatch.context() as patch:
+        fail_cleanup_rename(docs, patch)
+        seventh = publish_dated(tmp_path, docs, date(2026, 3, 8), 7)
+    assert capsys.readouterr().out.count("verified publication is intact") == 2
+    index = json.loads((docs / reader.RETENTION_FILE).read_bytes())
+    assert len(index["objects"]) == reader.MAX_SIDECARS + 2
+    eighth = publish_dated(tmp_path, docs, date(2026, 3, 9), 8)
+    on_disk = {p.stem for p in (docs / reader.OBSERVATION_DIR).iterdir() if p.name != "retention.json"}
+    assert on_disk == {r["sha256"] for r in refs[3:] + [sixth, seventh, eighth]}
+    assert set(json.loads((docs / reader.RETENTION_FILE).read_bytes())["objects"]) == on_disk
+    reader.check_assets(docs)
+
+
+@pytest.mark.parametrize("persistent", [False, True])
+def test_a_failed_removal_at_the_cap_is_retried_before_the_next_night_is_refused(
+        persistent, tmp_path, monkeypatch, capsys, caplog):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    refs = five_days(tmp_path, docs)
+    monkeypatch.setattr(reader, "MAX_SIDECARS", 5)
+    original = Path.unlink
+    def fail(path, *args, **kwargs):
+        if path.parent == docs / reader.OBSERVATION_DIR: raise OSError("injected cleanup failure")
+        return original(path, *args, **kwargs)
+    caplog.set_level("INFO", logger="spicystock.reader")
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "unlink", fail)
+        sixth = publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    assert "verified publication is intact" in capsys.readouterr().out
+    size = len((docs / refs[0]["path"]).read_bytes())
+    assert ("WARNING", f"Reader observation archive: 1 object inside its 21-day grace was chosen for removal, "
+            f"oldest first, to fit the cap of 5 objects and {reader.MAX_ARCHIVE_BYTES} bytes ({size} bytes); "
+            f"1 could not be removed and the next publication retries.") in \
+        [(r.levelname, r.getMessage()) for r in caplog.records if r.name == "spicystock.reader"]
+    # The leftover sits on disk: six files where the cap is five.
+    assert (docs / refs[0]["path"]).exists()
+    if persistent:
+        before = {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")}
+        with monkeypatch.context() as patch:
+            patch.setattr(Path, "unlink", fail)
+            with pytest.raises(ValueError, match="cleanup is required before another publication"):
+                publish_dated(tmp_path, docs, date(2026, 3, 8), 7)
+        assert {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")} == before
+        return
+    seventh = publish_dated(tmp_path, docs, date(2026, 3, 8), 7)
+    on_disk = {p.stem for p in (docs / reader.OBSERVATION_DIR).iterdir() if p.name != "retention.json"}
+    assert on_disk == {r["sha256"] for r in refs[2:] + [sixth, seventh]}
+    assert set(json.loads((docs / reader.RETENTION_FILE).read_bytes())["objects"]) == on_disk
     reader.check_assets(docs)
 
 

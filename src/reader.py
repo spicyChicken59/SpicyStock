@@ -2,9 +2,11 @@
 
 Derivation is pure: source bytes, recommendation receipts and historical
 observations are never changed. Transport hashes bind exact UTF-8 bytes.
-Immutable observation objects retain a bounded old-tab grace window. Only
-expired objects tracked by this transport's ownership manifest are pruned;
-canonical records, histories, and unrelated evidence are never deleted.
+Immutable observation objects retain a bounded old-tab grace window; past the
+archive's capacity, the oldest owned objects inside it give way before a
+publication is refused. Only objects tracked by this transport's ownership
+manifest are pruned; canonical records, histories, and unrelated evidence are
+never deleted.
 """
 from __future__ import annotations
 
@@ -13,6 +15,7 @@ from copy import deepcopy
 from datetime import date, timedelta
 import hashlib
 import json
+import logging
 import os
 from pathlib import Path
 import re
@@ -31,6 +34,9 @@ RETENTION_FILE = f"{OBSERVATION_DIR}/retention.json"
 RETENTION_DAYS = 21
 MAX_RETENTION_BYTES = 64 * 1024
 HEX = re.compile(r"[a-f0-9]{64}\Z")
+RETENTION_WARN_FRACTION = 0.8  # of the cap, after tonight's removals: the run log warns
+
+log = logging.getLogger("spicystock.reader")
 
 
 def _require(condition, message):
@@ -190,7 +196,7 @@ def _retention(stage, docs, ref, canonical_raw):
                  and type(previous["schema_version"]) is int and previous["schema_version"] == VERSION
                  and isinstance(previous["objects"], dict), "invalid reader retention manifest")
         _session(previous["as_of"])
-        _require(len(previous["objects"]) <= MAX_SIDECARS + 1, "reader retention manifest exceeds bound")
+        _require(len(previous["objects"]) <= MAX_SIDECARS + 2, "reader retention manifest exceeds bound")
         for sha, entry in previous["objects"].items():
             _require(isinstance(sha, str) and HEX.fullmatch(sha) and isinstance(entry, dict)
                      and set(entry) == {"last_session", "bytes"}
@@ -203,6 +209,7 @@ def _retention(stage, docs, ref, canonical_raw):
     # The formerly current object's grace begins when it is superseded, even
     # after a publication gap. A currently served old object is never expired.
     current = docs / READER_FILE
+    superseded = False
     if current.exists() or current.is_symlink():
         current_raw = _regular(current, MAX_READER_BYTES)
         expected_current, expected_old_observations = derive(
@@ -216,6 +223,7 @@ def _retention(stage, docs, ref, canonical_raw):
             _require(old_raw == expected_old_observations,
                      "current reader observation object is not verified")
         objects[old_ref["sha256"]] = {"last_session": as_of.isoformat(), "bytes": old_ref["bytes"]}
+        superseded = True
     objects[ref["sha256"]] = {"last_session": as_of.isoformat(), "bytes": ref["bytes"]}
     cutoff = (as_of - timedelta(days=RETENTION_DAYS)).isoformat()
     expired = {sha for sha, entry in objects.items() if entry["last_session"] < cutoff}
@@ -232,12 +240,15 @@ def _retention(stage, docs, ref, canonical_raw):
             _require(_hash(raw) == sha and len(raw) == objects[sha]["bytes"],
                      "expired reader object ownership differs; nothing was removed")
             removable.append(path)
-    # A prior cleanup may have removed files before its manifest rename failed.
-    # Retire only those already absent expired entries before growing the index.
-    absent_expired = {sha for sha in expired if not (archive / (sha + ".json")).exists()}
-    for sha in absent_expired:
+    # A prior cleanup may have removed files before its manifest rename failed,
+    # expired ones or ones the capacity chose inside their grace. Retire every
+    # owned entry whose file is already gone before growing the index; only
+    # tonight's object may be absent here, since it is written after this plan.
+    absent = {sha for sha in objects
+              if sha != ref["sha256"] and not (archive / (sha + ".json")).exists()}
+    for sha in absent:
         del objects[sha]
-    expired -= absent_expired
+    expired -= absent
     raw = _regular(stage / ref["path"], MAX_OBSERVATION_BYTES)
     if target.exists() or target.is_symlink():
         _require(_regular(target, MAX_OBSERVATION_BYTES) == raw,
@@ -246,22 +257,61 @@ def _retention(stage, docs, ref, canonical_raw):
     added_bytes = 0 if not additions else len(raw)
     object_files = [p for p in files if p.name != "retention.json"]
     retained = [p for p in object_files if p not in removable]
-    _require(len(retained) + additions <= MAX_SIDECARS
-             and sum(path.stat().st_size for path in retained) + added_bytes <= MAX_ARCHIVE_BYTES,
-             "reader observation archive capacity exceeded; explicit retention decision required")
-    # One new object may coexist with expired objects until the fixed files
-    # commit. A failed cleanup cannot grow this working set without bound.
-    _require(len(object_files) + additions <= MAX_SIDECARS + 1
-             and sum(path.stat().st_size for path in object_files) + added_bytes
-             <= MAX_ARCHIVE_BYTES + MAX_OBSERVATION_BYTES,
-             "reader retention cleanup is required before another publication")
+
+    def fits():
+        return (len(retained) + additions <= MAX_SIDECARS
+                and sum(path.stat().st_size for path in retained) + added_bytes <= MAX_ARCHIVE_BYTES)
+
+    # Past the capacity, an old tab's copy gives way before tonight's
+    # publication does: the owned objects inside their grace leave oldest
+    # first, never the object served now or the one it replaces, and never a
+    # file whose bytes are not the object the manifest owns.
+    protected = {ref["sha256"]} | ({old_ref["sha256"]} if superseded else set())
+    evicted = []
+    for sha in sorted((sha for sha in objects if sha not in expired and sha not in protected),
+                      key=lambda sha: (objects[sha]["last_session"], sha)):
+        if fits():
+            break
+        path = archive / (sha + ".json")
+        body = _regular(path, MAX_OBSERVATION_BYTES)
+        _require(_hash(body) == sha and len(body) == objects[sha]["bytes"],
+                 "reader object ownership differs; nothing was removed")
+        removable.append(path)
+        retained.remove(path)
+        evicted.append(sha)
+    expired |= set(evicted)
+    _require(fits(), "reader observation archive capacity exceeded; explicit retention decision required")
+
+    def working_set_fits():
+        return (len(object_files) + additions <= MAX_SIDECARS + 1
+                and sum(path.stat().st_size for path in object_files) + added_bytes
+                <= MAX_ARCHIVE_BYTES + MAX_OBSERVATION_BYTES)
+
+    # One new object may coexist with tonight's planned removals until the
+    # fixed files commit. Removals wait for that commit unless the working set
+    # is already past its bound, from a cleanup that failed on an earlier
+    # night or a file the archive does not own: then the planned removals,
+    # verified above, go first, so one failure is not every later night's
+    # refusal, and a rollback keeps only what had not gone yet. A cleanup that
+    # fails again leaves the bound to refuse.
+    if not working_set_fits():
+        try:
+            for path in removable:
+                path.unlink()
+        except OSError:
+            pass
+        object_files = [p for p in object_files if p.exists()]
+    _require(working_set_fits(), "reader retention cleanup is required before another publication")
     index = {"schema_version": VERSION, "as_of": as_of.isoformat(), "objects": objects}
-    _require(len(objects) <= MAX_SIDECARS + 1,
+    # Kept entries fit the cap; the rest are tonight's planned removals, each a
+    # file the archive held, which the working set holds to one past the cap,
+    # beside tonight's object. A failed cleanup leaves this index as written.
+    _require(len(objects) - len(expired) <= MAX_SIDECARS and len(objects) <= MAX_SIDECARS + 2,
              "reader retention ownership exceeds bound; explicit retention decision required")
     index_raw = _encode(index)
     _require(len(index_raw) <= MAX_RETENTION_BYTES, "reader retention manifest bytes exceed bound")
     _write(stage / RETENTION_FILE, index_raw)
-    return index, expired, additions
+    return index, expired, additions, evicted
 
 
 def _retain_object(stage, docs, ref, additions):
@@ -272,14 +322,15 @@ def _retain_object(stage, docs, ref, additions):
 
 
 def _prune_owned(stage, docs, index, expired):
-    """Prune owned expired cache files after successful fixed publication.
+    """Prune owned cache files after successful fixed publication: expired
+    ones, and any the capacity required inside their grace.
 
     Cleanup failure keeps ownership metadata for retry and is announced. The
     already verified publication remains usable; working-set bounds prevent
     repeated cleanup failures from growing the transport archive indefinitely.
     """
     if not expired:
-        return
+        return True
     try:
         cleaned = deepcopy(index)
         for sha in expired:
@@ -290,7 +341,10 @@ def _prune_owned(stage, docs, index, expired):
         _write(stage / RETENTION_FILE, _encode(cleaned))
         os.replace(stage / RETENTION_FILE, docs / RETENTION_FILE)
     except OSError:
-        print("Reader retention cleanup failed; verified publication is intact and owned cleanup will retry.")
+        print("Reader retention cleanup failed; verified publication is intact and owned cleanup "
+              "will retry at the next publication.")
+        return False
+    return True
 
 
 def install_publication(stage: Path, docs: Path, names: tuple[str, ...] | list[str]) -> None:
@@ -298,8 +352,9 @@ def install_publication(stage: Path, docs: Path, names: tuple[str, ...] | list[s
 
     Canonical data is installed last. Ordinary rename failures roll fixed files
     back byte-for-byte. Process death between renames remains the existing
-    multi-file publication limitation. Only owned expired transport objects
-    are removed, after successful installation and outside the grace window.
+    multi-file publication limitation. Only owned transport objects are
+    removed, after successful installation: those outside the grace window,
+    and the oldest inside it when the capacity requires.
     """
     stage, docs = Path(stage), Path(docs)
     _require(list(names) in (["data.json"], ["picks.json", "data.json"], []),
@@ -309,7 +364,7 @@ def install_publication(stage: Path, docs: Path, names: tuple[str, ...] | list[s
     ref = parse_reader(reader_raw)["retained_observations"]
     observations_raw = _regular(stage / ref["path"], MAX_OBSERVATION_BYTES)
     validate_bundle(canonical_raw, reader_raw, observations_raw)
-    index, expired, additions = _retention(stage, docs, ref, canonical_raw)
+    index, expired, additions, evicted = _retention(stage, docs, ref, canonical_raw)
     fixed_names = [RETENTION_FILE, READER_FILE, *names]
     previous = {}
     for name in fixed_names:
@@ -329,8 +384,50 @@ def install_publication(stage: Path, docs: Path, names: tuple[str, ...] | list[s
             else:
                 _write(stage / name, previous[name])
                 os.replace(stage / name, docs / name)
+        # Tonight's object came in with this install and no restored manifest
+        # owns it: it leaves too, or it would sit in the archive as nobody's.
+        if additions:
+            try:
+                (docs / ref["path"]).unlink()
+            except OSError:
+                pass
         raise
-    _prune_owned(stage, docs, index, expired)
+    cleaned = _prune_owned(stage, docs, index, expired)
+    _log_archive(docs, evicted, index, cleaned)
+
+
+def _log_archive(docs, evicted, index, cleaned):
+    """What the run log says of the archive once tonight's removals are done.
+    It describes an installed publication and never fails it."""
+    try:
+        files = [path for path in (docs / OBSERVATION_DIR).iterdir()
+                 if path.name != "retention.json" and path.is_file() and not path.is_symlink()]
+        held = sum(path.stat().st_size for path in files)
+    except OSError as exc:
+        log.warning("Reader observation archive could not be measured (%s).", exc)
+        return
+    if evicted:
+        one = len(evicted) == 1
+        what = (f"{len(evicted)} {'object' if one else 'objects'} inside {'its' if one else 'their'} "
+                f"{RETENTION_DAYS}-day grace")
+        cap = f"the cap of {MAX_SIDECARS} objects and {MAX_ARCHIVE_BYTES} bytes"
+        removed = sum(index["objects"][sha]["bytes"] for sha in evicted)
+        left = [sha for sha in evicted if (docs / OBSERVATION_DIR / (sha + ".json")).exists()]
+        if not left:
+            log.warning("Reader observation archive: %s %s removed, oldest first, so the publication "
+                        "fits %s (%d bytes; git keeps %s).%s", what, "was" if one else "were", cap,
+                        removed, "it" if one else "them",
+                        "" if cleaned else " The manifest update failed; the next publication retires "
+                        + ("it." if one else "them."))
+        else:
+            log.warning("Reader observation archive: %s %s chosen for removal, oldest first, to fit %s "
+                        "(%d bytes); %d could not be removed and the next publication retries.",
+                        what, "was" if one else "were", cap, removed, len(left))
+    full = (held > MAX_ARCHIVE_BYTES * RETENTION_WARN_FRACTION
+            or len(files) > MAX_SIDECARS * RETENTION_WARN_FRACTION)
+    log.log(logging.WARNING if full else logging.INFO,
+            "Reader observation archive: %d of %d objects, %d of %d bytes.",
+            len(files), MAX_SIDECARS, held, MAX_ARCHIVE_BYTES)
 
 
 def write_publication(data: dict, docs: Path) -> None:

@@ -1752,8 +1752,24 @@ restamping as well as the initial write. Owned derived transport files have a
 21-calendar-day retention window measured against advancing publication-session
 dates, with the prior current object's session refreshed when it is superseded.
 The currently served file is always retained. This is not a guarantee of 21
-elapsed days after a late publication. Canonical history and evidence
-are outside this cleanup. The committed-main publisher verifies the reader and
+elapsed days after a late publication. The archive is capped at 84 objects and
+128 MiB. When a new object would pass the cap, owned objects still inside their
+window give way, oldest last-served session first: an old tab's deferred
+research then reads as unavailable, which it already handles, rather than the
+whole evening going unpublished. The object served now and the one it replaces
+never give way, an unknown file never does, and an owned file whose bytes are
+not the object its manifest names refuses the publication rather than being
+removed. Removals wait until the fixed files are installed, so a rollback keeps
+them, unless the archive's working set is already past its bound (one object over
+the count cap, 32 MiB over the byte cap), from a cleanup that failed on an
+earlier night or a file the archive does not own: then the planned removals go
+first, a rollback keeps only what had not gone yet, and a cleanup failing again
+refuses the publication. A rollback also removes the object it brought in. An
+owned entry whose file is already gone is retired from the manifest before
+anything is planned. The run log states the archive's objects and bytes against
+both caps, warns past 80% of either, and says when objects inside their window
+were removed, or could not be, and when the manifest update failed.
+Canonical history and evidence are outside this cleanup. The committed-main publisher verifies the reader and
 its referenced sidecar before declaring the site updated.
 
 `python -m src.reader --docs docs --check` verifies committed companions without
