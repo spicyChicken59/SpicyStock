@@ -1734,7 +1734,24 @@ The October 9 production record projects from 14,918,679 to 5,606,909 decoded
 bytes, including its envelope. The deferred observation file is 5,040,916 bytes.
 These are artifact sizes, not measured network transfer or a mobile-device
 speed guarantee. Complete hydration reproduces the original parsed publication;
-the canonical record, picks and historical evidence are unchanged.
+the projection changes no canonical record, picks or historical evidence.
+
+From 24 October 2026 the canonical `data.json` is written compact -- no
+indentation or spaces, key order and UTF-8 kept -- so the 23 October record
+would be 9,992,325 bytes instead of 14,124,268. Earlier canonical records are
+indented, the 14,918,679 above among them; the reader and observation files
+were compact already. The record is bounded at 32 MiB
+(`reader.MAX_PUBLICATION_BYTES`; every reader that bounds the record, and the
+browser, hold this one number): the run log states each night's record against
+it, with its bursts and observation bytes, and warns past 80%; a record over it
+refuses the night before anything is installed (exit 1), and the run log and the
+run's failure name the size and the bound. The failure notice mailed for it
+carries the notice's fixed sentence for missing inputs, not the size. The
+restamp after delivery writes the record once more, a few bytes longer for the
+mail's word or its problem, and is stated against the bound in its own line;
+should that write alone cross it, the record first installed stays, is retained
+in the recovery catalog and the quality ledger, and the run fails after
+publication (exit 3) under the stage `restamp`.
 
 New morning receipts derive both canonical and reader hashes from the exact
 canonical source bytes. The browser verifies the actual reader bytes before
@@ -1840,7 +1857,7 @@ node tools/page_smoke.mjs --only findings     # the Record view's replay over th
 node tools/page_smoke.mjs --only funnel       # the scan disclosure's candidate funnel, printed from the record's own block
 node tools/page_smoke.mjs --only service      # pending against stale off the record's calendar and archived slots, every phase at every width
 node tools/page_smoke.mjs --only recovery     # the Method view's source-recovery line, bound to the loaded publication's bytes
-python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
+python tools/make_fixture.py --check        # the fixtures are the pipeline's own records
 ```
 
 The page smoke runs its suites in two lanes over one browser, each line it
@@ -1969,7 +1986,9 @@ ticket and the withheld setup have left the record, one burst has burst
 again and the coil has broken out; `revised` is that same session re-run on
 later bars, one close a few cents off — a correction and not another trading
 day. `docs/data.json` on a fresh clone is the `full` one until the
-first real night replaces it. The page smoke opens each in Chromium and
+first real night replaces it. A fixture, and that placeholder, is the
+pipeline's record labelled `fixture`, its two run clocks zeroed, re-serialized
+at indent=1 for reviewable diffs; the pipeline itself writes compact. The page smoke opens each in Chromium and
 compares what it reads back with the record it was handed — every stock in
 both stages, the search, the chooser and the rail on a phone, the keyboard,
 deep links and Back, the old anchors, unknown routes and symbols, rapid

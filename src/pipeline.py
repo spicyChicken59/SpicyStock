@@ -998,20 +998,9 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             except Exception as exc:  # noqa: BLE001
                 rep.problem("email_failed", f"{type(exc).__name__}: {exc}")
                 data["run"]["email"] = "failed"
-                restamp(data, rep, closed)
-                from src import reader
-                reader.write_publication(data, docs)
-                publish_stop_research(docs, rec)
-                publish_research_outcomes(docs, rec)
-                rep.fail(exc)
-                retain_publication(rep, docs, data, rec, frames, stats, minutes)
+                finish_publication(rep, docs, data, rec, frames, stats, minutes, closed, failure=exc)
                 return rep
-        restamp(data, rep, closed)
-        from src import reader
-        reader.write_publication(data, docs)
-        publish_stop_research(docs, rec)
-        publish_research_outcomes(docs, rec)
-        retain_publication(rep, docs, data, rec, frames, stats, minutes)
+        finish_publication(rep, docs, data, rec, frames, stats, minutes, closed)
         return rep
     except PreflightError:
         raise
@@ -1082,6 +1071,33 @@ def slots_held(open_plans: list[dict]) -> int:
     """How many of the configured slots the open model plans occupy: model
     allocation over configured sizing assumptions, not a holding count."""
     return sum(1 for o in open_plans if o.get("status") in SLOT_STATUSES)
+
+
+def finish_publication(rep: RunReport, docs: Path, data: dict, rec: dict, frames: dict, stats, minutes,
+                       closed: bool, failure: BaseException | None = None) -> None:
+    """After delivery: restamp the record and write it once more, derive the
+    optional research from the installed bytes, and retain them. A restamp
+    write that is refused (the canonical bound, a full disk) leaves the
+    record first installed in place; the research and the retained copies
+    are taken from that record and the run fails after publication (exit 3)
+    under its own stage, ``restamp``. ``failure`` is the delivery's own,
+    recorded before the restamp's."""
+    restamp(data, rep, closed)
+    from src import reader
+    try:
+        reader.write_publication(data, docs)
+    except Exception as exc:  # noqa: BLE001 -- named below; the first record stays
+        restamped = exc
+    else:
+        restamped = None
+    publish_stop_research(docs, rec)
+    publish_research_outcomes(docs, rec)
+    if failure is not None:
+        rep.fail(failure)
+    if restamped is not None:
+        rep.stage = "restamp"
+        rep.fail(restamped)
+    retain_publication(rep, docs, data, rec, frames, stats, minutes)
 
 
 def retain_publication(rep: RunReport, docs: Path, data: dict, rec: dict, frames: dict, stats, minutes) -> None:

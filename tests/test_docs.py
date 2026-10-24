@@ -409,6 +409,21 @@ def test_the_readme_and_the_env_example_quote_the_recovery_catalogs_bounds_from_
             f"inside their window give way, oldest first") in continuity
 
 
+def test_the_readme_and_the_env_example_quote_the_canonical_bound_from_the_module():
+    """The canonical record's bound and its warning are two constants; the
+    prose that says when a night is refused quotes them."""
+    from src import reader
+    text = re.sub(r"\s+", " ", README)
+    mib = reader.MAX_PUBLICATION_BYTES // (1024 * 1024)
+    assert (f"The record is bounded at {mib} MiB (`reader.MAX_PUBLICATION_BYTES`; every reader that bounds "
+            f"the record, and the browser, hold this one number): the run log states each night's record "
+            f"against it, with its bursts and observation bytes, and warns past "
+            f"{reader.PUBLICATION_WARN_FRACTION:.0%}") in text
+    env = re.sub(r"\s*#\s*", " ", (ROOT / ".env.example").read_text())
+    assert (f"docs/data.json is written compact; past {reader.PUBLICATION_WARN_FRACTION:.0%} of its "
+            f"{mib} MiB bound the run log warns") in env
+
+
 def test_the_readme_and_the_env_example_quote_the_source_recovery_bounds_from_the_module():
     """The recovery's budget is four constants; the prose that tells a reader
     what one receipt may cost quotes them, and the names bound is one batch."""
