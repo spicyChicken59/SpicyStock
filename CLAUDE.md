@@ -12105,3 +12105,125 @@ misfiled failure notice (every post-preflight failure is mailed as
 **Not claimable:** a live night on which the catalog's cap binds; its
 *Recovery catalog:* line is the first to read. Also not claimable: a morning or
 research observation; any trading edge.
+
+## Checkpoint, 24 Oct 2026 -- PR #196 accepted; the canonical record written compact and stated against its 32 MiB bound
+
+**PR #196, accepted.** Merged as `29a7eaa0` on `main` with a merge commit over
+`1e1ad24f`. The head `ae927027` passed all seven checks (Tests run
+40117054923; both gitleaks runs). Publisher 40119482198 printed *Verified:
+every one of the 48 public files matches committed main*; Pages 40119503623
+deployed (40119481734 cancelled as superseded, as every merge does); the merge
+commit's own Tests run 40119482205 and Secret scan 40119482199 passed. The first
+night under the catalog rule is Monday 26 October's; read its *Recovery
+catalog:* line.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` restarted from
+`main` at `29a7eaa0`, pushed as **PR #197**. `docs/data.json`,
+`docs/picks.json`, the compact reader, every receipt, the history, the evidence
+objects, the quality ledger, the workflows, the fixtures and the vendored design
+system are untouched; no rule moved, so `rules_version` stands; no run, mail,
+dispatch, provider call or credential. No pinned source of the delivery proof
+moved.
+
+**What the bound did.** `reader.MAX_PUBLICATION_BYTES` (32 MiB) bounds the
+canonical `docs/data.json`; the morning, issuer and stop-research readers, the
+issuer publisher and the browser (`app-reader.js`) each hold the same number.
+Past it `reader.derive()` refused the whole night after every paid call with
+*reader transport bytes exceed bound*, naming neither the size nor the bound,
+and no log line said how close a night had come. The record was written at
+`indent=1`. The 22 October record (988 bursts, the most yet) was 19,092,277
+bytes, 57% of the bound; the 23 October one 14,124,268. A refit over the 14
+publications of 12 to 23 October (the read-only design workflow's: three
+investigations, three designs, two judges) put an indented record past the
+bound above about 2,430 bursts at that night's observations, near the design's
+own estimate for a thrust day like 10 November 2022 (2,200 to 2,500 bursts).
+
+**The change.** `report.write()` writes the record compact
+(`separators=(",",":")`), keeping key order (which
+`provenance._check_mechanical` reads), UTF-8 and the trailing newline: the 23
+October record is 9,992,325 bytes compact, 29% less, and the 22 October one
+13,738,612. Every digest over the parsed record is unchanged (evidence ids,
+`rules_version`, the provenance hashes); only bindings over the file's own bytes
+move, as they do on every new publication. The same fit puts the compact record
+past the bound above about 3,600 bursts at 22 October's observations (+48%), and
+the warning at about 2,700. `derive()` names the size and the bound when it
+refuses (*canonical publication is N bytes, over its B-byte bound*).
+`reader.log_publication()` states each night's record against the bound with
+its bursts and observation bytes -- INFO, WARNING past
+`PUBLICATION_WARN_FRACTION` (80%), ERROR past the bound with what the refusal
+does -- and never raises; the size line survives counts it cannot read. Page
+fixtures stay indented: `tools/make_fixture.py` re-serializes the pipeline's
+record, labelled and its two run clocks zeroed, for reviewable diffs, so the
+compact format is held by the pipeline's own tests, not by `--check`.
+
+**The restamp after delivery** (found by the review). `restamp()` rewrites the
+record after the mail -- `run.email` *skipped* to *delivered* adds two bytes, a
+mail failure adds a problem -- through `reader.write_publication()`, after the
+first record was installed. A record that crossed the bound there failed the run
+at stage `email` with the first record installed, and skipped the recovery
+catalog and the quality ledger. `pipeline.finish_publication()` now runs the
+restamp, the research companions and retention in that order: a refused
+restamp leaves the record first installed, which the catalog and the ledger
+then retain from disk, and the run fails (exit 3) under its own stage,
+`restamp`. The restamp is logged in its own words (*Canonical record after
+delivery:*). The failure notice still carries its fixed missing-inputs sentence
+for every post-preflight failure, not the size (the open lead from #196).
+
+**The review, worked.** A workflow by execution over `0ac00dee`, three lenses
+(the consumers of the bytes, the bound, the documents) and two skeptics a
+finding, 23 agents, none errored. The consumers lens found nothing: no reader
+splits, greps or offsets the record. On a tree with the 23 October record
+rewritten compact and its companions re-derived, the full suite passed (5,266),
+1,497 page checks over production passed, the publisher verified 48 files,
+provenance gave PASS on both forms, three study tools gave byte-identical output,
+a transition night (an indented record, then a compact one) published and bound,
+and every fixture generator reproduced with nothing regenerated. The bound lens
+returned three, all upheld: the restamp above; the refusal test held three files
+in an empty directory, so a refusal moved after the evidence prune and write
+passed it (the test publishes a night first, holds every file under `docs/` to
+its bytes, and the refused night re-runs on a revised bar that brings evidence
+objects of its own, held before it is asked); and the log line dropped the size
+when a count could not be read. The documents lens returned seven, six upheld:
+the restamp sentence again; "every size quoted above is indented" was false of
+the compact `reader.json` and sidecar sizes; the paragraph said both "written
+compact" and "the canonical record is unchanged"; "indentation was a third of
+the file" (whitespace was 29%, newlines and indentation 26%); README still said
+the fixtures are what the pipeline writes; and "one number every reader holds"
+when several readers hold no bound. The seventh, that the refusal is mailed as
+missing inputs, was not upheld (the base mails the same; README now says so).
+The bound lens's own mutation pass killed fifteen mutants over the first commit
+with two controls green, the evidence-order mutant its one survivor.
+
+**Mutation pass over the fixes**, each mutant in a detached worktree judged by
+`tests/test_publication_bound.py` and `tests/test_report.py`: the refused restamp
+propagating, not logged, its stage unnamed, given the first write's tail, skipping
+retention, or not a failure; the counts inside the size's `try`; the warning
+fraction ignored; the refusal moved after the evidence write. Eight died at once;
+**the last survived the first test** (night two's evidence objects were night
+one's) and dies under the revised bar. The control (a docstring word) survives.
+
+**Measured** (this sandbox, Python 3.12.3): the full suite on `2cb5f609`, run on
+a committed worktree, 5269 passed and 34 environment-gated skips in 22 m 06 s
+(5303 collected); `tests/test_publication_bound.py` (17) and
+`tests/test_report.py` 149 passed; the docs test holds README's bound sentence
+and 80% to the module. CI on `2cb5f609` (Tests run 40122196236): page and the
+gate passed, both gitleaks runs passed; pytest and the native cases are
+recorded on PR #197. The design workflow measured, read-only: gitleaks 8.24.3 over
+the 22 and 23 October records finds the same rule keys in both forms without the
+allowlist and none with the repository's config; git packs three consecutive
+records 17% smaller compact (2,910 against 3,520 KiB).
+
+**Keep / fix / defer / omit.** Keep: one bound, one number, held by every copy;
+the restamp never costs the night's retention. Fix if it bites: the 80% warning
+predicts nothing for a one-night spike (an ordinary night sits at 25 to 41%);
+it is the slow term, observations, it watches. Defer: the failure notice's
+fixed sentence; a thrust past about 3,600 bursts still refuses the night, and
+clearing that needs the per-burst evidence factored out (about 1.15 KB of
+constant check fields a burst) or a larger bound. Omit: a larger bound as the
+fix.
+
+**Not claimable:** the first compact night -- Monday 26 October's: read its
+*Canonical record:* and *Canonical record after delivery:* lines, and confirm
+`docs/data.json` is one line and `reader.json`'s `canonical.bytes` equals its
+length. Also not claimable: a morning or research observation; any trading
+edge.
