@@ -71,13 +71,16 @@ def test_unknown_entries_in_the_archive_stay_and_count_against_the_cap(tmp_path)
     (folder / "nested").mkdir()
     (folder / "nested" / (name("deep") + ".json.gz")).write_bytes(b"d")
     # named like objects, named by nothing, and not regular files: they stay
-    os.symlink(tmp_path / "nowhere.png", folder / (name("link") + ".png"))
+    (tmp_path / "elsewhere.png").write_bytes(b"a file outside the archive")
+    os.symlink(tmp_path / "elsewhere.png", folder / (name("link") + ".png"))
     (folder / (name("folder") + ".json.gz")).mkdir()
     result = provenance.prune_objects(docs)
     assert sorted(p.name for p in folder.iterdir()) == sorted(
         [*unknown, "nested", name("link") + ".png", name("folder") + ".json.gz"])
     assert (result["objects"], result["removed"], result["removed_bytes"]) == (0, 1, 10)
-    assert result["bytes"] == sum(map(len, unknown.values()))
+    # counted as write_objects() counts the archive: a link to a file is its file
+    assert result["bytes"] == sum(map(len, unknown.values())) + len(b"a file outside the archive")
+    assert (tmp_path / "elsewhere.png").exists()
 
 
 def test_a_missing_archive_is_empty_and_is_not_created(tmp_path):

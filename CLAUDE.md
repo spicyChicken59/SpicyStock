@@ -11783,3 +11783,122 @@ when the 23 October tickets reach their fifth session. Omit: any rule,
 threshold or account change on these numbers; an edge claim.
 
 **Not claimable:** a morning or research observation; any trading edge.
+
+## Checkpoint, 24 Oct 2026 -- PR #193 accepted; the evidence archive keeps what a served file names, before its cap refused a publication
+
+**PR #193, accepted.** Merged as `bef7dd67` on `main` with a merge commit over
+`b4901830`. Publisher 40073876114 printed *Verified: every one of the 48 public
+files matches committed main* at 07:23:42 UTC; the merge commit's own Tests run
+40073876121 (pytest, page) and Secret scan 40073876152 passed.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` from `main` at
+`bef7dd67`, pushed as **PR #194**. `docs/data.json`, `docs/picks.json`, the
+compact reader, every receipt, the history, the quality ledger, the workflows
+and the vendored design system are untouched; no rule moved (`rules_version`
+stands, no fixture regenerated); no run, mail, dispatch, provider call or
+credential.
+
+**What a sweep for date-dependence found.** A workflow by execution (finders
+over the tests, the browser suites and the production writers, each claim
+simulated in the future, a skeptic each, a completeness critic) confirmed three
+of four candidates; the critic added two. The serious one was not a test.
+`provenance.write_objects()` refuses a publication once `docs/evidence` would
+pass `MAX_ARCHIVE_BYTES` (128 MiB, 134,217,728 bytes), and nothing removed an
+object: v1 said so, and that capacity exhaustion would need "an explicit
+retention decision". On 23 October the archive held 86,196,761 bytes (86.2 MB,
+82.2 MiB; the first commit's message says "86 of its 128 MiB", the wrong unit),
+grown by 0.5 to 4.9 MB a publication, about 3 MB a session from 12 to 23
+October. The 48.0 MB left would have refused the first evening publication
+between about 6 November (4.9 MB a night) and 17 November (3 MB). Also
+confirmed: `tests/test_clock.py`'s no-argument test read the real clock, and
+the calendar it reads ends in 2035; and the weekly full-history secret scan
+reads the SEC excerpts the issuer collector commits, which no allowlist covers.
+
+**The rule.** Before each night's objects are written and counted against the
+cap, `publish_bundle()` calls `provenance.prune_objects(docs, keep=tonight)`:
+an object no other file under `docs/` names leaves the working tree. A name is
+a full 64-character lowercase hex run in a file's text (`.gz` read expanded);
+any 64 inside a longer run counts too. Nothing is removed unless every file
+outside the archive was read in full: a link, a directory that cannot be
+listed, a file that is not regular or is over `RETENTION_SCAN_BYTES` (64 MiB),
+or a `.gz` that does not expand raises, and the capacity check then decides as
+before. Unknown entries in the archive stay. A removal that fails stops there
+and says how far it got. `pipeline.log_retention()` writes what is left against
+the cap and what went, and warns above `RETENTION_WARN_FRACTION` (80%). The
+archive follows the recovery catalog a night behind. `git add docs` stages the
+deletions, as it already does for the catalog's own; git keeps every removed
+object at every commit that carried it. On a copy of the 23 October tree it
+removes 1,652 objects (7,978,559 bytes) and leaves 13,185 (78,218,202 bytes,
+58% of the cap), the scan taking about 6 seconds.
+
+**What it does not bound.** The publication and the 21-day catalog are the
+rolling part. The dated reports under `docs/input-truthfulness` (22.2 MB, a
+protected-files manifest of 28 September among them), the quality ledger
+(every read chart, for good), the research cohorts and journal and the frozen
+validation cases are permanent: 31.9 MB with the rolling part removed. The
+ledger adds about 0.12 MB a two-read night and 0.8 MB a twelve-read night, so
+the 56.0 MB left lasts about 70 to 480 sessions at today's rolling size; the
+80% warning comes first, and the next decision -- a rule for ledger-named
+charts or a larger cap -- is that day's.
+
+**Tests that read the rolling archive.** A full `pytest tests/` run and both
+research fixture generators recorded every read under `docs/evidence`: 497
+objects (the 9 October publication's 487, six provider placeholders, two dated
+reader frames, CRL's and IQV's frozen-case frames). They are frozen byte for
+byte under `tests/fixtures/retained-evidence/` and read through
+`provenance._object()`; a test holds each to its own name. A second full run
+in a worktree with `docs/evidence` deleted found the one read the repointing
+had missed: `tools/historical_input_proof.volume_sensitivity()` read a fixed
+path, and takes the archive it reads now. Both generators and all 13 page
+fixtures reproduce byte for byte there.
+
+**Also.** The wall-clock test pins the clock it reads, four instants
+(unpinned, all four fail). Every direct runtime and test requirement is held
+below its next major (`tests/test_requirements.py`); their own dependencies are
+not -- `python-dateutil` resolves to 3.0.0 under pandas here, where
+`requirements-host.txt` pins 2.9.0.post0 -- and the sentences say so.
+`tools/freeze_validation_cases.py --check`, which CI runs, holds each frozen
+case's source frame, system prompt and chart present in `docs/evidence`: the
+one way a branch cut before a night's removal could merge naming an object the
+archive no longer holds.
+
+**The review, worked.** A workflow by execution over `d2df33ff` (safety, can
+the tests fail, every sentence; a skeptic a finding, 28 agents) returned 25
+findings and every one was upheld, each reproduced here before it was touched.
+Two mediums on the code: the merge race above, and `log_retention()`'s refusal
+branch and 80% warning, which no test reached (dropping the branch turned a scan
+refusal into a failed evening after the publication was installed). The lows:
+`os.walk` silently skipped a directory it could not list; a removal failing
+midway was logged as "left as it was"; the OSError half of the catch, the
+bounds one byte over, gzip members over the bound together, a FIFO, a `.csv.gz`
+and an object-named link or folder in the archive had no case; the evening
+test's first assertion was held by the previous `data.json` rather than the
+catalog, and its last could not fail its own message; two frozen reads skipped
+the digest; and seven sentences said more than the code (the unit, links
+inside the archive, "never missed for its spelling", the permanent growth, the
+actionability README, every dependency bounded, the frozen set's groups). All
+are fixed.
+
+**Mutation pass.** Twenty mutants and a control, each in a scratch worktree
+and judged by the whole test file naming its rule: 19 died first; **one
+survived, a hole** -- the archive link in the unknown-entries test pointed at
+nothing, so `is_file()` alone also kept it; it points at a real file now and
+the mutant dies. The control (a comment) survives.
+
+**Measured** (this sandbox, Python 3.12.3): the retention and freeze tests 30
+and 35; the full suite and CI on the pushed head are recorded on PR #194.
+gitleaks 8.24.3 over the branch's commits: no leaks.
+
+**Open leads, written down.** The reader-observation sidecars (`docs/reader-
+observations/`, 15 objects, 80.2 MB on 23 October, about 5.9 MB each and
+growing with the signal window) peak near 110 MB of their own 128 MiB cap on 30
+October at today's size and refuse a publication if a sidecar grows about 20%;
+the same class, not yet reached. The weekly full-history secret scan reads the
+SEC excerpts and would stay red from the first detector-shaped phrase; a scan
+before the issuer collector commits is the fix. Transitive dependencies could be
+held with a constraints file.
+
+**Not claimable:** the first night under the rule -- Monday 26 October's
+publication; read its run log's *Evidence archive:* line and the commit's
+deletions, and record them here. Also not claimable: a morning or research
+observation; any trading edge.
