@@ -1003,19 +1003,15 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                 reader.write_publication(data, docs)
                 publish_stop_research(docs, rec)
                 publish_research_outcomes(docs, rec)
-                if not data.get("fixture"):
-                    history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
-                rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats, minutes=minutes)
                 rep.fail(exc)
+                retain_publication(rep, docs, data, rec, frames, stats, minutes)
                 return rep
         restamp(data, rep, closed)
         from src import reader
         reader.write_publication(data, docs)
         publish_stop_research(docs, rec)
         publish_research_outcomes(docs, rec)
-        if not data.get("fixture"):
-            history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
-        rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats, minutes=minutes)
+        retain_publication(rep, docs, data, rec, frames, stats, minutes)
         return rep
     except PreflightError:
         raise
@@ -1086,6 +1082,24 @@ def slots_held(open_plans: list[dict]) -> int:
     """How many of the configured slots the open model plans occupy: model
     allocation over configured sizing assumptions, not a holding count."""
     return sum(1 for o in open_plans if o.get("status") in SLOT_STATUSES)
+
+
+def retain_publication(rep: RunReport, docs: Path, data: dict, rec: dict, frames: dict, stats, minutes) -> None:
+    """The night's two retained copies of its final publication: the public
+    recovery catalog (``history.publish``), then the quality ledger, which is
+    captured whatever the catalog did. A catalog that cannot take tonight's
+    record fails the run after publication (exit 3) under its own stage, and
+    never costs the night its ledger entry."""
+    failure = None
+    if not data.get("fixture"):
+        rep.stage = "history"
+        try:
+            history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
+        except Exception as exc:  # noqa: BLE001 -- named below, after the ledger
+            failure = exc
+    rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats, minutes=minutes)
+    if failure is not None:
+        rep.fail(failure)
 
 
 def publish_stop_research(docs: Path, rec: dict) -> None:

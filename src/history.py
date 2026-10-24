@@ -9,6 +9,7 @@ from copy import deepcopy
 from datetime import date, timedelta
 import hashlib
 import json
+import logging
 import math
 from pathlib import Path
 import re
@@ -18,7 +19,9 @@ OBSERVATIONS_MAX = 20
 RECORDS_MAX = 84
 SIGNALS_MAX = 10000
 CATALOG_BYTES_MAX = 128 * 1024 * 1024
+CATALOG_WARN_FRACTION = 0.8  # of either cap: the run log warns past it
 SYMBOL = re.compile(r"[A-Z0-9][A-Z0-9.-]{0,15}\Z")
+log = logging.getLogger("spicystock.history")
 
 
 def encoded(value):
@@ -130,6 +133,14 @@ def publish(raw, root, *, source_commit=None):
 
     Refuse malformed/oversized input before replacing the index. A changed
     publication is a separate source even on the same signal date/rules.
+
+    Past either cap (``RECORDS_MAX`` records, ``CATALOG_BYTES_MAX`` bytes) the
+    records still inside their window give way, oldest session first, then
+    the earlier publication, then the digest, until tonight's fits; tonight's
+    record never does. Only tonight's record alone past the byte cap refuses,
+    with the existing index and every file left as they were. An evicted
+    record's originals stay in git; the page reads it as unavailable, as it
+    does an expired one.
     """
     data = json.loads(raw)
     if data.get("fixture") or data.get("app", {}).get("version") != "2.0":
@@ -155,8 +166,6 @@ def publish(raw, root, *, source_commit=None):
                   "session": session, "published_at": data["run"].get("published_at"),
                   "rules_version": rules, "run_id": data["run"].get("run_id")}
     records[source] = provenance
-    if len(records) > RECORDS_MAX:
-        raise ValueError("recovery revision bound exceeded; existing catalog left intact")
     context = {k: deepcopy(data.get(k, {})) for k in ["app", "run", "rules", "breadth", "cash_budget"]}
     if data.get("run", {}).get("evidence"):
         context["account"] = deepcopy(data["account"])
@@ -188,13 +197,22 @@ def publish(raw, root, *, source_commit=None):
                         "sha256": hashlib.sha256(evidence).hexdigest(), "chart": bool(series)})
         if row.get("evidence"):
             entries[-1]["evidence_id"] = row["evidence"]["id"]
-    index = {"version": 1, "as_of": as_of, "days": DAYS, "records_max": RECORDS_MAX,
-             "dates": sorted({v["session"] for v in records.values()}), "records": records,
-             "entries": sorted(entries, key=lambda e: (records[e["source"]]["session"], e["ticker"], e["source"]), reverse=True)}
-    files["index.json"] = encoded(index)
-    kept_bytes = sum(p.stat().st_size for k in records if k != source for p in (root / k).glob('*.json'))
-    if kept_bytes + sum(map(len, files.values())) > CATALOG_BYTES_MAX:
-        raise ValueError("recovery byte bound exceeded; existing index left intact")
+    kept_bytes = {k: sum(p.stat().st_size for p in (root / k).glob('*.json')) for k in records if k != source}
+    oldest_first = sorted(kept_bytes, key=lambda k: (records[k]["session"], records[k].get("published_at") or "", k))
+    evicted = []
+    while True:
+        entries = [e for e in entries if e["source"] in records]
+        index = {"version": 1, "as_of": as_of, "days": DAYS, "records_max": RECORDS_MAX,
+                 "dates": sorted({v["session"] for v in records.values()}), "records": records,
+                 "entries": sorted(entries, key=lambda e: (records[e["source"]]["session"], e["ticker"], e["source"]), reverse=True)}
+        files["index.json"] = encoded(index)
+        size = sum(kept_bytes[k] for k in records if k != source) + sum(map(len, files.values()))
+        if len(records) <= RECORDS_MAX and size <= CATALOG_BYTES_MAX:
+            break
+        if not oldest_first:
+            raise ValueError("recovery byte bound exceeded; existing index left intact")
+        gone = oldest_first.pop(0)
+        evicted.append(records.pop(gone)["session"])
     for name, body in files.items():
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -213,4 +231,24 @@ def publish(raw, root, *, source_commit=None):
             for p in (root / expired).glob('*.json'):
                 p.unlink()
             (root / expired).rmdir()
+    _log_catalog(index, size, evicted)
     return index
+
+
+def _log_catalog(index, size, evicted):
+    """State the catalog against both caps, once a night; never raises."""
+    try:
+        if evicted:
+            one = len(evicted) == 1
+            log.warning("Recovery catalog: %d %s inside %s %d-day window %s removed, oldest first (%s), "
+                        "so tonight's fits the caps of %d records and %d bytes; %s originals stay in git.",
+                        len(evicted), "record" if one else "records", "its" if one else "their", DAYS,
+                        "was" if one else "were", ", ".join(evicted), RECORDS_MAX, CATALOG_BYTES_MAX,
+                        "its" if one else "their")
+        records, sessions = len(index["records"]), len(index["dates"])
+        full = size > CATALOG_BYTES_MAX * CATALOG_WARN_FRACTION or records > RECORDS_MAX * CATALOG_WARN_FRACTION
+        log.log(logging.WARNING if full else logging.INFO,
+                "Recovery catalog: %d of %d records over %d %s, %d of %d bytes.", records, RECORDS_MAX,
+                sessions, "session" if sessions == 1 else "sessions", size, CATALOG_BYTES_MAX)
+    except Exception as exc:  # noqa: BLE001 -- a log line never fails the night
+        log.warning("Recovery catalog could not be stated (%s).", type(exc).__name__)

@@ -732,7 +732,14 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    is provided.
    **Find earlier setup** searches a public, source-addressed catalog on demand.
    It retains 21 calendar days, up to 84 distinct publications and 10,000 signals
-   per publication, within 128 MiB. Originals load only when selected; chart
+   per publication, within 128 MiB. Past the publication or byte cap the records
+   still inside their window give way, oldest session first (then the earlier
+   publication of a session, then the digest), until the night's own record fits;
+   that record never gives way, and only a record too large to fit alone refuses
+   the catalog, leaving the old one. The run log states the catalog against both
+   caps, warns past 80% of either, and names the sessions that gave way; the
+   catalog is written before the quality ledger, which captures the night
+   whatever the catalog did. Originals load only when selected; chart
    evidence is at most the authentic 120 published bars. Absent charts stay
    absent. Revisions keep separate provenance. An unavailable original is never
    reconstructed from a later signal. Local saves do not expire with this window.
