@@ -805,6 +805,145 @@ def test_a_reply_that_writes_the_marker_into_its_own_score_cannot_stop_the_run()
     assert is_run_fatal(_error_text(RuntimeError(CREDIT)))
 
 
+REFUSED_REQUEST = ("Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': "
+                   "'temperature: Extra inputs are not permitted'}, 'request_id': 'req_011CgJEksUxSZ6J6uSUKyNKG'}")
+#: 22 Oct 2026, verbatim: CL's reply under API version 2026-10-21 (ABT's differed in its request id alone)
+
+
+def test_a_request_the_api_refused_is_told_apart_from_the_account_the_balance_and_the_reply():
+    from src.grader import ScoreFormatError, _error_text, is_request_refusal, is_run_fatal
+    text = "anthropic.BadRequestError: " + REFUSED_REQUEST
+    assert is_request_refusal(text) and not is_run_fatal(text), "a refused request is the run's to name, not to stop"
+    assert is_request_refusal("anthropic.BadRequestError: Error code: 400 - image exceeds 5 MB maximum")
+    for other in ("anthropic.BadRequestError: " + CREDIT,                       # the account's answer, matched first
+                  "anthropic.AuthenticationError: Error code: 401 - invalid x-api-key",
+                  "anthropic.PermissionDeniedError: Error code: 403 - forbidden",
+                  "anthropic.APIStatusError: Error code: 503 - overloaded",
+                  "RuntimeError: Error code: 4000 - not a status", ""):
+        assert not is_request_refusal(other), other
+    # a reply's own words are never the provider's answer
+    assert not is_request_refusal(_error_text(ScoreFormatError("score 'Error code: 400 - x' is not a number")))
+
+
+def _sdk_error(status, body):
+    """The error the INSTALLED SDK raises for an HTTP answer, built through the
+    client's own constructor over a response: the shapes a run meets, not ones
+    a test invents."""
+    import anthropic
+    import httpx2 as httpx
+    client = anthropic.Anthropic(api_key="offline-shape-test", max_retries=0)
+    response = httpx.Response(status, content=body.encode(), request=httpx.Request("POST", "https://api.anthropic.com/v1/messages"))
+    return client._make_status_error_from_response(response)
+
+
+@pytest.mark.parametrize("status,body,refused", [
+    (400, "{'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'temperature: Extra inputs are not permitted'}, 'request_id': 'req_1'}".replace("'", '"'), True),
+    (400, "image exceeds 5 MB maximum", True),                       # a plain-text body: no "Error code" prefix at all
+    (400, "<html><body><h1>400 Bad Request</h1></body></html>", True),  # a proxy's page
+    (400, "", True),                                                 # an empty body: "Error code: 400" and no dash
+    (413, '{"type": "error", "error": {"type": "request_too_large", "message": "Request body too large"}}', True),
+    (401, '{"type": "error", "error": {"type": "authentication_error", "message": "invalid x-api-key"}}', False),
+    (403, '{"type": "error", "error": {"type": "permission_error", "message": "forbidden"}}', False),
+    (404, '{"type": "error", "error": {"type": "not_found_error", "message": "model: x"}}', False),
+    (429, '{"type": "error", "error": {"type": "rate_limit_error", "message": "rate limited"}}', False),
+    (500, '{"type": "error", "error": {"type": "api_error", "message": "internal"}}', False),
+    (529, '{"type": "error", "error": {"type": "overloaded_error", "message": "Overloaded"}}', False),
+], ids=["400-json", "400-text", "400-html", "400-empty", "413", "401", "403", "404", "429", "500", "529"])
+def test_the_sdks_own_errors_name_a_refused_request_by_class_whatever_the_body(status, body, refused):
+    """The SDK writes "Error code: 400 - <body>" only for a JSON body; a text,
+    HTML or empty body gives the text alone or the bare status. The class the
+    SDK raises is the same for all four, so the class label is what the rule
+    reads, and a 413 is a refused request too. An answer the SDK classes as the
+    account's, the model's, a rate limit or the server's is not."""
+    from src import reader_coverage
+    from src.grader import _error_text, is_request_refusal, is_run_fatal
+    text = _error_text(_sdk_error(status, body))
+    assert is_request_refusal(text) is refused, text
+    assert not is_run_fatal(text) or status in (401, 403), text
+    assert (reader_coverage.failure_of(text) == "request") is refused, text
+
+
+def test_refusal_key_is_the_apis_message_without_the_request_id():
+    from src.grader import refusal_key
+    a = "anthropic.BadRequestError: " + REFUSED_REQUEST
+    b = a.replace("req_011CgJEksUxSZ6J6uSUKyNKG", "req_011CgJEku2E8tqvuenUhFWxV")   # ABT's, the same night
+    assert refusal_key(a) == refusal_key(b) == "temperature: Extra inputs are not permitted"
+    assert refusal_key(a) != refusal_key(a.replace("temperature", "top_k"))
+    # no message dict: the text itself, less any request id
+    assert refusal_key("RuntimeError: Error code: 400 - image exceeds 5 MB maximum, 'request_id': 'req_1'") == \
+        "RuntimeError: Error code: 400 - image exceeds 5 MB maximum"
+    assert refusal_key("") == ""
+
+
+def test_a_refused_request_is_not_asked_again(claude):
+    """A transport retry sends the body unchanged, and a request the API
+    refused as invalid is refused the same way: one call, then the fallback,
+    with the refusal in the row and no second attempt."""
+    claude.replies(RuntimeError(REFUSED_REQUEST))
+    out = grade_candidate("AAA", metrics(), None, SYSTEM)
+    assert len(claude.calls) == 1, "22 Oct 2026 asked twice and was refused twice"
+    assert out["provenance"]["source"] == SOURCE_FALLBACK
+    assert [a["outcome"] for a in out["provenance"]["attempts"]] == ["rejected"]
+    assert "temperature: Extra inputs are not permitted" in out["provenance"]["error"]
+
+
+def test_two_consecutive_names_refused_the_same_way_stop_the_run(claude):
+    """Four names, every request refused for one reason: the first two are
+    asked (one call each), the run stops, the other two fall back without a
+    call and carry the refusal."""
+    claude.replies(RuntimeError(REFUSED_REQUEST),
+                   RuntimeError(REFUSED_REQUEST.replace("req_011CgJEksUxSZ6J6uSUKyNKG", "req_011CgJEku2E8tqvuenUhFWxV")))
+    rows = grade_all(candidates(9, 8, 7, 6), SYSTEM, max_calls=4)
+    assert len(claude.calls) == 2
+    assert [r["provenance"]["source"] for r in rows] == [SOURCE_FALLBACK] * 4
+    assert all("temperature: Extra inputs are not permitted" in r["provenance"]["error"] for r in rows)
+    # a name the run never asked carries no attempt, as a credit outage's rows carry none,
+    # and the run's own sentence rather than another name's answer with its request id
+    assert [len(r["provenance"].get("attempts") or []) for r in rows] == [1, 1, 0, 0]
+    from src.grader import RequestOutage, error_label, is_request_refusal
+    for row in rows[2:]:
+        error = row["provenance"]["error"]
+        assert error.startswith(error_label(RequestOutage) + ": the run stopped asking after 2 requests were refused alike: ")
+        assert "req_" not in error and is_request_refusal(error), error
+    assert all("req_" in r["provenance"]["error"] for r in rows[:2]), "the asked names keep the API's own answer"
+
+
+def test_two_refusals_with_different_messages_do_not_stop_the_run(claude):
+    """The stop reads the API's message and nothing else: two consecutive
+    refusals that differ (an oversized image, then a prompt too long by a
+    count) are two answers, and the third name is still asked."""
+    claude.replies(RuntimeError("Error code: 400 - messages.0.content.0.image: image exceeds 5 MB maximum"),
+                   RuntimeError("Error code: 400 - prompt is too long: 213456 tokens > 200000 maximum"),
+                   json.dumps(REPLY))
+    rows = grade_all(candidates(9, 8, 7), SYSTEM, max_calls=3)
+    assert len(claude.calls) == 3, "two different refusals are two answers, not the API's answer to every request"
+    assert [r["provenance"]["source"] for r in rows] == [SOURCE_FALLBACK, SOURCE_FALLBACK, SOURCE_CLAUDE]
+
+
+def test_two_identical_refusals_stop_the_run_whatever_the_message_names(claude):
+    """The rule is message equality, not what the message is about: two names
+    in a row refused with one content message (every chart over the size limit
+    would be such a night) stop the asking as the temperature refusals did."""
+    claude.replies(RuntimeError("Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', "
+                                "'message': 'messages.0.content.0.image: image exceeds 5 MB maximum'}, 'request_id': 'req_a'}"),
+                   RuntimeError("Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', "
+                                "'message': 'messages.0.content.0.image: image exceeds 5 MB maximum'}, 'request_id': 'req_b'}"),
+                   json.dumps(REPLY))
+    rows = grade_all(candidates(9, 8, 7), SYSTEM, max_calls=3)
+    assert len(claude.calls) == 2
+    assert [r["provenance"]["source"] for r in rows] == [SOURCE_FALLBACK] * 3
+
+
+def test_an_answer_of_another_kind_ends_a_streak_of_refusals(claude):
+    claude.replies(RuntimeError(REFUSED_REQUEST), json.dumps(REPLY), RuntimeError(REFUSED_REQUEST),
+                   RuntimeError(REFUSED_REQUEST))
+    rows = grade_all(candidates(9, 8, 7, 6, 5), SYSTEM, max_calls=5)
+    assert len(claude.calls) == 4, "the accepted reply between them restarted the count"
+    assert [r["provenance"]["source"] for r in rows] == \
+        [SOURCE_FALLBACK, SOURCE_CLAUDE, SOURCE_FALLBACK, SOURCE_FALLBACK, SOURCE_FALLBACK]
+    assert [len(r["provenance"].get("attempts") or []) for r in rows] == [1, 1, 1, 1, 0]
+
+
 def test_an_empty_credit_balance_is_not_bought_again(claude):
     """Three candidates, the first answered with an empty balance: one call,
     three fallback rows, each carrying the answer."""

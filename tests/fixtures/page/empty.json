@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "cb56153aca6e"
+  "rules_version": "5c0f45da6dde"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -249,18 +249,20 @@
    "requested": 0,
    "done": 0,
    "unavailable_reason": null,
-   "version": 1,
+   "version": 2,
    "causes": {
     "refused": 0,
     "format": 0,
     "account": 0,
     "credit": 0,
+    "request": 0,
     "transport": 0
    },
    "refusal_limit": 0,
    "refused_names": [],
    "refused_admissible": [],
    "verdict": "not_asked",
+   "unasked": 0,
    "sentence": null
   },
   "reader_usage": {
@@ -931,7 +933,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "5fc3bb8bf10eae0dee45756eb2ecd264dd5a121feb70c501747ddc3f17cc2725"
+   "context_sha256": "d4217c8155eed306464dba477108a2038b601fbfd0f4670c7e20278a59a60f3f"
   },
   "sanitised": {
    "replaced": 0,
@@ -1456,7 +1458,7 @@
    "feasibility": "private per-candidate plan before reader and combined allocation"
   },
   "funnel": {
-   "version": 1,
+   "version": 2,
    "policy": "candidate_funnel_v1"
   },
   "intraday": {
@@ -1498,6 +1500,7 @@
    "reader_policy": "accepted_required_v1",
    "reader_refusal_fraction": 0.25,
    "reader_refusal_min": 1,
+   "reads_version": 2,
    "reader_usage_version": 1,
    "delivery_version": 1,
    "delivery_primary_et": "18:16",
@@ -2089,7 +2092,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "cb56153aca6e"
+  "replay_rules_version": "5c0f45da6dde"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -2164,7 +2167,7 @@
  },
  "closest_miss": null,
  "funnel": {
-  "version": 1,
+  "version": 2,
   "policy": "candidate_funnel_v1",
   "regime": "green",
   "admitted_grades": [
@@ -2196,6 +2199,7 @@
     "review_format": 0,
     "review_account": 0,
     "review_credit": 0,
+    "review_request": 0,
     "review_transport": 0,
     "review_downgraded": 0,
     "review_unknown": 0,
@@ -2253,6 +2257,7 @@
    "review_format": "review",
    "review_account": "review",
    "review_credit": "review",
+   "review_request": "review",
    "review_transport": "review",
    "review_downgraded": "review",
    "review_unknown": "review",
@@ -2283,6 +2288,7 @@
    "review_format": "review reply could not be read as a score",
    "review_account": "review stopped: the API refused the account",
    "review_credit": "review stopped: the API credit balance was too low",
+   "review_request": "review request refused by the API as invalid (HTTP 400), or unasked after two refused alike",
    "review_transport": "review got no usable answer from the API",
    "review_downgraded": "review lowered the grade below the admitted band",
    "review_unknown": "review state not readable from this record",

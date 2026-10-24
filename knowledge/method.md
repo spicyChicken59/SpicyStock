@@ -101,7 +101,9 @@ discovery contract within a quarter
 of the night's reads, or within one if that is more, with every other read accepted (at least one) and none on a name the
 regime would have planned, are counted by cause. A stale stock is still an
 unknown input and a refused reading still leaves the checklist's grade and no
-ticket. An empty credit balance stops the calls like a refused key.
+ticket. An empty credit balance stops the calls like a refused key; a request
+the API refused as invalid (HTTP 400) is counted by its own cause, never asked
+again, and two names refused alike in a row stop the asking.
 
 ## Market Monitor (`src/breadth.py`)
 

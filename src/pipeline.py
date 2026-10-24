@@ -98,6 +98,7 @@ RULES = {
     "pipeline.reader_policy": reader_coverage.POLICY,
     "pipeline.reader_refusal_fraction": READER_REFUSAL_FRACTION,
     "pipeline.reader_refusal_min": READER_REFUSAL_MIN,
+    "pipeline.reads_version": reader_coverage.READS_VERSION,
     "pipeline.reader_usage_version": reader_coverage.USAGE_VERSION,
     **delivery.RULES,   # the evening workflow's slots and recovery window, as the record archives them
     "pipeline.series_bars": SERIES_BARS,

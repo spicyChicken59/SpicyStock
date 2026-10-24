@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5149 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5192 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -11363,3 +11363,251 @@ run on a copy must carry `.git` or be run on a worktree. CI on the pushed tip
 UTC, page -- the full smoke with `--shots` -- 22:37–22:54, the gate, the native
 central case 22:37–22:55 and stress 22:37–23:17; Secret scans 40034777459 and
 40034772674).
+
+## Checkpoint, 24 Oct 2026 -- PR #191 accepted; a request the API refuses is its own reads cause, asked once (PR C)
+
+**PR #191, accepted.** Merged as `f466932f` on `main` with a merge commit over
+`f8db66e3` (the 23 October publication and its issuer receipt). The code head
+`2a30af64` passed all seven checks on Tests run 40034777473 (pytest 22:37–22:58
+UTC, page 22:37–22:54, the gate, the native central case 22:37–22:55 and
+stress 22:37–23:17; Secret scans 40034777459 and 40034772674); the final head
+`a3bc5d2a` (CLAUDE.md alone over it) passed pytest (02:20–02:47), page
+(02:20–02:38), the gate's docs-only decision and both gitleaks runs on run
+40053753949. Publisher 40055715771 waited for `app-issuer-evidence.js` and
+`app-morning.js` and printed *Verified: every one of the 48 public files
+matches committed main* at 02:49:56 UTC; Pages 40055736501 deployed at
+02:49:54 (40055715503 cancelled as superseded, as every merge does); the merge
+commit's own Secret scan 40055715775 and Tests run 40055715801 (02:48–03:16 UTC)
+passed. The merge tree equals the local merge the PR C
+branch was built on, byte for byte.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` restarted from `main` at
+`f466932f`, pushed as **PR #192**: three commits, `ea97fce3`, `3b758fbe` and
+`3ee0e427`, cherry-picked from the worktree branch the work was built on
+(`a84ac114`, `5f3d99c0`, `913f9a1e`, over the #191 tree merged with `main`),
+the trees equal byte for byte. The reader-pin checkpoint's "recorded, not
+fixed": a 400 was counted as `transport`, because `run.reads` version 1 had no
+cause for a request the API refuses, and the grader retried an identical
+request after one. `docs/data.json`, `docs/picks.json`, the compact reader,
+every receipt, the history, the evidence objects, the quality ledger, the
+workflows and the vendored design system are untouched; no run, mail,
+dispatch, provider call or credential. `.env.example` was read: nothing here
+is configuration.
+
+**The rule.** `grader.is_request_refusal()` names an answer whose text carries
+the SDK's `Error code: 400 -` prefix and is neither the account's empty-balance
+answer (a 400 too, matched first), a refused key nor a reply's own words; such
+a request is not asked again -- a transport retry sends the body unchanged and
+is refused the same way -- so `grade_candidate()` breaks after one attempt as it
+does for an admission conflict. `grade_all()` stops asking after
+`REQUEST_OUTAGE_AFTER` (two) consecutive asked names were refused with one
+message, `refusal_key()`: the API's own `message`, read off the text, or the
+text with its per-request id removed; the remaining names fall back without a
+call and carry the refusal, as a credit outage's do. A refusal that names one
+request's own content (an oversized image, a prompt too long) differs from name
+to name and stops nothing; an accepted reply, a reply the checks refused or a
+transport failure between two refusals ends the streak. `run.reads` is version
+2 (`reader_coverage.FAILURES_BY_VERSION`): `request` sits between `credit` and
+`transport`, the sentence says "N names' requests were refused by the API as
+invalid (HTTP 400) and not asked again", and `pipeline.reads_version` is
+archived, so `rules_version` moves. `reads_faults()` holds a block to the
+version its rules archived -- version 1 and its five causes for every record
+from before, which archived none -- and re-derives an open night's reads in
+that version's words (`failure_of(error, version)` folds a refused request into
+`transport` under version 1, as those records counted it). The funnel is
+version 2 with `review_request` ("review request refused by the API as invalid
+(HTTP 400)"), and `funnel.faults()` asks for a block only under the version it
+archived: a record archived under version 1 is read for what it recorded and
+held to nothing. The page's `READ_CAUSES` prints the new word on the Method
+strip, `READ_FAILURES_BY_VERSION` is held equal to the module's by
+`tests/test_docs.py`, and `reviewSelectionFacts()` reconciles the Morning desk
+under the record's archived version, classifying a 400 by the grader's own
+marker into `request` under version 2 and `transport` under version 1. README's
+reads paragraph and funnel stage list and `knowledge/method.md` say the rule.
+
+**Over the two empty nights, read again** (read-only, the new modules over
+the records on `main`): the 21 October publication (`2eb0e0be`, COST and WRB)
+and the 22 October one (`503193ea`, CL and ABT) each carry two selected rows
+with two attempts apiece, every attempt refused with one message, so one
+`refusal_key` across both nights: `temperature: Extra inputs are not
+permitted`. `failure_of()` reads each row `request` under version 2 and
+`transport` under version 1; both records archived no `reads_version` and
+wrote version-1 blocks (`transport: 2`), and `reads_faults()` and
+`funnel.faults()` accept both as they stand. Under the new grader each night
+would have spent two calls, not four -- one per name, the second refusal
+stopping the asking -- and `run.reads` would have said `request: 2` and
+"2 names' requests were refused by the API as invalid (HTTP 400) and not asked
+again." The nights' verdicts (`unavailable`, `claude_unavailable`, degraded)
+are unchanged by the name.
+
+**Measured** (this sandbox, Python 3.12.3, Node 22, Chromium through Playwright
+1.63). On the first commit (`a84ac114`): the full suite on the committed
+worktree 5132 passed, 34 environment-gated skips and one failure in 20 m 05 s
+-- the recovery rehearsal's clean-night literal, which still spelled five
+causes and which `5f3d99c0` moved (its two files 87 passed there). On the
+final tree (`913f9a1e`, the review's fixes): 5191 collected, the full suite on
+the committed worktree **5157 passed and 34 environment-gated skips in
+19 m 47 s**; the eight touched Python files 537 passed; 13 page fixtures and
+every cascaded generator regenerated twice (once for the rules digest, once
+for the `unasked` field) and current, their `--check`s run last (morning
+pinned 21, issuer-evidence 44, stop-research 22, research-outcomes 40,
+research-observations 24, source-recovery 20, cash-preview 6, the first-trade
+backup 80/80 and its parity corpus 109 cases with 32 accepted,
+`tools/recovery_rehearsal.py --check` and `freeze_validation_cases --check`);
+the browser suites `review-selection` 442/442 -- new: a refused request under
+version 2 and under version 1, every request refused under each, the SDK's
+plain-text and oversized-body shapes, a name never asked, the grader's own two
+non-refusals, the Method strip's cause word under both versions, four
+renderer-only faults over the retained 9 October publication (a version-one
+block) and two over the version-two producer fixture -- and `inputs`,
+`funnel`, `reader` and `coverage` 908/908 over the regenerated fixtures (1315
+on the first commit, 1309 before the two faults were pointed at the record that
+can show them); screenshots at 1280, 390 and 320 in both themes looked at (the
+funnel table lists no stage with no name, so the night's page is unchanged);
+`git diff --check` clean; gitleaks 8.24.3 over the branch's commits with the
+repository's config: no leaks. The full smoke with `--shots` is CI's page job:
+on the pushed code head `3ee0e427` (Tests run 40062212976) the page job
+passed 04:24–04:39 UTC, the gate and the native stress case (04:24–04:42)
+passed, both gitleaks runs passed, and **pytest failed**: 5172 passed, 8
+skipped and eleven errors, every one the setup of the eleven-publication
+funnel test. Its fixture fetches the commits a shallow checkout lacks, and
+`VERSION_ONE_PUBLICATIONS` named them by eight-character prefix; GitHub
+serves a commit the clone does not hold only by its whole object id, so the
+runner's `git fetch --depth=1 origin 279ec5a3 …` was answered *couldn't
+find remote ref*, and the findings test the fixture was modelled on passes
+in CI only because its spec names whole ids. Reproduced here in a depth-1
+clone of the real remote: the original file gives the same eleven setup
+errors, the abbreviated fetch is refused by hand and the whole id is
+fetched. The list is the eleven whole ids now, each case keeps its
+eight-character id, and a guard test holds every entry to forty lowercase
+hex digits with no duplicate, so the next abbreviation fails on any
+checkout, shallow or not; in the depth-1 clone the ten missing commits are
+fetched and 12 pass, over the full history the file passes 81, an id
+abbreviated kills the guard and a comment control passes 12. The native
+central case was still running when this was written; the seven checks on
+the final head are recorded on PR #192. The checkpoint commit's own message
+(`37f75b51`) counts thirty-six Python and eleven page mutants where the
+passes ran 18 and 30 Python (12 of the second pass new) and 5 page; the
+counts in this checkpoint are the right ones.
+
+**Mutation passes**, the tree never written. Python, each mutant in its own
+detached git worktree of the shared repository at the PR C commit (so the
+tests that read publications off git by commit still run), judged by
+`tests/test_grader.py`, `test_reader_coverage.py`, `test_funnel.py` and
+`test_docs.py` in full: eighteen -- the no-retry break dropped, the stop after
+one and after three, the streak never reset, `refusal_key` keeping the request
+id and ignoring the message, `is_request_refusal` admitting the credit answer
+and a reply's own words, the marker without its dash, `failure_of` ignoring the
+version, `reads()` writing the current version, the validator ignoring the
+archived version and taking an untyped one, the sentence without its request
+clause, the funnel gate dropped and its stage dropped, `reads_version` not
+archived, and the page's lists drifting from the module's. All eighteen die,
+each in the test naming its rule (the dropped stage first against the
+regenerated fixtures and, with the fixture-equality tests deselected, in the
+stage test `5f3d99c0` adds; the unarchived version first in the pipeline's own
+publication, refused by the validator); the control (a comment) passes 292.
+Page, through routed copies of `app.js` judged by `--only review-selection`:
+the classifier reading every 400 as transport (2 checks), as request under
+version 1 too (2), the failure list fixed to version 2 (7, the retained
+version-one record among them), the archived-version check dropped (4, the
+retained record's fault and the producer fixture's) and `READ_CAUSES` without
+the new word (2, the Method strip) all die; the control (a comment) passes
+409/409.
+
+**The second mutation pass**, over the final tree, each of thirty mutants in
+its own detached worktree at the fix commit and judged by the same four test
+files in full with the fixture-equality test deselected, so each dies in the
+test naming its rule. The first pass's eighteen again, their anchors moved by
+the review's fixes (the funnel gate is "a record made before the funnel rule
+is asked for no block" now, since the version-equality gate it struck no
+longer exists), and twelve over the fixes' own rules: the SDK's class labels
+dropped (dies in the eleven-status shape test), `RequestOutage`'s label not a
+refusal, the names after the stop carrying the second name's answer, `unasked`
+never counted, unchecked by the validator and not re-derived on an open night,
+the sentence ignoring it, `funnel.build()` ignoring the archived version, the
+stage read under the current reads version, the labels unfiltered, an unknown
+funnel version not a fault, and `archived_version()` untyped. All thirty die:
+the three funnel-version mutants in the git-backed test over the eleven
+retained version-one publications and the stage test; the unarchived reads
+version in ten tests, the pipeline's own publication among them; the page's
+drifted list in the docs test alone; the control (a comment) passes 304. Two
+harness defects of mine on the way, neither a kill: the pass stopped at its
+fourteenth mutant on the sentence anchor the review had moved, and its
+failure filter kept the grader's `ERROR` log lines, so the first three kills
+were named by their count alone; re-anchored, the remaining seventeen ran and
+those three were judged again under the fixed filter, each dying in the tests
+named above.
+
+**The review, worked.** A workflow by execution over the first commit
+(`a84ac114`), three finders (the rule's semantics, the page, the tests and the
+documents) and one skeptic a finding: ten findings, ten upheld -- the two
+mediums read as low-to-medium and low by their skeptics -- and every one
+reproduced here before it was touched. The rule finder's three. **The marker
+missed the SDK's own shapes** (medium): `anthropic`'s client writes "Error
+code: 400 - <body>" only when the body parses as JSON; a plain-text, HTML or
+empty 400 body gives the text alone or "Error code: 400" with no dash, and a
+413 is `RequestTooLargeError` -- built through the installed client's own
+`_make_status_error_from_response()` over constructed responses, each read as
+transport and retried. The rule reads the SDK's class labels now
+(`REQUEST_REFUSAL_LABELS`: a 400 or 413 whatever the body) beside the status
+markers for a 400 or 413 another wrapper carried, and the test builds its cases
+through the same constructor over eleven statuses (400 as JSON, text, HTML and
+empty; 413; 401, 403, 404, 429, 500, 529), so the suite sees the shapes a run
+meets rather than ones a test spelled. **The funnel gate held a version-1
+record to nothing** (medium): the first commit skipped every check for a record
+archiving funnel version 1 -- every publication from 12 to 23 October -- so a
+forged, moved or malformed block on a retained publication passed
+`report.validate()` and `tools/verify_retained_publication.py` where the code
+before the commit refused it, because the re-derivation was version-blind
+(`failure_of()` read a 400 as `review_request` where those records wrote
+`review_transport`). `funnel.build()` re-derives a record under the version its
+rules archived now (`archived_version()`, `REACTION_STAGES_BY_VERSION`,
+`READS_VERSION_BY_FUNNEL`: a version-1 record in version 1's stages, groups,
+labels and reads words), `faults()` holds every known version to its own
+re-derivation and names an unknown one, and a test fetches the eleven retained
+version-1 publications by whole object id (12–23 October, both 19 October
+revisions) and holds each to its archived block to the byte, the 21 and 22
+October refusals at `review_transport` under version 1 and `review_request`
+under 2. **Never-asked names were worded as refused** (low): after the stop,
+the remaining names carried the second name's answer verbatim -- another name's
+request id -- and the sentence said their requests were refused. They carry
+`grader.RequestOutage`'s own sentence now (the message, no request id),
+`run.reads` counts them as `unasked` beside `request`, and the sentence says
+how many were refused and how many went unasked; the funnel's label says both.
+The page finder's one (low) was a hole: no browser control told the dashed
+marker from a bare "error code: 400", so a page classifying by the bare text
+passed the suite and only the docs test's string check held it -- which a
+comment could satisfy. Two controls carry the grader's own non-refusals now (a
+4000 status, the bare 400 without the SDK's dash), and the docs test reads the
+page's label and marker lists off their `const` lines against the module's. The
+tests-and-documents finder's six: README, the commit message and the grader's
+comment promised that a refusal naming one request's own content "never stops
+the run by itself", while the rule is message equality -- two names refused
+alike for an oversized chart stop the asking as the temperature refusals did,
+and the one test of the rule scripted two DIFFERENT messages (the second shape
+this file names); the words say what the code does now, and a test holds two
+identical content refusals to the stop beside two different ones that do not.
+The commit message and the grader's comment conflated calls and names ("four
+calls bought nothing, and run.reads counted the four as transport": four calls
+a night, eight over the two nights, and two names a night counted); the comment
+says so, the commit message stands as written. The first commit's funnel gate
+test passed its named assertion for another reason (the first shape: the
+lowered version left a version-2 block that still equalled the re-derivation,
+and only the deleted block failed), replaced by the version-aware test above.
+`a84ac114` alone was red on the rehearsal literal `5f3d99c0` fixed. The
+integration test gave every name one request id where the real nights'
+differed, so `refusal_key()`'s id rule could not fail there; each name has its
+own id now. And `build()` over a version-1 record yielded version 2's stage
+set, the reading tool's half of the funnel finding, closed by the same fix.
+
+**Keep / fix / defer / omit.** Keep: a refused request is named, never
+retried, and never read as a transport fault; the stop needs two alike. Fix if
+it bites: the stop reads the API's message by a regular expression over the
+SDK's error text; a provider that changes its error shape makes two refusals
+read as different and the run asks every name once (bounded by the names, as
+before). Defer: a reads cause for an HTTP 429 or 5xx, which a transport retry
+is right to retry. Omit: any retry of a refused request; a page that guesses a
+cause a record did not archive.
+
+**Not claimable:** a live night with a refused request -- the first such night
+after the merge is the test; any trading edge.

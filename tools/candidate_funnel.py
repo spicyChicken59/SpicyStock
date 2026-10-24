@@ -80,6 +80,7 @@ def reading(data: dict, *, source: str, identity: str) -> dict:
         "session": run.get("session"), "session_state": run.get("session_state"),
         "published_at": run.get("published_at"), "rules_version": data["app"].get("rules_version"),
         "archived": isinstance((data.get("rules") or {}).get("funnel"), dict),
+        "built_under": block["version"],   # the archived funnel version, or the current one for a record from before the rule
         "regime": block["regime"], "admitted_grades": block["admitted_grades"],
         "reaction": {k: block["reaction"][k] for k in ("discovered", "potentially_usable", "by_mechanical_grade", "stages")},
         "anticipation": {k: block["anticipation"][k] for k in ("listed", "counts", "stages")},

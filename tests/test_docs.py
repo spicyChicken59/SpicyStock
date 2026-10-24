@@ -651,6 +651,27 @@ def test_the_publication_gate_skips_what_it_cannot_publish(tmp_path):
     assert publish_dashboard.public_files(tmp_path) == ("index.html", *publish_dashboard.RECORD_FILES, sidecar)
 
 
+def test_the_page_counts_the_reads_causes_the_module_writes_by_version():
+    """run.reads names a selected name's missing reading by one word a version;
+    the page prints those words and re-derives the counts on the Morning desk,
+    so its lists are held to reader_coverage's, version by version, and it
+    classifies a refused request by the grader's own marker."""
+    from src import grader, reader_coverage
+    block = re.search(r"const READ_FAILURES_BY_VERSION = \{ (.*?) \};", PAGE_JS).group(1)
+    versions = {int(v): re.findall(r"'(\w+)'", lst) for v, lst in re.findall(r"(\d+): \[([^\]]*)\]", block)}
+    assert versions == {v: list(f) for v, f in reader_coverage.FAILURES_BY_VERSION.items()}
+    causes = re.search(r"const READ_CAUSES = \{ (.*?) \};", PAGE_JS).group(1)
+    assert re.findall(r"(\w+): '", causes) == list(reader_coverage.FAILURES)
+    labels = re.search(r"const READ_REQUEST_LABELS = \[([^\]]*)\];", PAGE_JS).group(1)
+    markers = re.search(r"const READ_REQUEST_MARKERS = \[([^\]]*)\];", PAGE_JS).group(1)
+    assert re.findall(r"'([^']+)'", labels) == [*grader.REQUEST_REFUSAL_LABELS, grader.error_label(grader.RequestOutage)]
+    assert re.findall(r"'([^']+)'", markers) == list(grader.REQUEST_REFUSAL_MARKERS)
+    # the documents say what the second version tells apart and what the run does about it
+    assert "`request`" in README and "not asked again" in README
+    assert "review_request" in README, "the funnel's stage list in README lacks the new stage"
+    assert "refused as invalid" in (ROOT / "knowledge" / "method.md").read_text()
+
+
 def test_the_readme_counts_the_fields_the_smoke_drops():
     """README says how many fields the page smoke drops in turn; that is the
     length of the list the smoke walks, read off the smoke itself."""

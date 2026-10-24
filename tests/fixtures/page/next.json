@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "cb56153aca6e"
+  "rules_version": "5c0f45da6dde"
  },
  "cover": {
   "h1": "Trade next session. 2 A-quality bursts.",
@@ -249,18 +249,20 @@
    "requested": 2,
    "done": 2,
    "unavailable_reason": null,
-   "version": 1,
+   "version": 2,
    "causes": {
     "refused": 0,
     "format": 0,
     "account": 0,
     "credit": 0,
+    "request": 0,
     "transport": 0
    },
    "refusal_limit": 1,
    "refused_names": [],
    "refused_admissible": [],
    "verdict": "complete",
+   "unasked": 0,
    "sentence": null
   },
   "reader_usage": {
@@ -940,7 +942,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "89445f0ac5e9687ae8354a040420da0e58d8cbfbb68e45429165be824ad6acc8"
+   "context_sha256": "181ec3d3a1dbb0a5dad0728249d30fd2fabd530c953f0746c656901dab97dda3"
   },
   "sanitised": {
    "replaced": 0,
@@ -1470,7 +1472,7 @@
    "feasibility": "private per-candidate plan before reader and combined allocation"
   },
   "funnel": {
-   "version": 1,
+   "version": 2,
    "policy": "candidate_funnel_v1"
   },
   "intraday": {
@@ -1512,6 +1514,7 @@
    "reader_policy": "accepted_required_v1",
    "reader_refusal_fraction": 0.25,
    "reader_refusal_min": 1,
+   "reads_version": 2,
    "reader_usage_version": 1,
    "delivery_version": 1,
    "delivery_primary_et": "18:16",
@@ -2388,8 +2391,8 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "2da829bbe7287d9978bbe0f9743fa41c04d04c709ed3e43920f02c9d3bb71220",
-     "context_sha256": "89445f0ac5e9687ae8354a040420da0e58d8cbfbb68e45429165be824ad6acc8",
+     "id": "0b00ba5af936c5f8b00bb8db46d24d8cd0fab25a7ce5fbfd303674fe291e8015",
+     "context_sha256": "181ec3d3a1dbb0a5dad0728249d30fd2fabd530c953f0746c656901dab97dda3",
      "plan_sha256": "2e97c86bc0d9b0a3d5f58a15e01a6ae6f78ae311ac47c457ffa8a7832bdac587",
      "pick_sha256": "60f4999a826dafe140bcd6d80a1a5c4ea23e905b2a2a9923f7a42d18f9c31485"
     }
@@ -2521,8 +2524,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-11",
-    "rules_version": "cb56153aca6e",
-    "context_sha256": "89445f0ac5e9687ae8354a040420da0e58d8cbfbb68e45429165be824ad6acc8",
+    "rules_version": "5c0f45da6dde",
+    "context_sha256": "181ec3d3a1dbb0a5dad0728249d30fd2fabd530c953f0746c656901dab97dda3",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -2535,7 +2538,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "2da829bbe7287d9978bbe0f9743fa41c04d04c709ed3e43920f02c9d3bb71220"
+    "id": "0b00ba5af936c5f8b00bb8db46d24d8cd0fab25a7ce5fbfd303674fe291e8015"
    },
    "series": [
     {
@@ -4002,8 +4005,8 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "3161f9ff0ad0b75847472271645f67053d6b34d83ed5244ad2d901d9d1c5f9c1",
-     "context_sha256": "89445f0ac5e9687ae8354a040420da0e58d8cbfbb68e45429165be824ad6acc8",
+     "id": "cc416d0e2976c0d4a0d2f2036044b9930f5a66cbbc076eded8060830e83f0929",
+     "context_sha256": "181ec3d3a1dbb0a5dad0728249d30fd2fabd530c953f0746c656901dab97dda3",
      "plan_sha256": "ca9b0e0f41f338615bae69660fde525051f0de2906fffa6cfcf2c59b9d2305ab",
      "pick_sha256": "c7182ae8b763598bbf333e0823e9638fc4a711148fae0b2757ec663c49eb930f"
     }
@@ -4135,8 +4138,8 @@
     "kind": "burst",
     "ticker": "COIL",
     "session": "2026-09-11",
-    "rules_version": "cb56153aca6e",
-    "context_sha256": "89445f0ac5e9687ae8354a040420da0e58d8cbfbb68e45429165be824ad6acc8",
+    "rules_version": "5c0f45da6dde",
+    "context_sha256": "181ec3d3a1dbb0a5dad0728249d30fd2fabd530c953f0746c656901dab97dda3",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -4149,7 +4152,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "3161f9ff0ad0b75847472271645f67053d6b34d83ed5244ad2d901d9d1c5f9c1"
+    "id": "cc416d0e2976c0d4a0d2f2036044b9930f5a66cbbc076eded8060830e83f0929"
    },
    "series": [
     {
@@ -5468,8 +5471,8 @@
    "limit": 126.47,
    "evidence_ref": {
     "version": 1,
-    "id": "0f2622d5d49e3f2e034b69257124899f6f027c98997c8b0d7996648d724923b8",
-    "context_sha256": "74dea98e6513167de10901ceb1bb4c4c9ee727451873bb44e31e9ac2269d2573",
+    "id": "655e9732b79d37bb0b4493bb488e4e60af89858579fc31c895a1e1369eaedc2e",
+    "context_sha256": "044d69df76e1d5a3232180e2dec3129ec2e53ad1576a0c8b59ba426e1b924ec8",
     "plan_sha256": "0f9a29ecc5c1d5c64d66fe20dde133b7798eabb86df158a16f01a0a06f3f3c83",
     "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
    }
@@ -5530,7 +5533,7 @@
    "expected_session": "2026-09-11",
    "evaluated_session": "2026-09-11"
   },
-  "replay_rules_version": "cb56153aca6e"
+  "replay_rules_version": "5c0f45da6dde"
  },
  "observations": {
   "as_of": "2026-09-11",
@@ -5838,74 +5841,74 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:cb56153aca6e": {
+   "burst:AAPL:2026-09-10:5c0f45da6dde": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:cb56153aca6e": {
+   "burst:AMD:2026-09-10:5c0f45da6dde": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:cb56153aca6e": {
+   "burst:NVDA:2026-09-10:5c0f45da6dde": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:cb56153aca6e": {
+   "burst:TSLA:2026-09-10:5c0f45da6dde": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:cb56153aca6e": {
+   "burst:PLUG:2026-09-10:5c0f45da6dde": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:cb56153aca6e": {
+   "burst:DLLR:2026-09-10:5c0f45da6dde": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:cb56153aca6e": {
+   "anticipation:COIL:2026-09-10:5c0f45da6dde": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-11:cb56153aca6e": {
+   "burst:NVDA:2026-09-11:5c0f45da6dde": {
     "ticker": "NVDA",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "burst:COIL:2026-09-11:cb56153aca6e": {
+   "burst:COIL:2026-09-11:5c0f45da6dde": {
     "ticker": "COIL",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    },
-   "anticipation:VRT:2026-09-11:cb56153aca6e": {
+   "anticipation:VRT:2026-09-11:5c0f45da6dde": {
     "ticker": "VRT",
     "session": "2026-09-11",
     "kind": "anticipation",
-    "rules_version": "cb56153aca6e",
+    "rules_version": "5c0f45da6dde",
     "coverage": "observed"
    }
   },
@@ -5913,7 +5916,7 @@
  },
  "closest_miss": null,
  "funnel": {
-  "version": 1,
+  "version": 2,
   "policy": "candidate_funnel_v1",
   "regime": "green",
   "admitted_grades": [
@@ -5945,6 +5948,7 @@
     "review_format": 0,
     "review_account": 0,
     "review_credit": 0,
+    "review_request": 0,
     "review_transport": 0,
     "review_downgraded": 0,
     "review_unknown": 0,
@@ -6011,6 +6015,7 @@
    "review_format": "review",
    "review_account": "review",
    "review_credit": "review",
+   "review_request": "review",
    "review_transport": "review",
    "review_downgraded": "review",
    "review_unknown": "review",
@@ -6041,6 +6046,7 @@
    "review_format": "review reply could not be read as a score",
    "review_account": "review stopped: the API refused the account",
    "review_credit": "review stopped: the API credit balance was too low",
+   "review_request": "review request refused by the API as invalid (HTTP 400), or unasked after two refused alike",
    "review_transport": "review got no usable answer from the API",
    "review_downgraded": "review lowered the grade below the admitted band",
    "review_unknown": "review state not readable from this record",
