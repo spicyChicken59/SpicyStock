@@ -5,10 +5,10 @@
 # .github/workflows/tests.yml installs this file and nothing else.
 -r requirements.txt
 
-pytest>=8.0
+pytest>=8.0,<10
 
 # Exercise Anthropic's real HTTP transport without opening sockets.
-httpx2>=2.12
+httpx2>=2.12,<3
 
 # tests/test_workflows.py parses .github/workflows/*.yml and asserts on the
 # PARSED structure, because what went wrong there twice was a structural
@@ -19,4 +19,4 @@ httpx2>=2.12
 # installed while the runner does not -- so four tests passed locally and
 # errored in CI for three commits. Same lesson as the interpreter difference in
 # CLAUDE.md: what is on this machine is not what CI has.
-PyYAML>=6.0
+PyYAML>=6.0,<7

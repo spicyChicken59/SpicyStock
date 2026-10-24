@@ -104,9 +104,21 @@ exact chart bytes once. Gzip uses `mtime=0`; hashes bind expanded canonical data
 or raw bytes for PNGs. The browser does not fetch these objects on initial load.
 Each object is bounded at 256 KiB compressed **and expanded**, and the archive at
 128 MiB. Existing different/corrupt objects are refused, never overwritten or
-repaired. Objects are retained independently of the rotating recovery catalog;
-there is no automatic deletion or compaction in v1. Capacity exhaustion withholds
-the new publication and requires an explicit retention decision. Actual chart
+repaired. Capacity exhaustion withholds the new publication. **Retention
+(24 October 2026), the explicit decision v1 deferred:** before each night's
+objects are written and counted against the cap, `provenance.prune_objects()`
+removes every object that no other file under `docs/` names -- the publication
+and its compact reader, the 21-day recovery catalog, the research cohorts and
+their journal, the quality ledger, the frozen validation cases and the dated
+reports all keep what they name. A name is any 64 lowercase hex digits in a
+file's text (a `.gz` read expanded, and any 64 inside a longer run), so a
+reference is never missed for its spelling. Every file is read in full first;
+a link under `docs/`, a file over 64 MiB or a `.gz` that does not expand removes
+nothing, and the capacity check then decides as before. Unknown entries in the
+archive stay. The archive follows the catalog a night behind: a night the
+catalog drops tonight leaves the archive on the next publication. Removed
+objects stay in git at every commit that carried them. The run log states what
+is left against the cap and what went, and warns above 80% of it. Actual chart
 sizes vary; the fixture's fixed PNG double is not a production storage estimate.
 The evening artifact includes evidence and history. There are no new settings.
 

@@ -99,7 +99,7 @@ def retained_inputs(index):
     audit = json.loads((root / "docs/input-truthfulness/2026-09-22-reader-downgrade-audit.json").read_text())
     row = audit["decisions"][index]
     sha = row["provenance"]["source"]["sha256"]
-    df = frame_of(json.loads(gzip.decompress((root / "docs/evidence" / (sha + ".json.gz")).read_bytes())))
+    df = frame_of(json.loads(gzip.decompress((root / "tests/fixtures/retained-evidence" / (sha + ".json.gz")).read_bytes())))
     assessment = quality.assess(df)
     assert (assessment.grade, assessment.score, assessment.a_plus_count) == (
         row["mechanical_grade"], row["mechanical_score"], row["a_plus_tally"])

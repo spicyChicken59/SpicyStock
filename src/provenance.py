@@ -17,6 +17,7 @@ import os
 from pathlib import Path
 import re
 import tempfile
+import zlib
 
 import numpy as np
 import pandas as pd
@@ -27,6 +28,14 @@ VERSION = 1
 OBJECT_DIR = "evidence"
 MAX_OBJECT_BYTES = 256 * 1024
 MAX_ARCHIVE_BYTES = 128 * 1024 * 1024
+# Retention: an archived object stays while any other file under docs/ names
+# it -- the publication, the recovery catalog, the research cohorts and their
+# journal, the quality ledger, the frozen validation cases, the dated reports.
+# A file is read whole (a .gz expanded) up to this bound, or nothing is removed.
+RETENTION_SCAN_BYTES = 64 * 1024 * 1024
+RETENTION_WARN_FRACTION = 0.8  # of the cap, after removals: the run log warns
+OBJECT_FILE = re.compile(r"([0-9a-f]{64})\.(?:json\.gz|png)\Z")
+NAME_RUN = re.compile(rb"[0-9a-f]{64,}")
 RULES = {"provenance.version": VERSION, "provenance.canonicalization": "typed-json-f64hex-v1",
          "provenance.grade_bands": [list(band) for band in grader.GRADE_BANDS],
          "provenance.quality_gate_letters": list(quality.GRADE_GATE_LETTERS), "provenance.quality_gate_cap": quality.GATE_CAP}
@@ -665,6 +674,88 @@ def write_objects(objects, directory):
             raise
 
 
+def _expanded(raw, path):
+    out, data = bytearray(), raw
+    while data:
+        try:
+            member = zlib.decompressobj(16 + zlib.MAX_WBITS)
+            out += member.decompress(data, RETENTION_SCAN_BYTES + 1 - len(out))
+        except zlib.error as exc:
+            raise ValueError(f"retention scan cannot expand {path}: {exc}") from exc
+        if member.unconsumed_tail or len(out) > RETENTION_SCAN_BYTES:
+            raise ValueError(f"retention scan bound exceeded by {path}")
+        if not member.eof:
+            raise ValueError(f"retention scan cannot expand {path}: truncated")
+        data = member.unused_data
+    return bytes(out)
+
+
+def named_objects(docs):
+    """The object names every file under docs/ other than the archive carries.
+
+A name is any run of 64 lowercase hex digits, or any 64 in a longer run, so a
+reference is never missed for its spelling; a .gz file is read expanded. A
+link, a file over the bound or a .gz that does not expand is a refusal: a file
+the scan cannot read in full may name what it cannot see.
+"""
+    docs = Path(docs)
+    archive = docs / OBJECT_DIR
+    exact, runs = set(), []
+    for dirpath, dirnames, filenames in os.walk(docs):
+        here = Path(dirpath)
+        if here == archive:
+            dirnames[:] = []
+            continue
+        for name in sorted(dirnames + filenames):
+            path = here / name
+            if path.is_symlink():
+                raise ValueError(f"retention scan refuses the link {path}")
+        for name in filenames:
+            path = here / name
+            if not path.is_file():
+                raise ValueError(f"retention scan refuses {path}: not a regular file")
+            if path.stat().st_size > RETENTION_SCAN_BYTES:
+                raise ValueError(f"retention scan bound exceeded by {path}")
+            raw = path.read_bytes()
+            text = _expanded(raw, path) if name.endswith(".gz") else raw
+            for run in NAME_RUN.findall(text):
+                if len(run) == 64:
+                    exact.add(run.decode())
+                else:
+                    runs.append(run.decode())
+    return exact, runs
+
+
+def prune_objects(docs, keep=()):
+    """Remove archive objects no other file under docs/ names, before a write.
+
+The names are all read before anything is removed, so a refusal removes
+nothing; `keep` is what tonight writes. Unknown entries stay. Git keeps every
+object that leaves the working tree. Returns what is left and what went.
+"""
+    archive = Path(docs) / OBJECT_DIR
+    if archive.is_symlink() or (archive.exists() and not archive.is_dir()):
+        raise ValueError("evidence archive is not a directory")
+    if not archive.exists():
+        return {"objects": 0, "bytes": 0, "cap": MAX_ARCHIVE_BYTES, "removed": 0, "removed_bytes": 0}
+    exact, runs = named_objects(docs)
+    exact |= set(keep)
+    doomed, objects, total = [], 0, 0
+    for path in archive.iterdir():
+        match = OBJECT_FILE.fullmatch(path.name)
+        regular = path.is_file() and not path.is_symlink()
+        if match and regular and match.group(1) not in exact and not any(match.group(1) in run for run in runs):
+            doomed.append((path, path.stat().st_size))
+            continue
+        # counted as write_objects() counts the archive against its cap
+        total += path.stat().st_size if path.is_file() else 0
+        objects += bool(match and regular)
+    for path, _ in doomed:
+        path.unlink()
+    return {"objects": objects, "bytes": total, "cap": MAX_ARCHIVE_BYTES,
+            "removed": len(doomed), "removed_bytes": sum(size for _, size in doomed)}
+
+
 def publish_bundle(data, rec, docs, objects, *, dry_run=False):
     """Verify the serialized data AND picks before installing either file.
 
@@ -683,6 +774,12 @@ process death between filesystem renames is not a multi-file transaction.
         persisted = None if dry_run else json.loads((stage / "picks.json").read_bytes())
         require(staged, persisted, objects, require_sources=False, require_picks=not dry_run)
         reader.stage_assets(stage)
+        # Before the capacity check, so a full archive can still make room.
+        try:
+            retention = prune_objects(docs, keep=objects)
+        except (OSError, ValueError) as exc:
+            retention = {"error": f"{type(exc).__name__}: {exc}"}
         write_objects(objects, docs / OBJECT_DIR)
         names = ["data.json"] if dry_run else ["picks.json", "data.json"]
         reader.install_publication(stage, docs, names)
+    return retention

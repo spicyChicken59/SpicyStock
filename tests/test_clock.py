@@ -2,8 +2,8 @@
 
 Every instant below is written out and never read off the wall clock: a test
 whose answer depends on the hour it runs is green all evening and red all
-morning, which is the worst kind there is. The one no-argument call made
-here asserts only what is true at every hour.
+morning, which is the worst kind there is. The no-argument calls made here
+read a wall clock the test pins.
 """
 
 from __future__ import annotations
@@ -71,15 +71,28 @@ def test_the_settling_margin_is_the_number_the_schedule_was_built_around():
     assert SESSION_COMPLETE_ET == time_of_day(16, 15)
 
 
-def test_a_call_with_no_instant_reads_the_wall_clock_and_is_still_a_weekday():
-    """The no-argument path is the one production takes. What is true of
-    its answer at every hour: a weekday, no later than today in market time."""
-    today_et = datetime.now(timezone.utc).astimezone(MARKET_TZ).date()
-    session = current_session()
-    assert session.weekday() < 5
-    assert session <= today_et
-    assert isinstance(session_has_closed(), bool)
-    assert isinstance(is_trading_weekday(), bool)
+@pytest.mark.parametrize("instant", [
+    datetime(2026, 9, 1, 18, 30, tzinfo=MARKET_TZ),   # a session, after its close
+    datetime(2026, 9, 1, 11, 0, tzinfo=MARKET_TZ),    # the same session, before it
+    datetime(2026, 9, 5, 18, 30, tzinfo=MARKET_TZ),   # a Saturday
+    datetime(2026, 9, 7, 12, 0, tzinfo=MARKET_TZ),    # Labor Day
+])
+def test_a_call_with_no_instant_reads_the_wall_clock(instant, monkeypatch):
+    """The no-argument path is the one production takes. It reads the wall
+    clock, which is pinned here: the calendar the module carries ends in 2035,
+    and a test asking the real clock would fail from the first day after it."""
+    import src.sessions as sessions
+
+    class Wall(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            assert tz is timezone.utc
+            return instant.astimezone(timezone.utc)
+
+    monkeypatch.setattr(sessions, "datetime", Wall)
+    assert current_session() == current_session(instant)
+    assert session_has_closed() is session_has_closed(instant)
+    assert is_trading_weekday() is is_trading_weekday(instant)
 
 
 # --- which side of the close a run is on -----------------------------------

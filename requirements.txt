@@ -1,13 +1,17 @@
-pandas>=2.0
-numpy>=1.24
-requests>=2.31
-mplfinance>=0.12.10b0
+# Every dependency is held below its next major (or pinned), so a release on
+# PyPI cannot change a night's run without a change here: anthropic 2.0.0 did
+# exactly that on 21 Oct 2026 (below). Raise a bound in its own change, with the
+# suite run against the new major.
+pandas>=2.0,<4
+numpy>=1.24,<3
+requests>=2.31,<3
+mplfinance>=0.12.10b0,<0.13
 # Held below 2.0: anthropic 2.x sends anthropic-version 2026-10-21, under which
 # the Messages API refuses `temperature` with HTTP 400 on every model, and the
 # chart reader sends temperature 0 on purpose (grader.SAMPLING_MODELS). The
 # unpinned install took 2.1.0 on 21 and 22 Oct 2026 and every review failed.
 # grader.API_VERSION names the version the request shape was validated under.
 anthropic>=1.15,<2
-resend>=2.0
-alpaca-py>=0.21
+resend>=2.0,<3
+alpaca-py>=0.21,<1
 exchange_calendars==4.13.2
