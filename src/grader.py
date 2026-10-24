@@ -157,25 +157,39 @@ FATAL_AUTH_MARKERS = (
 #: call answers the same way (6 Oct 2026: six names asked twice each after
 #: it, twelve calls bought nothing). Matched as the auth markers are.
 FATAL_CREDIT_MARKERS = ("credit balance is too low",)
-#: The SDK's prefix on an answer the API refused as an INVALID REQUEST, an HTTP
-#: 400: not the account, not its balance (an empty balance is a 400 too, and
-#: is matched first as the account's answer), the request itself. The same
-#: request asked again gets the same answer -- a transport retry sends the body
-#: unchanged -- so a refused request is never retried (21 and 22 Oct 2026: under
-#: API version 2026-10-21 every chart-reader request was refused for its
-#: `temperature`, four calls for two names bought nothing, and run.reads counted
-#: them as transport, the one cause it had for an answer it did not know).
-REQUEST_REFUSAL_MARKERS = ("error code: 400 -",)
+#: The SDK's own classes for a request the API refused as INVALID, as
+#: `_error_text()` labels them: an HTTP 400 (BadRequestError) whatever its body
+#: -- the SDK writes "Error code: 400 - <body>" only when the body is JSON, and
+#: a plain-text, HTML or empty body gives the text alone or "Error code: 400"
+#: -- and an HTTP 413 (RequestTooLargeError). Not the account, not its balance
+#: (an empty balance is a 400 too, and is matched first as the account's
+#: answer), the request itself. The same request asked again gets the same
+#: answer -- a transport retry sends the body unchanged -- so a refused request
+#: is never retried (21 and 22 Oct 2026: under API version 2026-10-21 every
+#: chart-reader request was refused for its `temperature`; two names a night,
+#: each asked twice, four calls a night bought nothing, and run.reads counted
+#: both names as transport, the one cause it had for an answer it did not know).
+REQUEST_REFUSAL_LABELS = ("anthropic.BadRequestError", "anthropic.RequestTooLargeError")
+#: the same answers carried by another wrapper, matched on the SDK's status prefix
+REQUEST_REFUSAL_MARKERS = ("error code: 400 -", "error code: 413 -")
 #: After this many consecutive names' requests are refused with the SAME message
 #: (`refusal_key()`: the API's message, the per-request id removed) the run stops
-#: asking and the remaining names fall back without a call: a refusal that names
-#: one request's own content (an oversized image, a prompt too long) differs
-#: from name to name and never stops the run by itself.
+#: asking and the remaining names fall back without a call. The rule is message
+#: equality, whatever the message names: a refusal whose text varies per request
+#: (a token count) cannot reach two, and two names refused alike for their own
+#: content (every chart over a size limit) are the API's answer to every request.
 REQUEST_OUTAGE_AFTER = 2
 
 
 class ScoreFormatError(ValueError):
     """The model replied, but not with a score this pipeline can rank."""
+
+
+class RequestOutage(RuntimeError):
+    """What a name the run never asked carries after the run stopped asking:
+    REQUEST_OUTAGE_AFTER consecutive names' requests were refused alike. Its
+    text names the API's message and no request id, so no name quotes another
+    name's answer, and `is_request_refusal()` reads it as a refused request."""
 
 
 class DiscoveryConflict(ValueError):
@@ -246,6 +260,8 @@ def is_request_refusal(error_text: str) -> bool:
     text = error_text or ""
     if _is_reply_error(text) or is_fatal_auth_failure(text) or is_fatal_credit_failure(text):
         return False
+    if any(text.startswith(label + ":") for label in (*REQUEST_REFUSAL_LABELS, error_label(RequestOutage))):
+        return True
     lowered = text.lower()
     return any(marker in lowered for marker in REQUEST_REFUSAL_MARKERS)
 
@@ -617,8 +633,8 @@ def grade_all(candidates: list[dict], system_prompt: str, max_calls: int,
     within the budget are fallback rows carrying the refusal, with no further
     call; so is an empty credit balance; and so are `REQUEST_OUTAGE_AFTER`
     consecutive names whose requests the API refused with one message
-    (`refusal_key()`), where a refusal naming one request's own content differs
-    from name to name and stops nothing. Every row carries its `ticker`. One log line says what the prompt
+    (`refusal_key()`), whatever that message names; the names after them carry
+    `RequestOutage`'s sentence. Every row carries its `ticker`. One log line says what the prompt
     cache did, written whenever a call was made.
     """
     cache = usage if usage is not None else {}
@@ -646,7 +662,9 @@ def grade_all(candidates: list[dict], system_prompt: str, max_calls: int,
                 key = refusal_key(error)
                 streak, streak_key = (streak + 1 if key == streak_key else 1), key
                 if streak >= REQUEST_OUTAGE_AFTER:
-                    outage = error
+                    # the names after this carry the run's own sentence, not this name's answer
+                    outage = _error_text(RequestOutage(
+                        f"the run stopped asking after {streak} requests were refused alike: {key}"))
                     log.error("the API refused %d consecutive names' requests the same way (%s) -- grading "
                               "the remaining candidates from the checklist without calling again", streak, key)
             else:

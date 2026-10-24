@@ -662,7 +662,10 @@ def test_the_page_counts_the_reads_causes_the_module_writes_by_version():
     assert versions == {v: list(f) for v, f in reader_coverage.FAILURES_BY_VERSION.items()}
     causes = re.search(r"const READ_CAUSES = \{ (.*?) \};", PAGE_JS).group(1)
     assert re.findall(r"(\w+): '", causes) == list(reader_coverage.FAILURES)
-    assert all(f"'{m}'" in PAGE_JS for m in grader.REQUEST_REFUSAL_MARKERS), "the page classifies a 400 by another marker than the grader"
+    labels = re.search(r"const READ_REQUEST_LABELS = \[([^\]]*)\];", PAGE_JS).group(1)
+    markers = re.search(r"const READ_REQUEST_MARKERS = \[([^\]]*)\];", PAGE_JS).group(1)
+    assert re.findall(r"'([^']+)'", labels) == [*grader.REQUEST_REFUSAL_LABELS, grader.error_label(grader.RequestOutage)]
+    assert re.findall(r"'([^']+)'", markers) == list(grader.REQUEST_REFUSAL_MARKERS)
     # the documents say what the second version tells apart and what the run does about it
     assert "`request`" in README and "not asked again" in README
     assert "review_request" in README, "the funnel's stage list in README lacks the new stage"

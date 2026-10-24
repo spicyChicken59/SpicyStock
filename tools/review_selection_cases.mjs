@@ -86,6 +86,13 @@ function rendererReadControls(full) {
   const cases = [
     ['partial transport', 'RuntimeError: unavailable', 'transport'],
     ['partial request', REFUSED_REQUEST, 'request'],
+    ['partial request, a plain-text body', 'anthropic.BadRequestError: image exceeds 5 MB maximum', 'request'],
+    ['partial request, an oversized body', "anthropic.RequestTooLargeError: Error code: 413 - {'type': 'error', 'error': {'type': 'request_too_large', 'message': 'Request body too large'}}", 'request'],
+    ['a name never asked', 'src.RequestOutage: the run stopped asking after 2 requests were refused alike: temperature: Extra inputs are not permitted', 'request'],
+    // the grader's own non-refusals: a status that only begins with 400, and the SDK's status prefix
+    // without its dash carried by another wrapper, are answers the page does not know -- transport
+    ['a 4000 code is not a refused request', 'RuntimeError: Error code: 4000 - not a status', 'transport'],
+    ['a bare 400 without the SDK dash is transport', 'RuntimeError: Error code: 400', 'transport'],
     ['all requests refused', REFUSED_REQUEST, 'request', true],
     ['a refused request under version one is transport', REFUSED_REQUEST, 'transport', false, false, true],
     ['every request refused under version one', REFUSED_REQUEST, 'transport', true, false, true],

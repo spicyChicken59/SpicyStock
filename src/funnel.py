@@ -15,6 +15,8 @@ from collections import Counter
 from src import allocation, grader, plan, reader_coverage
 
 VERSION = 2   # 2: review_request, a request the API refused as invalid (reads version 2)
+#: the reads version each funnel version reads a reviewed name's cause in
+READS_VERSION_BY_FUNNEL = {1: 1, 2: 2}
 POLICY = "candidate_funnel_v1"
 RULES = {"funnel.version": VERSION, "funnel.policy": POLICY}
 
@@ -28,6 +30,9 @@ REACTION_STAGES = (
     "event", "geometry", "sizing", "allocation_slot", "allocation_cash", "allocation_occupied",
     "allocation_unknown", "ticket", "unknown",
 )
+#: the reaction stages each archived version could write: a record is re-derived
+#: and held under its own, never under stages it had no word for
+REACTION_STAGES_BY_VERSION = {1: tuple(s for s in REACTION_STAGES if s != "review_request"), 2: REACTION_STAGES}
 #: the terminal stages a listed anticipation setup can stop at
 ANTICIPATION_STAGES = (
     "market", "plan_error", "plan_unavailable",
@@ -65,7 +70,7 @@ LABELS = {
     "review_format": "review reply could not be read as a score",
     "review_account": "review stopped: the API refused the account",
     "review_credit": "review stopped: the API credit balance was too low",
-    "review_request": "review request refused by the API as invalid (HTTP 400)",
+    "review_request": "review request refused by the API as invalid (HTTP 400), or unasked after two refused alike",
     "review_transport": "review got no usable answer from the API",
     "review_downgraded": "review lowered the grade below the admitted band",
     "review_unknown": "review state not readable from this record",
@@ -152,7 +157,14 @@ def _unplanned_stage(row):
     return "plan_error" if isinstance(error, str) and error else "plan_unavailable"
 
 
-def reaction_stage(row, admitted, cash_budget, trades):
+def archived_version(data):
+    """The funnel version a record's rules archive, when it is one this module
+    knows; the current version for a record that archives none."""
+    version = _get(data, "rules", "funnel", "version")
+    return version if type(version) is int and version in REACTION_STAGES_BY_VERSION else VERSION
+
+
+def reaction_stage(row, admitted, cash_budget, trades, version=VERSION):
     """The one terminal stage of a reaction candidate, in the pipeline's order:
     the regime, the mechanical grade, the veto, then the review selection's
     recorded reasons for an unreviewed name, the reader's state for a reviewed
@@ -187,7 +199,7 @@ def reaction_stage(row, admitted, cash_budget, trades):
     if not reader_coverage.accepted(row):
         if reader.get("source") == grader.SOURCE_CLAUDE:
             return "review_unknown"
-        return "review_" + reader_coverage.failure_of(reader.get("error"))
+        return "review_" + reader_coverage.failure_of(reader.get("error"), READS_VERSION_BY_FUNNEL[version])
     if row.get("grade") not in admitted:
         return "review_downgraded"
     p = row.get("plan")
@@ -216,26 +228,31 @@ def _counts(stages, names):
 
 
 def build(data):
-    """The funnel block for a record, read off the record alone."""
+    """The funnel block for a record, read off the record alone, under the
+    funnel version its rules archived (`archived_version()`): a record from
+    version 1 is re-derived in version 1's stages and words."""
+    version = archived_version(data)
+    reaction_stages = REACTION_STAGES_BY_VERSION[version]
     admitted = admitted_grades(data)
     cash_budget = data.get("cash_budget") if isinstance(data.get("cash_budget"), dict) else {}
     trades = data.get("trades") if isinstance(data.get("trades"), list) else []
     bursts = [b for b in (data.get("bursts") or []) if isinstance(b, dict)]
     top = [r for r in (_get(data, "watchlist", "top") or []) if isinstance(r, dict)]
-    reaction_rows = [{"ticker": b.get("ticker"), "stage": reaction_stage(b, admitted, cash_budget, trades)} for b in bursts]
+    reaction_rows = [{"ticker": b.get("ticker"), "stage": reaction_stage(b, admitted, cash_budget, trades, version)}
+                     for b in bursts]
     anticipation_rows = [{"ticker": r.get("ticker"), "stage": anticipation_stage(r, admitted, cash_budget)} for r in top]
     usable = sum(1 for b in bursts if admitted and b.get("grade_mechanical") in admitted and not b.get("vetoes"))
     counts = _get(data, "watchlist", "counts")
     counts = counts if isinstance(counts, dict) else {}
     block = {
-        "version": VERSION, "policy": POLICY,
+        "version": version, "policy": POLICY,
         "regime": _get(data, "breadth", "regime", "verdict"),
         "admitted_grades": list(admitted) if admitted is not None else None,
         "reaction": {
             "discovered": len(bursts),
             "potentially_usable": usable,
             "by_mechanical_grade": {g: sum(1 for b in bursts if b.get("grade_mechanical") == g) for g in grader.GRADES},
-            "stages": _counts(REACTION_STAGES, (r["stage"] for r in reaction_rows)),
+            "stages": _counts(reaction_stages, (r["stage"] for r in reaction_rows)),
             "rows": reaction_rows,
         },
         "anticipation": {
@@ -244,7 +261,8 @@ def build(data):
             "stages": _counts(ANTICIPATION_STAGES, (r["stage"] for r in anticipation_rows)),
             "rows": anticipation_rows,
         },
-        "groups": dict(GROUPS), "labels": dict(LABELS),
+        "groups": {k: v for k, v in GROUPS.items() if k in reaction_stages or k in ANTICIPATION_STAGES},
+        "labels": {k: v for k, v in LABELS.items() if k in reaction_stages or k in ANTICIPATION_STAGES},
     }
     block["sentence"] = sentence(block)
     return block
@@ -289,11 +307,16 @@ def sentence(block):
 
 def faults(data):
     """The funnel held to the record it sits in: present under rules that write
-    it, and exactly what those rules re-derive from the record's own fields.
-    A record made under older rules is not asked for one."""
+    it, and exactly what the version those rules archive re-derives from the
+    record's own fields -- a version-1 record under version 1's stages. A
+    record made before the funnel rule is not asked for one; a version this
+    module does not know is a fault by name."""
     rules = data.get("rules") if isinstance(data.get("rules"), dict) else {}
-    if not isinstance(rules.get("funnel"), dict) or rules["funnel"].get("version") != VERSION:
-        return []   # no block, or one written under other stages than these
+    if not isinstance(rules.get("funnel"), dict):
+        return []
+    version = rules["funnel"].get("version")
+    if type(version) is not int or version not in REACTION_STAGES_BY_VERSION:
+        return ["funnel archived version is unknown"]
     block = data.get("funnel")
     if not isinstance(block, dict):
         return ["funnel block missing"]

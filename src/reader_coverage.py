@@ -127,6 +127,7 @@ def reads(rows, *, admitted_grades, refusal_fraction, refusal_min=0, version=REA
     done = sum(1 for b in rows if (b.get("claude") or {}).get("source") == grader.SOURCE_CLAUDE)
     causes = {f: 0 for f in FAILURES_BY_VERSION[version]}
     refused = []
+    unasked = 0   # names the run never asked, because two requests before them were refused alike
     for b in rows:
         c = b.get("claude") or {}
         if c.get("source") == grader.SOURCE_CLAUDE:
@@ -135,6 +136,8 @@ def reads(rows, *, admitted_grades, refusal_fraction, refusal_min=0, version=REA
         causes[cause] += 1
         if cause == "refused":
             refused.append(b)
+        if cause == "request" and not c.get("attempts"):
+            unasked += 1
     limit = _limit(requested, refusal_fraction, refusal_min)
     refused_admissible = sorted(b["ticker"] for b in refused if not b.get("vetoes")
                                 and (admitted_grades is None or b.get("grade") in admitted_grades))
@@ -145,6 +148,8 @@ def reads(rows, *, admitted_grades, refusal_fraction, refusal_min=0, version=REA
            "version": version, "causes": causes, "refusal_limit": limit,
            "refused_names": sorted(b["ticker"] for b in refused),
            "refused_admissible": refused_admissible, "verdict": verdict}
+    if "request" in causes:
+        out["unasked"] = unasked
     out["sentence"] = reads_sentence(out)
     return out
 
@@ -181,9 +186,14 @@ def reads_sentence(r):
         parts.append(f"The API refused the account; the run stopped asking after that answer and "
                      f"{_names(c['account'], 'name', 'names')} went unread.")
     if c.get("request"):
-        n = c["request"]
-        parts.append(f"{n} {"name's request was" if n == 1 else "names' requests were"} refused by the API as "
-                     "invalid (HTTP 400) and not asked again.")
+        unasked = r.get("unasked") or 0
+        asked = c["request"] - unasked
+        s = (f"{asked} {"name's request was" if asked == 1 else "names' requests were"} refused by the API as "
+             "invalid (HTTP 400) and not asked again")
+        if unasked:
+            s += (f"; after {grader.REQUEST_OUTAGE_AFTER} refused alike the run stopped asking, and "
+                  f"{_names(unasked, 'name', 'names')} went unasked")
+        parts.append(s + ".")
     if c["transport"]:
         parts.append(f"{_names(c['transport'], 'name', 'names')} got no usable answer from the API in "
                      f"{grader.ATTEMPTS} attempts each.")
@@ -358,6 +368,8 @@ def reads_faults(data):
             return ["run.reads causes are malformed"]
         if r["requested"] != r["done"] + sum(c.values()):
             return ["run.reads counts do not reconcile"]
+        if "request" in c and (type(r.get("unasked")) is not int or not 0 <= r["unasked"] <= c["request"]):
+            return ["run.reads unasked count is malformed"]
         if len(r["refused_names"]) != c["refused"] or not set(r["refused_admissible"]) <= set(r["refused_names"]):
             return ["run.reads refused names are not its refusals"]
         if r["refusal_limit"] != _limit(r["requested"], rules["reader_refusal_fraction"], minimum):
@@ -369,7 +381,9 @@ def reads_faults(data):
             reg = (((data.get("breadth") or {}).get("regime") or {}).get("verdict"))
             again = reads(selected, admitted_grades=admitted(reg, rules["trade_grades"], rules["yellow_grades"]),
                           refusal_fraction=rules["reader_refusal_fraction"], refusal_min=minimum, version=version)
-            if any(again[k] != r[k] for k in ("requested", "done", "causes", "refused_names", "refused_admissible", "verdict")):
+            keys = ("requested", "done", "causes", "refused_names", "refused_admissible", "verdict") + \
+                (("unasked",) if "unasked" in again else ())
+            if any(again[k] != r[k] for k in keys):
                 return ["run.reads is not the bursts' own"]
         if r.get("sentence") != reads_sentence(r):
             return ["run.reads sentence is not its own"]

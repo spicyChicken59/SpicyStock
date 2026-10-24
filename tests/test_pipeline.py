@@ -78,7 +78,7 @@ def test_a_clean_night_publishes_a_trade_with_its_ticket_and_records_the_pick(ma
     assert run["reads"] == {"requested": 1, "done": 1, "unavailable_reason": None, "version": 2,
                             "causes": {"refused": 0, "format": 0, "account": 0, "credit": 0, "request": 0, "transport": 0},
                             "refusal_limit": 0, "refused_names": [], "refused_admissible": [], "verdict": "complete",
-                            "sentence": None}
+                            "unasked": 0, "sentence": None}
     assert run["input_tolerance"]["verdict"] == "complete" and run["input_tolerance"]["names"] == []
     assert run["stale_followup"]["reason"] == "no_previous_record" and run["stale_followup"]["sentence"] is None
     assert run["published_at"] == data["generated"]

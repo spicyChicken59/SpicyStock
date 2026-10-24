@@ -262,6 +262,7 @@
       "refused_names": [],
       "refused_admissible": [],
       "verdict": "complete",
+      "unasked": 0,
       "sentence": null
     },
     "reader_usage": {
@@ -11812,7 +11813,7 @@
       "review_format": "review reply could not be read as a score",
       "review_account": "review stopped: the API refused the account",
       "review_credit": "review stopped: the API credit balance was too low",
-      "review_request": "review request refused by the API as invalid (HTTP 400)",
+      "review_request": "review request refused by the API as invalid (HTTP 400), or unasked after two refused alike",
       "review_transport": "review got no usable answer from the API",
       "review_downgraded": "review lowered the grade below the admitted band",
       "review_unknown": "review state not readable from this record",

@@ -223,17 +223,21 @@ def test_a_refused_request_is_its_own_cause_under_version_two_and_transport_unde
 
 
 def test_every_request_refused_the_same_way_is_two_calls_and_named_by_its_cause(tmp_path, monkeypatch):
-    reads, kinds, calls, rows = four_reads(tmp_path, monkeypatch,
-                                           {t: RuntimeError(REFUSED_REQUEST) for t in "AAA BBB CCC DDD".split()},
-                                           admitted=())
+    # each name's answer carries its own request id, as CL's and ABT's did on 22 Oct 2026
+    script = {t: RuntimeError(REFUSED_REQUEST.replace("req_011CgJEksUxSZ6J6uSUKyNKG", f"req_{t}"))
+              for t in "AAA BBB CCC DDD".split()}
+    reads, kinds, calls, rows = four_reads(tmp_path, monkeypatch, script, admitted=())
     assert len(calls) == 2, "22 Oct 2026 bought four calls for two names; two names refused alike stop the asking"
     assert (reads["version"], reads["verdict"], reads["causes"]["request"], reads["causes"]["transport"], kinds) == \
         (2, "unavailable", 4, 0, ["claude_unavailable"])
-    assert reads["sentence"] == ("Chart reader: 0 of 4 judgements accepted. 4 names' requests were refused by the "
-                                 "API as invalid (HTTP 400) and not asked again.")
+    assert reads["unasked"] == 2
+    assert reads["sentence"] == ("Chart reader: 0 of 4 judgements accepted. 2 names' requests were refused by the "
+                                 "API as invalid (HTTP 400) and not asked again; after 2 refused alike the run "
+                                 "stopped asking, and 2 names went unasked.")
     assert all(rows[t]["claude"]["source"] == "fallback" and "Extra inputs are not permitted" in rows[t]["claude"]["error"]
                for t in rows)
     assert [len(rows[t]["claude"]["attempts"]) for t in ("AAA", "BBB", "CCC", "DDD")] == [1, 1, 0, 0]
+    assert all(rows[t]["claude"]["error"].startswith("src.RequestOutage: ") for t in ("CCC", "DDD"))
 
 
 def test_one_refused_request_among_accepted_reads_is_partial_and_asked_once(tmp_path, monkeypatch):
@@ -242,6 +246,7 @@ def test_one_refused_request_among_accepted_reads_is_partial_and_asked_once(tmp_
     assert (reads["verdict"], {k: v for k, v in reads["causes"].items() if v}, kinds) == \
         ("partial", {"request": 1}, ["claude_partial"])
     assert "1 name's request was refused by the API as invalid (HTTP 400) and not asked again." in reads["sentence"]
+    assert "went unasked" not in reads["sentence"] and reads["unasked"] == 0
     assert len(rows["BBB"]["claude"]["attempts"]) == 1
 
 
@@ -392,7 +397,8 @@ def test_an_open_night_re_derives_its_reads_from_the_bursts_under_the_archived_f
 
 
 def _request_rows():
-    return [{"ticker": "T0", "grade": "B", "vetoes": [], "claude": {"source": "fallback", "error": REFUSED_REQUEST}},
+    # T0 was asked once and refused (one attempt); a row without an attempt is a name never asked
+    return [{"ticker": "T0", "grade": "B", "vetoes": [], "claude": {"source": "fallback", "error": REFUSED_REQUEST, "attempts": [{}]}},
             {"ticker": "T1", "grade": "B", "vetoes": [], "claude": {"source": "claude"}}]
 
 
@@ -401,6 +407,7 @@ def test_the_validator_reads_the_block_in_the_version_the_record_archived():
     v1 = reader_coverage.reads(_request_rows(), admitted_grades=(), refusal_fraction=0.25, refusal_min=1, version=1)
     assert (v2["version"], v2["causes"]["request"], v1["version"], v1["causes"]["transport"]) == (2, 1, 1, 1)
     assert "request" not in v1["causes"] and v1["verdict"] == v2["verdict"] == "partial"
+    assert v2["unasked"] == 0 and "unasked" not in v1, "the unasked count is version two's field alone"
     partial = [{"kind": "claude_partial"}]
     archived = {"reader_refusal_min": 1, "reads_version": 2}
     assert reader_coverage.reads_faults(_reads_record(v2, archived, partial)) == []
@@ -416,6 +423,10 @@ def test_the_validator_reads_the_block_in_the_version_the_record_archived():
     widened = {**v1, "causes": {**v1["causes"], "request": 0}}
     assert reader_coverage.reads_faults(_reads_record(widened, {"reader_refusal_min": 1}, partial)) == \
         ["run.reads causes are malformed"]
+    # the unasked count: a whole number no larger than the refused requests
+    for bad in (None, -1, 2, True, 0.0):
+        assert reader_coverage.reads_faults(_reads_record({**v2, "unasked": bad}, archived, partial)) == \
+            ["run.reads unasked count is malformed"], bad
 
 
 @pytest.mark.parametrize("bad", [True, 3, "2", 2.0, None])
@@ -442,8 +453,13 @@ def test_an_open_night_re_derives_a_refused_request_in_the_words_of_its_own_vers
     admitted = reader_coverage.admitted(d["breadth"]["regime"]["verdict"], rules["trade_grades"], rules["yellow_grades"])
     kw = dict(admitted_grades=admitted, refusal_fraction=rules["reader_refusal_fraction"], refusal_min=rules["reader_refusal_min"])
     d["run"]["reads"] = reader_coverage.reads(selected, **kw)
-    assert (d["run"]["reads"]["causes"]["request"], d["run"]["reads"]["verdict"]) == (1, "partial")
+    assert (d["run"]["reads"]["causes"]["request"], d["run"]["reads"]["unasked"], d["run"]["reads"]["verdict"]) == (1, 0, "partial")
     assert reader_coverage.reads_faults(d) == []
+    # TSLA was asked (its row carries an attempt); a block calling it unasked is not the bursts' own
+    counted = dict(d["run"]["reads"], unasked=1)
+    d["run"]["reads"] = dict(counted, sentence=reader_coverage.reads_sentence(counted))
+    assert reader_coverage.reads_faults(d) == ["run.reads is not the bursts' own"]
+    d["run"]["reads"] = reader_coverage.reads(selected, **kw)
     # the same bursts with the request folded into transport are not this record's block
     folded = dict(d["run"]["reads"], causes={**d["run"]["reads"]["causes"], "request": 0, "transport": 1})
     d["run"]["reads"] = dict(folded, sentence=reader_coverage.reads_sentence(folded))

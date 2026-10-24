@@ -122,28 +122,97 @@ def test_a_refused_request_is_counted_under_its_own_review_stage():
     assert stages["review_request"] == before["review_request"] + 1 == 1
     assert sum(stages.values()) == block["reaction"]["discovered"] == len(data["bursts"])
     assert block["groups"]["review_request"] == "review"
-    assert block["labels"]["review_request"] == "review request refused by the API as invalid (HTTP 400)"
+    assert block["labels"]["review_request"] == ("review request refused by the API as invalid (HTTP 400), "
+                                                 "or unasked after two refused alike")
     assert "review_request" in funnel.REACTION_STAGES and "review_request" not in funnel.ANTICIPATION_STAGES
+    # the same record under version 1's rules has no such stage: the refusal is transport there
+    data["rules"]["funnel"]["version"] = 1
+    older = funnel.build(data)
+    assert older["version"] == 1 and "review_request" not in older["reaction"]["stages"]
+    assert "review_request" not in older["labels"] and "review_request" not in older["groups"]
+    assert older["reaction"]["stages"]["review_transport"] == stages["review_transport"] + 1
+    assert funnel.reaction_stage(row, admitted, data.get("cash_budget") or {}, data.get("trades") or [], version=1) == "review_transport"
 
 
-def test_a_block_written_under_other_stages_is_read_for_what_it_recorded_and_held_to_nothing():
-    """Every publication before 24 Oct 2026 archived funnel version 1, whose
-    stages had no word for a request the API refused: it is not asked for
-    version 2's block, and its own block is never compared against stages it
-    could not write. A record under the current version is held as before."""
+def test_a_block_is_held_to_the_version_its_record_archived_never_to_stages_it_had_no_word_for():
+    """Every publication from 12 to 23 Oct 2026 archived funnel version 1,
+    whose stages had no word for a request the API refused. Such a record is
+    re-derived under version 1 and held to it exactly as before -- its shape,
+    its partition, its sentence -- and never compared against version 2's
+    stages; a version this module does not know is a fault by name, and a
+    record from before the rule is asked for nothing."""
     data = load(FIXTURES[0])
-    assert funnel.faults(data) == []
+    assert funnel.faults(data) == [] and funnel.archived_version(data) == funnel.VERSION
     older = json.loads(json.dumps(data))
-    older["rules"]["funnel"]["version"] = funnel.VERSION - 1
-    assert funnel.faults(older) == [], "a record archived under older stages is not held to these"
-    del older["funnel"]
+    older["rules"]["funnel"]["version"] = 1
+    assert funnel.archived_version(older) == 1
+    assert funnel.faults(older) == ["funnel is not the record's own"], "a version-2 block under version-1 rules"
+    older["funnel"] = funnel.build(older)
+    assert older["funnel"]["version"] == 1 and set(older["funnel"]["reaction"]["stages"]) == set(funnel.REACTION_STAGES_BY_VERSION[1])
     assert funnel.faults(older) == []
+    forged = json.loads(json.dumps(older))
+    forged["funnel"]["reaction"]["stages"]["market"] -= 1
+    forged["funnel"]["reaction"]["stages"]["ticket"] += 1
+    assert funnel.faults(forged) == ["funnel is not the record's own"]
+    forged = json.loads(json.dumps(older))
+    forged["funnel"] = "forged"
+    assert funnel.faults(forged) == ["funnel block missing"]
+    forged = json.loads(json.dumps(older))
+    forged["funnel"]["sentence"] = "every candidate reached a ticket"
+    assert funnel.faults(forged) == ["funnel is not the record's own"]
+    for bad in (3, 0, True, "1", None):
+        unknown = json.loads(json.dumps(older))
+        unknown["rules"]["funnel"]["version"] = bad
+        assert funnel.faults(unknown) == ["funnel archived version is unknown"], bad
+        assert funnel.archived_version(unknown) == funnel.VERSION
+    before = json.loads(json.dumps(data))
+    del before["rules"]["funnel"]
+    del before["funnel"]
+    assert funnel.faults(before) == [], "a record from before the funnel rule is asked for nothing"
     current = json.loads(json.dumps(data))
     del current["funnel"]
     assert funnel.faults(current) == ["funnel block missing"]
-    current = json.loads(json.dumps(data))
-    current["funnel"]["reaction"]["stages"]["review_request"] += 1
-    assert funnel.faults(current) == ["funnel is not the record's own"]
+
+
+#: every publication on main that archived funnel version 1, by the commit that landed
+#: its record: 12 Oct (the #165 merge carried it) to 23 Oct 2026, the two 19 Oct revisions among them
+VERSION_ONE_PUBLICATIONS = ("279ec5a3", "8772006f", "16032f05", "0f951414", "7a1a9e49", "a34a2978",
+                            "d179f206", "0d8494fc", "2eb0e0be", "fb70e706", "cd239b20")
+
+
+@pytest.fixture(scope="module")
+def version_one_history():
+    """A shallow checkout -- CI's -- carries only its tip, so the named commits
+    are fetched, exactly those and once; when they cannot be had the test fails
+    with the reason, and is never skipped."""
+    def present(c):
+        return subprocess.run(["git", "cat-file", "-e", f"{c}^{{commit}}"], cwd=ROOT, capture_output=True).returncode == 0
+    missing = [c for c in VERSION_ONE_PUBLICATIONS if not present(c)]
+    if missing:
+        done = subprocess.run(["git", "fetch", "--quiet", "--no-tags", "--depth=1", "origin", *missing],
+                              cwd=ROOT, capture_output=True, text=True)
+        assert done.returncode == 0 and all(present(c) for c in missing), \
+            f"{len(missing)} publications are not in this checkout and could not be fetched: {done.stderr.strip()}"
+    return VERSION_ONE_PUBLICATIONS
+
+
+@pytest.mark.parametrize("commit", VERSION_ONE_PUBLICATIONS)
+def test_every_retained_version_one_publication_re_derives_its_own_block(version_one_history, commit):
+    """The retained publications were built by version 1's code; version 1's
+    re-derivation here must give each its archived block to the byte, so the
+    validator keeps holding them as it did before the stage was added -- and
+    the 21 and 22 October nights, whose selected names carry the API's
+    refusal, stay at review_transport under their own version."""
+    data = json.loads(subprocess.check_output(["git", "show", f"{commit}:docs/data.json"], cwd=ROOT))
+    assert data["rules"]["funnel"]["version"] == 1 and data["funnel"]["version"] == 1
+    assert funnel.archived_version(data) == 1
+    assert funnel.faults(data) == []
+    assert funnel.build(data) == data["funnel"]
+    if data["run"]["session"] in ("2026-10-21", "2026-10-22"):
+        refused = [b for b in data["bursts"] if isinstance(b.get("claude"), dict) and b["claude"].get("error")]
+        assert len(refused) == 2 and all(grader.is_request_refusal(b["claude"]["error"]) for b in refused)
+        assert all(funnel.reaction_stage(b, ("A+", "A"), {}, [], version=1) == "review_transport" for b in refused)
+        assert all(funnel.reaction_stage(b, ("A+", "A"), {}, [], version=2) == "review_request" for b in refused)
 
 
 @pytest.mark.parametrize("path", FIXTURES, ids=lambda p: p.stem)
@@ -370,7 +439,8 @@ def test_a_record_whose_regime_is_not_a_verdict_is_unknown_never_green():
         assert block["admitted_grades"] is None and block["reaction"]["potentially_usable"] == 0, breadth
         assert [r["stage"] for r in block["reaction"]["rows"]] == ["unknown"], breadth
         assert [r["stage"] for r in block["anticipation"]["rows"]] == ["unknown"], breadth
-        assert funnel.faults({**data, "rules": {**rules, "funnel": dict(funnel.RULES)}, "funnel": block}) == []
+        archived = {"version": funnel.VERSION, "policy": funnel.POLICY}   # as build_rules() nests funnel.RULES
+        assert funnel.faults({**data, "rules": {**rules, "funnel": archived}, "funnel": block}) == []
     # the same record under a verdict the rules name is the shared rule's answer
     data["breadth"] = {"regime": {"verdict": "green"}}
     assert funnel.build(data)["reaction"]["rows"][0]["stage"] == "ticket"
@@ -379,7 +449,8 @@ def test_a_record_whose_regime_is_not_a_verdict_is_unknown_never_green():
 def test_potentially_usable_counts_the_names_past_the_grade_and_the_veto_and_nothing_later():
     """A vetoed name in the band is not usable; a name past both gates is,
     whatever the review or the plan then did to it."""
-    rules = {"pipeline": {"trade_grades": ["A+", "A"], "yellow_grades": ["A+"]}, "funnel": dict(funnel.RULES)}
+    rules = {"pipeline": {"trade_grades": ["A+", "A"], "yellow_grades": ["A+"]},
+             "funnel": {"version": funnel.VERSION, "policy": funnel.POLICY}}   # as build_rules() nests funnel.RULES
     data = {"rules": rules, "breadth": {"regime": {"verdict": "green"}}, "cash_budget": {}, "trades": [],
             "watchlist": {"top": [], "counts": {"momentum": 1, "quiet": 1, "admitted": 0, "top": 0, "also_quiet": 0}},
             "bursts": [

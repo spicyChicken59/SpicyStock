@@ -956,17 +956,31 @@ archived, and a record from before the block is asked for none. The run:
   `grader.API_VERSION` names the validated version and `tests/test_grader.py`
   reads the header off the wire, so a loosened pin fails CI, not the evening.
   Since 24 October 2026 (`run.reads` version 2, `pipeline.reads_version` in the
-  archived rules) a request the API refuses as invalid (an HTTP 400 that is not
-  the empty-balance answer) is its own cause, `request`: the request is not asked
-  again (a transport retry would send it unchanged and be refused the same way),
-  and after `grader.REQUEST_OUTAGE_AFTER` (two) consecutive names are refused with
-  one message -- the API's own, the per-request id removed (`grader.refusal_key()`)
-  -- the run stops asking and the remaining names fall back without a call, so a
-  refusal that names one request's own content (an oversized image, a prompt too
-  long) never stops the run by itself. The validator holds a record's block to
-  the version its rules archived -- version 1 and its five causes for every record
-  from before -- and the page reads each version in its own words, folding a
-  refused request into `transport` for a version-1 record as that record did.
+  archived rules) a request the API refuses as invalid is its own cause,
+  `request`: the SDK's own classes for an HTTP 400 or 413 whatever the body
+  (`grader.REQUEST_REFUSAL_LABELS`; the SDK spells a JSON body "Error code: 400 -
+  ..." and a text, HTML or empty one without that prefix), or that status prefix
+  carried by another wrapper, and never the empty-balance answer, which is read
+  first as the account's. The request is not asked again (a transport retry would
+  send it unchanged and be refused the same way), and after
+  `grader.REQUEST_OUTAGE_AFTER` (two) consecutive names are refused with one
+  message -- the API's own, the per-request id removed (`grader.refusal_key()`) --
+  the run stops asking: the remaining names fall back without a call, each
+  carrying the run's own sentence (`grader.RequestOutage`, the message and no
+  request id) rather than another name's answer, counted under `request` and
+  under the block's `unasked`, which the sentence says ("N names' requests were
+  refused ... ; after 2 refused alike the run stopped asking, and M names went
+  unasked"). The rule is message equality, whatever the message names: a
+  refusal whose text varies per request (a prompt too long by a count) cannot
+  reach two, and two names refused alike for their own content (every chart over
+  a size limit) are read as the API's answer to every request. The validator
+  holds a record's block to the version its rules archived
+  -- version 1 and its five causes for every record from before -- and the page
+  reads each version in its own words, folding a refused request into
+  `transport` for a version-1 record as that record did. The funnel (version 2,
+  `review_request`) is likewise re-derived under the version a record archived,
+  so a version-1 publication is still held to its own stages, shape and sentence,
+  with the refusal at `review_transport` as it recorded it.
   Every reply that arrived is billed, a reply the checks then
   refuse or cannot read included, and each attempt's own bill is kept beside the
   attempt, so `report.validate()` re-derives the block's totals from the bursts'

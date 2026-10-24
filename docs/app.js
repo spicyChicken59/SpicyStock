@@ -923,6 +923,11 @@
   // writes them: version 2 tells a request the API refused as invalid (HTTP 400) from an
   // answer that never came; version 1 had no word for it and counted it as transport
   const READ_FAILURES_BY_VERSION = { 1: ['refused', 'format', 'account', 'credit', 'transport'], 2: ['refused', 'format', 'account', 'credit', 'request', 'transport'] };
+  // a request the API refused, as the grader names it: the SDK's own classes for a 400 and
+  // a 413 whatever the body, the run's own outage sentence for a name never asked, and the
+  // SDK's status prefix carried by another wrapper (grader.REQUEST_REFUSAL_LABELS/_MARKERS)
+  const READ_REQUEST_LABELS = ['anthropic.BadRequestError', 'anthropic.RequestTooLargeError', 'src.RequestOutage'];
+  const READ_REQUEST_MARKERS = ['error code: 400 -', 'error code: 413 -'];
   function readsNote(reads) {
     const c = reads.causes;
     if (reads.version && c && typeof c === 'object') {
@@ -1031,7 +1036,8 @@
           : lower.includes('credit balance is too low') ? 'credit'
           // a request the API refused as invalid (HTTP 400): its own cause from reads version 2,
           // folded into transport under version 1, which had no word for it
-          : lower.includes('error code: 400 -') ? (failures.includes('request') ? 'request' : 'transport') : 'transport';
+          : (READ_REQUEST_LABELS.some(l => error.startsWith(l + ':')) || READ_REQUEST_MARKERS.some(m => lower.includes(m)))
+            ? (failures.includes('request') ? 'request' : 'transport') : 'transport';
         causes[cause] += 1;
         if (cause === 'refused') {
           group.refused += 1; refused.push(row.ticker);
