@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5069 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5149 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -10983,9 +10983,10 @@ at 13:21 UTC and dispatched `morning.yml` (run 39960745472, created 13:23:07 UTC
 13:23:41 UTC (`no_tickets`: the 22 October record is RED and admits no plan, so
 no provider was asked), the research collector wrote `docs/research-observations.json`
 at 13:23:48 (`no_research_rows`), and the persist job committed both
-(`6418f2a8`, `777a9917`) 97 seconds after the dispatch. The four scheduled
-morning crons were created 4.5 to 5.1 hours late (17:52 to 18:34 UTC) and each
-skipped every collection step. One in-window check that had nothing to quote is
+(`6418f2a8`, `777a9917`) 88 and 94 seconds after the dispatch was created (the
+persist job finished at 98). The four scheduled morning crons were created 4.1
+to 4.5 hours after their own slots (17:52 to 18:34 UTC; the winter pair's slots
+are 14:20 and 14:28) and each skipped every collection step. One in-window check that had nothing to quote is
 what the service has to show; the ten-session acceptance still needs a night
 with an admitted plan.
 
@@ -11028,3 +11029,337 @@ the mutation controls are recorded on the pull request. **Not claimable until
 tonight's run:** that the API answers the pinned SDK's request again -- the
 22:16 UTC evening cron on `main` is the test, and its `run.reads` and
 `run.reader_usage` are what to read tomorrow.
+
+## Checkpoint, 23 Oct 2026 -- the paused handoff reconciled onto `main`: merger and tender forms under the shipped review block, and acknowledgements that belong to one plan
+
+**PR #190, accepted.** Merged as `28513f27` on `main` with a merge commit over
+`503193ea`. The head `17d2f092` passed all seven checks (Tests run 40018042500,
+20:17–21:06 UTC: pytest, page, the gate, the native central case to 21:06 and
+stress to 20:48; both gitleaks runs). The diff touched nothing under `docs/`, so
+the publisher did not fire, correctly (as at #64, #174 and #177); Pages
+40024969508 deployed at 21:12 UTC; the merge commit's own Secret scan 40024970058
+and Tests run 40024969981 (21:11–21:29 UTC; the native cases skipped by the gate,
+as a merge's are) passed. The full suite under the pin here was 5000 passed, 34
+environment-gated skips and 35 failed, every failure `tests/test_historical_package.py`
+on a sandbox venv without `zstandard`; with it installed that file is 107 passed
+and 21 skipped, and CI's pytest on the same head was green. **The first live night under
+the pin, read off `main`:** session 23 October, run 40045887700 (the `16 22`
+slot, created 00:37:26 UTC on the 24th, 141 minutes late), published 00:38:06
+and landed as `cd239b20` at 00:42:20, `run.delivery` 263.1 minutes after
+completion, after both slots, before Monday's open; `run.status` **ok**, the
+mail delivered. `run.reads` 2 of 2, `complete`, every cause zero (IOSP and Q,
+the review selection's two research reads under RED; the refusal limit reads 1
+under the #182 floor, unexercised); `run.reader_usage` 2 calls, 2 replies,
+14,712 input tokens (8,040 uncached, 3,336 written to the cache, 3,336 read)
+and 1,340 output, under `claude-sonnet-4-6`: the API answered the pinned SDK's
+request, where the 21 and 22 October nights had four 400s each. The rest of the
+night: RED (10-session ratio 0.81, 1,511 up against 1,862 down), 493 reaction
+candidates, all at the market gate, 0 tickets; anticipation 822 momentum names,
+278 quiet, 10 passing the coil checks, 5 listed, 0 tickets; the tolerance
+`tolerated` over 18 stale stocks, every one in the directory (`run.seed_stale`
+names none on the seed alone); the follow-up read the 22 October night's 17
+stale stocks again at 22 October; `rules_version` `07ccd74f29c7`. One night is
+not a trend: the next 400 the API answers is PR C's to name.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` restarted from
+`main` at `28513f27` (the merge of #190) and pushed as **PR #191**: four
+commits cherry-picked from the local worktree branch the reconciliation was
+built on, their trees equal byte for byte. The checkpoint branch
+`codex/issuer-transaction-review` (`4cd163c3`, base `88e708f2`, handoff
+`FABLE_HANDOFF.md`) was read and its two changes carried onto current `main`
+selectively; nothing of it was merged or replayed wholesale, and `main` had
+advanced through PRs #185-#190, five publications over four sessions (19
+October twice, then 20, 21 and 22 October) and twelve companion-receipt
+commits since its base. `docs/data.json`, `docs/picks.json`, the compact
+reader, every receipt, the history, the evidence objects, the quality ledger,
+the workflows and the vendored design system are untouched; no run, mail,
+dispatch, provider call or credential.
+
+**The issuer change, reconciled rather than duplicated.** The handoff added a
+second block, `index.transaction_filings`, beside the `index.acquisition_review`
+that PR #185 had shipped a week earlier for the same forms, with a second
+section and a second count on the page. One block now: `acquisition_review`
+version 2 under the key version 1 shipped. The collector writes it for EVERY
+row (`_empty_acquisition_review()`, filled in `_collect_issuer`), so nothing
+observed is said rather than left out, and an unverified identity carries zero;
+the forms are the eight the handoff named (PREM14A, DEFM14A, SC TO-T, SC 14D9
+and each `/A` amendment; version 1 had six); `not_listed_count` is the observed
+count less the twelve listed; and each listed entry is `{filing, index_source}`,
+the source byte-equal to the row's retained `submissions_source` or one of its
+`history_sources` (a filing in both the recent file and a fetched history file
+keeps the recent source). `_acquisition_review()` holds version 2 one level in
+(version, counts against `metadata_count` less the current reports, the twelve
+bound, forms, window, unique accessions never among `listed_filings`, each
+source validated as a source and found among the row's, newest first) and
+`_acquisition_review_v1()` keeps the first collector's block readable under its
+own rules; an absent block is a bundle from before the warning and clears
+nothing. The page's `validateAcquisitionReview()` mirrors both branches, and
+`acquisitionReview()` draws ONE section (`data-acquisition-section`,
+`data-acquisition-state` of `not_recorded`, `unknown`, `none` or `observed`,
+`data-acquisition-version` of `none`, `1` or `2`) with the existing per-filing
+`data-acquisition-review` lines, each version-2 line naming its retained index
+with its retrieval and check instants; the "observed metadata rows not listed
+here" count subtracts the listed forms as before. The receipt's `policy` block
+is unchanged on purpose: a changed policy would refuse every published receipt.
+**Compatibility by execution:** all eleven issuer receipts ever published on
+`main` (every commit of `docs/issuer-evidence.json`, each with the bundle it
+names at that commit) validate under the new validator; none carries a block.
+The generator gains six variants through the real collector (`observed`,
+`none`, `partial`, `unavailable`, `history`, `capped`), so the 30 fixtures are
+42 and every bundle regenerated, since every row now carries the block.
+
+**The acknowledgement change, and the control that timed out.** `refreshPreview()`
+clears the four manual checks when the previewed plan's identity changes
+(stage, ticker, `plan_sha256`, the order), as the handoff did; `render()` still
+clears them only on a new publication or session. The handoff's same-plan
+refresh control called `SCStock.render(SCStock.data, …)` and waited for the
+observations to load, which can never happen: `render()` nulls the record's
+bytes and resets the observations module to `unbound`, and only the loader's
+`bind(raw)` moves it on. The product's clock path is `reclock()`, which a
+pinned page refuses, so the multiple-plan case now opens UNPINNED with `Date`
+replaced (the first-trade rehearsal's pattern over the same fixture), moves the
+clock across the 14:00Z cutoff and calls `SCStock.reclock()`: the desk repaints
+through `morning.render()` (`data-morning-offered` true to false), the preview
+is withdrawn with the cutoff's own reason, the plan selection and the four
+checks survive. Before it, an edit of the same plan's quantity recalculates the
+preview and keeps them. README says both.
+
+**Measured** (this sandbox, Python 3.12.3, anthropic 1.17.0, Node 22, Chromium
+through Playwright 1.63): the six issuer Python test files 340 passed
+(`test_issuer_acquisition_review` new, 59 cases at that commit; 67 at the
+round-3 tip and 77 now); `tests/test_docs.py`,
+`test_workflows.py`, `test_publish_dashboard.py` and `test_secret_scan.py` 224
+passed with the count line at 5130; the issuer generator `--check` 42 current;
+the `issuer`, `cashpreview` and `morning` suites 1165/1165 with `--shots`
+against `main`'s 1038, and the four new screenshots at 1280 and 390 were
+looked at (one column on the phone, nothing sideways); gitleaks 8.24.3 with the
+repository's config over the 50 changed files: no leaks. `.env.example` was
+read: nothing here is configuration. The full suite, the chart check, the full
+smoke, the mutation passes and the review are recorded below as they finished.
+
+**Mutation passes**, the tree never written: page mutants through routed copies
+of `app-morning.js` and `app-issuer-evidence.js` (`SCSTOCK_MORNING`,
+`SCSTOCK_ISSUER_EVIDENCE`) judged by `--only cashpreview` and `--only issuer`;
+Python mutants in a full copy of the worktree, judged by two issuer test files
+(`test_issuer_acquisition_review`, `test_issuer_evidence`) with the six
+committed-fixture equality cases deselected, so each dies in the test that
+names its rule. The acknowledgement rule, four: the reset removed (4
+checks), the quote check alone reset (4), the reset made unconditional (8: the
+same-plan edit and the same-publication render both lose the checks) and
+`render()` clearing on every render (6) die; the control (a comment) passes
+565/565 under `--only cashpreview,morning` (305 and 260). The page's review
+block, seven: any version accepted (4), the index
+source unchecked (4), the omitted count unchecked (2), the amendments dropped
+(the producer's observed variant, whose forms are the amendments too, refuses to
+load), an unknown identity read as `none` (2), the version-1 branch refused (the
+synthetic version-1 bundle refuses to load) die, and the unverified clause
+survives (below); the control passes 600/600. The collector and validator,
+nine: the amendments dropped, a history source
+overriding the recent one, any version, the source unchecked, the omitted count
+unchecked, the order unchecked, version 1 refused and the block omitted on a
+zero count die, each in the test naming it, and the unverified clause survives
+(below); the docstring control passes 120/120. **Two survived and both are
+equivalent**, the same rule in two
+readers: the browser's `observed_count === 0` clause under an unverified
+identity and the Python `_require` beside it. An unverified issuer's index is
+held to `metadata_count` 0 by the identity rule (`coverage()`, `_reconcile_row`),
+and the count rule bounds `observed_count` by `metadata_count` less the current
+reports, so a forged count is refused before either clause is reached. Both are
+kept as the statement of intent beside the arithmetic. The harness's Python
+phase first died on a missing `rsync`; it copies with `shutil.copytree` now.
+
+**The review, worked.** A workflow by execution over the pushed tip
+(`b2973b87`), three finders (the page, the Python, the morning desk). The page
+finder returned four, each reproduced here with its own read-only probe before
+anything was touched, then driven through the real collector where the finding
+named a shape. The medium one: a verified issuer whose index yielded no readable
+metadata row under partial coverage -- the collector writes `metadata_count` 0,
+`coverage_status` partial, `metadata_invalid` and a zero review block, proved by
+driving it over an index whose only in-window row has a future acceptance clock
+-- read as `none` and printed *No merger or tender-offer forms ... among the 0
+observed metadata rows*, a negative finding over a vacuous denominator. The
+state is `unknown` now (`unreadable` in `acquisitionReview()`), in its own words
+(*no metadata row of its SEC index was readable (index coverage: partial), so
+... were not checked*), and a complete window that held no filing of any form
+says so instead of counting forms among zero rows. The generator gains the
+variant through the real collector (`semantic-rows-invalid`; 44 fixtures, the
+42 byte-identical), the reconciliation test holds its shape, and the issuer
+suite holds both states. The lows: every version-2 index link read *retained
+SEC submissions index* when the retained source was the history file the same
+page calls *Older SEC submissions index* two paragraphs below (named by equality
+against the row's own sources now, both labels held in words, not only the
+href); the browser's `filing()` admitted a primary document of `.` -- a link to
+the accession directory, which Python's `BASENAME` refuses -- and the acquisition
+lines are the one place a reader is told the link IS the filing (it is the
+collector's basename rule now, through the module's own `diagnosticBasename`,
+and the dotted document is a refusal case); and the browser accepts
+`schema_version` 2.0 and `observed_count` 8.0 where Python refuses them, because
+`JSON.parse` cannot tell 2.0 from 2 -- a pre-existing class for every integer
+field, recorded in the schema document and README rather than guessed at from
+the raw text: the publisher's validator holds the typed contract before any
+publication. Six routed mutants over the three rules (the zero-row state back to
+`none`, the coverage clause dropped, the empty-window wording dropped, the label
+fixed either way, the old basename rule) die on the checks naming them; the
+comment control passes 615/615.
+
+The Python finder returned nine, each reproduced here before it was touched,
+and the morning finder four. Two were the shapes this file names. The
+unverified-identity clause's test passed for a different rule: with the
+unverified row's metadata count left at zero the count rule refused first, and
+deleting the clause survived every issuer test (it is also behind the source
+rule, since an unverified row retains no index source); the test forges the
+metadata count with the block now and holds the clause to its own message, so
+the clause dies in the test naming it, and its comment says what stands behind
+it. And the every-row rule was held only by the committed fixture bytes: a
+collector writing the block once the identity was verified passed the test
+that names the rule, which read the fixtures off disk, and died only in the
+byte comparison; the test drives `collect_acquisition()` over the `none` and
+`unavailable` variants now. **One was the class this file names most, and a
+regression of this change:** every new bundle carries the block, and
+`_acquisition_review()` read the listed current reports for its overlap check
+before the validator had named their shape, so `listed_filings` of `[1]`,
+`[{"form": "8-K"}]`, `["x"]` or `[None]` raised a `TypeError` or `KeyError`
+through `validate_bundle()` where the module from before the block named
+`issuer object keys` (the publisher catches all three, so the effect was the
+wrong word in a log); the block is read after the listed reports now, and the
+four shapes are a named refusal. Then: the newest-first checks compared the
+clock's spelling, so a later instant written under another offset was
+accepted last (`_newest_first()` sorts by the instant, in the review block and
+the listed reports alike, and the case is held); the overlap with a selected
+current report was refused under the word *ordering* (each rule names itself
+now, and the corruption cases match the message); the count bound, the recent
+file's bound times the history files, was untested above the recent bound, so
+a bound of the recent file alone survived while a collector output of 3,999
+observed forms -- which the finder drove through the real collector and the
+real validator accepted -- would have been refused (two positive cases at the
+boundary now, and the refusal past it, which the metadata relationship
+refuses first); the README said each filing names *the exact retained SEC
+index it was read from*, which the validator cannot hold -- it holds the
+source to one of the row's retained sources, and which file carried the filing
+is the collector's own record, checked against its captures where they exist
+-- and said a version-1 block is *held to its own rules* where it is held to
+the current form list (both sentences say what the code does, in README and
+the schema). The ninth was the replay: the eleven receipt versions in `main`'s
+ancestry validate under the new validator with the bundles they name, none
+carrying a block; the retention store keeps fourteen bundles, three of them
+(`0848ff98…`, `c20f9e4d…`, `f525a5f9…`) named only by receipts in 10 October
+commits outside `main`'s ancestry (`981e6792`, `3e1dfed6`, `f9b91d00`), each
+validating with that receipt and its record; the live
+pair passes `validate_for_publication`, and the observed and none variants
+differ only in the block, the sources that carried it and the counts. The
+morning finder's three were test holes: *new plan has no broker
+acknowledgements* passed on a fresh desk whatever the clearing rule did (it is
+named for what it reads now; the rule is held two checks later, which the
+first pass's mutant showed); *the withdrawn preview says the window ended*
+read only the preview's state, so a desk printing *Preview paused.* at the
+cutoff passed (it reads the availability sentence now, and that mutant dies
+on both widths, 305/307); and seven checks inside the two-width loop carried
+width-less names. Its fourth was the record of what held: Escape, the Close
+button, a prepare click, an observations reload, the cutoff repaint and a
+later focus repaint all keep the four checks; a same-session revision of the
+same plan clears them, which is `render()`'s own rule.
+
+**The third mutation pass**, over this round's validator rules, each mutant in a
+copy of the worktree judged by the three issuer test files in full (172
+collected then, nothing deselected), so each dies in the test naming its rule: the
+unverified clause removed (dies in the forged-count test now), the count bound
+on the recent file alone (the two boundary cases), the block read before the
+listed reports -- in its original place and moved one require later (the
+shape-corruption cases, and the four malformed listed reports) -- the sort by
+the clock's spelling (the other-offset case) and the overlap refused under
+*ordering* (the current-report case) all die; the control (a comment) passes
+172/172. On the page, through a routed copy of `app-morning.js` judged by
+`--only cashpreview`: the cutoff reason replaced by *Preview paused.* dies on
+both widths, 305/307.
+
+**The fourth review, over the tests and the documents** -- the two lenses the
+starved workflow never judged -- a fresh workflow by execution over `699fafa4`:
+two finders and two skeptics a finding, the finders recording 35 single-rule
+breaks with the test that caught each. Seventeen findings (nine on the tests,
+eight on the documents), each reproduced here by execution before it was
+touched. **The skeptic stage starved again**: of the 34 skeptics (two a
+finding), 18 died on the session's usage limit, so eight findings were judged
+and nine were not; seven of the eight were upheld by both skeptics and one (the
+empty-string `match` cases) was split one each way. An unjudged finding is not
+refuted, so each of the nine was reproduced here by execution before it was
+fixed, and the finders' own 35 single-rule breaks are the record of what the
+tests could and could not catch. **One was a page defect**: `newestFirst` ordered the review's filings by the SPELLING of
+`accepted_at` where the publisher orders by the instant, so a bundle whose last
+entry's clock was respelled under -05:00 (the latest instant) loaded on the
+page and was refused by Python, and one whose first entry was respelled to the
+SAME instant was refused by the page and accepted by Python -- README's "the
+browser holds every other rule of the block" and the schema's ordering sentence
+were false of the browser as committed. It compares `instant()` now, in both
+branches, and the issuer suite holds both cases. The tests, the shapes this
+file names: the shape/count corruption test accepted a `TypeError` or
+`KeyError`, so a validator raising through on `filings: None` -- the class this
+file names most, which round 3 had closed one function away -- stayed green
+(every case names its clause as a `ValueError` now, and `2.0`, `8.0` and `0.0`
+hold the typed-integer rule README leans on, which no test held); four
+version-1 rules (duplicate accession, the overlap with the listed reports, the
+window, the metadata relationship) were held by no test, the v1 duplicate case
+appending a copy the count rule refused first (each has a case that keeps the
+count consistent and names its clause); eight of twelve corruption cases
+matched the empty string, which pytest warns always passes (each names its
+clause, and the file runs under `-W error::pytest.PytestWarning`); the entry key
+set `{filing, index_source}` was held on neither side; the relationship test
+was refused by the bound clause (it is named for the bound now, with a second
+case the relationship alone refuses); two browser controls named rules they
+never reached (the v1 duplicate, refused by the count; a block copied onto a
+VERIFIED issuer, refused by its count and not by any identity or source rule),
+and the v1 final rule -- uniqueness, overlap, order -- had no browser case at
+all. Recorded, not fixed, three equivalents: the per-entry `_source` call, which
+the equality against the row's already-validated sources refuses first; the
+bound clause of the count rule, implied by the index's own metadata bound; and
+the v1 verified-identity clause, behind the identity and count rules as the v2
+one is. The documents: the fixtures README still said thirty outputs and eight
+semantic pairs (44 and nine, the six acquisition pairs and the rows-invalid
+variant unnamed); README said the validator holds the collector's captures to
+the file that carried a filing (only a test replays them); "twelve
+publications since its base" counted the companion-receipt commits (five
+publications over four sessions; twelve receipt commits); "61 cases" was 59;
+round 3's "172/172" was the three issuer files with nothing deselected; the
+first mutation pass's "five", "eight" and "ten" named four, seven and nine
+mutants with the survivors among them, and its 565/565 control was
+`--only cashpreview,morning`; "all fourteen bundles on `main`'s history
+validate with their own receipts" overstated what the ancestry carries (eleven
+receipt versions, and three retained bundles named only by 10 October receipts
+outside it, each re-validated here with that receipt and its record); and the
+morning-run figures in the reader-pin checkpoint and `PRODUCT_GOAL.md` measured
+the winter cron pair against the summer slots (4.1 to 4.5 hours against their
+own) and gave 97 seconds for commits that landed 88 and 94 seconds after the
+dispatch was created. Each sentence is corrected above and in its file.
+
+**The fourth mutation pass**, each Python mutant in its own copy of the
+worktree judged by the three issuer test files in full, each page mutant a
+routed copy judged by `--only issuer`: the v1 duplicate, overlap, window and
+relationship clauses deleted one at a time; the v2 entry key set loosened; the
+typed `schema_version` and `_count` loosened to admit a float; the `filings`
+list clause dropped; the v2 relationship dropped -- nine, all dead in the test
+naming the rule (the relationship in three, its new case among them). On the
+page: the order back to the spelling (3 checks, the respelled-instant case
+among them), the v1 final rule removed (6), its uniqueness half (2) and its
+overlap half (2), the entry keys loosened (2) -- all dead. The `_source` call
+dropped survives, equivalent as recorded; the two controls (a comment each)
+survive at 182 and 627.
+
+**Measured** (this sandbox, Python 3.12.3, Node 22, Chromium through Playwright
+1.63, on the round-4 tree): the three issuer test files 182 passed under
+`-W error::pytest.PytestWarning` (`test_issuer_acquisition_review` 77 cases);
+`tests/test_docs.py` passes with the count line at 5149; the `issuer` suite
+627/627 (615 at `699fafa4`), `cashpreview` 307/307 and `morning` 260/260; the
+issuer generator `--check` 44 current (no fixture moved). The full suite at
+`699fafa4` was 5105 passed and 34 environment-gated skips in 22 m 00 s, and CI
+on that head passed all seven checks (Tests run 40025679322: pytest
+21:17–21:46 UTC, page 21:17–21:34, the gate, the native central case
+21:17–21:45 and stress 21:17–21:46; Secret scans 40025679311 and 40025525146).
+On the final tree the full suite was run on the WORKTREE itself, committed
+and quiet: 5115 passed and 34 environment-gated skips in 20 m 50 s (5149
+collected). A first attempt over a `.git`-less snapshot copy of the tree
+returned 3 failed and 24 errors, every one `fatal: not a git repository`: the
+tests that read publications off git by commit need the repository, so a suite
+run on a copy must carry `.git` or be run on a worktree. CI on the pushed tip
+`2a30af64` passed all seven checks (Tests run 40034777473: pytest 22:37–22:58
+UTC, page -- the full smoke with `--shots` -- 22:37–22:54, the gate, the native
+central case 22:37–22:55 and stress 22:37–23:17; Secret scans 40034777459 and
+40034772674).

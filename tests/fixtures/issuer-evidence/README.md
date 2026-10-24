@@ -26,8 +26,9 @@ Browser receipts, when present, are generated through the production collector
 from verified fixture publications; they are not hand-authored publication
 records. Fetch success does not mean issuer news or earnings are cleared.
 
-Run `python tests/fixtures/issuer-evidence/generate.py --check` to verify the thirty
-producer outputs, or omit `--check` to regenerate them. The generator changes a
+Run `python tests/fixtures/issuer-evidence/generate.py --check` to verify the 44
+producer outputs (21 variants, each a receipt and a bundle, beside the
+publication and reader files), or omit `--check` to regenerate them. The generator changes a
 synthetic provider's COIL symbol to ZIM before the real evening pipeline runs.
 That produces an AAPL ticket and a reviewed ZIM exclusion. Following the
 cash-preview fixture convention, the generator keeps the returned deterministic
@@ -48,12 +49,14 @@ captured files above. Its uncaptured August document returns an explicit
 retrieval failure, so the `collected` variant honestly remains partial. No
 fixture generation makes a live provider request or changes trade authority.
 
-The eight additive `semantic-*` pairs reuse those exact canonical and reader
+The nine additive `semantic-*` pairs reuse those exact canonical and reader
 bytes. Their SEC-shaped mapping, submissions and document responses are entirely
 synthetic, including the ZIM responses; the original captured-source variants
 remain byte-identical. They exercise complete content, an empty full metadata
 window, cached mapping/documents with fresh submissions, an unverified cached
-mapping, late document HTTP 403, invalid metadata, a short metadata window and a
+mapping, late document HTTP 403, invalid metadata, a verified issuer whose only
+in-window metadata row is refused (`rows-invalid`: zero rows read, so the
+acquisition review is unknown rather than none), a short metadata window and a
 deadline before transport. The real collector produces every receipt and bundle
 with `dry_run: false` and an explicitly synthetic run ID. Shared mapping response
 identity and identical bodies at different document URLs distinguish network
@@ -61,3 +64,17 @@ attempts/downloads from unique captures. Cached source clocks stay dated; they
 do not create new network requests. Equivalent timestamp spellings and semantic
 contradictions are separately labelled, resealed test mutations, not claimed
 producer outputs or captured source facts.
+
+The six additive `acquisition-*` pairs (`observed`, `none`, `partial`,
+`unavailable`, `history`, `capped`) are the real collector's outputs over
+synthetic SEC-shaped submissions and history files, with `dry_run: false` and
+the same synthetic run ID. Every bundle carries the version-2
+`acquisition_review` block for every issuer: `observed` lists eight synthetic
+merger and tender-offer forms (the four base forms and their `/A`
+amendments), each naming the retained submissions index it was read from;
+`none` observes no such form on a verified index; `partial` observes forms
+under a partial window; `unavailable` carries zero on an unverified identity;
+`history` reads a form from the one fetched history file, which the entry
+names; and `capped` observes more forms than the twelve listed, so the omitted
+count is positive. The forms are metadata rows the generator wrote; none
+describes a real transaction, and none clears an event.

@@ -223,12 +223,33 @@ stdlib save guard. Only trusted-main workflows may restore/save this cache.
 
 ## Acquisition metadata review extension
 
-An issuer index may carry `acquisition_review` with positive `observed_count`
-and `filings` (the latest min(count, 12) metadata rows). It requires verified
-identity, unique accessions, descending acceptance/accession order, acceptance
-no later than the collection instant, and filing dates in the bounded window.
-Forms are PREM14A, DEFM14A, SC TO-T, SC TO-T/A, SC 14D9 and SC 14D9/A.
-The collector derives it from already parsed submissions and bounded history.
-It does not fetch those documents or change current-report selection. Missing
-fields on legacy or no-match bundles mean no warning recorded, never clearance.
-The links are metadata references; form names do not prove an active deal.
+Every issuer index written by the current collector carries `acquisition_review`
+version 2: `schema_version` 2, `observed_count`, `not_listed_count` and
+`filings`, a list of `{filing, index_source}` entries, the latest
+min(count, 12) matching metadata rows newest first by acceptance then
+accession. Forms are PREM14A, PREM14A/A, DEFM14A, DEFM14A/A, SC TO-T,
+SC TO-T/A, SC 14D9 and SC 14D9/A. `not_listed_count` equals the observed count
+less the listed; `observed_count` plus the eligible current-report count is at
+most `metadata_count`; an unverified identity carries zero observed. Each
+`index_source` is byte-for-byte one of the row's retained index sources (the
+identity's `submissions_source` or an entry of `history_sources`) and is
+validated as a source. Accessions are unique and never among `listed_filings`;
+acceptance is no later than the collection instant and filing dates lie in the
+bounded window. Order is by the acceptance instant, so a clock spelled under
+another offset is ordered by what it means, on the page as in the publisher's
+validator. Which retained index carried a filing is the collector's own record;
+the validator holds each `index_source` to one of the row's retained sources,
+and the tests replay the attribution against the collector's captured index
+bytes over the producer fixtures. A version-1 block (no `schema_version`, bare filings, present
+only when a form was observed, verified identity, the current form list, its
+own count, order and window rules) stays readable. A missing block is a bundle from before the warning:
+no record, never clearance. The page reads the block's state off the index
+that produced it: a verified issuer whose index yielded no readable metadata
+row under partial coverage observed nothing and is `unknown`, not a zero
+result; a complete window holding no filing of any form is `none` and says so.
+JSON numbers carry no integer type in the browser, so `2.0` and `8.0` read as
+`2` and `8` there; the publisher's validator, which runs before publication,
+holds the typed contract. The collector derives the block from already
+parsed submissions and bounded history; it fetches no document and changes no
+current-report selection. The links are metadata references; form names do
+not prove an active deal, and an empty list is not event clearance.

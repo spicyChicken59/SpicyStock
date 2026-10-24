@@ -100,3 +100,4 @@ __pycache__/
 # matters is the checkpoint's own account of what they printed, and 56 PNGs
 # in a pull request are noise. Local only.
 scratchpad/
+node_modules

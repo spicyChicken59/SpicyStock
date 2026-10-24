@@ -13,7 +13,8 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
   const file = name => readFile(path.join(ROOT, DIR, name));
   const publicationRaw = await file('publication.json'), readerRaw = await file('reader.json');
   const variants = {};
-  for (const name of ['collected', 'metadata-only', 'identity-unverified', 'outage', 'inapplicable', 'http-denied']) {
+  for (const name of ['collected', 'metadata-only', 'identity-unverified', 'outage', 'inapplicable', 'http-denied',
+    ...['observed', 'none', 'partial', 'unavailable', 'history', 'capped'].map(name => 'acquisition-' + name)]) {
     variants[name] = { receipt: JSON.parse(await file(name + '-receipt.json')), raw: await file(name + '-bundle.json') };
   }
   const original = variants.collected;
@@ -74,8 +75,10 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
   const reveal = async page => {
     await page.locator('[data-issuer-evidence] > summary').click(); await wait(page);
   };
-  // Explicit synthetic transport controls; collector source propagation is
-  // independently exercised by test_acquisition_metadata_uses_existing_requests_and_never_changes_plans.
+  // The block as the first collector wrote it (version 1: bare filings, present
+  // only when a form was observed), served as a synthetic transport control
+  // over the producer's bundle: a receipt published under that collector must
+  // stay readable, and is held to its own rules.
   const withAcquisition = changed(null, b => {
     const index = b.issuers[0].index;
     const filing = { ...index.listed_filings[0], form: 'DEFM14A', accession: '0000320193-26-009099', primary_document: 'synthetic-acquisition.htm' };
@@ -89,6 +92,9 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
       eq('acquisition warning bundle loads at ' + width, (await status(page)).state, 'loaded');
       const warning = page.locator('[data-acquisition-review]');
       eq('acquisition metadata is visible at ' + width, await warning.count(), 1);
+      eq('a version-1 block is read as the older generation at ' + width, await page.locator('[data-acquisition-section]').evaluate(n => [n.getAttribute('data-acquisition-state'), n.getAttribute('data-acquisition-version')]), ['observed', '1']);
+      check('a version-1 block says it attributes no source', /older receipt lists forms without attributing each to its retained index source/.test(await page.locator('[data-acquisition-section]').innerText()));
+      eq('a version-1 line carries the filing link and no source link', await warning.locator('a').count(), 1);
       check('acquisition links count among displayed metadata', (await bodyText(page)).includes('0 observed metadata rows not listed here.'));
       check('acquisition warning is dated and explicitly unreviewed', /DEFM14A.*2026-10-09.*SEC accepted.*metadata only; content unreviewed/s.test(await warning.innerText()));
       eq('acquisition source is the exact filing', await warning.locator('a').getAttribute('href'), 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009099/synthetic-acquisition.htm');
@@ -103,19 +109,128 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
         ['form', r => { r.filings[0].form = '10-K'; }],
         ['future', r => { r.filings[0].accepted_at = '2027-01-01T00:00:00Z'; }],
         ['old', r => { r.filings[0].filing_date = '2020-01-01'; }],
-        ['duplicate', r => { r.filings.push(r.filings[0]); r.observed_count = 2; }]
+        // the counts are kept consistent (one more metadata row for one more filing) so
+        // the uniqueness, overlap and ordering rules are what refuse, not the count
+        ['duplicate', (r, index) => { r.filings.push({ ...r.filings[0] }); r.observed_count = 2; index.metadata_count += 1; }],
+        ['overlap', (r, index) => { r.filings[0].accession = index.listed_filings[0].accession; }],
+        ['older first', (r, index) => { r.filings.unshift({ ...r.filings[0], accession: '0000320193-26-009098', accepted_at: '2026-09-01T10:00:00+00:00' }); r.observed_count = 2; index.metadata_count += 1; }]
       ]) {
-        transport.current = changed(null, b => edit(b.issuers[0].index.acquisition_review), withAcquisition);
+        transport.current = changed(null, b => edit(b.issuers[0].index.acquisition_review, b.issuers[0].index), withAcquisition);
         await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
         eq('acquisition invalid ' + name + ' rejected at ' + width, (await status(page)).state, 'unavailable');
       }
       transport.current = original;
       await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
-      eq('legacy acquisition receipt still readable', (await status(page)).state, 'loaded');
-      check('legacy absence is not clearance', (await bodyText(page)).includes('This is not evidence that no acquisition exists'));
+      eq('the producer bundle with nothing observed still loads', (await status(page)).state, 'loaded');
+      eq('zero observed is said as none, not left out', await page.locator('[data-acquisition-section]').evaluate(n => [n.getAttribute('data-acquisition-state'), n.getAttribute('data-acquisition-version')]), ['none', '2']);
+      check('zero observed is not clearance', /No merger or tender-offer forms .* among the \d+ observed metadata rows\. Index coverage: observed window\. An empty list is not event clearance/.test(await page.locator('[data-acquisition-section]').innerText()));
       eq('source changes remove the previous warning', await page.locator('[data-acquisition-review]').count(), 0);
+      transport.current = changed(null, b => { for (const row of b.issuers) delete row.index.acquisition_review; });
+      await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
+      eq('legacy acquisition receipt still readable', (await status(page)).state, 'loaded');
+      eq('a bundle from before the warning is read as not recorded', await page.locator('[data-acquisition-section]').evaluate(n => [n.getAttribute('data-acquisition-state'), n.getAttribute('data-acquisition-version')]), ['not_recorded', 'none']);
+      check('legacy absence is not clearance', (await bodyText(page)).includes('This is not evidence that no acquisition exists'));
     } finally { await context.close(); }
   }
+  // Version 2 over the producer's own outputs: every form and amendment, the
+  // omitted count, each filing's retained index source, zero, unknown and partial.
+  for (const width of [390, 1280]) {
+    const tab = await setup({ width, variant: variants['acquisition-observed'] });
+    try {
+      const before = await tab.page.evaluate(() => JSON.stringify({ data: SCStock.data, model: SCStock.model, storage: { ...localStorage } }));
+      await reveal(tab.page);
+      eq(`${width}: acquisition producer output loads`, (await status(tab.page)).state, 'loaded');
+      const section = tab.page.locator('[data-acquisition-section]');
+      eq(`${width}: the section reads observed, version 2`, await section.evaluate(n => [n.getAttribute('data-acquisition-state'), n.getAttribute('data-acquisition-version')]), ['observed', '2']);
+      eq(`${width}: all eight form/amendment observations appear`, await section.locator('[data-acquisition-review]').count(), 8);
+      const words = await section.innerText();
+      check(`${width}: the counts are the block's`, /8 acquisition-related form\(s\) observed; 8 listed below; 0 not listed/.test(words));
+      check(`${width}: transaction status and event clearance remain unknown`, /Review before considering a trade/.test(words) && /Form names alone do not establish a pending or completed acquisition, its terms, or clearance/.test(words));
+      check(`${width}: every form and amendment is named`, ['PREM14A/A', 'DEFM14A/A', 'SC TO-T/A', 'SC 14D9/A', 'PREM14A ·', 'DEFM14A ·', 'SC TO-T ·', 'SC 14D9 ·'].every(form => words.includes(form)));
+      eq(`${width}: exact newest filing link comes from issuer, accession and document`, await section.locator('[data-acquisition-review] a').first().getAttribute('href'), 'https://www.sec.gov/Archives/edgar/data/320193/000032019326008007/synthetic-acquisition-7.htm');
+      eq(`${width}: source link identifies retained recent index`, await section.locator('[data-acquisition-review]').first().locator('a').nth(1).getAttribute('href'), 'https://data.sec.gov/submissions/CIK0000320193.json');
+      eq(`${width}: the recent index is named as the submissions index`, await section.locator('[data-acquisition-review]').first().locator('a').nth(1).innerText(), 'retained SEC submissions index');
+      check(`${width}: filing, acceptance and index check dates are distinguished`, /filed 2026-09-01/.test(words) && /SEC accepted/.test(words) && /retrieved \/ checked/.test(words));
+      check(`${width}: the listed count joins the metadata accounting`, (await bodyText(tab.page)).includes((JSON.parse(variants['acquisition-observed'].raw).issuers[0].index.metadata_count - 4 - 8) + ' observed metadata rows not listed here.'));
+      eq(`${width}: form warning cannot change plans, model or private state`, await tab.page.evaluate(() => JSON.stringify({ data: SCStock.data, model: SCStock.model, storage: { ...localStorage } })), before);
+      eq(`${width}: warning adds no browser provider request`, publicRequests(tab.requests).length, 2);
+      check(`${width}: acquisition links stay inside the dialog width`, await section.evaluate(n => n.scrollWidth <= n.clientWidth + 1));
+      if (shotsDir) {
+        await mkdir(shotsDir, { recursive: true });
+        await section.scrollIntoViewIfNeeded();
+        await tab.page.locator('#morning-desk').screenshot({ path: path.join(shotsDir, `issuer-acquisition-v2-${width}.png`) });
+      }
+      await tab.page.locator('[data-issuer-choice]').selectOption('anticipation:ZIM');
+      check(`${width}: inspection preserves the known exclusion`, /35/.test(await tab.page.locator('[data-issuer-anchors]').innerText()));
+      eq(`${width}: ZIM carries the block with nothing observed`, await section.evaluate(n => n.getAttribute('data-acquisition-state')), 'none');
+      eq(`${width}: acquisition browser errors`, [...tab.errors], []);
+    } finally { await tab.context.close(); }
+  }
+  const acquisitions = await setup({ variant: variants['acquisition-observed'] });
+  try {
+    await reveal(acquisitions.page);
+    const sectionOf = page => page.locator('[data-acquisition-section]');
+    for (const [name, count, state, words] of [
+      ['none', 0, 'none', /No merger or tender-offer forms .* among the \d+ observed metadata rows/],
+      ['partial', 8, 'observed', /Incomplete index: missing or invalid metadata may omit other acquisition filings/],
+      ['unavailable', 0, 'unknown', /Unknown\. Issuer identity or submissions could not be verified/],
+      ['history', 8, 'observed', /Review before considering a trade/],
+      ['capped', 12, 'observed', /15 acquisition-related form\(s\) observed; 12 listed below; 3 not listed/]
+    ]) {
+      acquisitions.transport.current = variants['acquisition-' + name];
+      await acquisitions.page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(acquisitions.page);
+      eq(name + ': valid acquisition scope loads', (await status(acquisitions.page)).state, 'loaded');
+      eq(name + ': bounded acquisition list', await acquisitions.page.locator('[data-acquisition-review]').count(), count);
+      eq(name + ': the section names its state', await sectionOf(acquisitions.page).getAttribute('data-acquisition-state'), state);
+      check(name + ': uncertainty is explicit', words.test(await sectionOf(acquisitions.page).innerText()));
+      if (name === 'partial') check('a partial index still says what it observed', /8 acquisition-related form\(s\) observed/.test(await sectionOf(acquisitions.page).innerText()));
+      if (name === 'history') {
+        eq('historical forms identify their actual retained history source', await acquisitions.page.locator('[data-acquisition-review]').first().locator('a').nth(1).getAttribute('href'), 'https://data.sec.gov/submissions/CIK0000320193-submissions-001.json');
+        eq('a filing read from a history file names the older index in words', await acquisitions.page.locator('[data-acquisition-review]').first().locator('a').nth(1).innerText(), 'retained older SEC submissions index');
+      }
+    }
+    for (const [name, edit] of [
+      ['unknown version', x => { x.schema_version = 3; }],
+      ['version one keys under version two', x => { x.schema_version = 1; }],
+      ['boolean count', x => { x.observed_count = true; }],
+      ['incorrect omitted count', x => { x.not_listed_count = 1; }],
+      ['erased listed warning', x => { x.filings.pop(); }],
+      ['duplicate accession', x => { x.filings[1] = structuredClone(x.filings[0]); }],
+      ['irrelevant form', x => { x.filings[0].filing.form = '10-K'; }],
+      ['bare proxy form', x => { x.filings[0].filing.form = 'DEF 14A'; }],
+      ['dotted primary document', x => { x.filings[0].filing.primary_document = '.'; }],
+      ['foreign index source', x => { x.filings[0].index_source.url = 'https://data.sec.gov/submissions/CIK0001654126.json'; }],
+      ['altered source digest', x => { x.filings[0].index_source.raw_sha256 = '0'.repeat(64); }],
+      ['out of window', x => { x.filings[0].filing.filing_date = '2025-01-01'; }],
+      ['reversed chronology', x => { x.filings.reverse(); }],
+      // the last entry's clock respelled under -05:00 is the LATEST instant of the list,
+      // so the list is no longer newest first whatever the strings say
+      ['later instant under another offset', x => { x.filings[x.filings.length - 1].filing.accepted_at = '2026-09-01T15:00:00-05:00'; }],
+      ['extra entry key', x => { x.filings[0].note = 'x'; }],
+      ['missing entry source key', x => { delete x.filings[0].index_source; }],
+      ['filing listed twice', (x, index) => { x.filings[0].filing.accession = index.listed_filings[0].accession; }]
+    ]) {
+      acquisitions.transport.current = changed(null, b => edit(b.issuers[0].index.acquisition_review, b.issuers[0].index), variants['acquisition-observed']);
+      await acquisitions.page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(acquisitions.page);
+      eq(name + ': resealed acquisition corruption is refused', (await status(acquisitions.page)).state, 'unavailable');
+      eq(name + ': no unverified acquisition warning displayed', await acquisitions.page.locator('[data-acquisition-review]').count(), 0);
+    }
+    // the same instant spelled under another offset is still newest first: the
+    // page orders by what the clock means, as the publisher's validator does
+    acquisitions.transport.current = changed(null, b => { b.issuers[0].index.acquisition_review.filings[0].filing.accepted_at = '2026-09-01T11:00:00-05:00'; }, variants['acquisition-observed']);
+    await acquisitions.page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(acquisitions.page);
+    eq('the same instant respelled under another offset still loads', (await status(acquisitions.page)).state, 'loaded');
+    eq('and is still read as an observed version-2 block', await acquisitions.page.locator('[data-acquisition-section]').evaluate(n => [n.getAttribute('data-acquisition-state'), n.getAttribute('data-acquisition-version')]), ['observed', '2']);
+    // AAPL's block copied onto ZIM: its eight observed forms exceed ZIM's one
+    // non-current metadata row, so the count rule refuses it (the source rule
+    // is held by the 'foreign index source' case above)
+    acquisitions.transport.current = changed(null, b => { b.issuers[1].index.acquisition_review = structuredClone(b.issuers[0].index.acquisition_review); }, variants['acquisition-observed']);
+    await acquisitions.page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(acquisitions.page);
+    eq('a block whose counts exceed another issuer\u2019s index is refused', (await status(acquisitions.page)).state, 'unavailable');
+    acquisitions.transport.current = variants['acquisition-observed'];
+    await acquisitions.page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(acquisitions.page);
+    eq('valid acquisition receipt recovers after refusal controls', (await status(acquisitions.page)).state, 'loaded');
+  } finally { await acquisitions.context.close(); }
   for (const [width, theme, canonical] of [[1280, 'dark', false], [390, 'light', false], [390, 'dark', true], [1280, 'light', true]]) {
     const { page, context, errors, requests } = await setup({ width, theme, canonical });
     try {
@@ -199,7 +314,7 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
   // These companions are real collector outputs over injected SEC responses.
   // Their public publication/reader are the unchanged original producer fixture.
   const semantic = {};
-  for (const name of ['complete', 'empty-window', 'cached', 'cache-unverified', 'document-denied', 'metadata-invalid', 'short-index', 'prefetch-budget']) {
+  for (const name of ['complete', 'empty-window', 'cached', 'cache-unverified', 'document-denied', 'metadata-invalid', 'short-index', 'prefetch-budget', 'rows-invalid']) {
     semantic[name] = { receipt: JSON.parse(await file('semantic-' + name + '-receipt.json')), raw: await file('semantic-' + name + '-bundle.json') };
   }
   const semantics = await setup({ variant: semantic.complete });
@@ -215,13 +330,28 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
       ['complete', 'observed window', 1], ['empty-window', 'observed window', 0],
       ['cached', 'observed window', 1], ['cache-unverified', 'unknown', 0],
       ['document-denied', 'observed window', 0], ['metadata-invalid', 'partial', 1],
-      ['short-index', 'partial', 1], ['prefetch-budget', 'unknown', 0]
+      ['short-index', 'partial', 1], ['prefetch-budget', 'unknown', 0], ['rows-invalid', 'partial', 0]
     ]) {
       await load(semantic[name]);
       eq(name + ' genuine semantic producer result is readable', (await status(page)).state, 'loaded');
       await page.locator('[data-issuer-choice]').selectOption('burst:AAPL');
       check(name + ' keeps its observed index scope', (await bodyText(page)).includes('· ' + coverage));
       eq(name + ' presents only actually retained documents', await page.locator('[data-issuer-document]').count(), documents);
+      // The review block's state follows the index that produced it: a verified issuer whose
+      // only in-window row was refused observed nothing and checked nothing (unknown, in its own
+      // words); a complete window that held no filing of any form is a zero result, said as such.
+      if (name === 'rows-invalid') {
+        const section = page.locator('[data-acquisition-section]');
+        eq('a verified index with no readable row is unknown, not none', await section.evaluate(n => [n.getAttribute('data-acquisition-state'), n.getAttribute('data-acquisition-version')]), ['unknown', '2']);
+        check('and says that nothing was checked, in its own words', /no metadata row of its SEC index was readable \(index coverage: partial\), so merger and tender-offer forms .* were not checked/.test(await section.innerText()));
+        check('without the identity sentence or a zero denominator', !/could not be verified|among the 0 observed/.test(await section.innerText()));
+        eq('and lists nothing', await section.locator('[data-acquisition-review]').count(), 0);
+      }
+      if (name === 'empty-window') {
+        const section = page.locator('[data-acquisition-section]');
+        eq('a complete window with no filing at all is none', await section.getAttribute('data-acquisition-state'), 'none');
+        check('and says no filing of any form was observed in the window', /No filings of any form were observed in the requested window \(\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}\), so no merger or tender-offer forms/.test(await section.innerText()) && !/among the 0 observed/.test(await section.innerText()));
+      }
       if (name === 'document-denied') {
         check('later primary HTTP403 does not erase the observed index', /Observed HTTP 403 · primary filing document/.test(await page.locator('[data-issuer-error]').innerText()) && /1 selected primary documents missing/.test(await bodyText(page)));
         if (shotsDir) {

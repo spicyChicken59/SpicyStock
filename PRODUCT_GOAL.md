@@ -607,3 +607,27 @@ scope. Fresh documentation, secret-scan and independent exact-head checks are
 required before publishing this smaller receipt; hosted gates and actual public
 acceptance remain outstanding. The separate combined-morning fixture upload
 remains blocked and is not included in this independent broker release.
+
+
+## Current reconciliation — 23 October 2026
+
+The owner's claude.ai task dispatched `morning.yml` at 13:23 UTC (8:23 CT): the
+first morning check inside its window, with both receipts committed 88 and 94
+seconds after the dispatch was created. It had nothing to quote, because the 22 October record is RED with no
+admitted plan; the ten-session acceptance still needs a night with one. The
+chart reader had been empty for two nights: the unpinned Anthropic SDK took
+2.1.0 on 21 and 22 October, whose API version refuses the `temperature` the
+grader sends, and every review was an HTTP 400 counted as `transport`.
+[PR #190](https://github.com/spicyChicken59/SpicyStock/pull/190) holds the SDK
+below 2.0 and reads the version off the wire in CI; whether the API answers
+again is tonight's run's to show. Moving to the new API version means grading
+at default sampling, an owner's decision that is recorded and not made.
+
+The paused Codex handoff (`codex/issuer-transaction-review`) is reconciled onto
+`main` rather than merged: merger and tender-offer forms, their amendments,
+explicit zero/unknown states, the omitted count and each filing's retained
+index source live under the shipped `acquisition_review` block as its version 2,
+with version 1 and absent blocks still readable and every published receipt
+replayed; and the four manual preparation checks now belong to one plan,
+proved through a real clock crossing rather than the control that timed out.
+No ticket, quote, broker fact or trade follows from either change.

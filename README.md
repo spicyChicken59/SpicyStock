@@ -85,7 +85,10 @@ mismatched account assumptions cannot produce a current personal preview.
 
 Each preview considers one plan independently and reserves no cash. Account for
 other orders and broker holds before entering available settled cash. Changing
-plans clears the fees and quantity inputs; a new session clears cash too, and a
+plans clears the fees and quantity inputs and the four manual preparation
+checks: a quote, cash, stop or event check made for one stock says nothing
+about another. Editing the same plan's inputs, or the clock repainting the
+desk on the same publication, keeps them. A new session clears cash too, and a
 reload clears these preview inputs. Published copy controls still copy the original model
 quantity, clearly identified beside the preview. The calculation does not submit
 an order or verify a balance. Preparation checks do not establish live quotes,
@@ -1359,14 +1362,33 @@ dates and document types. An acquisition mentioned by an issuer does not, by
 itself, establish that the issuer is a takeover target.
 
 Acquisition-related metadata forms (PREM14A, DEFM14A, SC TO-T and SC 14D9,
-including tender-offer amendments) now produce a separate review warning from
-the same bounded submissions/history reads, with no additional request. Up to
-twelve dated links are shown with the total observed count. These form names
-do not establish whether an acquisition is pending or completed, its terms,
-or that the issuer is the target. Their document content remains unreviewed;
-the latest-three current-report excerpts do not cover these forms. An absent
-warning, including in older bundles, is never event clearance. This metadata
-warning does not modify published tickets, sizing or known-event exclusions.
+each with its `/A` amendment) produce a separate review warning from the same
+bounded submissions/history reads, with no additional request. Every new
+bundle carries the block (`acquisition_review`, version 2) for every issuer,
+so the reader tells four states apart and never guesses: observed, with up to
+twelve dated links newest first, the observed and omitted counts, and for
+each listed filing the retained SEC index the collector read it from (the
+submissions file or the one fetched history file) with its retrieval time,
+which the validator holds to one of the row's own retained sources (which
+file carried a filing is the collector's own record, replayed against its
+captured index bytes only by the tests over the producer fixtures);
+none, when a verified index showed no such form, which is said, not left out
+(a complete window that held no filing of any form says so, rather than
+counting forms among zero rows); unknown, when the issuer's identity or
+submissions could not be verified, or when a verified index yielded no
+readable metadata row under partial coverage, so nothing was checked; and not
+recorded, for a bundle from before the warning existed. A version-1 block
+(bare filings, written only when a form was observed) stays readable under the
+current form list and its own count, window and order rules. The browser reads JSON numbers, so it cannot tell `2.0`
+from `2` where the publisher's validator requires a typed integer; that
+validator runs before every publication, so the typed contract is held where
+the bytes are written, and the browser holds every other rule of the block. These form names do not establish whether an
+acquisition is pending or completed, its terms, or that the issuer is the
+target. Their document content remains unreviewed; the latest-three
+current-report excerpts do not cover these forms. Neither an empty list nor
+an absent block, including in older bundles, is event clearance; a partial
+index says so beside its list. This metadata warning does not modify
+published tickets, sizing or known-event exclusions.
 
 Known unresolved events remain separate, source-backed anchors. The collector
 does not classify new events or clear an existing exclusion. In the 10 October

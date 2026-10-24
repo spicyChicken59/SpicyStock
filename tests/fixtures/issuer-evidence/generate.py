@@ -25,7 +25,8 @@ HERE = Path(__file__).resolve().parent
 NOW = datetime(2026, 10, 10, 6, 20, tzinfo=timezone.utc)
 VARIANTS = ("collected", "metadata-only", "identity-unverified", "outage", "inapplicable", "http-denied")
 SEMANTIC_VARIANTS = ("complete", "empty-window", "cached", "cache-unverified", "document-denied",
-                     "metadata-invalid", "short-index", "prefetch-budget")
+                     "metadata-invalid", "short-index", "prefetch-budget", "rows-invalid")
+ACQUISITION_VARIANTS = ("observed", "none", "partial", "unavailable", "history", "capped")
 MAPPING_URL = "https://www.sec.gov/files/company_tickers_exchange.json"
 AAPL_SUBMISSIONS = "https://data.sec.gov/submissions/CIK0000320193.json"
 
@@ -144,6 +145,9 @@ def collect_semantic(raw, variant, *, dry_run=False):
     The shared mapping event and identical document bodies deliberately test
     different request/download versus distinct-capture accounting. These
     additional controls leave all original captured-source outputs unchanged.
+    ``rows-invalid`` is a verified issuer whose only in-window row is refused:
+    the collector observes zero metadata rows under partial coverage, the
+    shape the page must call unknown rather than a zero result.
     """
     assert variant in SEMANTIC_VARIANTS
     mapping = {"fields": ["cik", "name", "ticker", "exchange"], "data": [
@@ -155,11 +159,11 @@ def collect_semantic(raw, variant, *, dry_run=False):
         filings = [{"accessionNumber": f"{cik:010d}-25-000001", "filingDate": "2025-10-01",
                     "reportDate": "2025-10-01", "acceptanceDateTime": "2025-10-01T16:00:00Z",
                     "form": "10-K", "items": "", "primaryDocument": "old.htm"}]
-        if variant != "empty-window":
+        if variant not in ("empty-window", "rows-invalid"):
             filings.append({"accessionNumber": f"{cik:010d}-26-000001", "filingDate": "2026-10-09",
                             "reportDate": "2026-10-09", "acceptanceDateTime": "2026-10-09T16:00:00Z",
                             "form": "8-K", "items": "8.01", "primaryDocument": "current.htm"})
-        if variant == "metadata-invalid":
+        if variant in ("metadata-invalid", "rows-invalid"):
             filings.append({"accessionNumber": f"{cik:010d}-27-000001", "filingDate": "2026-10-09",
                             "reportDate": "2026-10-09", "acceptanceDateTime": "2027-10-09T16:00:00Z",
                             "form": "8-K", "items": "8.01", "primaryDocument": "future.htm"})
@@ -193,6 +197,50 @@ def collect_semantic(raw, variant, *, dry_run=False):
     return issuer.collect(raw, **options)
 
 
+def acquisition_responses(variant):
+    """Synthetic merger/tender form observations over the unchanged report-fetch boundary.
+
+    Eight rows cycle through every form and amendment the review names, all
+    dated inside the window and accepted before the fixture clock; `capped`
+    writes fifteen so the list stops at twelve and the omitted count is three;
+    `history` moves them into one fetched history file so each names that
+    source; `partial` drops the oldest recent row so the index is partial.
+    """
+    assert variant in ACQUISITION_VARIANTS
+    data = aapl_submissions()
+    forms = tuple(sorted(issuer.ACQUISITION_FORMS))
+    count = 15 if variant == "capped" else 0 if variant == "none" else len(forms)
+    rows = [{"accessionNumber": f"0000320193-26-{8000 + number:06d}",
+             "form": forms[number % len(forms)], "filingDate": "2026-09-01", "reportDate": "",
+             "acceptanceDateTime": "2026-09-01T16:00:00Z",
+             "primaryDocument": f"synthetic-acquisition-{number}.htm", "items": ""}
+            for number in range(count)]
+    recent = data["filings"]["recent"]
+    additions = {key: [row[key] for row in rows] for key in recent}
+    edits = {}
+    if variant == "history":
+        old = {key: values[-1:] + additions[key] for key, values in recent.items()}
+        data["filings"]["recent"] = {key: values[:-1] for key, values in recent.items()}
+        data["filings"]["files"] = [{"name": "CIK0000320193-submissions-001.json",
+            "filingCount": len(rows) + 1, "filingFrom": "2025-10-01", "filingTo": "2026-09-01"}]
+        edits["https://data.sec.gov/submissions/CIK0000320193-submissions-001.json"] = json_bytes(old)
+    else:
+        data["filings"]["recent"] = {
+            key: (values[:-1] if variant == "partial" else values) + additions[key]
+            for key, values in recent.items()}
+    edits[AAPL_SUBMISSIONS] = json_bytes(data)
+    return edits
+
+
+def collect_acquisition(raw, variant, **kwargs):
+    options = {"fetch": transport("http-denied" if variant == "unavailable" else "collected",
+                                  edits=acquisition_responses(variant)),
+               "now": NOW, "run_id": "fixture-issuer-acquisition-" + variant,
+               "dry_run": False, "allow_fixture": True}
+    options.update(kwargs)
+    return issuer.collect(raw, **options)
+
+
 def build():
     raw = publication()
     projected, _ = reader.derive(raw)
@@ -209,6 +257,11 @@ def build():
         issuer.validate_for_publication(raw, result["receipt_bytes"], result["bundle_bytes"], allow_fixture=True)
         outputs["semantic-" + variant + "-receipt.json"] = result["receipt_bytes"]
         outputs["semantic-" + variant + "-bundle.json"] = result["bundle_bytes"]
+    for variant in ACQUISITION_VARIANTS:
+        result = collect_acquisition(raw, variant)
+        issuer.validate_for_publication(raw, result["receipt_bytes"], result["bundle_bytes"], allow_fixture=True)
+        outputs["acquisition-" + variant + "-receipt.json"] = result["receipt_bytes"]
+        outputs["acquisition-" + variant + "-bundle.json"] = result["bundle_bytes"]
     return outputs
 
 
