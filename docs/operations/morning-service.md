@@ -170,6 +170,10 @@ limited to two seconds each. The parent accepts at most 4 KiB of structured chil
 output. A timeout can coincide with an already completed atomic ingestion, so
 it reports unknown completion rather than claiming a rollback. The next
 synchronization rechecks committed source identity and deduplicates normally.
+The canonical record it downloads may be 48 MiB (`reader.MAX_PUBLICATION_BYTES`,
+32 MiB until 25 October 2026); carrying that inside the 30-second deadline needs
+roughly 13 Mbit/s, which no deployed host has been measured at. A download that
+misses the deadline is refused like any other timeout.
 
 The SQLite poll ledger reserves the next allowed time before source requests.
 Normally completed success/failure records include the request count; interrupted

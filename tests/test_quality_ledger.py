@@ -183,3 +183,82 @@ def test_terminal_status_and_external_calls_unchanged(
             if outcome == 'capture_failure':
                 assert 'quality_ledger_capture_failed' in caplog.text
     assert results[0] == results[1]
+
+
+# --- the retained line and a refusal state their sizes ------------------------------
+def test_the_retained_line_states_the_entry_and_the_archive_against_their_bounds(tmp_path, monkeypatch, caplog):
+    from src import quality_ledger as ledger
+    monkeypatch.setattr(pipeline.time, 'monotonic', lambda: 100.0)
+    caplog.set_level('INFO', logger='src.quality_ledger')
+    docs = tmp_path / 'docs'
+    run_variant('full', docs)
+    [path] = entries(docs)
+    expanded = len(gzip.decompress(path.read_bytes()))
+    [line] = [r for r in caplog.records if r.getMessage().startswith('Quality ledger retained: ')]
+    assert line.levelname == 'INFO' and line.getMessage() == (
+        f'Quality ledger retained: {path}, its entry {expanded} of {ledger.MAX_ENTRY_BYTES} bytes expanded; '
+        f'the archive 1 of {ledger.MAX_ENTRIES} entries, {path.stat().st_size} of {ledger.MAX_ARCHIVE_BYTES} bytes.')
+
+
+@pytest.mark.parametrize('field,size,level', [
+    ('entry', 80, 'INFO'), ('entry', 81, 'WARNING'), ('archive', 80, 'INFO'), ('archive', 81, 'WARNING'),
+    ('count', 0, 'INFO'), ('count', 1, 'WARNING')])
+def test_the_retained_line_warns_past_eighty_percent_of_any_bound(field, size, level, tmp_path, monkeypatch, caplog):
+    from src import quality_ledger as ledger
+    caplog.set_level('INFO', logger='src.quality_ledger')
+    monkeypatch.setattr(ledger, 'MAX_ENTRY_BYTES', 100)
+    monkeypatch.setattr(ledger, 'MAX_ARCHIVE_BYTES', 100)
+    monkeypatch.setattr(ledger, 'MAX_ENTRIES', 5)                  # 80% of five is four
+    for i in range(4 + size if field == 'count' else 1):
+        (tmp_path / f'{i}.json.gz').write_bytes(b'x' * (size if field == 'archive' else 1))
+    ledger.log_retained(tmp_path / '0.json.gz', size if field == 'entry' else 1)
+    [record] = caplog.records
+    assert record.levelname == level, record.getMessage()
+
+
+def test_the_retained_line_never_fails_the_capture(caplog):
+    from src import quality_ledger as ledger
+    caplog.set_level('INFO', logger='src.quality_ledger')
+    ledger.log_retained(None, 1)
+    [record] = caplog.records
+    assert record.levelname == 'WARNING'
+    assert record.getMessage() == 'Quality ledger retained: None; its sizes could not be measured (TypeError).'
+
+
+def test_an_entry_or_an_archive_past_its_bound_is_refused_with_its_sizes(tmp_path, monkeypatch):
+    from src import quality_ledger as ledger
+    d = {'run': {'session': '2026-09-10'}, 'bursts': [], 'trades': []}
+    entry = ledger.build(d, 'a' * 64, None)
+    size = len(ledger.encoded(entry))
+    monkeypatch.setattr(ledger, 'MAX_ENTRY_BYTES', size - 1)
+    with pytest.raises(ledger.CapacityExceeded,
+                       match=rf'^quality ledger entry is {size} bytes, over its {size - 1}-byte entry capacity$'):
+        ledger.append(entry, tmp_path)
+    monkeypatch.setattr(ledger, 'MAX_ENTRY_BYTES', size)            # at the bound it is written
+    first = ledger.append(entry, tmp_path)
+    held = first.stat().st_size
+    monkeypatch.setattr(ledger, 'MAX_ARCHIVE_BYTES', held + 1)
+    other = ledger.build(d, 'b' * 64, None)
+    with pytest.raises(ledger.CapacityExceeded, match=rf'^quality ledger archive capacity exceeded: 1 of '
+                       rf'{ledger.MAX_ENTRIES} entries, {held} bytes held and \d+ more against {held + 1}$'):
+        ledger.append(other, tmp_path)
+
+
+@pytest.mark.parametrize('bound', [True, False])
+def test_a_failed_capture_names_a_bounds_sizes_and_nothing_else(bound, tmp_path, monkeypatch, caplog):
+    from src import quality_ledger as ledger
+    monkeypatch.setattr(pipeline.time, 'monotonic', lambda: 100.0)
+    caplog.set_level('INFO', logger='src.quality_ledger')
+    if bound:
+        monkeypatch.setattr(ledger, 'MAX_ENTRY_BYTES', 10)
+    else:   # a failure whose text is not a bound's: never quoted
+        monkeypatch.setattr(ledger, 'append', lambda *a: (_ for _ in ()).throw(ValueError('AAPL secret detail')))
+    run_variant('full', tmp_path / 'docs')
+    [line] = [r for r in caplog.records if 'quality_ledger_capture_failed' in r.getMessage()]
+    assert line.levelname == 'ERROR'
+    said = line.getMessage()
+    assert said.startswith('quality_ledger_capture_failed; publication unchanged; evidence unavailable')
+    if bound:
+        assert said.endswith(', over its 10-byte entry capacity') and '; quality ledger entry is ' in said
+    else:
+        assert said == 'quality_ledger_capture_failed; publication unchanged; evidence unavailable'

@@ -3,7 +3,9 @@
 (function (w) {
   'use strict';
   const api = w.SCStock = w.SCStock || {};
-  const MAX_BYTES = 32 * 1024 * 1024, TIMEOUT_MS = 15000, HEX = /^[a-f0-9]{64}$/;
+  // MAX_BYTES bounds every file the page downloads; MAX_CANONICAL_BYTES bounds only the
+  // identity of data.json, which the page never downloads (reader.MAX_PUBLICATION_BYTES).
+  const MAX_BYTES = 32 * 1024 * 1024, MAX_CANONICAL_BYTES = 48 * 1024 * 1024, TIMEOUT_MS = 15000, HEX = /^[a-f0-9]{64}$/;
   const object = value => !!value && typeof value === 'object' && !Array.isArray(value);
   const date = value => typeof value === 'string' && /^\d{4}-\d\d-\d\d$/.test(value) && Number.isFinite(Date.parse(value));
   const finite = value => typeof value === 'number' && Number.isFinite(value);
@@ -18,7 +20,7 @@
     if (value && value.schema_version === 2) return { data: value, projection: null };
     require(object(value) && value.schema_version === 1 && value.projection_version === 1 && object(value.data) && value.data.schema_version === 2 && value.data.run, 'Unsupported reader projection.');
     const canonical = value.canonical, sidecar = value.retained_observations, observations = value.data.observations;
-    require(object(canonical) && HEX.test(canonical.sha256) && Number.isSafeInteger(canonical.bytes) && canonical.bytes > 0 && canonical.bytes <= MAX_BYTES, 'Canonical publication identity is invalid.');
+    require(object(canonical) && HEX.test(canonical.sha256) && Number.isSafeInteger(canonical.bytes) && canonical.bytes > 0 && canonical.bytes <= MAX_CANONICAL_BYTES, 'Canonical publication identity is invalid.');
     require(object(sidecar) && HEX.test(sidecar.sha256) && Number.isSafeInteger(sidecar.bytes) && sidecar.bytes > 0 && sidecar.bytes <= MAX_BYTES && sidecar.path === 'reader-observations/' + sidecar.sha256 + '.json', 'Research sidecar identity is invalid.');
     require(object(observations) && object(observations.symbols) && !Object.keys(observations.symbols).length && (!('signals' in observations) || object(observations.signals) && !Object.keys(observations.signals).length), 'Projected observations must be deferred.');
     const base = new URL(sourceUrl || 'reader.json', w.location.href), url = new URL(sidecar.path, base);
@@ -118,5 +120,5 @@
     });
     return pending;
   }
-  api.reader = { parse, read, decode, attach, ensure, status, mergeAllowed: () => !projection || state === 'complete', onChange: fn => { onChange = fn; }, MAX_BYTES };
+  api.reader = { parse, read, decode, attach, ensure, status, mergeAllowed: () => !projection || state === 'complete', onChange: fn => { onChange = fn; }, MAX_BYTES, MAX_CANONICAL_BYTES };
 })(window);

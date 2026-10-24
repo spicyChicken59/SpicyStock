@@ -25,7 +25,16 @@ import tempfile
 VERSION = 1
 READER_FILE = "reader.json"
 OBSERVATION_DIR = "reader-observations"
-MAX_PUBLICATION_BYTES = 32 * 1024 * 1024
+# The canonical record, which the browser never downloads: above the record
+# the scan-ready population makes when every scan-ready stock bursts beside a
+# full observation window (42,926,403 bytes built from 22 October's record,
+# tests/test_publication_ceiling.py), and under the 50 MiB above which a push
+# is warned (100 MiB is refused) -- GitHub's documentation, read as search
+# excerpts on 24 October 2026; docs.github.com does not resolve from the sandbox.
+MAX_PUBLICATION_BYTES = 48 * 1024 * 1024
+# reader.json, the file the browser does download: its own bound, which a
+# night reaches first whenever its observations are under 16 MiB (27,351,450
+# bytes at that design point).
 MAX_READER_BYTES = 32 * 1024 * 1024
 MAX_OBSERVATION_BYTES = 32 * 1024 * 1024
 MAX_SIDECARS = 84
@@ -35,7 +44,7 @@ RETENTION_DAYS = 21
 MAX_RETENTION_BYTES = 64 * 1024
 HEX = re.compile(r"[a-f0-9]{64}\Z")
 RETENTION_WARN_FRACTION = 0.8  # of the cap, after tonight's removals: the run log warns
-PUBLICATION_WARN_FRACTION = 0.8  # of MAX_PUBLICATION_BYTES: the run log warns past it
+PUBLICATION_WARN_FRACTION = 0.8  # of MAX_PUBLICATION_BYTES and of MAX_READER_BYTES: the run log warns past it
 
 log = logging.getLogger("spicystock.reader")
 
@@ -82,6 +91,20 @@ def derive(canonical_raw: bytes) -> tuple[bytes, bytes]:
     boundary's responsibility. Nothing is derived from provider frames or a
     browser selection. All non-observation values and their ordering survive.
     """
+    reader_raw, observations_raw = _project(canonical_raw)
+    _reader_bound(reader_raw)
+    return reader_raw, observations_raw
+
+
+def _reader_bound(reader_raw):
+    if len(reader_raw) > MAX_READER_BYTES:
+        raise ValueError(f"reader projection is {len(reader_raw)} bytes, "
+                         f"over its {MAX_READER_BYTES}-byte bound")
+
+
+def _project(canonical_raw):
+    """The projection before its own bound is asked: the canonical record's
+    bound and the observations' are held here, the reader's by the caller."""
     if isinstance(canonical_raw, bytes) and len(canonical_raw) > MAX_PUBLICATION_BYTES:
         raise ValueError(f"canonical publication is {len(canonical_raw)} bytes, "
                          f"over its {MAX_PUBLICATION_BYTES}-byte bound")
@@ -101,9 +124,7 @@ def derive(canonical_raw: bytes) -> tuple[bytes, bytes]:
                 "retained_observations": {"sha256": observations_sha,
                     "bytes": len(observations_raw),
                     "path": f"{OBSERVATION_DIR}/{observations_sha}.json"}}
-    reader_raw = _encode(envelope)
-    _require(len(reader_raw) <= MAX_READER_BYTES, "reader projection bytes exceed bound")
-    return reader_raw, observations_raw
+    return _encode(envelope), observations_raw
 
 
 def binding(canonical_raw: bytes) -> dict:
@@ -159,6 +180,16 @@ def _write(path, raw):
         os.fsync(handle.fileno())
 
 
+def _level(size, bound):
+    return (logging.ERROR if size > bound else
+            logging.WARNING if size > bound * PUBLICATION_WARN_FRACTION else logging.INFO)
+
+
+def _over(after_delivery):
+    return ("; over its bound, so this write is refused and the record first installed stays"
+            if after_delivery else "; over its bound, so the night is refused before anything is installed")
+
+
 def log_publication(size: int, data, *, after_delivery: bool = False) -> None:
     """State the canonical record's bytes against its bound; never raises.
 
@@ -171,28 +202,38 @@ def log_publication(size: int, data, *, after_delivery: bool = False) -> None:
     try:
         bound = MAX_PUBLICATION_BYTES
         over = size > bound
-        level = logging.ERROR if over else logging.WARNING if size > bound * PUBLICATION_WARN_FRACTION else logging.INFO
+        level = _level(size, bound)
         try:
             bursts = len(data["bursts"])
             observations = len(_encode(data["observations"]))
             counts = f", with {bursts} {'burst' if bursts == 1 else 'bursts'} and {observations} bytes of observations"
         except Exception as exc:  # noqa: BLE001 -- the size is still stated
             counts = f", its burst and observation counts unreadable ({type(exc).__name__})"
-        if not over:
-            tail = ""
-        elif after_delivery:
-            tail = "; over its bound, so this write is refused and the record first installed stays"
-        else:
-            tail = "; over its bound, so the night is refused before anything is installed"
+        tail = _over(after_delivery) if over else ""
         log.log(level, "%s: %d of %d bytes%s%s.", name, size, bound, counts, tail)
     except Exception as exc:  # noqa: BLE001 -- a log line never fails the night
         log.warning("%s could not be measured (%s).", name, type(exc).__name__)
 
 
-def stage_assets(stage: Path) -> dict:
+def log_projection(size: int, *, after_delivery: bool = False) -> None:
+    """State reader.json, the file the browser downloads, against its own
+    bound; never raises. Called as each projection is made, before that bound
+    is asked, so a refused one is stated too."""
+    name = "Reader projection after delivery" if after_delivery else "Reader projection"
+    try:
+        bound = MAX_READER_BYTES
+        log.log(_level(size, bound), "%s: %d of %d bytes%s.", name, size, bound,
+                _over(after_delivery) if size > bound else "")
+    except Exception as exc:  # noqa: BLE001 -- a log line never fails the night
+        log.warning("%s could not be measured (%s).", name, type(exc).__name__)
+
+
+def stage_assets(stage: Path, *, after_delivery: bool = False) -> dict:
     """Prepare companions beside the already serialized canonical record."""
     stage = Path(stage)
-    reader_raw, observations_raw = derive((stage / "data.json").read_bytes())
+    reader_raw, observations_raw = _project((stage / "data.json").read_bytes())
+    log_projection(len(reader_raw), after_delivery=after_delivery)
+    _reader_bound(reader_raw)
     ref = parse_reader(reader_raw)["retained_observations"]
     _write(stage / READER_FILE, reader_raw)
     _write(stage / ref["path"], observations_raw)
@@ -467,8 +508,8 @@ def _log_archive(docs, evicted, index, cleaned):
 def write_publication(data: dict, docs: Path) -> None:
     """Serialize a final/restamped canonical record and publish its companions.
 
-    Past the canonical bound `derive()` refuses before anything is installed,
-    so the record already installed stays."""
+    Past the canonical or the reader bound the projection is refused before
+    anything is installed, so the record already installed stays."""
     from src import report
     docs = Path(docs)
     docs.mkdir(parents=True, exist_ok=True)
@@ -476,7 +517,7 @@ def write_publication(data: dict, docs: Path) -> None:
         stage = Path(tmp)
         report.write(data, stage / "data.json")
         log_publication((stage / "data.json").stat().st_size, data, after_delivery=True)
-        stage_assets(stage)
+        stage_assets(stage, after_delivery=True)
         install_publication(stage, docs, ["data.json"])
 
 

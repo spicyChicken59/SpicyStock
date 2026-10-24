@@ -23,7 +23,12 @@ DIRECTORY = 'quality-ledger/v1'
 MAX_ENTRY_BYTES = 8 * 1024 * 1024
 MAX_ARCHIVE_BYTES = 128 * 1024 * 1024
 MAX_ENTRIES = 4096
+WARN_FRACTION = 0.8  # of each bound: the retained line warns past it
 log = logging.getLogger(__name__)
+
+
+class CapacityExceeded(ValueError):
+    """A bound refused the entry; its sentence names the sizes and the bound."""
 
 
 def project(value, keys):
@@ -93,7 +98,8 @@ def append(entry, docs):
     if entry.get('schema_version') != VERSION:
         raise ValueError('unsupported quality ledger schema')
     if len(raw) > MAX_ENTRY_BYTES:
-        raise ValueError('quality ledger entry capacity exceeded')
+        raise CapacityExceeded(f'quality ledger entry is {len(raw)} bytes, '
+                               f'over its {MAX_ENTRY_BYTES}-byte entry capacity')
     # Canonical JSON inside a deterministic gzip container. GzipFile uses a
     # neutral OS header; no local filename, clock or platform enters the bytes.
     buffer = io.BytesIO()
@@ -110,8 +116,10 @@ def append(entry, docs):
             raise ValueError('existing quality ledger entry differs; preserved')
         return path
     files = list(directory.glob('*.json.gz'))
-    if len(files) >= MAX_ENTRIES or sum(p.stat().st_size for p in files) + len(raw) > MAX_ARCHIVE_BYTES:
-        raise ValueError('quality ledger archive capacity exceeded')
+    held = sum(p.stat().st_size for p in files)
+    if len(files) >= MAX_ENTRIES or held + len(raw) > MAX_ARCHIVE_BYTES:
+        raise CapacityExceeded(f'quality ledger archive capacity exceeded: {len(files)} of {MAX_ENTRIES} '
+                               f'entries, {held} bytes held and {len(raw)} more against {MAX_ARCHIVE_BYTES}')
     directory.mkdir(parents=True, exist_ok=True)
     temporary = None
     try:
@@ -169,8 +177,27 @@ def capture(*, docs, rec, frames, stats, minutes=None):
         entry = build(data, hashlib.sha256(raw).hexdigest(), rows,
                       exceptions=exceptions, revision=execution_revision())
         path = append(entry, docs)
-        log.info('Quality ledger retained: %s', path)
+        log_retained(path, len(encoded(entry)))
         return {'status': 'retained', 'path': str(path)}
-    except Exception:
-        log.error('quality_ledger_capture_failed; publication unchanged; evidence unavailable')
+    except Exception as exc:
+        # Only a bound's own sentence is quoted: it names sizes, never a record's text.
+        said = f'; {exc}' if isinstance(exc, CapacityExceeded) else ''
+        log.error('quality_ledger_capture_failed; publication unchanged; evidence unavailable%s', said)
         return {'status': 'failed', 'path': None, 'failure': 'quality_ledger_capture_failed'}
+
+
+def log_retained(path, entry_bytes):
+    """The retained line: the entry (expanded) and the archive against their
+    bounds, a warning past WARN_FRACTION of any. It never fails the capture."""
+    try:
+        files = list(Path(path).parent.glob('*.json.gz'))
+        held = sum(p.stat().st_size for p in files)
+        full = (entry_bytes > MAX_ENTRY_BYTES * WARN_FRACTION or held > MAX_ARCHIVE_BYTES * WARN_FRACTION
+                or len(files) > MAX_ENTRIES * WARN_FRACTION)
+        log.log(logging.WARNING if full else logging.INFO,
+                'Quality ledger retained: %s, its entry %d of %d bytes expanded; the archive %d of %d '
+                'entries, %d of %d bytes.', path, entry_bytes, MAX_ENTRY_BYTES, len(files), MAX_ENTRIES,
+                held, MAX_ARCHIVE_BYTES)
+    except Exception as exc:  # noqa: BLE001 -- the entry is written; only its measure is lost
+        log.warning('Quality ledger retained: %s; its sizes could not be measured (%s).',
+                    path, type(exc).__name__)

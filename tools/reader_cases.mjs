@@ -393,6 +393,42 @@ export async function checkReaderTransport({ browser, base, open, check, eq, sho
         return results;
       }, next.readerRaw);
       eq('invalid traversal, foreign and symbol-bearing paths are refused before request', parseRefusals, [true, true, true]);
+      // The record's identity is held to its own 48 MiB (the page never downloads it); every download to 32 MiB.
+      const sizeBounds = await tab.page.evaluate(raw => {
+        const original = JSON.parse(raw), base = new URL('reader.json', location.href).href, said = {};
+        const { MAX_CANONICAL_BYTES: record, MAX_BYTES: download } = SCStock.reader;
+        const attempt = (name, change) => {
+          const value = structuredClone(original); change(value);
+          try { SCStock.reader.parse(JSON.stringify(value), base); said[name] = 'accepted'; } catch (error) { said[name] = error.message; }
+        };
+        attempt('record of 40 MiB', v => { v.canonical.bytes = 40 * 1024 * 1024; });
+        attempt('record at its bound', v => { v.canonical.bytes = record; });
+        attempt('record one byte past', v => { v.canonical.bytes = record + 1; });
+        attempt('sidecar at its bound', v => { v.retained_observations.bytes = download; });
+        attempt('sidecar one byte past', v => { v.retained_observations.bytes = download + 1; });
+        return { said, record, download };
+      }, next.readerRaw);
+      eq('the page holds the record to 48 MiB and every download to 32 MiB', [sizeBounds.record, sizeBounds.download], [48 * 1024 * 1024, 32 * 1024 * 1024]);
+      eq('a reader may name a record up to its own bound, never past it', sizeBounds.said, {
+        'record of 40 MiB': 'accepted', 'record at its bound': 'accepted',
+        'record one byte past': 'Canonical publication identity is invalid.',
+        'sidecar at its bound': 'accepted', 'sidecar one byte past': 'Research sidecar identity is invalid.' });
+    } finally { await tab.context.close(); }
+  }
+
+  // A thrust night's reader names a record past the old shared 32 MiB: it renders; one past 48 MiB is refused.
+  for (const [bytes, rendered] of [[40 * 1024 * 1024, true], [48 * 1024 * 1024 + 1, false]]) {
+    const envelope = JSON.parse(next.readerRaw); envelope.canonical.bytes = bytes;
+    const tab = await setup(bundle(JSON.stringify(envelope), next.sidecarRaw, next.canonicalRaw), { now: PAGE_NOW });
+    try {
+      const state = await tab.page.getAttribute('html', 'data-ss-rendered');
+      if (rendered) {
+        check(`a reader naming a ${bytes}-byte record renders`, state !== 'error');
+        eq(`the ${bytes}-byte record's reader renders its stocks`, await tab.page.evaluate(() => SCStock.data.bursts.length), next.data.bursts.length);
+        eq(`the ${bytes}-byte record is never downloaded`, tab.requests.filter(r => new URL(r.url).pathname === '/docs/data.json').length, 0);
+      } else {
+        eq(`a reader naming a ${bytes}-byte record is refused before rendering`, state, 'error');
+      }
     } finally { await tab.context.close(); }
   }
 
