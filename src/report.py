@@ -820,8 +820,9 @@ def write(data: dict, path: Path) -> None:
 
     The record is compact -- no indentation or spaces -- with its key order and
     UTF-8 kept: `provenance` rebuilds each check's display text from the stored
-    key order, and every digest reads these bytes. Indentation was a third of
-    the file, and the file is bounded (`reader.MAX_PUBLICATION_BYTES`)."""
+    key order, and every digest reads these bytes. Whitespace was over a
+    quarter of the file (29% of the 23 October record), and the file is
+    bounded (`reader.MAX_PUBLICATION_BYTES`)."""
     if data.get("run", {}).get("evidence") or data.get("rules", {}).get("provenance"):
         from src import provenance
         provenance.require(data)

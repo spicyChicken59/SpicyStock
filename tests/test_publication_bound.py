@@ -15,6 +15,7 @@ import pytest
 
 from src import pipeline, reader
 from tests.test_pipeline import market, claude, evening
+from tests.test_quality import frame as qframe, ideal_bars
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -56,12 +57,17 @@ def snapshot(docs):
             for p in sorted(docs.rglob("*")) if p.is_file() and p.relative_to(docs).parts[0] != "charts"}
 
 
-def test_a_record_over_its_bound_is_refused_before_anything_is_installed_and_says_why(market, claude, fake_resend, tmp_path, monkeypatch, caplog):
+def test_a_record_over_its_bound_is_refused_before_anything_is_installed_and_says_why(market, claude, fake_alpaca, fake_resend, tmp_path, monkeypatch, caplog):
     _, data, docs = evening(tmp_path, market)          # night one publishes everything a night keeps
     before = snapshot(docs)
     assert {"data.json", "picks.json", "reader.json", "history/index.json"} <= set(before)
     assert any(k.startswith("evidence/") for k in before) and any(k.startswith("reader-observations/") for k in before)
     assert any(k.startswith("quality-ledger/") for k in before)
+    # Night two re-runs the session on a revised burst bar, so it brings evidence objects of its own: a
+    # refusal that came after the evidence write would change the archive (held here before it is asked).
+    fake_alpaca.add_history("AAA", qframe(ideal_bars(burst_range_pct=0.3, base_range=0.15, prior_range=0.1)))
+    _, _, other = evening(tmp_path / "unbounded", market)
+    assert {k for k in snapshot(other) if k.startswith("evidence/")} - set(before)
     bound = len(compact(data)) // 2
     monkeypatch.setattr(reader, "MAX_PUBLICATION_BYTES", bound)
     caplog.set_level("INFO", logger="spicystock.reader")

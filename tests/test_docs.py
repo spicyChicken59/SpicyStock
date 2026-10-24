@@ -415,9 +415,10 @@ def test_the_readme_and_the_env_example_quote_the_canonical_bound_from_the_modul
     from src import reader
     text = re.sub(r"\s+", " ", README)
     mib = reader.MAX_PUBLICATION_BYTES // (1024 * 1024)
-    assert (f"The record is bounded at {mib} MiB (`reader.MAX_PUBLICATION_BYTES`, one number every reader "
-            f"and the browser hold): the run log states each night's record against it, with its bursts and "
-            f"observation bytes, and warns past {reader.PUBLICATION_WARN_FRACTION:.0%}") in text
+    assert (f"The record is bounded at {mib} MiB (`reader.MAX_PUBLICATION_BYTES`; every reader that bounds "
+            f"the record, and the browser, hold this one number): the run log states each night's record "
+            f"against it, with its bursts and observation bytes, and warns past "
+            f"{reader.PUBLICATION_WARN_FRACTION:.0%}") in text
     env = re.sub(r"\s*#\s*", " ", (ROOT / ".env.example").read_text())
     assert (f"docs/data.json is written compact; past {reader.PUBLICATION_WARN_FRACTION:.0%} of its "
             f"{mib} MiB bound the run log warns") in env

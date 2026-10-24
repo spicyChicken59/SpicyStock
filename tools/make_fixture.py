@@ -6,8 +6,9 @@ test suite uses (tests/fakes.py, tests/synthetic.py, the textbook frames in
 tests/test_quality.py and tests/test_watchlist.py). A generator that took a
 different path from the code it is a fixture FOR could only be checked
 against itself; this one cannot drift from the pipeline because it is the
-pipeline. The pipeline writes its record compact; a fixture is that record
-re-serialized at indent=1 for reviewable diffs, so the production format is
+pipeline. The pipeline writes its record compact; a fixture is that record,
+labelled `fixture` and its two run clocks zeroed, re-serialized at indent=1
+for reviewable diffs, so the production format is
 held by the pipeline's own tests (tests/test_publication_bound.py), not by
 --check.
 
