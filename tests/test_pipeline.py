@@ -58,6 +58,11 @@ def claude(fake_anthropic):
     return fake_anthropic
 
 
+def _mail_text(markup: str) -> str:
+    from tests.test_report import _rendered
+    return _rendered(markup)
+
+
 def evening(tmp_path: Path, tickers: list[str], *, now: datetime = EVENING, dry_run: bool = False) -> tuple:
     docs = tmp_path / "docs"
     rep = pipeline.run_evening(dry_run=dry_run, tickers=tickers, docs=docs, now=now)
@@ -412,6 +417,26 @@ def test_a_feed_outage_fails_before_publishing_and_mails_the_notice(market, clau
     assert rep.exit_code() == pipeline.EXIT_FAILED and data is None
     assert len(fake_resend.sent) == 1
     assert fake_resend.sent[0]["subject"] == f"FAILED — no plan for {SESSION}"
+    text = _mail_text(fake_resend.sent[0]["html"])
+    assert rep.stage in report.INPUT_STAGES and report.PROBLEM_SENTENCES["coverage_thin"] in text
+    assert f"It stopped at its {rep.stage} stage, while reading the night's inputs." in text
+
+
+def test_a_failure_after_the_inputs_is_mailed_by_its_stage_and_not_as_missing_inputs(market, claude, fake_resend, tmp_path, monkeypatch):
+    """A crash past the inputs has nothing missing: the notice names the stage it
+    stopped at and leaves what it raised to the run log."""
+    def boom(*args, **kwargs):
+        raise RuntimeError("planner bug https://example.invalid")
+    monkeypatch.setattr(pipeline, "make_plans", boom)
+    rep, data, docs = evening(tmp_path, market)
+    assert rep.exit_code() == pipeline.EXIT_FAILED and data is None and rep.stage == "grade"
+    [sent] = fake_resend.sent
+    text = _mail_text(sent["html"])
+    assert sent["subject"] == f"FAILED — no plan for {SESSION}"
+    assert ("It stopped at its grade stage, after the night's inputs were read; what it raised is in "
+            "the workflow's run log, not in this mail.") in text
+    assert report.PROBLEM_SENTENCES["coverage_thin"] not in text
+    assert "planner bug" not in sent["html"] and "example.invalid" not in sent["html"]
 
 
 def test_stale_frames_on_every_name_are_an_outage_not_a_market(market, claude, fake_resend, fake_alpaca, tmp_path):

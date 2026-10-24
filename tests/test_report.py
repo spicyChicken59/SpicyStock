@@ -866,6 +866,26 @@ def test_the_failure_notice_names_the_session_it_has_no_plan_for(fake_resend):
     assert "None" not in params["html"] and params["attachments"] == []
 
 
+def test_the_failure_notice_names_the_stage_it_stopped_at_in_its_own_words(fake_resend):
+    """A run that stopped after reading its inputs is not missing any: it is
+    named by its stage and carries no inputs sentence. Only a word the code owns
+    is printed, never the stage of a caller that is not one."""
+    send_failure_notice("evening", [], None, expected_session="2026-09-11", stage="publish")
+    text = _rendered(fake_resend.sent[0]["html"])
+    assert ("It stopped at its publish stage, after the night's inputs were read; what it raised is in "
+            "the workflow's run log, not in this mail.") in text
+    assert PROBLEM_SENTENCES["coverage_thin"] not in text and "No problem was recorded before it stopped." in text
+    send_failure_notice("evening", [problem("fetch", "coverage_thin", "only 40% answered")], None,
+                        expected_session="2026-09-11", stage="fetch")
+    text = _rendered(fake_resend.sent[1]["html"])
+    assert "It stopped at its fetch stage, while reading the night's inputs." in text
+    assert PROBLEM_SENTENCES["coverage_thin"] in text and "after the night's inputs" not in text
+    for stage in (None, "startup", "<b>publish</b>", "Publish", 3):
+        assert report.stage_sentence(stage) is None, stage
+        assert "It stopped at its" not in _rendered(report.failure_html("evening", [], "2026-09-11", stage))
+    assert set(report.INPUT_STAGES) < set(report.RUN_STAGES)
+
+
 def test_after_a_publish_the_digest_itself_is_the_notice_with_the_problems_it_now_carries(fake_resend):
     data = build(**_night())
     extra = problem("email", "email_failed", "refused")

@@ -86,6 +86,19 @@ def test_the_readme_names_the_exit_codes_and_every_problem_word():
     assert f"one of {['seven'][0]} words" in README and len(report.PROBLEM_KINDS) == 7
 
 
+def test_the_failure_notice_names_the_stages_the_evening_enters():
+    """The notice prints a stage only from ``report.RUN_STAGES``, so the list is
+    held to the stages the evening sets, in order; the inputs' stages are the
+    first ones after preflight, and README names them."""
+    import inspect
+    source = "".join(inspect.getsource(f) for f in (
+        pipeline.run_evening, pipeline.finish_publication, pipeline.retain_publication))
+    assert tuple(dict.fromkeys(re.findall(r'rep\.stage = "(\w+)"', source))) == report.RUN_STAGES
+    assert report.INPUT_STAGES == report.RUN_STAGES[1:1 + len(report.INPUT_STAGES)]
+    names = ", ".join(f"`{s}`" for s in report.INPUT_STAGES[:-1]) + f" or `{report.INPUT_STAGES[-1]}`"
+    assert f"stopped while reading the night's inputs ({names})" in README
+
+
 def test_the_readme_names_the_crons_and_the_bonde_median():
     assert "6:16 PM ET" in README and "8:16 PM ET" in README
     assert "Bonde's median night is 239" in README
