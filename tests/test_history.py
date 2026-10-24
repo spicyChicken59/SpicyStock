@@ -191,6 +191,15 @@ def test_revisions_of_one_session_leave_in_publication_order_then_by_digest(tmp_
     assert history.git_blob(second) in index['records'] and history.git_blob(first) not in index['records']
 
 
+def test_the_older_session_gives_way_first_even_when_it_was_published_later(tmp_path, monkeypatch):
+    monkeypatch.setattr(history, 'RECORDS_MAX', 2)
+    late_rerun, next_day = small('2026-10-01', '2026-10-03T09:00:00Z'), small('2026-10-02', '2026-10-02T22:00:00Z')
+    history.publish(next_day, tmp_path)
+    history.publish(late_rerun, tmp_path)
+    index = history.publish(small('2026-10-05', '2026-10-05T22:00:00Z'), tmp_path)
+    assert history.git_blob(next_day) in index['records'] and history.git_blob(late_rerun) not in index['records']
+
+
 def test_tonight_alone_past_the_cap_refuses_and_nothing_gives_way(tmp_path, monkeypatch):
     old = small('2026-10-01', '2026-10-01T22:00:00Z')
     history.publish(old, tmp_path)
@@ -214,13 +223,17 @@ def test_tonights_record_never_gives_way_even_when_it_is_the_oldest(tmp_path, mo
     assert not (tmp_path / history.git_blob(newer)).exists()
 
 
-@pytest.mark.parametrize('fraction,warns', [(0.79, False), (0.81, True)])
-def test_the_run_log_states_the_catalog_against_its_caps(fraction, warns, tmp_path, monkeypatch, caplog):
+@pytest.mark.parametrize('cap,warns', [('0.79', False), ('exact', False), ('one under', True), ('0.81', True)])
+def test_the_run_log_states_the_catalog_against_its_caps(cap, warns, tmp_path, monkeypatch, caplog):
     raw = small('2026-10-01', '2026-10-01T22:00:00Z')
     probe = tmp_path / 'probe'
     history.publish(raw, probe)
     size = catalog_bytes(probe)
-    monkeypatch.setattr(history, 'CATALOG_BYTES_MAX', int(size / fraction))
+    if cap in ('exact', 'one under'):
+        # at half the cap to the byte, a warning fraction of one half does not warn; a byte less of cap does
+        monkeypatch.setattr(history, 'CATALOG_WARN_FRACTION', 0.5)
+    limit = {'0.79': int(size / 0.79), 'exact': 2 * size, 'one under': 2 * size - 1, '0.81': int(size / 0.81)}[cap]
+    monkeypatch.setattr(history, 'CATALOG_BYTES_MAX', limit)
     caplog.set_level('INFO', logger='spicystock.history')
     history.publish(raw, tmp_path / 'catalog')
     line = [r for r in caplog.records if r.name == 'spicystock.history' and 'Recovery catalog:' in r.getMessage()]
@@ -230,15 +243,41 @@ def test_the_run_log_states_the_catalog_against_its_caps(fraction, warns, tmp_pa
     assert line[0].levelname == ('WARNING' if warns else 'INFO')
 
 
+@pytest.mark.parametrize('records_max,warns', [(5, False), (4, True)])
+def test_the_run_log_warns_on_the_record_count_too(records_max, warns, tmp_path, monkeypatch, caplog):
+    # four records against a cap of five is 80%, which does not warn; against four it does
+    monkeypatch.setattr(history, 'RECORDS_MAX', records_max)
+    caplog.set_level('INFO', logger='spicystock.history')
+    for d in (1, 2, 5, 6):
+        history.publish(small(f'2026-10-0{d}', f'2026-10-0{d}T22:00:00Z'), tmp_path)
+    line = [r for r in caplog.records if r.name == 'spicystock.history' and 'Recovery catalog:' in r.getMessage()][-1]
+    assert line.getMessage().startswith(f'Recovery catalog: 4 of {records_max} records over 4 sessions, ')
+    assert line.levelname == ('WARNING' if warns else 'INFO')
+
+
+def test_the_catalog_log_never_fails_the_publication(tmp_path, monkeypatch, caplog):
+    raw = small('2026-10-01', '2026-10-01T22:00:00Z')
+    monkeypatch.setattr(history, 'CATALOG_WARN_FRACTION', None)
+    caplog.set_level('INFO', logger='spicystock.history')
+    index = history.publish(raw, tmp_path)
+    assert set(index['records']) == {history.git_blob(raw)}
+    assert any('Recovery catalog could not be stated (TypeError).' == r.getMessage() for r in caplog.records)
+
+
 @pytest.mark.parametrize('email', ['delivered', 'failed'])
-def test_a_catalog_that_cannot_take_tonight_still_leaves_the_night_its_ledger_entry(email, market, claude, fake_resend, tmp_path, monkeypatch):
+def test_a_catalog_that_cannot_take_tonight_still_leaves_the_night_its_ledger_entry(email, market, claude, fake_resend, tmp_path, monkeypatch, caplog):
     from src import quality_ledger
     if email == 'failed':
         fake_resend.raises = RuntimeError('Resend refused')
     monkeypatch.setattr(history, 'CATALOG_BYTES_MAX', 10)
+    caplog.set_level('ERROR', logger='spicystock.pipeline')
     rep, data, docs = evening(tmp_path, market)
     assert rep.published and rep.exit_code() == pipeline.EXIT_FAILED_AFTER_PUBLISH
-    assert 'byte bound' in rep.failure or email == 'failed'
+    failed = [r.getMessage() for r in caplog.records if r.name == 'spicystock.pipeline' and r.getMessage().startswith('run failed at')]
+    expected = ['run failed at history: ValueError: recovery byte bound exceeded; existing index left intact']
+    if email == 'failed':
+        expected.insert(0, 'run failed at email: RuntimeError: Resend refused')
+    assert failed == expected
     assert rep.quality_ledger['status'] == 'retained', rep.quality_ledger
     assert len(list((docs / 'quality-ledger' / 'v1').glob('*.json.gz'))) == 1
     assert not (docs / 'history' / 'index.json').exists()
