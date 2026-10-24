@@ -1760,9 +1760,14 @@ whole evening going unpublished. The object served now and the one it replaces
 never give way, an unknown file never does, and an owned file whose bytes are
 not the object its manifest names refuses the publication rather than being
 removed. Removals wait until the fixed files are installed, so a rollback keeps
-them. The run log states the archive against its cap and warns past 80% of it
-or when objects inside their window were removed. Canonical history and evidence
-are outside this cleanup. The committed-main publisher verifies the reader and
+them, unless a cleanup that failed on an earlier night left the archive's working
+set past its bound (one object over the count cap, 32 MiB over the byte cap):
+then the planned removals go first, and a cleanup failing again refuses the
+publication. An owned entry whose file is already gone is retired from the
+manifest before anything is planned. The run log states the archive's objects
+and bytes against both caps, warns past 80% of either, and says when objects
+inside their window were removed, or were chosen and the cleanup failed.
+Canonical history and evidence are outside this cleanup. The committed-main publisher verifies the reader and
 its referenced sidecar before declaring the site updated.
 
 `python -m src.reader --docs docs --check` verifies committed companions without

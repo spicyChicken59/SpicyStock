@@ -196,7 +196,7 @@ def _retention(stage, docs, ref, canonical_raw):
                  and type(previous["schema_version"]) is int and previous["schema_version"] == VERSION
                  and isinstance(previous["objects"], dict), "invalid reader retention manifest")
         _session(previous["as_of"])
-        _require(len(previous["objects"]) <= MAX_SIDECARS + 1, "reader retention manifest exceeds bound")
+        _require(len(previous["objects"]) <= MAX_SIDECARS + 2, "reader retention manifest exceeds bound")
         for sha, entry in previous["objects"].items():
             _require(isinstance(sha, str) and HEX.fullmatch(sha) and isinstance(entry, dict)
                      and set(entry) == {"last_session", "bytes"}
@@ -240,12 +240,15 @@ def _retention(stage, docs, ref, canonical_raw):
             _require(_hash(raw) == sha and len(raw) == objects[sha]["bytes"],
                      "expired reader object ownership differs; nothing was removed")
             removable.append(path)
-    # A prior cleanup may have removed files before its manifest rename failed.
-    # Retire only those already absent expired entries before growing the index.
-    absent_expired = {sha for sha in expired if not (archive / (sha + ".json")).exists()}
-    for sha in absent_expired:
+    # A prior cleanup may have removed files before its manifest rename failed,
+    # expired ones or ones the capacity chose inside their grace. Retire every
+    # owned entry whose file is already gone before growing the index; only
+    # tonight's object may be absent here, since it is written after this plan.
+    absent = {sha for sha in objects
+              if sha != ref["sha256"] and not (archive / (sha + ".json")).exists()}
+    for sha in absent:
         del objects[sha]
-    expired -= absent_expired
+    expired -= absent
     raw = _regular(stage / ref["path"], MAX_OBSERVATION_BYTES)
     if target.exists() or target.is_symlink():
         _require(_regular(target, MAX_OBSERVATION_BYTES) == raw,
@@ -270,8 +273,6 @@ def _retention(stage, docs, ref, canonical_raw):
         if fits():
             break
         path = archive / (sha + ".json")
-        if not path.exists():
-            continue
         body = _regular(path, MAX_OBSERVATION_BYTES)
         _require(_hash(body) == sha and len(body) == objects[sha]["bytes"],
                  "reader object ownership differs; nothing was removed")
@@ -280,14 +281,30 @@ def _retention(stage, docs, ref, canonical_raw):
         evicted.append(sha)
     expired |= set(evicted)
     _require(fits(), "reader observation archive capacity exceeded; explicit retention decision required")
-    # One new object may coexist with expired objects until the fixed files
-    # commit. A failed cleanup cannot grow this working set without bound.
-    _require(len(object_files) + additions <= MAX_SIDECARS + 1
-             and sum(path.stat().st_size for path in object_files) + added_bytes
-             <= MAX_ARCHIVE_BYTES + MAX_OBSERVATION_BYTES,
-             "reader retention cleanup is required before another publication")
+
+    def working_set_fits():
+        return (len(object_files) + additions <= MAX_SIDECARS + 1
+                and sum(path.stat().st_size for path in object_files) + added_bytes
+                <= MAX_ARCHIVE_BYTES + MAX_OBSERVATION_BYTES)
+
+    # One new object may coexist with tonight's planned removals until the
+    # fixed files commit. Removals wait for that commit unless an earlier
+    # cleanup failed and left the working set past its bound: then the planned
+    # removals, verified above, go first, so one failure is not every later
+    # night's refusal. A cleanup that fails again leaves the bound to refuse.
+    if not working_set_fits():
+        try:
+            for path in removable:
+                path.unlink()
+        except OSError:
+            pass
+        object_files = [p for p in object_files if p.exists()]
+    _require(working_set_fits(), "reader retention cleanup is required before another publication")
     index = {"schema_version": VERSION, "as_of": as_of.isoformat(), "objects": objects}
-    _require(len(objects) <= MAX_SIDECARS + 1,
+    # Kept entries fit the cap; the rest are tonight's planned removals, each a
+    # file the archive held, which the working set holds to one past the cap,
+    # beside tonight's object. A failed cleanup leaves this index as written.
+    _require(len(objects) - len(expired) <= MAX_SIDECARS and len(objects) <= MAX_SIDECARS + 2,
              "reader retention ownership exceeds bound; explicit retention decision required")
     index_raw = _encode(index)
     _require(len(index_raw) <= MAX_RETENTION_BYTES, "reader retention manifest bytes exceed bound")
@@ -311,7 +328,7 @@ def _prune_owned(stage, docs, index, expired):
     repeated cleanup failures from growing the transport archive indefinitely.
     """
     if not expired:
-        return
+        return True
     try:
         cleaned = deepcopy(index)
         for sha in expired:
@@ -322,7 +339,10 @@ def _prune_owned(stage, docs, index, expired):
         _write(stage / RETENTION_FILE, _encode(cleaned))
         os.replace(stage / RETENTION_FILE, docs / RETENTION_FILE)
     except OSError:
-        print("Reader retention cleanup failed; verified publication is intact and owned cleanup will retry.")
+        print("Reader retention cleanup failed; verified publication is intact and owned cleanup "
+              "will retry at the next publication.")
+        return False
+    return True
 
 
 def install_publication(stage: Path, docs: Path, names: tuple[str, ...] | list[str]) -> None:
@@ -363,23 +383,39 @@ def install_publication(stage: Path, docs: Path, names: tuple[str, ...] | list[s
                 _write(stage / name, previous[name])
                 os.replace(stage / name, docs / name)
         raise
-    _prune_owned(stage, docs, index, expired)
-    _log_archive(docs, evicted, index)
+    cleaned = _prune_owned(stage, docs, index, expired)
+    _log_archive(docs, evicted, index, cleaned)
 
 
-def _log_archive(docs, evicted, index):
-    """What the run log says of the archive once tonight's removals are done."""
-    files = [path for path in (docs / OBSERVATION_DIR).iterdir()
-             if path.name != "retention.json" and path.is_file() and not path.is_symlink()]
-    held = sum(path.stat().st_size for path in files)
+def _log_archive(docs, evicted, index, cleaned):
+    """What the run log says of the archive once tonight's removals are done.
+    It describes an installed publication and never fails it."""
+    try:
+        files = [path for path in (docs / OBSERVATION_DIR).iterdir()
+                 if path.name != "retention.json" and path.is_file() and not path.is_symlink()]
+        held = sum(path.stat().st_size for path in files)
+    except OSError as exc:
+        log.warning("Reader observation archive could not be measured (%s).", exc)
+        return
     if evicted:
-        log.warning("Reader observation archive: %d objects inside their %d-day grace were removed, "
-                    "oldest first, so the publication fits the %d-byte cap (%d bytes; git keeps them).",
-                    len(evicted), RETENTION_DAYS, MAX_ARCHIVE_BYTES,
-                    sum(index["objects"][sha]["bytes"] for sha in evicted))
-    level = logging.WARNING if held > MAX_ARCHIVE_BYTES * RETENTION_WARN_FRACTION else logging.INFO
-    log.log(level, "Reader observation archive: %d objects, %d of %d bytes.",
-            len(files), held, MAX_ARCHIVE_BYTES)
+        one = len(evicted) == 1
+        what = (f"{len(evicted)} {'object' if one else 'objects'} inside {'its' if one else 'their'} "
+                f"{RETENTION_DAYS}-day grace")
+        cap = f"the cap of {MAX_SIDECARS} objects and {MAX_ARCHIVE_BYTES} bytes"
+        removed = sum(index["objects"][sha]["bytes"] for sha in evicted)
+        if cleaned:
+            log.warning("Reader observation archive: %s %s removed, oldest first, so the publication "
+                        "fits %s (%d bytes; git keeps %s).", what, "was" if one else "were", cap,
+                        removed, "it" if one else "them")
+        else:
+            log.warning("Reader observation archive: %s %s chosen for removal, oldest first, to fit %s "
+                        "(%d bytes); the cleanup failed and retries at the next publication.",
+                        what, "was" if one else "were", cap, removed)
+    full = (held > MAX_ARCHIVE_BYTES * RETENTION_WARN_FRACTION
+            or len(files) > MAX_SIDECARS * RETENTION_WARN_FRACTION)
+    log.log(logging.WARNING if full else logging.INFO,
+            "Reader observation archive: %d of %d objects, %d of %d bytes.",
+            len(files), MAX_SIDECARS, held, MAX_ARCHIVE_BYTES)
 
 
 def write_publication(data: dict, docs: Path) -> None:

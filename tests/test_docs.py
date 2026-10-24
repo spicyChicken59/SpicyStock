@@ -376,6 +376,20 @@ def test_the_readme_and_the_env_example_quote_the_two_tolerances_from_the_module
     assert quarter + ", or within " + {1: "one"}[pipeline.READER_REFUSAL_MIN] + " if that is more" in method
 
 
+def test_the_readme_and_the_env_example_quote_the_reader_archives_bounds_from_the_module():
+    """The reader archive's grace, caps and warning are four constants; the
+    prose that says when an old tab's copy gives way quotes them."""
+    from src import reader
+    text = re.sub(r"\s+", " ", README)
+    mib = reader.MAX_ARCHIVE_BYTES // (1024 * 1024)
+    assert f"{reader.RETENTION_DAYS}-calendar-day retention window" in text
+    assert f"capped at {reader.MAX_SIDECARS} objects and {mib} MiB" in text
+    assert f"{reader.MAX_OBSERVATION_BYTES // (1024 * 1024)} MiB over the byte cap" in text
+    assert f"warns past {reader.RETENTION_WARN_FRACTION:.0%} of either" in text
+    env = re.sub(r"\s*#\s*", " ", (ROOT / ".env.example").read_text())
+    assert f"keep a {reader.RETENTION_DAYS}-day grace for open tabs; past the {mib} MiB cap" in env
+
+
 def test_the_readme_and_the_env_example_quote_the_source_recovery_bounds_from_the_module():
     """The recovery's budget is four constants; the prose that tells a reader
     what one receipt may cost quotes them, and the names bound is one batch."""
