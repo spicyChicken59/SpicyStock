@@ -4,6 +4,7 @@ from datetime import datetime
 import gzip
 import json
 import socket
+from pathlib import Path
 
 import pytest
 
@@ -222,7 +223,8 @@ def test_offline_runner_blocks_sockets_and_restores_them():
 
 def test_crl_volume_boundary_keeps_dollar_and_iqv_control(originals):
     with proof.network_blocked():
-        rows = {x["ticker"]: x for x in proof.volume_sensitivity(originals)}
+        rows = {x["ticker"]: x for x in proof.volume_sensitivity(
+            originals, objects=Path(__file__).parent / "fixtures/retained-evidence")}
     crl, iqv = rows["CRL"], rows["IQV"]
     assert crl["public_observation_date"] == iqv["public_observation_date"] == "2026-09-28"
     assert crl["cases"][0]["discovery_routes"] == ["dollar"]
