@@ -12227,3 +12227,96 @@ fix.
 `docs/data.json` is one line and `reader.json`'s `canonical.bytes` equals its
 length. Also not claimable: a morning or research observation; any trading
 edge.
+
+## Checkpoint, 24 Oct 2026 -- PR #197 accepted; the failure notice names the stage it stopped at
+
+**PR #197, accepted.** Merged as `0e68a112` on `main` with a merge commit over
+`29a7eaa0`. The code head `2cb5f609` passed all seven checks (Tests run
+40122196236: pytest 18:45-19:08 UTC, page 18:45-19:02, the gate, the native
+stress case to 19:06 and central to 19:20; both gitleaks runs); the final head
+`a45d215a` (CLAUDE.md alone over it) passed pytest, page, the gate's docs-only
+decision and both gitleaks runs on run 40123887099. The diff touched nothing
+under `docs/`, so the publisher did not fire, correctly (as at #64, #174 and
+#177); Pages 40126002916 deployed and the merge commit's own Secret scan
+40126003534 passed; its Tests run 40126003532 passed (19:35-20:05 UTC; the native cases skipped by
+the gate, as a merge's are). The first compact night is
+Monday 26 October's.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` restarted from
+`main` at `0e68a112`, pushed as **PR #198**. Nothing under `docs/` moves and
+no rule moves (`rules_version` stands, no fixture regenerated); no run, mail,
+dispatch, provider call or credential. `.env.example` was read: nothing here is
+configuration.
+
+**What the notice said.** `pipeline.notify_failure()` mails the failure notice
+for a run that stopped after preflight with nothing published, and it appended
+a `coverage_thin` problem to every one, so every such mail said *Some inputs
+were missing, could not be evaluated or arrived late*. Reproduced through the
+doubles: a night refused at the canonical bound (stage `publish`) and a planner
+crash (stage `grade`) were both mailed that sentence, the same one a real feed
+outage gets (stage `session`, *insufficient usable coverage*). The record and
+the page never see the notice; only the mail was wrong.
+
+**The rule.** The notice names the stage the run stopped at, a word from
+`report.NOTICE_STAGES` -- the inputs' stages and every one after them up to
+`publish`, the stages a run can stop at with nothing published --
+(`report.RUN_STAGES` is held by `tests/test_docs.py` to the stages
+`run_evening()`, `finish_publication()` and `retain_publication()` set, in
+order), and leaves what the run raised to the workflow's run log; the mail
+quotes no free text, as before. A stop in `report.INPUT_STAGES` (`universe`,
+`fetch`, `session`) is mailed the missing-inputs sentence for that failure; a
+stop after them says those stages had passed and claims no cause, since a later
+failure can be the code's or the data's. Problems recorded earlier in the night
+go out as recorded, so a stale night that then crashes is mailed both. Preflight
+mails nothing and a run past `publish` mails the digest, so neither is named.
+
+**The review, worked.** A workflow by execution over `47faf34f`, two lenses
+(whether a stage tells the truth about inputs; tests and documents), one
+skeptic a finding, nine agents, none errored: seven findings, all upheld, each
+reproduced here before it was touched. The medium one: a stage is a proxy -- a
+whole night of truncated history (every frame six bars) passes the input stages,
+which test only the session bar and the one before it, and fails at `breadth`
+(*a 10-session ratio needs 10 days*); an `inf` close twenty bars back fails at
+`publish` (*candidate facts differ from source bars*). The first version mailed
+both "after the night's inputs were read" and commented that a failure after
+them is not a missing input, which said more than the code knows; the old notice
+had mailed them the inputs sentence, which was true there. The notice now claims
+no cause past the inputs' stages. The lows: `preflight`, `email`, `restamp` and
+`history` were given the after-inputs sentence (only `NOTICE_STAGES` are
+printed now); README and the comments said the inputs sentence comes "only"
+from an input stage when an earlier recorded `coverage_thin` is mailed too
+(said so, and a test holds the two together); and a report assertion could not
+fail for the rule it named (the report test now holds only what the report
+owns). Recorded, not fixed: the ledger's own reconciliation runs at `session`
+and again at `watchlist`, so the same fault is mailed the inputs sentence at
+one and the stage sentence at the other; both say true things.
+
+**Mutation passes**, each mutant in a detached worktree judged by
+`tests/test_report.py`, `tests/test_publication_bound.py`, `tests/test_docs.py`
+and the three notice tests in `tests/test_pipeline.py`: over `47faf34f`, twelve,
+ten dead at once and **one survivor, a hole** -- a notice that adds a problem
+nobody recorded passed, because no pipeline test read the problems block of a
+crash with none (it reads *No problem was recorded before it stopped.* now);
+the control survived. Over `fe1bb2ef`, sixteen -- the inputs sentence on every failure and never,
+earlier problems dropped, the stage not passed at either hand-off, any owned
+word or any word printed, the notice stages from `preflight` or past
+`publish`, every stage an input stage and none, `session` not one, `history`
+dropped from the stages, the stage line not rendered, a problem nobody
+recorded, the passed stages unnamed -- all dead in the test naming their rule;
+the control (a comment) survives.
+
+**Measured** (this sandbox, Python 3.12.3): the full suite on `961a913c`, run on
+a committed worktree, 5273 passed and 34 environment-gated skips in 21 m 41 s
+(5307 collected); the touched files and the three notice tests 200 passed. CI
+on the pushed head is recorded on PR #198.
+
+**Keep / fix / defer / omit.** Keep: the mail names a stage the code owns and
+never quotes what was raised. Fix if it bites: the input stages accept a frame
+whose session bar and the one before it are readable, so a night of truncated
+history is refused at `breadth` with no cause named in the mail -- an input
+acceptance rule for the bars breadth and the scans need is a strategy-adjacent
+change, not this one. Defer: a link to the Actions run in the notice (the record
+carries `run_id` only once published). Omit: quoting the exception.
+
+**Not claimable:** a live failure notice under the rule; the first compact
+night (Monday 26 October); a morning or research observation; any trading edge.
