@@ -816,13 +816,18 @@ def build(run: dict, account: dict, rules: dict, breadth: dict, bursts: list[dic
 
 def write(data: dict, path: Path) -> None:
     """Write the file atomically: the bytes land in a sibling temp file and
-    are renamed over the target, so a reader never sees a half-written one."""
+    are renamed over the target, so a reader never sees a half-written one.
+
+    The record is compact -- no indentation or spaces -- with its key order and
+    UTF-8 kept: `provenance` rebuilds each check's display text from the stored
+    key order, and every digest reads these bytes. Indentation was a third of
+    the file, and the file is bounded (`reader.MAX_PUBLICATION_BYTES`)."""
     if data.get("run", {}).get("evidence") or data.get("rules", {}).get("provenance"):
         from src import provenance
         provenance.require(data)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    text = json.dumps(data, indent=1, sort_keys=False, ensure_ascii=False, allow_nan=False)
+    text = json.dumps(data, separators=(",", ":"), sort_keys=False, ensure_ascii=False, allow_nan=False)
     tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     try:
         with open(tmp, "w", encoding="utf-8") as fh:

@@ -638,8 +638,11 @@ def test_write_is_atomic_and_reads_back_equal(tmp_path):
     write(data, target)
     assert json.loads(target.read_text(encoding="utf-8")) == data
     assert [p.name for p in target.parent.iterdir()] == ["data.json"], "no temp file is left beside it"
-    text = target.read_text(encoding="utf-8")
-    assert text.startswith('{\n "schema_version": 2,') and "×" in text, "indent 1, key order kept, unicode kept"
+    raw = target.read_bytes()
+    # compact, key order and UTF-8 kept, one trailing newline: built here, not by report's encoder
+    assert raw == json.dumps(data, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8") + b"\n"
+    assert raw.startswith(b'{"schema_version":2,') and "×".encode("utf-8") in raw and b"\\u00d7" not in raw
+    assert b"\n" not in raw[:-1]
 
 
 def test_write_refuses_a_nan_rather_than_writing_an_invalid_file(tmp_path):

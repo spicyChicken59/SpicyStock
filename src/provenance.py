@@ -785,6 +785,7 @@ process death between filesystem renames is not a multi-file transaction.
     with tempfile.TemporaryDirectory(prefix=".publication-", dir=docs) as tmp:
         stage = Path(tmp)
         report.write(data, stage / "data.json")
+        reader.log_publication((stage / "data.json").stat().st_size, data)
         if not dry_run:
             record.save(rec, stage)
         staged = json.loads((stage / "data.json").read_bytes())

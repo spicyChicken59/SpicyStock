@@ -35,6 +35,7 @@ RETENTION_DAYS = 21
 MAX_RETENTION_BYTES = 64 * 1024
 HEX = re.compile(r"[a-f0-9]{64}\Z")
 RETENTION_WARN_FRACTION = 0.8  # of the cap, after tonight's removals: the run log warns
+PUBLICATION_WARN_FRACTION = 0.8  # of MAX_PUBLICATION_BYTES: the run log warns past it
 
 log = logging.getLogger("spicystock.reader")
 
@@ -81,6 +82,9 @@ def derive(canonical_raw: bytes) -> tuple[bytes, bytes]:
     boundary's responsibility. Nothing is derived from provider frames or a
     browser selection. All non-observation values and their ordering survive.
     """
+    if isinstance(canonical_raw, bytes) and len(canonical_raw) > MAX_PUBLICATION_BYTES:
+        raise ValueError(f"canonical publication is {len(canonical_raw)} bytes, "
+                         f"over its {MAX_PUBLICATION_BYTES}-byte bound")
     data = _decode(canonical_raw, MAX_PUBLICATION_BYTES)
     _data(data)
     observations_raw = _encode(data["observations"])
@@ -153,6 +157,23 @@ def _write(path, raw):
         handle.write(raw)
         handle.flush()
         os.fsync(handle.fileno())
+
+
+def log_publication(size: int, data) -> None:
+    """State the canonical record's bytes against its bound, once a night,
+    before the companions are derived from it; never raises. Past the bound
+    `derive()` refuses the night before anything is installed."""
+    try:
+        bursts = len(data["bursts"])
+        observations = len(_encode(data["observations"]))
+        bound = MAX_PUBLICATION_BYTES
+        over = size > bound
+        level = logging.ERROR if over else logging.WARNING if size > bound * PUBLICATION_WARN_FRACTION else logging.INFO
+        log.log(level, "Canonical record: %d of %d bytes, with %d %s and %d bytes of observations%s.",
+                size, bound, bursts, "burst" if bursts == 1 else "bursts", observations,
+                "; over its bound, so the night is refused before anything is installed" if over else "")
+    except Exception as exc:  # noqa: BLE001 -- a log line never fails the night
+        log.warning("Canonical record could not be measured (%s).", type(exc).__name__)
 
 
 def stage_assets(stage: Path) -> dict:

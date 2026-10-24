@@ -1732,6 +1732,14 @@ readable.
 
 The October 9 production record projects from 14,918,679 to 5,606,909 decoded
 bytes, including its envelope. The deferred observation file is 5,040,916 bytes.
+From 24 October 2026 the canonical `data.json` is written compact -- no
+indentation or spaces, key order and UTF-8 kept -- so the 23 October record
+would be 9,992,325 bytes instead of 14,124,268; earlier publications, and every
+size quoted from them above, are indented. The record is bounded at 32 MiB
+(`reader.MAX_PUBLICATION_BYTES`, one number every reader and the browser hold):
+the run log states each night's record against it, with its bursts and
+observation bytes, and warns past 80%; a record over it refuses the night before
+anything is installed (exit 1), and the refusal names the size and the bound.
 These are artifact sizes, not measured network transfer or a mobile-device
 speed guarantee. Complete hydration reproduces the original parsed publication;
 the canonical record, picks and historical evidence are unchanged.
