@@ -11042,9 +11042,24 @@ and Tests run 40024969981 (21:11–21:29 UTC; the native cases skipped by the ga
 as a merge's are) passed. The full suite under the pin here was 5000 passed, 34
 environment-gated skips and 35 failed, every failure `tests/test_historical_package.py`
 on a sandbox venv without `zstandard`; with it installed that file is 107 passed
-and 21 skipped, and CI's pytest on the same head was green. Not yet claimable:
-tonight's evening run under the pinned SDK, whose `run.reads` and
-`run.reader_usage` are the first live test of the fix.
+and 21 skipped, and CI's pytest on the same head was green. **The first live night under
+the pin, read off `main`:** session 23 October, run 40045887700 (the `16 22`
+slot, created 00:37:26 UTC on the 24th, 141 minutes late), published 00:38:06
+and landed as `cd239b20` at 00:42:20, `run.delivery` 263.1 minutes after
+completion, after both slots, before Monday's open; `run.status` **ok**, the
+mail delivered. `run.reads` 2 of 2, `complete`, every cause zero (IOSP and Q,
+the review selection's two research reads under RED; the refusal limit reads 1
+under the #182 floor, unexercised); `run.reader_usage` 2 calls, 2 replies,
+14,712 input tokens (8,040 uncached, 3,336 written to the cache, 3,336 read)
+and 1,340 output, under `claude-sonnet-4-6`: the API answered the pinned SDK's
+request, where the 21 and 22 October nights had four 400s each. The rest of the
+night: RED (10-session ratio 0.81, 1,511 up against 1,862 down), 493 reaction
+candidates, all at the market gate, 0 tickets; anticipation 822 momentum names,
+278 quiet, 10 passing the coil checks, 5 listed, 0 tickets; the tolerance
+`tolerated` over 18 stale stocks, every one in the directory (`run.seed_stale`
+names none on the seed alone); the follow-up read the 22 October night's 17
+stale stocks again at 22 October; `rules_version` `07ccd74f29c7`. One night is
+not a trend: the next 400 the API answers is PR C's to name.
 
 **Revision.** Branch `claude/spicystock-market-data-vfd3o2` restarted from
 `main` at `28513f27` (the merge of #190) and pushed as **PR #191**: four
@@ -11262,9 +11277,13 @@ starved workflow never judged -- a fresh workflow by execution over `699fafa4`:
 two finders and two skeptics a finding, the finders recording 35 single-rule
 breaks with the test that caught each. Seventeen findings (nine on the tests,
 eight on the documents), each reproduced here by execution before it was
-touched; every skeptic verdict in by the time of this commit upheld its
-finding, and the full tally is recorded on the pull request. **One was a page
-defect**: `newestFirst` ordered the review's filings by the SPELLING of
+touched. **The skeptic stage starved again**: of the 34 skeptics (two a
+finding), 18 died on the session's usage limit, so eight findings were judged
+and nine were not; seven of the eight were upheld by both skeptics and one (the
+empty-string `match` cases) was split one each way. An unjudged finding is not
+refuted, so each of the nine was reproduced here by execution before it was
+fixed, and the finders' own 35 single-rule breaks are the record of what the
+tests could and could not catch. **One was a page defect**: `newestFirst` ordered the review's filings by the SPELLING of
 `accepted_at` where the publisher orders by the instant, so a bundle whose last
 entry's clock was respelled under -05:00 (the latest instant) loaded on the
 page and was refused by Python, and one whose first entry was respelled to the
@@ -11334,5 +11353,13 @@ issuer generator `--check` 44 current (no fixture moved). The full suite at
 on that head passed all seven checks (Tests run 40025679322: pytest
 21:17–21:46 UTC, page 21:17–21:34, the gate, the native central case
 21:17–21:45 and stress 21:17–21:46; Secret scans 40025679311 and 40025525146).
-The full suite and the full smoke on the final tree, and its CI, are recorded
-on the pull request.
+On the final tree the full suite was run on the WORKTREE itself, committed
+and quiet: 5115 passed and 34 environment-gated skips in 20 m 50 s (5149
+collected). A first attempt over a `.git`-less snapshot copy of the tree
+returned 3 failed and 24 errors, every one `fatal: not a git repository`: the
+tests that read publications off git by commit need the repository, so a suite
+run on a copy must carry `.git` or be run on a worktree. CI on the pushed tip
+`2a30af64` passed all seven checks (Tests run 40034777473: pytest 22:37–22:58
+UTC, page -- the full smoke with `--shots` -- 22:37–22:54, the gate, the native
+central case 22:37–22:55 and stress 22:37–23:17; Secret scans 40034777459 and
+40034772674).
