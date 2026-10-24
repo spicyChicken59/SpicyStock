@@ -11999,3 +11999,109 @@ night's publication -- the next milestone. Omit: a larger cap as the fix.
 **Not claimable:** a live night on which either cap binds; Monday 26 October's
 *Evidence archive:* and *Reader observation archive:* lines are the first to
 read. Also not claimable: a morning or research observation; any trading edge.
+
+## Checkpoint, 24 Oct 2026 -- PR #195 accepted; past the recovery catalog's cap its oldest records give way, and the ledger is captured whatever the catalog does
+
+**PR #195, accepted.** Merged as `1e1ad24f` on `main` with a merge commit over
+`01b29d8d`. The code head `cbc3c5eb` passed all seven checks (Tests run
+40103249278: pytest 14:36-15:00 UTC, page 14:36-14:54, the gate, the native
+central and stress cases 14:36-15:25; both gitleaks runs); the final head
+`22812193` (CLAUDE.md alone over it) passed pytest, page, the gate's docs-only
+decision and both gitleaks runs. The diff touched nothing the publisher serves,
+so the publisher did not fire, correctly; Pages 40108275306 deployed at 15:44
+UTC; the merge commit's own Secret scan 40108275741 and Tests run 40108275733
+(15:43-16:08 UTC) passed.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` restarted from
+`main` at `1e1ad24f`, pushed as **PR #196**. `docs/data.json`,
+`docs/picks.json`, the compact reader, every receipt, the history, the evidence
+objects, the quality ledger, the workflows and the vendored design system are
+untouched; no rule moved; no run, mail, dispatch, provider call or credential.
+
+**How this was chosen.** A read-only design workflow over the canonical
+record's 32 MiB bound (three investigations, three designs, two judges; 8
+agents) found the nearer risk one bound over: `docs/history/`, the public
+recovery catalog behind *Find earlier setup*, capped at 84 records and 128 MiB,
+held 20 records over 16 sessions on 23 October -- 86.5 MB of files and a 3.9
+MB index against 134.2 MB, 67%. Each burst costs about 7.9 KB a record and a
+same-session re-run keeps a whole second copy (three revisions of 9 October,
+two each of 8 and 19 October in the window). `history.publish()` raised past
+either cap AFTER the record was installed and the mail sent, and
+`run_evening()` then skipped `quality_ledger.capture()`, so the night lost its
+permanent ledger entry and exited 3. Both judges recommended the canonical fix
+(below, deferred to the next PR); judge 0 named this one the higher safety
+priority.
+
+**A replay from the real catalog** (`scratchpad/catalog-sim`, the real 22
+October record, 988 bursts, published once a session for 30 sessions from a
+copy of `docs/history` at 23 October): 988 bursts every session peaks at 131.8
+MB, 98% of the cap, with no refusal under either rule; with a re-run every fifth
+session the old rule refuses 5 nights, the first 9 November, and the new none,
+the window ending at 13 sessions; one 2,500-burst day refuses 2 nights under the
+old rule, the first 10 November, and none under the new.
+
+**The rule.** Past either cap the records still inside their window give way,
+oldest session first, then the earlier publication of a session, then the
+digest, until tonight's fits; tonight's record never does, even when it is the
+oldest (a backfill). Of the caps, only a record too large to fit alone refuses;
+the evidence and identity checks refuse as before, and every refusal leaves the
+old index and files. An evicted record is pruned as an expired one is: every
+file in an owned directory goes (an interrupted write's `.tmp` included), a
+directory already gone is already pruned, and one that cannot be removed is
+named without stopping the others. A kept record's every file counts against
+the byte cap. `_log_catalog()` states records, sessions and bytes against both
+caps once a night, warns past `CATALOG_WARN_FRACTION` (80%) of either, and names
+the sessions that gave way. `pipeline.retain_publication()` writes the catalog,
+then captures the ledger whatever the catalog did, then fails the run (exit 3)
+under its own stage, `history`; a clean night still ends at `email`.
+
+**The review, worked.** A workflow by execution over `261d5337`, three lenses
+and two skeptics a finding (23 agents, none errored), returned 8 distinct
+findings. Upheld by every skeptic: the stage set to `history` on every night,
+which made the recovery rehearsal's committed evidence stale and failed three
+of its tests on CI (found by CI before the review; fixed in `302cf54e`); the
+ordering tests passing on digest order (the record that must give way carried
+the smaller digest, so an order by digest alone passed); the docs test's warning
+clause matched by the evidence archive's paragraph; "only a record too large to
+fit alone refuses" overstated (the evidence and identity checks still refuse);
+the byte-cap test's precondition, which reduced to nothing; and the PR body's
+"15 sessions" (16). Not upheld, both skeptics finding them identical on `main`:
+a prune that stops at the first directory it cannot remove, after the new index
+is written, stranding evicted directories unowned and uncounted (hardened here
+anyway, since eviction now prunes directories inside the window); and a failed
+restamp write (`reader.write_publication`) still skipping both the catalog and
+the ledger -- the next instance of this class, an open lead.
+
+**Measured** (this sandbox, Python 3.12.3): the full suite on `0c0b0c87`, run on
+a committed worktree, 5251 passed and 34 environment-gated skips in 22 m 51 s
+(5285 collected, the count line); the first full run, on `0ae36be4`, failed
+the three rehearsal tests CI also failed, the stage defect above, and nothing
+else. CI's Tests run on `302cf54e` passed whole (16:47-17:35 UTC). The replay
+above re-run with the final `history.py` gives the same table. Two mutation
+passes, each mutant judged by the whole of `tests/test_history.py`,
+`test_quality_ledger.py` and `test_docs.py` in a detached worktree: 23 over the
+eviction, the order, the caps, the log and `retain_publication()`, 21 dead at
+once; **one survivor, a hole** -- an order by session and digest alone passed,
+because the earlier of the two revisions also carried the smaller digest (the
+test sets them against each other now, `7bf2dd46`, and it dies); and one
+equivalent, the pipeline's fixture guard, since a pipeline record never
+carries `fixture` (`load_previous()` refuses one). Over the review's prune
+rules, 6 more (only `*.json` removed, a directory already gone counted as
+stranded, the loop stopping at the first failure, the stranded directory
+unlogged, a kept record's stray file uncounted, the prune raising) all dead.
+The control survives every pass. gitleaks 8.24.3 over the branch's commits: no
+leaks.
+
+**Keep / fix / defer / omit.** Keep: a companion that cannot take tonight costs
+that companion, never the night's ledger; the window shrinks under pressure and
+says so. Fix if it bites: a failed restamp write after publication still skips
+the catalog and the ledger. Defer: the canonical record's 32 MiB bound, the next
+PR -- written compact (+48%: refused above about 3,530 bursts at today's
+observations instead of 2,350), a log line against the bound, a refusal that
+names the size, and one coherence test over every copy of the bound; the
+misfiled failure notice (every post-preflight failure is mailed as
+`coverage_thin`). Omit: a larger catalog cap as the fix.
+
+**Not claimable:** a live night on which the catalog's cap binds; its
+*Recovery catalog:* line is the first to read. Also not claimable: a morning or
+research observation; any trading edge.
