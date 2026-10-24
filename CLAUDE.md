@@ -11902,3 +11902,100 @@ held with a constraints file.
 publication; read its run log's *Evidence archive:* line and the commit's
 deletions, and record them here. Also not claimable: a morning or research
 observation; any trading edge.
+
+
+## Checkpoint, 24 Oct 2026 -- PR #194 accepted; past the reader archive's cap, an old tab's copy gives way before a publication does
+
+**PR #194, accepted.** Merged as `01b29d8d` on `main` with a merge commit over
+`a46c0932` (the 23 October source-recovery receipt). The head `82c12552` passed
+all seven checks (Tests run 40095200289: pytest, page, the gate, the native
+central and stress cases; both gitleaks runs). Publisher 40097467723 printed
+*Verified: every one of the 48 public files matches committed main* at
+13:17:22 UTC; Pages 40097487954 deployed (40097467397 cancelled as superseded);
+the merge commit's own Secret scan 40097467736 passed. The first night under
+the evidence rule is still Monday's.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` from `main` at
+`01b29d8d`, pushed as **PR #195**. Nothing but `src/reader.py`, its tests,
+`tests/test_docs.py`, README, `.env.example` and this file moves; no rule, no
+record, no fixture; no run, mail, dispatch, provider call or credential.
+
+**What the record showed.** `docs/reader-observations/` holds one object per
+publication, the deferred observations the browser loads for saved research,
+kept 21 calendar days for an open tab under a cap of 84 objects and 128 MiB
+whose excess refused the whole evening publication ("explicit retention
+decision required"). On 23 October: 15 objects, 80,201,638 bytes, the objects
+grown from 5,040,916 bytes (9 October) to 5,925,119 (22 October) with the
+signals and symbols in the 21-day observation window. A replay from that real
+archive (`scratchpad/sidecar-sim`, one publication a session, objects grown
+over ten sessions to a final size): at 6 and 7 MB neither rule refuses (peaks
+109.6 and 118.3 MB); at 8 MB the old rule refuses once, 25 November; at 10 MB
+four times, the first on 12 November. A GREEN stretch is where the objects
+grow and where a refused publication costs most.
+
+**The rule.** When a new object would pass the cap, the owned objects still
+inside their window give way, oldest last-served session first, ties by
+digest. Never the object served tonight (an older object served again
+included), never the one it replaces, never an unknown file, and never an
+owned file whose bytes or length are not the manifest's (that refuses, as an
+expired one did). Removals wait until the fixed files are installed, unless the
+working set is already past its bound (an earlier failed cleanup, or a file the
+archive does not own): then the planned removals go first. An owned entry
+whose file is gone is retired before planning; the manifest bound reads kept
+entries against the cap and the whole index against one past the working set;
+a rollback removes the object it brought in. `_log_archive()` states objects
+and bytes against both caps, warns past 80% of either, and says when objects
+were removed, could not be, or the manifest update failed; it never fails an
+installed publication.
+
+**Two reviews by execution.** The first, over `27e8e66a`, three lenses and a
+skeptic a finding: 15 findings, all upheld. The defects were the failed-cleanup
+class: a manifest rename failing after an eviction left the manifest owning a
+deleted file inside its grace, and at the count cap every night refused until
+it expired (17 nights in the probe); at the count cap eviction left no working
+set slack, so one transient cleanup failure refused every later night. The rest
+were the log ("1 objects", "were removed" after a failed cleanup, the byte cap
+named when the count cap bound) and test holes (order held only on equal
+sizes, the length half of the ownership check, an expired and an in-grace
+removal on one night, the tie-break's precondition, README's numbers). The
+second, over `20928335`, two lenses: 8 findings, 7 upheld: the orphan a
+rolled-back install leaves (pre-existing, unreachable in the workflow, which
+persists nothing from a failed run), the early removals' real trigger, the log
+after a failed manifest rename, the count warning's boundary, the log's guard.
+All fixed.
+
+**Measured** (this sandbox, Python 3.12.3): the full suite on `cbc3c5eb`, run
+on the committed checkout, 5232 passed and 34 environment-gated skips in
+22 m 34 s (5266 collected, the count line); `tests/test_reader_projection.py`
+and `tests/test_docs.py` pass on it. CI on `cbc3c5eb` (Tests run 40103249278):
+pytest 14:36-15:00 UTC, page 14:36-14:54, the gate and both gitleaks runs
+green; the native cases are recorded on PR #195. Three mutation passes, each
+mutant in a detached worktree judged by the whole of
+`tests/test_reader_projection.py` and `tests/test_docs.py`: over `9f9ea745`,
+fifteen, fourteen dead at once and **one survivor, a hole** -- the served
+object could be evicted, because no test served an older object again (one
+does now, `9023e72b`); over `20928335`, twenty-nine, twenty-eight dead and **one
+survivor, a hole** -- the manifest's read bound back at one past the cap,
+which no test read after two failed cleanups (one does, `81c5f884`); over
+`cbc3c5eb`, thirty-five over every rule of the change -- the eviction loop, the
+protected pair, the order and its tie-break, both halves of the ownership
+check, the deferred removals and the early ones, both caps, the final and the
+working-set refusals, the absent-entry retirement, both manifest bounds, the
+rollback's own object, the cleanup flag and every clause of the log -- all
+dead in the test naming their rule; the control (a comment) survives every
+pass. A first run of the third pass used an interpreter without pytest, so
+every mutant "died" with no test run, the control too; it is void and was run
+again. gitleaks 8.24.3 over the branch's commits: no leaks.
+
+**Keep / fix / defer / omit.** Keep: the cache serves open tabs and never
+outranks a publication; nothing unowned or unverified is removed. Fix if it
+bites: a night that rolls back after the early removals loses those old-tab
+copies. Defer: the canonical `data.json`'s own 32 MiB bound, shared by the
+morning, issuer and browser readers: 19.1 MB at 988 bursts on 22 October, about
+11 KB a burst raw and the observations block about 6 MB compact, so a thrust day
+near 2,300 bursts, or an active stretch's larger observations, refuses that
+night's publication -- the next milestone. Omit: a larger cap as the fix.
+
+**Not claimable:** a live night on which either cap binds; Monday 26 October's
+*Evidence archive:* and *Reader observation archive:* lines are the first to
+read. Also not claimable: a morning or research observation; any trading edge.
