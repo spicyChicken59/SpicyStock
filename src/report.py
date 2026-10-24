@@ -64,6 +64,23 @@ PROBLEM_SENTENCES: dict[str, str] = {
 }
 MESSAGE_MAX_CHARS = 200
 
+#: The evening's stages, in the order ``pipeline.run_evening()`` enters them
+#: (``RunReport.stage``). The failure notice names the one a run stopped at by
+#: this word and nothing else; tests/test_docs.py holds the list to the stages
+#: the pipeline sets.
+RUN_STAGES: tuple[str, ...] = (
+    "preflight", "universe", "fetch", "session", "followup", "breadth", "scan", "plan",
+    "grade", "watchlist", "record", "publish", "email", "restamp", "history",
+)
+#: The stages that read the night's inputs. A run that stopped in one of them
+#: failed there, and the notice carries the ``coverage_thin`` sentence for it.
+INPUT_STAGES: tuple[str, ...] = ("universe", "fetch", "session")
+#: The stages a run can stop at with nothing published, so the ones a failure
+#: notice can name: the inputs' and every one after them up to the publish.
+#: Preflight refuses before anything is read and mails nothing; a run that
+#: stopped past the publish mails the digest itself.
+NOTICE_STAGES: tuple[str, ...] = RUN_STAGES[RUN_STAGES.index(INPUT_STAGES[0]):RUN_STAGES.index("publish") + 1]
+
 # --- the vocabularies the record is validated against -------------------------
 
 RUN_STATUSES: tuple[str, ...] = ("ok", "degraded", "closed", "failed")
@@ -1236,9 +1253,26 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
     return "".join(out)
 
 
-def failure_html(run_type: str, problems: list[dict], expected: str) -> str:
+def stage_sentence(stage: Any) -> str | None:
+    """Where a run that did not publish stopped, in words the code owns: one
+    of the stages that read the night's inputs, or one after them, which says
+    those had passed and claims no cause -- a later failure can be the code's
+    or the data's. What it raised stays in the run log. A word that is not one
+    of ``NOTICE_STAGES`` is not printed."""
+    if not isinstance(stage, str) or stage not in NOTICE_STAGES:
+        return None
+    log_clause = "what it raised is in the workflow's run log, not in this mail."
+    if stage in INPUT_STAGES:
+        return f"It stopped at its {stage} stage, one of the stages that read the night's inputs; {log_clause}"
+    passed = ", ".join(INPUT_STAGES[:-1]) + f" and {INPUT_STAGES[-1]}"
+    return f"It stopped at its {stage} stage, after its {passed} stages had passed; {log_clause}"
+
+
+def failure_html(run_type: str, problems: list[dict], expected: str, stage: str | None = None) -> str:
     """The notice for a run that died before it published: the verdict it
-    cannot give, the fixed problem sentences, and the link."""
+    cannot give, the stage it stopped at, the fixed problem sentences, and the
+    link."""
+    where = stage_sentence(stage)
     return "".join([
         f'<div style="{_S_PAGE}">',
         f'<p style="{_S_EYEBROW}"><span style="{_S_EYEBROW_SLASH}">// </span>spicystock · {esc(run_type)} run</p>',
@@ -1246,6 +1280,7 @@ def failure_html(run_type: str, problems: list[dict], expected: str) -> str:
         f'<h1 style="{_S_H1}">{esc(H1_FAILED.format(expected=expected))}</h1>'
         f'<p style="margin:0">The {esc(run_type)} run stopped before it published a plan. The open model plans '
         f'are unchanged: if you hold one, keep the stops from the last plan you acted on.</p></div>',
+        f'<p style="margin:0 0 12px">{esc(where)}</p>' if where else "",
         _problems_block(problems) or f'<p style="margin:0 0 12px">No problem was recorded before it stopped.</p>',
         f'<p style="margin:16px 0 0">The last published plan: '
         f'<a href="{esc(PAGE_URL)}" style="{_S_LINK}">{esc(PAGE_URL)}</a></p></div>',
@@ -1379,7 +1414,7 @@ def closed_market_digest(data: dict) -> dict:
 
 
 def send_failure_notice(run_type: str, problems: list[dict], data: dict | None = None, *,
-                        expected_session: str | None = None) -> dict:
+                        expected_session: str | None = None, stage: str | None = None) -> dict:
     """Mail the fact that there is no plan -- or, when the record published
     and only the delivery failed, mail the digest itself again with the
     problems it now carries. A run that dies mid-scan sends nothing, and
@@ -1387,4 +1422,4 @@ def send_failure_notice(run_type: str, problems: list[dict], data: dict | None =
     if data is not None:
         return deliver(digest_subject(data), digest_html(data, problems=problems))
     expected = _text(expected_session) or "the next session"
-    return deliver(FAILED_SUBJECT.format(expected=expected), failure_html(run_type, problems, expected))
+    return deliver(FAILED_SUBJECT.format(expected=expected), failure_html(run_type, problems, expected, stage))

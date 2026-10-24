@@ -13,9 +13,10 @@ from pathlib import Path
 
 import pytest
 
-from src import pipeline, reader
+from src import pipeline, reader, report
 from tests.test_pipeline import market, claude, evening
 from tests.test_quality import frame as qframe, ideal_bars
+from tests.test_report import _rendered
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -80,6 +81,11 @@ def test_a_record_over_its_bound_is_refused_before_anything_is_installed_and_say
     assert len(line) == 1 and line[0].levelname == "ERROR"
     assert line[0].getMessage().startswith(f"Canonical record: {said.group(1)} of {bound} bytes, with ")
     assert line[0].getMessage().endswith("; over its bound, so the night is refused before anything is installed.")
+    # mailed by the stage it stopped at, not as missing inputs, and never with the size
+    text = _rendered(fake_resend.sent[-1]["html"])
+    assert fake_resend.sent[-1]["subject"].startswith("FAILED — no plan for ")
+    assert "It stopped at its publish stage, after its universe, fetch and session stages had passed;" in text
+    assert report.PROBLEM_SENTENCES["coverage_thin"] not in text and said.group(1) not in text
 
 
 def logged(caplog, name):

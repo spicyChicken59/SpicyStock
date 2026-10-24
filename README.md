@@ -1219,6 +1219,14 @@ Exit codes are the workflow's contract: **0** clean, **1** failed before
 publishing (the failure notice is mailed instead, when the failure came
 after preflight and the delivery keys are there), **2** degraded but
 published (a warning, not a red run), **3** published but the email failed.
+The failure notice names the stage the run stopped at, one of the words the
+code owns (`report.NOTICE_STAGES`), and leaves what the run raised to the
+workflow's run log, which the mail never quotes. A run that stopped while
+reading the night's inputs (`universe`, `fetch` or `session`) is mailed the
+missing-inputs sentence for that failure; a stop after them says those stages
+had passed and claims no cause, since a later failure can be the code's or the
+data's. Problems the night recorded before it stopped go out as recorded, an
+earlier missing input among them.
 Preflight checks every variable the run reads, for presence and for a value
 the code understands, before anything is fetched or paid for.
 A degraded night names its problem with one of seven words —
@@ -1746,7 +1754,7 @@ browser, hold this one number): the run log states each night's record against
 it, with its bursts and observation bytes, and warns past 80%; a record over it
 refuses the night before anything is installed (exit 1), and the run log and the
 run's failure name the size and the bound. The failure notice mailed for it
-carries the notice's fixed sentence for missing inputs, not the size. The
+names the `publish` stage, not the size. The
 restamp after delivery writes the record once more, a few bytes longer for the
 mail's word or its problem, and is stated against the bound in its own line;
 should that write alone cross it, the record first installed stays, is retained

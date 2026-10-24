@@ -866,6 +866,28 @@ def test_the_failure_notice_names_the_session_it_has_no_plan_for(fake_resend):
     assert "None" not in params["html"] and params["attachments"] == []
 
 
+def test_the_failure_notice_names_the_stage_it_stopped_at_in_its_own_words(fake_resend):
+    """The notice names the stage in a sentence of its own, claims no cause past
+    the inputs' stages, and adds no problem of its own: what it lists is what it
+    was given. Only a stage a notice can name is printed."""
+    send_failure_notice("evening", [], None, expected_session="2026-09-11", stage="publish")
+    text = _rendered(fake_resend.sent[0]["html"])
+    assert ("It stopped at its publish stage, after its universe, fetch and session stages had passed; "
+            "what it raised is in the workflow's run log, not in this mail.") in text
+    assert "No problem was recorded before it stopped." in text
+    send_failure_notice("evening", [], None, expected_session="2026-09-11", stage="fetch")
+    text = _rendered(fake_resend.sent[1]["html"])
+    assert ("It stopped at its fetch stage, one of the stages that read the night's inputs; what it raised "
+            "is in the workflow's run log, not in this mail.") in text
+    assert PROBLEM_SENTENCES["coverage_thin"] not in text and "No problem was recorded before it stopped." in text
+    assert report.NOTICE_STAGES == report.RUN_STAGES[1:report.RUN_STAGES.index("publish") + 1]
+    for stage in report.NOTICE_STAGES:
+        assert report.stage_sentence(stage).startswith(f"It stopped at its {stage} stage, "), stage
+    for stage in (None, "startup", "preflight", "email", "restamp", "history", "<b>publish</b>", "Publish", 3):
+        assert report.stage_sentence(stage) is None, stage
+        assert "It stopped at its" not in _rendered(report.failure_html("evening", [], "2026-09-11", stage))
+
+
 def test_after_a_publish_the_digest_itself_is_the_notice_with_the_problems_it_now_carries(fake_resend):
     data = build(**_night())
     extra = problem("email", "email_failed", "refused")
