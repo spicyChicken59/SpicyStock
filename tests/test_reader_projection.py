@@ -441,6 +441,28 @@ def test_the_served_and_the_replaced_object_never_give_way_and_nothing_moves_on_
     assert {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")} == before
 
 
+def test_an_object_served_again_is_the_served_object_and_never_gives_way(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    first = publish_dated(tmp_path, docs, date(2026, 3, 2), 1)
+    middle = publish_dated(tmp_path, docs, date(2026, 3, 3), 2)
+    publish_dated(tmp_path, docs, date(2026, 3, 4), 3)
+    # An owner's file the archive does not own holds most of the room.
+    unknown = docs / reader.OBSERVATION_DIR / "owner-kept-copy.json"
+    unknown.write_bytes(b"x" * 10_000)
+    held = sum(len(b) for n, b in archive_files(docs).items() if n != "retention.json")
+    # Tonight serves the first day's object again: it is on disk already.
+    # Only the middle object may leave, and it frees too little.
+    size = len((docs / first["path"]).read_bytes())
+    assert len((docs / middle["path"]).read_bytes()) == size
+    monkeypatch.setattr(reader, "MAX_ARCHIVE_BYTES", held - size - 1)
+    before = {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")}
+    with pytest.raises(ValueError, match="explicit retention decision"):
+        publish_dated(tmp_path, docs, date(2026, 3, 5), 1)
+    assert {p.relative_to(docs): p.read_bytes() for p in docs.rglob("*.json")} == before
+    assert (docs / first["path"]).exists() and (docs / middle["path"]).exists()
+
+
 def test_objects_sharing_a_last_session_leave_in_digest_order(tmp_path, monkeypatch):
     docs = tmp_path / "docs"
     docs.mkdir()
