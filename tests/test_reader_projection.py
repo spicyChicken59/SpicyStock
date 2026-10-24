@@ -145,6 +145,8 @@ def test_fixed_publication_rollback_and_sidecar_installation_order(previous, fai
             if Path(name) in old_files: assert (docs / name).read_bytes() == old_files[Path(name)]
             else: assert not (docs / name).exists()
         for name, body in old_files.items(): assert (docs / name).read_bytes() == body
+        # Tonight's object leaves with the rollback: nothing is left unowned.
+        assert {p.relative_to(docs) for p in docs.rglob("*.json")} == set(old_files)
     else:
         expected = (stage / "data.json").read_bytes()
         reader.install_publication(stage, docs, ["picks.json", "data.json"])
@@ -557,20 +559,89 @@ def test_the_run_log_states_the_archive_against_its_cap(full, tmp_path, monkeypa
     assert not any("grace" in m for _, m in lines)
 
 
-@pytest.mark.parametrize("count, warned", [(9, False), (8, True)])
-def test_the_run_log_warns_on_the_object_count_too(count, warned, tmp_path, monkeypatch, caplog):
+@pytest.mark.parametrize("fraction, warned", [(0.6, False), (0.59, True)])
+def test_the_run_log_warns_on_the_object_count_too(fraction, warned, tmp_path, monkeypatch, caplog):
     docs = tmp_path / "docs"
     docs.mkdir()
     five_days(tmp_path, docs)
-    # Six objects against nine is 67% of the count; against eight, 75%: the
-    # warning sits past 80%, so eight objects of ten would warn and seven not.
+    # Six objects of ten: at exactly the fraction the log does not warn, since
+    # it warns past it (with the real 80%, nine of ten would warn, eight not).
+    count = 10
     monkeypatch.setattr(reader, "MAX_SIDECARS", count)
-    monkeypatch.setattr(reader, "RETENTION_WARN_FRACTION", 0.7)
+    monkeypatch.setattr(reader, "RETENTION_WARN_FRACTION", fraction)
     caplog.set_level("INFO", logger="spicystock.reader")
     publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
     lines = [(r.levelname, r.getMessage()) for r in caplog.records if r.name == "spicystock.reader"]
     assert [level for level, m in lines if m.startswith(f"Reader observation archive: 6 of {count} objects")] \
         == ["WARNING" if warned else "INFO"]
+
+
+def test_a_manifest_update_that_failed_after_the_removals_is_said_as_such(tmp_path, monkeypatch, caplog, capsys):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    refs = five_days(tmp_path, docs)
+    monkeypatch.setattr(reader, "MAX_SIDECARS", 5)
+    caplog.set_level("INFO", logger="spicystock.reader")
+    with monkeypatch.context() as patch:
+        fail_cleanup_rename(docs, patch)
+        publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    assert "verified publication is intact" in capsys.readouterr().out
+    assert not (docs / refs[0]["path"]).exists()
+    size = len((docs / refs[1]["path"]).read_bytes())
+    assert ("WARNING", f"Reader observation archive: 1 object inside its 21-day grace was removed, oldest first, "
+            f"so the publication fits the cap of 5 objects and {reader.MAX_ARCHIVE_BYTES} bytes ({size} bytes; "
+            f"git keeps it). The manifest update failed; the next publication retires it.") in \
+        [(r.levelname, r.getMessage()) for r in caplog.records if r.name == "spicystock.reader"]
+
+
+def test_an_archive_the_log_cannot_measure_never_fails_the_installed_publication(tmp_path, monkeypatch, caplog):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    five_days(tmp_path, docs)
+    listings = []
+    iterdir = Path.iterdir
+    def fail(path):
+        if path == docs / reader.OBSERVATION_DIR:
+            listings.append(path)
+            if len(listings) == 2: raise OSError("injected listing failure")
+        return iterdir(path)
+    caplog.set_level("INFO", logger="spicystock.reader")
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "iterdir", fail)
+        tonight = publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    # The plan listed the archive once; the log's listing was the second.
+    assert len(listings) == 2 and (docs / tonight["path"]).exists()
+    reader.check_assets(docs)
+    assert ("WARNING", "Reader observation archive could not be measured (injected listing failure).") in \
+        [(r.levelname, r.getMessage()) for r in caplog.records if r.name == "spicystock.reader"]
+
+
+def test_an_owners_file_past_the_working_set_sends_the_planned_removals_first(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    refs = five_days(tmp_path, docs)
+    monkeypatch.setattr(reader, "MAX_SIDECARS", 5)
+    unknown = docs / reader.OBSERVATION_DIR / "owner-kept-copy.json"
+    unknown.write_bytes(b"never delete unknown files")
+    replace = reader.os.replace
+    def fault(source, target):
+        if Path(target) == docs / "data.json": raise OSError("fixed publication failed")
+        return replace(source, target)
+    with monkeypatch.context() as patch:
+        patch.setattr(reader.os, "replace", fault)
+        with pytest.raises(OSError, match="fixed publication"):
+            publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    # Six files and tonight's would be past the working set: the two oldest,
+    # planned for removal, went first and the rollback keeps the rest.
+    assert unknown.read_bytes() == b"never delete unknown files"
+    assert not (docs / refs[0]["path"]).exists() and not (docs / refs[1]["path"]).exists()
+    assert all((docs / r["path"]).exists() for r in refs[2:])
+    tonight = publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    on_disk = {p.stem for p in (docs / reader.OBSERVATION_DIR).iterdir()
+               if p.name not in ("retention.json", unknown.name)}
+    assert set(json.loads((docs / reader.RETENTION_FILE).read_bytes())["objects"]) == on_disk
+    assert tonight["sha256"] in on_disk
+    reader.check_assets(docs)
 
 
 def test_an_expired_object_and_one_inside_its_grace_leave_on_the_same_night(tmp_path, monkeypatch):
@@ -710,7 +781,7 @@ def test_a_failed_removal_at_the_cap_is_retried_before_the_next_night_is_refused
     size = len((docs / refs[0]["path"]).read_bytes())
     assert ("WARNING", f"Reader observation archive: 1 object inside its 21-day grace was chosen for removal, "
             f"oldest first, to fit the cap of 5 objects and {reader.MAX_ARCHIVE_BYTES} bytes ({size} bytes); "
-            f"the cleanup failed and retries at the next publication.") in \
+            f"1 could not be removed and the next publication retries.") in \
         [(r.levelname, r.getMessage()) for r in caplog.records if r.name == "spicystock.reader"]
     # The leftover sits on disk: six files where the cap is five.
     assert (docs / refs[0]["path"]).exists()

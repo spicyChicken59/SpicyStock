@@ -1760,13 +1760,15 @@ whole evening going unpublished. The object served now and the one it replaces
 never give way, an unknown file never does, and an owned file whose bytes are
 not the object its manifest names refuses the publication rather than being
 removed. Removals wait until the fixed files are installed, so a rollback keeps
-them, unless a cleanup that failed on an earlier night left the archive's working
-set past its bound (one object over the count cap, 32 MiB over the byte cap):
-then the planned removals go first, and a cleanup failing again refuses the
-publication. An owned entry whose file is already gone is retired from the
-manifest before anything is planned. The run log states the archive's objects
-and bytes against both caps, warns past 80% of either, and says when objects
-inside their window were removed, or were chosen and the cleanup failed.
+them, unless the archive's working set is already past its bound (one object over
+the count cap, 32 MiB over the byte cap), from a cleanup that failed on an
+earlier night or a file the archive does not own: then the planned removals go
+first, a rollback keeps only what had not gone yet, and a cleanup failing again
+refuses the publication. A rollback also removes the object it brought in. An
+owned entry whose file is already gone is retired from the manifest before
+anything is planned. The run log states the archive's objects and bytes against
+both caps, warns past 80% of either, and says when objects inside their window
+were removed, or could not be, and when the manifest update failed.
 Canonical history and evidence are outside this cleanup. The committed-main publisher verifies the reader and
 its referenced sidecar before declaring the site updated.
 

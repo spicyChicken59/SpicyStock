@@ -288,10 +288,12 @@ def _retention(stage, docs, ref, canonical_raw):
                 <= MAX_ARCHIVE_BYTES + MAX_OBSERVATION_BYTES)
 
     # One new object may coexist with tonight's planned removals until the
-    # fixed files commit. Removals wait for that commit unless an earlier
-    # cleanup failed and left the working set past its bound: then the planned
-    # removals, verified above, go first, so one failure is not every later
-    # night's refusal. A cleanup that fails again leaves the bound to refuse.
+    # fixed files commit. Removals wait for that commit unless the working set
+    # is already past its bound, from a cleanup that failed on an earlier
+    # night or a file the archive does not own: then the planned removals,
+    # verified above, go first, so one failure is not every later night's
+    # refusal, and a rollback keeps only what had not gone yet. A cleanup that
+    # fails again leaves the bound to refuse.
     if not working_set_fits():
         try:
             for path in removable:
@@ -382,6 +384,13 @@ def install_publication(stage: Path, docs: Path, names: tuple[str, ...] | list[s
             else:
                 _write(stage / name, previous[name])
                 os.replace(stage / name, docs / name)
+        # Tonight's object came in with this install and no restored manifest
+        # owns it: it leaves too, or it would sit in the archive as nobody's.
+        if additions:
+            try:
+                (docs / ref["path"]).unlink()
+            except OSError:
+                pass
         raise
     cleaned = _prune_owned(stage, docs, index, expired)
     _log_archive(docs, evicted, index, cleaned)
@@ -403,14 +412,17 @@ def _log_archive(docs, evicted, index, cleaned):
                 f"{RETENTION_DAYS}-day grace")
         cap = f"the cap of {MAX_SIDECARS} objects and {MAX_ARCHIVE_BYTES} bytes"
         removed = sum(index["objects"][sha]["bytes"] for sha in evicted)
-        if cleaned:
+        left = [sha for sha in evicted if (docs / OBSERVATION_DIR / (sha + ".json")).exists()]
+        if not left:
             log.warning("Reader observation archive: %s %s removed, oldest first, so the publication "
-                        "fits %s (%d bytes; git keeps %s).", what, "was" if one else "were", cap,
-                        removed, "it" if one else "them")
+                        "fits %s (%d bytes; git keeps %s).%s", what, "was" if one else "were", cap,
+                        removed, "it" if one else "them",
+                        "" if cleaned else " The manifest update failed; the next publication retires "
+                        + ("it." if one else "them."))
         else:
             log.warning("Reader observation archive: %s %s chosen for removal, oldest first, to fit %s "
-                        "(%d bytes); the cleanup failed and retries at the next publication.",
-                        what, "was" if one else "were", cap, removed)
+                        "(%d bytes); %d could not be removed and the next publication retries.",
+                        what, "was" if one else "were", cap, removed, len(left))
     full = (held > MAX_ARCHIVE_BYTES * RETENTION_WARN_FRACTION
             or len(files) > MAX_SIDECARS * RETENTION_WARN_FRACTION)
     log.log(logging.WARNING if full else logging.INFO,
