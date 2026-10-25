@@ -121,6 +121,17 @@ are not rewritten.
 A `source` is `{url, raw_sha256, bytes, fetched_at, checked_at, cache_status}`;
 cache status is `network` or `verified_cache`. A `filing` is
 `{accession, form, filing_date, report_date, accepted_at, primary_document, items}`.
+SEC lists an XML filing -- Forms 3, 4, 5, 144 and 25-NSE, an EFFECT notice, a
+structured Schedule 13D or 13G -- under the directory of the XSL stylesheet that
+renders it (`xslF345X06/form4.xml`). A row of a form the collector never stores
+or fetches is read with that path, held to every other row rule by its
+document's own name, and counts toward `metadata_count` and the observed range;
+it is never listed, linked or fetched, so no bundle carries such a path. A
+current report or acquisition form must still name one plain document. Until
+25 October 2026 every rendered row was refused as invalid, so nearly every
+issuer's index read `partial` on `metadata_invalid`: 78 of the 240 rows of
+ZIM's index captured on 10 October, and on a runner on 25 October (run
+40163306777) the same 78 for ZIM and 674 for AAPL.
 An empty report date becomes null. An invalid, naive or future acceptance
 timestamp is rejected, not clamped. Acceptance is availability metadata,
 not the event date or issuer release date.

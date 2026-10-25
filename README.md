@@ -1485,7 +1485,13 @@ got both answers -- the mapping (523,925 bytes) and AAPL's submissions
 (163,690 bytes), the identity established -- so the refusal recorded through
 16 October is not what SEC gives the named contact. The first collection with
 a candidate, for ZIM on 24 October, was answered too: its identity was
-verified and its index read, `partial` on `metadata_invalid`.
+verified and its index read, `partial` on `metadata_invalid`. The probe named
+why (run 40163306777, 25 October): every refused row -- 78 of ZIM's, 674 of
+AAPL's -- was an XML filing (a Form 3, 4 or 144, an EFFECT notice, a Schedule
+13D or 13G) that SEC lists under its XSL rendering directory,
+`xslF345X06/form4.xml`. The row rule reads such a row now for a form the
+collector never stores or fetches (`issuer_evidence._rendered()`); a current
+report or acquisition form must still name one plain document.
 
 `issuer-evidence.yml` follows an actual committed evening or morning publication;
 the guard identifies the parent by its exact workflow file path, then checks

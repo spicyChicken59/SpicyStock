@@ -80,7 +80,7 @@ def row_problem(columns, i, as_of):
     if not issuer_evidence._text(form, 32):
         return "form", form
     document = columns["primaryDocument"][i]
-    if not issuer_evidence._basename(document):
+    if not (issuer_evidence._basename(document) or issuer_evidence._rendered(form, document)):
         return "primary_document", document
     items = columns["items"][i]
     if not issuer_evidence._text(items, 256, True):

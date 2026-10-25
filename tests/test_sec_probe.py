@@ -213,7 +213,8 @@ REFUSED = [
     ("accepted_at", good_row(1, acceptanceDateTime="2026-10-01 16:30:00"), "2026-10-01 16:30:00"),
     ("accession", good_row(2, accessionNumber="0000320193-26-12"), "0000320193-26-12"),
     ("form", good_row(3, form="X" * 33), "X" * 33),
-    ("primary_document", good_row(4, form="4", primaryDocument="xslF345X05/wf-form4.xml"), "xslF345X05/wf-form4.xml"),
+    # A current report is listed and fetched by its document: never under a rendering directory.
+    ("primary_document", good_row(4, primaryDocument="xslF345X05/wf-form4.xml"), "xslF345X05/wf-form4.xml"),
     ("primary_document", good_row(5, form="SCHEDULE 13G/A", primaryDocument=""), ""),
     ("items", good_row(6, items=None), "<null>"),
     ("filing_date", good_row(7, filingDate="2026-9-30"), "2026-9-30"),
@@ -236,7 +237,7 @@ def test_each_refused_row_is_named_by_the_rule_the_collector_refused_it_under():
     assert [(r["rule"], r["value"]) for r in rejected["rows"]] == [(rule, value) for rule, _, value in REFUSED]
     assert [r["form"] for r in rejected["rows"]] == [row["form"] for _, row, _ in REFUSED]
     assert rejected["by_rule"] == {rule: sum(1 for r, _, _ in REFUSED if r == rule) for rule, _, _ in REFUSED}
-    assert rejected["by_form"] == {"4": 1, "8-K": 7, "SCHEDULE 13G/A": 1, "X" * 33: 1}
+    assert rejected["by_form"] == {"8-K": 8, "SCHEDULE 13G/A": 1, "X" * 33: 1}
     assert list(rejected["by_rule"]) == sorted(rejected["by_rule"])
     assert {rule for rule, _, _ in REFUSED} == set(probe.ROW_RULES)
 
@@ -261,17 +262,17 @@ def test_a_refused_value_is_printed_in_its_own_characters_only_and_bounded():
 
 
 def test_every_refused_row_is_counted_and_only_the_first_are_printed():
-    many = [good_row(i, form="4", primaryDocument=f"xslF345X05/f{i}.xml") for i in range(probe.MAX_REJECTED_ROWS + 5)]
+    many = [good_row(i, form="4", primaryDocument=f"xslF345X05/{i}/f.xml") for i in range(probe.MAX_REJECTED_ROWS + 5)]
     result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: rows_submissions(many)})
     rejected = one(result)["submissions"]["rejected_rows"]
     assert rejected["count"] == len(many) == one(result)["submissions"]["invalid_count"]
     assert len(rejected["rows"]) == probe.MAX_REJECTED_ROWS
-    assert rejected["rows"][-1]["value"] == f"xslF345X05/f{probe.MAX_REJECTED_ROWS - 1}.xml"
+    assert rejected["rows"][-1]["value"] == f"xslF345X05/{probe.MAX_REJECTED_ROWS - 1}/f.xml"
     assert rejected["by_form"] == {"4": len(many)} and rejected["by_rule"] == {"primary_document": len(many)}
 
 
 def test_rules_that_drift_from_the_collectors_are_said_and_never_read_as_access(monkeypatch):
-    raw = rows_submissions([good_row(0), good_row(1, primaryDocument="xslF345X05/f.xml")])
+    raw = rows_submissions([good_row(0), good_row(1, primaryDocument="xslF345X05/f.xml")])  # an 8-K: refused
     monkeypatch.setattr(probe, "row_problem", lambda columns, i, as_of: None)
     result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: raw})
     submissions = one(result)["submissions"]
@@ -299,3 +300,13 @@ def test_the_fixed_issuers_are_asked_after_one_mapping():
     assert other.calls == [issuer_evidence.MAPPING_URL, SUBMISSIONS]
     assert partial["issuers"][1]["identity"]["status"] == "unverified" and partial["answered"] is False
     assert partial["sentence"] == "SEC answered, and the answer did not establish every fixed issuer (ZIM)."
+
+
+def test_a_form_the_collector_never_stores_is_read_under_its_rendering_directory():
+    # SEC's own shape for an XML filing; the collector reads it, so the probe names nothing.
+    rows = [good_row(0), good_row(1, form="4", primaryDocument="xslF345X06/form4.xml", items=""),
+            good_row(2, form="SCHEDULE 13D/A", primaryDocument="xslSCHEDULE_13D_X01/primary_doc.xml", items="")]
+    result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: rows_submissions(rows)})
+    submissions = one(result)["submissions"]
+    assert submissions["invalid_count"] == 0 and submissions["filings_in_window"] == 3
+    assert submissions["rejected_rows"] == {"count": 0, "by_rule": {}, "by_form": {}, "rows": []}
