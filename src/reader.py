@@ -27,14 +27,14 @@ READER_FILE = "reader.json"
 OBSERVATION_DIR = "reader-observations"
 # The canonical record, which the browser never downloads: above the record
 # the scan-ready population makes when every scan-ready stock bursts beside a
-# full observation window (42,926,403 bytes built from 22 October's record,
+# full observation window (46,640,227 bytes built from 22 October's record,
 # tests/test_publication_ceiling.py), and under the 50 MiB above which a push
 # is warned (100 MiB is refused) -- GitHub's documentation, read as search
 # excerpts on 24 October 2026; docs.github.com does not resolve from the sandbox.
 MAX_PUBLICATION_BYTES = 48 * 1024 * 1024
 # reader.json, the file the browser does download: its own bound, which a
-# night reaches first whenever its observations are under 16 MiB (27,351,450
-# bytes at that design point).
+# night reaches before the record's whenever its observations are under 16 MiB
+# (27,351,450 bytes at that design point).
 MAX_READER_BYTES = 32 * 1024 * 1024
 MAX_OBSERVATION_BYTES = 32 * 1024 * 1024
 MAX_SIDECARS = 84
@@ -92,27 +92,30 @@ def derive(canonical_raw: bytes) -> tuple[bytes, bytes]:
     browser selection. All non-observation values and their ordering survive.
     """
     reader_raw, observations_raw = _project(canonical_raw)
-    _reader_bound(reader_raw)
+    _bounds(reader_raw, observations_raw)
     return reader_raw, observations_raw
 
 
-def _reader_bound(reader_raw):
+def _bounds(reader_raw, observations_raw):
+    """The two files the browser downloads, each against its own bound; the
+    sidecar first, as `derive()` has always asked it."""
+    if len(observations_raw) > MAX_OBSERVATION_BYTES:
+        raise ValueError(f"reader observations are {len(observations_raw)} bytes, "
+                         f"over their {MAX_OBSERVATION_BYTES}-byte bound")
     if len(reader_raw) > MAX_READER_BYTES:
         raise ValueError(f"reader projection is {len(reader_raw)} bytes, "
                          f"over its {MAX_READER_BYTES}-byte bound")
 
 
 def _project(canonical_raw):
-    """The projection before its own bound is asked: the canonical record's
-    bound and the observations' are held here, the reader's by the caller."""
+    """The projection and its sidecar before either's bound is asked: the
+    canonical record's bound is held here, theirs by the caller (`_bounds()`)."""
     if isinstance(canonical_raw, bytes) and len(canonical_raw) > MAX_PUBLICATION_BYTES:
         raise ValueError(f"canonical publication is {len(canonical_raw)} bytes, "
                          f"over its {MAX_PUBLICATION_BYTES}-byte bound")
     data = _decode(canonical_raw, MAX_PUBLICATION_BYTES)
     _data(data)
     observations_raw = _encode(data["observations"])
-    _require(len(observations_raw) <= MAX_OBSERVATION_BYTES,
-             "reader observation bytes exceed bound")
     projected = deepcopy(data)
     projected["observations"]["symbols"] = {}
     if "signals" in projected["observations"]:
@@ -185,17 +188,17 @@ def _level(size, bound):
             logging.WARNING if size > bound * PUBLICATION_WARN_FRACTION else logging.INFO)
 
 
-def _over(after_delivery):
-    return ("; over its bound, so this write is refused and the record first installed stays"
-            if after_delivery else "; over its bound, so the night is refused before anything is installed")
+def _over(after_delivery, its="its"):
+    return (f"; over {its} bound, so this write is refused and the record first installed stays"
+            if after_delivery else f"; over {its} bound, so the night is refused before anything is installed")
 
 
 def log_publication(size: int, data, *, after_delivery: bool = False) -> None:
     """State the canonical record's bytes against its bound; never raises.
 
     Called twice a night: as the record is first staged (past the bound
-    `derive()` refuses the night before anything is installed) and as the
-    restamp after delivery writes it again (past the bound that write is
+    `stage_assets()` refuses the night before anything is installed) and as
+    the restamp after delivery writes it again (past the bound that write is
     refused and the record first installed stays). The size line is written
     even when the record's counts cannot be read."""
     name = "Canonical record after delivery" if after_delivery else "Canonical record"
@@ -215,25 +218,27 @@ def log_publication(size: int, data, *, after_delivery: bool = False) -> None:
         log.warning("%s could not be measured (%s).", name, type(exc).__name__)
 
 
-def log_projection(size: int, *, after_delivery: bool = False) -> None:
-    """State reader.json, the file the browser downloads, against its own
-    bound; never raises. Called as each projection is made, before that bound
-    is asked, so a refused one is stated too."""
-    name = "Reader projection after delivery" if after_delivery else "Reader projection"
-    try:
-        bound = MAX_READER_BYTES
-        log.log(_level(size, bound), "%s: %d of %d bytes%s.", name, size, bound,
-                _over(after_delivery) if size > bound else "")
-    except Exception as exc:  # noqa: BLE001 -- a log line never fails the night
-        log.warning("%s could not be measured (%s).", name, type(exc).__name__)
+def log_projection(size: int, observations: int, *, after_delivery: bool = False) -> None:
+    """State the two files the browser downloads -- reader.json and its
+    observation sidecar -- each against its own bound, one line each; never
+    raises. Called as each projection is made, before either bound is asked,
+    so a refused one is stated too."""
+    after = " after delivery" if after_delivery else ""
+    for name, value, bound, its in ((f"Reader projection{after}", size, MAX_READER_BYTES, "its"),
+                                    (f"Reader observations{after}", observations, MAX_OBSERVATION_BYTES, "their")):
+        try:
+            log.log(_level(value, bound), "%s: %d of %d bytes%s.", name, value, bound,
+                    _over(after_delivery, its) if value > bound else "")
+        except Exception as exc:  # noqa: BLE001 -- a log line never fails the night
+            log.warning("%s could not be measured (%s).", name, type(exc).__name__)
 
 
 def stage_assets(stage: Path, *, after_delivery: bool = False) -> dict:
     """Prepare companions beside the already serialized canonical record."""
     stage = Path(stage)
     reader_raw, observations_raw = _project((stage / "data.json").read_bytes())
-    log_projection(len(reader_raw), after_delivery=after_delivery)
-    _reader_bound(reader_raw)
+    log_projection(len(reader_raw), len(observations_raw), after_delivery=after_delivery)
+    _bounds(reader_raw, observations_raw)
     ref = parse_reader(reader_raw)["retained_observations"]
     _write(stage / READER_FILE, reader_raw)
     _write(stage / ref["path"], observations_raw)

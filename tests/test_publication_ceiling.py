@@ -1,29 +1,30 @@
-"""The largest night this universe can make still publishes.
+"""The largest night 22 October's scan-ready population can make still publishes.
 
 The design point, built from the real 22 October record (its 988 bursts the
 most any retained night has published): every stock its run measured as
 scan-ready (`run.coverage.scan_ready`, 3,581) bursts, and its observation
-window is full -- every one of those stocks with the window's whole history
-and a signal on every session of it, published once a session. That record
-must fit the canonical bound and its projection the reader's, the sidecar
-and the quality-ledger entry their own; it would not have fitted the single
-32 MiB bound the canonical record and the projection shared until 25 October.
+window is full -- every one of those stocks carries the window's whole history,
+and the window holds signals at the record's own density (signals for each
+stock and session, 22 October's own ratio of signal identities to the stocks
+and sessions they name). That record must fit the canonical bound and its
+projection the reader's, the sidecar and the quality-ledger entry their own;
+it would not have fitted the single 32 MiB bound the canonical record and the
+projection shared until 25 October.
 
-The record is frozen bytes, so it cannot see a field the current code adds to
-every burst or to every observation. Two tripwires carry that growth into the
-design point: the compact bytes of the regenerated `red.json` fixture's
-unreviewed, unplanned bursts and of its observations block, each held to the
-size it had when this ceiling was measured. A burst the current code writes N
-bytes longer adds N bytes to every burst of the design point; observations a
-fraction longer scale its window by that fraction. Only a projection past a
-bound fails -- a builder whose change does that re-measures the ceiling.
-The ledger entry's growth is not projected: it reads a few fields of each
-check, not the whole burst, and is stated here at the frozen record's size.
+The record is frozen bytes, so it cannot see a field the current code adds.
+The growth tripwires read the regenerated `red.json` fixture: the bytes of an
+unreviewed, unplanned burst, of a funnel row, of an observation signal, of a
+history bar and of a symbol entry, each against what it was when the ceiling
+was measured. Each component's growth is added once for every such entry the
+design point carries. Only a projection past a bound fails -- a builder whose
+change does that re-measures the ceiling. The ledger entry's growth is not
+projected: it reads a few fields of each check, not the whole burst, and is
+stated here at the frozen record's size.
 """
 import hashlib
 import json
+import re
 import subprocess
-import sys
 from copy import deepcopy
 from pathlib import Path
 
@@ -37,17 +38,27 @@ ROOT = Path(__file__).resolve().parents[1]
 COMMIT = "fb70e70638a3488bf7fbe61c7c54012c48eb1b96"
 BLOB = "5fbc06804566f84a79dd1ff67d541240ccfc61a8"
 OLD_BOUND = 32 * 1024 * 1024
-#: The growth tripwires' baselines, measured on the regenerated red.json the
-#: day the ceiling was measured: its four bursts no review selected and no plan
-#: carries, their series removed, and its observations block, all compact.
 FIXTURE = ROOT / "tests/fixtures/page/red.json"
+#: The bursts the tripwire reads: red.json's four that no review selected and no plan carries.
 FIXTURE_ROWS = ("AMD", "NVDA", "PLUG", "DLLR")
-FIXTURE_ROW_BYTES = 28641
-FIXTURE_OBSERVATION_BYTES = 3713
+#: Each component's (count, compact bytes) on the regenerated red.json the day the ceiling was
+#: measured; bursts with their series removed, symbols with their history emptied.
+BASELINE = {"burst": (4, 28641), "funnel_row": (6, 203), "signal": (7, 1027), "bar": (10, 1424), "symbol": (10, 1172)}
 
 
 def compact(value) -> bytes:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode("utf-8")
+
+
+def entry(key, value) -> int:
+    """A member's compact bytes inside its object: key, colon and value."""
+    return len(compact({key: value})) - 2
+
+
+def written(data) -> bytes:
+    """The bytes `report.write()` writes; the synthetic record carries no
+    provenance of its own, so its write (which asks for it) is not called."""
+    return compact(data) + b"\n"
 
 
 @pytest.fixture(scope="module")
@@ -70,24 +81,39 @@ def frozen() -> dict:
     return json.loads(raw)
 
 
-def unplanned_row_bytes(data) -> int:
-    """The tripwire rows' compact bytes, series removed; held to the kind of row they are."""
+# --- the growth tripwires -------------------------------------------------------
+def components(data) -> dict:
+    """Each component's (count, compact bytes) in a record."""
     rows = {r["ticker"]: r for r in data["bursts"]}
-    total = 0
+    bursts = []
     for ticker in FIXTURE_ROWS:
         row = rows[ticker]
         assert row.get("plan") is None and row.get("claude") is None, ticker
         assert row["reader_coverage"] == "not_selected_budget", ticker
-        total += len(compact({k: v for k, v in row.items() if k != "series"}))
-    return total
+        bursts.append(len(compact({k: v for k, v in row.items() if k != "series"})))
+    funnel = data["funnel"]["reaction"]["rows"]
+    observations = data["observations"]
+    signals, symbols = observations["signals"], observations["symbols"]
+    bars = [bar for value in symbols.values() for bar in value["history"]]
+    return {"burst": (len(bursts), sum(bursts)),
+            "funnel_row": (len(funnel), sum(len(compact(r)) for r in funnel)),
+            "signal": (len(signals), sum(entry(k, v) for k, v in signals.items())),
+            "bar": (len(bars), sum(len(compact(b)) for b in bars)),
+            "symbol": (len(symbols), sum(entry(k, {**v, "history": []}) for k, v in symbols.items()))}
 
 
-def growth():
-    """How much longer a burst and the observations are under the current code
-    than when the ceiling was measured: bytes a burst, and a ratio."""
-    data = json.loads(FIXTURE.read_bytes())
-    per_row = (unplanned_row_bytes(data) - FIXTURE_ROW_BYTES) / len(FIXTURE_ROWS)
-    return per_row, len(compact(data["observations"])) / FIXTURE_OBSERVATION_BYTES
+def growth(path=None) -> dict:
+    """How many bytes longer each component is under the current code than
+    when the ceiling was measured, read off the regenerated fixture."""
+    now = components(json.loads((path or FIXTURE).read_bytes()))
+    return {name: now[name][1] / now[name][0] - total / count for name, (count, total) in BASELINE.items()}
+
+
+# --- the design point ------------------------------------------------------------
+def density(data) -> float:
+    """Signal identities for each stock and session they name, as the record carries them."""
+    signals = data["observations"]["signals"].values()
+    return len(signals) / len({(s["ticker"], s["session"]) for s in signals})
 
 
 def ceiling(frozen: dict) -> dict:
@@ -109,26 +135,18 @@ def ceiling(frozen: dict) -> dict:
     symbols, signals = observations["symbols"], observations["signals"]
     window = max(len(v["history"]) for v in symbols.values())
     full = [v for v in symbols.values() if len(v["history"]) == window]
+    for k, (name, value) in enumerate(list(symbols.items())):    # every symbol the window's whole history
+        if len(value["history"]) < window:
+            symbols[name] = deepcopy(full[k % len(full)])
     names = iter(range(10**6))
     while len(symbols) < scan_ready:
         symbols[f"Y{next(names):05d}"] = deepcopy(full[len(symbols) % len(full)])
+    target = round(scan_ready * window * density(frozen))
     originals = list(signals.items())
-    while len(signals) < scan_ready * window:
+    while len(signals) < target:
         key, value = originals[len(signals) % len(originals)]
         signals[f"{key}#{len(signals)}"] = value
     return data
-
-
-def written(data) -> bytes:
-    """The bytes `report.write()` writes; the synthetic record carries no
-    provenance of its own, so its write (which asks for it) is not called."""
-    return compact(data) + b"\n"
-
-
-def test_the_ceiling_is_written_as_production_writes_a_record(tmp_path):
-    data = {"schema_version": 2, "run": {"session": "2026-10-22"}, "bursts": [{"ticker": "Ä"}], "observations": {}}
-    report.write(data, tmp_path / "data.json")
-    assert (tmp_path / "data.json").read_bytes() == written(data)
 
 
 @pytest.fixture(scope="module")
@@ -136,8 +154,47 @@ def measured(frozen):
     data = ceiling(frozen)
     canonical = written(data)
     reader_raw, observations_raw = reader.derive(canonical)
-    entry = quality_ledger.encoded(quality_ledger.build(data, hashlib.sha256(canonical).hexdigest(), []))
-    return data, canonical, reader_raw, observations_raw, entry
+    ledger = quality_ledger.encoded(quality_ledger.build(data, hashlib.sha256(canonical).hexdigest(), []))
+    return data, canonical, reader_raw, observations_raw, ledger
+
+
+def counts(data) -> dict:
+    """How many entries of each component the design point carries."""
+    observations = data["observations"]
+    return {"burst": len(data["bursts"]),
+            "funnel_row": len(data["funnel"]["reaction"]["rows"]),
+            "signal": len(observations["signals"]),
+            "bar": sum(len(v["history"]) for v in observations["symbols"].values()),
+            "symbol": len(observations["symbols"])}
+
+
+def projected(measured, grown):
+    """The design point's sizes once each component is `grown[name]` bytes
+    longer: the canonical record, the reader projection (no observations) and
+    the sidecar (only observations)."""
+    data, canonical, reader_raw, observations_raw, _ = measured
+    n = counts(data)
+    per_burst = sum(grown[name] * n[name] for name in ("burst", "funnel_row"))
+    per_observation = sum(grown[name] * n[name] for name in ("signal", "bar", "symbol"))
+    return (len(canonical) + per_burst + per_observation,
+            len(reader_raw) + per_burst,
+            len(observations_raw) + per_observation)
+
+
+def fits(sizes):
+    canonical, projection, sidecar = sizes
+    return (canonical <= reader.MAX_PUBLICATION_BYTES, projection <= reader.MAX_READER_BYTES,
+            sidecar <= reader.MAX_OBSERVATION_BYTES)
+
+
+NONE = {name: 0 for name in BASELINE}
+
+
+# --- the tests --------------------------------------------------------------------
+def test_the_ceiling_is_written_as_production_writes_a_record(tmp_path):
+    data = {"schema_version": 2, "run": {"session": "2026-10-22"}, "bursts": [{"ticker": "Ä"}], "observations": {}}
+    report.write(data, tmp_path / "data.json")
+    assert (tmp_path / "data.json").read_bytes() == written(data)
 
 
 def test_the_design_point_is_every_scan_ready_stock_beside_a_full_window(frozen, measured):
@@ -147,32 +204,16 @@ def test_the_design_point_is_every_scan_ready_stock_beside_a_full_window(frozen,
     assert len(data["bursts"]) == len(data["funnel"]["reaction"]["rows"]) == scan_ready
     assert len({r["ticker"] for r in data["bursts"]}) == scan_ready
     symbols = data["observations"]["symbols"]
-    window = max(len(v["history"]) for v in symbols.values())
+    window = max(len(v["history"]) for v in frozen["observations"]["symbols"].values())
     assert window == 16 and len(symbols) == scan_ready
-    assert len(data["observations"]["signals"]) == scan_ready * window
-    assert canonical > b"" and canonical.endswith(b"\n") and b"\n" not in canonical[:-1]
-
-
-def projected(measured, per_row, ratio):
-    """The design point's sizes once every burst is `per_row` bytes longer and
-    the observations `ratio` times as long: the canonical record, the reader
-    projection (no observations) and the sidecar (only observations)."""
-    data, canonical, reader_raw, observations_raw, _ = measured
-    bursts = len(data["bursts"])
-    observations = len(compact(data["observations"]))
-    return (len(canonical) + per_row * bursts + (ratio - 1) * observations,
-            len(reader_raw) + per_row * bursts,
-            len(observations_raw) * ratio)
-
-
-def fits(sizes):
-    canonical, projection, sidecar = sizes
-    return (canonical <= reader.MAX_PUBLICATION_BYTES, projection <= reader.MAX_READER_BYTES,
-            sidecar <= reader.MAX_OBSERVATION_BYTES)
+    assert all(len(v["history"]) == window for v in symbols.values())          # every stock, the whole window
+    assert 1.2 < density(frozen) < 1.3                                         # 22 October's own: 1.237
+    assert len(data["observations"]["signals"]) == round(scan_ready * window * density(frozen))
+    assert canonical.endswith(b"\n") and b"\n" not in canonical[:-1]
 
 
 def test_the_design_point_fits_every_bound_with_the_current_codes_growth(measured):
-    assert fits(projected(measured, *growth())) == (True, True, True), projected(measured, *growth())
+    assert fits(projected(measured, growth())) == (True, True, True), projected(measured, growth())
     assert len(measured[4]) <= quality_ledger.MAX_ENTRY_BYTES
 
 
@@ -181,30 +222,60 @@ def test_the_single_bound_the_two_files_shared_would_have_refused_it(measured):
     assert len(canonical) > OLD_BOUND >= len(reader_raw)
 
 
-def test_a_burst_or_an_observation_grown_past_the_headroom_fails_the_design_point(measured):
-    """Each bound can be crossed by the growth the tripwires carry: a burst one
-    byte past the reader's headroom, observations a fraction past the record's."""
-    data, canonical, reader_raw, *_ = measured
-    bursts = len(data["bursts"])
-    room = (reader.MAX_READER_BYTES - len(reader_raw)) // bursts
-    assert fits(projected(measured, room, 1))[1] and not fits(projected(measured, room + 1, 1))[1]
-    observations = len(compact(data["observations"]))
-    ratio = 1 + (reader.MAX_PUBLICATION_BYTES - len(canonical)) / observations
-    assert not fits(projected(measured, 0, ratio * 1.001))[0]
+def test_each_bound_can_be_crossed_by_the_growth_the_tripwires_carry(measured):
+    """Bursts one byte past the record's headroom; past the projection's when
+    smaller signals leave the record room; signals one byte past the record's;
+    both at once past the record's when neither alone is; and the sidecar's own
+    bound, reached when smaller bursts leave the record room for its
+    observations to grow past 32 MiB."""
+    data, canonical, reader_raw, observations_raw, _ = measured
+    n = counts(data)
+    record_room = reader.MAX_PUBLICATION_BYTES - len(canonical)
+    projection_room = reader.MAX_READER_BYTES - len(reader_raw)
+    sidecar_room = reader.MAX_OBSERVATION_BYTES - len(observations_raw)
+    burst = record_room // n["burst"]                           # the record binds first at the design point
+    assert burst < projection_room // n["burst"]
+    assert fits(projected(measured, {**NONE, "burst": burst})) == (True, True, True)
+    assert fits(projected(measured, {**NONE, "burst": burst + 1})) == (False, True, True)
+    burst = projection_room // n["burst"]
+    smaller = -(projection_room // n["signal"] + 1)             # signals that much smaller leave the record room
+    assert fits(projected(measured, {**NONE, "burst": burst, "signal": smaller})) == (True, True, True)
+    assert fits(projected(measured, {**NONE, "burst": burst + 1, "signal": smaller})) == (True, False, True)
+    signal = record_room // n["signal"]
+    assert fits(projected(measured, {**NONE, "signal": signal})) == (True, True, True)
+    assert fits(projected(measured, {**NONE, "signal": signal + 1})) == (False, True, True)
+    half = {**NONE, "burst": record_room // (2 * n["burst"]) + 1, "signal": record_room // (2 * n["signal"]) + 1}
+    assert fits(projected(measured, {**half, "signal": 0})) == fits(projected(measured, {**half, "burst": 0})) == (True, True, True)
+    assert fits(projected(measured, half)) == (False, True, True)                # neither alone, both together
+    room = {**NONE, "burst": -(sidecar_room // n["burst"] + 1), "signal": sidecar_room // n["signal"] + 1}
+    assert fits(projected(measured, room)) == (True, True, False)               # the sidecar's own bound
 
 
-def test_the_tripwires_read_the_regenerated_fixture(tmp_path, monkeypatch):
-    """A field the current code adds to every burst, and to every observation
-    bar, shows in the fixture the tripwires read."""
+@pytest.mark.parametrize("name", list(BASELINE))
+def test_each_tripwire_reads_its_own_component_of_the_regenerated_fixture(name, tmp_path):
+    """A field the current code adds to every entry of one component shows in
+    that component's tripwire, at its own bytes, and in no other."""
     data = json.loads(FIXTURE.read_bytes())
-    for row in data["bursts"]:
-        row["added_by_a_later_build"] = "x" * 89                    # 116 bytes compact, with its key
-    for value in data["observations"]["symbols"].values():
-        for bar in value["history"]:
-            bar["added"] = 1
+    observations = data["observations"]
+    targets = {"burst": [r for r in data["bursts"] if r["ticker"] in FIXTURE_ROWS],
+               "funnel_row": data["funnel"]["reaction"]["rows"],
+               "signal": list(observations["signals"].values()),
+               "bar": [b for v in observations["symbols"].values() for b in v["history"]],
+               "symbol": list(observations["symbols"].values())}[name]
+    before = growth(FIXTURE)
+    for value in targets:
+        value["added_by_a_later_build"] = "x" * 89
     copy = tmp_path / "red.json"
     copy.write_text(json.dumps(data))
-    monkeypatch.setattr(sys.modules[__name__], "FIXTURE", copy)
-    per_row, ratio = growth()
-    assert per_row == len(compact({"added_by_a_later_build": "x" * 89})) - 2 + 1   # less the braces, plus a comma
-    assert ratio > 1
+    after = growth(copy)
+    added = entry("added_by_a_later_build", "x" * 89) + 1               # with its key, colon and comma
+    assert added == 117
+    assert {k: round(after[k] - before[k], 9) for k in BASELINE} == {k: (added if k == name else 0) for k in BASELINE}
+
+
+def test_the_readme_quotes_the_design_points_sizes(measured):
+    _, canonical, reader_raw, _, ledger = measured
+    text = re.sub(r"\s+", " ", (ROOT / "README.md").read_text())
+    assert (f"makes a record of {len(canonical):,} bytes, past the old bound, and a projection of "
+            f"{len(reader_raw):,}") in text
+    assert f"({len(ledger):,} bytes at the design point)" in text

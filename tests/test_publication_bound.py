@@ -1,11 +1,12 @@
 """The canonical record is written compact and stated against its 48 MiB bound;
-reader.json, the file the browser downloads, against its own 32 MiB.
+reader.json and its observation sidecar, the files the browser downloads,
+against their own 32 MiB each.
 
-Past either bound a night is refused before anything is installed, and the
-refusal names the size and the bound. A restamp after delivery that alone
-crosses one leaves the record first installed, which is still retained. Every
-copy of the canonical bound, the browser's included, is the reader's own
-number, and the browser bounds every file it downloads by the reader's.
+Past any of the three bounds a night is refused before anything is installed,
+and the refusal names the size and the bound. A restamp after delivery that
+alone crosses one leaves the record first installed, which is still retained.
+Every copy of the canonical bound, the browser's included, is the reader's own
+number; the browser's reader module bounds what it downloads by the projection's.
 """
 import hashlib
 import json
@@ -202,14 +203,22 @@ def test_every_copy_of_the_canonical_bound_is_the_readers():
     assert literal, "app-reader.js declares MAX_BYTES and MAX_CANONICAL_BYTES together"
     assert eval(literal.group(1), {"__builtins__": {}}) == reader.MAX_READER_BYTES   # digits and * only
     assert eval(literal.group(2), {"__builtins__": {}}) == bound
-    # the page holds the record's identity to the canonical bound and every download to the reader's
+    # the page holds the record's identity to the canonical bound and what this module downloads to the reader's
     assert js.count("canonical.bytes <= MAX_CANONICAL_BYTES") == 1 and "canonical.bytes <= MAX_BYTES" not in js
     assert "MAX_BYTES, MAX_CANONICAL_BYTES };" in js     # both exported on SCStock.reader
+    # the evidence retention scan reads every docs file whole, the record among them, under its own
+    # bound: never below the record's, or a publishable record would stop the archive's pruning
+    from src import provenance
+    assert provenance.RETENTION_SCAN_BYTES >= bound
 
 
-# --- the reader projection's own bound ----------------------------------------
+# --- the files the browser downloads: their own bounds ------------------------
+def tiny():
+    return compact({"schema_version": 2, "run": {}, "bursts": [], "observations": {"symbols": {"AAA": {"c": 1}}}})
+
+
 def test_derive_refuses_a_projection_one_byte_over_its_own_bound_and_names_both_numbers(monkeypatch):
-    raw = compact({"schema_version": 2, "run": {}, "bursts": [], "observations": {"symbols": {}}})
+    raw = tiny()
     size = len(reader.derive(raw)[0])
     monkeypatch.setattr(reader, "MAX_READER_BYTES", size - 1)
     with pytest.raises(ValueError, match=rf"^reader projection is {size} bytes, over its {size - 1}-byte bound$"):
@@ -218,76 +227,102 @@ def test_derive_refuses_a_projection_one_byte_over_its_own_bound_and_names_both_
     assert len(reader.derive(raw)[0]) == size
 
 
+def test_derive_refuses_observations_one_byte_over_their_own_bound_and_names_both_numbers(monkeypatch):
+    raw = tiny()
+    size = len(reader.derive(raw)[1])
+    monkeypatch.setattr(reader, "MAX_OBSERVATION_BYTES", size - 1)
+    with pytest.raises(ValueError, match=rf"^reader observations are {size} bytes, over their {size - 1}-byte bound$"):
+        reader.derive(raw)
+    monkeypatch.setattr(reader, "MAX_OBSERVATION_BYTES", size)
+    assert len(reader.derive(raw)[1]) == size
+
+
 @pytest.mark.parametrize("size,level", [(800, "INFO"), (801, "WARNING"), (1000, "WARNING"), (1001, "ERROR")])
-def test_the_run_log_states_the_projection_against_its_own_bound(size, level, monkeypatch, caplog):
+def test_the_run_log_states_each_downloaded_file_against_its_own_bound(size, level, monkeypatch, caplog):
     monkeypatch.setattr(reader, "MAX_READER_BYTES", 1000)
-    monkeypatch.setattr(reader, "MAX_PUBLICATION_BYTES", 10)   # the canonical bound is not the one read
+    monkeypatch.setattr(reader, "MAX_OBSERVATION_BYTES", 2000)  # a different number: each line reads its own
+    monkeypatch.setattr(reader, "MAX_PUBLICATION_BYTES", 10)    # the canonical bound is not the one read
     caplog.set_level("INFO", logger="spicystock.reader")
-    reader.log_projection(size)
-    [record] = [r for r in caplog.records if r.name == "spicystock.reader"]
-    assert record.levelname == level
-    tail = "; over its bound, so the night is refused before anything is installed." if size > 1000 else "."
-    assert record.getMessage() == f"Reader projection: {size} of 1000 bytes{tail}"
+    reader.log_projection(size, size * 2)
+    projection, observations = [r for r in caplog.records if r.name == "spicystock.reader"]
+    assert projection.levelname == observations.levelname == level
+    over = size > 1000
+    assert projection.getMessage() == f"Reader projection: {size} of 1000 bytes" + (
+        "; over its bound, so the night is refused before anything is installed." if over else ".")
+    assert observations.getMessage() == f"Reader observations: {size * 2} of 2000 bytes" + (
+        "; over their bound, so the night is refused before anything is installed." if over else ".")
 
 
-def test_the_projection_after_delivery_is_stated_in_its_own_words(monkeypatch, caplog):
+def test_the_downloaded_files_after_delivery_are_stated_in_their_own_words(monkeypatch, caplog):
     monkeypatch.setattr(reader, "MAX_READER_BYTES", 1000)
     caplog.set_level("INFO", logger="spicystock.reader")
-    reader.log_projection(1001, after_delivery=True)
-    [record] = caplog.records
-    assert record.levelname == "ERROR" and record.getMessage() == (
+    reader.log_projection(1001, reader.MAX_OBSERVATION_BYTES + 1, after_delivery=True)
+    projection, observations = caplog.records
+    assert projection.levelname == observations.levelname == "ERROR"
+    assert projection.getMessage() == (
         "Reader projection after delivery: 1001 of 1000 bytes; "
         "over its bound, so this write is refused and the record first installed stays.")
+    assert observations.getMessage() == (
+        f"Reader observations after delivery: {reader.MAX_OBSERVATION_BYTES + 1} of {reader.MAX_OBSERVATION_BYTES} "
+        "bytes; over their bound, so this write is refused and the record first installed stays.")
 
 
-def test_the_projection_line_never_fails_the_night(caplog):
+def test_the_downloaded_files_lines_never_fail_the_night(caplog):
     caplog.set_level("INFO", logger="spicystock.reader")
-    reader.log_projection(None)
-    [record] = [r for r in caplog.records if r.name == "spicystock.reader"]
-    assert record.levelname == "WARNING" and record.getMessage() == "Reader projection could not be measured (TypeError)."
+    reader.log_projection(None, 10)
+    projection, observations = [r for r in caplog.records if r.name == "spicystock.reader"]
+    assert projection.levelname == "WARNING" and projection.getMessage() == "Reader projection could not be measured (TypeError)."
+    assert observations.levelname == "INFO" and observations.getMessage().startswith("Reader observations: 10 of ")
 
 
-def sizes(caplog):
-    """The night's two lines, each once: the canonical record's and the projection's."""
-    return logged(caplog, "Canonical record")[1], logged(caplog, "Reader projection")[1]
+def sizes(caplog, after=""):
+    """The night's three lines, each once: the canonical record's, the projection's and the sidecar's."""
+    return tuple(logged(caplog, name + after)[1] for name in ("Canonical record", "Reader projection", "Reader observations"))
 
 
-def test_the_two_bounds_are_asked_separately_of_one_night(market, claude, fake_resend, tmp_path, monkeypatch, caplog):
+def test_the_three_bounds_are_asked_separately_of_one_night(market, claude, fake_resend, tmp_path, monkeypatch, caplog):
     caplog.set_level("INFO", logger="spicystock.reader")
     evening(tmp_path / "measure", market)
-    _, canonical = logged(caplog, "Canonical record after delivery")
-    _, projection = logged(caplog, "Reader projection after delivery")
-    assert projection < canonical                     # the projection defers the observations
+    canonical, projection, observations = sizes(caplog, " after delivery")
+    assert projection < canonical and observations < canonical  # the projection defers the observations
     caplog.clear()
-    # each bound at exactly its night's final size: the reader's bound is smaller than the record it
-    # would refuse if it were asked of it, and the night publishes with both files at their bounds
+    # each bound at exactly its night's final size: neither downloaded file's bound is the record's,
+    # and the night publishes with every file at its bound
     monkeypatch.setattr(reader, "MAX_PUBLICATION_BYTES", canonical)
     monkeypatch.setattr(reader, "MAX_READER_BYTES", projection)
+    monkeypatch.setattr(reader, "MAX_OBSERVATION_BYTES", observations)
     rep, data, docs = evening(tmp_path / "night", market)
     assert rep.exit_code() == 0 and rep.published and data["run"]["email"] == "delivered", rep.failure
-    assert len((docs / "data.json").read_bytes()) == canonical > reader.MAX_READER_BYTES
+    assert len((docs / "data.json").read_bytes()) == canonical > max(projection, observations)
     assert len((docs / "reader.json").read_bytes()) == projection
+    ref = reader.check_assets(docs)                  # the committed companions check under the same three bounds
+    assert ref["bytes"] == observations and len((docs / ref["path"]).read_bytes()) == observations
 
 
-def test_a_projection_over_its_bound_is_refused_before_anything_is_installed_and_says_why(market, claude, fake_alpaca, fake_resend, tmp_path, monkeypatch, caplog):
+@pytest.mark.parametrize("which", ["projection", "observations"])
+def test_a_downloaded_file_over_its_bound_is_refused_before_anything_is_installed_and_says_why(which, market, claude, fake_alpaca, fake_resend, tmp_path, monkeypatch, caplog):
     caplog.set_level("INFO", logger="spicystock.reader")
     _, data, docs = evening(tmp_path, market)          # night one publishes everything a night keeps
-    canonical, projection = sizes(caplog)
+    _, projection, observations = sizes(caplog)
     before = snapshot(docs)
     fake_alpaca.add_history("AAA", qframe(ideal_bars(burst_range_pct=0.3, base_range=0.15, prior_range=0.1)))
     caplog.clear()
-    bound = projection // 2
-    monkeypatch.setattr(reader, "MAX_READER_BYTES", bound)        # the canonical bound is left at 48 MiB
-    rep, _, _ = evening(tmp_path, market)              # night two, the same docs, its projection over its bound
+    name, constant, size, words = {
+        "projection": ("Reader projection", "MAX_READER_BYTES", projection, ("reader projection is", "its")),
+        "observations": ("Reader observations", "MAX_OBSERVATION_BYTES", observations, ("reader observations are", "their")),
+    }[which]
+    bound = size // 2
+    monkeypatch.setattr(reader, constant, bound)                  # the canonical bound is left at 48 MiB
+    rep, _, _ = evening(tmp_path, market)              # night two, the same docs, one downloaded file over its bound
     assert rep.exit_code() == pipeline.EXIT_FAILED and not rep.published and rep.stage == "publish"
     assert snapshot(docs) == before                   # nothing pruned, written or installed
-    said = re.search(r"reader projection is (\d+) bytes, over its (\d+)-byte bound", rep.failure)
+    said = re.search(rf"{words[0]} (\d+) bytes, over {words[1]} (\d+)-byte bound", rep.failure)
     assert said and int(said.group(2)) == bound and int(said.group(1)) > bound, rep.failure
-    first, second = logged(caplog, "Canonical record"), logged(caplog, "Reader projection")
-    assert first[0].levelname == "INFO" and first[1] < reader.MAX_PUBLICATION_BYTES
-    assert second[0].levelname == "ERROR" and second[1] == int(said.group(1))
-    assert second[0].getMessage() == (f"Reader projection: {said.group(1)} of {bound} bytes; "
-                                      "over its bound, so the night is refused before anything is installed.")
+    record, line = logged(caplog, "Canonical record"), logged(caplog, name)
+    assert record[0].levelname == "INFO" and record[1] < reader.MAX_PUBLICATION_BYTES
+    assert line[0].levelname == "ERROR" and line[1] == int(said.group(1))
+    assert line[0].getMessage() == (f"{name}: {said.group(1)} of {bound} bytes; "
+                                    f"over {words[1]} bound, so the night is refused before anything is installed.")
     text = _rendered(fake_resend.sent[-1]["html"])
     assert "It stopped at its publish stage" in text and said.group(1) not in text
 

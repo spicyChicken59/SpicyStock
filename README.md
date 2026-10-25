@@ -1763,35 +1763,40 @@ indentation or spaces, key order and UTF-8 kept -- so the 23 October record
 would be 9,992,325 bytes instead of 14,124,268. Earlier canonical records are
 indented, the 14,918,679 above among them; the reader and observation files
 were compact already. The record is bounded at 48 MiB
-(`reader.MAX_PUBLICATION_BYTES`; every reader that bounds the record holds this
-one number, and the browser holds it only as the size `reader.json` may name,
-since the page never downloads the record): the run log states each night's
-record against it, with its bursts and observation bytes, and warns past 80%; a
-record over it refuses the night before anything is installed (exit 1), and the
-run log and the run's failure name the size and the bound. `reader.json`, the
-file the browser does download, has its own bound of 32 MiB
-(`reader.MAX_READER_BYTES`), as its observation sidecar has: the run log states
-each projection against it in a line of its own (*Reader projection:*) and warns
-past 80%, and a projection over it refuses the night the same way, its failure
-naming the projection's size and bound. Until 25 October 2026 one 32 MiB number
-bounded both files. The record's was raised because the record carries the
-observation window, which its projection defers: built from the 22 October
-record, every stock that night measured as scan-ready (3,581) bursting beside a
-full observation window makes a record of 42,926,403 bytes, past the old bound,
-and a projection of 27,351,450 (`tests/test_publication_ceiling.py`, which holds
-that design point inside both bounds and adds the growth the current code writes
-to every burst and observation). Grown further from the same record, the record's
-own bound is reached first, at 4,179 bursts, while every bursting stock keeps a
-full window; with 22 October's observation window held, the projection's bound is
-reached first, at 4,403 (the record's at 5,837). The quality ledger's 8 MiB entry
-is reached at 4,465 either way (6,732,678 bytes at the design point). 48 MiB is under the 50 MiB above which,
+(`reader.MAX_PUBLICATION_BYTES`; every reader that bounds the record as a
+publication holds this one number -- the evidence archive's retention scan reads
+it whole under its own larger 64 MiB -- and the browser holds it only as the size
+`reader.json` may name, since the page never downloads the record): the run log
+states each night's record against it, with its bursts and observation bytes,
+and warns past 80%; a record over it refuses the night before anything is
+installed (exit 1), and the run log and the run's failure name the size and the
+bound. `reader.json`, the file the browser does download, has its own bound of
+32 MiB (`reader.MAX_READER_BYTES`), as its observation sidecar has: the run log
+states each projection against it in a line of its own (*Reader projection:*) and
+the sidecar against its bound in another (*Reader observations:*), warns past
+80% of either, and a file over its bound refuses the night the same way, the
+failure naming that file's size and bound. Until 25 October 2026 one 32 MiB
+number bounded the record and the projection. The record's was raised because
+the record carries the observation window, which its projection defers: built
+from the 22 October record, every stock that night measured as scan-ready
+(3,581) bursting, each with the observation window's whole history and the
+window's signals at that record's own density (1.237 signal identities a stock
+and session), makes a record of 46,640,227 bytes, past the old bound, and a
+projection of 27,351,450 (`tests/test_publication_ceiling.py`, which holds that
+design point inside every bound and adds the growth the current code writes to
+each kind of burst, funnel row and observation entry). Grown further from the
+same record and measured on 25 October 2026: while every bursting stock keeps a
+full window the record's own bound is reached first, at 3,864 bursts; with 22
+October's observation window held, the projection's is, at 4,403 (the record's
+at 5,837). The quality ledger's 8 MiB entry is reached at 4,465 either way
+(6,732,678 bytes at the design point). 48 MiB is under the 50 MiB above which,
 by GitHub's documentation (read as search excerpts), a push is warned. The
-failure notice mailed for either refusal names the `publish` stage, not the size.
-The restamp after delivery writes the record and its projection once more, a few
-bytes longer for the mail's word or its problem, and states each against its
-bound in its own line; should that write alone cross either, the record first
-installed stays, is retained in the recovery catalog and the quality ledger, and
-the run fails after publication (exit 3) under the stage `restamp`.
+failure notice mailed for any of these refusals names the `publish` stage, not
+the size. The restamp after delivery writes the record and its companions once
+more, a few bytes longer for the mail's word or its problem, and states each
+against its bound in its own line; should that write alone cross one, the record
+first installed stays, is retained in the recovery catalog and the quality
+ledger, and the run fails after publication (exit 3) under the stage `restamp`.
 
 New morning receipts derive both canonical and reader hashes from the exact
 canonical source bytes. The browser verifies the actual reader bytes before

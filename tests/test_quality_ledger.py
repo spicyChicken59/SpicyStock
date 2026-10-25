@@ -201,13 +201,13 @@ def test_the_retained_line_states_the_entry_and_the_archive_against_their_bounds
 
 
 @pytest.mark.parametrize('field,size,level', [
-    ('entry', 80, 'INFO'), ('entry', 81, 'WARNING'), ('archive', 80, 'INFO'), ('archive', 81, 'WARNING'),
+    ('entry', 80, 'INFO'), ('entry', 81, 'WARNING'), ('archive', 800, 'INFO'), ('archive', 801, 'WARNING'),
     ('count', 0, 'INFO'), ('count', 1, 'WARNING')])
 def test_the_retained_line_warns_past_eighty_percent_of_any_bound(field, size, level, tmp_path, monkeypatch, caplog):
     from src import quality_ledger as ledger
     caplog.set_level('INFO', logger='src.quality_ledger')
-    monkeypatch.setattr(ledger, 'MAX_ENTRY_BYTES', 100)
-    monkeypatch.setattr(ledger, 'MAX_ARCHIVE_BYTES', 100)
+    monkeypatch.setattr(ledger, 'MAX_ENTRY_BYTES', 100)          # each bound its own number: each size
+    monkeypatch.setattr(ledger, 'MAX_ARCHIVE_BYTES', 1000)       # is read against its own bound alone
     monkeypatch.setattr(ledger, 'MAX_ENTRIES', 5)                  # 80% of five is four
     for i in range(4 + size if field == 'count' else 1):
         (tmp_path / f'{i}.json.gz').write_bytes(b'x' * (size if field == 'archive' else 1))

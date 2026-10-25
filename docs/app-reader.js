@@ -3,8 +3,9 @@
 (function (w) {
   'use strict';
   const api = w.SCStock = w.SCStock || {};
-  // MAX_BYTES bounds every file the page downloads; MAX_CANONICAL_BYTES bounds only the
-  // identity of data.json, which the page never downloads (reader.MAX_PUBLICATION_BYTES).
+  // MAX_BYTES bounds every file this module downloads (reader.json, a direct record, the
+  // sidecar); MAX_CANONICAL_BYTES bounds only the size reader.json names for data.json,
+  // which the page never downloads (reader.MAX_PUBLICATION_BYTES).
   const MAX_BYTES = 32 * 1024 * 1024, MAX_CANONICAL_BYTES = 48 * 1024 * 1024, TIMEOUT_MS = 15000, HEX = /^[a-f0-9]{64}$/;
   const object = value => !!value && typeof value === 'object' && !Array.isArray(value);
   const date = value => typeof value === 'string' && /^\d{4}-\d\d-\d\d$/.test(value) && Number.isFinite(Date.parse(value));

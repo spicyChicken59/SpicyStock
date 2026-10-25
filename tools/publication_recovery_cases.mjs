@@ -43,7 +43,8 @@ export async function checkPublicationRecovery({ browser, check, eq, shotsDir })
         if (step.kind === 'http') { res.writeHead(503); res.end('Controlled unavailable publication.'); return; }
         const body = step.kind === 'malformed' ? Buffer.from('{') : step.kind === 'shape' ? Buffer.from(JSON.stringify({ ...JSON.parse(raw), bursts: {} })) : step.kind === 'utf8' ? Buffer.from([0xff])
           : step.kind === 'bom' ? Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), raw])
-          : step.kind === 'oversize' ? Buffer.alloc(32 * 1024 * 1024 + 1, 32) : step.body || raw;
+          // the accepted bytes padded with JSON whitespace past the download bound: only the size rule refuses them
+          : step.kind === 'oversize' ? Buffer.concat([raw, Buffer.alloc(32 * 1024 * 1024 + 1 - raw.length, 32)]) : step.body || raw;
         res.writeHead(200, { 'content-type': 'application/json', 'content-length': body.length }); res.end(body); return;
       }
       if (url.pathname === '/docs/morning.json') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(morning); return; }

@@ -26,7 +26,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 VERSION = 1
 MAX_RECEIPT_BYTES = 64 * 1024
 MAX_BUNDLE_BYTES = 2 * 1024 * 1024
-MAX_PUBLICATION_BYTES = 48 * 1024 * 1024  # reader.MAX_PUBLICATION_BYTES; this module reads only the stdlib
+MAX_PUBLICATION_BYTES = 48 * 1024 * 1024  # reader.MAX_PUBLICATION_BYTES; receipt and bundle parsing import no src module
 MAX_CANDIDATES = 128
 MAX_ISSUERS = 8
 LOOKBACK_DAYS = 365

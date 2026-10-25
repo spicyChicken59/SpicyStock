@@ -338,7 +338,10 @@ export async function checkReaderTransport({ browser, base, open, check, eq, sho
         large.arrayBuffer = () => { oversizedNativeReads++; return largeNative(); };
         try { await SCStock.reader.read(large); } catch (error) { oversized = /byte limit/.test(error.message); }
         const advertised = new ReadableStream({ start(controller) { controller.enqueue(new Uint8Array([123, 125])); }, cancel() { headerCancelled = true; } });
-        try { await SCStock.reader.read(new Response(advertised, { headers: { 'content-length': String(SCStock.reader.MAX_BYTES + 1) } })); }
+        // The advertised body never ends: a page that let the header through would wait on it, so the
+        // read is raced against a short timer and fails this check by name instead of hanging the suite.
+        try { await Promise.race([SCStock.reader.read(new Response(advertised, { headers: { 'content-length': String(SCStock.reader.MAX_BYTES + 1) } })),
+          new Promise((_, reject) => setTimeout(() => reject(Error('the read waited on a body its header should have refused')), 5000))]); }
         catch (error) { header = /size limit/.test(error.message); }
         const refused = new ReadableStream({ start(controller) { controller.enqueue(new Uint8Array([123, 125])); }, cancel() { statusCancelled = true; } });
         try { await SCStock.reader.read(new Response(refused, { status: 503 })); } catch (error) { /* expected HTTP refusal */ }
@@ -408,7 +411,7 @@ export async function checkReaderTransport({ browser, base, open, check, eq, sho
         attempt('sidecar one byte past', v => { v.retained_observations.bytes = download + 1; });
         return { said, record, download };
       }, next.readerRaw);
-      eq('the page holds the record to 48 MiB and every download to 32 MiB', [sizeBounds.record, sizeBounds.download], [48 * 1024 * 1024, 32 * 1024 * 1024]);
+      eq('the reader module holds the record to 48 MiB and what it downloads to 32 MiB', [sizeBounds.record, sizeBounds.download], [48 * 1024 * 1024, 32 * 1024 * 1024]);
       eq('a reader may name a record up to its own bound, never past it', sizeBounds.said, {
         'record of 40 MiB': 'accepted', 'record at its bound': 'accepted',
         'record one byte past': 'Canonical publication identity is invalid.',
@@ -424,7 +427,7 @@ export async function checkReaderTransport({ browser, base, open, check, eq, sho
       const state = await tab.page.getAttribute('html', 'data-ss-rendered');
       if (rendered) {
         check(`a reader naming a ${bytes}-byte record renders`, state !== 'error');
-        eq(`the ${bytes}-byte record's reader renders its stocks`, await tab.page.evaluate(() => SCStock.data.bursts.length), next.data.bursts.length);
+        eq(`the ${bytes}-byte record's reader renders its stocks`, await tab.page.evaluate(() => SCStock.data && SCStock.data.bursts ? SCStock.data.bursts.length : null), next.data.bursts.length);
         eq(`the ${bytes}-byte record is never downloaded`, tab.requests.filter(r => new URL(r.url).pathname === '/docs/data.json').length, 0);
       } else {
         eq(`a reader naming a ${bytes}-byte record is refused before rendering`, state, 'error');
