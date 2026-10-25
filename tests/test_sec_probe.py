@@ -1,4 +1,4 @@
-"""The SEC access diagnostic: two fixed requests through the collector's transport, no address."""
+"""The SEC access diagnostic: fixed requests through the collector's transport, no address."""
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -49,9 +49,14 @@ class Transport:
         return {"body": answer, "observed_at": AT}
 
 
-def run(answers):
+def run(answers, tickers=("AAPL",)):
     transport = Transport(answers)
-    return probe.probe(transport=transport, clock=lambda: AT), transport
+    return probe.probe(transport=transport, clock=lambda: AT, tickers=tickers), transport
+
+
+def one(result):
+    (issuer,) = result["issuers"]
+    return issuer
 
 
 def test_both_answers_name_the_issuer_and_carry_no_body_or_address():
@@ -59,12 +64,15 @@ def test_both_answers_name_the_issuer_and_carry_no_body_or_address():
     assert transport.calls == [issuer_evidence.MAPPING_URL, SUBMISSIONS]
     assert result["answered"] is True and result["refused_statuses"] == []
     assert result["request_count"] == 2
-    assert [r["phase"] for r in result["requests"]] == ["mapping", "submissions"]
+    assert [r["phase"] for r in result["requests"]] == ["mapping", "submissions:AAPL"]
     assert [r["outcome"] for r in result["requests"]] == ["ok", "ok"]
     assert result["requests"][1]["sha256"] == issuer_evidence._sha(submissions())
     assert result["requests"][1]["bytes"] == len(submissions())
-    assert result["identity"] == {"status": "verified", "cik": CIK, "name": "Apple Inc.", "reason": None}
-    assert result["submissions"] == {"status": "parsed", "filings_in_window": 3, "history_files_advertised": 0}
+    assert one(result)["identity"] == {"status": "verified", "cik": CIK, "name": "Apple Inc.", "reason": None}
+    assert one(result)["submissions"] == {"status": "parsed", "filings_in_window": 3, "history_files_advertised": 0,
+                                          "invalid_count": 0,
+                                          "rejected_rows": {"count": 0, "by_rule": {}, "by_form": {}, "rows": []}}
+    assert result["tickers"] == ["AAPL"] and result["schema"] == "spicystock-sec-probe-v2"
     assert result["sentence"] == "SEC answered all 2 requests from this runner."
     assert result["user_agent"] == {"names_sender": True, "names_contact": True}
     text = json.dumps(result)
@@ -79,7 +87,7 @@ def test_a_refused_mapping_asks_nothing_more_and_names_its_status():
     assert result["answered"] is False and result["refused_statuses"] == [403]
     assert result["requests"] == [{"phase": "mapping", "url": issuer_evidence.MAPPING_URL, "outcome": "http_error",
                                    "http_status": 403, "bytes": None, "sha256": None, "checked_at": None}]
-    assert result["identity"]["status"] == result["submissions"]["status"] == "not_reached"
+    assert one(result)["identity"]["status"] == one(result)["submissions"]["status"] == "not_reached"
     assert result["sentence"] == "SEC did not answer the mapping request from this runner: HTTP 403."
 
 
@@ -87,9 +95,9 @@ def test_a_refused_submissions_request_is_named_after_a_verified_identity():
     result, transport = run({issuer_evidence.MAPPING_URL: mapping(),
                              SUBMISSIONS: issuer_evidence.SourceError("rate_limit", http_status=429)})
     assert transport.calls == [issuer_evidence.MAPPING_URL, SUBMISSIONS]
-    assert result["identity"]["status"] == "verified" and result["submissions"]["status"] == "unavailable"
+    assert one(result)["identity"]["status"] == "verified" and one(result)["submissions"]["status"] == "unavailable"
     assert result["answered"] is False and result["refused_statuses"] == [429]
-    assert result["sentence"] == "SEC did not answer the submissions request from this runner: HTTP 429."
+    assert result["sentence"] == "SEC did not answer the submissions:AAPL request from this runner: HTTP 429."
 
 
 def test_a_network_failure_has_no_status_and_says_so():
@@ -101,12 +109,12 @@ def test_a_network_failure_has_no_status_and_says_so():
 def test_an_answer_that_does_not_establish_the_issuer_is_not_access():
     result, transport = run({issuer_evidence.MAPPING_URL: mapping(rows=((789019, "MICROSOFT CORP", "MSFT", "Nasdaq"),))})
     assert transport.calls == [issuer_evidence.MAPPING_URL]
-    assert result["identity"] == {"status": "unverified", "cik": None, "name": None, "reason": "identity_unverified"}
+    assert one(result)["identity"] == {"status": "unverified", "cik": None, "name": None, "reason": "identity_unverified"}
     assert result["answered"] is False
-    assert result["sentence"] == "SEC answered, and the answer did not establish the fixed issuer."
+    assert result["sentence"] == "SEC answered, and the answer did not establish every fixed issuer (AAPL)."
     other, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: submissions(tickers=("MSFT",))})
-    assert other["submissions"]["status"] == "invalid" and other["answered"] is False
-    assert other["sentence"] == "SEC answered, and the answer did not establish the fixed issuer."
+    assert one(other)["submissions"]["status"] == "invalid" and other["answered"] is False
+    assert other["sentence"] == "SEC answered, and the answer did not establish every fixed issuer (AAPL)."
     empty, _ = run({issuer_evidence.MAPPING_URL: b""})
     assert empty["requests"][0]["outcome"] == "invalid_response" and empty["answered"] is False
 
@@ -177,3 +185,117 @@ def test_a_clock_that_moves_backwards_is_refused():
     with pytest.raises(ValueError, match="backwards"):
         probe.probe(transport=Transport({issuer_evidence.MAPPING_URL: issuer_evidence.SourceError("timeout")}),
                     clock=lambda: next(ticks))
+
+
+ZIM_CIK = 1654126
+ZIM_SUBMISSIONS = f"https://data.sec.gov/submissions/CIK{ZIM_CIK:010d}.json"
+
+
+def rows_submissions(rows, cik=CIK, tickers=("AAPL",)):
+    """A submissions answer whose recent rows are given whole, one dict a row."""
+    keys = ("accessionNumber", "filingDate", "reportDate", "acceptanceDateTime", "form", "items", "primaryDocument")
+    recent = {key: [row[key] for row in rows] for key in keys}
+    recent["size"] = [1 for _ in rows]  # another parallel SEC column the collector reads past
+    return json.dumps({"cik": str(cik), "tickers": list(tickers), "filings": {"recent": recent, "files": []}}).encode()
+
+
+def good_row(n, **changes):
+    day = (AT.date() - timedelta(days=5 + n)).isoformat()
+    row = {"accessionNumber": f"0000320193-26-{n + 1:06d}", "filingDate": day, "reportDate": day,
+           "acceptanceDateTime": f"{day}T16:30:00.000Z", "form": "8-K", "items": "2.02,9.01",
+           "primaryDocument": f"doc{n}.htm"}
+    row.update(changes)
+    return row
+
+
+# One row per rule, each failing only that rule, in the collector's order.
+REFUSED = [
+    ("accepted_at", good_row(1, acceptanceDateTime="2026-10-01 16:30:00"), "2026-10-01 16:30:00"),
+    ("accession", good_row(2, accessionNumber="0000320193-26-12"), "0000320193-26-12"),
+    ("form", good_row(3, form="X" * 33), "X" * 33),
+    ("primary_document", good_row(4, form="4", primaryDocument="xslF345X05/wf-form4.xml"), "xslF345X05/wf-form4.xml"),
+    ("primary_document", good_row(5, form="SCHEDULE 13G/A", primaryDocument=""), ""),
+    ("items", good_row(6, items=None), "<null>"),
+    ("filing_date", good_row(7, filingDate="2026-9-30"), "2026-9-30"),
+    ("report_date", good_row(8, reportDate="2026-02-30"), "2026-02-30"),
+    ("future_acceptance", good_row(9, acceptanceDateTime="2026-10-19T13:31:00Z"), "2026-10-19T13:31:00Z"),
+    ("future_filing_date", good_row(10, filingDate="2026-10-20"), "2026-10-20"),
+]
+
+
+def test_each_refused_row_is_named_by_the_rule_the_collector_refused_it_under():
+    rows = [good_row(0)] + [row for _, row, _ in REFUSED]
+    raw = rows_submissions(rows)
+    parsed = issuer_evidence.parse_submissions(raw, CIK, "AAPL", AT)
+    assert parsed["invalid_count"] == len(REFUSED) and len(parsed["filings"]) == 1
+    result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: raw})
+    submissions = one(result)["submissions"]
+    assert submissions["status"] == "parsed" and submissions["invalid_count"] == len(REFUSED)
+    rejected = submissions["rejected_rows"]
+    assert rejected["count"] == len(REFUSED)
+    assert [(r["rule"], r["value"]) for r in rejected["rows"]] == [(rule, value) for rule, _, value in REFUSED]
+    assert [r["form"] for r in rejected["rows"]] == [row["form"] for _, row, _ in REFUSED]
+    assert rejected["by_rule"] == {rule: sum(1 for r, _, _ in REFUSED if r == rule) for rule, _, _ in REFUSED}
+    assert rejected["by_form"] == {"4": 1, "8-K": 7, "SCHEDULE 13G/A": 1, "X" * 33: 1}
+    assert list(rejected["by_rule"]) == sorted(rejected["by_rule"])
+    assert {rule for rule, _, _ in REFUSED} == set(probe.ROW_RULES)
+
+
+def test_the_rules_are_asked_in_the_collectors_order():
+    # A row failing two rules is named by the first the collector asks.
+    both = good_row(1, accessionNumber="bad", primaryDocument="a/b.xml")
+    result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: rows_submissions([good_row(0), both])})
+    assert one(result)["submissions"]["rejected_rows"]["rows"] == [{"form": "8-K", "rule": "accession", "value": "bad"}]
+
+
+def test_a_refused_value_is_printed_in_its_own_characters_only_and_bounded():
+    assert probe.shown("xslF345X05/wf-form4_1.xml") == "xslF345X05/wf-form4_1.xml"
+    assert probe.shown("a b:c+d-e.f") == "a b:c+d-e.f"
+    assert probe.shown("x@y.z\n<script>") == "x?y.z??script?"
+    assert probe.shown("z" * 200) == "z" * probe.MAX_VALUE_CHARS + "..."
+    assert probe.shown(None) == "<null>" and probe.shown(7) == "<int>" and probe.shown(["a"]) == "<list>"
+    leaky = good_row(1, primaryDocument="someone@example.com.htm")
+    result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: rows_submissions([leaky])})
+    assert one(result)["submissions"]["rejected_rows"]["rows"][0]["value"] == "someone?example.com.htm"
+    assert "@" not in json.dumps(result)
+
+
+def test_every_refused_row_is_counted_and_only_the_first_are_printed():
+    many = [good_row(i, form="4", primaryDocument=f"xslF345X05/f{i}.xml") for i in range(probe.MAX_REJECTED_ROWS + 5)]
+    result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: rows_submissions(many)})
+    rejected = one(result)["submissions"]["rejected_rows"]
+    assert rejected["count"] == len(many) == one(result)["submissions"]["invalid_count"]
+    assert len(rejected["rows"]) == probe.MAX_REJECTED_ROWS
+    assert rejected["rows"][-1]["value"] == f"xslF345X05/f{probe.MAX_REJECTED_ROWS - 1}.xml"
+    assert rejected["by_form"] == {"4": len(many)} and rejected["by_rule"] == {"primary_document": len(many)}
+
+
+def test_rules_that_drift_from_the_collectors_are_said_and_never_read_as_access(monkeypatch):
+    raw = rows_submissions([good_row(0), good_row(1, primaryDocument="xslF345X05/f.xml")])
+    monkeypatch.setattr(probe, "row_problem", lambda columns, i, as_of: None)
+    result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: raw})
+    submissions = one(result)["submissions"]
+    assert submissions["status"] == "classification_mismatch" and submissions["invalid_count"] == 1
+    assert submissions["rejected_rows"]["count"] == 0
+    assert result["answered"] is False
+    assert result["sentence"] == "SEC answered, and the answer did not establish every fixed issuer (AAPL)."
+
+
+def test_the_fixed_issuers_are_asked_after_one_mapping():
+    two = mapping(rows=((CIK, "Apple Inc.", "AAPL", "Nasdaq"), (ZIM_CIK, "ZIM Integrated Shipping Services Ltd.", "ZIM", "NYSE")))
+    zim = rows_submissions([good_row(0, accessionNumber="0001178913-26-004777", form="6-K", items="")],
+                           cik=ZIM_CIK, tickers=("ZIM",))
+    transport = Transport({issuer_evidence.MAPPING_URL: two, SUBMISSIONS: submissions(), ZIM_SUBMISSIONS: zim})
+    result = probe.probe(transport=transport, clock=lambda: AT)
+    assert probe.TICKERS == ("AAPL", "ZIM") and result["tickers"] == ["AAPL", "ZIM"]
+    assert transport.calls == [issuer_evidence.MAPPING_URL, SUBMISSIONS, ZIM_SUBMISSIONS]
+    assert result["request_count"] == 3 and result["answered"] is True
+    assert [i["ticker"] for i in result["issuers"]] == ["AAPL", "ZIM"]
+    assert [i["identity"]["cik"] for i in result["issuers"]] == [CIK, ZIM_CIK]
+    assert result["sentence"] == "SEC answered all 3 requests from this runner."
+    # An issuer the mapping does not name is asked nothing and names itself.
+    other = Transport({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: submissions()})
+    partial = probe.probe(transport=other, clock=lambda: AT)
+    assert other.calls == [issuer_evidence.MAPPING_URL, SUBMISSIONS]
+    assert partial["issuers"][1]["identity"]["status"] == "unverified" and partial["answered"] is False
+    assert partial["sentence"] == "SEC answered, and the answer did not establish every fixed issuer (ZIM)."

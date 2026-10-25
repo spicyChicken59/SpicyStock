@@ -16,7 +16,7 @@ on:
         required: false
         default: true
       probe_sec:
-        description: "Ask SEC once for its ticker mapping and one fixed issuer's submissions, as a transport diagnostic printed to the log; needs dry_run, publishes nothing and collects no candidate."
+        description: "Ask SEC for its ticker mapping and each fixed issuer's submissions (AAPL, ZIM), as a transport diagnostic printed to the log that names any index rows the collector's row rules refuse; needs dry_run, publishes nothing and collects no candidate."
         type: boolean
         required: false
         default: false

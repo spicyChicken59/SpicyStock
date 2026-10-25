@@ -1468,18 +1468,24 @@ so the collector asks SEC nothing, and a red week can pass without showing
 whether SEC answers the named contact. A manual dispatch of
 `issuer-evidence.yml` with **dry_run** and **probe_sec** ticked runs
 `tools/probe_sec_access.py` instead of a collection: one request for the
-ticker mapping and one for a fixed issuer's submissions (AAPL), through the
-collector's own transport -- its User-Agent, spacing, deadline, refused
-redirects and size bounds, and no cache, so a cached mapping cannot answer for
-today. It prints its result to the job log and keeps it as a 14-day artifact:
-each request's outcome, HTTP status, bytes and digest, whether the issuer's
-identity was established, and whether the User-Agent names a sender and a
-contact (never the address). It binds no publication, collects no candidate,
-writes nothing under `docs/` and is never persisted. Its first run, from a
-runner on 18 October 2026 (run 39095391329), got both answers -- the mapping
-(523,925 bytes) and AAPL's submissions (163,690 bytes), the identity
-established -- so the refusal recorded through 16 October is not what SEC
-gives the named contact; a collection with candidates has yet to show it.
+ticker mapping and one for each fixed issuer's submissions (AAPL, a domestic
+filer; ZIM, a foreign private issuer), through the collector's own transport --
+its User-Agent, spacing, deadline, refused redirects and size bounds, and no
+cache, so a cached mapping cannot answer for today. It prints its result to the
+job log and keeps it as a 14-day artifact: each request's outcome, HTTP status,
+bytes and digest, whether each issuer's identity was established, and whether
+the User-Agent names a sender and a contact (never the address). For each
+issuer it also names the rows of SEC's recent index the collector's row rules
+refuse (a refused row makes a collection `partial` on `metadata_invalid`):
+every one counted by rule and by form, and the first 24 with the refused
+field's value spelled only in the characters such a field carries. It binds no
+publication, collects no candidate, writes nothing under `docs/` and is never
+persisted. Its first run, from a runner on 18 October 2026 (run 39095391329),
+got both answers -- the mapping (523,925 bytes) and AAPL's submissions
+(163,690 bytes), the identity established -- so the refusal recorded through
+16 October is not what SEC gives the named contact. The first collection with
+a candidate, for ZIM on 24 October, was answered too: its identity was
+verified and its index read, `partial` on `metadata_invalid`.
 
 `issuer-evidence.yml` follows an actual committed evening or morning publication;
 the guard identifies the parent by its exact workflow file path, then checks
@@ -2303,7 +2309,7 @@ knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose 
                 broker-fidelity.md (the ticket on Fidelity's order entry; each fact labelled Fidelity's words, a regulator's words, inferred, unconfirmed or SpicyStock's advice)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py · publish_morning.py · probe_morning_sources.py · sync_morning_service.py
-                probe_sec_access.py (a dispatch-only diagnostic: two fixed SEC requests through the issuer collector's transport, printed to the log; never published)
+                probe_sec_access.py (a dispatch-only diagnostic: fixed SEC requests through the issuer collector's transport, and the index rows its row rules refuse, printed to the log; never published)
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)
                 entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)
                 historical_backtest.py (offline: the run's own stages replayed over a recovered archive; reader not run)
