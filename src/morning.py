@@ -19,7 +19,7 @@ import tempfile
 from src import event_risk, market_data, morning_halts, plan, provenance, reader, sessions, timing
 
 VERSION = 1
-MAX_PUBLICATION_BYTES = 32 * 1024 * 1024
+MAX_PUBLICATION_BYTES = reader.MAX_PUBLICATION_BYTES
 MAX_OBSERVATION_BYTES = 512 * 1024
 MAX_ROWS = 64
 MAX_CONDITIONS = 32

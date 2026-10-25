@@ -428,13 +428,30 @@ def test_the_readme_and_the_env_example_quote_the_canonical_bound_from_the_modul
     from src import reader
     text = re.sub(r"\s+", " ", README)
     mib = reader.MAX_PUBLICATION_BYTES // (1024 * 1024)
+    from src import provenance, quality_ledger
+    scan = provenance.RETENTION_SCAN_BYTES // (1024 * 1024)
     assert (f"The record is bounded at {mib} MiB (`reader.MAX_PUBLICATION_BYTES`; every reader that bounds "
-            f"the record, and the browser, hold this one number): the run log states each night's record "
+            f"the record as a publication holds this one number -- the evidence archive's retention scan reads "
+            f"it whole under its own larger {scan} MiB -- and the browser holds it only as the size `reader.json` "
+            f"may name, since the page never downloads the record): the run log states each night's record "
             f"against it, with its bursts and observation bytes, and warns past "
             f"{reader.PUBLICATION_WARN_FRACTION:.0%}") in text
+    assert scan > mib
+    projection = reader.MAX_READER_BYTES // (1024 * 1024)
+    assert (f"`reader.json`, the file the browser does download, has its own bound of {projection} MiB "
+            f"(`reader.MAX_READER_BYTES`), as its observation sidecar has: the run log states each projection "
+            f"against it in a line of its own (*Reader projection:*) and the sidecar against its bound in another "
+            f"(*Reader observations:*), warns past {reader.PUBLICATION_WARN_FRACTION:.0%} of either") in text
+    assert ("failure naming that file's size and bound. Both lines are written only for a record within its own "
+            "bound, since the projection is made from it after that bound is asked; when both files are over "
+            "theirs, the sidecar's is the bound named.") in text
+    assert reader.MAX_OBSERVATION_BYTES == reader.MAX_READER_BYTES       # "as its observation sidecar has"
+    assert (f"The run log states each retained entry (expanded) and the archive against these bounds and "
+            f"warns past {quality_ledger.WARN_FRACTION:.0%} of any.") in text
     env = re.sub(r"\s*#\s*", " ", (ROOT / ".env.example").read_text())
     assert (f"docs/data.json is written compact; past {reader.PUBLICATION_WARN_FRACTION:.0%} of its "
             f"{mib} MiB bound the run log warns") in env
+    assert f"reader.json, which the browser downloads, keeps its own {projection} MiB bound" in env
 
 
 def test_the_readme_and_the_env_example_quote_the_source_recovery_bounds_from_the_module():

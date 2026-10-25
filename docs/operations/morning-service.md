@@ -170,6 +170,16 @@ limited to two seconds each. The parent accepts at most 4 KiB of structured chil
 output. A timeout can coincide with an already completed atomic ingestion, so
 it reports unknown completion rather than claiming a rollback. The next
 synchronization rechecks committed source identity and deduplicates normally.
+The canonical record it downloads may be 48 MiB (`reader.MAX_PUBLICATION_BYTES`,
+32 MiB until 25 October 2026). Carrying that inside the 30-second deadline needs
+about 13 Mbit/s for the transfer alone; the same deadline also covers the
+record's validation (`morning.bind_record()`): on the build sandbox's CPU about
+2 seconds for the 22 October record (13.7 MB written compact, 988 bursts; the
+provenance replay 1.2 seconds of it), a cost that grows with the bursts --
+parsing and projecting the 46.6 MB design point alone take about 4 seconds,
+before the replay, which cannot run on a synthetic record. Ingestion validates
+it again inside the 35-second supervisor. No deployed host has been measured at either. A download
+that misses the deadline is refused like any other timeout.
 
 The SQLite poll ledger reserves the next allowed time before source requests.
 Normally completed success/failure records include the request count; interrupted
