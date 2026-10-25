@@ -12,6 +12,12 @@ const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2' };
 const field = (page, key) => page.locator('[data-handoff-field="' + key + '"]');
 const waitOutcome = (page, state) => page.waitForFunction(want => document.querySelector('#refresh-said')?.dataset.outcome === want, state, { timeout: DEADLINE + 6000 });
+// The outcome a read settled on, whatever it is: a case that expects a refusal then fails by name
+// when the page accepted the bytes, instead of waiting out a deadline for an outcome that never comes.
+const settled = async page => {
+  await page.waitForFunction(() => { const o = document.querySelector('#refresh-said')?.dataset.outcome; return !!o && o !== 'checking'; }, null, { timeout: DEADLINE + 6000 });
+  return page.evaluate(() => document.querySelector('#refresh-said').dataset.outcome);
+};
 const stored = page => page.evaluate(key => localStorage.getItem(key), KEY);
 async function closed(request) {
   let timer;
@@ -170,10 +176,12 @@ export async function checkPublicationRecovery({ browser, check, eq, shotsDir })
         await page.route('**/app-morning.js', route => route.fulfill({ contentType: 'text/javascript', body: source + '\n' +
           '{ const render = SCStock.morning.render; SCStock.morning.render = function(...args) { SCStock.morning.render = render; throw Error("Controlled initial renderer failure."); }; }' }));
       } : undefined }), { page } = tab;
-      await waitOutcome(page, 'failed');
+      const outcome = await settled(page);
+      eq(kind + ': the refused read settles as failed', outcome, 'failed');
       eq(kind + ': initial failure is explicitly unavailable, including a partial render', await page.getAttribute('html', 'data-ss-rendered'), 'error');
       check(kind + ': startup refusal retains usable retry', await page.locator('#check-updates').isVisible() && !(await page.locator('#check-updates').isDisabled()));
       check(kind + ': startup refusal has no current entry authority', await noAuthority(page));
+      if (outcome !== 'failed') { await close(tab); continue; }   // accepted, so the retry below has nothing to recover
       if (kind === 'render-fault') {
         await page.evaluate(() => new Promise(resolve => {
           window.addEventListener('hashchange', () => resolve(), { once: true });
