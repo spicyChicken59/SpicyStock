@@ -42,8 +42,11 @@ FIXTURE = ROOT / "tests/fixtures/page/red.json"
 #: The bursts the tripwire reads: red.json's four that no review selected and no plan carries.
 FIXTURE_ROWS = ("AMD", "NVDA", "PLUG", "DLLR")
 #: Each component's (count, compact bytes) on the regenerated red.json the day the ceiling was
-#: measured; bursts with their series removed, symbols with their history emptied.
+#: measured; bursts with their series removed, symbols with their history emptied. That red.json
+#: is the blob below, read out of git at the commit (on main) that wrote it, by its whole id.
 BASELINE = {"burst": (4, 28641), "funnel_row": (6, 203), "signal": (7, 1027), "bar": (10, 1424), "symbol": (10, 1172)}
+BASELINE_COMMIT = "3ee0e427ecb42a972715736cd893e74ab8bedfaa"
+BASELINE_BLOB = "579481ffe341f904568bc38d237cdf179d567269"
 
 
 def compact(value) -> bytes:
@@ -61,24 +64,28 @@ def written(data) -> bytes:
     return compact(data) + b"\n"
 
 
-@pytest.fixture(scope="module")
-def frozen() -> dict:
-    """The 22 October record, read out of git by commit and held to its blob;
-    fetched when the checkout lacks it, and never skipped."""
+def at_commit(commit: str, path: str, blob: str) -> bytes:
+    """A file read out of git by commit and held to its blob; the commit is
+    fetched when the checkout lacks it, and the test is never skipped."""
     def present() -> bool:
-        return subprocess.run(["git", "cat-file", "-e", f"{COMMIT}^{{commit}}"],
+        return subprocess.run(["git", "cat-file", "-e", f"{commit}^{{commit}}"],
                               cwd=ROOT, capture_output=True).returncode == 0
     if not present():
-        done = subprocess.run(["git", "fetch", "--quiet", "--no-tags", "--depth=1", "origin", COMMIT],
+        done = subprocess.run(["git", "fetch", "--quiet", "--no-tags", "--depth=1", "origin", commit],
                               cwd=ROOT, capture_output=True, text=True)
         assert done.returncode == 0 and present(), \
-            f"the 22 October publication is not in this checkout and could not be fetched: {done.stderr.strip()}"
-    blob = subprocess.run(["git", "rev-parse", f"{COMMIT}:docs/data.json"], cwd=ROOT,
-                          capture_output=True, text=True, check=True).stdout.strip()
-    assert blob == BLOB, blob
-    raw = subprocess.run(["git", "cat-file", "-p", f"{COMMIT}:docs/data.json"], cwd=ROOT,
-                         capture_output=True, check=True).stdout
-    return json.loads(raw)
+            f"{commit} is not in this checkout and could not be fetched: {done.stderr.strip()}"
+    found = subprocess.run(["git", "rev-parse", f"{commit}:{path}"], cwd=ROOT,
+                           capture_output=True, text=True, check=True).stdout.strip()
+    assert found == blob, found
+    return subprocess.run(["git", "cat-file", "-p", f"{commit}:{path}"], cwd=ROOT,
+                          capture_output=True, check=True).stdout
+
+
+@pytest.fixture(scope="module")
+def frozen() -> dict:
+    """The 22 October record."""
+    return json.loads(at_commit(COMMIT, "docs/data.json", BLOB))
 
 
 # --- the growth tripwires -------------------------------------------------------
@@ -249,6 +256,27 @@ def test_each_bound_can_be_crossed_by_the_growth_the_tripwires_carry(measured):
     assert fits(projected(measured, half)) == (False, True, True)                # neither alone, both together
     room = {**NONE, "burst": -(sidecar_room // n["burst"] + 1), "signal": sidecar_room // n["signal"] + 1}
     assert fits(projected(measured, room)) == (True, True, False)               # the sidecar's own bound
+
+
+def test_the_baselines_are_the_fixture_they_were_measured_on():
+    """Measured again, the red.json the ceiling was measured against gives every
+    baseline exactly: a tripwire that read a component another way would not."""
+    assert components(json.loads(at_commit(BASELINE_COMMIT, "tests/fixtures/page/red.json", BASELINE_BLOB))) == BASELINE
+
+
+def test_each_components_growth_lands_in_the_files_that_carry_it_once_an_entry(measured):
+    """A byte on every burst or funnel row lands in the record and the projection
+    once a burst; a byte on every signal, history bar or symbol in the record and
+    the sidecar once an entry of its own."""
+    data, *_ = measured
+    n, start = counts(data), projected(measured, NONE)
+    symbols = data["observations"]["symbols"]
+    assert n["bar"] == sum(len(v["history"]) for v in symbols.values()) == 16 * n["symbol"]
+    assert n["funnel_row"] == n["burst"] and n["signal"] == len(data["observations"]["signals"])
+    for name in BASELINE:
+        moved = [after - before for after, before in zip(projected(measured, {**NONE, name: 1}), start)]
+        reader_side = name in ("burst", "funnel_row")
+        assert moved == [n[name], n[name] if reader_side else 0, 0 if reader_side else n[name]], name
 
 
 @pytest.mark.parametrize("name", list(BASELINE))
