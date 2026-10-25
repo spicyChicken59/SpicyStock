@@ -12569,3 +12569,199 @@ bot that moves the pins.
 **Not claimable:** the first night under the constraints (the first workflow to
 install them after the merge); the first real night under the four storage
 rules (Monday 26 October); a morning or research observation; any trading edge.
+
+## Checkpoint, 25 Oct 2026 -- PR #199 accepted; the record the browser never downloads bounded apart from the files it does
+
+**PR #199, accepted.** Merged as `d9e2e9c3` on `main` with a merge commit over
+`39627bf0`. Its diff touched nothing under `docs/`, so the publisher did not
+fire, correctly (as at #64, #174, #177, #197 and #198). Pages 40141038953
+deployed. The merge commit's own Secret scan 40141038652 and Tests run
+40141038602 (23:01-23:30 UTC on 24 October) passed. The first workflow to
+install the constraints is Monday's morning dispatch or evening run.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` from `main` at
+`d9e2e9c3`, pushed as **PR #200**. Changed:
+- `src/reader.py`, with its copies of the bound in `src/morning.py`,
+  `src/issuer_evidence.py`, `tools/publish_issuer_evidence.py` and
+  `docs/app-reader.js`;
+- `src/quality_ledger.py` (a log line and two refusal sentences);
+- the tests and two browser suites;
+- README, `.env.example` and the two operations documents.
+
+No rule moved: `rules_version` stands and no fixture was regenerated.
+`docs/data.json`, `docs/picks.json`, every receipt, the history, the evidence
+objects, the quality ledger, the workflows and the vendored design system are
+untouched. No run, mail, dispatch, provider call or credential. `.env.example`
+was swept for the new bound.
+
+**Why.** One 32 MiB number (`reader.MAX_PUBLICATION_BYTES`) bounded the
+canonical `data.json`, which the browser never downloads, and `reader.json`, its
+projection, which it does. The record carries the observation window the
+projection defers to its sidecar, so the record reached the bound first. A
+night over it was refused at `publish` after every paid call. On 22 October (988
+bursts, the most yet) the record was 13.7 MB compact, the observations 5.9 MB of
+it.
+
+A read-only design workflow (wf_6c3ed3bc-a5d) compared three designs:
+- (A) pack each burst and hydrate it in the browser;
+- (B) shed the low-ranked bursts' detail into evidence objects;
+- (C) split the bound.
+
+It ran three measurements, the three designs and two judges. Both judges chose
+C: no schema, identity or browser change.
+
+**The rule.**
+- **The record**, which only the readers of a publication read, is bounded at
+  48 MiB. Its copies hold the one number: the morning, issuer and stop-research
+  readers, the issuer publisher, and the browser, which holds it only as the
+  size `reader.json` may name. The evidence archive's retention scan reads it
+  whole under its own 64 MiB.
+- **`reader.json` and its sidecar** keep 32 MiB each (`MAX_READER_BYTES`,
+  `MAX_OBSERVATION_BYTES`).
+- **`derive()`** asks the record's bound before it projects, then the sidecar's,
+  then the projection's, each refusal naming the file's size and bound.
+- **The run log** states every projection a record within its bound makes, in
+  two lines (*Reader projection:*, *Reader observations:*), at the first staging
+  and after delivery (`log_projection()`). It warns past 80% of either.
+- **The quality ledger's** retained line states the entry (expanded) and the
+  archive against their bounds, warning past 80% of any. A capture a bound
+  refused names the sizes in its `quality_ledger_capture_failed` log line, and
+  no other exception's text is quoted.
+
+**The design point, and how far it reaches.** `tests/test_publication_ceiling.py`
+builds it from the real 22 October publication (`fb70e706`, fetched by whole
+id): every stock that night measured as scan-ready (3,581) bursts, and every
+stock carries the window's whole history. Every stock and session holds the
+record's own 1.237 signal identities for each stock and session that carried
+one.
+
+It is one chosen point, not the largest night that population can make: a
+stock and session of that record carries up to four signal identities.
+
+| at the design point | bytes |
+|---|---|
+| record | 46,640,227 (past the old bound) |
+| projection | 27,351,450 |
+| sidecar | 19,289,227 |
+| ledger entry | 6,732,678 (with no scorecard rows or exception membership) |
+
+The frozen record cannot see what the current code adds, so tripwires read
+the regenerated `red.json` against what it was at `3ee0e427`:
+- an unreviewed, unplanned burst, a funnel row, a signal, a history bar and a
+  symbol entry, each added once an entry;
+- the rules, added once;
+- the ledger's candidate, once a burst;
+- the rest of the record and of its ledger entry, as if it came once a burst.
+  That overestimates anything written once a night; a fixed addition of about
+  6 KB to the record's rest, or 3 KB to the ledger's, asks for a re-measure.
+
+The headroom left a burst is 1,031 bytes in the record and 462 in the ledger
+entry. The crossings are computed from the bytes each further burst appends,
+and held to a real build at the burst before two of them:
+- while every bursting stock keeps a full window, the record's bound is reached
+  first, at 3,864 bursts;
+- with 22 October's window held, the projection's is reached first, at 4,403,
+  and the record's at 5,837;
+- the ledger's 8 MiB entry is reached at 4,465 either way.
+
+**Two reviews by execution, every finding reproduced here before it was
+touched.**
+
+*The first review*, over `fccb5ad0`, had four lenses: the tests, the consumers,
+the words and the ledger. It returned 25 findings. 17 of its 50 skeptic
+verdicts had arrived after about two and a half hours, every one upheld. The
+run was stopped there and all 25 were reproduced and fixed (`3d819170` to
+`f5614088`). They included:
+- the sidecar's bound could now refuse a night before the record's, naming no
+  size and writing no log line;
+- the "full window" design point left 1,845 of its 3,581 symbols short, so it
+  built 42,926,403 bytes where a full one is 46,640,227;
+- the observation tripwire under-projected a signal's growth by half;
+- no browser check failed by name when the download bound was raised: one suite
+  hung to its timeout and the other passed for another reason;
+- the count line;
+- the morning report's 256 MiB read bound, and the sync's 30-second deadline
+  counting only the transfer.
+
+*The second review*, over `f5614088`, had three lenses and a completeness
+critic. It returned 19 findings, 17 distinct, and its skeptics upheld every
+one:
+- the tripwires read five components, so a new per-candidate block anywhere
+  else in the record (the way the funnel came on 11 October) moved nothing;
+- the ledger entry, which copies each check's whole values, the reader block,
+  the review selection and the gate, was not projected at all, and has less
+  than half the record's headroom a burst;
+- the README's crossings, density and the report's counts were held by no test;
+- no test held the sidecar-first order;
+- no test held the retained line's entry filter;
+- nine sentences said more than the code. The ones that mattered: "the largest
+  night"; a density called per stock and session that is per stock and session
+  that carried one; a failure notice said to come with a ledger refusal that
+  changes no exit; sizes said to sit beside a word that is only in the log; and
+  a validation time naming no record.
+
+Commit `fccb5ad0`'s message keeps two statements the review superseded. Its
+42,926,403 is 46,640,227 from `3d819170` on. And it says "app-reader.js moves
+to 48 MiB": only the size `reader.json` names moved; every download stays at
+32 MiB.
+
+**Mutation passes**, each mutant in a detached worktree and judged by the whole
+test files naming its rule:
+- over `fccb5ad0`: 28 mutants, all dead, both controls alive;
+- over `3d819170`: 19 mutants; 16 dead and three survivors, each a hole:
+  - a signal tripwire measured without its key;
+  - a projection that ignored funnel rows;
+  - bars counted as symbols.
+  All three die at `f5614088`;
+- over `8cd1591e`: 17 mutants over the second review's rules -- the
+  sidecar-first order, the retained line's filter, the ledger left out of the
+  fits, each tripwire's landing and spread, the crossing arithmetic, two data
+  mutants in the fixture (a 600-byte check value, a per-candidate run block)
+  and three documents. 16 died at once, with **one survivor, a hole**: the
+  signal arithmetic shifted one index late passed, because at 3,863 bursts the
+  two entries the shift trades are both 152 bytes, so the real build there
+  could not see it, though the shift moves 136 of the 282 steps before it (the
+  second shape this file names). Every step to the crossing is now held to the
+  real build's own entries (`360e9190`), and the shifted arithmetic dies at the
+  first step it moves. Of the three controls, one first failed for a harness
+  defect of mine: it wrote its 2 KB under the test's own `added_by_a_later_build`
+  key, which the tripwire's mutation then overwrote. Under a key of its own it
+  survives, as do the other two (a comment in `reader.py` and in
+  `quality_ledger.py`). One README mutant first missed its anchor on a line
+  break; re-run, it died.
+
+**Measured** (this sandbox, Python 3.12.3): the full suite on `8cd1591e`, run
+on a committed worktree, 5349 passed and 34 environment-gated skips in
+22 m 06 s (5383 collected, the count line); `360e9190` added assertions to one
+test and no test, and `tests/test_publication_ceiling.py` and
+`tests/test_docs.py` 68 passed on it. CI on `f5614088` passed all
+seven checks (Tests run 40152946712: pytest, page, the gate, the native central
+and stress cases; both gitleaks runs). The browser's reader suite is 125/125 and
+the publication-recovery suite 138/138.
+
+**Keep / fix / defer / omit.**
+- *Keep:* the record's bound is one number every reader of the record holds,
+  and the browser downloads nothing over 32 MiB.
+- *Fix if it bites:*
+  - At the design point the morning journal keeps at most 23 publications in
+    its 1 GiB, their receipts and events sharing it, and a report reads at most
+    five. Revisit both before the host runs across a thrust stretch.
+  - A 27 MB `reader.json` is what a phone downloads on every load at the design
+    point.
+  - The ledger's 8 MiB entry is the next bound a growing night reaches (4,465
+    bursts, fewer with a night's scorecard rows).
+- *Defer:* the two options that would give the record more room per burst:
+  factoring out each burst's constant check fields (about 1.15 KB a burst), and
+  compacting the observations.
+- *Omit:* a larger bound for the files the browser downloads.
+
+GitHub's 50 MiB push warning was read off search excerpts only.
+
+**Not claimable:**
+- a night past 32 MiB, or Pages and the publication gate serving one;
+- the undeployed morning host syncing one;
+- Monday 26 October's first real night under the storage rules and the split
+  bounds. Read its *Canonical record:*, *Reader projection:*, *Reader
+  observations:*, *Evidence archive:*, *Reader observation archive:*,
+  *Recovery catalog:* and *Quality ledger retained:* lines;
+- any trading edge.
