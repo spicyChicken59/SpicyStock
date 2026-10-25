@@ -211,9 +211,14 @@ def test_the_retained_line_warns_past_eighty_percent_of_any_bound(field, size, l
     monkeypatch.setattr(ledger, 'MAX_ENTRIES', 5)                  # 80% of five is four
     for i in range(4 + size if field == 'count' else 1):
         (tmp_path / f'{i}.json.gz').write_bytes(b'x' * (size if field == 'archive' else 1))
+    # an interrupted append leaves its staging file beside the entries: it is no entry
+    (tmp_path / 'tmpk3x9q2zz').write_bytes(b'x' * 10_000)
     ledger.log_retained(tmp_path / '0.json.gz', size if field == 'entry' else 1)
     [record] = caplog.records
     assert record.levelname == level, record.getMessage()
+    entries = 4 + size if field == 'count' else 1
+    held = size if field == 'archive' else entries
+    assert record.getMessage().endswith(f'the archive {entries} of 5 entries, {held} of 1000 bytes.')
 
 
 def test_the_retained_line_never_fails_the_capture(caplog):

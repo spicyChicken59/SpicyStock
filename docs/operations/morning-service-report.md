@@ -63,10 +63,11 @@ exceeds 256 MiB of selected payload or 8 MiB of encoded JSON output is refused
 instead of silently dropping observations.
 The selected payload includes each publication's whole canonical bytes. These
 bounds were sized when a record was at most 32 MiB; the record may be 48 MiB
-since 25 October 2026, and the largest night the 22 October scan-ready
-population can make is 46,640,227 bytes. At that size five publications fit
-the 256 MiB a report may read and 23 the 1 GiB the journal keeps, short of its
-45 days; at today's sizes (10 to 19 MB) many more fit both. Revisit both before
+since 25 October 2026, and the design point the 22 October scan-ready
+population makes is 46,640,227 bytes. At that size five publications fit the
+256 MiB a report may read and at most 23 the 1 GiB the journal keeps (the
+publications alone; their receipts and events share the same 1 GiB), short of
+its 45 days; at today's sizes (10 to 19 MB) many more fit both. Revisit both before
 the service runs across a thrust stretch.
 The as-of cutoff filters the writer's recorded time, so an older provider
 timestamp cannot admit an event written after that cutoff.

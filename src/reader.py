@@ -25,10 +25,10 @@ import tempfile
 VERSION = 1
 READER_FILE = "reader.json"
 OBSERVATION_DIR = "reader-observations"
-# The canonical record, which the browser never downloads: above the record
-# the scan-ready population makes when every scan-ready stock bursts beside a
-# full observation window (46,640,227 bytes built from 22 October's record,
-# tests/test_publication_ceiling.py), and under the 50 MiB above which a push
+# The canonical record, which the browser never downloads: above the design
+# point -- every stock 22 October's run measured as scan-ready bursting beside a
+# full observation window, 46,640,227 bytes (tests/test_publication_ceiling.py)
+# -- and under the 50 MiB above which a push
 # is warned (100 MiB is refused) -- GitHub's documentation, read as search
 # excerpts on 24 October 2026; docs.github.com does not resolve from the sandbox.
 MAX_PUBLICATION_BYTES = 48 * 1024 * 1024
@@ -44,7 +44,7 @@ RETENTION_DAYS = 21
 MAX_RETENTION_BYTES = 64 * 1024
 HEX = re.compile(r"[a-f0-9]{64}\Z")
 RETENTION_WARN_FRACTION = 0.8  # of the cap, after tonight's removals: the run log warns
-PUBLICATION_WARN_FRACTION = 0.8  # of MAX_PUBLICATION_BYTES and of MAX_READER_BYTES: the run log warns past it
+PUBLICATION_WARN_FRACTION = 0.8  # of MAX_PUBLICATION_BYTES, MAX_READER_BYTES and MAX_OBSERVATION_BYTES: the run log warns past it
 
 log = logging.getLogger("spicystock.reader")
 

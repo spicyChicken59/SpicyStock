@@ -442,6 +442,9 @@ def test_the_readme_and_the_env_example_quote_the_canonical_bound_from_the_modul
             f"(`reader.MAX_READER_BYTES`), as its observation sidecar has: the run log states each projection "
             f"against it in a line of its own (*Reader projection:*) and the sidecar against its bound in another "
             f"(*Reader observations:*), warns past {reader.PUBLICATION_WARN_FRACTION:.0%} of either") in text
+    assert ("failure naming that file's size and bound. Both lines are written only for a record within its own "
+            "bound, since the projection is made from it after that bound is asked; when both files are over "
+            "theirs, the sidecar's is the bound named.") in text
     assert reader.MAX_OBSERVATION_BYTES == reader.MAX_READER_BYTES       # "as its observation sidecar has"
     assert (f"The run log states each retained entry (expanded) and the archive against these bounds and "
             f"warns past {quality_ledger.WARN_FRACTION:.0%} of any.") in text

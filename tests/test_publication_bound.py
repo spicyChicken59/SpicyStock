@@ -84,6 +84,8 @@ def test_a_record_over_its_bound_is_refused_before_anything_is_installed_and_say
     assert len(line) == 1 and line[0].levelname == "ERROR"
     assert line[0].getMessage().startswith(f"Canonical record: {said.group(1)} of {bound} bytes, with ")
     assert line[0].getMessage().endswith("; over its bound, so the night is refused before anything is installed.")
+    # the projection is made only from a record within its bound, so neither downloaded file is stated
+    assert not [r for r in caplog.records if r.getMessage().startswith("Reader ")]
     # mailed by the stage it stopped at, not as missing inputs, and never with the size
     text = _rendered(fake_resend.sent[-1]["html"])
     assert fake_resend.sent[-1]["subject"].startswith("FAILED — no plan for ")
@@ -119,6 +121,7 @@ def test_a_restamp_that_crosses_the_bound_leaves_the_first_record_installed_and_
     line, size = logged(caplog, "Canonical record after delivery")
     assert size == final and line.levelname == "ERROR"
     assert line.getMessage().endswith("; over its bound, so this write is refused and the record first installed stays.")
+    assert not [r for r in caplog.records if r.getMessage().startswith("Reader projection after delivery")]
 
 
 # --- the derive refusal --------------------------------------------------------
@@ -237,6 +240,18 @@ def test_derive_refuses_observations_one_byte_over_their_own_bound_and_names_bot
     assert len(reader.derive(raw)[1]) == size
 
 
+def test_derive_names_the_sidecar_when_both_downloaded_files_are_over_their_bounds(monkeypatch):
+    """`_bounds()` asks the sidecar first, as `derive()` always has: a record
+    whose projection and sidecar are both over is refused in the sidecar's words."""
+    raw = tiny()
+    projection, observations = map(len, reader.derive(raw))
+    monkeypatch.setattr(reader, "MAX_READER_BYTES", projection - 1)
+    monkeypatch.setattr(reader, "MAX_OBSERVATION_BYTES", observations - 1)
+    with pytest.raises(ValueError, match=rf"^reader observations are {observations} bytes, "
+                                         rf"over their {observations - 1}-byte bound$"):
+        reader.derive(raw)
+
+
 @pytest.mark.parametrize("size,level", [(800, "INFO"), (801, "WARNING"), (1000, "WARNING"), (1001, "ERROR")])
 def test_the_run_log_states_each_downloaded_file_against_its_own_bound(size, level, monkeypatch, caplog):
     monkeypatch.setattr(reader, "MAX_READER_BYTES", 1000)
@@ -280,14 +295,14 @@ def sizes(caplog, after=""):
     return tuple(logged(caplog, name + after)[1] for name in ("Canonical record", "Reader projection", "Reader observations"))
 
 
-def test_the_three_bounds_are_asked_separately_of_one_night(market, claude, fake_resend, tmp_path, monkeypatch, caplog):
+def test_a_night_with_every_file_exactly_at_its_bound_publishes(market, claude, fake_resend, tmp_path, monkeypatch, caplog):
     caplog.set_level("INFO", logger="spicystock.reader")
     evening(tmp_path / "measure", market)
     canonical, projection, observations = sizes(caplog, " after delivery")
     assert projection < canonical and observations < canonical  # the projection defers the observations
     caplog.clear()
-    # each bound at exactly its night's final size: neither downloaded file's bound is the record's,
-    # and the night publishes with every file at its bound
+    # each bound at exactly its night's final size: every bound is inclusive, and the night publishes
+    # with every file at its bound (which bound refuses which file, the refusal tests hold)
     monkeypatch.setattr(reader, "MAX_PUBLICATION_BYTES", canonical)
     monkeypatch.setattr(reader, "MAX_READER_BYTES", projection)
     monkeypatch.setattr(reader, "MAX_OBSERVATION_BYTES", observations)
