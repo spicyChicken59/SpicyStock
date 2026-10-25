@@ -509,14 +509,25 @@ def test_each_tripwire_reads_its_own_component_of_the_regenerated_fixture(name, 
 
 def test_the_crossing_arithmetic_is_what_a_real_build_makes(frozen, measured, crossings):
     """The design point grown by arithmetic agrees with the design point built,
-    and the burst before each of two crossings agrees with a real build of it."""
+    the burst before each of two crossings agrees with a real build of it, and
+    every step to the first adds what that build holds for its stock."""
     full, held = crossings
     start = len(measured[0]["bursts"])
     assert held[start][3] == full[start][3] == len(measured[4])          # the ledger reads no observations
     for sizes in (full, held):                   # the projection names these two, at one length throughout
         assert all(len({len(str(size[f])) for size in sizes.values()}) == 1 for f in (0, 2))
     record = first_over(full, 0, reader.MAX_PUBLICATION_BYTES)
-    assert full[record - 1] == built(ceiling(frozen, record - 1))
+    data = ceiling(frozen, record - 1)
+    assert full[record - 1] == built(data)
+    # and every step on the way: what the sidecar gains for the nth stock is the
+    # real build's own nth symbol and the signals it holds for that stock, by
+    # position, so an entry miscounted at one step cannot cancel another's.
+    symbols, signals = (list(data["observations"][k].items()) for k in ("symbols", "signals"))
+    window, signal_density = window_of(frozen), density(frozen)
+    stock = [round(n * window * signal_density) for n in range(record)]
+    for n in range(start + 1, record):
+        real = entry(*symbols[n - 1]) + 1 + sum(entry(k, v) + 1 for k, v in signals[stock[n - 1]:stock[n]])
+        assert full[n][2] - full[n - 1][2] == real, n
     projection = first_over(held, 1, reader.MAX_READER_BYTES)
     assert held[projection - 1] == built(cloned(deepcopy(frozen), projection - 1))
 
