@@ -338,7 +338,7 @@ export async function checkReaderTransport({ browser, base, open, check, eq, sho
         large.arrayBuffer = () => { oversizedNativeReads++; return largeNative(); };
         try { await SCStock.reader.read(large); } catch (error) { oversized = /byte limit/.test(error.message); }
         const advertised = new ReadableStream({ start(controller) { controller.enqueue(new Uint8Array([123, 125])); }, cancel() { headerCancelled = true; } });
-        try { await SCStock.reader.read(new Response(advertised, { headers: { 'content-length': String(33 * 1024 * 1024) } })); }
+        try { await SCStock.reader.read(new Response(advertised, { headers: { 'content-length': String(SCStock.reader.MAX_BYTES + 1) } })); }
         catch (error) { header = /size limit/.test(error.message); }
         const refused = new ReadableStream({ start(controller) { controller.enqueue(new Uint8Array([123, 125])); }, cancel() { statusCancelled = true; } });
         try { await SCStock.reader.read(new Response(refused, { status: 503 })); } catch (error) { /* expected HTTP refusal */ }
