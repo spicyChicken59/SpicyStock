@@ -379,3 +379,131 @@ def test_inapplicable_publication_uses_no_fetch_budget_and_keeps_original_anchor
     original = next(row for row in data["watchlist"]["top"] if row["ticker"] == "ZIM")
     assert candidate["anchors"] == original["plan"]["event_risk"]["matches"]
     issuer.validate_for_publication(canonical, result["receipt_bytes"], result["bundle_bytes"])
+
+
+# SEC lists an XML filing under the directory of the XSL stylesheet that renders
+# it. Until 25 October 2026 the row rule refused every such row, so nearly every
+# issuer's index read partial on metadata_invalid: 78 of the 240 rows of ZIM's
+# index captured on 10 October, and on the runner on 25 October (run
+# 40163306777) the same 78 for ZIM and 674 for AAPL.
+RENDERED_FORMS = {"3", "4", "144", "EFFECT", "SCHEDULE 13D", "SCHEDULE 13D/A", "SCHEDULE 13G", "SCHEDULE 13G/A"}
+
+
+def test_the_captured_zim_index_is_read_whole_including_its_rendered_xml_filings():
+    entry, raw = source("zim-submissions.json")
+    recent = json.loads(raw)["filings"]["recent"]
+    rendered = [(form, doc) for form, doc in zip(recent["form"], recent["primaryDocument"]) if "/" in doc]
+    assert len(recent["form"]) == 240 and len(rendered) == 78
+    assert {form for form, _ in rendered} == RENDERED_FORMS
+    assert {doc.split("/")[0] for _, doc in rendered} == {
+        "xsl144X01", "xslEFFECTX01", "xslF345X02", "xslF345X06", "xslSCHEDULE_13D_X01", "xslSCHEDULE_13G_X01"}
+    parsed = issuer.parse_submissions(raw, ZIM_CIK, "ZIM", NOW)
+    assert parsed["invalid_count"] == 0
+    # The window now holds the ownership and 144 rows beside the reports it held before.
+    forms = [f["form"] for f in parsed["filings"]]
+    assert len(forms) == 99 and sum(form in issuer.FORMS for form in forms) == 33 and forms.count("20-F") == 1
+    # The rendered rows in the window keep SEC's path, and every one is a form never stored.
+    kept = [f for f in parsed["filings"] if "/" in f["primary_document"]]
+    assert len(kept) == 99 - 34 and {f["form"] for f in kept} <= RENDERED_FORMS
+    assert all(f["primary_document"].startswith("xsl") for f in kept)
+
+
+@pytest.mark.parametrize("form, document, name", [
+    ("4", "xslF345X06/form4.xml", "form4.xml"),
+    ("144", "xsl144X01/primary_doc.xml", "primary_doc.xml"),
+    ("SCHEDULE 13D/A", "xslSCHEDULE_13D_X01/primary_doc.xml", "primary_doc.xml"),
+    ("25-NSE", "xslF25X02/primary_doc.xml", "primary_doc.xml"),
+    ("EFFECT", "xslEFFECTX01/primary_doc.xml", "primary_doc.xml"),
+    ("4", "xsl" + "A" * 64 + "/f.xml", "f.xml"),
+])
+def test_a_rendered_row_of_a_form_never_stored_is_read_by_its_documents_own_name(form, document, name):
+    assert issuer._rendered(form, document) == name
+
+
+@pytest.mark.parametrize("form, document", [
+    # A current report or an acquisition form is listed, linked and fetched by its document.
+    *[(form, "xslF345X06/form4.xml") for form in sorted(issuer.FORMS | issuer.ACQUISITION_FORMS)],
+    ("4", "form4.xml"),                      # no directory: the plain rule reads it
+    ("4", "xslF345X06/"), ("4", "xsl/form4.xml"), ("4", "XSLF345X06/form4.xml"), ("4", "notxsl/form4.xml"),
+    ("4", "xslF345X06/a/form4.xml"), ("4", "xslF345X06/../form4.xml"), ("4", "xslF345X06/..form4.xml"),
+    ("4", "xslF345X06/.form4.xml"), ("4", "xsl" + "A" * 65 + "/f.xml"), ("4", "xslF345X06/form4.xml\n"),
+    ("4", "xslF-345/form4.xml"), ("4", "/xslF345X06/form4.xml"), ("4", None), (None, "xslF345X06/form4.xml"),
+    (["4"], "xslF345X06/form4.xml"),
+])
+def test_no_other_row_is_read_under_a_rendering_directory(form, document):
+    assert issuer._rendered(form, document) is None
+
+
+def _index(rows):
+    keys = ("accessionNumber", "filingDate", "reportDate", "acceptanceDateTime", "form", "items", "primaryDocument")
+    return {key: [row[key] for row in rows] for key in keys}
+
+
+def _row(n, form, document, day="2026-10-05"):
+    return {"accessionNumber": f"0001654126-26-{n:06d}", "filingDate": day, "reportDate": day,
+            "acceptanceDateTime": f"{day}T16:00:00Z", "form": form, "items": "", "primaryDocument": document}
+
+
+def test_a_rendered_row_is_held_to_every_other_row_rule():
+    good = _row(1, "4", "xslF345X06/form4.xml")
+    bad = [dict(good, accessionNumber="bad"), dict(good, filingDate="2026-10-5"), dict(good, items=None),
+           dict(good, acceptanceDateTime="2026-10-11T06:20:00Z"), dict(good, form="")]
+    parsed = issuer._parse_rows(_index([good] + bad), NOW)
+    assert parsed["invalid_count"] == len(bad) and [f["accession"] for f in parsed["filings"]] == [good["accessionNumber"]]
+    # The row keeps SEC's path; only the check reads the document's own name.
+    assert parsed["filings"][0]["primary_document"] == "xslF345X06/form4.xml"
+
+
+def test_a_current_report_under_a_rendering_directory_is_still_refused_and_never_fetched(producer, canonical):
+    data = zim_submissions()
+    recent = data["filings"]["recent"]
+    first = recent["form"].index("6-K")
+    recent["primaryDocument"][first] = "xslF345X06/" + recent["primaryDocument"][first]
+    fetch = producer.transport(edits={"https://data.sec.gov/submissions/CIK0001654126.json": raw_json(data)})
+    result = producer.collect(canonical, fetch=fetch)
+    row = next(row for row in result["bundle"]["issuers"] if row["ticker"] == "ZIM")
+    assert {"code": "metadata_invalid", "source_url": "https://data.sec.gov/submissions/CIK0001654126.json"} in row["errors"]
+    assert row["index"]["coverage_status"] == "partial"
+    assert not any("xsl" in url for url in fetch.calls)
+    assert "xsl" not in json.dumps(result["bundle"])
+    issuer.validate_bundle(result["receipt_bytes"], result["bundle_bytes"])
+
+
+def test_the_captured_zim_index_now_gives_an_observed_window_with_its_ownership_rows_counted(producer, canonical):
+    fetch = producer.transport()
+    result = producer.collect(canonical, fetch=fetch)
+    row = next(row for row in result["bundle"]["issuers"] if row["ticker"] == "ZIM")
+    index = row["index"]
+    assert index["coverage_status"] == "observed_window" and index["reason"] is None
+    assert index["metadata_count"] == 99 and index["eligible_current_report_count"] == 33
+    assert all(error["code"] != "metadata_invalid" for error in row["errors"])
+    # A rendered row is counted, never listed, linked or fetched.
+    assert "xsl" not in json.dumps(result["bundle"]) and not any("xsl" in url for url in fetch.calls)
+    issuer.validate_bundle(result["receipt_bytes"], result["bundle_bytes"])
+
+
+def test_the_job_log_names_each_issuers_index_coverage_and_nothing_of_its_sources():
+    bundle = json.loads((FIXTURES / "collected-bundle.json").read_bytes())
+    lines = issuer.issuer_lines(bundle)
+    assert [line.split(":")[0].strip() for line in lines] == [row["ticker"] for row in bundle["issuers"]]
+    zim = next(line for line in lines if line.strip().startswith("ZIM:"))
+    assert zim == "  ZIM: partial; identity verified; index observed_window, 99 metadata rows; errors: http_error."
+    assert not any("http" in line.replace("http_error", "") or "/" in line or ".htm" in line for line in lines)
+    one = deepcopy(bundle)
+    row = one["issuers"][1]
+    row["index"]["metadata_count"] = 1
+    row["errors"] = []
+    assert issuer.issuer_lines(one)[1] == "  ZIM: partial; identity verified; index observed_window, 1 metadata row; errors: none."
+
+
+def test_main_prints_the_status_line_then_one_line_an_issuer(tmp_path, monkeypatch, capsys, producer, canonical):
+    result = producer.collect(canonical)
+    record = tmp_path / "data.json"
+    record.write_bytes(canonical)
+    monkeypatch.setattr(issuer, "collect", lambda *a, **k: result)
+    monkeypatch.setattr("sys.argv", ["issuer_evidence", "--record", str(record), "--previous", str(tmp_path / "none.json"),
+                                     "--output", str(tmp_path / "out"), "--dry-run"])
+    assert issuer.main() == 0
+    printed = capsys.readouterr().out.splitlines()
+    assert printed[0].startswith(f'Issuer evidence: {result["receipt"]["status"]}; ')
+    assert printed[1:] == issuer.issuer_lines(result["bundle"])

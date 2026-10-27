@@ -60,6 +60,11 @@ HEX = re.compile(r"[a-f0-9]{64}\Z")
 SYMBOL = re.compile(r"[A-Z][A-Z0-9.\-]{0,31}\Z")
 ACCESSION = re.compile(r"[0-9]{10}-[0-9]{2}-[0-9]{6}\Z")
 BASENAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.\-]{0,199}\Z")
+#: SEC lists an XML filing -- an ownership report (Forms 3, 4, 5), a Form 144,
+#: a 25-NSE, an EFFECT notice, a structured Schedule 13D or 13G -- under the
+#: directory of the XSL stylesheet that renders it: ``xslF345X06/form4.xml``.
+#: Read only for a form the collector never stores or fetches (``_rendered``).
+RENDITION = re.compile(r"xsl[A-Za-z0-9_]{1,64}/(.+)\Z", re.S)
 # Merger-proxy and tender-offer forms, with their amendments. Version 2 of the
 # review block (always written, zero and unknown said out loud, every listed
 # filing naming the retained index it was read from) under the key version 1
@@ -195,6 +200,19 @@ def _sec_url(value):
 
 def _basename(value):
     return isinstance(value, str) and bool(BASENAME.fullmatch(value)) and ".." not in value
+
+
+def _rendered(form, document):
+    """The document's own name when SEC lists the row under an XSL rendering directory.
+
+    Only for a form the collector neither stores nor fetches: a current report
+    or an acquisition form is listed and linked by its document, so it must
+    name one plain document, as before. None for every other row.
+    """
+    if not (isinstance(form, str) and isinstance(document, str)) or form in FORMS or form in ACQUISITION_FORMS:
+        return None
+    match = RENDITION.fullmatch(document)
+    return match.group(1) if match and _basename(match.group(1)) else None
 
 
 def _publication(raw):
@@ -652,7 +670,10 @@ def _parse_rows(columns, as_of):
                 "items": columns["items"][i]}
         try:
             item["accepted_at"] = _iso(item["accepted_at"])
-            _filing(item, as_of)
+            # A row listed under its XSL rendering directory is held to every
+            # other rule by its document's own name; the row keeps SEC's path.
+            rendered = _rendered(item["form"], item["primary_document"])
+            _filing(item if rendered is None else dict(item, primary_document=rendered), as_of)
             filing_day = _day(item["filing_date"])
             _require(filing_day <= as_of.date(), "future filing date")
         except (ValueError, TypeError):
@@ -1295,6 +1316,22 @@ def collect(canonical_raw, *, fetch=None, now=None, finished_at=None, run_id, dr
             "captures": fetcher.captures}
 
 
+def issuer_lines(bundle):
+    """One job-log line an issuer: what a reader without the artifact can check.
+
+    Validated tickers, labels, counts and error codes only; never a URL,
+    filing name, excerpt or response detail.
+    """
+    lines = []
+    for row in bundle["issuers"]:
+        index = row["index"]
+        codes = ", ".join(sorted({error["code"] for error in row["errors"]})) or "none"
+        rows = "1 metadata row" if index["metadata_count"] == 1 else f'{index["metadata_count"]} metadata rows'
+        lines.append(f'  {row["ticker"]}: {row["status"]}; identity {row["identity"]["status"]}; '
+                     f'index {index["coverage_status"]}, {rows}; errors: {codes}.')
+    return lines
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--record", type=Path, default=Path("docs/data.json"))
@@ -1344,6 +1381,8 @@ def main():
             "raw_capture_bytes": result["bundle"]["stats"]["capture_bytes"], "captures": manifest}))
         output("issuer-evidence.json", result["receipt_bytes"])
         print(f'Issuer evidence: {result["receipt"]["status"]}; {len(result["bundle"]["issuers"])} selected issuers; no entry authority.')
+        for line in issuer_lines(result["bundle"]):
+            print(line)
         return 0
     except (OSError, ValueError, KeyError, TypeError):
         print("Issuer evidence collection failed; no raw response was logged.")
