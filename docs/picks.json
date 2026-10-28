@@ -150,6 +150,106 @@
    },
    "date": "2026-10-09",
    "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "3931599cf9439be773f64d1cec44bd16490d2ffa67baa58285a1afaa029068db",
+    "context_sha256": "4a009a56628d0d2419b9fab91a42e4d9d6ca9d5bbdbd07ae6fc4cf717977e791",
+    "plan_sha256": "8fee3921b0626635b42c9dd0ccf6db6ea2e0a5720106200eefd9113635f88cc2",
+    "pick_sha256": "5583a109ca5ed469f5123e875f40f8a420c67c7fcc645e8db7d669d30ab07d81"
+   },
+   "ticker": "EXEL",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": 1.1244,
+   "entry_ref": 65.65,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 65.65,
+   "limit": 66.31,
+   "stop": 63.91,
+   "shares": 1,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 70.9,
+    "high": 78.78,
+    "note": "above $40 he measures the move in dollars: $5-25",
+    "dollar_low": 70.65,
+    "dollar_high": 90.65
+   },
+   "order_json": {
+    "symbol": "EXEL",
+    "action": "buy",
+    "quantity": 1,
+    "order_type": "stop_limit",
+    "stop_price": 65.65,
+    "limit_price": 66.31,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 1,
+     "order_type": "stop",
+     "stop_price": 63.91,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-10-27",
+   "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "10e48598ea132ea4e5e4e2eb2fc6bee96dd766a3da761998e92b821bc1dba653",
+    "context_sha256": "4a009a56628d0d2419b9fab91a42e4d9d6ca9d5bbdbd07ae6fc4cf717977e791",
+    "plan_sha256": "6f15b9fabad1c60d977cb9d454b0dadb6ac9306c4ea92ebee734c7970c0a2943",
+    "pick_sha256": "bfee3fe98795c9e319e3ed29025913d12a4df642052e8c8f1e018f8f2c98730a"
+   },
+   "ticker": "OGN",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": null,
+   "entry_ref": 13.82,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 13.82,
+   "limit": 13.96,
+   "stop": 13.74,
+   "shares": 22,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 14.93,
+    "high": 16.58,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "order_json": {
+    "symbol": "OGN",
+    "action": "buy",
+    "quantity": 22,
+    "order_type": "stop_limit",
+    "stop_price": 13.82,
+    "limit_price": 13.96,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 22,
+     "order_type": "stop",
+     "stop_price": 13.74,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-10-27",
+   "regime": "yellow"
   }
  ]
 }
