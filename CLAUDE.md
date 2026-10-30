@@ -12765,3 +12765,153 @@ GitHub's 50 MiB push warning was read off search excerpts only.
   observations:*, *Evidence archive:*, *Reader observation archive:*,
   *Recovery catalog:* and *Quality ledger retained:* lines;
 - any trading edge.
+
+## Checkpoint, 30 Oct 2026 -- PR #201 accepted; the first YELLOW week read; request v3 shows the reader each criterion's checks
+
+**PR #201, accepted.** Mo merged it as `ed5b400c` on `main` at 13:42 UTC on
+27 October, a merge commit over `adaf1b1a` (the 26 October publication). Its
+head `7dd49f1a` had all of its checks complete green (the check-suite event
+of 25 October). Its review workflow (`wf_d51f5765-0b6`) lost 18 agents to the
+session's weekly usage limit. Its one upheld finding -- README's XSL form
+list -- is carried by PR #202: the list now names the forms exactly as the
+25 October probe counted them, and the claim that the rerun read the same
+index bytes cites both job logs' digests (AAPL `5891cf87…`, ZIM `7d822c20…`).
+
+**The first production collections under the XSL rule.** The issuer receipt
+committed at 13:44 UTC on 27 October (`000bc057`) was the first after the
+merge. It read ZIM's index `observed_window`: 100 metadata rows, no error. The
+01:33 receipt the same day (`d3a2f5c4`) had read `partial` on
+`metadata_invalid` with 35 rows. After that:
+- EXEL (107 rows) and OGN (88) on 28 October, OGN (88) on 29 October and PSNL
+  (92) on 30 October all read `observed_window`.
+- MCS (94 rows, 29 October) and QGEN (24 rows, 30 October) still read
+  `partial` on `metadata_invalid`. That is a second refused-row shape the probe
+  has not been asked about. Not worked here.
+
+**The nights of 26 to 29 October, read off `main`.** Runs 40432684287,
+40614157533, 40802470870 and 40988674329. Each published after both slots and
+before the next open, 303 to 341 minutes after completion, and each delivered
+its mail.
+- 26 October was RED (10-session ratio 0.87) and `ok`.
+- **27, 28 and 29 October were YELLOW** (ratios 1.13, 1.64 and 1.50), the
+  first YELLOW nights since 12 October. Each was `degraded` on `claude_partial`
+  and nothing else. The stale tails (17, 18 and 14 stocks) were tolerated, none
+  of them on the seed alone.
+- The reader refused every A+ name it was asked to read: WST (27), IBM (28),
+  AEE, BSY and TTEK (29). Every reply was a downgrade to B or C. Of these, only
+  BSY and TTEK were account-feasible (purpose `opportunity`). WST, IBM and AEE
+  were research reads blocked by `no_whole_share`. Other A+ names were never
+  reviewed (`preview_sizing`).
+- **The anticipation list published tickets on all three nights:** EXEL 1 and
+  OGN 22 shares (for 28 October), OGN 22 and MCS 2 (29 October), QGEN 1 and
+  PSNL 4 (30 October). These are the first tickets since ZIM on 9 October.
+- The 29 October record's model plans:
+  - EXEL filled at 09:40 ET at the $65.65 trigger, placed by minute bars, and
+    holds;
+  - OGN was not filled either day; on 29 October its minute bars put the
+    trigger at 11:00 ET, after the window;
+  - MCS is uncertain, having opened above its limit and traded back under it.
+
+  These are model plans, not anyone's trades.
+- **The storage lines, read off the four job logs**, held on every night:
+  - canonical record 9.96 to 12.32 MB of its 48 MiB bound;
+  - reader projection 4.1 to 6.2 MB of 32 MiB;
+  - evidence archive 78.2 to 80.4 MB of 128 MiB, removing 401 to 1,652 unnamed
+    objects a night;
+  - reader observation archive 86.0 to 103.9 MB of 128 MiB (77%; the dry runs
+    of 30 October warned at 110.2 MB, past 80%);
+  - recovery catalog 90.8 to 97.6 MB over 16 sessions;
+  - quality ledger entries 0.97 to 1.50 MB of 8 MiB.
+
+**No morning check ran for any of those tickets.** There has been no
+`workflow_dispatch` of `morning.yml` since 23 October.
+- The owner's claude.ai task fired every weekday. Its session answered 27, 28
+  and 29 October with the account's weekly usage limit.
+- On 30 October its GitHub connection timed out (`CONNECT_TIMEOUT`, twice).
+- GitHub's own morning crons were created 18:38 to 20:02 UTC each day, five to
+  six hours late, and each guard refused them as past the window.
+
+The in-window count for #111 stays at one (23 October). The delivery choice is
+the owner's; this records what it did.
+
+**What the refusals were.** `tests/fixtures/grading/reader-authority-refusals/`
+freezes every retained reply that reader authority refused. Its `build.py`
+reads every schema-2 publication through `13b4da23`, read-only over git, and
+pins the commit it read through. That gives 30 replies over 28 name-nights in
+18 sessions, 23 September to 29 October, and every one is a downgrade. Three
+groups:
+- **3 cited a path `reader_evidence` does not carry**: HAE twice and TTEK,
+  citing `burst.*` or `flags`.
+- **23 cited a real check their criterion does not list**:
+  - `overhead_supply` citing `checks.Y`, `checks.L` or `checks.RE` (10);
+  - `extension` citing `checks.C` or `checks.RE` (8);
+  - `trend_maturity` citing `checks.C` or `checks.L` (6 findings).
+- **4 named a `measured_quality` defect on a candidate whose eight checks all
+  recorded PASS**: INGN, JAKK, MSM and RVTY. There was nothing to cite.
+
+In 26 of the 30, the reply's other findings alone would have carried the
+downgrade.
+
+**Request v3, and the design the API refused.** The first design made each
+finding one `anyOf` branch per criterion, each with its own path enum, so the
+schema itself would have excluded 26 of the 30. The dry run of `93fde91f`
+(run 41120821225, session 29 October, nothing committed) was answered
+"The compiled grammar is too large" (HTTP 400). #192's rule stopped after two
+calls. No offline test could see that: llguidance compiled the same schema at
+about 1.6 times version 2's lexer size, so the API's compiler and its limit
+are not llguidance's. **What shipped:**
+- One finding shape, as in version 2, but `path` is an enum of the 39 paths
+  `reader_evidence` carries (`EVIDENCE_PATHS`, over `CHECK_VALUES`).
+- The instruction names each criterion's checks, says one citation outside its
+  criterion refuses the reply, and says no FAIL/PARTIAL means no
+  `measured_quality` finding.
+- `validate()` is unchanged.
+- `REQUEST_VERSION` is 3, and `rules_version` moves.
+- The verifier rebuilds a record's reader requests under the version it
+  archived. `FINDINGS_SCHEMA_V2` and `instruction(2)` are kept byte for byte and
+  pinned by SHA-256. `provenance.replayable_request_version()` admits int 2 or
+  3, and any other version is partial. Without this, the bump would have made
+  every version-2 publication fail the readers that require PASS: morning,
+  stop-research, research-observation and issuer.
+- Of the 28 publications that archive request v2, 19 verify PASS with full
+  source replay. 9 stay PARTIAL as on `main`, on
+  `plan.allocation_policy`/`watchlist.min_compress`. None changes status.
+
+**The dry runs of the shipped design** (session 29 October, the same four
+names as the live night). Run 41124967933 at `3b7ae4cc` returned 4 × HTTP 200,
+and **all four reviews were accepted**, against 1 of 4 under v2 on the live
+night. Run 41128246793 at `4e72a4b9`, with the final instruction (the request
+`fb0edfef` sends is the same), did the same: 4 × HTTP 200, all four accepted.
+One night and four names is not a rate.
+
+**The review, worked.** `wf_fb57ef00-177` ran three lenses over `93fde91f`,
+with one skeptic per finding.
+- The safety lens re-ran all 28 version-2 publications on the base and the
+  head: no status moved. Forcing version 3 onto a version-2 record broke its
+  replay with 12 mismatches, as it must.
+- The words lens returned 10 findings, all upheld:
+  - README called a v2 record partial;
+  - "every v2 publication verifies PASS";
+  - the measured-defect four;
+  - "every candidate the band would have planned";
+  - the per-criterion counts;
+  - "no branch offers";
+  - the uncited same-bytes claim;
+  - "constants" for enums;
+  - the misplaced `SCORE_SCHEMA` comment;
+  - `docs/provenance/README.md`.
+
+  Each is fixed, except the two that live only in a pushed commit message,
+  which are corrected in the PR.
+- The tests lens ran 46 mutants. Four survived, each a hole, and all four are
+  closed (`fb0edfef`) and die in the test named for their rule:
+  - the citation key-set rule;
+  - the int clause;
+  - `REPLAYABLE_REQUEST_VERSIONS` against what can be rebuilt;
+  - `CHECK_VALUES` against `quality.assess()`.
+
+**Not claimable:**
+- a live night under request v3;
+- that the acceptance rate holds;
+- a morning check for any of the week's tickets;
+- any trading edge.
