@@ -1124,7 +1124,17 @@ archived, and a record from before the block is asked for none. The run:
   use measurements. Subjective chart truth and free commentary remain unverified.
   Every model receives the same nested findings schema in text; supported models
   also receive it through structured output. Findings and citations remain closed
-  objects. Returned text is retained before parsing/authority checks in each
+  objects. From request version 3 (`grader.REQUEST_VERSION`) the schema is one
+  branch per criterion, offering only the evidence paths that criterion may cite
+  (`reader_authority.paths()`, over `CHECK_VALUES`, the value fields
+  `quality.assess()` writes); the validator is unchanged and still checks every
+  rule. Of the 30 replies reader authority refused from 23 September to 29
+  October 2026 (`tests/fixtures/grading/reader-authority-refusals/`), 26 carried
+  a citation no branch offers -- most a visual finding citing a check its
+  criterion does not list -- and the other 4 cited a measured defect without its
+  FAIL or PARTIAL status, a condition on a value no schema can carry, which the
+  instruction now asks for by path. A record made under request version 2 is
+  read under its own rules: the verifier reports it partial, never as this one. Returned text is retained before parsing/authority checks in each
   attempt, with its SHA-256, byte count, stop reason and message ID. Text above
   64 KiB is explicitly omitted with its digest and size retained. Rejected text is
   diagnostic evidence, never an accepted judgement, and the quality ledger retains
@@ -1487,11 +1497,18 @@ got both answers -- the mapping (523,925 bytes) and AAPL's submissions
 a candidate, for ZIM on 24 October, was answered too: its identity was
 verified and its index read, `partial` on `metadata_invalid`. The probe named
 why (run 40163306777, 25 October): every refused row -- 78 of ZIM's, 674 of
-AAPL's -- was an XML filing (a Form 3, 4 or 144, an EFFECT notice, a Schedule
-13D or 13G) that SEC lists under its XSL rendering directory,
-`xslF345X06/form4.xml`. The row rule reads such a row now for a form the
-collector never stores or fetches (`issuer_evidence._rendered()`); a current
-report or acquisition form must still name one plain document.
+AAPL's -- failed the document rule, and the forms were XML filings SEC lists
+under the XSL rendering directory, `xslF345X06/form4.xml`: Forms 3 and 4 and
+their amendments, Form 5, Form 144 and its amendment, 25-NSE, EFFECT notices,
+and Schedules 13D and 13G and their amendments.
+The row rule reads such a row now for a form the collector never stores or
+fetches (`issuer_evidence._rendered()`); a current report or acquisition form
+must still name one plain document. On the fixed branch, over the same index
+bytes (run 40164017459), the probe refused no row of either. The first
+production collections under it (27 to 30 October) read ZIM, EXEL, OGN and
+PSNL `observed_window`; MCS (29 October) and QGEN (30 October) still read
+`partial` on `metadata_invalid`, a refused row the probe has not been asked
+about.
 
 `issuer-evidence.yml` follows an actual committed evening or morning publication;
 the guard identifies the parent by its exact workflow file path, then checks

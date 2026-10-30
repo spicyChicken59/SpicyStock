@@ -78,6 +78,9 @@ routes, measured facts and unknowns cannot be redefined. Visual proxies can
 miss a qualitative defect; the reader can still name that defect with the
 chart present. Code validates authority and cited facts, not subjective visual
 truth. Free commentary does not create order terms or an executable rule.
+The structured-output schema (request version 3) offers each criterion only its
+own checks' evidence paths; it narrows what a reply can say and never widens
+what the validator accepts.
 
 Review selection (`src/review_selection.py`) is DERIVED (P) resource allocation,
 not a Bonde threshold or a performance claim. `account_feasible_first_research_v1`

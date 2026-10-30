@@ -1,0 +1,2586 @@
+{
+ "refusals": [
+  {
+   "commit": "6ff292d7971570d809a2bdd4d476a1f88d3c4234",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CfMKb2G9BYb6BBGAPsUw8",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.15,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PASS",
+      "values": {
+       "base_sessions": 17,
+       "base_volume_vs_avg": 1.01,
+       "base_volume_vs_leg": 0.89,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.26,
+       "tightness": 0.77
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.84
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.52,
+       "leg_gain_pct": 84.2,
+       "leg_sessions": 48,
+       "r2": 0.89
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.6,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -0.15,
+       "prior_range_pct": 2.5
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 3.4,
+       "vs_prior_10": 0.63,
+       "vs_prior_5": 1.36
+      }
+     },
+     "VOL": {
+      "status": "FAIL",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 38,
+       "volume_vs_avg50": 0.81,
+       "volume_vs_prior": 0.78
+      }
+     },
+     "Y": {
+      "status": "FAIL",
+      "values": {
+       "breakouts_in_move": 2,
+       "gain_since_move_start_pct": 53.6,
+       "sessions_since_move_start": 60
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-09-23",
+   "text": "{\"score\": 6.5, \"grade\": \"B\", \"reason\": \"Two independent measured FAILs drag this below A: Y fails because today would be the third breakout of a 60-session, 84% move, and VOL fails because the burst bar traded only 78% of the prior session's volume on a below-average day. The base box (17 sessions, ~$258\u2013296) looks visually orderly and tight against the chart, but the shaded region sits well below the August spike highs near $295\u2013300, meaning the name is consolidating under prior heavy-volume supply rather than breaking to new highs.\", \"key_risk\": \"Third breakout of a mature 84% leg with declining volume into overhead supply from the August spike \u2014 the move is statistically more likely to stall or reverse than to extend.\", \"entry_note\": \"Skip if the open gaps above the burst close of $270.75 by more than 1%, or if the first 30 minutes show weak tape with price retreating below $268.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.Y.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.Y.values.breakouts_in_move\", \"value\": 2}, {\"path\": \"checks.Y.values.sessions_since_move_start\", \"value\": 60}, {\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 53.6}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.VOL.values.volume_vs_prior\", \"value\": 0.78}, {\"path\": \"checks.VOL.values.volume_vs_avg50\", \"value\": 0.81}, {\"path\": \"checks.VOL.values.volume_rank_60\", \"value\": 38}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.C.values.base_sessions\", \"value\": 17}, {\"path\": \"checks.C.values.tightness\", \"value\": 0.77}], \"observation\": \"prior_trading_above_signal\"}, {\"criterion\": \"trend_maturity\", \"source\": \"strategy.chart.trend\", \"evidence\": [{\"path\": \"checks.Y.values.breakouts_in_move\", \"value\": 2}, {\"path\": \"checks.L.values.leg_sessions\", \"value\": 48}, {\"path\": \"checks.L.values.leg_gain_pct\", \"value\": 84.2}], \"observation\": \"repeated_visible_pushes\"}]}",
+   "text_sha256": "093bbb94de34a9bdd3592a46746d85b862075fa44f2a8b8be6409a75d88c1cca",
+   "ticker": "VEEV"
+  },
+  {
+   "commit": "6822dddd14d0a541083e7caaecca9c945b451af2",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CfPDieF75vbunKPofyPja",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.18,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PASS",
+      "values": {
+       "base_sessions": 18,
+       "base_volume_vs_avg": 0.94,
+       "base_volume_vs_leg": 0.87,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.24,
+       "tightness": 0.79
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.86
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.53,
+       "leg_gain_pct": 44.3,
+       "leg_sessions": 47,
+       "r2": 0.93
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.5,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -0.18,
+       "prior_range_pct": 2.1
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 3.4,
+       "vs_prior_10": 0.87,
+       "vs_prior_5": 1.42
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 6,
+       "volume_vs_avg50": 1.32,
+       "volume_vs_prior": 2.11
+      }
+     },
+     "Y": {
+      "status": "FAIL",
+      "values": {
+       "breakouts_in_move": 2,
+       "gain_since_move_start_pct": 36.5,
+       "sessions_since_move_start": 55
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-09-24",
+   "text": "{\"score\": 6.5, \"grade\": \"B\", \"reason\": \"Y is a hard FAIL \u2014 this would be the third breakout of a 55-session, 36% move, which is exactly the 'third-day buyer becomes the bag holder' scenario at the move scale. The base itself looks orderly in the shaded box (18 sessions, tight range roughly 365\u2013396), and the burst bar is clean with a close near the high, but the trend maturity is the decisive flaw. The prior leg is linear and the consolidation is acceptable, but a third push out of a mature move materially reduces follow-through probability.\", \"key_risk\": \"Third breakout of a 55-session move; prior buyers sitting at overhead supply from the August highs near 396 could cap any continuation quickly.\", \"entry_note\": \"Skip if BIO opens below the burst-day close of 387.54 or gaps up through the base high near 396 with no room left to run.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.Y.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.Y.values.breakouts_in_move\", \"value\": 2}, {\"path\": \"checks.Y.values.sessions_since_move_start\", \"value\": 55}, {\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 36.5}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"trend_maturity\", \"source\": \"strategy.chart.trend\", \"evidence\": [{\"path\": \"checks.Y.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.Y.values.breakouts_in_move\", \"value\": 2}], \"observation\": \"repeated_visible_pushes\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.C.values.base_sessions\", \"value\": 18}, {\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 36.5}], \"observation\": \"prior_trading_above_signal\"}]}",
+   "text_sha256": "469930a25c723cc86bd416512b7464e44761d96cdb9d92ef4be1b16b9fef084d",
+   "ticker": "BIO"
+  },
+  {
+   "commit": "6822dddd14d0a541083e7caaecca9c945b451af2",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A+",
+   "message_id": "msg_011CfPDcicsfxn9HeyFf9jiA",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.53,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PARTIAL",
+      "values": {
+       "base_sessions": 28,
+       "base_volume_vs_avg": 0.87,
+       "base_volume_vs_leg": 0.47,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.33,
+       "tightness": 0.8
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.86
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.46,
+       "leg_gain_pct": 35.1,
+       "leg_sessions": 50,
+       "r2": 0.84
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 1.9,
+       "narrow": true,
+       "negative": true,
+       "prior_day_pct": -0.53,
+       "prior_range_pct": 1.3
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 2.7,
+       "vs_prior_10": 0.6,
+       "vs_prior_5": 1.17
+      }
+     },
+     "VOL": {
+      "status": "FAIL",
+      "values": {
+       "cv_required": true,
+       "volume_rank_60": 24,
+       "volume_vs_avg50": 1.06,
+       "volume_vs_prior": 1.66
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 1.7,
+       "sessions_since_move_start": 1
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-09-24",
+   "text": "{\"score\": 5.5, \"grade\": \"C\", \"reason\": \"VOL is a hard FAIL: the base is 28 sessions (over the 21-session threshold that triggers the catalyst-volume requirement), volume came in at only 1.06x the 50-day average against the required 1.5x, and volume rank is 24th of the last 60 \u2014 nowhere near confirming institutional participation. The base itself is visually a 28-session sideways drift with multiple overlapping bars and a tightness of 0.8, well above the A+ threshold, confirming the PARTIAL on C. The chart also shows the entire base sitting below the early-August highs near 180, meaning the signal bar is pushing into overhead supply from that prior peak.\", \"key_risk\": \"Volume confirmation is absent for a long base requiring a catalyst, and the signal bar is pressing into a dense overhead supply zone from the August highs.\", \"entry_note\": \"Skip if the open gaps above the base high near 180 or if the first 30 minutes show weak tape with volume tracking below yesterday's pace.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.VOL.values.volume_vs_avg50\", \"value\": 1.06}, {\"path\": \"checks.VOL.values.cv_required\", \"value\": true}, {\"path\": \"checks.VOL.values.volume_rank_60\", \"value\": 24}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"PARTIAL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 28}, {\"path\": \"checks.C.values.tightness\", \"value\": 0.8}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.33}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.C.values.base_sessions\", \"value\": 28}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 2.7}], \"observation\": \"prior_trading_above_signal\"}, {\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.values.tightness\", \"value\": 0.8}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 28}], \"observation\": \"wide_overlapping_bars\"}]}",
+   "text_sha256": "a7c94523f8c47b73d9dc9a597c743057040b1034fc3cd7427285b2f41e381b6c",
+   "ticker": "NIC"
+  },
+  {
+   "commit": "6822dddd14d0a541083e7caaecca9c945b451af2",
+   "error": "src.ReaderAuthorityError: measured defect requires a recorded FAIL or PARTIAL",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CfPDgMfQ7zm83Kx8D6f3F",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.84,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PASS",
+      "values": {
+       "base_sessions": 4,
+       "base_volume_vs_avg": 1.5,
+       "base_volume_vs_leg": 1.58,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.2,
+       "tightness": 0.83
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.85
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.32,
+       "leg_gain_pct": 38.9,
+       "leg_sessions": 60,
+       "r2": 0.73
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.5,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -0.84,
+       "prior_range_pct": 3.5
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 6.9,
+       "vs_prior_10": 0.84,
+       "vs_prior_5": 1.97
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 9,
+       "volume_vs_avg50": 1.45,
+       "volume_vs_prior": 1.13
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 1,
+       "gain_since_move_start_pct": 41.6,
+       "sessions_since_move_start": 47
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-09-24",
+   "text": "{\"score\": 7.5, \"grade\": \"B\", \"reason\": \"The burst bar itself is clean \u2014 closes near the high, opens near the prior close, no gap-and-fade \u2014 and the 4-session base sits tight at the top of a 60-session stair-step advance. The decisive visual concern is trend maturity: the chart shows a move that has already run ~41% in 47 sessions with the price now 12% above its 20-SMA, and the base volume is running above both the leg average and the 50-session average (1.58x and 1.5x respectively), which is the opposite of the quiet, drying-up consolidation Bonde prizes. The C A+ flag is absent precisely because of elevated base volume, and the extension note (12.2% over 20-SMA, 19.3% gain over 20 sessions) confirms a visibly stretched move.\", \"key_risk\": \"The stock is extended after a long uninterrupted run; a failure to follow through on day 2 could see a fast reversal back into the base.\", \"entry_note\": \"Skip if RVTY gaps up more than 1\u20132% above the burst close at the open, or if it opens below the burst-day close and shows no buying interest in the first 30 minutes.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.values.base_volume_vs_leg\", \"value\": 1.58}, {\"path\": \"checks.C.values.base_volume_vs_avg\", \"value\": 1.5}, {\"path\": \"checks.C.values.tightness\", \"value\": 0.83}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"extension\", \"source\": \"strategy.chart.extension\", \"evidence\": [{\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 41.6}, {\"path\": \"checks.Y.values.sessions_since_move_start\", \"value\": 47}, {\"path\": \"checks.L.values.leg_sessions\", \"value\": 60}], \"observation\": \"visibly_spent_move\"}]}",
+   "text_sha256": "ce8a3ab9411302f1512ae1231bc4289bb88c6941202b330137ab736b0621dce7",
+   "ticker": "RVTY"
+  },
+  {
+   "commit": "8be007f68deaa417b85a512d2e16a37899d27011",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CfR7qgNr4yoK9hwNU2hiu",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.53,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PASS",
+      "values": {
+       "base_sessions": 18,
+       "base_volume_vs_avg": 0.72,
+       "base_volume_vs_leg": 0.54,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.19,
+       "tightness": 0.7
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.85
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.47,
+       "leg_gain_pct": 45.5,
+       "leg_sessions": 46,
+       "r2": 0.82
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 1.9,
+       "narrow": true,
+       "negative": true,
+       "prior_day_pct": -0.53,
+       "prior_range_pct": 1.5
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 4.3,
+       "vs_prior_10": 1.43,
+       "vs_prior_5": 1.43
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 8,
+       "volume_vs_avg50": 1.34,
+       "volume_vs_prior": 2.29
+      }
+     },
+     "Y": {
+      "status": "FAIL",
+      "values": {
+       "breakouts_in_move": 2,
+       "gain_since_move_start_pct": 35.3,
+       "sessions_since_move_start": 45
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-09-25",
+   "text": "{\"score\": 6.5, \"grade\": \"B\", \"reason\": \"Y is a hard FAIL \u2014 this would be the third breakout of a 46-session, 45% move, and the chart confirms two prior visible pushes out of the rising base structure since July, making the trend mature rather than young. The base itself looks orderly and tight in the shaded box (18 sessions, low giveback, low tightness), and the burst bar is honest with a solid close near the high, but the repeated-push problem is the single most decisive flaw visible on the chart. The move is also running into the upper end of a multi-week range near 520 where prior sessions show overhead supply from the August highs.\", \"key_risk\": \"Third breakout of an aging 45% leg in a large-cap name with visible overhead supply near the August peak; follow-through odds are lower than a first or second push.\", \"entry_note\": \"Skip if MSFT opens below the burst close of 516.17 or gaps up more than 1% above it into the prior August supply zone without immediate continuation.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.Y.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.Y.values.breakouts_in_move\", \"value\": 2}, {\"path\": \"checks.Y.values.sessions_since_move_start\", \"value\": 45}, {\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 35.3}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"trend_maturity\", \"source\": \"strategy.chart.trend\", \"evidence\": [{\"path\": \"checks.Y.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.Y.values.breakouts_in_move\", \"value\": 2}], \"observation\": \"repeated_visible_pushes\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.C.values.base_sessions\", \"value\": 18}, {\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 35.3}], \"observation\": \"prior_trading_above_signal\"}]}",
+   "text_sha256": "183e93475534fd486584967e176c39c6a707d985456046d1b360b6a4399d029d",
+   "ticker": "MSFT"
+  },
+  {
+   "commit": "786ade7013a0c55d172d89118322b19a056fa8a6",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CfWu9yzH3uGkiaDDBoxcL",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.55,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PASS",
+      "values": {
+       "base_sessions": 7,
+       "base_volume_vs_avg": 1.18,
+       "base_volume_vs_leg": 1.21,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.25,
+       "tightness": 0.73
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.93
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.47,
+       "leg_gain_pct": 50.5,
+       "leg_sessions": 39,
+       "r2": 0.76
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 3.5,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -0.55,
+       "prior_range_pct": 2.1
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 4.4,
+       "vs_prior_10": 0.83,
+       "vs_prior_5": 1.16
+      }
+     },
+     "VOL": {
+      "status": "FAIL",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 53,
+       "volume_vs_avg50": 0.53,
+       "volume_vs_prior": 0.74
+      }
+     },
+     "Y": {
+      "status": "FAIL",
+      "values": {
+       "breakouts_in_move": 3,
+       "gain_since_move_start_pct": 50.6,
+       "sessions_since_move_start": 46
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-09-28",
+   "text": "{\"score\": 6.5, \"grade\": \"B\", \"reason\": \"The mechanical grade is A (8.5) but two recorded FAIL checks \u2014 Y (this would be breakout 4 of the move, with 3 prior breakouts in 46 sessions) and VOL (volume only 74% of the prior session and 53% of the 50-session average) \u2014 are both genuine quality drags visible in the chart: the base sits at the top of a 50% leg that has already produced multiple pushes, and the signal bar's volume bar is clearly below the surrounding cluster. The trend is not young by any measure, and low-volume confirmation on the burst bar is a meaningful concern for a dollar-scan name.\", \"key_risk\": \"A fourth breakout attempt in a mature 50% move with below-average volume on the signal day has poor odds of follow-through.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.Y.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.Y.values.breakouts_in_move\", \"value\": 3}, {\"path\": \"checks.Y.values.sessions_since_move_start\", \"value\": 46}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.VOL.values.volume_vs_prior\", \"value\": 0.74}, {\"path\": \"checks.VOL.values.volume_vs_avg50\", \"value\": 0.53}, {\"path\": \"checks.VOL.values.volume_rank_60\", \"value\": 53}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"trend_maturity\", \"source\": \"strategy.chart.trend\", \"evidence\": [{\"path\": \"checks.Y.values.breakouts_in_move\", \"value\": 3}, {\"path\": \"checks.Y.values.sessions_since_move_start\", \"value\": 46}, {\"path\": \"checks.L.values.leg_gain_pct\", \"value\": 50.5}], \"observation\": \"repeated_visible_pushes\"}], \"entry_note\": \"Skip if the open gaps above the base high of 25.63 or if the first 30 minutes show volume tracking below yesterday's pace with no price follow-through above the signal close of 24.51.\"}",
+   "text_sha256": "37dd88187c712fd2932b3ad0361a889393f2643e719bacc84c757754dffc3b24",
+   "ticker": "CBLL"
+  },
+  {
+   "commit": "6284cb9787c11929eaedf1a263cf463ab4ae4928",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CfYkEW3c9AAtbpzbatr3h",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": 0.64,
+       "up_closes": 2,
+       "up_run": 1
+      }
+     },
+     "C": {
+      "status": "FAIL",
+      "values": {
+       "base_sessions": 30,
+       "base_volume_vs_avg": 1.05,
+       "base_volume_vs_leg": 0.86,
+       "breakdowns": 1,
+       "bursts_in_base": 0,
+       "giveback": 0.68,
+       "tightness": 1.05
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.82
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.42,
+       "leg_gain_pct": 29.5,
+       "leg_sessions": 55,
+       "r2": 0.93
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.1,
+       "narrow": true,
+       "negative": false,
+       "prior_day_pct": 0.64,
+       "prior_range_pct": 1.7
+      }
+     },
+     "RE": {
+      "status": "FAIL",
+      "values": {
+       "bar_range_pct": 1.2,
+       "vs_prior_10": 0.16,
+       "vs_prior_5": 0.16
+      }
+     },
+     "VOL": {
+      "status": "FAIL",
+      "values": {
+       "cv_required": true,
+       "volume_rank_60": 30,
+       "volume_vs_avg50": 0.94,
+       "volume_vs_prior": 0.69
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 2.5,
+       "sessions_since_move_start": 3
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-09-29",
+   "text": "{\"score\": 4.2, \"grade\": \"skip\", \"reason\": \"The base is 30 sessions long with a giveback of 0.68 of the prior leg \u2014 the shaded box on the chart shows a clear declining structure from the August highs down through September, with multiple wide overlapping red bars and a breakdown, not a tight orderly consolidation. On top of that, both RE and VOL are hard FAILs: the signal bar's range is only 16% of the prior 5-bar maximum and volume came in at 69% of the prior session, well below the 1.5x average required for a base this long. The close is already 7\u201310% below its 20-day moving average, meaning the name is in a downtrend, not bursting from a quiet base.\", \"key_risk\": \"The base is a declining structure with heavy giveback and the signal bar shows no range or volume expansion, making follow-through extremely unlikely.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 30}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.68}, {\"path\": \"checks.C.values.tightness\", \"value\": 1.05}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 1}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.RE.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.16}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 1.2}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.VOL.values.volume_vs_prior\", \"value\": 0.69}, {\"path\": \"checks.VOL.values.volume_vs_avg50\", \"value\": 0.94}, {\"path\": \"checks.VOL.values.cv_required\", \"value\": true}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 0.68}, {\"path\": \"checks.C.values.tightness\", \"value\": 1.05}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 30}], \"observation\": \"declining_base\"}, {\"criterion\": \"extension\", \"source\": \"strategy.chart.extension\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 0.68}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.16}], \"observation\": \"visibly_spent_move\"}], \"entry_note\": \"Skip if the open is below the signal day's close of 497.32 or if the first 30 minutes show continued selling pressure with no recovery above the open.\"}",
+   "text_sha256": "b13e68a24f01ba9719a6564767ae35faa3102b8a02a970fda0da6f71dbe5f918",
+   "ticker": "AMP"
+  },
+  {
+   "commit": "a900236900be6e531cc3c0c0e9b0547269861ec8",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011Cfads8cUZTBxK2gLAfjAc",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -1.94,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "FAIL",
+      "values": {
+       "base_sessions": 22,
+       "base_volume_vs_avg": 1.08,
+       "base_volume_vs_leg": 1.02,
+       "breakdowns": 2,
+       "bursts_in_base": 1,
+       "giveback": 0.84,
+       "tightness": 0.94
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.86
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.37,
+       "leg_gain_pct": 44.1,
+       "leg_sessions": 48,
+       "r2": 0.91
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 3.0,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -1.94,
+       "prior_range_pct": 3.4
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 4.2,
+       "vs_prior_10": 1.24,
+       "vs_prior_5": 1.24
+      }
+     },
+     "VOL": {
+      "status": "FAIL",
+      "values": {
+       "cv_required": true,
+       "volume_rank_60": 28,
+       "volume_vs_avg50": 0.9,
+       "volume_vs_prior": 0.89
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 2.9,
+       "sessions_since_move_start": 1
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-09-30",
+   "text": "{\"score\": 4.5, \"grade\": \"skip\", \"reason\": \"The base is a hard FAIL on multiple counts: 22 sessions (outside the 3\u201320 window), two 4% breakdowns inside it, and a giveback of 0.84 of the prior leg \u2014 meaning the stock surrendered nearly the entire advance before this signal day. Looking at the chart, the shaded base region from late August through late September is visibly a declining structure with wide, overlapping red bars and two sharp drops, not a tight consolidation. Volume also fails the catalyst-volume requirement for a base over 21 sessions, and prior breakouts worked only 1 of 4 times.\", \"key_risk\": \"The base gave back 84% of the prior leg and contains two 4% breakdowns, making this a deteriorating trend rather than a healthy consolidation.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 22}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 2}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.84}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.VOL.values.volume_vs_prior\", \"value\": 0.89}, {\"path\": \"checks.VOL.values.volume_vs_avg50\", \"value\": 0.9}, {\"path\": \"checks.VOL.values.cv_required\", \"value\": true}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.values.breakdowns\", \"value\": 2}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.84}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 22}], \"observation\": \"declining_base\"}, {\"criterion\": \"extension\", \"source\": \"strategy.chart.extension\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 0.84}, {\"path\": \"checks.L.values.leg_gain_pct\", \"value\": 44.1}], \"observation\": \"visibly_spent_move\"}], \"entry_note\": \"Skip if the open is below the signal day's close of $209 or if the first 30 minutes show continued selling pressure with no recovery above the open.\"}",
+   "text_sha256": "162d0f63fd52da33164a4312b80f897b7fcd2d8b53ac70515b9b582fc3ab6591",
+   "ticker": "ADSK"
+  },
+  {
+   "commit": "a900236900be6e531cc3c0c0e9b0547269861ec8",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CfadyRZsGkCDuYzoYgycL",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.51,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "FAIL",
+      "values": {
+       "base_sessions": 25,
+       "base_volume_vs_avg": 1.07,
+       "base_volume_vs_leg": 0.99,
+       "breakdowns": 2,
+       "bursts_in_base": 1,
+       "giveback": 0.92,
+       "tightness": 0.93
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.82
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.38,
+       "leg_gain_pct": 45.0,
+       "leg_sessions": 42,
+       "r2": 0.95
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 3.4,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -0.51,
+       "prior_range_pct": 3.0
+      }
+     },
+     "RE": {
+      "status": "FAIL",
+      "values": {
+       "bar_range_pct": 3.4,
+       "vs_prior_10": 0.44,
+       "vs_prior_5": 0.63
+      }
+     },
+     "VOL": {
+      "status": "FAIL",
+      "values": {
+       "cv_required": true,
+       "volume_rank_60": 27,
+       "volume_vs_avg50": 0.95,
+       "volume_vs_prior": 0.99
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 2.9,
+       "sessions_since_move_start": 1
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-09-30",
+   "text": "{\"score\": 4.2, \"grade\": \"skip\", \"reason\": \"The base is a 25-session declining structure that gave back 0.92 of the prior leg \u2014 the shaded box on the chart shows price falling from ~360 to ~262, a clear downtrend with wide overlapping red bars, not a tight consolidation. Three recorded check failures (C, RE, VOL) compound the visual problem: the burst bar is only 63% of the prior 5-bar range and volume is below both the prior session and the 50-session average, with a catalyst required but absent. The chart also shows the stock is trading well below all three moving averages, confirming a spent move rather than a young breakout.\", \"key_risk\": \"The base is a downtrend, not a consolidation \u2014 any bounce is likely to be sold into the overhead supply from the entire August\u2013September decline.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 25}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.92}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 2}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.RE.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.63}, {\"path\": \"checks.RE.values.vs_prior_10\", \"value\": 0.44}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.VOL.values.volume_vs_prior\", \"value\": 0.99}, {\"path\": \"checks.VOL.values.volume_vs_avg50\", \"value\": 0.95}, {\"path\": \"checks.VOL.values.cv_required\", \"value\": true}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 0.92}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 2}, {\"path\": \"checks.C.values.tightness\", \"value\": 0.93}], \"observation\": \"declining_base\"}, {\"criterion\": \"extension\", \"source\": \"strategy.chart.extension\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 0.92}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.63}], \"observation\": \"visibly_spent_move\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 0.92}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 25}], \"observation\": \"prior_trading_above_signal\"}], \"entry_note\": \"Skip if the open is below the signal day's close of 275.71 or if the first 30 minutes show no buying interest above the open.\"}",
+   "text_sha256": "ede16360c2af30f0273680e46b2d01bc77976d9b67cc1e90d5b3dd9a2064980c",
+   "ticker": "INTU"
+  },
+  {
+   "commit": "58e0f38430ae82249db435ff397477bd2221106e",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CfeR9Lc13xwUgjGJH3bbu",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.32,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "FAIL",
+      "values": {
+       "base_sessions": 15,
+       "base_volume_vs_avg": 0.95,
+       "base_volume_vs_leg": 0.75,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.89,
+       "tightness": 0.76
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.89
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.72,
+       "leg_gain_pct": 12.8,
+       "leg_sessions": 10,
+       "r2": 0.85
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.7,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -0.32,
+       "prior_range_pct": 2.6
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 3.9,
+       "vs_prior_10": 0.89,
+       "vs_prior_5": 1.05
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 16,
+       "volume_vs_avg50": 1.07,
+       "volume_vs_prior": 1.2
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 1,
+       "gain_since_move_start_pct": 6.3,
+       "sessions_since_move_start": 25
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-02",
+   "text": "{\"score\": 5.5, \"grade\": \"C\", \"reason\": \"The single most decisive flaw is the C check FAIL: the base gave back 0.89 of the prior leg, meaning the consolidation box (Sep 11\u2013Oct 1) is essentially a full retracement of the 12.8% leg rather than a shallow pause \u2014 the chart confirms this, showing price sliding from ~72.5 down to ~64\u201365 inside the shaded region with wide, overlapping red bars. The signal bar itself is honest (closes near the high, modest gap), but the base is a declining drift, not an orderly tight consolidation. Volume rank of 16 out of 60 and a prior-breakout success rate of 0/3 add further headwinds.\", \"key_risk\": \"The base is a near-complete retracement of the prior leg, leaving no cushion and heavy overhead supply from all the prior trading between 65 and 73.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.89}, {\"path\": \"checks.C.values.tightness\", \"value\": 0.76}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.89}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 15}], \"observation\": \"declining_base\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 0.89}, {\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 6.3}], \"observation\": \"prior_trading_above_signal\"}], \"entry_note\": \"Skip if the open is below the signal day's close of 67.72 or if the first 30 minutes show no buying interest and price drifts back toward 66.\"}",
+   "text_sha256": "725d0baea873b6154746a73360eb40d00251e9a0e76d737dd20dc0aa5104249c",
+   "ticker": "ANDE"
+  },
+  {
+   "commit": "b0c6b60e5fb3415a81781e59c0d4f3e16ed16ff6",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011Cfn1poqBCjw6CqGhdreZQ",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.34,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "FAIL",
+      "values": {
+       "base_sessions": 36,
+       "base_volume_vs_avg": 0.95,
+       "base_volume_vs_leg": 0.9,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.66,
+       "tightness": 0.93
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.95
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.23,
+       "leg_gain_pct": 13.5,
+       "leg_sessions": 54,
+       "r2": 0.84
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 1.8,
+       "narrow": true,
+       "negative": true,
+       "prior_day_pct": -0.34,
+       "prior_range_pct": 1.3
+      }
+     },
+     "RE": {
+      "status": "FAIL",
+      "values": {
+       "bar_range_pct": 2.3,
+       "vs_prior_10": 0.57,
+       "vs_prior_5": 0.92
+      }
+     },
+     "VOL": {
+      "status": "FAIL",
+      "values": {
+       "cv_required": true,
+       "volume_rank_60": 19,
+       "volume_vs_avg50": 1.06,
+       "volume_vs_prior": 1.31
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 3.5,
+       "sessions_since_move_start": 8
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-06",
+   "text": "{\"score\": 4.5, \"grade\": \"skip\", \"reason\": \"Three recorded FAIL checks \u2014 C (base 36 sessions, giveback 0.66), RE (burst bar only 0.92x the prior 5-bar range), and VOL (rank 19 of 60, only 1.06x the 50-session average when 1.5x is required for a base this long) \u2014 combine with a visibly declining base in the shaded region: the price action from mid-August through early October is a steady downtrend from ~290 to ~265, not a tight consolidation. The base is not orderly; it is a multi-month slide with wide overlapping red bars, and the burst bar itself is modest against that backdrop.\", \"key_risk\": \"The 'base' is a declining channel, not a consolidation, so any follow-through is fighting a downtrend rather than launching from a platform.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 36}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.66}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.RE.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.92}, {\"path\": \"checks.RE.values.vs_prior_10\", \"value\": 0.57}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.VOL.values.volume_vs_avg50\", \"value\": 1.06}, {\"path\": \"checks.VOL.values.volume_rank_60\", \"value\": 19}, {\"path\": \"checks.VOL.values.cv_required\", \"value\": true}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 36}, {\"path\": \"checks.C.values.tightness\", \"value\": 0.93}], \"observation\": \"declining_base\"}, {\"criterion\": \"extension\", \"source\": \"strategy.chart.extension\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 0.66}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 36}], \"observation\": \"visibly_spent_move\"}], \"entry_note\": \"Skip if the open is below the signal day's close of 270.96 or if the first 30 minutes show no buying interest above the open.\"}",
+   "text_sha256": "2fa4e056651b7583616946423dc9834fbc29f6659546ac82eee5a67f2579f88e",
+   "ticker": "AIZ"
+  },
+  {
+   "commit": "b0c6b60e5fb3415a81781e59c0d4f3e16ed16ff6",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011Cfn1qpDWvHkjwB4HzTX4S",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": 0.82,
+       "up_closes": 1,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "FAIL",
+      "values": {
+       "base_sessions": 35,
+       "base_volume_vs_avg": 1.06,
+       "base_volume_vs_leg": 0.86,
+       "breakdowns": 1,
+       "bursts_in_base": 0,
+       "giveback": 0.68,
+       "tightness": 1.0
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.85
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.42,
+       "leg_gain_pct": 29.5,
+       "leg_sessions": 55,
+       "r2": 0.93
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.0,
+       "narrow": true,
+       "negative": false,
+       "prior_day_pct": 0.82,
+       "prior_range_pct": 1.4
+      }
+     },
+     "RE": {
+      "status": "FAIL",
+      "values": {
+       "bar_range_pct": 1.7,
+       "vs_prior_10": 0.23,
+       "vs_prior_5": 0.81
+      }
+     },
+     "VOL": {
+      "status": "FAIL",
+      "values": {
+       "cv_required": true,
+       "volume_rank_60": 24,
+       "volume_vs_avg50": 1.07,
+       "volume_vs_prior": 0.97
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 2.4,
+       "sessions_since_move_start": 8
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-06",
+   "text": "{\"score\": 4.2, \"grade\": \"skip\", \"reason\": \"The base is 35 sessions long with a giveback of 0.68 of the prior leg \u2014 the shaded box on the chart shows price drifting steadily lower from ~560 to ~478, which is a declining consolidation, not a tight orderly rest. Three recorded FAILs (C, RE, VOL) compound the problem: the burst bar is the smallest of the last five bars, volume is below the prior session and well under the 1.5x average required for a base this long, and the close-to-close gain is only 0.34% on a dollar scan. The chart confirms the base is a downtrend with a bounce, not a Bonde-style tight consolidation.\", \"key_risk\": \"The base is a visible declining structure with heavy giveback; any continuation of that downtrend makes the plan immediately wrong.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 35}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.68}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 1}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.RE.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.81}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 1.7}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.VOL.values.volume_vs_prior\", \"value\": 0.97}, {\"path\": \"checks.VOL.values.volume_vs_avg50\", \"value\": 1.07}, {\"path\": \"checks.VOL.values.cv_required\", \"value\": true}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 0.68}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 35}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 1}], \"observation\": \"declining_base\"}, {\"criterion\": \"extension\", \"source\": \"strategy.chart.extension\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 0.68}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 35}], \"observation\": \"visibly_spent_move\"}], \"entry_note\": \"Skip if the open is below the signal day's close of 496.61 or if the first 30 minutes show continued selling pressure with no recovery above the open.\"}",
+   "text_sha256": "cd9274cfa6bc57e3889311ade2aba5c2a2de827c4d8800ef8662a82b3c0d728e",
+   "ticker": "AMP"
+  },
+  {
+   "commit": "a8f9a36f8c07b12e82b55de943cc3fbea2f80bad",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CfowUtEp7ycWFgVeeP9t5",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -2.46,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "FAIL",
+      "values": {
+       "base_sessions": 23,
+       "base_volume_vs_avg": 1.22,
+       "base_volume_vs_leg": 1.56,
+       "breakdowns": 4,
+       "bursts_in_base": 0,
+       "giveback": 1.0,
+       "tightness": 0.95
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.86
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.3,
+       "leg_gain_pct": 65.0,
+       "leg_sessions": 59,
+       "r2": 0.64
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 4.2,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -2.46,
+       "prior_range_pct": 5.0
+      }
+     },
+     "RE": {
+      "status": "FAIL",
+      "values": {
+       "bar_range_pct": 5.8,
+       "vs_prior_10": 0.79,
+       "vs_prior_5": 0.89
+      }
+     },
+     "VOL": {
+      "status": "FAIL",
+      "values": {
+       "cv_required": true,
+       "volume_rank_60": 39,
+       "volume_vs_avg50": 0.61,
+       "volume_vs_prior": 0.55
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 3.5,
+       "sessions_since_move_start": 1
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-07",
+   "text": "{\"score\": 3.5, \"grade\": \"skip\", \"reason\": \"The base is a 23-session declining structure from ~$36 down to ~$22, with four 4%-plus breakdowns and a full giveback of the prior leg \u2014 the shaded box on the chart shows a clear downtrend, not a tight consolidation. Range expansion fails (burst bar is only 89% of the prior 5-bar max) and volume is 55% of the prior session with a rank of 39 out of 60, well below any meaningful surge. The signal bar is a small bounce inside a broken, extended downtrend, not a burst from an orderly base.\", \"key_risk\": \"The base is a downtrend with full leg giveback; any continuation of selling pressure makes this a falling knife with no structural support.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 23}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 4}, {\"path\": \"checks.C.values.giveback\", \"value\": 1.0}, {\"path\": \"checks.C.values.tightness\", \"value\": 0.95}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.RE.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.89}, {\"path\": \"checks.RE.values.vs_prior_10\", \"value\": 0.79}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 5.8}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.VOL.values.volume_vs_prior\", \"value\": 0.55}, {\"path\": \"checks.VOL.values.volume_vs_avg50\", \"value\": 0.61}, {\"path\": \"checks.VOL.values.volume_rank_60\", \"value\": 39}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 1.0}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 4}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 23}], \"observation\": \"declining_base\"}, {\"criterion\": \"extension\", \"source\": \"strategy.chart.extension\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 1.0}, {\"path\": \"checks.C.values.base_volume_vs_leg\", \"value\": 1.56}], \"observation\": \"visibly_spent_move\"}], \"entry_note\": \"Skip if the open is below the signal day's close of $22.95 or if the first 30 minutes show continued selling with no volume expansion.\"}",
+   "text_sha256": "86282e4249bc29bf9e48b8f3f2ebd689cbf646ce7d0434ffdba573fe3c2a29fc",
+   "ticker": "ASMB"
+  },
+  {
+   "commit": "a8f9a36f8c07b12e82b55de943cc3fbea2f80bad",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CfowaXqQYqK5Nb9zzC9Ao",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -2.67,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "FAIL",
+      "values": {
+       "base_sessions": 34,
+       "base_volume_vs_avg": 1.33,
+       "base_volume_vs_leg": 4.79,
+       "breakdowns": 11,
+       "bursts_in_base": 5,
+       "giveback": 1.88,
+       "tightness": 0.91
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.91
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.53,
+       "leg_gain_pct": 34.2,
+       "leg_sessions": 15,
+       "r2": 0.54
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 6.8,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -2.67,
+       "prior_range_pct": 8.0
+      }
+     },
+     "RE": {
+      "status": "FAIL",
+      "values": {
+       "bar_range_pct": 17.6,
+       "vs_prior_10": 0.82,
+       "vs_prior_5": 0.82
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": true,
+       "volume_rank_60": 5,
+       "volume_vs_avg50": 2.09,
+       "volume_vs_prior": 4.14
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 15.4,
+       "sessions_since_move_start": 3
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-07",
+   "text": "{\"score\": 3.5, \"grade\": \"skip\", \"reason\": \"The base is a 34-session declining channel from ~$18 down to ~$5, with 11 measured 4% breakdowns and 5 bursts inside it \u2014 the shaded box on the chart shows a clear downtrend, not a consolidation. The prior leg itself is a single large-volume spike followed by a drift lower, not persistent stair-step buying. The signal bar fires from a stock that has lost roughly 75% of its value since June, with all moving averages pointing sharply down and the burst closing near $6.60 into a structurally broken name.\", \"key_risk\": \"The 'base' is a multi-month downtrend with repeated breakdowns; any follow-through is likely to be absorbed by overhead supply from every prior buyer in the $8\u2013$18 range.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 34}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 11}, {\"path\": \"checks.C.values.giveback\", \"value\": 1.88}, {\"path\": \"checks.C.values.bursts_in_base\", \"value\": 5}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.RE.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.82}, {\"path\": \"checks.RE.values.vs_prior_10\", \"value\": 0.82}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 17.6}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.values.base_sessions\", \"value\": 34}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 11}, {\"path\": \"checks.C.values.giveback\", \"value\": 1.88}], \"observation\": \"declining_base\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.C.values.base_sessions\", \"value\": 34}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 11}, {\"path\": \"checks.C.values.base_volume_vs_leg\", \"value\": 4.79}], \"observation\": \"prior_trading_above_signal\"}, {\"criterion\": \"leg_shape\", \"source\": \"strategy.chart.leg\", \"evidence\": [{\"path\": \"checks.L.values.er\", \"value\": 0.53}, {\"path\": \"checks.L.values.r2\", \"value\": 0.54}, {\"path\": \"checks.L.values.leg_sessions\", \"value\": 15}], \"observation\": \"single_gap_then_drift\"}, {\"criterion\": \"extension\", \"source\": \"strategy.chart.extension\", \"evidence\": [{\"path\": \"checks.C.values.base_sessions\", \"value\": 34}, {\"path\": \"checks.C.values.giveback\", \"value\": 1.88}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 11}], \"observation\": \"visibly_spent_move\"}], \"entry_note\": \"Skip at the open if price gaps below the signal close of $6.60 or opens with a wide red bar showing sellers in control from the first print.\"}",
+   "text_sha256": "6750d8fbd0f7d3ff99e4e09166331c61b71514d777c7637a779fe26c113ce785",
+   "ticker": "CMND"
+  },
+  {
+   "commit": "a8f9a36f8c07b12e82b55de943cc3fbea2f80bad",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CfowT6M399PVbrBayTNrd",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -3.12,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PASS",
+      "values": {
+       "base_sessions": 10,
+       "base_volume_vs_avg": 0.97,
+       "base_volume_vs_leg": 0.89,
+       "breakdowns": 1,
+       "bursts_in_base": 0,
+       "giveback": 0.26,
+       "tightness": 0.87
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.86
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.37,
+       "leg_gain_pct": 119.1,
+       "leg_sessions": 59,
+       "r2": 0.83
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 6.2,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -3.12,
+       "prior_range_pct": 6.2
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 8.6,
+       "vs_prior_10": 1.18,
+       "vs_prior_5": 1.18
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 6,
+       "volume_vs_avg50": 1.82,
+       "volume_vs_prior": 1.56
+      }
+     },
+     "Y": {
+      "status": "FAIL",
+      "values": {
+       "breakouts_in_move": 6,
+       "gain_since_move_start_pct": 48.3,
+       "sessions_since_move_start": 60
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-07",
+   "text": "{\"score\": 6.5, \"grade\": \"B\", \"reason\": \"The single most decisive flaw is the recorded Y FAIL: this would be breakout number 7 of the current move over 60 sessions, with 6 prior breakouts already visible in the chart as repeated pushes out of a rising channel from the June lows through October \u2014 the trend is clearly mature, not young. The base itself looks reasonably orderly in the shaded box and the signal bar closes near its high, but the repeated-push pattern visible across the entire chart makes this a late-stage entry.\", \"key_risk\": \"Seven breakouts into a 119% leg means the move is extended and late-trend buyers absorb supply from earlier holders looking to exit.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.Y.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.Y.values.breakouts_in_move\", \"value\": 6}, {\"path\": \"checks.Y.values.sessions_since_move_start\", \"value\": 60}, {\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 48.3}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"trend_maturity\", \"source\": \"strategy.chart.trend\", \"evidence\": [{\"path\": \"checks.Y.values.breakouts_in_move\", \"value\": 6}, {\"path\": \"checks.L.values.leg_sessions\", \"value\": 59}, {\"path\": \"checks.L.values.leg_gain_pct\", \"value\": 119.1}], \"observation\": \"repeated_visible_pushes\"}], \"entry_note\": \"Skip if the open gaps above the signal day's high (~8.64) or if the stock opens below the signal day's close (~8.27) on weak volume, confirming no follow-through.\"}",
+   "text_sha256": "93f2b14b172892120f2e068f35decef65de733006a74ede6b5a5955d101b2db1",
+   "ticker": "VSTM"
+  },
+  {
+   "commit": "e67f8cba8774789b8deb0c106b21537b66f37a35",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A+",
+   "message_id": "msg_011CfreAXec2gMRdBcUNv9Mr",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -1.75,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PASS",
+      "values": {
+       "base_sessions": 13,
+       "base_volume_vs_avg": 0.7,
+       "base_volume_vs_leg": 0.68,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.24,
+       "tightness": 0.73
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.84
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.47,
+       "leg_gain_pct": 46.8,
+       "leg_sessions": 52,
+       "r2": 0.87
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.2,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -1.75,
+       "prior_range_pct": 2.7
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 7.8,
+       "vs_prior_10": 2.6,
+       "vs_prior_5": 2.6
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 1,
+       "volume_vs_avg50": 3.94,
+       "volume_vs_prior": 4.44
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 1,
+       "gain_since_move_start_pct": 55.8,
+       "sessions_since_move_start": 60
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-08",
+   "text": "{\"score\": 5.5, \"grade\": \"C\", \"reason\": \"The signal bar opened at roughly 115 (a 13% gap from the prior close of ~101.71), meaning the vast majority of the 17.46% gain was overnight gap rather than intraday price discovery \u2014 the actual bar range of 7.8% is dominated by the gap component, making this look more like an Episodic Pivot catalyst event than a clean momentum burst out of consolidation. The burst bar's close_pos of 0.84 is acceptable but the gap-dominated structure means buyers who missed the open captured very little of the move. A 17.46% gain on what appears to be a biotech catalyst gap is the worst cell in the event study (36% win rate, -9.3% at 20 sessions), and the base tightness of 0.73 just barely missed the A+ threshold.\", \"key_risk\": \"This is a biotech name with a large catalyst gap that looks like an Episodic Pivot; the 36% historical win rate for 15%+ burst-day gains and the gap-dominated bar structure make follow-through highly uncertain.\", \"findings\": [{\"criterion\": \"signal_shape\", \"source\": \"strategy.chart.signal\", \"evidence\": [{\"path\": \"burst.gap_pct\", \"value\": 13.1}, {\"path\": \"burst.bar_range_pct\", \"value\": 7.8}, {\"path\": \"burst.gain_pct\", \"value\": 17.46}], \"observation\": \"gap_dominated\"}, {\"criterion\": \"event_structure\", \"source\": \"strategy.chart.event\", \"evidence\": [{\"path\": \"burst.gap_pct\", \"value\": 13.1}, {\"path\": \"burst.volume_vs_avg50\", \"value\": 3.94}, {\"path\": \"flags\", \"value\": \"biotech\"}], \"observation\": \"apparent_catalyst_gap\"}], \"entry_note\": \"Skip if the open is below the signal day's close of 119.47 or if the stock gaps further up beyond the red dashed resistance line visible near 120, as both would invalidate the planned entry range.\"}",
+   "text_sha256": "b60d912198715e08101c827e5bd42f1c202435d2ff92cdb049bd00c925d73c02",
+   "ticker": "HAE"
+  },
+  {
+   "commit": "1e1ffe9ca890913d4c5502e44c824f851be149dc",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A+",
+   "message_id": "msg_011CfqrA9fuu591qEqCvquQE",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -1.75,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PASS",
+      "values": {
+       "base_sessions": 13,
+       "base_volume_vs_avg": 0.7,
+       "base_volume_vs_leg": 0.68,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.24,
+       "tightness": 0.73
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.84
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.47,
+       "leg_gain_pct": 46.8,
+       "leg_sessions": 52,
+       "r2": 0.87
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.2,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -1.75,
+       "prior_range_pct": 2.7
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 7.8,
+       "vs_prior_10": 2.6,
+       "vs_prior_5": 2.6
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 1,
+       "volume_vs_avg50": 3.94,
+       "volume_vs_prior": 4.64
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 1,
+       "gain_since_move_start_pct": 55.8,
+       "sessions_since_move_start": 60
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-08",
+   "text": "{\"score\": 6.5, \"grade\": \"B\", \"reason\": \"The signal bar opened at roughly 115 (a 13% gap from the prior close of ~101.71) and the entire bar range is only 7.8% of price, meaning the gap accounts for the overwhelming majority of the 17.46% move \u2014 the actual intraday range expansion is modest and the burst is gap-dominated rather than a genuine intraday thrust. A 17.46% gain on a biotech name with a 13.1% gap is the textbook apparent-catalyst pattern (likely an earnings or data release), which is an Episodic Pivot setup with a different plan, not a clean momentum burst out of a quiet base. The base itself looks orderly in the shaded region, but the signal bar's gap-dominated structure and the biotech catalyst flag materially reduce the quality of this as a reaction entry.\", \"key_risk\": \"The 17.46% gap-driven burst on a biotech flag almost certainly reflects a catalyst event; the after-close entry plan is designed for momentum continuation, not post-catalyst digestion, and the 36% win rate noted for 15%+ gains compounds this risk.\", \"findings\": [{\"criterion\": \"signal_shape\", \"source\": \"strategy.chart.signal\", \"evidence\": [{\"path\": \"burst.gap_pct\", \"value\": 13.1}, {\"path\": \"burst.bar_range_pct\", \"value\": 7.8}, {\"path\": \"burst.gain_pct\", \"value\": 17.46}], \"observation\": \"gap_dominated\"}, {\"criterion\": \"event_structure\", \"source\": \"strategy.chart.event\", \"evidence\": [{\"path\": \"burst.gap_pct\", \"value\": 13.1}, {\"path\": \"burst.volume_vs_avg50\", \"value\": 3.94}, {\"path\": \"burst.volume_rank_60\", \"value\": 1}], \"observation\": \"apparent_catalyst_gap\"}], \"entry_note\": \"Skip if the open gaps further above 119.47 or if the stock opens below the signal day's close, as either would confirm post-catalyst exhaustion rather than orderly continuation.\"}",
+   "text_sha256": "d251893420d72344f6fcddd757da4d782d6d7fe6339019a2bf1d7db76d3f8845",
+   "ticker": "HAE"
+  },
+  {
+   "commit": "62bce72ddf45596d735f72b2ea20808a25cd3f0b",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CfsiHWPcidBRGcQts81M4",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -1.93,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PARTIAL",
+      "values": {
+       "base_sessions": 2,
+       "base_volume_vs_avg": 0.75,
+       "base_volume_vs_leg": 0.78,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.28,
+       "tightness": 0.95
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.99
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.46,
+       "leg_gain_pct": 17.2,
+       "leg_sessions": 19,
+       "r2": 0.49
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 3.2,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -1.93,
+       "prior_range_pct": 4.6
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 5.0,
+       "vs_prior_10": 0.74,
+       "vs_prior_5": 1.09
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 40,
+       "volume_vs_avg50": 0.78,
+       "volume_vs_prior": 1.18
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 1,
+       "gain_since_move_start_pct": 21.5,
+       "sessions_since_move_start": 21
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-09",
+   "text": "{\"score\": 7.5, \"grade\": \"B\", \"reason\": \"The signal bar itself is clean \u2014 closes at 0.99 of its range, above the open, with a modest gap and solid body \u2014 but the base is only 2 sessions, which is outside Bonde's 3\u201320 window and recorded as a PARTIAL on C, and the prior leg's R\u00b2 of 0.49 barely clears the linearity threshold, with the chart showing a recovery move off a multi-month downtrend rather than a clean stair-step advance. Volume on the burst day ranks only 40th of the last 60 sessions and sits at 0.78\u00d7 the 50-session average, which is soft for a conviction burst. The overhead supply from the July\u2013August decline (price was trading in the $34\u2013$38 range for weeks) sits well above the current $29.63 close and represents a meaningful supply overhang.\", \"key_risk\": \"Prior breakouts in this name worked only 1 of 4 times in the last 60 sessions, and the stock is recovering from a deep downtrend with heavy overhead supply from the $34\u2013$38 zone.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"PARTIAL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 2}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 21.5}, {\"path\": \"checks.L.values.leg_gain_pct\", \"value\": 17.2}], \"observation\": \"prior_trading_above_signal\"}], \"entry_note\": \"Skip if the open gaps above $30.50 with no follow-through buying in the first 30 minutes, or if price opens below the prior session's close near $27.96.\"}",
+   "text_sha256": "f5338299461608ea383915c9222bda966c683e0533c5dcf0a48e6e65c5bae4ea",
+   "ticker": "ATEN"
+  },
+  {
+   "commit": "8772006f5a82e21d3a22c6551fc2f0a6b38b6134",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011Cg1F3eHd59BWFWUtj6tXa",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.23,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "FAIL",
+      "values": {
+       "base_sessions": 39,
+       "base_volume_vs_avg": 1.02,
+       "base_volume_vs_leg": 0.85,
+       "breakdowns": 2,
+       "bursts_in_base": 3,
+       "giveback": 0.54,
+       "tightness": 0.65
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.86
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.26,
+       "leg_gain_pct": 66.5,
+       "leg_sessions": 60,
+       "r2": 0.57
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 4.1,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -0.23,
+       "prior_range_pct": 3.5
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 9.2,
+       "vs_prior_10": 1.8,
+       "vs_prior_5": 1.84
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": true,
+       "volume_rank_60": 7,
+       "volume_vs_avg50": 1.86,
+       "volume_vs_prior": 1.92
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 6.7,
+       "sessions_since_move_start": 3
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-13",
+   "text": "{\"score\": 5.5, \"grade\": \"C\", \"reason\": \"The base is a recorded FAIL on C with 39 sessions (nearly double the 20-session maximum), 2 breakdowns of 4%+, 3 bursts inside the base, and a giveback of 0.54 \u2014 the chart confirms this: the shaded box from mid-August through mid-October shows a wide, declining, choppy consolidation with multiple large red bars and repeated failed pushes, not a tight orderly pause. The prior leg (May\u2013August) is a 66% gain but the ER of 0.26 is well below the 0.4 threshold, meaning the advance was not smooth enough for A+ linearity, and visually the leg includes a large gap-driven surge followed by a drift lower into the base. The base itself sits well below the prior highs (~$60) with heavy overhead supply from the August peak, and prior breakouts from this move worked 0 of 4 times.\", \"key_risk\": \"The base is structurally broken \u2014 too long, too many internal breakdowns, and too much giveback \u2014 making follow-through from this burst statistically poor for this name.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 39}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 2}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.54}, {\"path\": \"checks.C.values.bursts_in_base\", \"value\": 3}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.values.base_sessions\", \"value\": 39}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 2}, {\"path\": \"checks.C.values.tightness\", \"value\": 0.65}], \"observation\": \"wide_overlapping_bars\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 0.54}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 39}], \"observation\": \"prior_trading_above_signal\"}, {\"criterion\": \"trend_maturity\", \"source\": \"strategy.chart.trend\", \"evidence\": [{\"path\": \"checks.C.values.bursts_in_base\", \"value\": 3}, {\"path\": \"checks.Y.values.breakouts_in_move\", \"value\": 0}], \"observation\": \"repeated_visible_pushes\"}], \"entry_note\": \"Skip if the open is below the signal day's close (~$49.91) or if the first 30 minutes show no buying interest above the open, confirming the base's pattern of failed bursts.\"}",
+   "text_sha256": "1148fb3634ba986839385061d85ba238de00d22f643483e62d15ec865dedc8af",
+   "ticker": "ARXS"
+  },
+  {
+   "commit": "8772006f5a82e21d3a22c6551fc2f0a6b38b6134",
+   "error": "src.ReaderAuthorityError: measured defect requires a recorded FAIL or PARTIAL",
+   "mechanical_grade": "A+",
+   "message_id": "msg_011Cg1F2oSzsBCCN5HQBkA6G",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.65,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PASS",
+      "values": {
+       "base_sessions": 6,
+       "base_volume_vs_avg": 1.18,
+       "base_volume_vs_leg": 1.08,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.29,
+       "tightness": 0.75
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.93
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.45,
+       "leg_gain_pct": 11.7,
+       "leg_sessions": 22,
+       "r2": 0.67
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.2,
+       "narrow": true,
+       "negative": true,
+       "prior_day_pct": -0.65,
+       "prior_range_pct": 1.6
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 3.9,
+       "vs_prior_10": 0.85,
+       "vs_prior_5": 1.5
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 14,
+       "volume_vs_avg50": 1.16,
+       "volume_vs_prior": 1.43
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 13.5,
+       "sessions_since_move_start": 28
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-13",
+   "text": "{\"score\": 7.5, \"grade\": \"B\", \"reason\": \"The base shaded region (Oct 5\u201312) shows five to six bars that are visibly wide and overlapping \u2014 the candles span roughly 127.5 to 132.3 and repeatedly cross each other's bodies, which is looser than the tightness proxy of 0.75 suggests for an A+ consolidation. The signal bar itself closes near its high (close_pos 0.93) and volume is above prior, but the base lacks the quiet, narrow character Bonde requires. Additionally, the VOL rank of 14 out of 60 is well outside the A+ threshold of top 3, which alone prevents confirming the mechanical A+.\", \"key_risk\": \"The base bars are wide and overlapping, meaning any reversal from the burst close has little clean support and the consolidation did not compress price enough to give a reliable risk anchor.\", \"findings\": [{\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.values.tightness\", \"value\": 0.75}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 6}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.29}], \"observation\": \"wide_overlapping_bars\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.values.volume_rank_60\", \"value\": 14}, {\"path\": \"checks.VOL.status\", \"value\": \"PASS\"}], \"observation\": \"recorded_check_defect\"}], \"entry_note\": \"Skip if MSM opens below the burst bar's close of 132.17 or gaps up more than 1% above it, leaving no room for the plan's risk parameters.\"}",
+   "text_sha256": "f5660a95b7f71871fd6a0221d6fa7c4f5a0882fb042e4bd8198b6666708c6266",
+   "ticker": "MSM"
+  },
+  {
+   "commit": "0f95141450c579e86f4de657c23849217dc57cc4",
+   "error": "src.ReaderAuthorityError: measured defect requires a recorded FAIL or PARTIAL",
+   "mechanical_grade": "A+",
+   "message_id": "msg_011Cg4xrJZZmgPEh3DPJVBNL",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -1.14,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PASS",
+      "values": {
+       "base_sessions": 3,
+       "base_volume_vs_avg": 1.19,
+       "base_volume_vs_leg": 1.41,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.25,
+       "tightness": 0.89
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.98
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.64,
+       "leg_gain_pct": 18.7,
+       "leg_sessions": 22,
+       "r2": 0.84
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.8,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -1.14,
+       "prior_range_pct": 2.4
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 4.4,
+       "vs_prior_10": 0.72,
+       "vs_prior_5": 1.16
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 10,
+       "volume_vs_avg50": 1.89,
+       "volume_vs_prior": 1.7
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 22.1,
+       "sessions_since_move_start": 25
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-15",
+   "text": "{\"score\": 8.5, \"grade\": \"A\", \"reason\": \"The chart shows a clean stair-step leg from mid-September through early October with good linearity, and the 3-session base is visually tight and orderly near the highs. The signal bar closes near its high with honest range expansion, but the base tightness proxy (0.89) is above the A+ threshold of 0.70 and the volume rank (10th of 60) misses the A+ top-3 requirement, keeping this a solid A rather than A+. The extension note (10.1% above 20-SMA after a 22-session, 18.7% leg) is a modest headwind but not disqualifying on its own.\", \"key_risk\": \"The stock is already extended 10% above its 20-day average after a 22-session run, leaving limited cushion if the move stalls immediately.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.values.tightness\", \"value\": 0.89}, {\"path\": \"checks.VOL.values.volume_rank_60\", \"value\": 10}], \"observation\": \"recorded_check_defect\"}], \"entry_note\": \"Skip if the open gaps more than 1% above the signal close of 29.04 or if the first 30 minutes show a fade back below the base high of 28.60.\"}",
+   "text_sha256": "194dba02ef8faf7c6267957789f9b10a8b8e8108fbfdd2251466be24e01fa11a",
+   "ticker": "JAKK"
+  },
+  {
+   "commit": "a34a2978021bcb2fd0239799b1987f6ffe1cb52a",
+   "error": "src.ReaderAuthorityError: measured defect requires a recorded FAIL or PARTIAL",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CgCbJYFWcXrefcenMAGBv",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.79,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PASS",
+      "values": {
+       "base_sessions": 3,
+       "base_volume_vs_avg": 0.74,
+       "base_volume_vs_leg": 0.58,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.31,
+       "tightness": 0.9
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.88
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.58,
+       "leg_gain_pct": 24.6,
+       "leg_sessions": 15,
+       "r2": 0.85
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 3.7,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -0.79,
+       "prior_range_pct": 2.6
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 5.2,
+       "vs_prior_10": 0.91,
+       "vs_prior_5": 1.16
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 41,
+       "volume_vs_avg50": 0.74,
+       "volume_vs_prior": 1.21
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 1,
+       "gain_since_move_start_pct": 28.7,
+       "sessions_since_move_start": 18
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-19",
+   "text": "{\"score\": 7.5, \"grade\": \"B\", \"reason\": \"The checklist passes all six criteria and the prior leg is genuinely linear (ER 0.58, R\u00b2 0.85, 24.6% in 15 sessions), but the volume picture is weak: the burst bar ranks only 41st of the last 60 sessions and sits at just 0.74\u00d7 the 50-session average, meaning there is no real volume confirmation behind the breakout. The notes also record that prior breakouts from this name worked 0 of 3 times in the last 60 sessions, and the stock is extended 12.4% above its 20-SMA after a 28.4% move in 20 sessions, which together make follow-through less reliable.\", \"key_risk\": \"Biotech flag plus a poor prior-breakout track record (0/3) and below-average burst volume mean the move could stall or reverse quickly.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.values.volume_rank_60\", \"value\": 41}, {\"path\": \"checks.VOL.values.volume_vs_avg50\", \"value\": 0.74}, {\"path\": \"checks.VOL.values.volume_vs_prior\", \"value\": 1.21}], \"observation\": \"recorded_check_defect\"}], \"entry_note\": \"Skip if the open gaps above 6.65 or the first 30 minutes show a fade back below the prior close of 6.25.\"}",
+   "text_sha256": "4ff2060abd0a952eb504b2099acd1b0db2d079e5949eaf453c2e6c75ce215d26",
+   "ticker": "INGN"
+  },
+  {
+   "commit": "a34a2978021bcb2fd0239799b1987f6ffe1cb52a",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CgCbKeJRy5LL3d5om4bAn",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -2.54,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "FAIL",
+      "values": {
+       "base_sessions": 27,
+       "base_volume_vs_avg": 0.96,
+       "base_volume_vs_leg": 1.17,
+       "breakdowns": 3,
+       "bursts_in_base": 3,
+       "giveback": 0.46,
+       "tightness": 1.0
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.84
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.39,
+       "leg_gain_pct": 111.0,
+       "leg_sessions": 59,
+       "r2": 0.93
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 6.1,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -2.54,
+       "prior_range_pct": 7.5
+      }
+     },
+     "RE": {
+      "status": "FAIL",
+      "values": {
+       "bar_range_pct": 7.4,
+       "vs_prior_10": 0.69,
+       "vs_prior_5": 0.69
+      }
+     },
+     "VOL": {
+      "status": "FAIL",
+      "values": {
+       "cv_required": true,
+       "volume_rank_60": 49,
+       "volume_vs_avg50": 0.62,
+       "volume_vs_prior": 1.05
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 7.0,
+       "sessions_since_move_start": 1
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-19",
+   "text": "{\"score\": 4.5, \"grade\": \"skip\", \"reason\": \"Three recorded FAILs \u2014 C (27-session base with 3 breakdowns, 3 bursts inside, and 0.46 giveback), RE (burst bar only 69% of the prior 5-bar range), and VOL (volume at 62% of the 50-session average when 1.5x is required for a base this long) \u2014 combine with a visibly declining, wide, overlapping base in the shaded region that shows repeated failed pushes and heavy red bars, making the consolidation the opposite of the orderly, tight structure Bonde requires. The prior breakouts note (1 of 4 worked) and the base trading well below the September spike highs add overhead supply pressure that further undermines the setup.\", \"key_risk\": \"Three simultaneous checklist FAILs on consolidation quality, range expansion, and volume confirmation make this a structurally defective setup with no single compensating strength.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 27}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 3}, {\"path\": \"checks.C.values.bursts_in_base\", \"value\": 3}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.46}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.RE.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.69}, {\"path\": \"checks.RE.values.vs_prior_10\", \"value\": 0.69}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 7.4}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.VOL.values.volume_vs_avg50\", \"value\": 0.62}, {\"path\": \"checks.VOL.values.volume_rank_60\", \"value\": 49}, {\"path\": \"checks.VOL.values.cv_required\", \"value\": true}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.values.breakdowns\", \"value\": 3}, {\"path\": \"checks.C.values.bursts_in_base\", \"value\": 3}, {\"path\": \"checks.C.values.tightness\", \"value\": 1.0}], \"observation\": \"wide_overlapping_bars\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.C.values.giveback\", \"value\": 0.46}, {\"path\": \"checks.C.values.base_volume_vs_leg\", \"value\": 1.17}], \"observation\": \"prior_trading_above_signal\"}, {\"criterion\": \"trend_maturity\", \"source\": \"strategy.chart.trend\", \"evidence\": [{\"path\": \"checks.Y.values.breakouts_in_move\", \"value\": 0}, {\"path\": \"checks.C.values.bursts_in_base\", \"value\": 3}], \"observation\": \"repeated_visible_pushes\"}], \"entry_note\": \"Skip if the open gaps below the signal-day close of 47.55 or if the first 30 minutes show no buying interest above the prior close of 44.43.\"}",
+   "text_sha256": "5f480c14ca5d563cd1067128fb1c99c48bc2f1f1c2af09ad621e9aca4ba568f2",
+   "ticker": "PLSE"
+  },
+  {
+   "commit": "d179f2062902b248b61eab7956c3682bc6b63d68",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A",
+   "message_id": "msg_011CgDsjnhV4DymXEXX1civJ",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -2.54,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "FAIL",
+      "values": {
+       "base_sessions": 27,
+       "base_volume_vs_avg": 0.96,
+       "base_volume_vs_leg": 1.17,
+       "breakdowns": 3,
+       "bursts_in_base": 3,
+       "giveback": 0.46,
+       "tightness": 1.0
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.84
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.39,
+       "leg_gain_pct": 111.0,
+       "leg_sessions": 59,
+       "r2": 0.93
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 6.1,
+       "narrow": false,
+       "negative": true,
+       "prior_day_pct": -2.54,
+       "prior_range_pct": 7.5
+      }
+     },
+     "RE": {
+      "status": "FAIL",
+      "values": {
+       "bar_range_pct": 7.4,
+       "vs_prior_10": 0.69,
+       "vs_prior_5": 0.69
+      }
+     },
+     "VOL": {
+      "status": "FAIL",
+      "values": {
+       "cv_required": true,
+       "volume_rank_60": 49,
+       "volume_vs_avg50": 0.62,
+       "volume_vs_prior": 1.05
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 7.0,
+       "sessions_since_move_start": 1
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-19",
+   "text": "{\"score\": 4.5, \"grade\": \"skip\", \"reason\": \"Three recorded FAILs \u2014 C (27-session base with 3 breakdowns, 3 bursts inside, and 0.46 giveback), RE (burst bar only 69% of the prior 5-bar range), and VOL (volume at 62% of the 50-session average when 1.5x is required for a base this long) \u2014 combine with a visibly declining, wide, overlapping base in the shaded region that shows repeated failed pushes and heavy red bars, making the consolidation structurally loose rather than tight. The base is not orderly: the chart shows the price drifting lower from ~58 to ~43 across the 27-session box with multiple wide red bars and failed breakout attempts. Prior breakouts worked only 1 of 4 times, and the signal bar's volume is mediocre at best.\", \"key_risk\": \"The base is a declining, multi-breakdown structure with heavy giveback and weak volume on the burst, making follow-through unlikely.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 27}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 3}, {\"path\": \"checks.C.values.bursts_in_base\", \"value\": 3}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.46}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.RE.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.69}, {\"path\": \"checks.RE.values.vs_prior_10\", \"value\": 0.69}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 7.4}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.VOL.values.volume_vs_avg50\", \"value\": 0.62}, {\"path\": \"checks.VOL.values.volume_rank_60\", \"value\": 49}, {\"path\": \"checks.VOL.values.cv_required\", \"value\": true}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.values.breakdowns\", \"value\": 3}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.46}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 27}], \"observation\": \"declining_base\"}, {\"criterion\": \"trend_maturity\", \"source\": \"strategy.chart.trend\", \"evidence\": [{\"path\": \"checks.C.values.bursts_in_base\", \"value\": 3}, {\"path\": \"checks.C.values.breakdowns\", \"value\": 3}], \"observation\": \"repeated_visible_pushes\"}], \"entry_note\": \"Skip if the open is below the prior close (~44.43) or if the first 30 minutes show no buying interest above the burst bar's midpoint.\"}",
+   "text_sha256": "ce11936662a6e853ad503ed641ef430df540694ff5081c6535e85305a8237ec4",
+   "ticker": "PLSE"
+  },
+  {
+   "commit": "0d8494fca679819291dca3cc4d5c7236edaea6f5",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A+",
+   "message_id": "msg_011CgESymR5wMskaH5PGsTUB",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.42,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PARTIAL",
+      "values": {
+       "base_sessions": 2,
+       "base_volume_vs_avg": 1.17,
+       "base_volume_vs_leg": 1.13,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.26,
+       "tightness": 0.97
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.97
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.54,
+       "leg_gain_pct": 9.7,
+       "leg_sessions": 26,
+       "r2": 0.59
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 1.5,
+       "narrow": true,
+       "negative": true,
+       "prior_day_pct": -0.42,
+       "prior_range_pct": 1.4
+      }
+     },
+     "RE": {
+      "status": "FAIL",
+      "values": {
+       "bar_range_pct": 1.4,
+       "vs_prior_10": 0.39,
+       "vs_prior_5": 0.39
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 23,
+       "volume_vs_avg50": 1.1,
+       "volume_vs_prior": 1.19
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 12.8,
+       "sessions_since_move_start": 28
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-20",
+   "text": "{\"score\": 6.5, \"grade\": \"B\", \"reason\": \"The burst bar itself closes near its high (close_pos 0.97) and the prior leg is reasonably linear, but the range expansion check is a hard FAIL \u2014 the burst bar's 1.4% range is only 39% of the largest bar in the prior five sessions, meaning the expansion out of the base is not convincing. The base is also only two sessions, outside Bonde's 3\u201320 window (C PARTIAL), and volume at rank 23 of 60 is ordinary rather than institutional. These two measured defects together pull the setup below A quality.\", \"key_risk\": \"With RE failing badly and the stock already 7.8% above its 20-day average, there is little expansion energy left and the move may be largely spent before entry.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.RE.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.39}, {\"path\": \"checks.RE.values.vs_prior_10\", \"value\": 0.39}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 1.4}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"PARTIAL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 2}, {\"path\": \"checks.C.values.tightness\", \"value\": 0.97}, {\"path\": \"checks.C.values.base_volume_vs_leg\", \"value\": 1.13}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"extension\", \"source\": \"strategy.chart.extension\", \"evidence\": [{\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.39}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 1.4}], \"observation\": \"visibly_spent_move\"}], \"entry_note\": \"Skip if the open gaps above 106.50 or if the first 30 minutes show a fade back below the prior day's close near 104.09.\"}",
+   "text_sha256": "867354f23fa4f31e9c961d6b98bf85b18f00b4e58ea8f66275cd4e802edb3d3f",
+   "ticker": "CHD"
+  },
+  {
+   "commit": "36ce7ef92621432155dc03691dbbb50356d76310",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A+",
+   "message_id": "msg_011CgTkmmaJkdAbySoc84mTX",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": 0.66,
+       "up_closes": 1,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PARTIAL",
+      "values": {
+       "base_sessions": 2,
+       "base_volume_vs_avg": 1.27,
+       "base_volume_vs_leg": 1.17,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.14,
+       "tightness": 0.67
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.94
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.43,
+       "leg_gain_pct": 16.9,
+       "leg_sessions": 32,
+       "r2": 0.65
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.0,
+       "narrow": true,
+       "negative": false,
+       "prior_day_pct": 0.66,
+       "prior_range_pct": 1.8
+      }
+     },
+     "RE": {
+      "status": "FAIL",
+      "values": {
+       "bar_range_pct": 1.7,
+       "vs_prior_10": 0.47,
+       "vs_prior_5": 0.47
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 4,
+       "volume_vs_avg50": 1.47,
+       "volume_vs_prior": 1.22
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 18.2,
+       "sessions_since_move_start": 34
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-27",
+   "text": "{\"score\": 6.5, \"grade\": \"B\", \"reason\": \"The single most decisive flaw is the RE FAIL: the burst bar's range of 1.7% is only 47% of the largest bar in the prior five sessions, meaning there is no genuine range expansion on the signal day. Compounding this, the base is only two sessions long (outside Bonde's 3\u201320 minimum, recorded as PARTIAL), and the signal bar's gain of 0.9% close-to-close is modest for a dollar-scan burst. The chart confirms the burst bar is a small, tidy candle sitting atop a long prior leg with the red dashed overhead supply line just above.\", \"key_risk\": \"No range expansion on the burst bar means the move lacks the energy signature Bonde requires, and the stock is pressing against visible overhead supply near the prior highs.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.RE.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.47}, {\"path\": \"checks.RE.values.vs_prior_10\", \"value\": 0.47}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 1.7}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"PARTIAL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 2}, {\"path\": \"checks.C.values.base_volume_vs_leg\", \"value\": 1.17}, {\"path\": \"checks.C.values.base_volume_vs_avg\", \"value\": 1.27}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 18.2}, {\"path\": \"checks.L.values.leg_gain_pct\", \"value\": 16.9}], \"observation\": \"prior_trading_above_signal\"}], \"entry_note\": \"Skip if the open gaps above the red dashed resistance line near 395 without a clean pullback, or if the first 30 minutes show a fade back below the prior session's close of 394.73.\"}",
+   "text_sha256": "487352351d1223b370a0c3fb758d79643a40029e6cd1d67ad6601ad9b9744f62",
+   "ticker": "WST"
+  },
+  {
+   "commit": "dbb8358cd6c691209f1580ec6d765cd308a56fc7",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A+",
+   "message_id": "msg_011CgVgrBnFBX8Uo9oE54txd",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -1.26,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PASS",
+      "values": {
+       "base_sessions": 3,
+       "base_volume_vs_avg": 0.81,
+       "base_volume_vs_leg": 0.72,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.24,
+       "tightness": 0.85
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.9
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.61,
+       "leg_gain_pct": 14.6,
+       "leg_sessions": 17,
+       "r2": 0.8
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.6,
+       "narrow": true,
+       "negative": true,
+       "prior_day_pct": -1.26,
+       "prior_range_pct": 1.6
+      }
+     },
+     "RE": {
+      "status": "FAIL",
+      "values": {
+       "bar_range_pct": 2.4,
+       "vs_prior_10": 0.4,
+       "vs_prior_5": 0.4
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 55,
+       "volume_vs_avg50": 0.68,
+       "volume_vs_prior": 1.01
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 15.1,
+       "sessions_since_move_start": 20
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-28",
+   "text": "{\"score\": 6.5, \"grade\": \"B\", \"reason\": \"The RE check is a recorded FAIL \u2014 the burst bar's 2.4% range is only 0.4x the largest of the prior five bars, meaning the signal day did not expand meaningfully out of the base. The chart confirms this: the October 28 bar is visibly modest relative to the large bars seen in early July and the leg into the base, and volume at rank 55 of 60 is well below average. The overhead supply from the June\u2013July highs near 290\u2013300 is a further headwind, but the RE failure is the single most decisive measured defect.\", \"key_risk\": \"The burst bar lacks genuine range expansion, making follow-through momentum fragile if the broader market softens.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.RE.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.4}, {\"path\": \"checks.RE.values.vs_prior_10\", \"value\": 0.4}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 2.4}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 15.1}, {\"path\": \"checks.L.values.leg_gain_pct\", \"value\": 14.6}], \"observation\": \"prior_trading_above_signal\"}], \"entry_note\": \"Skip if the open is below the signal day's close of 253.22 or if the first 30 minutes show no buying interest above the base high of 256.30.\"}",
+   "text_sha256": "f08241355a47f734bf525ef7def813698d0dd26d85f02e71a5663beb5564cfed",
+   "ticker": "IBM"
+  },
+  {
+   "commit": "cd6418f191d5720a5f4704d7e81be58f0571ed58",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A+",
+   "message_id": "msg_011CgXbL1JoE9eqCkyXKLHZ2",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.68,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PASS",
+      "values": {
+       "base_sessions": 4,
+       "base_volume_vs_avg": 0.87,
+       "base_volume_vs_leg": 0.72,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.15,
+       "tightness": 0.75
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.8
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.53,
+       "leg_gain_pct": 9.8,
+       "leg_sessions": 21,
+       "r2": 0.9
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 1.4,
+       "narrow": true,
+       "negative": true,
+       "prior_day_pct": -0.68,
+       "prior_range_pct": 1.2
+      }
+     },
+     "RE": {
+      "status": "FAIL",
+      "values": {
+       "bar_range_pct": 1.3,
+       "vs_prior_10": 0.54,
+       "vs_prior_5": 0.65
+      }
+     },
+     "VOL": {
+      "status": "FAIL",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 52,
+       "volume_vs_avg50": 0.62,
+       "volume_vs_prior": 0.88
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 11.1,
+       "sessions_since_move_start": 25
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-29",
+   "text": "{\"score\": 5.5, \"grade\": \"C\", \"reason\": \"The two hardest quality checks both fail: the burst bar's range (1.3%) is only 65% of the prior 5-bar maximum and 54% of the prior 10-bar maximum, and volume came in at 88% of the prior session and just 62% of the 50-session average \u2014 there is no expansion in either range or volume to confirm a genuine burst. The signal bar itself is also visibly narrow relative to the surrounding bars in the October consolidation region, and the stock is pressing against the dashed overhead supply line near 110 where heavy prior trading occurred from July through August.\", \"key_risk\": \"No range expansion and below-average volume mean the move could stall or reverse immediately into the dense overhead supply from the prior multi-month trading range.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.RE.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.65}, {\"path\": \"checks.RE.values.vs_prior_10\", \"value\": 0.54}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 1.3}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.VOL.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.VOL.values.volume_vs_prior\", \"value\": 0.88}, {\"path\": \"checks.VOL.values.volume_vs_avg50\", \"value\": 0.62}, {\"path\": \"checks.VOL.values.volume_rank_60\", \"value\": 52}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 11.1}, {\"path\": \"checks.C.values.giveback\", \"value\": 0.15}], \"observation\": \"prior_trading_above_signal\"}], \"entry_note\": \"Skip if the open gaps above 110.50 into the overhead supply zone or if the first 30 minutes show no buying interest and price fades back below 109.50.\"}",
+   "text_sha256": "02071f0bb9f3e5b410675591b0bc15b4cfada49a07120b7bbb6ed6c4f40b55cd",
+   "ticker": "AEE"
+  },
+  {
+   "commit": "cd6418f191d5720a5f4704d7e81be58f0571ed58",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A+",
+   "message_id": "msg_011CgXbHnc1pYWBKvaL4a28T",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": 0.28,
+       "up_closes": 1,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PARTIAL",
+      "values": {
+       "base_sessions": 2,
+       "base_volume_vs_avg": 0.7,
+       "base_volume_vs_leg": 0.64,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.15,
+       "tightness": 0.61
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.98
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.44,
+       "leg_gain_pct": 28.6,
+       "leg_sessions": 32,
+       "r2": 0.85
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.8,
+       "narrow": true,
+       "negative": false,
+       "prior_day_pct": 0.28,
+       "prior_range_pct": 1.8
+      }
+     },
+     "RE": {
+      "status": "PASS",
+      "values": {
+       "bar_range_pct": 3.3,
+       "vs_prior_10": 0.66,
+       "vs_prior_5": 1.14
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 40,
+       "volume_vs_avg50": 0.76,
+       "volume_vs_prior": 1.13
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 0,
+       "gain_since_move_start_pct": 28.1,
+       "sessions_since_move_start": 34
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-29",
+   "text": "{\"score\": 7.5, \"grade\": \"B\", \"reason\": \"The signal bar itself is clean \u2014 closes at 0.98 of its range, above the open, with modest range expansion \u2014 but the base is only two sessions long, which is outside Bonde's 3\u201320 session window and recorded as a PARTIAL on C. Visually the chart shows a strong 32-session leg from ~$31 to ~$40 with good linearity, but the stock is now pressing against and through the red dashed overhead supply line near $38.50, and the move is already 28% off the leg start with the close sitting 7.9% above its 20-SMA, suggesting meaningful extension into prior resistance. The two-bar base gives almost no consolidation evidence to judge tightness from, and the burst itself is a modest $0.96 dollar move on below-average volume rank (40th of 60).\", \"key_risk\": \"The stock is extended 21% over 20 sessions and pressing through visible multi-month overhead supply near $38.50\u2013$39, leaving little room for error if sellers re-emerge.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"PARTIAL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 2}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 28.1}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 3.3}], \"observation\": \"prior_trading_above_signal\"}], \"entry_note\": \"Skip if BSY opens below the signal day's close of $39.66 or gaps up more than 1% above it, as either would invalidate the tight two-bar base entry premise.\"}",
+   "text_sha256": "e3db03b6a9d287740ba37cfd853050f72b30cdd56b6bb0639f1ff98177d4d04a",
+   "ticker": "BSY"
+  },
+  {
+   "commit": "cd6418f191d5720a5f4704d7e81be58f0571ed58",
+   "error": "src.ReaderAuthorityError: evidence outside criterion authority",
+   "mechanical_grade": "A+",
+   "message_id": "msg_011CgXbJw8koDckK5ShbbNVD",
+   "reader_evidence": {
+    "checks": {
+     "2": {
+      "status": "PASS",
+      "values": {
+       "prior_day_pct": -0.24,
+       "up_closes": 0,
+       "up_run": 0
+      }
+     },
+     "C": {
+      "status": "PARTIAL",
+      "values": {
+       "base_sessions": 2,
+       "base_volume_vs_avg": 0.92,
+       "base_volume_vs_leg": 1.09,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.21,
+       "tightness": 0.68
+      }
+     },
+     "H": {
+      "status": "PASS",
+      "values": {
+       "close_above_open": true,
+       "close_pos": 0.97
+      }
+     },
+     "L": {
+      "status": "PASS",
+      "values": {
+       "er": 0.91,
+       "leg_gain_pct": 13.5,
+       "leg_sessions": 14,
+       "r2": 0.9
+      }
+     },
+     "N": {
+      "status": "PASS",
+      "values": {
+       "median_range_pct": 2.2,
+       "narrow": true,
+       "negative": true,
+       "prior_day_pct": -0.24,
+       "prior_range_pct": 1.8
+      }
+     },
+     "RE": {
+      "status": "FAIL",
+      "values": {
+       "bar_range_pct": 2.6,
+       "vs_prior_10": 0.58,
+       "vs_prior_5": 0.58
+      }
+     },
+     "VOL": {
+      "status": "PASS",
+      "values": {
+       "cv_required": false,
+       "volume_rank_60": 32,
+       "volume_vs_avg50": 0.92,
+       "volume_vs_prior": 1.03
+      }
+     },
+     "Y": {
+      "status": "PASS",
+      "values": {
+       "breakouts_in_move": 1,
+       "gain_since_move_start_pct": 16.4,
+       "sessions_since_move_start": 16
+      }
+     }
+    },
+    "version": 1
+   },
+   "session": "2026-10-29",
+   "text": "{\"score\": 6.5, \"grade\": \"B\", \"reason\": \"The single most decisive flaw is a clear RE FAIL: the burst bar's range of 2.6% is only 0.58x the largest of the prior five bars, meaning this is not a genuine range-expansion day. Compounding this, the base is only two sessions long (outside Bonde's 3\u201320 minimum, recorded as PARTIAL), and the signal bar appears to be largely gap-dominated \u2014 roughly 1% of the 3.56% gain came from an overnight gap, with the intraday move modest relative to prior bars. The prior leg is genuinely linear (ER 0.91, R\u00b2 0.90) and the trend is young, but the weak burst bar and short base are independent quality drags.\", \"key_risk\": \"The burst bar failed range expansion against the prior five sessions, meaning the move lacks the force that distinguishes a true momentum burst from ordinary drift.\", \"findings\": [{\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.RE.status\", \"value\": \"FAIL\"}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.58}, {\"path\": \"checks.RE.values.vs_prior_10\", \"value\": 0.58}, {\"path\": \"checks.RE.values.bar_range_pct\", \"value\": 2.6}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"measured_quality\", \"source\": \"strategy.quality\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"PARTIAL\"}, {\"path\": \"checks.C.values.base_sessions\", \"value\": 2}], \"observation\": \"recorded_check_defect\"}, {\"criterion\": \"signal_shape\", \"source\": \"strategy.chart.signal\", \"evidence\": [{\"path\": \"burst.gap_pct\", \"value\": 1.0}, {\"path\": \"burst.bar_range_pct\", \"value\": 2.6}, {\"path\": \"checks.RE.values.vs_prior_5\", \"value\": 0.58}], \"observation\": \"gap_dominated\"}, {\"criterion\": \"overhead_supply\", \"source\": \"strategy.chart.supply\", \"evidence\": [{\"path\": \"checks.Y.values.gain_since_move_start_pct\", \"value\": 16.4}, {\"path\": \"checks.L.values.leg_gain_pct\", \"value\": 13.5}], \"observation\": \"prior_trading_above_signal\"}], \"entry_note\": \"Skip if the open gaps above the signal close of 38.09 by more than 0.5%, or if the first 30 minutes show a fade back below the base high of 37.47.\"}",
+   "text_sha256": "865f9fa5eaee0e28faaa6b5b0485d901d2086a1f9edeec9132bf82d494277859",
+   "ticker": "TTEK"
+  }
+ ],
+ "source": "every schema-2 docs/data.json in the history of the commit named through",
+ "through": "13b4da23fa09462007e7a2bc4b62a9c2b35cf5cd"
+}

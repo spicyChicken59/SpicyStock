@@ -23,12 +23,14 @@ def test_default_model_receives_the_exact_nested_finding_schema():
     assert marker in text, "default model never receives the required finding object shape"
     schema, _ = json.JSONDecoder().raw_decode(text.split(marker, 1)[1])
     assert schema == grader.SCORE_SCHEMA["properties"]["findings"]
-    item = schema["items"]
-    assert set(item["required"]) == {"criterion", "source", "evidence", "observation"}
-    assert item["additionalProperties"] is False
-    citation = item["properties"]["evidence"]["items"]
-    assert set(citation["required"]) == {"path", "value"}
-    assert citation["additionalProperties"] is False
+    branches = schema["items"]["anyOf"]
+    assert [b["properties"]["criterion"]["const"] for b in branches] == list(reader_authority.CRITERIA)
+    for item in branches:
+        assert set(item["required"]) == {"criterion", "source", "evidence", "observation"}
+        assert item["additionalProperties"] is False
+        citation = item["properties"]["evidence"]["items"]
+        assert set(citation["required"]) == {"path", "value"}
+        assert citation["additionalProperties"] is False
 
 
 @pytest.mark.parametrize("flaw", ["extra", "missing", "non_object", "contradiction", "observation"])

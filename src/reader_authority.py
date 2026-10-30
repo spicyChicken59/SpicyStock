@@ -33,10 +33,59 @@ OBSERVATIONS = {
     "event_structure": ("apparent_catalyst_gap", "apparent_halt_or_split"),
 }
 
-# One nested shape for both model families and the validator's closed fields.
-# Contextual authority (criterion/source pairing, paths and actual values) is
-# still checked below; schema conformance alone never grants a downgrade.
+#: The value fields each check records (quality.assess() writes them; the
+#: tests hold the two equal): with ``checks.<letter>.status``, the paths a
+#: citation can name.
+CHECK_VALUES = {
+    "2": ("up_run", "up_closes", "prior_day_pct"),
+    "L": ("er", "r2", "leg_sessions", "leg_gain_pct"),
+    "Y": ("breakouts_in_move", "sessions_since_move_start", "gain_since_move_start_pct"),
+    "N": ("prior_day_pct", "prior_range_pct", "negative", "narrow", "median_range_pct"),
+    "C": ("base_sessions", "breakdowns", "bursts_in_base", "giveback", "tightness",
+          "base_volume_vs_leg", "base_volume_vs_avg"),
+    "H": ("close_pos", "close_above_open"),
+    "RE": ("vs_prior_5", "vs_prior_10", "bar_range_pct"),
+    "VOL": ("volume_vs_prior", "volume_vs_avg50", "volume_rank_60", "cv_required"),
+}
+FINDING_FIELDS = ("criterion", "source", "evidence", "observation")
+CITATION_FIELDS = ("path", "value")
+
+
+def paths(criterion):
+    """Every evidence path a finding under ``criterion`` may cite, in check order."""
+    return [path for letter in CRITERIA[criterion][1]
+            for path in (f"checks.{letter}.status",
+                         *(f"checks.{letter}.values.{name}" for name in CHECK_VALUES[letter]))]
+
+
+def _branch(criterion):
+    source, _ = CRITERIA[criterion]
+    return {"type": "object", "properties": {
+        "criterion": {"type": "string", "const": criterion},
+        "source": {"type": "string", "const": source},
+        "evidence": {"type": "array", "description": f"1 to {MAX_CITATIONS} exact citations",
+                     "items": {"type": "object", "properties": {
+                         "path": {"type": "string", "enum": paths(criterion)},
+                         "value": {"type": ["string", "number", "boolean", "null"]}},
+                         "required": list(CITATION_FIELDS), "additionalProperties": False}},
+        "observation": {"type": "string", "enum": list(OBSERVATIONS[criterion])}},
+        "required": list(FINDING_FIELDS), "additionalProperties": False}
+
+
+# One nested shape for both model families. Each finding is one branch per
+# criterion, naming its own source, observations and evidence paths, so a
+# structured-output reply cannot cite a check its criterion does not list.
+# The validator below still checks every rule, the paths included; schema
+# conformance alone never grants a downgrade.
 FINDINGS_SCHEMA = {
+    "type": "array", "description": f"source-grounded findings, or [] when confirming; at most {MAX_FINDINGS}",
+    "items": {"anyOf": [_branch(name) for name in CRITERIA]},
+}
+
+#: Request version 2's findings schema, byte for byte as it was sent from
+#: 23 September to 30 October 2026: one item shape for every criterion and a
+#: free-text path. Kept only so the verifier can rebuild those requests.
+FINDINGS_SCHEMA_V2 = {
     "type": "array", "description": f"source-grounded findings, or [] when confirming; at most {MAX_FINDINGS}",
     "items": {"type": "object", "properties": {
         "criterion": {"type": "string", "enum": list(CRITERIA)},
@@ -50,6 +99,17 @@ FINDINGS_SCHEMA = {
         "required": ["criterion", "source", "evidence", "observation"],
         "additionalProperties": False},
 }
+
+
+def findings_schema(request_version):
+    """The findings schema a request of ``request_version`` carried (grader.REQUEST_VERSION)."""
+    if type(request_version) is not int:
+        raise ValueError(f"no findings schema for reader request version {request_version!r}")
+    if request_version == 2:
+        return FINDINGS_SCHEMA_V2
+    if request_version == 3:
+        return FINDINGS_SCHEMA
+    raise ValueError(f"no findings schema for reader request version {request_version!r}")
 
 class ReaderAuthorityError(ValueError):
     """A response has no authority to change the mechanical judgement."""
@@ -84,7 +144,7 @@ def validate(reply, metrics, *, chart_seen):
     if findings and (not isinstance(block, dict) or block.get("version") != VERSION):
         raise ReaderAuthorityError("missing reader evidence contract")
     for finding in findings:
-        if not isinstance(finding, dict) or set(finding) != set(FINDINGS_SCHEMA["items"]["required"]):
+        if not isinstance(finding, dict) or set(finding) != set(FINDING_FIELDS):
             raise ReaderAuthorityError("finding has missing or unauthorized fields")
         criterion = finding["criterion"]
         if not isinstance(criterion, str) or criterion not in CRITERIA:
@@ -102,8 +162,7 @@ def validate(reply, metrics, *, chart_seen):
             raise ReaderAuthorityError("finding lacks bounded evidence citations")
         defect = False
         for citation in citations:
-            if not isinstance(citation, dict) or set(citation) != set(
-                    FINDINGS_SCHEMA["items"]["properties"]["evidence"]["items"]["required"]):
+            if not isinstance(citation, dict) or set(citation) != set(CITATION_FIELDS):
                 raise ReaderAuthorityError("invalid evidence citation")
             path = citation["path"]
             parts = path.split(".") if isinstance(path, str) else []
@@ -134,15 +193,23 @@ def validate(reply, metrics, *, chart_seen):
     return deepcopy(findings)
 
 
-def instruction():
+def instruction(request_version=3):
+    """The authority instruction a request of ``request_version`` carried, byte for byte."""
+    schema = findings_schema(request_version)
     mapping = {name: {"source": source, "checks": list(letters), "observations": list(OBSERVATIONS[name])}
                for name, (source, letters) in CRITERIA.items()}
+    v3 = request_version >= 3
     return ("READER AUTHORITY: any downgrade requires findings with an allowed criterion, "
             "its exact source identifier, evidence citations copied from reader_evidence, "
             "and an allowed observation identifier. Allowed criteria: " + json.dumps(mapping, sort_keys=True) + ". "
-            'A citation is {"path":"checks.C.status","value":"PASS"} or a checks.C.values field. '
+            'A citation is {"path":"checks.C.status","value":"PASS"} or a checks.C.values field. ' +
+            ("A citation names only a check its own criterion lists: overhead_supply cites "
+             "checks.C and nothing else, and a fact recorded under another check belongs to the "
+             "finding whose criterion lists it, or in reason. One citation outside its criterion "
+             "refuses the whole reply. " if v3 else "") +
             "Use the actual JSON value, never reinterpret it. measured_quality needs an "
-            "actual FAIL/PARTIAL status. Visual findings need the chart and must name the "
+            "actual FAIL/PARTIAL status" + (", cited as that check's status path" if v3 else "") + ". "
+            "Visual findings need the chart and must name the "
             "bars/region seen in the reason; a passing proxy does not forbid a qualitative flaw. "
             "Unknown is not failure. No discovery requirement, outcome note, new numeric "
             "cutoff, or changed deterministic fact is an authorized finding. "
@@ -153,4 +220,5 @@ def instruction():
             "is the identifier, not prose; put chart bars/region and explanation in reason. "
             "JSON numbers 1 and 1.0 are equivalent; strings and booleans are not numbers. "
             "Null and UNMEASURED cannot support an adverse finding.\n"
-            "FINDINGS JSON SCHEMA:\n" + json.dumps(FINDINGS_SCHEMA, sort_keys=True) + "\n\n")
+            "FINDINGS JSON SCHEMA:\n" + (json.dumps(schema, sort_keys=True, separators=(",", ":")) if v3
+                                          else json.dumps(schema, sort_keys=True)) + "\n\n")

@@ -85,8 +85,14 @@ NOT_GRADED_REASON = "call budget"
 # https://platform.claude.com/docs/en/build-with-claude/structured-outputs
 # Sonnet 4.6 supports both schema output and sampling. SDK 1.8.0 accepts
 # output_config; local authority validation remains mandatory afterwards.
-REQUEST_VERSION = 2
+#: 3 (30 October 2026): each finding is one schema branch per criterion with
+#: the evidence paths that criterion may cite (reader_authority.paths()).
+REQUEST_VERSION = 3
 RULES = {"grading.reader_request_version": REQUEST_VERSION}
+#: The request versions whose requests this module can rebuild byte for byte
+#: (user_text(), request_kwargs()), so the provenance verifier replays a record
+#: made under any of them; a record made under another is partial.
+REPLAYABLE_REQUEST_VERSIONS = (2, 3)
 
 #: The Messages API version this request shape was validated under: the SDK's
 #: default header. API version 2026-10-21 removes `temperature`, `top_p` and
@@ -116,6 +122,14 @@ SAMPLING_MODELS = frozenset({
 #: shape line every request carries. No `minimum`/`maximum` on `score`:
 #: numerical constraints are not supported by structured outputs, and the
 #: range is checked by _validated() instead.
+def score_schema(request_version: int = REQUEST_VERSION) -> dict:
+    """The reply schema a request of ``request_version`` carried: SCORE_SCHEMA itself for this one."""
+    findings = reader_authority.findings_schema(request_version)
+    if findings is SCORE_SCHEMA["properties"]["findings"]:
+        return SCORE_SCHEMA
+    return {**SCORE_SCHEMA, "properties": {**SCORE_SCHEMA["properties"], "findings": findings}}
+
+
 SCORE_SCHEMA = {
     "type": "object",
     "properties": {
@@ -302,8 +316,10 @@ def _reply_shape() -> str:
     return "{" + ", ".join(parts) + "}"
 
 
-def user_text(metrics: dict) -> str:
-    """The text block; `sort_keys` so two runs over one candidate are byte-identical."""
+def user_text(metrics: dict, request_version: int = REQUEST_VERSION) -> str:
+    """The text block; `sort_keys` so two runs over one candidate are byte-identical.
+
+    ``request_version`` rebuilds an archived request (provenance replay)."""
     block = discovery.for_metrics(metrics)
     if block is not None:
         metrics = {**{k: v for k, v in metrics.items() if k != "recorded_rules"}, "discovery": block}
@@ -311,14 +327,15 @@ def user_text(metrics: dict) -> str:
         "Grade this momentum burst candidate strictly according to the "
         "strategy rules in your instructions.\n\n"
         + discovery.instruction(block) +
-        (reader_authority.instruction() if "quality_grade" in metrics else "") +
+        (reader_authority.instruction(request_version) if "quality_grade" in metrics else "") +
         f"METRICS:\n{json.dumps(metrics, indent=2, sort_keys=True, default=str)}\n\n"
         "Respond with ONLY a JSON object, no markdown fences, in this exact shape:\n"
         f"{_reply_shape()}"
     )
 
 
-def request_kwargs(system: str, content: list[dict], model: str | None = None) -> dict:
+def request_kwargs(system: str, content: list[dict], model: str | None = None,
+                   request_version: int = REQUEST_VERSION) -> dict:
     """Exactly what goes to `messages.create`, built where a test can read it.
 
     `system` is a LIST of one block carrying `cache_control`, because the
@@ -336,7 +353,7 @@ def request_kwargs(system: str, content: list[dict], model: str | None = None) -
         "messages": [{"role": "user", "content": content}],
     }
     if model in STRUCTURED_OUTPUT_MODELS:
-        kwargs["output_config"] = {"format": {"type": "json_schema", "schema": SCORE_SCHEMA}}
+        kwargs["output_config"] = {"format": {"type": "json_schema", "schema": score_schema(request_version)}}
     if model in SAMPLING_MODELS:
         # Through extra_body: anthropic 1.x dropped `temperature` from
         # Messages.create()'s signature, and a named argument is a TypeError

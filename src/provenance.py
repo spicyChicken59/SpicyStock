@@ -455,13 +455,14 @@ def _check_source(data, row, e, objects):
     if ri:
         extra = {k: row[k] for k in ("scan", "discovery", "flags", "gain_pct", "volume_vs_prior", "dollar_volume")}
         metrics = quality.metrics_for_model(assessment, row["ticker"], row["close"], extra)
-        if data['rules'].get('grading', {}).get('reader_request_version', 1) >= 2:
+        request_version = data['rules'].get('grading', {}).get('reader_request_version', 1)
+        if request_version >= 2:
             from src import charts
             metrics['chart_context'] = charts.reader_context(df, assessment) if ri.get('chart_sha256') else None
         _same(digest(metrics), ri["metrics_sha256"], "reader input measurements mismatch")
         system = _object(objects, ri["system_object"])["text"]
         _same(hashlib.sha256(system.encode()).hexdigest(), ri["system_sha256"], "reader system digest mismatch")
-        request = hashlib.sha256(json.dumps({"system": system, "user": grader.user_text(metrics)}, sort_keys=True).encode()).hexdigest()
+        request = hashlib.sha256(json.dumps({"system": system, "user": grader.user_text(metrics, request_version)}, sort_keys=True).encode()).hexdigest()
         _same(request, ri["request_text_sha256"], "reader text input mismatch")
         if ri["chart_sha256"]:
             png = _object(objects, ri["chart_sha256"], binary=True)
@@ -470,10 +471,11 @@ def _check_source(data, row, e, objects):
         cl = row.get("claude") or {}
         for attempt in cl.get("attempts", []):
             content = ([{"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": base64.b64encode(png).decode()}}] if png is not None else [])
-            content.append({"type": "text", "text": grader.user_text(metrics)})
+            content.append({"type": "text", "text": grader.user_text(metrics, request_version)})
             if attempt["correction"]:
                 content.append({"type": "text", "text": grader.RETRY_CORRECTION})
-            kwargs = grader.request_kwargs(system, content, model=cl["attempted_model"])
+            kwargs = grader.request_kwargs(system, content, model=cl["attempted_model"],
+                                           request_version=request_version)
             _same(digest(kwargs), attempt["request_sha256"], "actual model request digest mismatch")
 
 
@@ -506,7 +508,11 @@ archive. Integrity-only callers explicitly disable the source replay requirement
         for rules in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, sessions.RULES, RULES):
             for key, value in rules.items():
                 family, _, name = key.partition(".")
-                if digest(data["rules"].get(family, {}).get(name)) != digest(value):
+                archived = data["rules"].get(family, {}).get(name)
+                if key == "grading.reader_request_version" and type(archived) is int \
+                        and archived in grader.REPLAYABLE_REQUEST_VERSIONS:
+                    continue  # the grader rebuilds a request of that version byte for byte
+                if digest(archived) != digest(value):
                     mismatches.append(key)
         selection_supported = False
         if "review_selection" in data["rules"]:
