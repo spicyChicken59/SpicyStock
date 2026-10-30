@@ -479,6 +479,11 @@ def _check_source(data, row, e, objects):
             _same(digest(kwargs), attempt["request_sha256"], "actual model request digest mismatch")
 
 
+def replayable_request_version(archived):
+    """Whether the grader can rebuild a reader request of the archived version (an int it names)."""
+    return type(archived) is int and archived in grader.REPLAYABLE_REQUEST_VERSIONS
+
+
 def verify(data, picks=None, objects=None, *, require_sources=True, require_picks=False):
     """PASS / FAIL with a break reason / PARTIAL for explicitly missing evidence.
 
@@ -509,8 +514,7 @@ archive. Integrity-only callers explicitly disable the source replay requirement
             for key, value in rules.items():
                 family, _, name = key.partition(".")
                 archived = data["rules"].get(family, {}).get(name)
-                if key == "grading.reader_request_version" and type(archived) is int \
-                        and archived in grader.REPLAYABLE_REQUEST_VERSIONS:
+                if key == "grading.reader_request_version" and replayable_request_version(archived):
                     continue  # the grader rebuilds a request of that version byte for byte
                 if digest(archived) != digest(value):
                     mismatches.append(key)

@@ -103,6 +103,18 @@ def test_the_paths_named_for_each_criterion_are_the_ones_the_validator_accepts(c
     assert f"{criterion} {letters}" in ra.instruction(3)
 
 
+def test_quality_assess_writes_exactly_the_check_values_measured_or_not():
+    from tests.test_quality import ideal_bars, run
+    bars = ideal_bars()
+    statuses = {}
+    for frame in (bars, bars[-3:], bars[-2:]):
+        for check in run(frame).checks:
+            assert tuple(check.value) == ra.CHECK_VALUES[check.letter], (len(frame), check.letter)
+            statuses.setdefault(check.letter, set()).add(check.status)
+    assert set(statuses) == set(ra.CHECK_VALUES)
+    assert "UNMEASURED" in statuses["L"] and "UNMEASURED" in statuses["RE"]
+
+
 def test_the_check_values_are_the_keys_quality_writes_in_the_order_it_writes_them():
     seen = 0
     for path in sorted(glob.glob(str(ROOT / "tests/fixtures/page/*.json"))):
@@ -269,6 +281,39 @@ def test_request_version_2_is_rebuilt_byte_for_byte():
 def test_no_findings_schema_is_invented_for_another_request_version(version):
     with pytest.raises(ValueError):
         ra.findings_schema(version)
+
+
+def test_the_replayable_versions_are_exactly_the_ones_the_grader_can_rebuild():
+    rebuildable = set()
+    for version in range(-2, 12):
+        try:
+            ra.findings_schema(version)
+        except ValueError:
+            continue
+        rebuildable.add(version)
+        assert grader.user_text({"quality_grade": "A", "reader_evidence": _block()}, version)
+    assert set(grader.REPLAYABLE_REQUEST_VERSIONS) == rebuildable and grader.REQUEST_VERSION in rebuildable
+
+
+@pytest.mark.parametrize("archived,replayable", [
+    (2, True), (3, True), (1, False), (4, False), (0, False), (2.0, False), (3.0, False),
+    (True, False), ("2", False), (None, False), ([2], False)])
+def test_the_verifier_admits_only_an_int_request_version_it_can_rebuild(archived, replayable):
+    from src import provenance
+    assert provenance.replayable_request_version(archived) is replayable
+
+
+@pytest.mark.parametrize("citation", [
+    {"path": "checks.C.status", "value": "FAIL", "note": 1},
+    {"path": "checks.C.status"},
+    "checks.C.status"])
+def test_a_citation_must_be_exactly_a_path_and_a_value(citation):
+    block = _block()
+    finding = {"criterion": "measured_quality", "source": "strategy.quality",
+               "evidence": [citation], "observation": "recorded_check_defect"}
+    with pytest.raises(ra.ReaderAuthorityError, match="invalid evidence citation"):
+        ra.validate({"grade": "C", "reason": "r", "findings": [finding]},
+                    {"quality_grade": "A+", "reader_evidence": block}, chart_seen=True)
 
 
 def _october_9():
