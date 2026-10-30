@@ -100,8 +100,24 @@ def test_the_paths_named_for_each_criterion_are_the_ones_the_validator_accepts(c
             assert verdict in ("accepted", "measured defect requires a recorded FAIL or PARTIAL"), (path, verdict)
         else:
             assert verdict in ("evidence outside criterion authority", "unknown evidence path"), (path, verdict)
-    letters = ", ".join(f"checks.{letter}" for letter in ra.CRITERIA[criterion][1])
-    assert f"{criterion} {letters}" in ra.instruction(3)
+    assert named_in_instruction()[criterion] == [f"checks.{letter}" for letter in ra.CRITERIA[criterion][1]]
+
+
+def named_in_instruction():
+    """The instruction's own list of the checks each criterion may cite, parsed whole."""
+    text = ra.instruction(3)
+    marker = "Paths each criterion may cite: "
+    assert text.count(marker) == 1
+    sentence = text.split(marker, 1)[1].split(". ", 1)[0]
+    named = {}
+    for part in sentence.split("; "):
+        criterion, _, checks = part.partition(" ")
+        named[criterion] = checks.split(", ")
+    return named
+
+
+def test_the_instruction_names_every_criterion_once_in_order_and_nothing_else():
+    assert list(named_in_instruction()) == list(ra.CRITERIA)
 
 
 def test_quality_assess_writes_exactly_the_check_values_measured_or_not():
@@ -266,6 +282,17 @@ def test_each_frozen_refusal_is_the_one_its_publication_recorded(commits):
 #: verifier rebuilds for a version-2 record.
 V2_INSTRUCTION_SHA256 = "13e1c585a8eae0dd9f775eb62e7e3a4722d171e23cc80a35f22683c923da8745"
 V2_SCHEMA_SHA256 = "a7aecd2c35932a11edc50c43080267e7edb0e41a9d310079cddb8ee987d06a7d"
+#: The same for request version 3, as first sent (30 October 2026). Production
+#: records carry it from then on, so a change to either is a new request
+#: version, never an edit of this one.
+V3_INSTRUCTION_SHA256 = "913bd6958f066c9d7e76b0849ca3ba1546cb6666cd2949ebfd028098281b8bc6"
+V3_SCHEMA_SHA256 = "5352d517dacd2a8fe87e6b47fc1ff2d6ab75bd1084c83e98519d82eb695d2233"
+
+
+def test_request_version_3_is_pinned_as_first_sent():
+    assert hashlib.sha256(ra.instruction(3).encode()).hexdigest() == V3_INSTRUCTION_SHA256
+    assert hashlib.sha256(json.dumps(ra.findings_schema(3), sort_keys=True,
+                                     separators=(",", ":")).encode()).hexdigest() == V3_SCHEMA_SHA256
 
 
 def test_request_version_2_is_rebuilt_byte_for_byte():

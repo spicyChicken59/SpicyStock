@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5473 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5475 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -12911,6 +12911,16 @@ with one skeptic per finding.
   - the int clause;
   - `REPLAYABLE_REQUEST_VERSIONS` against what can be rebuilt;
   - `CHECK_VALUES` against `quality.assess()`.
+
+A second review (`wf_42bc8805-dfd`) read the final design at `a2e83065` with
+two lenses. The words lens returned 9 findings, every one fixed: the XSL
+directory, "most" visual, the measured-defect four, the source of the
+instruction's list, a test comment and name, #201's merge parent, the 9 of the
+23, and MCS/QGEN. The tests lens ran 47 mutants and found 2 real holes, both
+closed: the instruction's per-criterion list is now parsed whole (an extra check
+on a criterion passed the substring test), and request version 3 is pinned by
+SHA-256 beside version 2, since production records carry it from the merge on.
+Each new test's mutant dies in it; a control survives.
 
 **Not claimable:**
 - a live night under request v3;
