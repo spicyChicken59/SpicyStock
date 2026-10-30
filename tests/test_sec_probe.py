@@ -165,12 +165,12 @@ def test_the_diagnostic_cannot_reach_public_files_overwrite_or_carry_the_address
 
 def test_main_prints_the_result_and_hides_a_raw_failure(tmp_path, monkeypatch, capsys):
     result, _ = run({issuer_evidence.MAPPING_URL: issuer_evidence.SourceError("http_error", http_status=403)})
-    monkeypatch.setattr(probe, "probe", lambda: result)
+    monkeypatch.setattr(probe, "probe", lambda tickers: result)
     assert probe.main(["--output", str(tmp_path / "out.json")]) == 0
     printed = capsys.readouterr().out
     assert json.loads(printed) == result == json.loads((tmp_path / "out.json").read_text())
 
-    def broken():
+    def broken(tickers):
         raise RuntimeError("secret detail from a raw response")
 
     monkeypatch.setattr(probe, "probe", broken)
@@ -310,3 +310,30 @@ def test_a_form_the_collector_never_stores_is_read_under_its_rendering_directory
     submissions = one(result)["submissions"]
     assert submissions["invalid_count"] == 0 and submissions["filings_in_window"] == 3
     assert submissions["rejected_rows"] == {"count": 0, "by_rule": {}, "by_form": {}, "rows": []}
+
+
+@pytest.mark.parametrize("text,expected", [
+    ("", probe.TICKERS), ("  ", probe.TICKERS), ("MCS QGEN", ("MCS", "QGEN")), ("MCS,QGEN", ("MCS", "QGEN")),
+    ("BRK.B", ("BRK.B",)), ("BF-B ZIM", ("BF-B", "ZIM"))])
+def test_a_dispatch_may_name_the_issuers_to_ask_for(text, expected):
+    assert probe.tickers_from(text) == expected
+
+
+@pytest.mark.parametrize("text", ["mcs", "A B C D E", "MCS MCS", "TOOLONG", "A;rm", "$(x)", "A/B", "AAPL\nZIM.."])
+def test_anything_but_up_to_four_distinct_exchange_tickers_is_refused(text):
+    with pytest.raises(ValueError):
+        probe.tickers_from(text)
+
+
+def test_main_asks_for_the_named_issuers_and_refuses_malformed_ones_before_any_request(tmp_path, monkeypatch, capsys):
+    asked = []
+    monkeypatch.setattr(probe, "probe", lambda tickers=probe.TICKERS: asked.append(tickers) or {"tickers": list(tickers)})
+    monkeypatch.setattr(probe, "write_probe", lambda output, result: json.dumps(result) + "\n")
+    assert probe.main(["--output", str(tmp_path / "a.json"), "--tickers", "MCS QGEN"]) == 0
+    assert asked == [("MCS", "QGEN")]
+    assert probe.main(["--output", str(tmp_path / "b.json")]) == 0
+    assert asked[-1] == probe.TICKERS
+    capsys.readouterr()
+    assert probe.main(["--output", str(tmp_path / "c.json"), "--tickers", "MCS; rm -rf /"]) == 2
+    assert asked == [("MCS", "QGEN"), probe.TICKERS] and not (tmp_path / "c.json").exists()
+    assert capsys.readouterr().out.startswith("SEC access diagnostic refused: tickers must be")

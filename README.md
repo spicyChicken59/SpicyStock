@@ -1487,7 +1487,9 @@ whether SEC answers the named contact. A manual dispatch of
 `issuer-evidence.yml` with **dry_run** and **probe_sec** ticked runs
 `tools/probe_sec_access.py` instead of a collection: one request for the
 ticker mapping and one for each fixed issuer's submissions (AAPL, a domestic
-filer; ZIM, a foreign private issuer), through the collector's own transport --
+filer; ZIM, a foreign private issuer), or for up to four other exchange tickers
+named in **probe_tickers** (passed through the environment, refused whole if any
+is not a ticker, before any request), through the collector's own transport --
 its User-Agent, spacing, deadline, refused redirects and size bounds, and no
 cache, so a cached mapping cannot answer for today. It prints its result to the
 job log and keeps it as a 14-day artifact: each request's outcome, HTTP status,
@@ -2343,7 +2345,7 @@ knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose 
                 broker-fidelity.md (the ticket on Fidelity's order entry; each fact labelled Fidelity's words, a regulator's words, inferred, unconfirmed or SpicyStock's advice)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py · publish_morning.py · probe_morning_sources.py · sync_morning_service.py
-                probe_sec_access.py (a dispatch-only diagnostic: fixed SEC requests through the issuer collector's transport, and the index rows its row rules refuse, printed to the log; never published)
+                probe_sec_access.py (a dispatch-only diagnostic: SEC requests for AAPL and ZIM, or up to four named tickers, through the issuer collector's transport, and the index rows its row rules refuse, printed to the log; never published)
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)
                 entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)
                 historical_backtest.py (offline: the run's own stages replayed over a recovered archive; reader not run)

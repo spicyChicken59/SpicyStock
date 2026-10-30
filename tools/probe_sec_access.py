@@ -32,6 +32,10 @@ SCHEMA = "spicystock-sec-probe-v2"
 #: the first issuer whose collection reached SEC (24 October 2026) and read
 #: partial on refused index rows. The mapping must name each exactly once.
 TICKERS = ("AAPL", "ZIM")
+#: A dispatch may name other issuers instead (``--tickers``): at most this many,
+#: each an exchange ticker in SEC's spelling.
+MAX_TICKERS = 4
+TICKER = re.compile(r"[A-Z]{1,5}(?:[.-][A-Z]{1,2})?\Z")
 #: The rejected rows printed per issuer; every one is counted whatever this is.
 MAX_REJECTED_ROWS = 24
 #: A refused field's value is printed at most this long, in these characters.
@@ -224,12 +228,29 @@ def write_probe(output: Path, result: dict):
     return payload
 
 
+def tickers_from(text):
+    """The issuers a dispatch named, or the fixed ones when it named none; refused whole if any is malformed."""
+    words = [w for w in re.split(r"[\s,]+", text or "") if w]
+    if not words:
+        return TICKERS
+    if len(words) > MAX_TICKERS or len(set(words)) != len(words) \
+            or not all(TICKER.fullmatch(w) for w in words):
+        raise ValueError("tickers must be at most %d distinct exchange tickers" % MAX_TICKERS)
+    return tuple(words)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--tickers", default="", help="issuers to ask for instead of AAPL and ZIM")
     args = parser.parse_args(argv)
     try:
-        payload = write_probe(args.output, probe())
+        tickers = tickers_from(args.tickers)
+    except ValueError as error:
+        print(f"SEC access diagnostic refused: {error}.")
+        return 2
+    try:
+        payload = write_probe(args.output, probe(tickers=tickers))
     except Exception:
         # Never log a raw exception: it can carry a request detail.
         print("SEC access diagnostic failed; no raw error was logged.")
