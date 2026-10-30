@@ -1486,10 +1486,12 @@ so the collector asks SEC nothing, and a red week can pass without showing
 whether SEC answers the named contact. A manual dispatch of
 `issuer-evidence.yml` with **dry_run** and **probe_sec** ticked runs
 `tools/probe_sec_access.py` instead of a collection: one request for the
-ticker mapping and one for each fixed issuer's submissions (AAPL, a domestic
-filer; ZIM, a foreign private issuer), or for up to four other exchange tickers
-named in **probe_tickers** (passed through the environment, refused whole if any
-is not a ticker, before any request), through the collector's own transport --
+ticker mapping and one for each issuer's submissions (AAPL, a domestic filer;
+ZIM, a foreign private issuer), or for up to four other tickers named in
+**probe_tickers**, spelled as SEC's mapping spells them (a class share with a
+hyphen, BRK-B, which the collector matches exactly), passed through the
+environment and refused whole, before any request, if any is not such a
+ticker -- through the collector's own transport --
 its User-Agent, spacing, deadline, refused redirects and size bounds, and no
 cache, so a cached mapping cannot answer for today. It prints its result to the
 job log and keeps it as a 14-day artifact: each request's outcome, HTTP status,

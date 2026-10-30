@@ -16,12 +16,12 @@ on:
         required: false
         default: true
       probe_sec:
-        description: "Ask SEC for its ticker mapping and each fixed issuer's submissions (AAPL, ZIM), as a transport diagnostic printed to the log that names any index rows the collector's row rules refuse; needs dry_run, publishes nothing and collects no candidate."
+        description: "Ask SEC for its ticker mapping and each issuer's submissions (AAPL and ZIM, or those probe_tickers names), as a transport diagnostic printed to the log that names any index rows the collector's row rules refuse; needs dry_run, publishes nothing and collects no candidate."
         type: boolean
         required: false
         default: false
       probe_tickers:
-        description: "With probe_sec: up to 4 exchange tickers to ask for instead of AAPL and ZIM, space- or comma-separated; empty asks for the fixed two."
+        description: "With probe_sec: up to 4 tickers to ask for instead of AAPL and ZIM, spelled as SEC's mapping spells them (a class share with a hyphen, BRK-B), space- or comma-separated; empty asks for AAPL and ZIM."
         type: string
         required: false
         default: ""

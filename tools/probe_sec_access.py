@@ -1,9 +1,10 @@
-"""A fixed-issuer SEC access diagnostic, never a publication or an event check.
+"""An SEC access diagnostic for a few issuers, never a publication or an event check.
 
 The issuer collector asks SEC only for a night's candidates, and a night with
 no admitted plan and no known-event exclusion has none, so a red week can pass
 without one request that would show whether SEC answers. This asks for the
-ticker mapping and for each fixed issuer's submissions, through the
+ticker mapping and for each issuer's submissions (AAPL and ZIM, or up to four
+a dispatch names), through the
 collector's own transport: its User-Agent, its spacing, its deadline, its
 refused redirects and its size bounds. The result carries no publication
 binding, candidate, filing excerpt or order; it is printed to the job log and
@@ -33,9 +34,10 @@ SCHEMA = "spicystock-sec-probe-v2"
 #: partial on refused index rows. The mapping must name each exactly once.
 TICKERS = ("AAPL", "ZIM")
 #: A dispatch may name other issuers instead (``--tickers``): at most this many,
-#: each an exchange ticker in SEC's spelling.
+#: each spelled as SEC's ticker mapping spells it, which the collector matches
+#: exactly: a class share with a hyphen (BRK-B), never the exchange's dot.
 MAX_TICKERS = 4
-TICKER = re.compile(r"[A-Z]{1,5}(?:[.-][A-Z]{1,2})?\Z")
+TICKER = re.compile(r"[A-Z]{1,5}(?:-[A-Z]{1,2})?\Z")
 #: The rejected rows printed per issuer; every one is counted whatever this is.
 MAX_REJECTED_ROWS = 24
 #: A refused field's value is printed at most this long, in these characters.
@@ -210,7 +212,7 @@ def sentence(answered, requests, issuers):
     if failed is None:
         named = ", ".join(i["ticker"] for i in issuers
                           if i["identity"]["status"] != "verified" or i["submissions"]["status"] != "parsed")
-        return f"SEC answered, and the answer did not establish every fixed issuer ({named})."
+        return f"SEC answered, and the answer did not establish every issuer asked for ({named})."
     status = f"HTTP {failed['http_status']}" if failed["http_status"] is not None else failed["outcome"]
     return f"SEC did not answer the {failed['phase']} request from this runner: {status}."
 
