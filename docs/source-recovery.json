@@ -1,54 +1,54 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-10-29T14:37:56.707070+00:00",
-  "generated_at": "2026-10-29T14:37:58.753768+00:00",
-  "observation_run_id": "40893314671",
-  "previous_observation_sha256": "4e997d00db279c690f524c520e71aaa8463f4c91a15935beaa8efd370e412bdb",
+  "collection_started_at": "2026-10-30T14:29:40.508807+00:00",
+  "generated_at": "2026-10-30T14:29:42.877149+00:00",
+  "observation_run_id": "41071862681",
+  "previous_observation_sha256": "5feab7e72a0436557bd4ac7e9aa5e416f645aabad9d23c5d07bd005b842fab92",
   "dry_run": false,
   "publication": {
-    "data_sha256": "5f85a19cb42a56c8a25ffe05f1176c49f89139c1e538afd3bc641fc423b66128",
-    "context_sha256": "186e2c8facab9f5bb117a4734c5c52e5da9050da8dc564250d0ab2e6e942b079",
-    "run_id": "40802470870",
-    "rules_version": "ed03791a8e3a",
-    "measured_session": "2026-10-28",
-    "applicable_session": "2026-10-29",
-    "published_at": "2026-10-29T01:47:28.789758+00:00",
+    "data_sha256": "d017a8800b7e0b3967d0dd5495919ce95d41abaeb0d68ee431f0942918411112",
+    "context_sha256": "23bffad9b461c69f177215f1c7dfae2f6e375e2383cc98bdc7ed1a270db01128",
+    "run_id": "40988674329",
+    "rules_version": "14d0b9add6f2",
+    "measured_session": "2026-10-29",
+    "applicable_session": "2026-10-30",
+    "published_at": "2026-10-30T01:56:02.591551+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "d682c5f4c2534d7b7fa7ecd7d568fd9838314e96d01dee43235606e5e0a64889"
+    "reader_sha256": "0035601ed8839ae983c743bc705f3ab7c3ae7f1630cc00e66e58ae4661be2998"
   },
   "frozen": {
-    "session": "2026-10-28",
-    "expected_session": "2026-10-28",
+    "session": "2026-10-29",
+    "expected_session": "2026-10-29",
     "feed": "sip",
     "adjustment": "split",
     "timeframe": "1Day",
     "lookback_days": 260,
     "stale_names_max": 100,
-    "universe_identity": "f874e9e8be946f1d",
-    "universe_snapshot_sha256": "d15955decad67d23461c2e3ab3f0e177799312be7af61bec7a7a6245a2c4a5f2",
+    "universe_identity": "4e7df4a17e109440",
+    "universe_snapshot_sha256": "337cf3c68b7d708ac72d56db45071a4350fbda73fdddba5a77fc1eda12c6ee16",
     "universe_size": 4770,
-    "intended_identity": "6a408f044225a1c6",
-    "coverage_sha256": "0d069baa8c76962e4509d865ae8143901d9b683cab7d58655417080c7282e589",
-    "rules_version": "ed03791a8e3a"
+    "intended_identity": "1605bb4bc2dc897d",
+    "coverage_sha256": "6ed36597917b050eae2614c41930e560c75d1f35638485ed8f1dabc9016bd1a1",
+    "rules_version": "14d0b9add6f2"
   },
   "window": {
-    "next_session": "2026-10-29",
-    "next_open_at": "2026-10-29T09:30:00-04:00",
+    "next_session": "2026-10-30",
+    "next_open_at": "2026-10-30T09:30:00-04:00",
     "before_next_open": false
   },
   "original": {
     "acceptance_status": "degraded",
     "intended_stocks": 4770,
-    "ready_stocks": 4752,
-    "fraction": 0.9962264150943396,
+    "ready_stocks": 4756,
+    "fraction": 0.9970649895178197,
     "complete_intended": false,
     "capacity_excluded": 0,
-    "stale": 18,
-    "stale_stocks": 18,
+    "stale": 14,
+    "stale_stocks": 14,
     "tolerance_verdict": "tolerated",
     "tolerance_reasons": [],
     "gaps": {
-      "stale": 18,
+      "stale": 14,
       "no_bars": 0,
       "dropped": 0,
       "unfetched_budget": 0,
@@ -65,27 +65,23 @@
   "deficits": {
     "categories": {
       "stale": {
-        "count": 18,
-        "identity": "4007aaa432bfcabb",
+        "count": 14,
+        "identity": "54ae9e2b76a4c6a7",
         "named": true,
         "source": "record",
         "names": [
           "AKA",
-          "ARTW",
-          "BEBE",
-          "BLIV",
-          "CPBI",
+          "ARKR",
           "DIT",
-          "ELLO",
-          "GBLI",
-          "GDEV",
-          "INCR",
           "IOR",
-          "KELYB",
-          "LUD",
+          "MBBC",
+          "MDRR",
           "NCEW",
-          "RAND",
-          "RGS",
+          "NYC",
+          "PBHC",
+          "RDIB",
+          "SENEB",
+          "TLIH",
           "TULP",
           "WLYB"
         ],
@@ -140,11 +136,11 @@
         "benchmark_in_population": false
       }
     },
-    "named_stocks": 18,
+    "named_stocks": 14,
     "unnamed_frames": 0,
     "ledger": {
-      "path": "quality-ledger/v1/5f85a19cb42a56c8a25ffe05f1176c49f89139c1e538afd3bc641fc423b66128.json.gz",
-      "sha256": "037926f2a7935983c7d763596fc07475e4574d4d8e5e18b72378758cece159aa",
+      "path": "quality-ledger/v1/d017a8800b7e0b3967d0dd5495919ce95d41abaeb0d68ee431f0942918411112.json.gz",
+      "sha256": "1a9842093742c9c08e5a31ec8c9bfa5e5aaee04b96bbf6e00b0d379e88661df7",
       "used": false
     }
   },
@@ -217,5 +213,5 @@
     "scheduled_dispatch_is_best_effort",
     "prior_session_followup_is_separate"
   ],
-  "sentence": "No source recovery for the 2026-10-28 publication at 10:37 AM ET on Thu 29 Oct: the next session opened before this check ran; nothing was fetched."
+  "sentence": "No source recovery for the 2026-10-29 publication at 10:29 AM ET on Fri 30 Oct: the next session opened before this check ran; nothing was fetched."
 }
