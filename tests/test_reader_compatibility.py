@@ -29,6 +29,7 @@ def test_default_model_receives_the_exact_nested_finding_schema():
     citation = item["properties"]["evidence"]["items"]
     assert set(citation["required"]) == {"path", "value"}
     assert citation["additionalProperties"] is False
+    assert citation["properties"]["path"]["enum"] == reader_authority.EVIDENCE_PATHS
 
 
 @pytest.mark.parametrize("flaw", ["extra", "missing", "non_object", "contradiction", "observation"])

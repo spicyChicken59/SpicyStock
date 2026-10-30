@@ -3,7 +3,11 @@
 The September 28 reader request repair adds `grading.reader_request_version = 2`
 to prospective rules. Its dated image context is included in reader metrics and
 their digest. Old requests, raw responses and receipts remain unchanged; full
-replay uses their original code, not new request semantics. See the
+replay uses their original code, not new request semantics. Request version 3
+(30 October 2026) changed the findings schema and the authority instruction; from
+it the verifier rebuilds a record's reader requests under the version that record
+archived, byte for byte, when that version is in `grader.REPLAYABLE_REQUEST_VERSIONS`
+(2 and 3), and reports any other version partial. See the
 [historical validation review](../input-truthfulness/2026-09-28-validation-review.md)
 for exact original-code coverage and missing evidence.
 

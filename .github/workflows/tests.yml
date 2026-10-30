@@ -171,7 +171,11 @@ jobs:
           fi
 
   page:
-    runs-on: ubuntu-latest
+    # ubuntu-latest became Ubuntu 26.04 by 30 October 2026, where Playwright
+    # 1.56.1 refuses to install Chromium ("Playwright does not support chromium
+    # on ubuntu26.04-x64", run 41129392549). The page is checked on 24.04, as
+    # the historical jobs above already are.
+    runs-on: ubuntu-24.04
     # Measured at 14m11s on main (a9862564) against the old 15; #152's journal
     # suite took it past the cap with 13951 of 13954 checks done.
     timeout-minutes: 30
