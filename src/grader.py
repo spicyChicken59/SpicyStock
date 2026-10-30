@@ -85,8 +85,9 @@ NOT_GRADED_REASON = "call budget"
 # https://platform.claude.com/docs/en/build-with-claude/structured-outputs
 # Sonnet 4.6 supports both schema output and sampling. SDK 1.8.0 accepts
 # output_config; local authority validation remains mandatory afterwards.
-#: 3 (30 October 2026): each finding is one schema branch per criterion with
-#: the evidence paths that criterion may cite (reader_authority.paths()).
+#: 3 (30 October 2026): a citation's path is an enum of the paths
+#: reader_evidence carries, and the instruction names the checks each
+#: criterion may cite (reader_authority.EVIDENCE_PATHS, paths()).
 REQUEST_VERSION = 3
 RULES = {"grading.reader_request_version": REQUEST_VERSION}
 #: The request versions whose requests this module can rebuild byte for byte

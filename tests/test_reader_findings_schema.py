@@ -1,14 +1,17 @@
-"""The findings schema offers a reply only the citations its criterion may make.
+"""Request version 3: the findings schema names the paths reader_evidence carries.
 
 reader_authority.validate() is the authority and is unchanged by request
 version 3. The schema -- sent as output_config.format and printed in the
-instruction -- is held to it: every path a branch offers, the validator
-accepts under that criterion, and every path the validator refuses as outside
-the criterion, no branch offers. The 30 replies reader authority refused from
-23 September to 29 October 2026 (tests/fixtures/grading/reader-authority-
-refusals/) are the evidence the schema was built from: 26 carried a citation no
-branch offers, and the other 4 cited a measured defect without its FAIL or
-PARTIAL status, a value condition no schema can carry.
+instruction -- now offers a citation only a path reader_evidence carries
+(EVIDENCE_PATHS), and the instruction names the checks each criterion may
+cite (paths(criterion)), held here to the validator. One branch per criterion
+in the schema itself was refused by the API (HTTP 400, "The compiled grammar
+is too large", dry run 41120821225, 30 October 2026). The 30 replies reader
+authority refused from 23 September to 29 October 2026
+(tests/fixtures/grading/reader-authority-refusals/) are the evidence: 3 cited a
+path reader_evidence does not carry, which the schema now refuses at decoding;
+23 cited a check their criterion does not list, which only the instruction
+addresses; 4 cited a measured defect without its FAIL or PARTIAL status.
 """
 from __future__ import annotations
 
@@ -58,49 +61,45 @@ def _verdict(criterion, path, block):
     return "accepted"
 
 
-def _branch(criterion):
-    return next(b for b in ra.FINDINGS_SCHEMA["items"]["anyOf"]
-                if b["properties"]["criterion"]["const"] == criterion)
-
-
 def conforms(finding):
-    """Whether one finding is an instance of some branch, as constrained decoding reads it."""
+    """Whether one finding is an instance of the findings item schema, as constrained decoding reads it."""
+    item = ra.FINDINGS_SCHEMA["items"]["properties"]
     if not isinstance(finding, dict) or set(finding) != set(ra.FINDING_FIELDS):
         return False
-    criterion = finding["criterion"]
-    if criterion not in ra.CRITERIA:
-        return False
-    props = _branch(criterion)["properties"]
     citations = finding["evidence"]
-    return (finding["source"] == props["source"]["const"]
-            and finding["observation"] in props["observation"]["enum"]
+    return (finding["criterion"] in item["criterion"]["enum"]
+            and finding["source"] in item["source"]["enum"]
+            and finding["observation"] in item["observation"]["enum"]
             and isinstance(citations, list)
             and all(isinstance(c, dict) and set(c) == set(ra.CITATION_FIELDS)
-                    and c["path"] in props["evidence"]["items"]["properties"]["path"]["enum"]
+                    and c["path"] in item["evidence"]["items"]["properties"]["path"]["enum"]
                     for c in citations))
 
 
-@pytest.mark.parametrize("criterion", list(ra.CRITERIA))
-def test_every_offered_path_is_one_the_validator_accepts_under_its_criterion(criterion):
+def test_the_schema_offers_exactly_the_paths_reader_evidence_carries():
+    offered = ra.FINDINGS_SCHEMA["items"]["properties"]["evidence"]["items"]["properties"]["path"]["enum"]
+    assert offered == ra.EVIDENCE_PATHS == EVERY_PATH
+    assert sorted(offered) == sorted({p for c in ra.CRITERIA for p in ra.paths(c)})
     block = _block()
-    offered = _branch(criterion)["properties"]["evidence"]["items"]["properties"]["path"]["enum"]
-    assert offered == ra.paths(criterion)
+    for path in offered:
+        assert _value(block, path) is not None
+    assert not set(FOREIGN) & set(offered)
+
+
+@pytest.mark.parametrize("criterion", list(ra.CRITERIA))
+def test_the_paths_named_for_each_criterion_are_the_ones_the_validator_accepts(criterion):
+    block = _block()
+    named = ra.paths(criterion)
     for path in EVERY_PATH + FOREIGN:
         verdict = _verdict(criterion, path, block)
-        if path in offered:
+        if path in named:
             # A value citation under measured_quality still needs a FAIL or
             # PARTIAL status beside it: that is the validator's, not the path's.
             assert verdict in ("accepted", "measured defect requires a recorded FAIL or PARTIAL"), (path, verdict)
         else:
             assert verdict in ("evidence outside criterion authority", "unknown evidence path"), (path, verdict)
-
-
-def test_every_path_the_validator_refuses_as_outside_a_criterion_is_offered_by_no_branch():
-    block = _block()
-    for criterion in ra.CRITERIA:
-        refused = {p for p in EVERY_PATH + FOREIGN
-                   if _verdict(criterion, p, block) == "evidence outside criterion authority"}
-        assert refused and not refused & set(ra.paths(criterion)), criterion
+    letters = ", ".join(f"checks.{letter}" for letter in ra.CRITERIA[criterion][1])
+    assert f"{criterion} {letters}" in ra.instruction(3)
 
 
 def test_the_check_values_are_the_keys_quality_writes_in_the_order_it_writes_them():
@@ -129,27 +128,33 @@ def test_the_retained_refusals_are_whole_and_still_refused_by_the_unchanged_vali
         assert entry["error"] == f"src.ReaderAuthorityError: {caught.value}", entry["ticker"]
 
 
-def test_26_of_the_30_carried_a_citation_no_branch_offers_and_the_other_4_a_measured_defect_without_its_status():
+def test_3_of_the_30_cited_a_path_reader_evidence_lacks_23_a_foreign_check_and_4_a_defect_without_status():
     excluded, rest = [], []
     for entry in REFUSALS:
         findings = json.loads(entry["text"])["findings"]
         (excluded if not all(conforms(f) for f in findings) else rest).append(entry)
-    assert len(excluded) == 26 and len(rest) == 4
-    assert all("outside criterion authority" in e["error"] for e in excluded)
-    assert {e["error"] for e in rest} == {
-        "src.ReaderAuthorityError: measured defect requires a recorded FAIL or PARTIAL"}
-    assert sorted(e["ticker"] for e in rest) == ["INGN", "JAKK", "MSM", "RVTY"]
+    assert sorted(e["ticker"] for e in excluded) == ["HAE", "HAE", "TTEK"]
+    outside = [e for e in rest if "outside criterion authority" in e["error"]]
+    status = [e for e in rest if "measured defect" in e["error"]]
+    assert len(outside) == 23 and len(status) == 4 and len(outside) + len(status) == len(rest)
+    assert sorted(e["ticker"] for e in status) == ["INGN", "JAKK", "MSM", "RVTY"]
+    for entry in outside:
+        # Each cites a real check its own criterion does not list: what the
+        # instruction now names, and what the schema can no longer carry.
+        bad = [f for f in json.loads(entry["text"])["findings"]
+               if any(c["path"] not in ra.paths(f["criterion"]) for c in f["evidence"])]
+        assert bad and all(c["path"] in ra.EVIDENCE_PATHS for f in bad for c in f["evidence"]), entry["ticker"]
 
 
-def test_every_finding_a_branch_admits_conforms_and_a_cross_letter_one_does_not():
+def test_the_schema_refuses_a_foreign_block_and_admits_any_real_check():
     good = {"criterion": "overhead_supply", "source": "strategy.chart.supply",
             "evidence": [{"path": "checks.C.values.giveback", "value": 0.2}],
             "observation": "prior_trading_above_signal"}
     assert conforms(good)
-    for path in ("checks.Y.values.gain_since_move_start_pct", "checks.L.values.leg_gain_pct", "burst.gap_pct"):
+    for path in ("burst.gap_pct", "flags", "checks.C.values.nope", "reader_evidence.checks.C.status"):
         assert not conforms({**good, "evidence": [{"path": path, "value": 1}]})
-    assert not conforms({**good, "source": "strategy.quality"})
-    assert not conforms({**good, "observation": "gap_dominated"})
+    # A real check outside the criterion still conforms: the validator refuses it.
+    assert conforms({**good, "evidence": [{"path": "checks.Y.values.gain_since_move_start_pct", "value": 1}]})
 
 
 def _schema_nodes(node):
@@ -182,14 +187,14 @@ def test_the_score_schema_uses_only_what_structured_outputs_document():
             assert all(isinstance(v, (str, int, float, bool)) or v is None for v in node["enum"])
         assert not avoided & set(node), sorted(avoided & set(node))
     assert unions <= 16, "parameters with union types across a request"
-    assert unions == 1 + len(ra.CRITERIA)
+    assert unions == 1, "no anyOf: one branch per criterion was refused as too large a grammar"
 
 
 def test_request_version_3_is_archived_and_the_default_model_gets_the_branches():
     assert grader.REQUEST_VERSION == 3 and grader.RULES == {"grading.reader_request_version": 3}
     kwargs = grader.request_kwargs("system", [{"type": "text", "text": "x"}], "claude-sonnet-4-6")
     findings = kwargs["output_config"]["format"]["schema"]["properties"]["findings"]
-    assert findings == ra.FINDINGS_SCHEMA and len(findings["items"]["anyOf"]) == len(ra.CRITERIA)
+    assert findings is ra.FINDINGS_SCHEMA and "anyOf" not in json.dumps(findings)
 
 
 def test_the_instruction_says_a_citation_names_only_its_criterions_checks():
@@ -197,6 +202,7 @@ def test_the_instruction_says_a_citation_names_only_its_criterions_checks():
     assert "A citation names only a check its own criterion lists" in text
     assert "One citation outside its criterion refuses the whole reply" in text
     assert "cited as that check's status path" in text
+    assert "Paths each criterion may cite: " in text
 
 
 def _have(commit):

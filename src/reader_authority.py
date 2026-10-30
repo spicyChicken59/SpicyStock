@@ -58,28 +58,30 @@ def paths(criterion):
                          *(f"checks.{letter}.values.{name}" for name in CHECK_VALUES[letter]))]
 
 
-def _branch(criterion):
-    source, _ = CRITERIA[criterion]
-    return {"type": "object", "properties": {
-        "criterion": {"type": "string", "const": criterion},
-        "source": {"type": "string", "const": source},
-        "evidence": {"type": "array", "description": f"1 to {MAX_CITATIONS} exact citations",
-                     "items": {"type": "object", "properties": {
-                         "path": {"type": "string", "enum": paths(criterion)},
-                         "value": {"type": ["string", "number", "boolean", "null"]}},
-                         "required": list(CITATION_FIELDS), "additionalProperties": False}},
-        "observation": {"type": "string", "enum": list(OBSERVATIONS[criterion])}},
-        "required": list(FINDING_FIELDS), "additionalProperties": False}
+#: Every path reader_evidence carries: what any finding can cite at all.
+EVIDENCE_PATHS = [path for letter, names in CHECK_VALUES.items()
+                  for path in (f"checks.{letter}.status", *(f"checks.{letter}.values.{n}" for n in names))]
 
-
-# One nested shape for both model families. Each finding is one branch per
-# criterion, naming its own source, observations and evidence paths, so a
-# structured-output reply cannot cite a check its criterion does not list.
+# One nested shape for both model families. Request version 3 names the paths
+# reader_evidence carries in an enum, so a structured-output reply cites a
+# real check and never another block (burst.*, flags). Which of them a
+# criterion may cite is the instruction's and the validator's: one branch per
+# criterion, each with its own paths, was refused by the API on 30 October
+# 2026 (HTTP 400, "The compiled grammar is too large"; dry run 41120821225).
 # The validator below still checks every rule, the paths included; schema
 # conformance alone never grants a downgrade.
 FINDINGS_SCHEMA = {
     "type": "array", "description": f"source-grounded findings, or [] when confirming; at most {MAX_FINDINGS}",
-    "items": {"anyOf": [_branch(name) for name in CRITERIA]},
+    "items": {"type": "object", "properties": {
+        "criterion": {"type": "string", "enum": list(CRITERIA)},
+        "source": {"type": "string", "enum": [source for source, _ in CRITERIA.values()]},
+        "evidence": {"type": "array", "description": f"1 to {MAX_CITATIONS} exact citations",
+                     "items": {"type": "object", "properties": {
+                         "path": {"type": "string", "enum": EVIDENCE_PATHS},
+                         "value": {"type": ["string", "number", "boolean", "null"]}},
+                         "required": list(CITATION_FIELDS), "additionalProperties": False}},
+        "observation": {"type": "string", "enum": [v for vs in OBSERVATIONS.values() for v in vs]}},
+        "required": list(FINDING_FIELDS), "additionalProperties": False},
 }
 
 #: Request version 2's findings schema, byte for byte as it was sent from
@@ -206,7 +208,9 @@ def instruction(request_version=3):
             ("A citation names only a check its own criterion lists: overhead_supply cites "
              "checks.C and nothing else, and a fact recorded under another check belongs to the "
              "finding whose criterion lists it, or in reason. One citation outside its criterion "
-             "refuses the whole reply. " if v3 else "") +
+             "refuses the whole reply. Paths each criterion may cite: " + "; ".join(
+                 f"{name} " + ", ".join(f"checks.{letter}" for letter in letters)
+                 for name, (_, letters) in CRITERIA.items()) + ". " if v3 else "") +
             "Use the actual JSON value, never reinterpret it. measured_quality needs an "
             "actual FAIL/PARTIAL status" + (", cited as that check's status path" if v3 else "") + ". "
             "Visual findings need the chart and must name the "

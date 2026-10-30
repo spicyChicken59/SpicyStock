@@ -1124,18 +1124,24 @@ archived, and a record from before the block is asked for none. The run:
   use measurements. Subjective chart truth and free commentary remain unverified.
   Every model receives the same nested findings schema in text; supported models
   also receive it through structured output. Findings and citations remain closed
-  objects. From request version 3 (`grader.REQUEST_VERSION`) the schema is one
-  branch per criterion, offering only the evidence paths that criterion may cite
-  (`reader_authority.paths()`, over `CHECK_VALUES`, the value fields
-  `quality.assess()` writes); the validator is unchanged and still checks every
-  rule. Of the 30 replies reader authority refused from 23 September to 29
-  October 2026 (`tests/fixtures/grading/reader-authority-refusals/`), 26 carried
-  a citation no branch offers -- most a visual finding citing a check its
-  criterion does not list -- and the other 4 cited a measured defect without its
-  FAIL or PARTIAL status, a condition on a value no schema can carry, which the
-  instruction now asks for by path. A record made under request version 2 is
-  read under its own rules: the verifier reports it partial, never as this one. Returned text is retained before parsing/authority checks in each
-  attempt, with its SHA-256, byte count, stop reason and message ID. Text above
+  objects. From request version 3 (`grader.REQUEST_VERSION`) a citation's path is
+  an enum of the paths `reader_evidence` carries (`reader_authority.EVIDENCE_PATHS`,
+  over `CHECK_VALUES`, the value fields `quality.assess()` writes), and the
+  instruction names the checks each criterion may cite (`reader_authority.paths()`);
+  the validator is unchanged and still checks every rule. One schema branch per
+  criterion, each with its own paths, was refused by the API on 30 October 2026
+  (HTTP 400, "The compiled grammar is too large"; dry run 41120821225), so which
+  real check a criterion may cite is the instruction's to say and the validator's
+  to hold. Of the 30 replies reader authority refused from 23 September to 29
+  October 2026 (`tests/fixtures/grading/reader-authority-refusals/`), 3 cited a
+  path `reader_evidence` does not carry (HAE twice, TTEK), which the schema now
+  refuses at decoding; 23 cited a real check their criterion does not list -- most
+  a visual finding -- which only the instruction addresses; 4 cited a measured
+  defect without its FAIL or PARTIAL status. The verifier rebuilds a record's
+  reader requests under the request version it archived (2 or 3, byte for byte);
+  a record made under another is partial. Returned text is retained before
+  parsing/authority checks in each attempt, with its SHA-256, byte count, stop
+  reason and message ID. Text above
   64 KiB is explicitly omitted with its digest and size retained. Rejected text is
   diagnostic evidence, never an accepted judgement, and the quality ledger retains
   those attempts unchanged. Authority failures still do not retry; only parser
