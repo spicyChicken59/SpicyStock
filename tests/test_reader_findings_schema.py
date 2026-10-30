@@ -12,7 +12,8 @@ authority refused from 23 September to 29 October 2026
 path reader_evidence does not carry, which the schema now refuses at decoding;
 23 cited a check their criterion does not list, which only the instruction
 addresses; 4 named a measured_quality defect on a candidate whose eight checks
-all recorded PASS, which only the validator refuses.
+all recorded PASS, which the validator refuses and the v3 instruction now
+addresses.
 """
 from __future__ import annotations
 
@@ -155,8 +156,8 @@ def test_3_of_the_30_cited_a_path_reader_evidence_lacks_23_a_foreign_check_and_4
         # No FAIL or PARTIAL anywhere: there was no measured defect to cite.
         assert {c["status"] for c in entry["reader_evidence"]["checks"].values()} == {"PASS"}, entry["ticker"]
     for entry in outside:
-        # Each cites a real check its own criterion does not list: what the
-        # instruction now names, and what the schema can no longer carry.
+        # Each cites a real check its own criterion does not list: the schema
+        # still admits it, the instruction now names it, the validator refuses it.
         bad = [f for f in json.loads(entry["text"])["findings"]
                if any(c["path"] not in ra.paths(f["criterion"]) for c in f["evidence"])]
         assert bad and all(c["path"] in ra.EVIDENCE_PATHS for f in bad for c in f["evidence"]), entry["ticker"]
@@ -206,7 +207,7 @@ def test_the_score_schema_uses_only_what_structured_outputs_document():
     assert unions == 1, "no anyOf: one branch per criterion was refused as too large a grammar"
 
 
-def test_request_version_3_is_archived_and_the_default_model_gets_the_branches():
+def test_request_version_3_is_archived_and_the_default_model_gets_the_schema():
     assert grader.REQUEST_VERSION == 3 and grader.RULES == {"grading.reader_request_version": 3}
     kwargs = grader.request_kwargs("system", [{"type": "text", "text": "x"}], "claude-sonnet-4-6")
     findings = kwargs["output_config"]["format"]["schema"]["properties"]["findings"]

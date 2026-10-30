@@ -87,7 +87,7 @@ NOT_GRADED_REASON = "call budget"
 # output_config; local authority validation remains mandatory afterwards.
 #: 3 (30 October 2026): a citation's path is an enum of the paths
 #: reader_evidence carries, and the instruction names the checks each
-#: criterion may cite (reader_authority.EVIDENCE_PATHS, paths()).
+#: criterion may cite (reader_authority.EVIDENCE_PATHS, CRITERIA).
 REQUEST_VERSION = 3
 RULES = {"grading.reader_request_version": REQUEST_VERSION}
 #: The request versions whose requests this module can rebuild byte for byte

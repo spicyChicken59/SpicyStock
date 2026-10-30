@@ -1127,7 +1127,7 @@ archived, and a record from before the block is asked for none. The run:
   objects. From request version 3 (`grader.REQUEST_VERSION`) a citation's path is
   an enum of the paths `reader_evidence` carries (`reader_authority.EVIDENCE_PATHS`,
   over `CHECK_VALUES`, the value fields `quality.assess()` writes), and the
-  instruction names the checks each criterion may cite (`reader_authority.paths()`);
+  instruction names the checks each criterion may cite (its `CRITERIA` letters);
   the validator is unchanged and still checks every rule. One schema branch per
   criterion, each with its own paths, was refused by the API on 30 October 2026
   (HTTP 400, "The compiled grammar is too large"; dry run 41120821225), so which
@@ -1135,10 +1135,11 @@ archived, and a record from before the block is asked for none. The run:
   to hold. Of the 30 replies reader authority refused from 23 September to 29
   October 2026 (`tests/fixtures/grading/reader-authority-refusals/`), 3 cited a
   path `reader_evidence` does not carry (HAE twice, TTEK), which the schema now
-  refuses at decoding; 23 cited a real check their criterion does not list -- most
-  a visual finding -- which only the instruction addresses; 4 named a
-  measured_quality defect on a candidate whose eight checks all recorded PASS,
-  which only the validator refuses. The verifier rebuilds a record's
+  refuses at decoding; 23 cited a real check their criterion does not list -- each
+  a visual finding -- which the instruction addresses and the validator refuses;
+  4 named a measured_quality defect on a candidate whose eight checks all
+  recorded PASS, which the validator refuses and the instruction now addresses
+  (no FAIL or PARTIAL means no measured_quality finding). The verifier rebuilds a record's
   reader requests under the request version it archived (2 or 3, byte for byte);
   a record made under another is partial. Returned text is retained before
   parsing/authority checks in each attempt, with its SHA-256, byte count, stop
@@ -1505,7 +1506,8 @@ a candidate, for ZIM on 24 October, was answered too: its identity was
 verified and its index read, `partial` on `metadata_invalid`. The probe named
 why (run 40163306777, 25 October): every refused row -- 78 of ZIM's, 674 of
 AAPL's -- failed the document rule, and the forms were XML filings SEC lists
-under the XSL rendering directory, `xslF345X06/form4.xml`: Forms 3 and 4 and
+under the directory of the XSL stylesheet that renders each
+(`xslF345X06/form4.xml`, `xsl144X01/primary_doc.xml`): Forms 3 and 4 and
 their amendments, Form 5, Form 144 and its amendment, 25-NSE, EFFECT notices,
 and Schedules 13D and 13G and their amendments.
 The row rule reads such a row now for a form the collector never stores or

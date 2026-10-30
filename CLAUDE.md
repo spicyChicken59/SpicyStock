@@ -12769,7 +12769,8 @@ GitHub's 50 MiB push warning was read off search excerpts only.
 ## Checkpoint, 30 Oct 2026 -- PR #201 accepted; the first YELLOW week read; request v3 shows the reader each criterion's checks
 
 **PR #201, accepted.** Mo merged it as `ed5b400c` on `main` at 13:42 UTC on
-27 October, a merge commit over `adaf1b1a` (the 26 October publication). Its
+27 October, a merge commit over `d383e9c5` (the source-recovery receipt that
+followed the 26 October publication). Its
 head `7dd49f1a` had all of its checks complete green (the check-suite event
 of 25 October). Its review workflow (`wf_d51f5765-0b6`) lost 18 agents to the
 session's weekly usage limit. Its one upheld finding -- README's XSL form
@@ -12785,8 +12786,8 @@ merge. It read ZIM's index `observed_window`: 100 metadata rows, no error. The
 - EXEL (107 rows) and OGN (88) on 28 October, OGN (88) on 29 October and PSNL
   (92) on 30 October all read `observed_window`.
 - MCS (94 rows, 29 October) and QGEN (24 rows, 30 October) still read
-  `partial` on `metadata_invalid`. That is a second refused-row shape the probe
-  has not been asked about. Not worked here.
+  `partial` on `metadata_invalid`, for a reason the job log's per-issuer line
+  does not record; the probe has not been asked about them. Not worked here.
 
 **The nights of 26 to 29 October, read off `main`.** Runs 40432684287,
 40614157533, 40802470870 and 40988674329. Each published after both slots and
@@ -12843,7 +12844,8 @@ groups:
 - **3 cited a path `reader_evidence` does not carry**: HAE twice and TTEK,
   citing `burst.*` or `flags`.
 - **23 cited a real check their criterion does not list**:
-  - `overhead_supply` citing `checks.Y`, `checks.L` or `checks.RE` (10);
+  - `overhead_supply` citing `checks.Y`, `checks.L` or `checks.RE` (9; TTEK's
+    is a tenth, counted with the three above);
   - `extension` citing `checks.C` or `checks.RE` (8);
   - `trend_maturity` citing `checks.C` or `checks.L` (6 findings).
 - **4 named a `measured_quality` defect on a candidate whose eight checks all
