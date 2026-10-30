@@ -11,7 +11,8 @@ authority refused from 23 September to 29 October 2026
 (tests/fixtures/grading/reader-authority-refusals/) are the evidence: 3 cited a
 path reader_evidence does not carry, which the schema now refuses at decoding;
 23 cited a check their criterion does not list, which only the instruction
-addresses; 4 cited a measured defect without its FAIL or PARTIAL status.
+addresses; 4 named a measured_quality defect on a candidate whose eight checks
+all recorded PASS, which only the validator refuses.
 """
 from __future__ import annotations
 
@@ -128,7 +129,7 @@ def test_the_retained_refusals_are_whole_and_still_refused_by_the_unchanged_vali
         assert entry["error"] == f"src.ReaderAuthorityError: {caught.value}", entry["ticker"]
 
 
-def test_3_of_the_30_cited_a_path_reader_evidence_lacks_23_a_foreign_check_and_4_a_defect_without_status():
+def test_3_of_the_30_cited_a_path_reader_evidence_lacks_23_a_foreign_check_and_4_a_defect_where_all_passed():
     excluded, rest = [], []
     for entry in REFUSALS:
         findings = json.loads(entry["text"])["findings"]
@@ -138,6 +139,9 @@ def test_3_of_the_30_cited_a_path_reader_evidence_lacks_23_a_foreign_check_and_4
     status = [e for e in rest if "measured defect" in e["error"]]
     assert len(outside) == 23 and len(status) == 4 and len(outside) + len(status) == len(rest)
     assert sorted(e["ticker"] for e in status) == ["INGN", "JAKK", "MSM", "RVTY"]
+    for entry in status:
+        # No FAIL or PARTIAL anywhere: there was no measured defect to cite.
+        assert {c["status"] for c in entry["reader_evidence"]["checks"].values()} == {"PASS"}, entry["ticker"]
     for entry in outside:
         # Each cites a real check its own criterion does not list: what the
         # instruction now names, and what the schema can no longer carry.
@@ -203,6 +207,7 @@ def test_the_instruction_says_a_citation_names_only_its_criterions_checks():
     assert "One citation outside its criterion refuses the whole reply" in text
     assert "cited as that check's status path" in text
     assert "Paths each criterion may cite: " in text
+    assert "when no check records FAIL or PARTIAL there is no measured_quality finding" in text
 
 
 def _have(commit):

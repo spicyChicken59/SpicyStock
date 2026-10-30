@@ -1136,8 +1136,9 @@ archived, and a record from before the block is asked for none. The run:
   October 2026 (`tests/fixtures/grading/reader-authority-refusals/`), 3 cited a
   path `reader_evidence` does not carry (HAE twice, TTEK), which the schema now
   refuses at decoding; 23 cited a real check their criterion does not list -- most
-  a visual finding -- which only the instruction addresses; 4 cited a measured
-  defect without its FAIL or PARTIAL status. The verifier rebuilds a record's
+  a visual finding -- which only the instruction addresses; 4 named a
+  measured_quality defect on a candidate whose eight checks all recorded PASS,
+  which only the validator refuses. The verifier rebuilds a record's
   reader requests under the request version it archived (2 or 3, byte for byte);
   a record made under another is partial. Returned text is retained before
   parsing/authority checks in each attempt, with its SHA-256, byte count, stop
@@ -1509,8 +1510,10 @@ their amendments, Form 5, Form 144 and its amendment, 25-NSE, EFFECT notices,
 and Schedules 13D and 13G and their amendments.
 The row rule reads such a row now for a form the collector never stores or
 fetches (`issuer_evidence._rendered()`); a current report or acquisition form
-must still name one plain document. On the fixed branch, over the same index
-bytes (run 40164017459), the probe refused no row of either. The first
+must still name one plain document. On the fixed branch (run 40164017459) the
+probe refused no row of either, over the same index bytes the first run read:
+both job logs print AAPL's submissions as SHA-256 `5891cf87…` (163,917 bytes)
+and ZIM's as `7d822c20…` (39,210 bytes). The first
 production collections under it (27 to 30 October) read ZIM, EXEL, OGN and
 PSNL `observed_window`; MCS (29 October) and QGEN (30 October) still read
 `partial` on `metadata_invalid`, a refused row the probe has not been asked

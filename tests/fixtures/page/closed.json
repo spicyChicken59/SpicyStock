@@ -2394,7 +2394,7 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "a66a779935480170ddab32648155a08b7e69c10538b8b318126b53d99cee0719",
+     "id": "18176d4f40bd5e36f948967a71d2e6e41928f3b9e6c9d5bb4bb8bf3372c7010c",
      "context_sha256": "228763af968660a636fdccce848abbb32e98b3fa0298454a299a23f7fa444237",
      "plan_sha256": "fcb636eb6a94e7ff5239500a5075221f363ff116436754e417ffc22042992e5d",
      "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
@@ -2423,7 +2423,7 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "124b9f542a765cd1078f18699e917151b62990dba39186a4259bdf3990bfccc7",
+    "request_text_sha256": "1d8ad88ede5e6e5d5b3a40ee63cfda56ac28c907497ea46da0c61634e3c889fd",
     "input": {
      "metrics_sha256": "7cd32dd36a3610cbfc41c1e83ce86cdb6051bddc89a68289e86332e14d72999a",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
@@ -2431,7 +2431,7 @@
     },
     "attempts": [
      {
-      "request_sha256": "005634c715f1e41aa778ce04518d057eac8f689a4f53e453ae09a4d84e15bf12",
+      "request_sha256": "cb83f7bd00e0c8cb1f8148ab20a56627742b83052f3ad1bf30b84cb5e95d42ab",
       "correction": false,
       "outcome": "model",
       "response": {
@@ -2509,7 +2509,7 @@
      "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "124b9f542a765cd1078f18699e917151b62990dba39186a4259bdf3990bfccc7"
+     "request_text_sha256": "1d8ad88ede5e6e5d5b3a40ee63cfda56ac28c907497ea46da0c61634e3c889fd"
     },
     "review_selection": {
      "policy": "account_feasible_first_research_v1",
@@ -2520,7 +2520,7 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "accepted",
-    "reader_sha256": "9c1f559c9ad1d40253d1d3ae47dbeb671308dea996e1fd564b52cf35faef6ba5",
+    "reader_sha256": "c70a88b60a69553e78f773c72f3702553f728cd2a6f58bf22f0d0f0588fae9d2",
     "reader_source": "claude",
     "final_grade": "A+",
     "version": 1,
@@ -2541,7 +2541,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "a66a779935480170ddab32648155a08b7e69c10538b8b318126b53d99cee0719"
+    "id": "18176d4f40bd5e36f948967a71d2e6e41928f3b9e6c9d5bb4bb8bf3372c7010c"
    },
    "series": [
     {
@@ -3969,7 +3969,7 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "26fd480ea6651436ae3748f59418c783c1e34b5cc3f9727b2e94dbcb3de4e4b6",
+     "id": "9b213ad3a894fecf18c6e0a335852567a5eb10e564a49052d6cbdef19917d829",
      "context_sha256": "228763af968660a636fdccce848abbb32e98b3fa0298454a299a23f7fa444237",
      "plan_sha256": "e32d7a3722bfba913743e9fe4295e005b5f62cad47757c09b32377430925a654",
      "pick_sha256": "8791448fea08a08339f01fec5d7b8f9dc3048b3c461320b8e5ad2b011c0b29b5"
@@ -3998,7 +3998,7 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "07f8916fa0cc90e85a0033d4bae014f9381de6aacb8441df77972006ddc01608",
+    "request_text_sha256": "140c6dea2bc72e17ff2ba6c48bc2514a51bf8c9df63468a0cf85fc94398b68f2",
     "input": {
      "metrics_sha256": "a887fd742941fa785374eeecb8586fd815c9f2f140ee81f559208bdf4c6c487c",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
@@ -4006,7 +4006,7 @@
     },
     "attempts": [
      {
-      "request_sha256": "e7a7c4c3888c7b63176ce7f4a88eb519d0dc0e5cd39a9b855c668a153f8bce4f",
+      "request_sha256": "0fa602692f316851832b8020c6d088aeb101674c8d07e7fb4db834bda92763a1",
       "correction": false,
       "outcome": "model",
       "response": {
@@ -4084,7 +4084,7 @@
      "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "07f8916fa0cc90e85a0033d4bae014f9381de6aacb8441df77972006ddc01608"
+     "request_text_sha256": "140c6dea2bc72e17ff2ba6c48bc2514a51bf8c9df63468a0cf85fc94398b68f2"
     },
     "review_selection": {
      "policy": "account_feasible_first_research_v1",
@@ -4095,7 +4095,7 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "accepted",
-    "reader_sha256": "d52be33f35352d2a6a61cbabc4bff32b597bbb99363ba0a83cb8266cce9a50db",
+    "reader_sha256": "e04ec525c0150952de32e823ebd6d35f07551c7a432a2878aa529ff775f5cea7",
     "reader_source": "claude",
     "final_grade": "A+",
     "version": 1,
@@ -4116,7 +4116,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out"
     },
-    "id": "26fd480ea6651436ae3748f59418c783c1e34b5cc3f9727b2e94dbcb3de4e4b6"
+    "id": "9b213ad3a894fecf18c6e0a335852567a5eb10e564a49052d6cbdef19917d829"
    },
    "series": [
     {
@@ -5513,7 +5513,7 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "ccd044710be6db72f4d4f342dd666b6ff0f50a0c25b6d7e248257c73d6684b96",
+     "id": "1a8f89574454cf87dcf38e93d8d30678587d7f5f70667fc9b9b05adda591fcb0",
      "context_sha256": "228763af968660a636fdccce848abbb32e98b3fa0298454a299a23f7fa444237",
      "plan_sha256": "ad19007ae6426e09462a59dd67fb668b24f6b0c1a234ec2eb848037864c3d8fd",
      "pick_sha256": "9e72b4c052e89621468bcd96ecd0f750df8860cf900623561da6e4ba30bc9b7a"
@@ -5542,7 +5542,7 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "9d1f9616006d96dbb63c9fc67a195662006270cbc9926dd8ae525360c5f40995",
+    "request_text_sha256": "b12741574040c6233ca2adf8543d49d56beba8a5278471ea7473db20618fac35",
     "input": {
      "metrics_sha256": "bac8b5b274bfbedbd030c16cc55be64d2d6c3bd83c7eb32a3967fd2c1643f6af",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
@@ -5550,7 +5550,7 @@
     },
     "attempts": [
      {
-      "request_sha256": "44536265e93c072d10a1031082b1b3d28debc493e4cec22f2aa57228ecd75f53",
+      "request_sha256": "f3250f09e6811064b16957ccadf3d6179e5710d5fdb2962e82a7f9b1bfcb84a7",
       "correction": false,
       "outcome": "model",
       "response": {
@@ -5628,7 +5628,7 @@
      "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "9d1f9616006d96dbb63c9fc67a195662006270cbc9926dd8ae525360c5f40995"
+     "request_text_sha256": "b12741574040c6233ca2adf8543d49d56beba8a5278471ea7473db20618fac35"
     },
     "review_selection": {
      "policy": "account_feasible_first_research_v1",
@@ -5639,7 +5639,7 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "accepted",
-    "reader_sha256": "2f5f2d0437876b579ebf7201d591dc5a4abe6070d1c1a9f611d190a76c2c9fed",
+    "reader_sha256": "02beb9f5c8ea88ac364842e65eee7bae91300075bfced9dd2a15412731f6cb69",
     "reader_source": "claude",
     "final_grade": "A+",
     "version": 1,
@@ -5660,7 +5660,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out"
     },
-    "id": "ccd044710be6db72f4d4f342dd666b6ff0f50a0c25b6d7e248257c73d6684b96"
+    "id": "1a8f89574454cf87dcf38e93d8d30678587d7f5f70667fc9b9b05adda591fcb0"
    },
    "series": [
     {
@@ -7097,7 +7097,7 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "50bd2305b63345fc473a2c63d0a319ca6973670e86eb9d6be64e137bf897b529",
+     "id": "b2682a09b557997ea83a5840243bbf2bfe0eaef9e4955a1fa9116a952341fb49",
      "context_sha256": "228763af968660a636fdccce848abbb32e98b3fa0298454a299a23f7fa444237",
      "plan_sha256": "4f611c4bbeaff0faf373aa1ea4e8e4bae450906c6b955a490b6e070719dde160",
      "pick_sha256": "2cd8ba442340b9e81c517f18affaceb6a5c62b97d88cb26325ef13ee328ae974"
@@ -7128,7 +7128,7 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "cac5a9b2100457dd56bcefcadf0c0ef27f2d88bbd1c0adbae9b48c26be40dbf6",
+    "request_text_sha256": "131afa6fd5e4193c8725181db8890c079bfcb634c0b5b8ea16047684fcf9a283",
     "input": {
      "metrics_sha256": "b1b0ab2346371dd1066eb868c0f87a1af7ceebfeb58fc2ce4330452dbaa82933",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
@@ -7136,7 +7136,7 @@
     },
     "attempts": [
      {
-      "request_sha256": "b7ab487d18717d9ba799e74ead156020b2a2f5d8f359d33a889d5d9ed8ae1fc3",
+      "request_sha256": "5c7429735297c0989ca3f4089b12ace5c612db634bdb9e887f5ec5542fdde7f6",
       "correction": false,
       "outcome": "model",
       "response": {
@@ -7214,7 +7214,7 @@
      "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "cac5a9b2100457dd56bcefcadf0c0ef27f2d88bbd1c0adbae9b48c26be40dbf6"
+     "request_text_sha256": "131afa6fd5e4193c8725181db8890c079bfcb634c0b5b8ea16047684fcf9a283"
     },
     "review_selection": {
      "policy": "account_feasible_first_research_v1",
@@ -7227,7 +7227,7 @@
      "purpose": "research_ranked"
     },
     "reader_coverage": "accepted",
-    "reader_sha256": "f124f339396f3f737d9fe7d72c9f1d99e281a1cbbfaf2b5b211ac61ea342d68d",
+    "reader_sha256": "51e3eecd1a8c8cb6694a278b4054beffdae1325e05e120ebebeaef1f8def66f2",
     "reader_source": "claude",
     "final_grade": "A+",
     "version": 1,
@@ -7248,7 +7248,7 @@
      "reason": "withheld",
      "detail": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
     },
-    "id": "50bd2305b63345fc473a2c63d0a319ca6973670e86eb9d6be64e137bf897b529"
+    "id": "b2682a09b557997ea83a5840243bbf2bfe0eaef9e4955a1fa9116a952341fb49"
    },
    "series": [
     {

@@ -123,14 +123,6 @@ SAMPLING_MODELS = frozenset({
 #: shape line every request carries. No `minimum`/`maximum` on `score`:
 #: numerical constraints are not supported by structured outputs, and the
 #: range is checked by _validated() instead.
-def score_schema(request_version: int = REQUEST_VERSION) -> dict:
-    """The reply schema a request of ``request_version`` carried: SCORE_SCHEMA itself for this one."""
-    findings = reader_authority.findings_schema(request_version)
-    if findings is SCORE_SCHEMA["properties"]["findings"]:
-        return SCORE_SCHEMA
-    return {**SCORE_SCHEMA, "properties": {**SCORE_SCHEMA["properties"], "findings": findings}}
-
-
 SCORE_SCHEMA = {
     "type": "object",
     "properties": {
@@ -149,6 +141,15 @@ SCORE_SCHEMA = {
     "required": ["score", "grade", "reason", "key_risk", "entry_note", "findings"],
     "additionalProperties": False,
 }
+
+
+def score_schema(request_version: int = REQUEST_VERSION) -> dict:
+    """The reply schema a request of ``request_version`` carried: SCORE_SCHEMA itself for this one."""
+    findings = reader_authority.findings_schema(request_version)
+    if findings is SCORE_SCHEMA["properties"]["findings"]:
+        return SCORE_SCHEMA
+    return {**SCORE_SCHEMA, "properties": {**SCORE_SCHEMA["properties"], "findings": findings}}
+
 
 #: Appended to the request when a reply could not be parsed, and ONLY then.
 #: A reply in the wrong shape is a fact about the request that produced it,

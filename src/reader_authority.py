@@ -212,7 +212,9 @@ def instruction(request_version=3):
                  f"{name} " + ", ".join(f"checks.{letter}" for letter in letters)
                  for name, (_, letters) in CRITERIA.items()) + ". " if v3 else "") +
             "Use the actual JSON value, never reinterpret it. measured_quality needs an "
-            "actual FAIL/PARTIAL status" + (", cited as that check's status path" if v3 else "") + ". "
+            "actual FAIL/PARTIAL status" + (", cited as that check's status path; when no check "
+                                             "records FAIL or PARTIAL there is no measured_quality "
+                                             "finding" if v3 else "") + ". "
             "Visual findings need the chart and must name the "
             "bars/region seen in the reason; a passing proxy does not forbid a qualitative flaw. "
             "Unknown is not failure. No discovery requirement, outcome note, new numeric "

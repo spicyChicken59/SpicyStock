@@ -2357,7 +2357,7 @@
         },
         "evidence_ref": {
           "version": 1,
-          "id": "7e1df4b25f5ac957c695c6bde5a067cd4147e04c5fd8eaedf6267663024ee822",
+          "id": "e10f282dfefb75182a3adea2adcda7db3a159c2bbe7d271a4e4fe47b32ea59d3",
           "context_sha256": "08637845882fd3c966936f95bcb11638c8f667201ce016e6391bd8d529e9707b",
           "plan_sha256": "a8e6c8dc68c90a82c0c763a7056399b241e962ecf2c3580d8f631a151f073211",
           "pick_sha256": "589d92c315ea19c46640e1074bf09ab005965531343ab9f6556eff0bdeab8475"
@@ -2386,7 +2386,7 @@
         "model": "claude-sonnet-4-6",
         "findings": [],
         "authority_version": 1,
-        "request_text_sha256": "650938d2da7731ec7150188f04887c5c854b16b4d726053118f3a61bfaf5726f",
+        "request_text_sha256": "d9c76613f9fb7625f423fb364340162ea0564402c4e880767978876199443b64",
         "input": {
           "metrics_sha256": "e03f284d45b6cad46ae120611569e1f6fadf2abf61c3fca4318888d88e785d81",
           "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
@@ -2394,7 +2394,7 @@
         },
         "attempts": [
           {
-            "request_sha256": "54c651aebbee44b29acc078dc584a936ef054e4d06d8d6bbf225ac249c2dfb51",
+            "request_sha256": "031404d3ed8b75907fff125b2ce63f024e104d5cd16d23e9aec872c8f6036c34",
             "correction": false,
             "outcome": "model",
             "response": {
@@ -2472,7 +2472,7 @@
           "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
           "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
           "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-          "request_text_sha256": "650938d2da7731ec7150188f04887c5c854b16b4d726053118f3a61bfaf5726f"
+          "request_text_sha256": "d9c76613f9fb7625f423fb364340162ea0564402c4e880767978876199443b64"
         },
         "review_selection": {
           "policy": "account_feasible_first_research_v1",
@@ -2483,7 +2483,7 @@
           "purpose": "opportunity"
         },
         "reader_coverage": "accepted",
-        "reader_sha256": "d63975532428b353076d572a35cbffa4cdf4d76fcc32a175b834f8dfd8ae1873",
+        "reader_sha256": "e8764cb36208de3b62b6d3ddb8e8ea215c7f7534b2b0f07f79790dd047254e9e",
         "reader_source": "claude",
         "final_grade": "A+",
         "version": 1,
@@ -2504,7 +2504,7 @@
           "reason": null,
           "detail": null
         },
-        "id": "7e1df4b25f5ac957c695c6bde5a067cd4147e04c5fd8eaedf6267663024ee822"
+        "id": "e10f282dfefb75182a3adea2adcda7db3a159c2bbe7d271a4e4fe47b32ea59d3"
       },
       "series": [
         {
@@ -3933,7 +3933,7 @@
         },
         "evidence_ref": {
           "version": 1,
-          "id": "15390589148afec6a71bef534668046ad7d98c361a69c3a4c430465a53287ca9",
+          "id": "5ba0fd5a3d911d8f529a6be65b6ac32baf8c353f181a47fe312bb4991ed24e3d",
           "context_sha256": "08637845882fd3c966936f95bcb11638c8f667201ce016e6391bd8d529e9707b",
           "plan_sha256": "9bae81ac16675255e8bb4e4a4c33bcb77704f8ab12c506112cd5123862e931a0",
           "pick_sha256": "8fe9361a9304f0983e4b2dc00b1999b4fffdf509fca5cfb53abd7436b05adb09"
@@ -3964,7 +3964,7 @@
         "model": "claude-sonnet-4-6",
         "findings": [],
         "authority_version": 1,
-        "request_text_sha256": "c9a6da16f810f6d49ae770335c0de9fbae3884600cb99c1a188a938810a6d6bd",
+        "request_text_sha256": "aaa74458bd71342aeedc0199f0b81893ad359067c3cebe4a77ac316a1ff000f3",
         "input": {
           "metrics_sha256": "178acb9bcd67549ca60ab2491d9acbad45d32a60c2b43341e2b1c13b1af43358",
           "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
@@ -3972,7 +3972,7 @@
         },
         "attempts": [
           {
-            "request_sha256": "2cdf8294172273d861ec7fef2430da5b4c821e6a6a0bdadaf50284c7f2923ab4",
+            "request_sha256": "80d6fb8855d1af5df640ed297afdf9570d0b9c9fe0361c95b1b798c7b9441a04",
             "correction": false,
             "outcome": "model",
             "response": {
@@ -4050,7 +4050,7 @@
           "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
           "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
           "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-          "request_text_sha256": "c9a6da16f810f6d49ae770335c0de9fbae3884600cb99c1a188a938810a6d6bd"
+          "request_text_sha256": "aaa74458bd71342aeedc0199f0b81893ad359067c3cebe4a77ac316a1ff000f3"
         },
         "review_selection": {
           "policy": "account_feasible_first_research_v1",
@@ -4063,7 +4063,7 @@
           "purpose": "research_ranked"
         },
         "reader_coverage": "accepted",
-        "reader_sha256": "b6c426ee451d940c3e72e4d05ea1ada64697ea01fcc169baeab28a015787eea1",
+        "reader_sha256": "6d5713fd7a744fcd88ce33618feb3402c41cfb60dcda03d6be2b7c69f5bdba7c",
         "reader_source": "claude",
         "final_grade": "A+",
         "version": 1,
@@ -4084,7 +4084,7 @@
           "reason": "no_shares",
           "detail": "the configured account cannot size it: no whole share fits both the $5.00 effective risk budget after size multipliers ($5.10 risk per share) and the $500.00 position cap ($128.20 sizing limit)"
         },
-        "id": "15390589148afec6a71bef534668046ad7d98c361a69c3a4c430465a53287ca9"
+        "id": "5ba0fd5a3d911d8f529a6be65b6ac32baf8c353f181a47fe312bb4991ed24e3d"
       },
       "series": [
         {
@@ -6737,7 +6737,7 @@
         },
         "evidence_ref": {
           "version": 1,
-          "id": "3236b17e67f88739b6595d053b8faddea30b809a4be035eea8c6a661e4a8d5c6",
+          "id": "3afe48d04687ab3d72654ac59cf60bc24be2cf6d01d115cfba26fce3423b326f",
           "context_sha256": "08637845882fd3c966936f95bcb11638c8f667201ce016e6391bd8d529e9707b",
           "plan_sha256": "65972c155073cb5796c8cea18472436399aabb18d71f1c806ddae2d208187f56",
           "pick_sha256": "62755251ba3dab6f072bc5e7ee5c3dffc646ed5a3de9fbfd0a12884bf34c1d11"
@@ -6769,7 +6769,7 @@
         "model": "claude-sonnet-4-6",
         "findings": [],
         "authority_version": 1,
-        "request_text_sha256": "99241c631726b0214bb7b0c0e412888b16a164ef2230b9cef41af265c3f04522",
+        "request_text_sha256": "addc68906331926d7a0d84c4b8ba62ea2fa3475c3ffb1b557f64daae6ac6043e",
         "input": {
           "metrics_sha256": "2aac16bc43f20aaf6d7d76b2461fbf886ebd7ae52d360437214a4d5f68d1c0cf",
           "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
@@ -6777,7 +6777,7 @@
         },
         "attempts": [
           {
-            "request_sha256": "9fe970dc1484a0e3eee138e1ca711fb6383ee12b243d6eb69e19c6dd00d9f315",
+            "request_sha256": "28f2ccbeb8beca579b39fa8bd8de1b9e8b4f9b2344ddc222ac264b0b752214c5",
             "correction": false,
             "outcome": "model",
             "response": {
@@ -6855,7 +6855,7 @@
           "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
           "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
           "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-          "request_text_sha256": "99241c631726b0214bb7b0c0e412888b16a164ef2230b9cef41af265c3f04522"
+          "request_text_sha256": "addc68906331926d7a0d84c4b8ba62ea2fa3475c3ffb1b557f64daae6ac6043e"
         },
         "review_selection": {
           "policy": "account_feasible_first_research_v1",
@@ -6869,7 +6869,7 @@
           "purpose": "research_rotating"
         },
         "reader_coverage": "accepted",
-        "reader_sha256": "6b67553de9071c40a0801bd1ed24a1ddc90bc5f0cfae279304b532381d3e5344",
+        "reader_sha256": "19239db467f5738acc26008ae5eeb8875cc5b209cea2d8530130665fe9e90324",
         "reader_source": "claude",
         "final_grade": "A+",
         "version": 1,
@@ -6890,7 +6890,7 @@
           "reason": "withheld",
           "detail": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
         },
-        "id": "3236b17e67f88739b6595d053b8faddea30b809a4be035eea8c6a661e4a8d5c6"
+        "id": "3afe48d04687ab3d72654ac59cf60bc24be2cf6d01d115cfba26fce3423b326f"
       },
       "series": [
         {

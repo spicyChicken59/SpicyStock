@@ -2156,7 +2156,7 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "579b00afcad00752c4a66ed91106f3a700a3e389c19d4f9d036fa4f02aaa36b6",
+    "request_text_sha256": "eee83b19e0df43ffb8a8615c2af7224d5273a5b01eb1a26eb769374c83fd287b",
     "input": {
      "metrics_sha256": "1ac72010c1e945e02533ca79815c882966c2609e161c7d34df8c02f5d7714a79",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
@@ -2164,13 +2164,13 @@
     },
     "attempts": [
      {
-      "request_sha256": "b5b39bd43476d22b4ca0db48d24d300b1283fcdc76639322eb916c6f97ab6571",
+      "request_sha256": "5ebc2af26409cc10d2eea6f543af1bad0a141516c43ecb8c8484edfc2b892b9c",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "b5b39bd43476d22b4ca0db48d24d300b1283fcdc76639322eb916c6f97ab6571",
+      "request_sha256": "5ebc2af26409cc10d2eea6f543af1bad0a141516c43ecb8c8484edfc2b892b9c",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -2220,7 +2220,7 @@
      "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "579b00afcad00752c4a66ed91106f3a700a3e389c19d4f9d036fa4f02aaa36b6"
+     "request_text_sha256": "eee83b19e0df43ffb8a8615c2af7224d5273a5b01eb1a26eb769374c83fd287b"
     },
     "review_selection": {
      "policy": "account_feasible_first_research_v1",
@@ -2231,7 +2231,7 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "fa2fc47df2c8504345cd7aa03dbe4012ecee65144088987693a40bb5fdd16478",
+    "reader_sha256": "979e451962611cd3380ff07b95834776e058790b7c03c58f95da55509c5ceeb1",
     "reader_source": "fallback",
     "final_grade": "A+",
     "version": 1,
@@ -2252,7 +2252,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "d4e8b9febb6dbad9345862b63e53fe066832cee0d8bbf700cd7e0173777c57a4"
+    "id": "0a4445e94c3e18446109749c3c8e56cdd3b240f06dc381e3d367e06a198ea181"
    },
    "series": [
     {
@@ -3453,7 +3453,7 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "655cad1a5a7c2c5d9e63aa58ca6637854a9fef865ba85c9afc48ef7debb45b05",
+    "request_text_sha256": "85ddfd4b0acc7121ea8c921980ded1fd5f48a3c8bc31775133dc208d06d758bf",
     "input": {
      "metrics_sha256": "4beb88212ca7691cc0b98b34c823653b13394b13cba15ffa48e2ab534cd91167",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
@@ -3461,13 +3461,13 @@
     },
     "attempts": [
      {
-      "request_sha256": "f20b6adfa4e941009661075ded654639456f799a457d79107a1e511d51377b1d",
+      "request_sha256": "abf343dc1000bd8a6ff22cb99580dccc946fea88c4acfa0dc0fb1d092cddacec",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "f20b6adfa4e941009661075ded654639456f799a457d79107a1e511d51377b1d",
+      "request_sha256": "abf343dc1000bd8a6ff22cb99580dccc946fea88c4acfa0dc0fb1d092cddacec",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -3517,7 +3517,7 @@
      "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": null,
-     "request_text_sha256": "655cad1a5a7c2c5d9e63aa58ca6637854a9fef865ba85c9afc48ef7debb45b05"
+     "request_text_sha256": "85ddfd4b0acc7121ea8c921980ded1fd5f48a3c8bc31775133dc208d06d758bf"
     },
     "review_selection": {
      "policy": "account_feasible_first_research_v1",
@@ -3528,7 +3528,7 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "1771ce782e9d6c45252f8443a6c10c0e9c353d88f31e287f53519a413a26098e",
+    "reader_sha256": "1a66f8546cd965ad8ff2948d5fab7e091d5683f3b45d1ec8298326dca345a266",
     "reader_source": "fallback",
     "final_grade": "A+",
     "version": 1,
@@ -3549,7 +3549,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "aa110be76a4584fc9bfa93ead381504235385b2b09ff830ffeaf9d200e3b31da"
+    "id": "5d211e51493756b2d511cb40fa5ef801077139b95493a8e1d3f624a8b06e15b1"
    },
    "series": [
     {
@@ -4718,7 +4718,7 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "8a771b4d8befce7e11b98cd9dcde4963a3aa7e2b3e258daf050635a8d766f2a4",
+    "request_text_sha256": "264755071d9434fc26af36c1ab1f08b56beb1310b47fec8ff214216e129e1809",
     "input": {
      "metrics_sha256": "743d3815c73ef97ddc8e3592eb17f805f23d0850762dcaf13807a1e8c8df5d90",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
@@ -4726,13 +4726,13 @@
     },
     "attempts": [
      {
-      "request_sha256": "13e31e20e47e4fdab6a37e99460c569023eb1cc168ac2100e0b377f6b4dc53eb",
+      "request_sha256": "d067fb618de501569582804f64ed7b7767768eebe1f174a2ad7b29ffdedba891",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "13e31e20e47e4fdab6a37e99460c569023eb1cc168ac2100e0b377f6b4dc53eb",
+      "request_sha256": "d067fb618de501569582804f64ed7b7767768eebe1f174a2ad7b29ffdedba891",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -4782,7 +4782,7 @@
      "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "8a771b4d8befce7e11b98cd9dcde4963a3aa7e2b3e258daf050635a8d766f2a4"
+     "request_text_sha256": "264755071d9434fc26af36c1ab1f08b56beb1310b47fec8ff214216e129e1809"
     },
     "review_selection": {
      "policy": "account_feasible_first_research_v1",
@@ -4793,7 +4793,7 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "e7518cd210d85cbf3452de02e7e76a92a6284e2c39a450a506893fb3639d883a",
+    "reader_sha256": "a334f7c0cac52641f4ffff0861d68f37bbfcf9cad72d047c63286b38abf1db0e",
     "reader_source": "fallback",
     "final_grade": "A+",
     "version": 1,
@@ -4814,7 +4814,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "722c36b5a5e66d0dce7dc8920933829716f15f962fa8d1ac3fc45266d3ce3fe4"
+    "id": "e44ea00ac70623fa1812cf76dab37917eeb866effd28e3b4c7403cab83678df4"
    },
    "series": [
     {
@@ -6025,7 +6025,7 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "99241c631726b0214bb7b0c0e412888b16a164ef2230b9cef41af265c3f04522",
+    "request_text_sha256": "addc68906331926d7a0d84c4b8ba62ea2fa3475c3ffb1b557f64daae6ac6043e",
     "input": {
      "metrics_sha256": "2aac16bc43f20aaf6d7d76b2461fbf886ebd7ae52d360437214a4d5f68d1c0cf",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
@@ -6033,13 +6033,13 @@
     },
     "attempts": [
      {
-      "request_sha256": "9fe970dc1484a0e3eee138e1ca711fb6383ee12b243d6eb69e19c6dd00d9f315",
+      "request_sha256": "28f2ccbeb8beca579b39fa8bd8de1b9e8b4f9b2344ddc222ac264b0b752214c5",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "9fe970dc1484a0e3eee138e1ca711fb6383ee12b243d6eb69e19c6dd00d9f315",
+      "request_sha256": "28f2ccbeb8beca579b39fa8bd8de1b9e8b4f9b2344ddc222ac264b0b752214c5",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -6089,7 +6089,7 @@
      "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
      "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "99241c631726b0214bb7b0c0e412888b16a164ef2230b9cef41af265c3f04522"
+     "request_text_sha256": "addc68906331926d7a0d84c4b8ba62ea2fa3475c3ffb1b557f64daae6ac6043e"
     },
     "review_selection": {
      "policy": "account_feasible_first_research_v1",
@@ -6102,7 +6102,7 @@
      "purpose": "research_ranked"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "5f5af1e10a315e351f6cd4dad110916ff6fb6b1b2deaca221bb3476ea61bb22b",
+    "reader_sha256": "9a34a6d1390521b3aac0d85535984fe0df43d98d788cffa9c8a0233d87c9af5b",
     "reader_source": "fallback",
     "final_grade": "A+",
     "version": 1,
@@ -6123,7 +6123,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "1917c932eac1dce586d5579921dd4c36037757724e858ad7866b822db6cb73a5"
+    "id": "751cdee668b7d74c686981c384d391641f42cb2b234f165766757f82a5bf5610"
    },
    "series": [
     {
