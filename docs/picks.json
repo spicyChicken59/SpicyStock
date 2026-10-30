@@ -350,6 +350,106 @@
    },
    "date": "2026-10-28",
    "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "91079e7fbe8fa3dec9d8fd08da2af27fef750efa5d8e556219a1df4d76a21d93",
+    "context_sha256": "23bffad9b461c69f177215f1c7dfae2f6e375e2383cc98bdc7ed1a270db01128",
+    "plan_sha256": "57b8f7694de3039c139887df9f2a7337ad929d6fad87b89b6c5b46e1bc1b657b",
+    "pick_sha256": "29bb97ea8ecadbb2993216f4f1b0ef0c40db9d42f1b7a1464dad2e2d56f48fe1"
+   },
+   "ticker": "PSNL",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": null,
+   "entry_ref": 16.15,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 16.15,
+   "limit": 16.31,
+   "stop": 15.8,
+   "shares": 4,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 17.44,
+    "high": 19.38,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "order_json": {
+    "symbol": "PSNL",
+    "action": "buy",
+    "quantity": 4,
+    "order_type": "stop_limit",
+    "stop_price": 16.15,
+    "limit_price": 16.31,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 4,
+     "order_type": "stop",
+     "stop_price": 15.8,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-10-29",
+   "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "79331842484fd99e71d46341ae7a832743a61aa48e7d6777c48ebbe6c0e04f2a",
+    "context_sha256": "23bffad9b461c69f177215f1c7dfae2f6e375e2383cc98bdc7ed1a270db01128",
+    "plan_sha256": "ed4538d0e80b6354fda5797c5ff82afa785248e988752a3a88aa94e56c97ba83",
+    "pick_sha256": "80bebb94af347d5495fcf8e5a6e47264e7e52984d2f865d612f4eb3c309b1b53"
+   },
+   "ticker": "QGEN",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": 1.1309,
+   "entry_ref": 50.87,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 50.87,
+   "limit": 51.38,
+   "stop": 50.1,
+   "shares": 1,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 54.94,
+    "high": 61.04,
+    "note": "above $40 he measures the move in dollars: $5-25",
+    "dollar_low": 55.87,
+    "dollar_high": 75.87
+   },
+   "order_json": {
+    "symbol": "QGEN",
+    "action": "buy",
+    "quantity": 1,
+    "order_type": "stop_limit",
+    "stop_price": 50.87,
+    "limit_price": 51.38,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 1,
+     "order_type": "stop",
+     "stop_price": 50.1,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-10-29",
+   "regime": "yellow"
   }
  ]
 }
