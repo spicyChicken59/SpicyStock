@@ -13049,6 +13049,8 @@ The tests lens ran its own mutants. Sixteen survivors were holes, each closed in
 
 Five survivors were equivalent. Two skeptics refuted a finding about a PR-body sentence already corrected.
 
+**A test that raced its own child.** CI on `35b8ba4e` (`CLAUDE.md` alone over the green `36a3a3df`) failed `test_morning_host.py::test_deadline_kills_and_reaps_ignoring_parent_and_child` with `int('')`. The forked child writes its pid with `write_text()`, which creates the file before writing; the test waited for the file to exist and then parsed it. Reproduced by a child that touches the file, waits 50 ms and then writes: the old test fails with CI's error, the fixed one passes. Both tests that read a child's pid this way wait for a whole number now (`_written_pid()`, `3ea51fb2`). Test-only; `src/` is unchanged.
+
 **Recorded, not fixed.** The ledger carries no per-frame fact that tells a first session from a hole. A block relabelling a hole as a first session re-derives cleanly, and past 8 gapped frames a name outside the ledger's sample is checked only when every gapped frame is claimed.
 
 **Mutation passes**, each mutant in a detached worktree, judged by the whole test files naming its rule:
