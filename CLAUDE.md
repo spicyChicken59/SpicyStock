@@ -13109,6 +13109,16 @@ The morning, status, endpoint-reader, finder and focus suites pass 2901/2901; co
 
 **CI found the harness the survey missed.** The page job on `c2249a10` timed out in the publication-recovery suite. That suite runs its own server, which served the shell unchanged, so the page read the live endpoint in place of the suite's fixture receipt and waited for a *loaded* state that never came. My survey had looked for page loads, not for servers. The suite's server blanks the endpoint now (139/139). `tests/test_offline_shell.py` holds every tool that runs a server or a DOM to blanking it, or to an exemption that says why it never serves the shell (the chart check serves its own harness page). Without the fix the test names the suite, and an exemption that stops being true fails too.
 
+**The review, worked.** A workflow by execution over `c2249a10`, two lenses (offline checks; words and the live tool), two skeptics a finding. The offline lens ran the full smoke with the Railway host blocked at the network and every request to it logged. The one live read was the publication-recovery suite's (above). With its fix the full smoke passed 17311/17311 and made no request to the host.
+
+Upheld by both skeptics, each fixed:
+- the guard failed a shell that predates the tag, which the helper serves as it is (`historical_journeys --baseline` serves one); it now fails only a shell naming a non-empty endpoint;
+- the reader never logs a finish;
+- `.env.example` and the service-report doc called the endpoint empty;
+- the live tool exited 0 when nothing answered.
+
+Split one each way and fixed anyway: PRODUCT_GOAL's "in place", and the live tool's hash named as the receipt's binding. Refuted and hardened all the same: the live tool printed header values; it prints presence now. Refuted and left: other spellings of the tag (`tests/test_offline_shell.py` holds the shell to the one spelling the helper matches); continuity having no check of its own.
+
 **Lead, not worked.** The service answers 503 both when the store holds no receipt for the current publication and when it cannot be read. The page says *The published morning file could not be read* for either. A 404 for the first would let the page say no check has run yet.
 
 **Not claimable:**

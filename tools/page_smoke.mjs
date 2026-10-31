@@ -4548,9 +4548,10 @@ async function main() {
   const browser = await chromium.launch();
   try {
     // the committed shell names the deployed morning endpoint (docs/index.html);
-    // every suite reads the copy this server serves, which names none
+    // the copy this server serves names none: the tag blanked, or absent from a
+    // shell that predates it (historical_journeys --baseline serves one)
     const shell = await (await fetch(base + '/docs/index.html')).text();
-    check('the served page shell names no live morning endpoint', /<meta name="spicystock-morning-endpoint" content="">/.test(shell),
+    check('the served page shell names no live morning endpoint', !/<meta name="spicystock-morning-endpoint" content="[^"]+"/.test(shell),
       (shell.match(/<meta name="spicystock-morning-endpoint"[^>]*>/) || ['no endpoint tag'])[0]);
     let full = JSON.parse(await readFile(path.join(FIXTURES, 'full.json'), 'utf8'));
     // Two lanes over one browser, each its own contexts. Lane A is every suite
