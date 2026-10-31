@@ -65,6 +65,16 @@ BASENAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.\-]{0,199}\Z")
 #: directory of the XSL stylesheet that renders it: ``xslF345X06/form4.xml``.
 #: Read only for a form the collector never stores or fetches (``_rendered``).
 RENDITION = re.compile(r"xsl[A-Za-z0-9_]{1,64}/(.+)\Z", re.S)
+#: SEC also lists some filings with no primary document at all, or with a
+#: name that carries a doubled dot (``marcus.corp..txt``): every such row its
+#: probe named on 31 October 2026 (run 41149821846) was a Schedule 13G or
+#: 13G/A, one of Marcus Corp's and six of Qiagen's. For a form the collector
+#: never stores or fetches the row is held to every other row rule by this
+#: name in place of its own, which is never used (``_unnamed``).
+UNNAMED = "unnamed"
+#: An index whose observed range reaches its window, partial only because rows
+#: SEC lists failed the row rules: those rows were not read.
+REFUSED_ROWS_REASON = "The index reaches the window, but rows SEC lists that the row rules refuse were not read; their content is not cleared."
 # Merger-proxy and tender-offer forms, with their amendments. Version 2 of the
 # review block (always written, zero and unknown said out loud, every listed
 # filing naming the retained index it was read from) under the key version 1
@@ -213,6 +223,21 @@ def _rendered(form, document):
         return None
     match = RENDITION.fullmatch(document)
     return match.group(1) if match and _basename(match.group(1)) else None
+
+
+def _unnamed(form, document):
+    """True when a row of a form the collector neither stores nor fetches names no usable document.
+
+    An empty document, or one name (no directory) that the basename rule
+    refuses only for its doubled dot. The row is counted under every other row
+    rule; its document is never read, listed, linked or fetched. A current
+    report or an acquisition form must still name one plain document, as
+    before, and every other shape (a directory, a leading dot, another
+    character, a non-string) is still refused.
+    """
+    if not (isinstance(form, str) and isinstance(document, str)) or form in FORMS or form in ACQUISITION_FORMS:
+        return False
+    return document == "" or (bool(BASENAME.fullmatch(document)) and ".." in document)
 
 
 def _publication(raw):
@@ -662,7 +687,7 @@ def _parse_rows(columns, as_of):
     _require(all(not isinstance(values, list) or len(values) == count for values in columns.values()), "submissions extra column lengths")
     out, invalid, dates = [], 0, []
     window = as_of.date() - timedelta(days=LOOKBACK_DAYS)
-    seen = {}
+    valid = []
     for i in range(count):
         item = {"accession": columns["accessionNumber"][i], "form": columns["form"][i],
                 "filing_date": columns["filingDate"][i], "report_date": columns["reportDate"][i] or None,
@@ -671,22 +696,41 @@ def _parse_rows(columns, as_of):
         try:
             item["accepted_at"] = _iso(item["accepted_at"])
             # A row listed under its XSL rendering directory is held to every
-            # other rule by its document's own name; the row keeps SEC's path.
+            # other rule by its document's own name, and an unnamed row of a
+            # form never stored by a fixed name; the row keeps SEC's value.
             rendered = _rendered(item["form"], item["primary_document"])
-            _filing(item if rendered is None else dict(item, primary_document=rendered), as_of)
+            unnamed = rendered is None and _unnamed(item["form"], item["primary_document"])
+            _filing(item if rendered is None and not unnamed else dict(item, primary_document=rendered or UNNAMED), as_of)
             filing_day = _day(item["filing_date"])
             _require(filing_day <= as_of.date(), "future filing date")
         except (ValueError, TypeError):
             invalid += 1
             continue
-        if item["accession"] in seen:
-            _require(item == seen[item["accession"]], "conflicting duplicate accession")
+        valid.append((item, filing_day, unnamed))
+    # An unnamed copy of an accession SEC also lists differently is refused, as
+    # every unnamed row was before it was counted; two copies that both name a
+    # usable document and differ still refuse the index.
+    named = {}
+    for item, _, unnamed in valid:
+        if not unnamed:
+            named.setdefault(item["accession"], item)
+    seen, admitted_unnamed = {}, []
+    for item, filing_day, unnamed in valid:
+        accession = item["accession"]
+        twin = named.get(accession, seen.get(accession))
+        if unnamed and twin is not None and twin != item:
+            invalid += 1
             continue
-        seen[item["accession"]] = item
+        if accession in seen:
+            _require(item == seen[accession], "conflicting duplicate accession")
+            continue
+        seen[accession] = item
         dates.append(item["filing_date"])
+        if unnamed:
+            admitted_unnamed.append(accession)
         if filing_day >= window:
             out.append(item)
-    return {"filings": out, "invalid_count": invalid,
+    return {"filings": out, "invalid_count": invalid, "unnamed": admitted_unnamed,
             "range_start": min(dates) if dates else None, "range_end": max(dates) if dates else None}
 
 
@@ -1205,9 +1249,16 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
                 raw, history_source = fetcher.get(history_url)
                 old = _parse_rows(_decode(raw, MAX_RESPONSE_BYTES), start)
                 fetcher.budget.check_time()
+                # Across the two files too, a differing copy refuses the index
+                # unless one copy is unnamed: then the history copy is refused.
+                unnamed = set(parsed["unnamed"]) | set(old["unnamed"])
+                twins = [filing for filing in old["filings"]
+                         if filing["accession"] in filings and filings[filing["accession"]] != filing]
+                _require(all(filing["accession"] in unnamed for filing in twins), "conflicting history accession")
+                old["invalid_count"] += len(twins)
                 for filing in old["filings"]:
-                    _require(filing["accession"] not in filings or filings[filing["accession"]] == filing, "conflicting history accession")
-                for filing in old["filings"]:
+                    if filing in twins:
+                        continue
                     filings[filing["accession"]] = filing
                     filing_sources.setdefault(filing["accession"], history_source)
                 index["history_files_fetched"] += 1
@@ -1222,7 +1273,9 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
                        http_status=error.http_status if isinstance(error, SourceError) else None, phase="history")
     full_window = index["range_start"] is not None and index["range_start"] <= index["window_start"]
     index["coverage_status"] = "observed_window" if full_window and not row["errors"] else "partial"
-    index["reason"] = None if index["coverage_status"] == "observed_window" else "The full requested index history has not been established; older content is not cleared."
+    refused_only = full_window and all(error["code"] == "metadata_invalid" for error in row["errors"])
+    index["reason"] = (None if index["coverage_status"] == "observed_window" else REFUSED_ROWS_REASON if refused_only
+                       else "The full requested index history has not been established; older content is not cleared.")
     if not full_window:
         _error(row, "history_incomplete")
     ordered = sorted(filings.values(), key=lambda f: (f["accepted_at"], f["accession"]), reverse=True)

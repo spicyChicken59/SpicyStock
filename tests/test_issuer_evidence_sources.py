@@ -482,6 +482,165 @@ def test_the_captured_zim_index_now_gives_an_observed_window_with_its_ownership_
     issuer.validate_bundle(result["receipt_bytes"], result["bundle_bytes"])
 
 
+# SEC also lists some filings with no primary document, or with a name that
+# carries a doubled dot. Every such row the probe named on 31 October
+# 2026 (run 41149821846) was a Schedule 13G or 13G/A: one of MCS's and six of
+# QGEN's, so their collections of 29 and 30 October read partial on
+# metadata_invalid though each index reached past its window.
+UNNAMED_ROWS = [("SC 13G/A", "marcus.corp..txt"), ("SC 13G/A", "qiagen.n.v..txt"),
+                ("SC 13G/A", "qiagen.nv.reg.shs..txt"), ("SC 13G", "qiagen.nv.reg.shs..txt"),
+                ("SC 13G/A", ""), ("SC 13G", "")]
+PLAIN_REQUIRED = sorted(issuer.FORMS | issuer.ACQUISITION_FORMS)
+
+
+@pytest.mark.parametrize("form, document", [
+    *UNNAMED_ROWS, ("10-K", ""), ("4", "x.."), ("SCHEDULE 13G/A", ""),
+    ("SC 13G/A", "x" * 198 + ".."),          # the basename rule's 200-character bound
+])
+def test_an_unnamed_row_of_a_form_never_stored_is_counted(form, document):
+    assert issuer._unnamed(form, document) is True
+    assert not issuer._basename(document) and issuer._rendered(form, document) is None
+
+
+@pytest.mark.parametrize("form, document", [
+    # A current report or an acquisition form is listed, linked and fetched by its document.
+    *[(form, document) for form in PLAIN_REQUIRED for document in ("", "x..htm")],
+    ("SC 13G/A", "marcus.corp.txt"),         # a plain name: the plain rule reads it
+    ("SC 13G/A", ".."), ("SC 13G/A", "."), ("SC 13G/A", "..txt"), ("SC 13G/A", ".x..txt"),
+    ("SC 13G/A", "a/b..txt"), ("SC 13G/A", "a/.."), ("SC 13G/A", "../x"), ("SC 13G/A", "xsl/.."),
+    ("SC 13G/A", "%2e%2e"), ("SC 13G/A", "a\\..\\b.txt"), ("SC 13G/A", "x..\n"), ("SC 13G/A", " "),
+    ("SC 13G/A", "a b..txt"), ("SC 13G/A", "x" * 199 + ".."), ("SC 13G/A", None), ("SC 13G/A", 0),
+    (None, ""), (["SC 13G/A"], ""),
+])
+def test_no_other_row_is_counted_without_a_plain_document(form, document):
+    assert issuer._unnamed(form, document) is False
+
+
+@pytest.mark.parametrize("form", PLAIN_REQUIRED)
+@pytest.mark.parametrize("document", ["", "x..htm", "a/b.htm"])
+def test_a_stored_filing_must_still_name_one_plain_document(form, document):
+    filing = {"accession": "0001654126-26-000001", "form": form, "filing_date": "2026-10-05", "report_date": None,
+              "accepted_at": "2026-10-05T16:00:00Z", "primary_document": document, "items": ""}
+    with pytest.raises(ValueError, match="issuer filing fields"):
+        issuer._filing(filing, NOW)
+    parsed = issuer._parse_rows(_index([_row(1, form, document)]), NOW)
+    assert parsed["invalid_count"] == 1 and parsed["filings"] == []
+
+
+def test_an_unnamed_row_is_held_to_every_other_row_rule_and_keeps_secs_value():
+    good = [_row(1, "SC 13G/A", "marcus.corp..txt"), _row(2, "SC 13G", "")]
+    bad = [dict(good[0], accessionNumber="bad"), dict(good[0], filingDate="2026-10-5"), dict(good[1], items=None),
+           dict(good[1], acceptanceDateTime="2026-10-11T06:20:00Z"), dict(good[1], form=""),
+           dict(good[0], form="8-K"), dict(good[1], form="SC 14D9"), dict(good[0], primaryDocument="a/b..txt")]
+    parsed = issuer._parse_rows(_index(good + bad), NOW)
+    assert parsed["invalid_count"] == len(bad)
+    # The row keeps SEC's value; only the check reads a fixed name in its place.
+    assert [(f["form"], f["primary_document"]) for f in parsed["filings"]] == [(form, doc) for form, doc in
+                                                                               (("SC 13G/A", "marcus.corp..txt"), ("SC 13G", ""))]
+
+
+def test_an_unnamed_row_before_the_window_counts_toward_the_range_only():
+    rows = [_row(1, "6-K", "a.htm"), _row(2, "SC 13G/A", "qiagen.n.v..txt", day="2003-02-10"),
+            _row(3, "SC 13G", "", day="2008-02-11")]
+    parsed = issuer._parse_rows(_index(rows), NOW)
+    assert parsed["invalid_count"] == 0 and parsed["range_start"] == "2003-02-10"
+    assert [f["form"] for f in parsed["filings"]] == ["6-K"]
+
+
+def test_the_captured_zim_index_with_unnamed_ownership_rows_still_gives_an_observed_window(producer, canonical):
+    data = zim_submissions()
+    recent = data["filings"]["recent"]
+    before = recent["form"].index("SC 13G")              # 14 November 2024, before the window
+    inside = recent["form"].index("SCHEDULE 13G/A")       # 13 November 2025, inside it
+    assert recent["filingDate"][before] < "2025-10-10" <= recent["filingDate"][inside]
+    recent["primaryDocument"][before], recent["primaryDocument"][inside] = "zim..txt", ""
+    fetch = producer.transport(edits={"https://data.sec.gov/submissions/CIK0001654126.json": raw_json(data)})
+    result = producer.collect(canonical, fetch=fetch)
+    row = next(row for row in result["bundle"]["issuers"] if row["ticker"] == "ZIM")
+    index = row["index"]
+    assert index["coverage_status"] == "observed_window" and index["reason"] is None and index["metadata_count"] == 99
+    assert all(error["code"] != "metadata_invalid" for error in row["errors"])
+    # An unnamed row is counted, never listed, linked or fetched.
+    assert "zim..txt" not in result["bundle_bytes"].decode() and not any("zim..txt" in url for url in fetch.calls)
+    listed = index["listed_filings"] + [entry["filing"] for entry in index["acquisition_review"]["filings"]]
+    assert all(issuer._basename(filing["primary_document"]) for filing in listed)
+    issuer.validate_bundle(result["receipt_bytes"], result["bundle_bytes"])
+
+
+@pytest.mark.parametrize("document", ["", "zk..htm"])
+def test_a_current_report_without_a_plain_document_is_still_refused_and_never_fetched(producer, canonical, document):
+    data = zim_submissions()
+    recent = data["filings"]["recent"]
+    first = recent["form"].index("6-K")
+    original = recent["primaryDocument"][first]
+    recent["primaryDocument"][first] = document
+    fetch = producer.transport(edits={"https://data.sec.gov/submissions/CIK0001654126.json": raw_json(data)})
+    result = producer.collect(canonical, fetch=fetch)
+    row = next(row for row in result["bundle"]["issuers"] if row["ticker"] == "ZIM")
+    assert {"code": "metadata_invalid", "source_url": "https://data.sec.gov/submissions/CIK0001654126.json"} in row["errors"]
+    assert row["index"]["coverage_status"] == "partial"
+    accession = recent["accessionNumber"][first]
+    assert accession not in result["bundle_bytes"].decode()
+    assert not any(accession.replace("-", "") in url for url in fetch.calls) and original != document
+    issuer.validate_bundle(result["receipt_bytes"], result["bundle_bytes"])
+
+
+@pytest.mark.parametrize("recent_document, history_document", [("x.txt", ""), ("", "x.txt"), ("", "x..txt")])
+def test_an_unnamed_copy_across_the_index_and_its_history_refuses_the_history_copy_only(
+        producer, canonical, recent_document, history_document):
+    data = producer.aapl_submissions()
+    original = deepcopy(data["filings"]["recent"])
+    twin = {"accessionNumber": "0000320193-26-009100", "form": "SC 13G", "filingDate": "2026-10-08",
+            "reportDate": "2026-10-08", "acceptanceDateTime": "2026-10-08T16:00:00Z", "items": ""}
+    data["filings"]["recent"] = {key: values[:1] + [twin.get(key, recent_document)] for key, values in original.items()}
+    data["filings"]["files"] = [{"name": "CIK0000320193-submissions-001.json", "filingCount": 2,
+                                  "filingFrom": "2025-10-01", "filingTo": "2026-10-08"}]
+    historical = {key: [twin.get(key, history_document), values[-1]] for key, values in original.items()}
+    archive_url = "https://data.sec.gov/submissions/CIK0000320193-submissions-001.json"
+    fetch = producer.transport(edits={producer.AAPL_SUBMISSIONS: raw_json(data), archive_url: raw_json(historical)})
+    result = producer.collect(canonical, fetch=fetch)
+    row = next(row for row in result["bundle"]["issuers"] if row["ticker"] == "AAPL")
+    index = row["index"]
+    # The history's other rows are read, so the range reaches the window; the
+    # one refused copy keeps the index partial, and the reason says why.
+    assert index["history_files_fetched"] == 1 and index["range_start"] == "2025-10-01"
+    assert row["errors"] == [{"code": "metadata_invalid", "source_url": archive_url}]
+    assert index["coverage_status"] == "partial" and index["reason"] == issuer.REFUSED_ROWS_REASON
+    assert index["metadata_count"] == 2
+    issuer.validate_bundle(result["receipt_bytes"], result["bundle_bytes"])
+
+
+def test_two_named_copies_across_the_index_and_its_history_still_refuse_the_history_file(producer, canonical):
+    data = producer.aapl_submissions()
+    original = deepcopy(data["filings"]["recent"])
+    twin = {"accessionNumber": "0000320193-26-009100", "form": "SC 13G", "filingDate": "2026-10-08",
+            "reportDate": "2026-10-08", "acceptanceDateTime": "2026-10-08T16:00:00Z", "items": ""}
+    data["filings"]["recent"] = {key: values[:1] + [twin.get(key, "a.txt")] for key, values in original.items()}
+    data["filings"]["files"] = [{"name": "CIK0000320193-submissions-001.json", "filingCount": 2,
+                                  "filingFrom": "2025-10-01", "filingTo": "2026-10-08"}]
+    historical = {key: [twin.get(key, "b.txt"), values[-1]] for key, values in original.items()}
+    archive_url = "https://data.sec.gov/submissions/CIK0000320193-submissions-001.json"
+    fetch = producer.transport(edits={producer.AAPL_SUBMISSIONS: raw_json(data), archive_url: raw_json(historical)})
+    row = next(row for row in producer.collect(canonical, fetch=fetch)["bundle"]["issuers"] if row["ticker"] == "AAPL")
+    assert row["index"]["history_files_fetched"] == 0 and row["index"]["range_start"] == "2026-10-08"
+    assert {"code": "metadata_invalid", "source_url": archive_url} in row["errors"]
+    assert row["index"]["reason"] != issuer.REFUSED_ROWS_REASON
+
+
+@pytest.mark.parametrize("copies, refused", [
+    ([("SC 13G/A", "marcus.corp.txt"), ("SC 13G/A", "marcus.corp..txt")], 1),
+    ([("SC 13G/A", ""), ("SC 13G/A", "marcus.corp.txt")], 1),
+    ([("SC 13G", ""), ("SC 13G", "x..txt")], 1),
+    ([("SC 13G", ""), ("SC 13G", "")], 0),
+])
+def test_an_unnamed_copy_of_an_accession_listed_differently_in_one_file_is_refused_not_the_index(copies, refused):
+    rows = [_row(1, "6-K", "a.htm")] + [_row(2, form, document) for form, document in copies]
+    parsed = issuer._parse_rows(_index(rows), NOW)
+    assert parsed["invalid_count"] == refused
+    assert [f["primary_document"] for f in parsed["filings"]] == ["a.htm", next(
+        (d for f, d in copies if d and ".." not in d), copies[0][1])]
+
+
 def test_the_job_log_names_each_issuers_index_coverage_and_nothing_of_its_sources():
     bundle = json.loads((FIXTURES / "collected-bundle.json").read_bytes())
     lines = issuer.issuer_lines(bundle)

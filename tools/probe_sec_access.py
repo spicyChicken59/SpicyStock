@@ -49,6 +49,9 @@ LIMITS = ["not_a_candidate_or_event_check", "not_news_or_earnings_coverage", "ne
 #: The collector's row rules in the order ``issuer_evidence._parse_rows`` asks them.
 ROW_RULES = ("accepted_at", "accession", "form", "primary_document", "items", "filing_date",
              "report_date", "future_acceptance", "future_filing_date")
+#: An unnamed row of a form the collector never stores, refused as a differing
+#: copy of an accession SEC also lists (``issuer_evidence._parse_rows``).
+TWIN_RULE = "unnamed_twin"
 
 
 def user_agent_shape(value=None):
@@ -86,7 +89,8 @@ def row_problem(columns, i, as_of):
     if not issuer_evidence._text(form, 32):
         return "form", form
     document = columns["primaryDocument"][i]
-    if not (issuer_evidence._basename(document) or issuer_evidence._rendered(form, document)):
+    if not (issuer_evidence._basename(document) or issuer_evidence._rendered(form, document)
+            or issuer_evidence._unnamed(form, document)):
         return "primary_document", document
     items = columns["items"][i]
     if not issuer_evidence._text(items, 256, True):
@@ -109,21 +113,61 @@ def row_problem(columns, i, as_of):
     return None
 
 
+def _item(columns, i):
+    """Row ``i`` as the collector's ``_parse_rows`` builds it, for a row its rules admit."""
+    return {"accession": columns["accessionNumber"][i], "form": columns["form"][i],
+            "filing_date": columns["filingDate"][i], "report_date": columns["reportDate"][i] or None,
+            "accepted_at": issuer_evidence._iso(columns["acceptanceDateTime"][i]),
+            "primary_document": columns["primaryDocument"][i], "items": columns["items"][i]}
+
+
+def _unnamed(item):
+    form, document = item["form"], item["primary_document"]
+    return issuer_evidence._rendered(form, document) is None and issuer_evidence._unnamed(form, document)
+
+
+def unnamed_twins(columns, admitted):
+    """The admitted rows the collector refuses as an unnamed copy of an accession it lists differently.
+
+    Its own walk of ``_parse_rows``' rule, written apart from it: an unnamed
+    row whose accession SEC lists again differently (a copy that names a usable
+    document first, else an earlier copy) is refused.
+    """
+    items = {i: _item(columns, i) for i in admitted}
+    named = {}
+    for i in admitted:
+        if not _unnamed(items[i]):
+            named.setdefault(items[i]["accession"], items[i])
+    seen, twins = {}, []
+    for i in admitted:
+        item = items[i]
+        twin = named.get(item["accession"], seen.get(item["accession"]))
+        if _unnamed(item) and twin is not None and twin != item:
+            twins.append(i)
+            continue
+        seen.setdefault(item["accession"], item)
+    return twins
+
+
 def rejected_rows(raw, as_of):
     """Every recent row the collector's rules refuse, counted by rule and by form."""
     columns = json.loads(raw)["filings"]["recent"]
     as_of = issuer_evidence._instant(as_of)
-    by_rule, by_form, rows = {}, {}, []
+    problems, admitted = [], []
     for i in range(len(columns["accessionNumber"])):
         problem = row_problem(columns, i, as_of)
         if problem is None:
-            continue
-        rule, value = problem
+            admitted.append(i)
+        else:
+            problems.append((i, *problem))
+    problems += [(i, TWIN_RULE, columns["primaryDocument"][i]) for i in unnamed_twins(columns, admitted)]
+    by_rule, by_form, rows = {}, {}, []
+    for i, rule, value in problems:
         form = shown(columns["form"][i])
         by_rule[rule] = by_rule.get(rule, 0) + 1
         by_form[form] = by_form.get(form, 0) + 1
         if len(rows) < MAX_REJECTED_ROWS:
-            rows.append({"form": form, "rule": rule, "value": shown(value)})
+            rows.append({"form": form, "rule": rule, "value": shown(value), "filing_date": shown(columns["filingDate"][i])})
     return {"count": sum(by_rule.values()), "by_rule": dict(sorted(by_rule.items())),
             "by_form": dict(sorted(by_form.items())), "rows": rows}
 

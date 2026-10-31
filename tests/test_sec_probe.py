@@ -215,7 +215,8 @@ REFUSED = [
     ("form", good_row(3, form="X" * 33), "X" * 33),
     # A current report is listed and fetched by its document: never under a rendering directory.
     ("primary_document", good_row(4, primaryDocument="xslF345X05/wf-form4.xml"), "xslF345X05/wf-form4.xml"),
-    ("primary_document", good_row(5, form="SCHEDULE 13G/A", primaryDocument=""), ""),
+    # An acquisition form is listed and linked by its document: never without one.
+    ("primary_document", good_row(5, form="SC 14D9", primaryDocument=""), ""),
     ("items", good_row(6, items=None), "<null>"),
     ("filing_date", good_row(7, filingDate="2026-9-30"), "2026-9-30"),
     ("report_date", good_row(8, reportDate="2026-02-30"), "2026-02-30"),
@@ -236,8 +237,10 @@ def test_each_refused_row_is_named_by_the_rule_the_collector_refused_it_under():
     assert rejected["count"] == len(REFUSED)
     assert [(r["rule"], r["value"]) for r in rejected["rows"]] == [(rule, value) for rule, _, value in REFUSED]
     assert [r["form"] for r in rejected["rows"]] == [row["form"] for _, row, _ in REFUSED]
+    # Each refused row's filing date, in its own characters, says whether it falls in the window.
+    assert [r["filing_date"] for r in rejected["rows"]] == [row["filingDate"] for _, row, _ in REFUSED]
     assert rejected["by_rule"] == {rule: sum(1 for r, _, _ in REFUSED if r == rule) for rule, _, _ in REFUSED}
-    assert rejected["by_form"] == {"8-K": 8, "SCHEDULE 13G/A": 1, "X" * 33: 1}
+    assert rejected["by_form"] == {"8-K": 8, "SC 14D9": 1, "X" * 33: 1}
     assert list(rejected["by_rule"]) == sorted(rejected["by_rule"])
     assert {rule for rule, _, _ in REFUSED} == set(probe.ROW_RULES)
 
@@ -246,7 +249,8 @@ def test_the_rules_are_asked_in_the_collectors_order():
     # A row failing two rules is named by the first the collector asks.
     both = good_row(1, accessionNumber="bad", primaryDocument="a/b.xml")
     result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: rows_submissions([good_row(0), both])})
-    assert one(result)["submissions"]["rejected_rows"]["rows"] == [{"form": "8-K", "rule": "accession", "value": "bad"}]
+    assert one(result)["submissions"]["rejected_rows"]["rows"] == [{"form": "8-K", "rule": "accession", "value": "bad",
+                                                                     "filing_date": both["filingDate"]}]
 
 
 def test_a_refused_value_is_printed_in_its_own_characters_only_and_bounded():
@@ -309,6 +313,48 @@ def test_a_form_the_collector_never_stores_is_read_under_its_rendering_directory
     result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: rows_submissions(rows)})
     submissions = one(result)["submissions"]
     assert submissions["invalid_count"] == 0 and submissions["filings_in_window"] == 3
+    assert submissions["rejected_rows"] == {"count": 0, "by_rule": {}, "by_form": {}, "rows": []}
+
+
+# One accession SEC lists twice, once without a usable document: the unnamed
+# copy is refused as it was before such a row was counted, and the index is
+# read; two copies that both name a usable document and differ still refuse it.
+TWINS = [
+    ("an unnamed copy after a named one", [("SC 13G/A", "marcus.corp.txt"), ("SC 13G/A", "marcus.corp..txt")], 1),
+    ("an unnamed copy before a named one", [("SC 13G/A", ""), ("SC 13G/A", "marcus.corp.txt")], 1),
+    ("two differing unnamed copies", [("SC 13G", ""), ("SC 13G", "qiagen.n.v..txt")], 1),
+    ("two equal unnamed copies", [("SC 13G", ""), ("SC 13G", "")], 0),
+]
+
+
+@pytest.mark.parametrize("name, copies, refused", TWINS, ids=[name for name, _, _ in TWINS])
+def test_an_unnamed_copy_of_a_listed_accession_is_refused_by_the_collector_and_named_by_the_probe(name, copies, refused):
+    rows = [good_row(0)] + [good_row(1, form=form, primaryDocument=document, items="") for form, document in copies]
+    raw = rows_submissions(rows)
+    parsed = issuer_evidence.parse_submissions(raw, CIK, "AAPL", AT)
+    assert parsed["invalid_count"] == refused and len(parsed["filings"]) == 2
+    result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: raw})
+    submissions = one(result)["submissions"]
+    assert submissions["status"] == "parsed" and submissions["invalid_count"] == refused
+    assert submissions["rejected_rows"]["by_rule"] == ({probe.TWIN_RULE: 1} if refused else {})
+
+
+def test_two_differing_copies_that_both_name_a_document_still_refuse_the_index():
+    rows = [good_row(0), good_row(1, form="SC 13G", primaryDocument="a.txt"), good_row(1, form="SC 13G", primaryDocument="b.txt")]
+    with pytest.raises(issuer_evidence.SourceError):
+        issuer_evidence.parse_submissions(rows_submissions(rows), CIK, "AAPL", AT)
+
+
+def test_a_form_the_collector_never_stores_is_counted_without_a_usable_document():
+    # The shapes the probe named for MCS and QGEN on 31 October 2026 (run 41149821846).
+    shapes = [("SC 13G/A", "marcus.corp..txt"), ("SC 13G/A", "qiagen.n.v..txt"), ("SC 13G/A", "qiagen.nv.reg.shs..txt"),
+              ("SC 13G", "qiagen.nv.reg.shs..txt"), ("SC 13G/A", ""), ("SC 13G", "")]
+    rows = [good_row(0)] + [good_row(n, form=form, primaryDocument=document, items="")
+                            for n, (form, document) in enumerate(shapes, start=1)]
+    result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: rows_submissions(rows)})
+    submissions = one(result)["submissions"]
+    assert submissions["status"] == "parsed"
+    assert submissions["invalid_count"] == 0 and submissions["filings_in_window"] == len(rows)
     assert submissions["rejected_rows"] == {"count": 0, "by_rule": {}, "by_form": {}, "rows": []}
 
 

@@ -127,6 +127,17 @@ renders it (`xslF345X06/form4.xml`). A row of a form the collector never stores
 or fetches is read with that path, held to every other row rule by its
 document's own name, and counts toward `metadata_count` and the observed range;
 it is never listed, linked or fetched, so no bundle carries such a path. A
+row of such a form that names no document, or one name (no directory) the
+basename rule refuses only for a doubled dot (`marcus.corp..txt`), is held to
+every other row rule by a fixed name in place of its own and counted the same
+way; its document is never read, listed, linked or fetched. The probe named
+seven such rows on 31 October 2026 (run 41149821846), one of MCS's and six of
+QGEN's, every one a Schedule 13G or 13G/A. An unnamed copy of an accession SEC
+lists again differently (in the same file, or across the recent index and its
+history file) is refused and counted as an invalid row, never refusing the
+index; two differing copies that both name a usable document still refuse it.
+An index partial only on `metadata_invalid` whose range reaches its window
+carries `REFUSED_ROWS_REASON` as its `reason`. A
 current report or acquisition form must still name one plain document. Until
 25 October 2026 every rendered row was refused as invalid, so nearly every
 issuer's index read `partial` on `metadata_invalid`: 78 of the 240 rows of
