@@ -72,7 +72,7 @@ def test_both_answers_name_the_issuer_and_carry_no_body_or_address():
     assert one(result)["submissions"] == {"status": "parsed", "filings_in_window": 3, "history_files_advertised": 0,
                                           "invalid_count": 0,
                                           "rejected_rows": {"count": 0, "by_rule": {}, "by_form": {}, "rows": []}}
-    assert result["tickers"] == ["AAPL"] and result["schema"] == "spicystock-sec-probe-v2"
+    assert result["tickers"] == ["AAPL"] and result["schema"] == "spicystock-sec-probe-v3"
     assert result["sentence"] == "SEC answered all 2 requests from this runner."
     assert result["user_agent"] == {"names_sender": True, "names_contact": True}
     text = json.dumps(result)
@@ -322,7 +322,7 @@ def test_a_form_the_collector_never_stores_is_read_under_its_rendering_directory
 TWINS = [
     ("an unnamed copy after a named one", [("SC 13G/A", "marcus.corp.txt"), ("SC 13G/A", "marcus.corp..txt")], 1),
     ("an unnamed copy before a named one", [("SC 13G/A", ""), ("SC 13G/A", "marcus.corp.txt")], 1),
-    ("two differing unnamed copies", [("SC 13G", ""), ("SC 13G", "qiagen.n.v..txt")], 1),
+    ("two differing unnamed copies", [("SC 13G", ""), ("SC 13G", "qiagen.n.v..txt")], 2),
     ("two equal unnamed copies", [("SC 13G", ""), ("SC 13G", "")], 0),
 ]
 
@@ -332,11 +332,15 @@ def test_an_unnamed_copy_of_a_listed_accession_is_refused_by_the_collector_and_n
     rows = [good_row(0)] + [good_row(1, form=form, primaryDocument=document, items="") for form, document in copies]
     raw = rows_submissions(rows)
     parsed = issuer_evidence.parse_submissions(raw, CIK, "AAPL", AT)
-    assert parsed["invalid_count"] == refused and len(parsed["filings"]) == 2
+    assert parsed["invalid_count"] == refused and len(parsed["filings"]) == len(copies) + 1 - refused - (refused == 0)
     result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: raw})
     submissions = one(result)["submissions"]
     assert submissions["status"] == "parsed" and submissions["invalid_count"] == refused
-    assert submissions["rejected_rows"]["by_rule"] == ({probe.TWIN_RULE: 1} if refused else {})
+    rejected = submissions["rejected_rows"]
+    assert rejected["by_rule"] == ({probe.TWIN_RULE: refused} if refused else {})
+    # Each refused copy is printed with its own document and filing date.
+    unnamed = [(d, rows[n + 1]["filingDate"]) for n, (_, d) in enumerate(copies) if not issuer_evidence._basename(d)]
+    assert [(r["value"], r["filing_date"]) for r in rejected["rows"]] == (unnamed if refused else [])
 
 
 def test_two_differing_copies_that_both_name_a_document_still_refuse_the_index():

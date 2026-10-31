@@ -707,18 +707,23 @@ def _parse_rows(columns, as_of):
             invalid += 1
             continue
         valid.append((item, filing_day, unnamed))
-    # An unnamed copy of an accession SEC also lists differently is refused, as
-    # every unnamed row was before it was counted; two copies that both name a
-    # usable document and differ still refuse the index.
-    named = {}
+    # An unnamed copy of an accession SEC also lists differently -- beside a
+    # copy that names a usable document, or beside another unnamed copy that
+    # differs -- is refused, as every unnamed row was before it was counted;
+    # two copies that both name a usable document and differ still refuse the
+    # index. Equal copies are one row.
+    named, variants = set(), {}
     for item, _, unnamed in valid:
-        if not unnamed:
-            named.setdefault(item["accession"], item)
+        if unnamed:
+            copies = variants.setdefault(item["accession"], [])
+            if item not in copies:
+                copies.append(item)
+        else:
+            named.add(item["accession"])
     seen, admitted_unnamed = {}, []
     for item, filing_day, unnamed in valid:
         accession = item["accession"]
-        twin = named.get(accession, seen.get(accession))
-        if unnamed and twin is not None and twin != item:
+        if unnamed and (accession in named or len(variants[accession]) > 1):
             invalid += 1
             continue
         if accession in seen:
@@ -730,7 +735,9 @@ def _parse_rows(columns, as_of):
             admitted_unnamed.append(accession)
         if filing_day >= window:
             out.append(item)
-    return {"filings": out, "invalid_count": invalid, "unnamed": admitted_unnamed,
+    # ``rows`` is every row read, in the window or before it, for the
+    # comparison with a history file's copies.
+    return {"filings": out, "invalid_count": invalid, "unnamed": admitted_unnamed, "rows": seen,
             "range_start": min(dates) if dates else None, "range_end": max(dates) if dates else None}
 
 
@@ -1236,6 +1243,8 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
     index.update(range_start=parsed["range_start"], range_end=parsed["range_end"], history_files_advertised=len(parsed["history"]))
     filings = {filing["accession"]: filing for filing in parsed["filings"]}
     filing_sources = {accession: source for accession in filings}
+    rows, unnamed = dict(parsed["rows"]), set(parsed["unnamed"])
+    dated = [(accession, item["filing_date"]) for accession, item in rows.items()]
     if parsed["invalid_count"]:
         _error(row, "metadata_invalid", url)
     history = [h for h in parsed["history"] if _day(h["filing_to"]) >= _day(index["window_start"])
@@ -1249,23 +1258,42 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
                 raw, history_source = fetcher.get(history_url)
                 old = _parse_rows(_decode(raw, MAX_RESPONSE_BYTES), start)
                 fetcher.budget.check_time()
-                # Across the two files too, a differing copy refuses the index
-                # unless one copy is unnamed: then the history copy is refused.
-                unnamed = set(parsed["unnamed"]) | set(old["unnamed"])
-                twins = [filing for filing in old["filings"]
-                         if filing["accession"] in filings and filings[filing["accession"]] != filing]
-                _require(all(filing["accession"] in unnamed for filing in twins), "conflicting history accession")
-                old["invalid_count"] += len(twins)
+                # Across the files the rule is the one inside a file: of two
+                # differing copies of an accession an unnamed copy is refused
+                # wherever it is read (both, when both are unnamed) and the named
+                # copy kept; two differing named copies in the window refuse this
+                # file, as before. A refused copy's date is not in the range.
+                old_unnamed = set(old["unnamed"])
+                twins = {accession for accession, item in old["rows"].items()
+                         if accession in rows and rows[accession] != item}
+                in_window = {filing["accession"] for filing in old["filings"]}
+                _require(all(accession in unnamed | old_unnamed for accession in twins
+                             if accession in filings and accession in in_window), "conflicting history accession")
+                refused = twins & old_unnamed
+                displaced = twins & unnamed
+                old["invalid_count"] += len(refused)
+                for accession in displaced:
+                    filings.pop(accession, None)
+                    filing_sources.pop(accession, None)
+                    del rows[accession]
+                unnamed -= displaced
+                if displaced and {"code": "metadata_invalid", "source_url": url} not in row["errors"]:
+                    _error(row, "metadata_invalid", url)
                 for filing in old["filings"]:
-                    if filing in twins:
-                        continue
-                    filings[filing["accession"]] = filing
-                    filing_sources.setdefault(filing["accession"], history_source)
+                    if filing["accession"] not in refused:
+                        filings[filing["accession"]] = filing
+                        filing_sources.setdefault(filing["accession"], history_source)
+                for accession, item in old["rows"].items():
+                    if accession not in refused:
+                        rows.setdefault(accession, item)
+                unnamed |= old_unnamed - refused
+                dated = [(accession, day) for accession, day in dated if accession not in displaced]
+                dated += [(accession, item["filing_date"]) for accession, item in old["rows"].items() if accession not in refused]
                 index["history_files_fetched"] += 1
                 index["history_sources"].append(history_source)
-                if old["range_start"] is not None:
-                    index["range_start"] = min(filter(None, (index["range_start"], old["range_start"])))
-                    index["range_end"] = max(filter(None, (index["range_end"], old["range_end"])))
+                if dated:
+                    index["range_start"] = min(day for _, day in dated)
+                    index["range_end"] = max(day for _, day in dated)
                 if old["invalid_count"]:
                     _error(row, "metadata_invalid", history_url)
             except (SourceError, ValueError, KeyError, TypeError) as error:

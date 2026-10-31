@@ -132,12 +132,16 @@ basename rule refuses only for a doubled dot (`marcus.corp..txt`), is held to
 every other row rule by a fixed name in place of its own and counted the same
 way; its document is never read, listed, linked or fetched. The probe named
 seven such rows on 31 October 2026 (run 41149821846), one of MCS's and six of
-QGEN's, every one a Schedule 13G or 13G/A. An unnamed copy of an accession SEC
-lists again differently (in the same file, or across the recent index and its
-history file) is refused and counted as an invalid row, never refusing the
-index; two differing copies that both name a usable document still refuse it.
-An index partial only on `metadata_invalid` whose range reaches its window
-carries `REFUSED_ROWS_REASON` as its `reason`. A
+QGEN's, every one a Schedule 13G or 13G/A. Where SEC lists one accession more
+than once and the copies differ, an unnamed copy is refused wherever it is read
+(the recent index or its history file) and the named copy kept, and two
+differing unnamed copies are both refused; a refused copy counts as one invalid
+row of its file and its date is not in the range, and it never refuses an
+index or drops a history file. Two differing copies that both name a usable
+document still refuse the recent index when both are in it, and the history
+file when one is in each and both fall in the window. An index partial only
+on `metadata_invalid` whose
+range reaches its window carries `REFUSED_ROWS_REASON` as its `reason`. A
 current report or acquisition form must still name one plain document. Until
 25 October 2026 every rendered row was refused as invalid, so nearly every
 issuer's index read `partial` on `metadata_invalid`: 78 of the 240 rows of

@@ -1524,24 +1524,34 @@ both job logs print AAPL's submissions as SHA-256 `5891cf87…` (163,917 bytes)
 and ZIM's as `7d822c20…` (39,210 bytes). The first
 production collections under it (27 to 30 October) read ZIM, EXEL, OGN and
 PSNL `observed_window`; MCS (29 October) and QGEN (30 October) still read
-`partial` on `metadata_invalid`. The probe named why (run 41149821846, 31
-October): one row of MCS's index and six of QGEN's failed the document rule,
-every one a Schedule 13G or 13G/A, and each either named no document at all or
-a name with a doubled dot (`marcus.corp..txt`, `qiagen.n.v..txt`,
-`qiagen.nv.reg.shs..txt`). The row rule counts such a row now for a form the
+`partial` on `metadata_invalid`. The probe (run 41149821846, 31 October)
+named the refused rows in the indexes SEC served then: one of MCS's and six of
+QGEN's failed the document rule, every one a Schedule 13G or 13G/A, and each
+named no document at all or a name with a doubled dot (`marcus.corp..txt`,
+`qiagen.n.v..txt`, `qiagen.nv.reg.shs..txt`). QGEN's index was byte for byte
+the one its 30 October collection read (`98c75f54…`); MCS's had changed since
+29 October (`54e41963…` then, `e3505edc…` on the probe), so for MCS the cause
+is inferred, not observed. The row rule counts such a row now for a form the
 collector never stores or fetches (`issuer_evidence._unnamed()`), held to every
 other row rule with its document never read, listed, linked or fetched; a
 current report or acquisition form must still name one plain document, and a
 document with a directory, a leading dot or any other character is still
-refused. An unnamed copy of an accession SEC also lists differently, in the
-same file or across the index and its history file, is refused as before
-rather than refusing the index; two copies that both name a usable document
-and differ still refuse it. An index whose range reaches the window and is
-partial only on `metadata_invalid` says so: `issuer_evidence.REFUSED_ROWS_REASON`,
-not the missing-history sentence. Whether MCS and QGEN read `observed_window`
-is for the next collection with them as candidates to show; it changes an
-index's coverage, not an issuer's status, and both left current reports
-unselected (4 and 9) when last collected.
+refused. Where SEC lists one accession more than once and the copies differ,
+an unnamed copy is refused wherever it is read -- in the recent index or its
+history file -- and the named copy kept; two differing unnamed copies are both
+refused. A refused copy counts as one invalid row of its file, and its date is
+not in the range; it never refuses an index or drops a history file. Two
+differing copies that both name a usable document still refuse the recent
+index when both are in it, and the history file when one is in each and both
+fall in the window, as before. An index whose range reaches the window and is
+partial only on
+`metadata_invalid` says so: `issuer_evidence.REFUSED_ROWS_REASON`, not the
+missing-history sentence. A branch probe of the change (run 41158793431)
+parsed both indexes with no row refused and the same rows in the window (96
+and 24), so every row refused before was older than the window. Whether MCS
+and QGEN read `observed_window` is for the next collection with them as
+candidates to show; it changes an index's coverage, not an issuer's status,
+and both left current reports unselected (4 and 9) when last collected.
 
 `issuer-evidence.yml` follows an actual committed evening or morning publication;
 the guard identifies the parent by its exact workflow file path, then checks

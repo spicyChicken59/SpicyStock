@@ -485,8 +485,9 @@ def test_the_captured_zim_index_now_gives_an_observed_window_with_its_ownership_
 # SEC also lists some filings with no primary document, or with a name that
 # carries a doubled dot. Every such row the probe named on 31 October
 # 2026 (run 41149821846) was a Schedule 13G or 13G/A: one of MCS's and six of
-# QGEN's, so their collections of 29 and 30 October read partial on
-# metadata_invalid though each index reached past its window.
+# QGEN's. QGEN's index was the one its 30 October collection read, partial on
+# metadata_invalid though it reached past its window; MCS's had changed since
+# its 29 October collection, so for MCS that cause is inferred.
 UNNAMED_ROWS = [("SC 13G/A", "marcus.corp..txt"), ("SC 13G/A", "qiagen.n.v..txt"),
                 ("SC 13G/A", "qiagen.nv.reg.shs..txt"), ("SC 13G", "qiagen.nv.reg.shs..txt"),
                 ("SC 13G/A", ""), ("SC 13G", "")]
@@ -585,29 +586,79 @@ def test_a_current_report_without_a_plain_document_is_still_refused_and_never_fe
     issuer.validate_bundle(result["receipt_bytes"], result["bundle_bytes"])
 
 
-@pytest.mark.parametrize("recent_document, history_document", [("x.txt", ""), ("", "x.txt"), ("", "x..txt")])
-def test_an_unnamed_copy_across_the_index_and_its_history_refuses_the_history_copy_only(
-        producer, canonical, recent_document, history_document):
+def _cross_file(producer, canonical, recent, history):
+    """AAPL's index cut to one 8-K and a twin of one accession, its history file holding the other copy."""
+    data = producer.aapl_submissions()
+    original = deepcopy(data["filings"]["recent"])
+    twin = {"accessionNumber": "0000320193-26-009100", "filingDate": "2026-10-08",
+            "reportDate": "2026-10-08", "acceptanceDateTime": "2026-10-08T16:00:00Z", "items": ""}
+    copy = lambda form, document: dict(twin, form=form, primaryDocument=document)
+    data["filings"]["recent"] = {key: values[:1] + [copy(*recent)[key]] for key, values in original.items()}
+    data["filings"]["files"] = [{"name": "CIK0000320193-submissions-001.json", "filingCount": 2,
+                                  "filingFrom": "2025-10-01", "filingTo": "2026-10-08"}]
+    historical = {key: [copy(*history)[key], values[-1]] for key, values in original.items()}
+    archive_url = "https://data.sec.gov/submissions/CIK0000320193-submissions-001.json"
+    fetch = producer.transport(edits={producer.AAPL_SUBMISSIONS: raw_json(data), archive_url: raw_json(historical)})
+    result = producer.collect(canonical, fetch=fetch)
+    issuer.validate_bundle(result["receipt_bytes"], result["bundle_bytes"])
+    return next(row for row in result["bundle"]["issuers"] if row["ticker"] == "AAPL"), archive_url
+
+
+@pytest.mark.parametrize("recent, history, refused_in, counted", [
+    # The unnamed copy is refused wherever it is read; the named copy is kept.
+    (("SC 13G", "x.txt"), ("SC 13G", ""), ("history",), 2),
+    (("SC 13G", ""), ("SC 13G", "x.txt"), ("recent",), 2),
+    # Two unnamed copies that differ are both refused, as each was before.
+    (("SC 13G", ""), ("SC 13G", "x..txt"), ("recent", "history"), 1),
+])
+def test_an_unnamed_copy_across_the_index_and_its_history_is_refused_wherever_it_is_read(
+        producer, canonical, recent, history, refused_in, counted):
+    row, archive_url = _cross_file(producer, canonical, recent, history)
+    index = row["index"]
+    urls = {"recent": producer.AAPL_SUBMISSIONS, "history": archive_url}
+    # The rest of the history is read, so the range reaches the window; the
+    # refused copy keeps the index partial, and the reason says why.
+    assert index["history_files_fetched"] == 1 and index["range_start"] == "2025-10-01"
+    assert row["errors"] == [{"code": "metadata_invalid", "source_url": urls[where]} for where in refused_in]
+    assert index["coverage_status"] == "partial" and index["reason"] == issuer.REFUSED_ROWS_REASON
+    assert index["metadata_count"] == counted
+
+
+def test_an_unnamed_history_copy_before_the_window_is_refused_and_does_not_stretch_the_range(producer, canonical):
     data = producer.aapl_submissions()
     original = deepcopy(data["filings"]["recent"])
     twin = {"accessionNumber": "0000320193-26-009100", "form": "SC 13G", "filingDate": "2026-10-08",
-            "reportDate": "2026-10-08", "acceptanceDateTime": "2026-10-08T16:00:00Z", "items": ""}
-    data["filings"]["recent"] = {key: values[:1] + [twin.get(key, recent_document)] for key, values in original.items()}
+            "reportDate": "2026-10-08", "acceptanceDateTime": "2026-10-08T16:00:00Z", "items": "", "primaryDocument": "x.txt"}
+    old_copy = dict(twin, filingDate="2024-01-02", reportDate="2024-01-02",
+                    acceptanceDateTime="2024-01-02T16:00:00Z", primaryDocument="")
+    data["filings"]["recent"] = {key: values[:1] + [twin[key]] for key, values in original.items()}
     data["filings"]["files"] = [{"name": "CIK0000320193-submissions-001.json", "filingCount": 2,
-                                  "filingFrom": "2025-10-01", "filingTo": "2026-10-08"}]
-    historical = {key: [twin.get(key, history_document), values[-1]] for key, values in original.items()}
+                                  "filingFrom": "2024-01-02", "filingTo": "2026-10-08"}]
+    historical = {key: [old_copy[key], values[-1]] for key, values in original.items()}
     archive_url = "https://data.sec.gov/submissions/CIK0000320193-submissions-001.json"
     fetch = producer.transport(edits={producer.AAPL_SUBMISSIONS: raw_json(data), archive_url: raw_json(historical)})
     result = producer.collect(canonical, fetch=fetch)
     row = next(row for row in result["bundle"]["issuers"] if row["ticker"] == "AAPL")
-    index = row["index"]
-    # The history's other rows are read, so the range reaches the window; the
-    # one refused copy keeps the index partial, and the reason says why.
-    assert index["history_files_fetched"] == 1 and index["range_start"] == "2025-10-01"
+    # The refused copy is outside the window, yet still refused, and its date is not the range's start.
+    assert row["index"]["range_start"] == "2025-10-01" and row["index"]["metadata_count"] == 2
     assert row["errors"] == [{"code": "metadata_invalid", "source_url": archive_url}]
-    assert index["coverage_status"] == "partial" and index["reason"] == issuer.REFUSED_ROWS_REASON
-    assert index["metadata_count"] == 2
     issuer.validate_bundle(result["receipt_bytes"], result["bundle_bytes"])
+
+
+def test_a_named_acquisition_form_in_the_history_is_kept_over_an_unnamed_recent_copy(producer, canonical):
+    row, archive_url = _cross_file(producer, canonical, ("SC 13G", ""), ("DEFM14A", "merger.htm"))
+    review = row["index"]["acquisition_review"]
+    assert review["observed_count"] == 1
+    entry, = review["filings"]
+    assert entry["filing"]["primary_document"] == "merger.htm" and entry["index_source"]["url"] == archive_url
+    assert row["errors"] == [{"code": "metadata_invalid", "source_url": producer.AAPL_SUBMISSIONS}]
+
+
+def test_a_named_acquisition_form_in_the_index_is_kept_over_an_unnamed_history_copy(producer, canonical):
+    row, archive_url = _cross_file(producer, canonical, ("DEFM14A", "merger.htm"), ("SC 13G", ""))
+    entry, = row["index"]["acquisition_review"]["filings"]
+    assert entry["index_source"]["url"] == producer.AAPL_SUBMISSIONS
+    assert row["errors"] == [{"code": "metadata_invalid", "source_url": archive_url}]
 
 
 def test_two_named_copies_across_the_index_and_its_history_still_refuse_the_history_file(producer, canonical):
@@ -630,15 +681,20 @@ def test_two_named_copies_across_the_index_and_its_history_still_refuse_the_hist
 @pytest.mark.parametrize("copies, refused", [
     ([("SC 13G/A", "marcus.corp.txt"), ("SC 13G/A", "marcus.corp..txt")], 1),
     ([("SC 13G/A", ""), ("SC 13G/A", "marcus.corp.txt")], 1),
-    ([("SC 13G", ""), ("SC 13G", "x..txt")], 1),
+    ([("SC 13G", ""), ("SC 13G", "x..txt")], 2),
+    ([("SC 13G", ""), ("SC 13G", "x..txt"), ("SC 13G", "x.txt")], 2),
     ([("SC 13G", ""), ("SC 13G", "")], 0),
 ])
 def test_an_unnamed_copy_of_an_accession_listed_differently_in_one_file_is_refused_not_the_index(copies, refused):
     rows = [_row(1, "6-K", "a.htm")] + [_row(2, form, document) for form, document in copies]
     parsed = issuer._parse_rows(_index(rows), NOW)
     assert parsed["invalid_count"] == refused
-    assert [f["primary_document"] for f in parsed["filings"]] == ["a.htm", next(
-        (d for f, d in copies if d and ".." not in d), copies[0][1])]
+    named = [d for _, d in copies if issuer._basename(d)]
+    kept = named[:1] or ([copies[0][1]] if refused == 0 else [])
+    assert [f["primary_document"] for f in parsed["filings"]] == ["a.htm", *kept]
+    # In either order, the same rows are refused and kept.
+    reversed_rows = [_row(1, "6-K", "a.htm")] + [_row(2, form, document) for form, document in reversed(copies)]
+    assert issuer._parse_rows(_index(reversed_rows), NOW)["invalid_count"] == refused
 
 
 def test_the_job_log_names_each_issuers_index_coverage_and_nothing_of_its_sources():

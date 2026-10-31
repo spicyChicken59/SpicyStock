@@ -28,7 +28,7 @@ import re
 
 from src import issuer_evidence
 
-SCHEMA = "spicystock-sec-probe-v2"
+SCHEMA = "spicystock-sec-probe-v3"
 #: AAPL: a large, long-listed domestic filer. ZIM: a foreign private issuer,
 #: the first issuer whose collection reached SEC (24 October 2026) and read
 #: partial on refused index rows. The mapping must name each exactly once.
@@ -74,8 +74,9 @@ def shown(value):
 def row_problem(columns, i, as_of):
     """The first of the collector's row rules row ``i`` fails, and the value it failed on.
 
-    Asked in ``_parse_rows``' own order through its own validators, so the
-    count of problems found here is the collector's ``invalid_count``.
+    Asked in ``_parse_rows``' own order through its own validators; with the
+    unnamed copies ``unnamed_twins`` names, the count ``rejected_rows`` gives is
+    the collector's ``invalid_count``.
     """
     accepted = columns["acceptanceDateTime"][i]
     try:
@@ -130,23 +131,15 @@ def unnamed_twins(columns, admitted):
     """The admitted rows the collector refuses as an unnamed copy of an accession it lists differently.
 
     Its own walk of ``_parse_rows``' rule, written apart from it: an unnamed
-    row whose accession SEC lists again differently (a copy that names a usable
-    document first, else an earlier copy) is refused.
+    row is refused when SEC lists its accession again with a usable document,
+    or again unnamed and different; equal copies are one row.
     """
     items = {i: _item(columns, i) for i in admitted}
-    named = {}
+    copies = {}
     for i in admitted:
-        if not _unnamed(items[i]):
-            named.setdefault(items[i]["accession"], items[i])
-    seen, twins = {}, []
-    for i in admitted:
-        item = items[i]
-        twin = named.get(item["accession"], seen.get(item["accession"]))
-        if _unnamed(item) and twin is not None and twin != item:
-            twins.append(i)
-            continue
-        seen.setdefault(item["accession"], item)
-    return twins
+        copies.setdefault(items[i]["accession"], []).append(items[i])
+    return [i for i in admitted if _unnamed(items[i])
+            and any(other != items[i] for other in copies[items[i]["accession"]])]
 
 
 def rejected_rows(raw, as_of):
