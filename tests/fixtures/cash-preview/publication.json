@@ -4,7 +4,7 @@
   "app": {
     "name": "SpicyStock",
     "version": "2.0",
-    "rules_version": "45b39b4d90db"
+    "rules_version": "e44a709748ac"
   },
   "cover": {
     "h1": "No new burst tickets. Reader review incomplete.",
@@ -188,7 +188,7 @@
       }
     },
     "input_tolerance": {
-      "version": 2,
+      "version": 3,
       "verdict": "complete",
       "reasons": [],
       "fraction": 0.01,
@@ -202,6 +202,8 @@
       "names": [],
       "endings": {},
       "held": [],
+      "first_sessions": [],
+      "first_session_stocks": 0,
       "sentence": "All 31 intended stocks had usable session bars; 31 were measured after session price eligibility. Coverage is of this selection, not every listed security."
     },
     "stale_followup": {
@@ -909,7 +911,7 @@
     },
     "evidence": {
       "version": 1,
-      "context_sha256": "86d968ab997b3d461d2797174b1cddbd49b8c5681ac2febc21ecdd90886ef39b"
+      "context_sha256": "1984d3ec2faf4ed73fb60019c19b7092029729a3ce86b0410c31952877001b3b"
     },
     "sanitised": {
       "replaced": 0,
@@ -1464,6 +1466,7 @@
       "stale_tolerance_fraction": 0.01,
       "stale_sessions_max": 5,
       "stale_names_max": 100,
+      "input_tolerance_version": 3,
       "seed_stale_version": 1,
       "max_error_fraction": 0.05,
       "trade_grades": [
@@ -2333,8 +2336,8 @@
         },
         "evidence_ref": {
           "version": 1,
-          "id": "51549b756160424cf7cb94a7c37676d43b1b8e7215f7cccdc59a899a054d547f",
-          "context_sha256": "86d968ab997b3d461d2797174b1cddbd49b8c5681ac2febc21ecdd90886ef39b",
+          "id": "de611eda887a79f513833e0d43133e9cb62d41875059d4e5f1374f284227725c",
+          "context_sha256": "1984d3ec2faf4ed73fb60019c19b7092029729a3ce86b0410c31952877001b3b",
           "plan_sha256": "6e46ccd98c37c4c1688ddadb60b7e64a0a6d9ed14217ce2e1a04e8c8c7e3288e",
           "pick_sha256": "0d41f5714b6a5b46dbe84378945e73ad6988aa2ed0dcaf2d36fec945f8fdc719"
         }
@@ -2470,8 +2473,8 @@
         "kind": "burst",
         "ticker": "AAPL",
         "session": "2026-09-10",
-        "rules_version": "45b39b4d90db",
-        "context_sha256": "86d968ab997b3d461d2797174b1cddbd49b8c5681ac2febc21ecdd90886ef39b",
+        "rules_version": "e44a709748ac",
+        "context_sha256": "1984d3ec2faf4ed73fb60019c19b7092029729a3ce86b0410c31952877001b3b",
         "gate": {
           "reader_coverage": "accepted",
           "regime": "green",
@@ -2484,7 +2487,7 @@
           "reason": "no_shares",
           "detail": "the configured account cannot size it: no whole share fits both the $5.00 effective risk budget after size multipliers ($5.05 risk per share) and the $500.00 position cap ($126.47 sizing limit)"
         },
-        "id": "51549b756160424cf7cb94a7c37676d43b1b8e7215f7cccdc59a899a054d547f"
+        "id": "de611eda887a79f513833e0d43133e9cb62d41875059d4e5f1374f284227725c"
       },
       "series": [
         {
@@ -3717,8 +3720,8 @@
         "kind": "burst",
         "ticker": "AMD",
         "session": "2026-09-10",
-        "rules_version": "45b39b4d90db",
-        "context_sha256": "86d968ab997b3d461d2797174b1cddbd49b8c5681ac2febc21ecdd90886ef39b",
+        "rules_version": "e44a709748ac",
+        "context_sha256": "1984d3ec2faf4ed73fb60019c19b7092029729a3ce86b0410c31952877001b3b",
         "gate": {
           "reader_coverage": "not_selected_budget",
           "regime": "green",
@@ -3731,7 +3734,7 @@
           "reason": "reader_coverage",
           "detail": null
         },
-        "id": "c166e7abdd7df87a92a9792a75d49599e99749517f89553491051835e5e8e80b"
+        "id": "c0a1bd580b1b219fa01b124e4d217b166322f11b37df428d2f28d99e1d243e8d"
       },
       "series": [
         {
@@ -4932,8 +4935,8 @@
         "kind": "burst",
         "ticker": "NVDA",
         "session": "2026-09-10",
-        "rules_version": "45b39b4d90db",
-        "context_sha256": "86d968ab997b3d461d2797174b1cddbd49b8c5681ac2febc21ecdd90886ef39b",
+        "rules_version": "e44a709748ac",
+        "context_sha256": "1984d3ec2faf4ed73fb60019c19b7092029729a3ce86b0410c31952877001b3b",
         "gate": {
           "reader_coverage": "not_selected_budget",
           "regime": "green",
@@ -4946,7 +4949,7 @@
           "reason": "reader_coverage",
           "detail": null
         },
-        "id": "87929b91fefc22bd8c3d0c8ebc20c05961d1017ec740f40c872280e73b2762f2"
+        "id": "1d6ffae82ab1ebcfce98ea09dd09bbf66e6ab8aabb5b86ec9fb816c1435350a8"
       },
       "series": [
         {
@@ -6384,8 +6387,8 @@
         },
         "evidence_ref": {
           "version": 1,
-          "id": "1c82da744af031a6971ea89e568788d5ec331fe9fa8c5f9be682b8f96840eea5",
-          "context_sha256": "86d968ab997b3d461d2797174b1cddbd49b8c5681ac2febc21ecdd90886ef39b",
+          "id": "082162ebb7e859bcaba00468e43cf0c2b30fdae12219e92f618a2d1c87d346f6",
+          "context_sha256": "1984d3ec2faf4ed73fb60019c19b7092029729a3ce86b0410c31952877001b3b",
           "plan_sha256": "65972c155073cb5796c8cea18472436399aabb18d71f1c806ddae2d208187f56",
           "pick_sha256": "62755251ba3dab6f072bc5e7ee5c3dffc646ed5a3de9fbfd0a12884bf34c1d11"
         }
@@ -6523,8 +6526,8 @@
         "kind": "burst",
         "ticker": "TSLA",
         "session": "2026-09-10",
-        "rules_version": "45b39b4d90db",
-        "context_sha256": "86d968ab997b3d461d2797174b1cddbd49b8c5681ac2febc21ecdd90886ef39b",
+        "rules_version": "e44a709748ac",
+        "context_sha256": "1984d3ec2faf4ed73fb60019c19b7092029729a3ce86b0410c31952877001b3b",
         "gate": {
           "reader_coverage": "accepted",
           "regime": "green",
@@ -6537,7 +6540,7 @@
           "reason": "withheld",
           "detail": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
         },
-        "id": "1c82da744af031a6971ea89e568788d5ec331fe9fa8c5f9be682b8f96840eea5"
+        "id": "082162ebb7e859bcaba00468e43cf0c2b30fdae12219e92f618a2d1c87d346f6"
       },
       "series": [
         {
@@ -7771,8 +7774,8 @@
         "kind": "burst",
         "ticker": "PLUG",
         "session": "2026-09-10",
-        "rules_version": "45b39b4d90db",
-        "context_sha256": "86d968ab997b3d461d2797174b1cddbd49b8c5681ac2febc21ecdd90886ef39b",
+        "rules_version": "e44a709748ac",
+        "context_sha256": "1984d3ec2faf4ed73fb60019c19b7092029729a3ce86b0410c31952877001b3b",
         "gate": {
           "reader_coverage": "not_selected_budget",
           "regime": "green",
@@ -7785,7 +7788,7 @@
           "reason": "quality_grade",
           "detail": null
         },
-        "id": "a81a325221125410a730ff6fba8c443defce831c0a95f7bbd2b223da9761d058"
+        "id": "eb75778602b13af53a7143c3167e2a35e90d26e40f314d367cdf11c79452fcf4"
       },
       "series": [
         {
@@ -9019,8 +9022,8 @@
         "kind": "burst",
         "ticker": "DLLR",
         "session": "2026-09-10",
-        "rules_version": "45b39b4d90db",
-        "context_sha256": "86d968ab997b3d461d2797174b1cddbd49b8c5681ac2febc21ecdd90886ef39b",
+        "rules_version": "e44a709748ac",
+        "context_sha256": "1984d3ec2faf4ed73fb60019c19b7092029729a3ce86b0410c31952877001b3b",
         "gate": {
           "reader_coverage": "not_selected_budget",
           "regime": "green",
@@ -9033,7 +9036,7 @@
           "reason": "quality_grade",
           "detail": null
         },
-        "id": "9c9d1895d4b2c90716f5406cc21a3e83c2074dee982d367249890760d20d45aa"
+        "id": "35b88a1af99c56344aa58e233e44e4f1a46b9c6e35f215f329734121add1415b"
       },
       "series": [
         {
@@ -10336,8 +10339,8 @@
           },
           "evidence_ref": {
             "version": 1,
-            "id": "cf0b894713cce99fb66743252a48998cc4c55e0a6bd5e8fc5fceb85b8524d194",
-            "context_sha256": "86d968ab997b3d461d2797174b1cddbd49b8c5681ac2febc21ecdd90886ef39b",
+            "id": "0c7aa829491333da6a13005a1b1b6393aee6d57d7daaecbaced2ba5e73c8e325",
+            "context_sha256": "1984d3ec2faf4ed73fb60019c19b7092029729a3ce86b0410c31952877001b3b",
             "plan_sha256": "ece0365fdedd914bf8003e322bf928c5827a8daa36b47228de8495380b90c566",
             "pick_sha256": "52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a"
           }
@@ -11345,8 +11348,8 @@
           "kind": "anticipation",
           "ticker": "COIL",
           "session": "2026-09-10",
-          "rules_version": "45b39b4d90db",
-          "context_sha256": "86d968ab997b3d461d2797174b1cddbd49b8c5681ac2febc21ecdd90886ef39b",
+          "rules_version": "e44a709748ac",
+          "context_sha256": "1984d3ec2faf4ed73fb60019c19b7092029729a3ce86b0410c31952877001b3b",
           "gate": {
             "regime": "green",
             "final_grade": "watch",
@@ -11355,7 +11358,7 @@
             "reason": null,
             "detail": null
           },
-          "id": "cf0b894713cce99fb66743252a48998cc4c55e0a6bd5e8fc5fceb85b8524d194"
+          "id": "0c7aa829491333da6a13005a1b1b6393aee6d57d7daaecbaced2ba5e73c8e325"
         }
       }
     ],
@@ -11447,7 +11450,7 @@
       "expected_session": "2026-09-10",
       "evaluated_session": "2026-09-10"
     },
-    "replay_rules_version": "45b39b4d90db"
+    "replay_rules_version": "e44a709748ac"
   },
   "observations": {
     "as_of": "2026-09-10",
@@ -11602,53 +11605,53 @@
       }
     },
     "signals": {
-      "burst:AAPL:2026-09-10:45b39b4d90db": {
+      "burst:AAPL:2026-09-10:e44a709748ac": {
         "ticker": "AAPL",
         "session": "2026-09-10",
         "kind": "burst",
-        "rules_version": "45b39b4d90db",
+        "rules_version": "e44a709748ac",
         "coverage": "observed"
       },
-      "burst:AMD:2026-09-10:45b39b4d90db": {
+      "burst:AMD:2026-09-10:e44a709748ac": {
         "ticker": "AMD",
         "session": "2026-09-10",
         "kind": "burst",
-        "rules_version": "45b39b4d90db",
+        "rules_version": "e44a709748ac",
         "coverage": "observed"
       },
-      "burst:NVDA:2026-09-10:45b39b4d90db": {
+      "burst:NVDA:2026-09-10:e44a709748ac": {
         "ticker": "NVDA",
         "session": "2026-09-10",
         "kind": "burst",
-        "rules_version": "45b39b4d90db",
+        "rules_version": "e44a709748ac",
         "coverage": "observed"
       },
-      "burst:TSLA:2026-09-10:45b39b4d90db": {
+      "burst:TSLA:2026-09-10:e44a709748ac": {
         "ticker": "TSLA",
         "session": "2026-09-10",
         "kind": "burst",
-        "rules_version": "45b39b4d90db",
+        "rules_version": "e44a709748ac",
         "coverage": "observed"
       },
-      "burst:PLUG:2026-09-10:45b39b4d90db": {
+      "burst:PLUG:2026-09-10:e44a709748ac": {
         "ticker": "PLUG",
         "session": "2026-09-10",
         "kind": "burst",
-        "rules_version": "45b39b4d90db",
+        "rules_version": "e44a709748ac",
         "coverage": "observed"
       },
-      "burst:DLLR:2026-09-10:45b39b4d90db": {
+      "burst:DLLR:2026-09-10:e44a709748ac": {
         "ticker": "DLLR",
         "session": "2026-09-10",
         "kind": "burst",
-        "rules_version": "45b39b4d90db",
+        "rules_version": "e44a709748ac",
         "coverage": "observed"
       },
-      "anticipation:COIL:2026-09-10:45b39b4d90db": {
+      "anticipation:COIL:2026-09-10:e44a709748ac": {
         "ticker": "COIL",
         "session": "2026-09-10",
         "kind": "anticipation",
-        "rules_version": "45b39b4d90db",
+        "rules_version": "e44a709748ac",
         "coverage": "observed"
       }
     },

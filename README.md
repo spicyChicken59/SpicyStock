@@ -843,7 +843,16 @@ archived, and a record from before the block is asked for none. The run:
   the session evaluated -- at most 1% of the intended stocks, no stock under an
   open model plan among them (SPY is outside the stock count here, as in
   acceptance) -- which
-  `run.input_tolerance` names, with where each frame ends; the next session's
+  `run.input_tolerance` names, with where each frame ends. From the rule's third
+  version (`pipeline.input_tolerance_version`, 3) stocks whose provider history
+  begins on the session evaluated -- a gapped frame with no bar before that
+  session at all, as on an exchange listing's first day (LCU on 19 October 2026,
+  NORD on 30 October, each the one gap of its night) -- are counted beside the
+  stale tail against the same 1%, named (`first_sessions`, counted and not
+  named past `pipeline.STALE_NAMES_MAX`) and never measured; a gapped frame
+  that has an earlier bar but not the previous session's is the gap it always
+  was, and a record whose rules archive no tolerance version is held to the
+  second version's rule. The next session's
   run, when it publishes, reads each of them again from its own split-adjusted
   fetch at every session it missed, one reading per stock and session, with no
   extra provider call (`run.stale_followup`, `src/followup.py`), and a late bar

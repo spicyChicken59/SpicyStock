@@ -666,10 +666,14 @@
     $('cover-published-label').textContent = 'Original published verdict · ' + (run.session || 'session unknown');
     $('cover-published').textContent = (cover.h1 || 'No verdict recorded.') + ' ' + (cover.dek || 'No summary recorded.');
     const warning = inputWarning(run), cov = run.coverage || {}, a = cov.acceptance || {}, tol = tolerance(run);
+    // the stale tail and the stocks whose provider history begins on the session,
+    // counted as the record counted them, then the one verdict the tolerance gave both
+    const firstN = firstCount(tol), tail = [cov.stale ? num(cov.stale) + (cov.stale === 1 ? ' fetched frame was stale' : ' fetched frames were stale') : '',
+      firstN ? num(firstN) + (firstN === 1 ? ' stock had no bar before ' : ' stocks had no bar before ') + dateWords(tol.evaluated) : ''].filter(Boolean);
     $('cover-dek').textContent = 'Found ' + num(run.bursts) + ' burst candidates. ' +
       (cov.version ? num(a.ready_stocks) + ' of ' + num(a.intended_stocks) + ' intended stocks had usable session bars.' +
         (a.status !== 'ok' ? ' Incomplete coverage.' : '') +
-        (cov.stale ? ' ' + num(cov.stale) + (cov.stale === 1 ? ' fetched frame was stale' : ' fetched frames were stale') + (tol && tol.verdict === 'tolerated' ? ', within the recorded tolerance.' : '.') : '') : warning);
+        (tail.length ? ' ' + tail.join('; ') + (tol && tol.verdict === 'tolerated' ? ', within the recorded tolerance.' : '.') : '') : warning);
     $('cover-original').textContent = 'Original published verdict · ' + (run.session || 'session unknown') + ': ' +
       (cover.h1 || 'not recorded') + ' ' + (cover.dek || 'No summary recorded.');
     // the coverage sentence the run stored, then the stale stocks by name, then
@@ -679,6 +683,7 @@
     const seedSaid = text((run.seed_stale || {}).sentence);
     $('cover-coverage').textContent = (warning || 'The record reports complete input coverage.') +
       (tol && Array.isArray(tol.names) && tol.names.length && cov.stale ? ' Without a ' + dateWords(tol.evaluated) + ' bar: ' + tol.names.join(', ') + '.' : '') +
+      (firstNames(tol) ? ' No bar before ' + dateWords(tol.evaluated) + ' at all: ' + firstNames(tol).join(', ') + '.' : '') +
       (seedSaid ? ' ' + seedSaid : '') +
       (follow ? ' ' + follow : '');
     const facts = clear($('market-facts'));
@@ -735,11 +740,23 @@
     const t = (run || {}).input_tolerance;
     return t && typeof t === 'object' && typeof t.verdict === 'string' ? t : null;
   }
+  // the stocks whose provider history begins on the evaluated session, which the
+  // block's third version counts beside the stale tail: a count of 0 for any
+  // other block, and the names only when the record carried them
+  function firstCount(tol) {
+    const n = tol && tol.first_session_stocks;
+    return tol && isNum(tol.version) && tol.version >= 3 && Number.isInteger(n) && n > 0 ? n : 0;
+  }
+  function firstNames(tol) {
+    const names = firstCount(tol) ? tol.first_sessions : null;
+    return Array.isArray(names) && names.length && names.every((n) => typeof n === 'string') ? names : null;
+  }
   const TOLERANCE_WORDS = { other_exceptions: 'other gaps beside the stale frames',
     over_limit: 'more stale stocks than the limit', open_plan: 'an open model plan among them' };
   // a frame too far back, in the words of the rule the record archived: the first
   // version held every stale frame to the previous session; the second to a bound
-  function toleranceWords(reason, data) {
+  function toleranceWords(reason, data, tol) {
+    if (reason === 'over_limit' && firstCount(tol)) return 'more stale stocks and stocks with no earlier bar than the limit';
     if (reason !== 'behind_more') return TOLERANCE_WORDS[reason] || words(reason);
     const n = ((data.rules || {}).pipeline || {}).stale_sessions_max;
     return isNum(n) ? 'not every stale frame ends within the ' + plain(n) + ' sessions before it on a readable date'
@@ -1086,9 +1103,16 @@
     // the bound, and its follow-up reads every session each frame missed
     const ending = isNum(n) ? 'ending within the ' + plain(n) + ' sessions before it' : 'ending on the previous session';
     const reads = isNum(n) ? 'reads every session each of them missed again' : 'reads it again';
-    return floor + '. A shortfall degrades the run unless its only gap is stale frames ' + ending + ' — at most ' +
-      plain(+(100 * f).toFixed(4)) + '% of the intended stocks, the benchmark outside that count as it is outside the denominator, and no open model plan among them; ' +
-      'that tail is counted and named, the next session\u2019s run ' + reads + ', and it does not degrade the run.';
+    // from the rule's third version a stock whose provider history begins on the
+    // session (no bar before it at all: an exchange listing's first day) is counted
+    // beside the stale tail, against the same limit, and is not another gap
+    const v = rules.input_tolerance_version, first = isNum(v) && v >= 3;
+    return floor + '. A shortfall degrades the run unless its only gap is stale frames ' + ending +
+      (first ? ' and stocks whose provider history begins on the session' : '') + ' — at most ' +
+      plain(+(100 * f).toFixed(4)) + '% of the intended stocks' + (first ? ' together' : '') +
+      ', the benchmark outside that count as it is outside the denominator, and no open model plan among them; ' +
+      'that tail is counted and named, the next session\u2019s run ' + reads +
+      (first ? ' (a stock whose history begins on the session missed none)' : '') + ', and it does not degrade the run.';
   }
   // ---------------------------------------------------------- source recovery
   // The bytes of the record on screen, hashed once per load, so a companion
@@ -1188,13 +1212,17 @@
       line('Coverage / input basis: ' + num(a.ready_stocks) + ' of ' + num(a.intended_stocks) + ' intended stocks had usable session bars (' +
         (isNum(a.fraction) ? (100 * a.fraction).toFixed(1) + '%' : 'unknown') + '); acceptance ' + a.status +
         '. The benchmark is excluded from this denominator. ' + coverageRule(data, a));
-      // the tolerance judges stale STOCKS on a degraded acceptance; a night with
-      // none, or one whose only stale frame is the benchmark, has nothing for it to say
+      // the tolerance judges stale STOCKS, and from its third version the stocks whose
+      // provider history begins on the session, on a degraded acceptance; a night with
+      // neither, or one whose only stale frame is the benchmark, has nothing for it to say
       const tol = tolerance(run);
-      if (tol && tol.verdict !== 'complete' && isNum(tol.stale_stocks) && tol.stale_stocks > 0) {
+      const firstN = firstCount(tol), staleN = tol && isNum(tol.stale_stocks) ? tol.stale_stocks : 0;
+      if (tol && tol.verdict !== 'complete' && (staleN > 0 || firstN > 0)) {
+        const counted = [staleN > 0 ? num(staleN) + ' stale stock' + (staleN === 1 ? '' : 's') : '',
+          firstN > 0 ? num(firstN) + (firstN === 1 ? ' stock' : ' stocks') + ' with no earlier bar' : ''].filter(Boolean).join(' and ');
         line('Stale tolerance: ' + (tol.verdict === 'tolerated' ? 'tolerated' : 'not tolerated') +
-          ' — ' + num(tol.stale_stocks) + ' stale stock' + (tol.stale_stocks === 1 ? '' : 's') + ' against a limit of ' + num(tol.limit) +
-          (tol.verdict === 'not_tolerated' && Array.isArray(tol.reasons) ? ' (' + tol.reasons.map((r) => toleranceWords(r, data)).join('; ') + ')' : '') + '.');
+          ' — ' + counted + ' against a limit of ' + num(tol.limit) +
+          (tol.verdict === 'not_tolerated' && Array.isArray(tol.reasons) ? ' (' + tol.reasons.map((r) => toleranceWords(r, data, tol)).join('; ') + ')' : '') + '.');
       }
       // the seed check before the follow-up, the order the cover and the mail print them in
       const seedLine = text((run.seed_stale || {}).sentence);

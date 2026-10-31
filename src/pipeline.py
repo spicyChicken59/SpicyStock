@@ -91,6 +91,7 @@ RULES = {
     "pipeline.stale_tolerance_fraction": STALE_TOLERANCE_FRACTION,
     "pipeline.stale_sessions_max": STALE_SESSIONS_MAX,
     "pipeline.stale_names_max": STALE_NAMES_MAX,
+    "pipeline.input_tolerance_version": inputs.TOLERANCE_VERSION,
     "pipeline.seed_stale_version": inputs.SEED_STALE_VERSION,
     "pipeline.max_error_fraction": MAX_ERROR_FRACTION,
     "pipeline.trade_grades": list(TRADE_GRADES),
@@ -798,17 +799,24 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                                f"{coverage['acceptance']['intended_stocks']} intended stocks; "
                                "no new publication (no-bars, stale frames, gaps and unfetched names are not non-matches)")
         # a degraded acceptance is a problem unless its only gap is the stale tail
-        # the run tolerates; the ledger and its acceptance stay exactly as built
+        # the run tolerates, beside stocks whose provider history begins tonight;
+        # the ledger and its acceptance stay exactly as built
+        first = inputs.first_sessions(stats.gapped, session, BENCHMARK_SYMBOL)
+        if first:
+            log.warning("%d gapped frames have no bar before %s at all (a first session): %s",
+                        len(first), session, ", ".join(first))
         tolerance = inputs.stale_tolerance(coverage, STALE_TOLERANCE_FRACTION, names=sorted(stats.stale), benchmark=BENCHMARK_SYMBOL,
                                            names_max=STALE_NAMES_MAX, endings=stale_endings(stats),
-                                           sessions_max=STALE_SESSIONS_MAX)
+                                           sessions_max=STALE_SESSIONS_MAX, first=first)
         if (coverage["acceptance"]["status"] == "degraded" and tolerance["verdict"] != inputs.TOLERATED
                 and not any(p["kind"] == "coverage_thin" for p in rep.problems)):
             rep.problem("coverage_thin", f"stale tolerance not met ({', '.join(tolerance['reasons'])}): "
                         + inputs.coverage_sentence({"coverage": coverage}))
         elif tolerance["verdict"] == inputs.TOLERATED:
-            log.info("Stale tolerance: %d frames within %d sessions behind, %d stocks within the limit of %d; not a problem",
-                     tolerance["stale"], STALE_SESSIONS_MAX, tolerance["stale_stocks"], tolerance["limit"])
+            log.info("Stale tolerance: %d frames within %d sessions behind and %d first sessions, %d stocks within the "
+                     "limit of %d; not a problem", tolerance["stale"], STALE_SESSIONS_MAX,
+                     tolerance["first_session_stocks"], tolerance["stale_stocks"] + tolerance["first_session_stocks"],
+                     tolerance["limit"])
 
         # the previous publication's stale stocks, read again from this run's frames
         # at every session each one missed: no provider call
@@ -849,9 +857,12 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                                      minutes=minutes)
         held = slots_held(open_now)
         # a stale frame under an unfinished open model plan leaves that plan
-        # unwalked tonight: never tolerated, whatever the count
+        # unwalked tonight: never tolerated, whatever the count. A frame whose
+        # history begins tonight is held the same way: a plan made on earlier bars
+        # should never name one, so one that does (a ticker the provider re-issued)
+        # is a fault to name, not a first session to count
         held_stale = sorted({o["ticker"] for o in open_now if o.get("ticker") and o.get("status") not in record.FINISHED}
-                            & set(stats.stale))
+                            & (set(stats.stale) | set(first)))
         if held_stale and not any(p["kind"] == "coverage_thin" for p in rep.problems):
             rep.problem("coverage_thin", "stale frames under open model plans: " + ", ".join(held_stale))
         # Private preview only: preserve the stop/chart supplied to the reader.
@@ -889,7 +900,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         log.info("Final input coverage: %s", json.dumps(coverage, sort_keys=True))
         tolerance = inputs.stale_tolerance(coverage, STALE_TOLERANCE_FRACTION, names=sorted(stats.stale), benchmark=BENCHMARK_SYMBOL,
                                            held=held_stale, names_max=STALE_NAMES_MAX, endings=stale_endings(stats),
-                                           sessions_max=STALE_SESSIONS_MAX)
+                                           sessions_max=STALE_SESSIONS_MAX, first=first)
         tolerance["sentence"] = inputs.coverage_sentence({"coverage": coverage, "input_tolerance": tolerance})
         # which of the stale stocks the seed alone asked for, off the record's own lists:
         # a seed name that stopped trading stays stale until a human retires it
