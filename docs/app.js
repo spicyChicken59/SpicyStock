@@ -666,7 +666,7 @@
     $('cover-published-label').textContent = 'Original published verdict · ' + (run.session || 'session unknown');
     $('cover-published').textContent = (cover.h1 || 'No verdict recorded.') + ' ' + (cover.dek || 'No summary recorded.');
     const warning = inputWarning(run), cov = run.coverage || {}, a = cov.acceptance || {}, tol = tolerance(run);
-    // the stale tail and the stocks whose provider history begins on the session,
+    // the stale tail and the stocks with no bar before the session in the request window,
     // counted as the record counted them, then the one verdict the tolerance gave both
     const firstN = firstCount(tol), tail = [cov.stale ? num(cov.stale) + (cov.stale === 1 ? ' fetched frame was stale' : ' fetched frames were stale') : '',
       firstN ? num(firstN) + (firstN === 1 ? ' stock had no bar before ' : ' stocks had no bar before ') + dateWords(tol.evaluated) : ''].filter(Boolean);
@@ -683,7 +683,7 @@
     const seedSaid = text((run.seed_stale || {}).sentence);
     $('cover-coverage').textContent = (warning || 'The record reports complete input coverage.') +
       (tol && Array.isArray(tol.names) && tol.names.length && cov.stale ? ' Without a ' + dateWords(tol.evaluated) + ' bar: ' + tol.names.join(', ') + '.' : '') +
-      (firstNames(tol) ? ' No bar before ' + dateWords(tol.evaluated) + ' at all: ' + firstNames(tol).join(', ') + '.' : '') +
+      (firstNames(tol) ? ' No bar before ' + dateWords(tol.evaluated) + ' in the request window: ' + firstNames(tol).join(', ') + '.' : '') +
       (seedSaid ? ' ' + seedSaid : '') +
       (follow ? ' ' + follow : '');
     const facts = clear($('market-facts'));
@@ -740,7 +740,7 @@
     const t = (run || {}).input_tolerance;
     return t && typeof t === 'object' && typeof t.verdict === 'string' ? t : null;
   }
-  // the stocks whose provider history begins on the evaluated session, which the
+  // the stocks with no bar before the evaluated session in the request window, which the
   // block's third version counts beside the stale tail: a count of 0 for any
   // other block, and the names only when the record carried them
   function firstCount(tol) {
@@ -1103,16 +1103,16 @@
     // the bound, and its follow-up reads every session each frame missed
     const ending = isNum(n) ? 'ending within the ' + plain(n) + ' sessions before it' : 'ending on the previous session';
     const reads = isNum(n) ? 'reads every session each of them missed again' : 'reads it again';
-    // from the rule's third version a stock whose provider history begins on the
-    // session (no bar before it at all: an exchange listing's first day) is counted
+    // from the rule's third version a stock with no bar before the session in the
+    // request window (every row dated the session, as on a listing's first day) is counted
     // beside the stale tail, against the same limit, and is not another gap
     const v = rules.input_tolerance_version, first = isNum(v) && v >= 3;
     return floor + '. A shortfall degrades the run unless its only gap is stale frames ' + ending +
-      (first ? ' and stocks whose provider history begins on the session' : '') + ' — at most ' +
+      (first ? ' and stocks with no bar before the session in the run\u2019s request window' : '') + ' — at most ' +
       plain(+(100 * f).toFixed(4)) + '% of the intended stocks' + (first ? ' together' : '') +
       ', the benchmark outside that count as it is outside the denominator, and no open model plan among them; ' +
       'that tail is counted and named, the next session\u2019s run ' + reads +
-      (first ? ' (a stock whose history begins on the session missed none)' : '') + ', and it does not degrade the run.';
+      (first ? ' (a stock with no earlier bar missed none)' : '') + ', and it does not degrade the run.';
   }
   // ---------------------------------------------------------- source recovery
   // The bytes of the record on screen, hashed once per load, so a companion
@@ -1213,7 +1213,7 @@
         (isNum(a.fraction) ? (100 * a.fraction).toFixed(1) + '%' : 'unknown') + '); acceptance ' + a.status +
         '. The benchmark is excluded from this denominator. ' + coverageRule(data, a));
       // the tolerance judges stale STOCKS, and from its third version the stocks whose
-      // provider history begins on the session, on a degraded acceptance; a night with
+      // no bar before the session in the request window, on a degraded acceptance; a night with
       // neither, or one whose only stale frame is the benchmark, has nothing for it to say
       const tol = tolerance(run);
       const firstN = firstCount(tol), staleN = tol && isNum(tol.stale_stocks) ? tol.stale_stocks : 0;

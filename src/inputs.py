@@ -25,18 +25,21 @@ VERSION = 1
 # words. Version 2 carries where each stale frame ends (``endings``) and the
 # bound it was judged by (``sessions_max``); version 1 held every frame to the
 # previous session and the follow-up read that session alone. Version 3 also
-# names the stocks whose provider history BEGINS on the evaluated session
-# (``first_sessions``): a gapped frame with no bar before the session at all,
-# which is an exchange listing's first day (LCU, 19 October 2026: Lion Copper's
-# first Nasdaq session; NORD, 30 October) or a symbol new to the provider, not
-# an input that went missing. Each night those two were degraded by that one
-# frame alone. It is still set aside, never measured, and counted against the
-# same limit as the stale stocks; a gapped frame with a real hole -- an earlier
-# bar, but not the session before -- is the gap it always was.
+# names the stocks with no bar before the evaluated session in the run's request
+# window (``first_sessions``): a gapped frame every row of which the provider
+# dated the session (market_data.history_begins_on()), as an exchange listing's
+# first day or a symbol new to the provider is, and not an input that went
+# missing. The 19 October 2026 revision (d179f206, LCU) and the 30 October
+# publication (NORD) were each degraded by one gapped frame alone, a stock new
+# to that night's directory; whether its frame had any earlier row the records
+# cannot show, which is what this version records. Such a stock is still set
+# aside, never measured, and counted against the same limit as the stale
+# stocks; a gapped frame with any earlier row -- a real hole, or earlier rows it
+# cannot read -- is the gap it always was.
 TOLERANCE_VERSION = 3
 #: the version a record wrote under rules that archive no tolerance version
 UNVERSIONED_TOLERANCE = 2
-#: the first version that names the stocks whose history begins on the session
+#: the first version that names the stocks with no bar before the session
 FIRST_SESSIONS_VERSION = 3
 #: the block versions a record can carry, read under the rules it archived
 TOLERANCE_VERSIONS = (UNVERSIONED_TOLERANCE, FIRST_SESSIONS_VERSION)
@@ -201,13 +204,14 @@ def allowed_endings(evaluated, sessions_max):
     return {d.isoformat() for d in sessions.sessions_before(date.fromisoformat(str(evaluated)), sessions_max)}
 
 
-def first_sessions(gapped, session, benchmark):
-    """The stocks among the gapped frames whose provider history begins on
-    ``session``: no bar before it at all. ``gapped`` is
-    market_data.drop_gapped()'s map, which holds the bar a frame has before the
-    session, or -- when it has none -- its own newest bar, the session itself.
-    The benchmark is never one: its gap is the gap it always was."""
-    return sorted(t for t, day in gapped.items() if t != benchmark and day == session)
+def first_sessions(stats, benchmark):
+    """The stocks among the gapped frames with no bar before the session in the
+    request window: every row the provider sent is dated the session, so there
+    is no row of any kind before it (market_data.history_begins_on(), read off the
+    frames by apply_session_rules() into ``stats.first_session``). A frame with
+    earlier rows it cannot read is a gap, not one of these. The benchmark is
+    never one: its gap is the gap it always was."""
+    return sorted(t for t in stats.first_session if t in stats.gapped and t != benchmark)
 
 
 def stale_tolerance(cov, fraction, *, names, benchmark, held=(), names_max, endings, sessions_max,
@@ -224,8 +228,8 @@ def stale_tolerance(cov, fraction, *, names, benchmark, held=(), names_max, endi
     named frame ends (ISO date, None when unreadable), carried so the next
     session's run can read every session each one missed.
 
-    Under version 3 a gapped frame whose provider history begins on the
-    evaluated session (``first``, from first_sessions(); ``first_count`` when
+    Under version 3 a gapped frame with no bar before the evaluated session
+    in the request window (``first``, from first_sessions(); ``first_count`` when
     the names are not carried) is not one of the other gaps: it is counted
     beside the stale stocks against the same limit, and an open model plan's
     stock among them is held as a stale one is. Version 2 is the rule as it
@@ -290,12 +294,17 @@ def _ending(cov, tol):
     return "ending " + ", ".join(parts)
 
 
+def first_session_version(tol):
+    """Whether a tolerance block's version names the stocks with no bar before
+    the session: a version-2 block names none, whatever fields it carries."""
+    return isinstance(tol, dict) and type(tol.get('version')) is int and tol['version'] >= FIRST_SESSIONS_VERSION
+
+
 def _first(tol):
-    """The version-3 count of stocks whose provider history begins on the
-    evaluated session; 0 under version 2, which has no such count."""
+    """The version-3 count of stocks with no bar before the evaluated session
+    in the request window; 0 under version 2, which has no such count."""
     n = tol.get('first_session_stocks')
-    return (n if type(tol.get('version')) is int and tol['version'] >= FIRST_SESSIONS_VERSION
-            and type(n) is int and n > 0 else 0)
+    return n if first_session_version(tol) and type(n) is int and n > 0 else 0
 
 
 def _why(cov, tol):
@@ -323,13 +332,17 @@ def _why(cov, tol):
 
 
 def _first_clause(tol, first):
-    """The stocks whose provider history begins on the evaluated session, in words."""
+    """The stocks with no bar before the evaluated session, in words: what the
+    request window shows, never more (a stock resuming after a halt longer than
+    the window looks the same as a listing's first day)."""
     one = first == 1
     named = tol.get('first_sessions')
-    who = f" ({', '.join(named)})" if isinstance(named, list) and named else ""
+    readable = isinstance(named, list) and named and all(isinstance(n, str) for n in named)
+    who = f" ({', '.join(named)})" if readable else ""
     return (f" {_count(first, 'returned frame', 'returned frames')}{who} had no bar before {tol['evaluated']} "
-            f"at all: the provider's history for {'it' if one else 'them'} begins on {tol['evaluated']}, "
-            f"so there is no session before to measure {'its' if one else 'their'} move against, and "
+            f"in this run's request window: every row the provider returned for {'it' if one else 'them'} "
+            f"is dated {tol['evaluated']}, as on an exchange listing's first day, so there is no session before "
+            f"to measure {'its' if one else 'their'} move against, and "
             f"{'it is not a measured non-match' if one else 'they are not measured non-matches'}.")
 
 
@@ -356,7 +369,7 @@ def _tolerance_clause(cov, tol):
 
 def _clause_with_first(cov, tol, first):
     """The clause of a version-3 night with at least one stock whose provider
-    history begins on the evaluated session: the stale tail first when there
+    bar before the evaluated session: the stale tail first when there
     is one, then those stocks, then the one verdict over both."""
     stale = cov['stale']
     s = ""
@@ -464,13 +477,18 @@ def tolerance_faults(run, pipeline_rules, plan_tickers):
         first, first_count = [], 0
         if expected >= FIRST_SESSIONS_VERSION:
             first, first_count = tol['first_sessions'], tol['first_session_stocks']
-            faults.extend(_first_faults(cov, tol, first, first_count, pipeline_rules['stale_names_max']))
+            named_faults = _first_faults(cov, tol, first, first_count, pipeline_rules['stale_names_max'])
+            if named_faults:
+                # named, and never read further: every check below indexes into them
+                return faults + named_faults
+        elif 'first_sessions' in tol or 'first_session_stocks' in tol:
+            return faults + ['input tolerance carries first sessions its version does not']
         named = set(names or []) | set(first or [])
         if held != sorted(set(held)) or ((names is not None and first is not None) and not set(held) <= named):
             faults.append('input tolerance holds a stock it does not name')
         if (plan_tickers is not None and names is not None and first is not None
                 and held != sorted(named & set(plan_tickers))):
-            faults.append('input tolerance does not hold the open model plans among the stale stocks')
+            faults.append('input tolerance does not hold the open model plans among the stocks it names')
         # without its names the block is re-derived over the one fact they carried: the benchmark's
         carried = names if names is not None else ([tol['benchmark']] if _benchmark_stale(cov, tol) else [])
         again = stale_tolerance(cov, tol['fraction'], names=carried, benchmark=tol['benchmark'], held=held,

@@ -1058,7 +1058,7 @@ def test_validate_holds_the_tolerance_to_the_records_own_constant(stale_night):
     (lambda t: t.update(names=['QAAA']), 'names are not the stale population the ledger counted'),
     (lambda t: t.update(names=None), 'drops a stale membership it could carry'),
     (lambda t: t.update(held=['QZZZ']), 'holds a stock it does not name'),
-    (lambda t: t.update(held=['QAAA']), 'does not hold the open model plans among the stale stocks'),
+    (lambda t: t.update(held=['QAAA']), 'does not hold the open model plans among the stocks it names'),
     (lambda t: t.update(limit=3), 'does not re-derive from the ledger'),
     (lambda t: t.update(stale_stocks=1), 'does not re-derive from the ledger'),
     (lambda t: t.update(benchmark='QAAA'), 'does not re-derive from the ledger'),

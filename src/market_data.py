@@ -301,6 +301,9 @@ class DownloadStats:
     #: symbol -> the bar it has before the session (None when it has none),
     #: for names whose bar before the session is not the session before
     gapped: dict[str, date | None] = field(default_factory=dict)
+    #: the gapped frames whose every row is dated the session, sorted: the provider
+    #: sent no row of any kind before it (history_begins_on())
+    first_session: list[str] = field(default_factory=list)
     unreadable: list[str] = field(default_factory=list)
     previous_session: date | None = None
     previous_session_observed: bool = False
@@ -463,6 +466,19 @@ def _bar_before_session(df: pd.DataFrame, session: date) -> date | None:
     return best
 
 
+def history_begins_on(df: pd.DataFrame, session: date) -> bool:
+    """Whether every row of this frame is dated `session`: the provider sent
+    no row of any kind before it, as on an exchange listing's first day.
+
+    Presence, not readability, unlike the gap rule's own question: a row before
+    the session with no readable close or volume is still history the provider
+    had, and a row whose stamp cannot be read could be any date, so either
+    leaves the frame the gap it is. drop_gapped() maps a frame with no
+    MEASURABLE bar before the session to the session itself, the same date a
+    first session has, so its map alone cannot tell the two apart."""
+    return len(df.index) > 0 and all(_as_date(stamp) == session for stamp in df.index)
+
+
 def newest_stale(stale: dict[str, date | None]) -> date | None:
     """The newest date among names that carried no bar for the session; a
     max over the ones that have a date, since None cannot be compared."""
@@ -561,8 +577,9 @@ def apply_session_rules(frames: dict[str, pd.DataFrame], session: date,
     before, observed = observed_previous_session(fresh, session, min_symbols,
                                                  downloaded=frames, tally=tally)
     printed = sum(1 for df in frames.values() if _printed_on(df, before))
-    fresh, gapped = drop_gapped(fresh, session, before)
+    measured, (fresh, gapped) = fresh, drop_gapped(fresh, session, before)
     stats.gapped = gapped
+    stats.first_session = sorted(t for t in gapped if history_begins_on(measured[t], session))
     stats.previous_session = before
     stats.previous_session_observed = observed
     stats.previous_session_printed = printed

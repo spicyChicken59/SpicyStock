@@ -799,12 +799,12 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                                f"{coverage['acceptance']['intended_stocks']} intended stocks; "
                                "no new publication (no-bars, stale frames, gaps and unfetched names are not non-matches)")
         # a degraded acceptance is a problem unless its only gap is the stale tail
-        # the run tolerates, beside stocks whose provider history begins tonight;
+        # the run tolerates, beside stocks with no bar before tonight's session;
         # the ledger and its acceptance stay exactly as built
-        first = inputs.first_sessions(stats.gapped, session, BENCHMARK_SYMBOL)
+        first = inputs.first_sessions(stats, BENCHMARK_SYMBOL)
         if first:
-            log.warning("%d gapped frames have no bar before %s at all (a first session): %s",
-                        len(first), session, ", ".join(first))
+            log.warning("%d gapped frames have no bar before %s in the request window (every row dated "
+                        "the session): %s", len(first), session, ", ".join(first))
         tolerance = inputs.stale_tolerance(coverage, STALE_TOLERANCE_FRACTION, names=sorted(stats.stale), benchmark=BENCHMARK_SYMBOL,
                                            names_max=STALE_NAMES_MAX, endings=stale_endings(stats),
                                            sessions_max=STALE_SESSIONS_MAX, first=first)
@@ -857,14 +857,18 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                                      minutes=minutes)
         held = slots_held(open_now)
         # a stale frame under an unfinished open model plan leaves that plan
-        # unwalked tonight: never tolerated, whatever the count. A frame whose
-        # history begins tonight is held the same way: a plan made on earlier bars
-        # should never name one, so one that does (a ticker the provider re-issued)
-        # is a fault to name, not a first session to count
-        held_stale = sorted({o["ticker"] for o in open_now if o.get("ticker") and o.get("status") not in record.FINISHED}
-                            & (set(stats.stale) | set(first)))
+        # unwalked tonight: never tolerated, whatever the count. So does a frame
+        # with no bar before the session: the plan was made on that ticker's
+        # earlier bars and the provider returned none of them (a re-issued ticker,
+        # or history it has since dropped), so it is held and named as what it is
+        open_tickers = {o["ticker"] for o in open_now if o.get("ticker") and o.get("status") not in record.FINISHED}
+        held_stale = sorted(open_tickers & (set(stats.stale) | set(first)))
         if held_stale and not any(p["kind"] == "coverage_thin" for p in rep.problems):
-            rep.problem("coverage_thin", "stale frames under open model plans: " + ", ".join(held_stale))
+            held_words = [words + ", ".join(names) for words, names in (
+                ("stale frames under open model plans: ", sorted(open_tickers & set(stats.stale))),
+                ("frames with no bar before the session under open model plans: ", sorted(open_tickers & set(first))))
+                if names]
+            rep.problem("coverage_thin", "; ".join(held_words))
         # Private preview only: preserve the stop/chart supplied to the reader.
         # These plans are discarded by make_plans after grading; preview tickets
         # and budgets are never recorded, published, or used as final permission.

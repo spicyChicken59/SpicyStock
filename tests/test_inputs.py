@@ -556,7 +556,18 @@ def tolerance_first(cov, stats, fraction=0.01, held=(), version=None):
     return inputs.stale_tolerance(cov, fraction, names=sorted(stats.stale), benchmark='SPY', held=held,
                                   names_max=pipeline.STALE_NAMES_MAX, endings=endings_of(stats),
                                   sessions_max=pipeline.STALE_SESSIONS_MAX,
-                                  first=inputs.first_sessions(stats.gapped, stats.session, 'SPY'), **kw)
+                                  first=inputs.first_sessions(stats, 'SPY'), **kw)
+
+
+def unreadable_before(column=None, stamp=False):
+    """A tape whose rows before 10 Sep are all present and none readable: each
+    lacks `column`, or (``stamp``) carries a date that cannot be read."""
+    df = tape()
+    if column:
+        df.loc[df.index[:-1], column] = float('nan')
+    if stamp:
+        df.index = pd.DatetimeIndex([pd.NaT] * (len(df) - 1) + [df.index[-1]])
+    return df
 
 
 def test_first_sessions_are_the_gapped_frames_with_no_bar_before_the_session():
@@ -565,8 +576,26 @@ def test_first_sessions_are_the_gapped_frames_with_no_bar_before_the_session():
                                           'SPY': tape(dates=FIRST_DATES)})
     assert inputs.faults(cov) == []
     assert stats.gapped == {'QAAC': date(2026, 9, 10), 'QAAD': date(2026, 9, 8), 'SPY': date(2026, 9, 10)}
-    assert inputs.first_sessions(stats.gapped, stats.session, 'SPY') == ['QAAC']
-    assert inputs.first_sessions(stats.gapped, stats.session, 'QAAC') == ['SPY']
+    assert stats.first_session == ['QAAC', 'SPY']
+    assert inputs.first_sessions(stats, 'SPY') == ['QAAC']
+    assert inputs.first_sessions(stats, 'QAAC') == ['SPY']
+
+
+@pytest.mark.parametrize('frame', [unreadable_before('Volume'), unreadable_before('Close'), unreadable_before(stamp=True)],
+                         ids=['no-volume-before', 'no-close-before', 'unreadable-stamps-before'])
+def test_a_frame_whose_earlier_rows_cannot_be_read_is_a_gap_not_a_first_session(frame):
+    """drop_gapped() asks for a MEASURABLE bar before the session and maps a frame
+    with none to its newest bar, the session itself -- the same date a first
+    session has. A frame whose earlier rows are there but unreadable (or whose
+    stamps cannot be read, so could be any date) has history the provider sent;
+    it is the gap it always was, never a stock whose history begins tonight."""
+    from src import inputs
+    cov, stats = ledger(stale=(), frames={'QAAC': frame})
+    assert stats.gapped == {'QAAC': date(2026, 9, 10)}, 'the map alone cannot tell it from a first session'
+    assert stats.first_session == [] and inputs.first_sessions(stats, 'SPY') == []
+    tol = tolerance_first(cov, stats)
+    assert (tol['verdict'], tol['reasons'], tol['first_sessions'], tol['first_session_stocks']) == \
+        ('not_tolerated', ['other_exceptions'], [], 0)
 
 
 @pytest.mark.parametrize('build,held,version,verdict,reasons,first', [
@@ -608,9 +637,9 @@ def test_the_first_session_sentence_names_the_stock_and_why():
     tol = tolerance_first(cov, stats)
     sentence = inputs.coverage_sentence({'coverage': cov, 'input_tolerance': tol})
     assert sentence.endswith(
-        " 1 returned frame (QAAC) had no bar before 2026-09-10 at all: the provider's history for it begins on "
-        "2026-09-10, so there is no session before to measure its move against, and it is not a measured "
-        "non-match. That is within this run's input tolerance of 2 stocks (1% of the intended stocks), so this "
+        " 1 returned frame (QAAC) had no bar before 2026-09-10 in this run's request window: every row the "
+        "provider returned for it is dated 2026-09-10, as on an exchange listing's first day, so there is no "
+        "session before to measure its move against, and it is not a measured non-match. That is within this run's input tolerance of 2 stocks (1% of the intended stocks), so this "
         "frame does not degrade the run."), sentence
     assert 'stale' not in sentence and 'missing the previous session' not in sentence
 
@@ -621,7 +650,7 @@ def test_the_first_session_sentence_beside_a_stale_tail_says_both():
     sentence = inputs.coverage_sentence({'coverage': cov, 'input_tolerance': tolerance_first(cov, stats)})
     assert ("1 returned frame had no bar for 2026-09-10, ending on the previous session, 2026-09-09. "
             "Its 2026-09-10 input is unknown, not a measured non-match. 1 returned frame (QAAC) had no bar before "
-            "2026-09-10 at all") in sentence, sentence
+            "2026-09-10 in this run's request window") in sentence, sentence
     assert sentence.endswith(
         f"each stale frame ending within the {pipeline.STALE_SESSIONS_MAX} sessions before, so these frames do "
         "not degrade the run; the next session's run, when it publishes, reads every session the stale frame "
@@ -660,15 +689,21 @@ def test_the_validator_holds_first_sessions_to_the_gapped_frames():
     assert checked(cov, dict(tol)) == []
     assert checked(cov, dict(tol, first_sessions=['QAAD'])) == \
         ['input tolerance first sessions are not the gapped population the ledger counted']
-    # a count past the ledger's gapped frames, and the verdict a re-derivation over it does not reach
+    # a count past the ledger's gapped frames: named, and read no further (a re-derivation over it
+    # would only repeat it, or raise and be called malformed)
     assert checked(cov, dict(tol, first_sessions=['QAAC', 'QAAD'], first_session_stocks=2)) == \
-        ['input tolerance first sessions are not a count of the gapped frames',
-         'input tolerance does not re-derive from the ledger']
+        ['input tolerance first sessions are not a count of the gapped frames']
     assert checked(cov, dict(tol, first_sessions=['QAAC', 'QAAC'], first_session_stocks=2)) == \
-        ['input tolerance first sessions are not a count of the gapped frames',
-         'input tolerance does not re-derive from the ledger']
+        ['input tolerance first sessions are not a count of the gapped frames']
     assert checked(cov, dict(tol, first_session_stocks=0)) == \
-        ['input tolerance first sessions are not the stocks it counted', 'input tolerance does not re-derive from the ledger']
+        ['input tolerance first sessions are not the stocks it counted']
+    # a shape no later check can read is named for what it is, never "malformed"
+    for shape in (5, 'QAAC', {'QAAC': 1}, [1]):
+        assert checked(cov, dict(tol, first_sessions=shape)) == \
+            ['input tolerance first sessions are not the stocks it counted'], shape
+    for count in ('1', 1.0, [1], -1):
+        assert checked(cov, dict(tol, first_session_stocks=count)) == \
+            ['input tolerance first sessions are not a count of the gapped frames'], count
     assert checked(cov, dict(tol, first_sessions=None)) == \
         ['input tolerance drops a first-session membership it could carry']
     assert checked(cov, dict(tol, first_session_stocks=True)) == \
@@ -691,12 +726,12 @@ def test_the_validator_holds_an_open_plans_first_session():
     cov, stats = ledger(stale=(), frames={'QAAC': tape(dates=FIRST_DATES)})
     tol = tolerance_first(cov, stats)
     assert checked(cov, dict(tol), plan_tickers={'QAAC'}) == \
-        ['input tolerance does not hold the open model plans among the stale stocks']
+        ['input tolerance does not hold the open model plans among the stocks it names']
     held = tolerance_first(cov, stats, held=('QAAC',))
     assert checked(cov, dict(held), plan_tickers={'QAAC'}) == []
     assert checked(cov, dict(held, held=['QAAZ']), plan_tickers={'QAAC'}) == [
         'input tolerance holds a stock it does not name',
-        'input tolerance does not hold the open model plans among the stale stocks']
+        'input tolerance does not hold the open model plans among the stocks it names']
 
 
 @pytest.mark.parametrize('version,archived,faults', [
@@ -710,6 +745,23 @@ def test_the_validator_holds_an_open_plans_first_session():
 def test_a_block_is_held_to_the_version_its_rules_archived(version, archived, faults):
     cov, stats = ledger()
     assert checked(cov, tolerance_first(cov, stats, version=version), archived=archived) == faults
+
+
+def test_a_second_version_block_names_no_first_session_whatever_it_carries():
+    """A version-2 block counts no first session: carrying the fields is a
+    fault, and the mail names none from one, as the page does not."""
+    from src import inputs, report
+    cov, stats = ledger(stale=('QAAA',), frames={'QAAC': tape(dates=FIRST_DATES)})
+    two = tolerance_first(cov, stats, version=2)
+    assert 'first_sessions' not in two and checked(cov, dict(two), archived=None) == []
+    for extra in ({'first_sessions': ['QAAC']}, {'first_session_stocks': 1}, {'first_sessions': [], 'first_session_stocks': 0}):
+        assert checked(cov, dict(two, **extra), archived=None) == \
+            ['input tolerance carries first sessions its version does not'], extra
+    run = {'input_tolerance': dict(two, first_sessions=['QAAC'], first_session_stocks=1)}
+    assert not inputs.first_session_version(run['input_tolerance'])
+    assert 'No bar before' not in report._inputs_block(run)
+    three = dict(tolerance_first(cov, stats), first_sessions=['QAAC'])
+    assert 'No bar before 2026-09-10 in the request window: QAAC.' in report._inputs_block({'input_tolerance': three})
 
 
 LONG_TAIL = tuple(q_names(pipeline.STALE_NAMES_MAX + 1))   # one more stale stock than a block names
@@ -903,19 +955,27 @@ def test_a_tolerated_tail_on_a_night_degraded_otherwise_never_says_the_run_is_no
     report.validate(data)
 
 
-@pytest.mark.parametrize('first', [True, False], ids=['history-begins-tonight', 'a-hole-control'])
+@pytest.mark.parametrize('shape', ['first', 'hole', 'unreadable'],
+                         ids=['history-begins-tonight', 'a-hole-control', 'unreadable-history-control'])
 def test_a_stock_whose_history_begins_tonight_does_not_degrade_the_night(
-        wide, claude, fake_resend, fake_alpaca, tmp_path, first):
-    """LCU, 19 October 2026: one stock on its first Nasdaq session, the only
-    frame the night could not measure, and the night degraded for "missing
-    the previous session". Served with its session bar alone it is named as a
-    first session and the night is ok; served with a hole before its session
-    bar it is the gap it always was."""
+        wide, claude, fake_resend, fake_alpaca, tmp_path, shape):
+    """The 19 October 2026 revision (LCU) and 30 October (NORD): one stock new
+    to the night's directory, the only frame the night could not measure, and
+    the night degraded for "missing the previous session". Served with its
+    session bar alone it is named as a first session and the night is ok;
+    served with a hole before its session bar, or with every earlier bar
+    unreadable, it is the gap it always was."""
     from src import inputs, report
+    first = shape == 'first'
+    history = fake_alpaca.history['QAAC']
     if first:
-        fake_alpaca.add_history('QAAC', fake_alpaca.history['QAAC'].iloc[-1:])
+        fake_alpaca.add_history('QAAC', history.iloc[-1:])
+    elif shape == 'hole':
+        fake_alpaca.add_history('QAAC', history, gap_before_session=True)
     else:
-        fake_alpaca.add_history('QAAC', fake_alpaca.history['QAAC'], gap_before_session=True)
+        unread = history.copy()
+        unread.iloc[:-1, unread.columns.get_loc('Volume')] = float('nan')
+        fake_alpaca.add_history('QAAC', unread)
     rep, data, _ = evening(tmp_path, wide)
     run, tol = data['run'], data['run']['input_tolerance']
     cov = run['coverage']
@@ -926,9 +986,9 @@ def test_a_stock_whose_history_begins_tonight_does_not_degrade_the_night(
     if first:
         assert rep.status == 'ok' and run['problems'] == [], rep.problems
         assert (tol['verdict'], tol['first_sessions'], tol['first_session_stocks']) == ('tolerated', ['QAAC'], 1)
-        assert '1 returned frame (QAAC) had no bar before 2026-09-10 at all' in tol['sentence']
+        assert "1 returned frame (QAAC) had no bar before 2026-09-10 in this run's request window" in tol['sentence']
         assert tol['sentence'] in data['cover']['dek']
-        assert 'No bar before 2026-09-10 at all: QAAC.' in report.digest_html(data)
+        assert 'No bar before 2026-09-10 in the request window: QAAC.' in report.digest_html(data)
     else:
         assert rep.status == 'degraded', rep.problems
         assert (tol['verdict'], tol['reasons'], tol['first_sessions']) == ('not_tolerated', ['other_exceptions'], [])
@@ -961,6 +1021,29 @@ def test_a_stale_frame_under_an_open_model_plan_keeps_the_night_degraded(
             ['stale frames under open model plans: AAA']
     else:
         assert (tol['verdict'], tol['held']) == ('tolerated', []) and data['run']['problems'] == []
+    report.validate(data)
+
+
+def test_a_frame_with_no_earlier_bar_under_an_open_model_plan_keeps_the_night_degraded(
+        wide, claude, fake_resend, fake_alpaca, tmp_path):
+    """A plan made on a ticker's earlier bars, whose frame tonight carries the
+    session's bar alone: the provider returned none of the history the plan
+    was made on, so the plan cannot be walked. It is held as a stale frame is,
+    and the problem names it for what it is, never as stale."""
+    from src import inputs, record, report
+    rep, data, _ = evening(tmp_path, wide)
+    assert rep.status == 'ok' and data['trades'] == ['AAA'], rep.problems
+    fake_alpaca.add_history('AAA', fake_alpaca.history['AAA'].iloc[-1:])
+    rep, data, _ = evening(tmp_path, wide, now=NEXT_EVENING)
+    assert rep.status == 'degraded', rep.problems
+    tol = data['run']['input_tolerance']
+    assert (tol['version'], tol['stale'], tol['first_sessions'], tol['first_session_stocks']) == \
+        (inputs.TOLERANCE_VERSION, 0, ['AAA'], 1)
+    assert (tol['verdict'], tol['reasons'], tol['held']) == ('not_tolerated', ['open_plan'], ['AAA'])
+    held = {p['ticker']: p['status'] for p in data['open_plans']}
+    assert 'AAA' in held and held['AAA'] not in record.FINISHED
+    assert [p['message'] for p in data['run']['problems'] if p['kind'] == 'coverage_thin'] == \
+        ['frames with no bar before the session under open model plans: AAA']
     report.validate(data)
 
 

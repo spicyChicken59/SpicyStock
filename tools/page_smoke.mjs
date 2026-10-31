@@ -4180,8 +4180,8 @@ async function checkStaleTolerance(browser, base) {
     follow.status === 'applied' && reads.verdict === 'complete' && reads.requested === 2,
     [thin.run.status, tol.verdict, follow.status, reads.verdict, reads.requested]);
   const pct = 'at most ' + (100 * thin.rules.pipeline.stale_tolerance_fraction) + '% of the intended stocks';
-  // the tolerance's third version (31 Oct 2026) counts a stock whose provider history
-  // begins on the session beside the stale tail; the fixture archives it and has none
+  // the tolerance's third version (31 Oct 2026) counts a stock with no bar before the
+  // session in the request window beside the stale tail; the fixture archives it and has none
   check('thin: the fixture archives the first-session rule and names no first session',
     thin.rules.pipeline.input_tolerance_version === 3 && tol.version === 3 && tol.first_session_stocks === 0 &&
     Array.isArray(tol.first_sessions) && tol.first_sessions.length === 0,
@@ -4218,9 +4218,9 @@ async function checkStaleTolerance(browser, base) {
         method.includes('reads every session each of them missed again') && !method.includes('ending on the previous session'), method.slice(0, 900));
       check(tag + ': Method says the tolerance held', method.includes('Stale tolerance: tolerated — ' + tol.stale_stocks + ' stale stock against a limit of ' + tol.limit + '.'), method);
       check(tag + ': Method states the first-session rule the record archived', method.includes('stale frames ending within the ' +
-        thin.rules.pipeline.stale_sessions_max + ' sessions before it and stocks whose provider history begins on the session — ' + pct + ' together') &&
-        method.includes('(a stock whose history begins on the session missed none)'), method.slice(0, 900));
-      check(tag + ': the page names no first session the record did not', !coverage.includes('No bar before') && !method.includes('no earlier bar') && !dek.includes('no bar before'), coverage.slice(-300));
+        thin.rules.pipeline.stale_sessions_max + ' sessions before it and stocks with no bar before the session in the run\u2019s request window — ' + pct + ' together') &&
+        method.includes('(a stock with no earlier bar missed none)'), method.slice(0, 900));
+      check(tag + ': the page names no first session the record did not', !coverage.includes('No bar before') && !/with no earlier bar against a limit/.test(method) && !dek.includes('no bar before'), coverage.slice(-300));
       check(tag + ': Method prints the follow-up', method.includes('Stale follow-up: ' + follow.sentence), method);
       // which of the stale stocks the seed alone asked for: this fixture's universe is an
       // explicit list, so the record says it cannot tell, and the page prints that verbatim
@@ -4325,8 +4325,9 @@ async function checkStaleTolerance(browser, base) {
         sentence: 'The stale stock is on the seed alone, not in the directory this run selected from: QAB. A seed name that has stopped trading stays stale every night until it is retired from data/symbols.txt by hand.' };
     },
     'a half-written seed check': (d) => { d.run.seed_stale = { version: 1 }; },
-    // a stock whose provider history begins on the session (LCU on 19 Oct 2026, NORD on
-    // 30 Oct): a gapped frame with no bar before it at all, counted beside the stale tail.
+    // a stock with no bar before the session in the request window (the case LCU on the
+    // 19 Oct 2026 revision and NORD on 30 Oct may have been): every row dated the session,
+    // counted beside the stale tail.
     // The sentence is the record's and is printed as written; the page adds the counts and
     // the names, each read off the block
     // (a limit of 2, as 2% of these 100 stocks gives, so the two together are within it)
@@ -4418,30 +4419,30 @@ async function checkStaleTolerance(browser, base) {
       } else if (name === 'a first session beside the stale tail') {
         const t = d.run.input_tolerance;
         check('thin ' + name + ': the dek counts both and the one verdict', dek.includes(' 1 fetched frame was stale; 1 stock had no bar before ' + evaluatedWords + ', within the recorded tolerance.'), dek);
-        check('thin ' + name + ': the coverage line names the first session after the stale names', coverage.includes(' bar: ' + t.names.join(', ') + '. No bar before ' + evaluatedWords + ' at all: QAAC.'), coverage.slice(-400));
+        check('thin ' + name + ': the coverage line names the first session after the stale names', coverage.includes(' bar: ' + t.names.join(', ') + '. No bar before ' + evaluatedWords + ' in the request window: QAAC.'), coverage.slice(-400));
         check('thin ' + name + ': Method counts both against the limit', method.includes('Stale tolerance: tolerated — 1 stale stock and 1 stock with no earlier bar against a limit of ' + t.limit + '.'), method);
         check('thin ' + name + ': the chip stays fresh', /^fresh/.test(chip), chip);
       } else if (name === 'a first session alone') {
         const t = d.run.input_tolerance;
         check('thin ' + name + ': the dek counts the first session and no stale frame', dek.includes(' Incomplete coverage. 1 stock had no bar before ' + evaluatedWords + ', within the recorded tolerance.') && !dek.includes('stale'), dek);
-        check('thin ' + name + ': the coverage line names it and no stale stock', coverage.includes('No bar before ' + evaluatedWords + ' at all: QAAC.') && !coverage.includes('Without a '), coverage.slice(-400));
+        check('thin ' + name + ': the coverage line names it and no stale stock', coverage.includes('No bar before ' + evaluatedWords + ' in the request window: QAAC.') && !coverage.includes('Without a '), coverage.slice(-400));
         check('thin ' + name + ': Method counts it alone', method.includes('Stale tolerance: tolerated — 1 stock with no earlier bar against a limit of ' + t.limit + '.') && !method.includes('0 stale stock'), method);
       } else if (name === 'first sessions past the limit') {
         check('thin ' + name + ': the chip says degraded', /^degraded/.test(chip), chip);
         check('thin ' + name + ': the dek does not claim the tolerance', !dek.includes('within the recorded tolerance') && dek.includes(' 1 fetched frame was stale; 2 stocks had no bar before ' + evaluatedWords + '.'), dek);
         check('thin ' + name + ': Method names both against the limit', method.includes('Stale tolerance: not tolerated — 1 stale stock and 2 stocks with no earlier bar against a limit of ') &&
           method.includes('(more stale stocks and stocks with no earlier bar than the limit)'), method);
-        check('thin ' + name + ': the coverage line names both', coverage.includes('No bar before ' + evaluatedWords + ' at all: QAAC, QAAD.'), coverage.slice(-400));
+        check('thin ' + name + ': the coverage line names both', coverage.includes('No bar before ' + evaluatedWords + ' in the request window: QAAC, QAAD.'), coverage.slice(-400));
       } else if (name === 'first sessions counted, not named') {
         check('thin ' + name + ': the dek still counts it', dek.includes('1 stock had no bar before ' + evaluatedWords), dek);
         check('thin ' + name + ': the coverage line names none it was not given', !coverage.includes('No bar before'), coverage.slice(-400));
         check('thin ' + name + ': Method still counts it', method.includes('1 stale stock and 1 stock with no earlier bar'), method);
       } else if (name === 'a record from before the first-session rule') {
         check('thin ' + name + ': Method keeps the second version\'s rule', method.includes('stale frames ending within the ' + d.rules.pipeline.stale_sessions_max + ' sessions before it — ' + pct + ',') &&
-          !method.includes('history begins') && !method.includes('together,'), method.slice(0, 900));
+          !method.includes('no bar before the session') && !method.includes('together,'), method.slice(0, 900));
         check('thin ' + name + ': Method says the tolerance held as it did', method.includes('Stale tolerance: tolerated — 1 stale stock against a limit of '), method);
       } else if (name === 'a second-version block carrying first sessions') {
-        check('thin ' + name + ': the page reads no first session off a second-version block', !coverage.includes('No bar before') && !method.includes('no earlier bar') && !dek.includes('no bar before'), [dek, coverage.slice(-300)]);
+        check('thin ' + name + ': the page reads no first session off a second-version block', !coverage.includes('No bar before') && !/with no earlier bar against a limit/.test(method) && !dek.includes('no bar before'), [dek, coverage.slice(-300)]);
       } else if (name === 'a half-written seed check') {
         check('thin ' + name + ': Method prints no seed check it cannot quote', !method.includes('Seed check:') && !coverage.includes('seed alone'), method.slice(0, 600));
       } else {

@@ -100,11 +100,11 @@ Two tolerances decide whether a night is called degraded, and nothing else
 (P): no grade, gate, plan, ticket or measurement reads them. A stale tail of at
 most 1% of the intended stocks, each ending within the 5 sessions before the
 session evaluated, is counted and named with where each frame ends, and read
-again by the next session's run at every session it missed; stocks whose
-provider history begins on the session evaluated (no bar before it at all, as on
-an exchange listing's first day) are counted beside that tail against the same
-limit and never measured, since there is no session before to measure a move
-against; refusals by reader authority or the
+again by the next session's run at every session it missed; stocks with no bar
+before the session evaluated in the run's request window (every row dated that
+session, as on an exchange listing's first day) are counted beside that tail
+against the same limit and never measured, since there is no session before to
+measure a move against; refusals by reader authority or the
 discovery contract within a quarter
 of the night's reads, or within one if that is more, with every other read accepted (at least one) and none on a name the
 regime would have planned, are counted by cause. A stale stock is still an
