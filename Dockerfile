@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -9,11 +8,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY requirements.txt requirements-host.txt ./
-# A managed build may supply its CA bundle as a temporary BuildKit secret.
-# Public builds use the image's normal trust store; no proxy or CA is retained.
-RUN --mount=type=secret,id=proxy_ca \
-    if [ -f /run/secrets/proxy_ca ]; then export PIP_CERT=/run/secrets/proxy_ca; fi; \
-    python -m pip install --no-cache-dir -r requirements-host.txt
+# No build secret and no RUN --mount. Railway's builder refused the earlier
+# file, which mounted an optional proxy_ca secret ("The Dockerfile failed
+# validation", 30 October 2026). Railway does not support secret mounts, and it
+# accepts a cache mount only when the mount's id carries the service's own id,
+# which this file does not hard-code. A build behind an intercepting proxy
+# supplies its certificate outside this file (docs/operations/morning-railway.md).
+RUN python -m pip install --no-cache-dir -r requirements-host.txt
 
 RUN groupadd --gid 10000 morning \
     && useradd --uid 10001 --gid morning --no-create-home --shell /usr/sbin/nologin morning-writer \

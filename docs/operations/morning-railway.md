@@ -130,9 +130,28 @@ Do not paste credentials into chat, logs, code, Docker `ARG`/`ENV` instructions,
 image layers or command arguments. The root launcher receives Railway's runtime
 variables and constructs sanitized child environments. Only the worker command
 receives the Alpaca pair; the reader and synchronizer do not. Unrelated application
-secrets are not needed. Railway needs no custom CA setting for this deployment;
-the optional Docker build secret `proxy_ca` exists only for a managed local build
-that requires its environment's trusted proxy certificate.
+secrets are not needed. Railway needs no custom CA setting for this deployment.
+
+The `Dockerfile` uses no build secret and no `RUN --mount`. Railway's builder
+refused the first deployment of the earlier file, which mounted an optional
+`proxy_ca` secret, with "The Dockerfile failed validation. Please check the build
+logs for more details." (30 October 2026); the message names no line. Read only
+in search excerpts: Railway's forum quotes its builder refusing a secret mount
+("other mount types are not supported") and a staff reply that secret mounts are
+not supported, and Railway's Dockerfile documentation requires a cache mount's id
+to carry the service's own id. The earlier file's syntax directive was removed
+too; nothing read shows Railway refuses one.
+
+A local build behind an intercepting proxy needs that proxy's certificate for
+pip, and the committed file carries none. Build from a copy kept outside the
+checkout whose install line reads
+
+    RUN --mount=type=bind,from=ca,source=ca-bundle.crt,target=/tmp/proxy-ca.crt \
+        PIP_CERT=/tmp/proxy-ca.crt python -m pip install --no-cache-dir -r requirements-host.txt
+
+with `docker buildx build --build-context ca=<directory holding ca-bundle.crt>
+-f <copy> .` from the checkout. A bind mount is not written into a layer, so the
+image keeps no proxy certificate.
 
 ## Bring up and verify
 
