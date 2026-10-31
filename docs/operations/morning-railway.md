@@ -19,7 +19,7 @@ alone; a query string 400, POST and OPTIONS 405 with `Allow: GET`, any other pat
 page from this checkout under the site's own origin and lets only the endpoint
 through: the browser sends that origin and no cookie or referer, and reads the 503.
 The first receipt can come only in an applicable session's window (Monday 2
-November 2026, 7:30 to 9:00 AM CT, for the 30 October publication). Live-session
+November 2026, 8:00 to 9:00 AM CT, for the 30 October publication). Live-session
 acceptance -- ten consecutive expected sessions -- is not established here.
 
 Use the repository's root `Dockerfile` and `requirements-host.txt`. The image

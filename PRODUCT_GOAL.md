@@ -63,7 +63,7 @@ existing Alpaca pair, automatic deploys off), and its HTTPS route was read from
 outside: `/healthz` 200, `/morning.json` 503 with no receipt yet (a weekend), CORS
 for the site's origin alone, and every other method, path and query refused. The
 site's endpoint tag names that route once its release is reviewed. What is still
-open: the first in-window receipt (Monday 2 November 2026, 7:30 to 9:00 AM CT), ten
+open: the first in-window receipt (Monday 2 November 2026, 8:00 to 9:00 AM CT), ten
 consecutive expected sessions, and measured usage against the $20 plan. See the
 [Railway runbook](docs/operations/morning-railway.md).
 

@@ -13105,7 +13105,7 @@ Two mutants each fail their named check, and the control passes 131/131:
 - the helper returning the shell unchanged: the guard fails, and two status checks fail because they read the live service;
 - the endpoint suite back on its literal replace: four request checks fail.
 
-The morning, status, endpoint-reader, finder and focus suites pass 2901/2901; continuity 137; decision inspection 257/257. **The pull request is held until the first in-window receipt from Railway is read** (Monday 2 November, 7:30 to 9:00 AM CT, for the 30 October publication, a RED night with no ticket: a delivery check, not quote coverage), as the runbook orders.
+The morning, status, endpoint-reader, finder and focus suites pass 2901/2901; continuity 137; decision inspection 257/257. **The pull request is held until the first in-window receipt from Railway is read** (Monday 2 November, 8:00 to 9:00 AM CT (14:00 to 15:00 UTC, after the US clock change), for the 30 October publication, a RED night with no ticket: a delivery check, not quote coverage), as the runbook orders.
 
 **Lead, not worked.** The service answers 503 both when the store holds no receipt for the current publication and when it cannot be read. The page says *The published morning file could not be read* for either. A 404 for the first would let the page say no check has run yet.
 
