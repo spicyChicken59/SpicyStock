@@ -16,10 +16,15 @@ on:
         required: false
         default: true
       probe_sec:
-        description: "Ask SEC for its ticker mapping and each fixed issuer's submissions (AAPL, ZIM), as a transport diagnostic printed to the log that names any index rows the collector's row rules refuse; needs dry_run, publishes nothing and collects no candidate."
+        description: "Ask SEC for its ticker mapping and each issuer's submissions (AAPL and ZIM, or those probe_tickers names), as a transport diagnostic printed to the log that names any index rows the collector's row rules refuse; needs dry_run, publishes nothing and collects no candidate."
         type: boolean
         required: false
         default: false
+      probe_tickers:
+        description: "With probe_sec: up to 4 tickers to ask for instead of AAPL and ZIM, spelled as SEC's mapping spells them (a class share with a hyphen, BRK-B), space- or comma-separated; empty asks for AAPL and ZIM."
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -83,7 +88,8 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sec == true
         env:
           SCAN_SEND_EMAIL: "false"
-        run: python -m tools.probe_sec_access --output "$RUNNER_TEMP/sec-probe.json"
+          PROBE_TICKERS: ${{ inputs.probe_tickers }}
+        run: python -m tools.probe_sec_access --output "$RUNNER_TEMP/sec-probe.json" --tickers "$PROBE_TICKERS"
       - name: Retain the SEC diagnostic separately
         if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sec == true
         uses: actions/upload-artifact@v4

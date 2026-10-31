@@ -471,8 +471,9 @@ def test_issuer_trigger_is_publication_bound_and_has_no_recursion_or_new_cron():
     assert on['workflow_run'] == {'workflows': [load('evening.yml')['name'], load('morning.yml')['name']],
                                   'types': ['completed'], 'branches': ['main']}
     assert on['workflow_dispatch']['inputs']['dry_run']['default'] is True
-    assert set(on['workflow_dispatch']['inputs']) == {'dry_run', 'probe_sec'}
+    assert set(on['workflow_dispatch']['inputs']) == {'dry_run', 'probe_sec', 'probe_tickers'}
     assert on['workflow_dispatch']['inputs']['probe_sec']['default'] is False
+    assert on['workflow_dispatch']['inputs']['probe_tickers']['default'] == ''
     assert wf['concurrency'] == {'group': 'issuer-evidence', 'cancel-in-progress': False}
     assert wf['permissions'] == {'contents': 'read', 'actions': 'read'}
 
@@ -510,8 +511,11 @@ def test_sec_probe_is_opt_in_rehearsal_only_separately_retained_and_never_persis
     artifact = current['Retain the SEC diagnostic separately']
     only = "github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sec == true"
     assert probe['if'] == artifact['if'] == only
-    assert probe['env'] == {'SCAN_SEND_EMAIL': 'false'}
-    assert probe['run'] == 'python -m tools.probe_sec_access --output "$RUNNER_TEMP/sec-probe.json"'
+    # The named tickers reach the probe through the environment, never spliced
+    # into the command, and the probe refuses anything but exchange tickers.
+    assert probe['env'] == {'SCAN_SEND_EMAIL': 'false', 'PROBE_TICKERS': '${{ inputs.probe_tickers }}'}
+    assert probe['run'] == ('python -m tools.probe_sec_access --output "$RUNNER_TEMP/sec-probe.json" '
+                            '--tickers "$PROBE_TICKERS"')
     assert artifact['with']['path'] == '${{ runner.temp }}/sec-probe.json'
     assert artifact['with']['name'] == 'sec-probe-${{ github.run_id }}-${{ github.run_attempt }}'
     assert 'docs' not in artifact['with']['path']

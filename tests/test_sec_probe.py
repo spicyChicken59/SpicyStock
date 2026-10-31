@@ -1,4 +1,4 @@
-"""The SEC access diagnostic: fixed requests through the collector's transport, no address."""
+"""The SEC access diagnostic: requests for a few issuers through the collector's transport, no address."""
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -111,10 +111,10 @@ def test_an_answer_that_does_not_establish_the_issuer_is_not_access():
     assert transport.calls == [issuer_evidence.MAPPING_URL]
     assert one(result)["identity"] == {"status": "unverified", "cik": None, "name": None, "reason": "identity_unverified"}
     assert result["answered"] is False
-    assert result["sentence"] == "SEC answered, and the answer did not establish every fixed issuer (AAPL)."
+    assert result["sentence"] == "SEC answered, and the answer did not establish every issuer asked for (AAPL)."
     other, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: submissions(tickers=("MSFT",))})
     assert one(other)["submissions"]["status"] == "invalid" and other["answered"] is False
-    assert other["sentence"] == "SEC answered, and the answer did not establish every fixed issuer (AAPL)."
+    assert other["sentence"] == "SEC answered, and the answer did not establish every issuer asked for (AAPL)."
     empty, _ = run({issuer_evidence.MAPPING_URL: b""})
     assert empty["requests"][0]["outcome"] == "invalid_response" and empty["answered"] is False
 
@@ -165,12 +165,12 @@ def test_the_diagnostic_cannot_reach_public_files_overwrite_or_carry_the_address
 
 def test_main_prints_the_result_and_hides_a_raw_failure(tmp_path, monkeypatch, capsys):
     result, _ = run({issuer_evidence.MAPPING_URL: issuer_evidence.SourceError("http_error", http_status=403)})
-    monkeypatch.setattr(probe, "probe", lambda: result)
+    monkeypatch.setattr(probe, "probe", lambda tickers: result)
     assert probe.main(["--output", str(tmp_path / "out.json")]) == 0
     printed = capsys.readouterr().out
     assert json.loads(printed) == result == json.loads((tmp_path / "out.json").read_text())
 
-    def broken():
+    def broken(tickers):
         raise RuntimeError("secret detail from a raw response")
 
     monkeypatch.setattr(probe, "probe", broken)
@@ -279,7 +279,7 @@ def test_rules_that_drift_from_the_collectors_are_said_and_never_read_as_access(
     assert submissions["status"] == "classification_mismatch" and submissions["invalid_count"] == 1
     assert submissions["rejected_rows"]["count"] == 0
     assert result["answered"] is False
-    assert result["sentence"] == "SEC answered, and the answer did not establish every fixed issuer (AAPL)."
+    assert result["sentence"] == "SEC answered, and the answer did not establish every issuer asked for (AAPL)."
 
 
 def test_the_fixed_issuers_are_asked_after_one_mapping():
@@ -299,7 +299,7 @@ def test_the_fixed_issuers_are_asked_after_one_mapping():
     partial = probe.probe(transport=other, clock=lambda: AT)
     assert other.calls == [issuer_evidence.MAPPING_URL, SUBMISSIONS]
     assert partial["issuers"][1]["identity"]["status"] == "unverified" and partial["answered"] is False
-    assert partial["sentence"] == "SEC answered, and the answer did not establish every fixed issuer (ZIM)."
+    assert partial["sentence"] == "SEC answered, and the answer did not establish every issuer asked for (ZIM)."
 
 
 def test_a_form_the_collector_never_stores_is_read_under_its_rendering_directory():
@@ -310,3 +310,32 @@ def test_a_form_the_collector_never_stores_is_read_under_its_rendering_directory
     submissions = one(result)["submissions"]
     assert submissions["invalid_count"] == 0 and submissions["filings_in_window"] == 3
     assert submissions["rejected_rows"] == {"count": 0, "by_rule": {}, "by_form": {}, "rows": []}
+
+
+@pytest.mark.parametrize("text,expected", [
+    ("", probe.TICKERS), ("  ", probe.TICKERS), ("MCS QGEN", ("MCS", "QGEN")), ("MCS,QGEN", ("MCS", "QGEN")),
+    ("BRK-B", ("BRK-B",)), ("BF-B ZIM", ("BF-B", "ZIM")), ("GOOGL", ("GOOGL",)), ("ABCDE-FG", ("ABCDE-FG",)),
+    ("MCS QGEN BF-B ZIM", ("MCS", "QGEN", "BF-B", "ZIM"))])
+def test_a_dispatch_may_name_the_issuers_to_ask_for(text, expected):
+    assert probe.tickers_from(text) == expected
+
+
+@pytest.mark.parametrize("text", ["mcs", "A B C D E", "MCS MCS", "TOOLONG", "A;rm", "$(x)", "A/B", "AAPL\nZIM..",
+                                  "BRK.B", "ABCDEF", "BRK-ABC", "A1", "-B", "BRK-"])
+def test_anything_but_up_to_four_distinct_exchange_tickers_is_refused(text):
+    with pytest.raises(ValueError):
+        probe.tickers_from(text)
+
+
+def test_main_asks_for_the_named_issuers_and_refuses_malformed_ones_before_any_request(tmp_path, monkeypatch, capsys):
+    asked = []
+    monkeypatch.setattr(probe, "probe", lambda tickers=probe.TICKERS: asked.append(tickers) or {"tickers": list(tickers)})
+    monkeypatch.setattr(probe, "write_probe", lambda output, result: json.dumps(result) + "\n")
+    assert probe.main(["--output", str(tmp_path / "a.json"), "--tickers", "MCS QGEN"]) == 0
+    assert asked == [("MCS", "QGEN")]
+    assert probe.main(["--output", str(tmp_path / "b.json")]) == 0
+    assert asked[-1] == probe.TICKERS
+    capsys.readouterr()
+    assert probe.main(["--output", str(tmp_path / "c.json"), "--tickers", "MCS; rm -rf /"]) == 2
+    assert asked == [("MCS", "QGEN"), probe.TICKERS] and not (tmp_path / "c.json").exists()
+    assert capsys.readouterr().out.startswith("SEC access diagnostic refused: tickers must be")

@@ -1,9 +1,10 @@
-"""A fixed-issuer SEC access diagnostic, never a publication or an event check.
+"""An SEC access diagnostic for a few issuers, never a publication or an event check.
 
 The issuer collector asks SEC only for a night's candidates, and a night with
 no admitted plan and no known-event exclusion has none, so a red week can pass
 without one request that would show whether SEC answers. This asks for the
-ticker mapping and for each fixed issuer's submissions, through the
+ticker mapping and for each issuer's submissions (AAPL and ZIM, or up to four
+a dispatch names), through the
 collector's own transport: its User-Agent, its spacing, its deadline, its
 refused redirects and its size bounds. The result carries no publication
 binding, candidate, filing excerpt or order; it is printed to the job log and
@@ -32,6 +33,11 @@ SCHEMA = "spicystock-sec-probe-v2"
 #: the first issuer whose collection reached SEC (24 October 2026) and read
 #: partial on refused index rows. The mapping must name each exactly once.
 TICKERS = ("AAPL", "ZIM")
+#: A dispatch may name other issuers instead (``--tickers``): at most this many,
+#: each spelled as SEC's ticker mapping spells it, which the collector matches
+#: exactly: a class share with a hyphen (BRK-B), never the exchange's dot.
+MAX_TICKERS = 4
+TICKER = re.compile(r"[A-Z]{1,5}(?:-[A-Z]{1,2})?\Z")
 #: The rejected rows printed per issuer; every one is counted whatever this is.
 MAX_REJECTED_ROWS = 24
 #: A refused field's value is printed at most this long, in these characters.
@@ -206,7 +212,7 @@ def sentence(answered, requests, issuers):
     if failed is None:
         named = ", ".join(i["ticker"] for i in issuers
                           if i["identity"]["status"] != "verified" or i["submissions"]["status"] != "parsed")
-        return f"SEC answered, and the answer did not establish every fixed issuer ({named})."
+        return f"SEC answered, and the answer did not establish every issuer asked for ({named})."
     status = f"HTTP {failed['http_status']}" if failed["http_status"] is not None else failed["outcome"]
     return f"SEC did not answer the {failed['phase']} request from this runner: {status}."
 
@@ -224,12 +230,29 @@ def write_probe(output: Path, result: dict):
     return payload
 
 
+def tickers_from(text):
+    """The issuers a dispatch named, or the fixed ones when it named none; refused whole if any is malformed."""
+    words = [w for w in re.split(r"[\s,]+", text or "") if w]
+    if not words:
+        return TICKERS
+    if len(words) > MAX_TICKERS or len(set(words)) != len(words) \
+            or not all(TICKER.fullmatch(w) for w in words):
+        raise ValueError("tickers must be at most %d distinct exchange tickers" % MAX_TICKERS)
+    return tuple(words)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--tickers", default="", help="issuers to ask for instead of AAPL and ZIM")
     args = parser.parse_args(argv)
     try:
-        payload = write_probe(args.output, probe())
+        tickers = tickers_from(args.tickers)
+    except ValueError as error:
+        print(f"SEC access diagnostic refused: {error}.")
+        return 2
+    try:
+        payload = write_probe(args.output, probe(tickers=tickers))
     except Exception:
         # Never log a raw exception: it can carry a request detail.
         print("SEC access diagnostic failed; no raw error was logged.")
