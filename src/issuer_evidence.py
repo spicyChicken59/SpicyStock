@@ -232,8 +232,9 @@ def _unnamed(form, document):
     refuses only for its doubled dot. The row is counted under every other row
     rule; its document is never read, listed, linked or fetched. A current
     report or an acquisition form must still name one plain document, as
-    before, and every other shape (a directory, a leading dot, another
-    character, a non-string) is still refused.
+    before, and every other shape (a directory other than the XSL rendering
+    path ``_rendered`` reads, a leading dot, another character, a non-string)
+    is still refused.
     """
     if not (isinstance(form, str) and isinstance(document, str)) or form in FORMS or form in ACQUISITION_FORMS:
         return False
@@ -687,7 +688,7 @@ def _parse_rows(columns, as_of):
     _require(all(not isinstance(values, list) or len(values) == count for values in columns.values()), "submissions extra column lengths")
     out, invalid, dates = [], 0, []
     window = as_of.date() - timedelta(days=LOOKBACK_DAYS)
-    valid = []
+    valid, refused_listed = [], set()
     for i in range(count):
         item = {"accession": columns["accessionNumber"][i], "form": columns["form"][i],
                 "filing_date": columns["filingDate"][i], "report_date": columns["reportDate"][i] or None,
@@ -705,13 +706,14 @@ def _parse_rows(columns, as_of):
             _require(filing_day <= as_of.date(), "future filing date")
         except (ValueError, TypeError):
             invalid += 1
+            refused_listed.add(json.dumps(columns["accessionNumber"][i], sort_keys=True))
             continue
         valid.append((item, filing_day, unnamed))
-    # An unnamed copy of an accession SEC also lists differently -- beside a
-    # copy that names a usable document, or beside another unnamed copy that
-    # differs -- is refused, as every unnamed row was before it was counted;
-    # two copies that both name a usable document and differ still refuse the
-    # index. Equal copies are one row.
+    # An unnamed copy of an accession SEC lists again differently in this file
+    # -- beside a copy that names a usable document, another unnamed copy that
+    # differs, or a copy the row rules refuse -- is refused, as every unnamed
+    # row was before it was counted; two copies that both name a usable
+    # document and differ still refuse the index. Equal copies are one row.
     named, variants = set(), {}
     for item, _, unnamed in valid:
         if unnamed:
@@ -723,7 +725,8 @@ def _parse_rows(columns, as_of):
     seen, admitted_unnamed = {}, []
     for item, filing_day, unnamed in valid:
         accession = item["accession"]
-        if unnamed and (accession in named or len(variants[accession]) > 1):
+        if unnamed and (accession in named or len(variants[accession]) > 1
+                        or json.dumps(accession, sort_keys=True) in refused_listed):
             invalid += 1
             continue
         if accession in seen:
@@ -735,8 +738,8 @@ def _parse_rows(columns, as_of):
             admitted_unnamed.append(accession)
         if filing_day >= window:
             out.append(item)
-    # ``rows`` is every row read, in the window or before it, for the
-    # comparison with a history file's copies.
+    # ``rows`` holds one row per accession the rules admitted, in the window
+    # or before it, for the comparison with a history file's copies.
     return {"filings": out, "invalid_count": invalid, "unnamed": admitted_unnamed, "rows": seen,
             "range_start": min(dates) if dates else None, "range_end": max(dates) if dates else None}
 
@@ -1259,10 +1262,12 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
                 old = _parse_rows(_decode(raw, MAX_RESPONSE_BYTES), start)
                 fetcher.budget.check_time()
                 # Across the files the rule is the one inside a file: of two
-                # differing copies of an accession an unnamed copy is refused
-                # wherever it is read (both, when both are unnamed) and the named
-                # copy kept; two differing named copies in the window refuse this
-                # file, as before. A refused copy's date is not in the range.
+                # differing copies of an accession, each admitted by its own
+                # file, an unnamed copy is refused wherever it is read (both,
+                # when both are unnamed) and the named copy kept; two differing
+                # named copies in the window refuse this file, as before, and
+                # then none of its rows is read. A refused copy's date is not
+                # in the range.
                 old_unnamed = set(old["unnamed"])
                 twins = {accession for accession, item in old["rows"].items()
                          if accession in rows and rows[accession] != item}
@@ -1291,9 +1296,8 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
                 dated += [(accession, item["filing_date"]) for accession, item in old["rows"].items() if accession not in refused]
                 index["history_files_fetched"] += 1
                 index["history_sources"].append(history_source)
-                if dated:
-                    index["range_start"] = min(day for _, day in dated)
-                    index["range_end"] = max(day for _, day in dated)
+                index["range_start"] = min(day for _, day in dated) if dated else None
+                index["range_end"] = max(day for _, day in dated) if dated else None
                 if old["invalid_count"]:
                     _error(row, "metadata_invalid", history_url)
             except (SourceError, ValueError, KeyError, TypeError) as error:

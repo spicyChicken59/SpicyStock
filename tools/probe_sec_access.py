@@ -131,15 +131,16 @@ def unnamed_twins(columns, admitted):
     """The admitted rows the collector refuses as an unnamed copy of an accession it lists differently.
 
     Its own walk of ``_parse_rows``' rule, written apart from it: an unnamed
-    row is refused when SEC lists its accession again with a usable document,
-    or again unnamed and different; equal copies are one row.
+    row is refused when SEC lists its accession again in the same file with a
+    usable document, again unnamed and different, or in a row the row rules
+    refuse; equal copies are one row.
     """
     items = {i: _item(columns, i) for i in admitted}
-    copies = {}
-    for i in admitted:
-        copies.setdefault(items[i]["accession"], []).append(items[i])
+    accessions = columns["accessionNumber"]
+    def differs(i, j):
+        return j not in items or items[j] != items[i]
     return [i for i in admitted if _unnamed(items[i])
-            and any(other != items[i] for other in copies[items[i]["accession"]])]
+            and any(accessions[j] == accessions[i] and j != i and differs(i, j) for j in range(len(accessions)))]
 
 
 def rejected_rows(raw, as_of):

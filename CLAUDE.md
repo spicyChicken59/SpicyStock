@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5617 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5620 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -12952,15 +12952,15 @@ Each new test's mutant dies in it; a control survives.
 
 **The 30 October night, the first under request v3.**
 - Run published `e4063d25`. RED: down 4% count 490, against an alarm of 385.8. No ticket.
-- `run.reads` 1 of 2: CLMT's reply was refused by reader authority. The refusal floor (#182) tolerated it, its first live use (`verdict` `tolerated`, `refusal_limit` 1).
+- `run.reads` 1 of 2: CLMT's reply was refused by reader authority. The refusal floor (#182) tolerated it (`verdict` `tolerated`, `refusal_limit` 1), as it had on 19 and 20 October.
 - `run.reader_usage`: 2 calls, 16,973 input and 1,254 output tokens.
 - `degraded`: `run.input_tolerance` read `not_tolerated` on `other_exceptions`. 16 stale stocks, all ending 29 October, within 47; but one stock was missing the previous session, a gap the tolerance does not cover. Not worked here.
 - `run.delivery`: 319.7 minutes after completion, after both slots, before the next open.
 - One night and two names say nothing about request v3's acceptance rate.
 
 **The probe, with issuers named.** Run 41149821846 on `main` (`184e1578`) with `probe_tickers: "MCS QGEN"`. SEC answered all 3 requests.
-- MCS: 1 of 96 recent-index rows was refused on `primary_document`, an SC 13G/A naming `marcus.corp..txt`.
-- QGEN: 6 of 24 were refused, all SC 13G or 13G/A: three named a doubled-dot document, three named none.
+- MCS: one row of its recent index was refused on `primary_document`, an SC 13G/A naming `marcus.corp..txt` (96 admitted rows fell in the window).
+- QGEN: six rows were refused, all SC 13G or 13G/A: three named a doubled-dot document, three named none (24 admitted rows fell in the window).
 - QGEN's index was byte for byte the one its 30 October collection read (`98c75f54…`). MCS's had changed since 29 October (`54e41963…`, 151,981 bytes, then; `e3505edc…`, 151,744, on the probe). So for MCS the cause is inferred, not observed.
 
 **#205: count an unnamed row of a form the collector never stores.**
@@ -12970,7 +12970,8 @@ Each new test's mutant dies in it; a control survives.
   - `_basename`, `_filing`, `_sec_url` and every validator are unchanged.
 - **Duplicate accessions.** Where SEC lists one accession more than once and the copies differ, an unnamed copy is refused wherever it is read and the named copy is kept. Two differing unnamed copies are both refused.
   - A refused copy counts as one invalid row of its file, and its date is not in the range.
-  - Two differing named copies still refuse the recent index, or the history file, as before.
+  - An unnamed copy beside a copy in its own file that the row rules refuse is refused too.
+  - Two differing named copies still refuse the recent index, or the history file when both are in the window, as before; a refused history file is not read, so its copies refuse nothing.
 - **The reason sentence.** An index that is partial only on `metadata_invalid`, and whose range reaches the window, carries `REFUSED_ROWS_REASON`, not the missing-history sentence.
 - **The page** printed every index reason with two full stops; it now strips the reason's own.
 - **The probe:**
@@ -12987,6 +12988,10 @@ Each new test's mutant dies in it; a control survives.
     - the probe's docstring and schema version;
     - five wording errors, including the MCS bytes.
   - Not upheld, by either skeptic: a case or whitespace variant of a stored form (`8-K `) being counted. The PR keeps the exact form sets the collector lists by.
+- **A second review over `0a09a635`** (`wf_71287756-50b`, two lenses, two skeptics a finding) ran an 800-case recent/history fuzz on both commits and an independent oracle of the stated rule; both matched, and the probe agreed with the collector on 1,811 random in-file indexes. Upheld by both skeptics and fixed:
+  - when every row of both files is a refused copy, the range kept the refused recent copy's date; it is unknown now;
+  - an unnamed copy beside a copy the row rules refuse was counted (main refused both); it is refused now, and the probe names both;
+  - five wording errors (this checkpoint's MCS "1 of 96" and "first live use" among them).
 - **Mutation pass over the fixes,** each mutant in a detached worktree, judged by the two issuer test files: eleven mutants, each dying in the test named for its rule, and a comment control surviving.
   - The mutants: both in-file clauses, displacement, refusal, the range, out-of-window twins, the recent error, the probe's walk, its twin rule, its filing date, and the reason.
   - On the page, reverting the full-stop fix fails 8 of the issuer suite's 645 checks.

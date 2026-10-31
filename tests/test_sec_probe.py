@@ -327,6 +327,17 @@ TWINS = [
 ]
 
 
+def test_a_copy_the_row_rules_refuse_refuses_its_unnamed_twin_and_the_probe_names_both():
+    rows = [good_row(0), good_row(1, form="SC 13G", primaryDocument="", items=""),
+            good_row(1, form="SC 13G", primaryDocument="a/b.txt", items="")]
+    raw = rows_submissions(rows)
+    assert issuer_evidence.parse_submissions(raw, CIK, "AAPL", AT)["invalid_count"] == 2
+    result, _ = run({issuer_evidence.MAPPING_URL: mapping(), SUBMISSIONS: raw})
+    submissions = one(result)["submissions"]
+    assert submissions["status"] == "parsed" and submissions["invalid_count"] == 2
+    assert submissions["rejected_rows"]["by_rule"] == {"primary_document": 1, probe.TWIN_RULE: 1}
+
+
 @pytest.mark.parametrize("name, copies, refused", TWINS, ids=[name for name, _, _ in TWINS])
 def test_an_unnamed_copy_of_a_listed_accession_is_refused_by_the_collector_and_named_by_the_probe(name, copies, refused):
     rows = [good_row(0)] + [good_row(1, form=form, primaryDocument=document, items="") for form, document in copies]

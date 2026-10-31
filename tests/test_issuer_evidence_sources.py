@@ -533,6 +533,10 @@ def test_an_unnamed_row_is_held_to_every_other_row_rule_and_keeps_secs_value():
     bad = [dict(good[0], accessionNumber="bad"), dict(good[0], filingDate="2026-10-5"), dict(good[1], items=None),
            dict(good[1], acceptanceDateTime="2026-10-11T06:20:00Z"), dict(good[1], form=""),
            dict(good[0], form="8-K"), dict(good[1], form="SC 14D9"), dict(good[0], primaryDocument="a/b..txt")]
+    # Each refused row is its own accession: a refused copy of a good row's
+    # accession would refuse that unnamed row too (the twin rule's own test).
+    bad = [dict(row, accessionNumber=row["accessionNumber"] if row["accessionNumber"] == "bad"
+                else f"0001654126-26-{100 + n:06d}") for n, row in enumerate(bad)]
     parsed = issuer._parse_rows(_index(good + bad), NOW)
     assert parsed["invalid_count"] == len(bad)
     # The row keeps SEC's value; only the check reads a fixed name in its place.
@@ -645,6 +649,24 @@ def test_an_unnamed_history_copy_before_the_window_is_refused_and_does_not_stret
     issuer.validate_bundle(result["receipt_bytes"], result["bundle_bytes"])
 
 
+def test_when_every_row_is_a_refused_copy_the_range_is_unknown(producer, canonical):
+    data = producer.aapl_submissions()
+    original = deepcopy(data["filings"]["recent"])
+    twin = {"accessionNumber": "0000320193-26-009100", "form": "SC 13G", "filingDate": "2026-10-08",
+            "reportDate": "2026-10-08", "acceptanceDateTime": "2026-10-08T16:00:00Z", "items": ""}
+    data["filings"]["recent"] = {key: [dict(twin, primaryDocument="")[key]] for key in original}
+    data["filings"]["files"] = [{"name": "CIK0000320193-submissions-001.json", "filingCount": 1,
+                                  "filingFrom": "2024-01-01", "filingTo": "2026-10-08"}]
+    historical = {key: [dict(twin, primaryDocument="x..txt")[key]] for key in original}
+    archive_url = "https://data.sec.gov/submissions/CIK0000320193-submissions-001.json"
+    fetch = producer.transport(edits={producer.AAPL_SUBMISSIONS: raw_json(data), archive_url: raw_json(historical)})
+    result = producer.collect(canonical, fetch=fetch)
+    row = next(row for row in result["bundle"]["issuers"] if row["ticker"] == "AAPL")
+    assert row["index"]["metadata_count"] == 0
+    assert (row["index"]["range_start"], row["index"]["range_end"]) == (None, None)
+    issuer.validate_bundle(result["receipt_bytes"], result["bundle_bytes"])
+
+
 def test_a_named_acquisition_form_in_the_history_is_kept_over_an_unnamed_recent_copy(producer, canonical):
     row, archive_url = _cross_file(producer, canonical, ("SC 13G", ""), ("DEFM14A", "merger.htm"))
     review = row["index"]["acquisition_review"]
@@ -684,12 +706,14 @@ def test_two_named_copies_across_the_index_and_its_history_still_refuse_the_hist
     ([("SC 13G", ""), ("SC 13G", "x..txt")], 2),
     ([("SC 13G", ""), ("SC 13G", "x..txt"), ("SC 13G", "x.txt")], 2),
     ([("SC 13G", ""), ("SC 13G", "")], 0),
+    # A copy the row rules refuse (a directory) refuses its unnamed twin too, as on main.
+    ([("SC 13G", ""), ("SC 13G", "a/b.txt")], 2),
 ])
 def test_an_unnamed_copy_of_an_accession_listed_differently_in_one_file_is_refused_not_the_index(copies, refused):
     rows = [_row(1, "6-K", "a.htm")] + [_row(2, form, document) for form, document in copies]
     parsed = issuer._parse_rows(_index(rows), NOW)
     assert parsed["invalid_count"] == refused
-    named = [d for _, d in copies if issuer._basename(d)]
+    named = [d for f, d in copies if issuer._basename(d) or issuer._rendered(f, d)]
     kept = named[:1] or ([copies[0][1]] if refused == 0 else [])
     assert [f["primary_document"] for f in parsed["filings"]] == ["a.htm", *kept]
     # In either order, the same rows are refused and kept.
