@@ -57,14 +57,17 @@ records the offline controls without claiming live-session acceptance.
 
 ## Morning host deployed — 31 October 2026
 
-The first row of the table above is in place: the owner deployed the morning host
-on Railway (one service, a durable volume, US East, worker enabled with the
+Part of the first row of the table above is in place: the owner deployed the
+morning host on Railway (one service, a durable volume, US East, worker enabled with the
 existing Alpaca pair, automatic deploys off), and its HTTPS route was read from
 outside: `/healthz` 200, `/morning.json` 503 with no receipt yet (a weekend), CORS
 for the site's origin alone, and every other method, path and query refused. The
 site's endpoint tag names that route once its release is reviewed. What is still
-open: the first in-window receipt (Monday 2 November 2026, 8:00 to 9:00 AM CT), ten
-consecutive expected sessions, and measured usage against the $20 plan. See the
+open: the first in-window receipt (Monday 2 November 2026, 8:00 to 9:00 AM CT, when
+the worker first may ask the provider anything, so entitlement is unconfirmed until
+then), ten consecutive expected sessions with measured pre-open arrival and expiry,
+restart and provider-failure behaviour on that host, and measured usage against the
+$20 plan. See the
 [Railway runbook](docs/operations/morning-railway.md).
 
 ## Release status — 9 October 2026

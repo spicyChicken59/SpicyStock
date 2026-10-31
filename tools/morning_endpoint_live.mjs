@@ -4,8 +4,13 @@
    served from this checkout under https://spicychicken59.github.io/SpicyStock/, so the
    browser sends the origin the service's CORS rule names; only the endpoint named by
    the committed `spicystock-morning-endpoint` tag is let through to the network, and
-   every other off-origin request is refused. It prints what the browser sent and was
-   answered, and what the page made of it, and changes nothing anywhere.
+   every other off-origin request is refused. It prints what the browser sent (which
+   headers, never their values) and was answered, and what the page made of it, and
+   changes nothing anywhere. It exits 1 when the endpoint never answered.
+
+   The page binds a receipt to the publication bytes it loaded, which here are this
+   checkout's docs/: run it on a checkout at main's current publication, or a valid
+   receipt for main's newer publication reads as another publication's.
 
    node tools/morning_endpoint_live.mjs [--shots <dir>] */
 import { readFile, stat, mkdir } from 'node:fs/promises';
@@ -58,11 +63,13 @@ try {
   if (r) answered.push({ status: r.status(), headers: await r.allHeaders() });
   await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'), null, { timeout: 30000 });
   await page.waitForFunction(() => window.SCStock && SCStock.observations && !['unbound', 'loading'].includes(SCStock.observations.facts().state), null, { timeout: 30000 }).catch(() => {});
-  const facts = await page.evaluate(() => { const f = SCStock.observations.facts(); return { state: f.state, headline: f.headline, generated_at: f.generatedAt || null, fresh: f.fresh, publication_bound: f.canonicalHash || null }; });
+  const facts = await page.evaluate(() => { const f = SCStock.observations.facts(); return { state: f.state, headline: f.headline, generated_at: f.generatedAt || null, fresh: f.fresh, checkout_publication_sha256: f.canonicalHash || null }; });
   const said = await page.evaluate(() => { const n = document.querySelector('[data-morning-observations], #morning-observations, [data-observations]'); return n ? n.textContent.replace(/\s+/g, ' ').trim().slice(0, 300) : null; });
   if (shots) { await mkdir(shots, { recursive: true }); await page.screenshot({ path: path.join(shots, 'morning-endpoint-live.png'), fullPage: false }); }
-  const keep = h => Object.fromEntries(Object.entries(h).filter(([k]) => ['origin', 'referer', 'cookie', 'authorization'].includes(k)));
+  // which of these the browser sent, never what: a value could be a credential
+  const keep = h => ({ origin: h.origin || null, referer: 'referer' in h, cookie: 'cookie' in h, authorization: 'authorization' in h });
   const show = h => Object.fromEntries(Object.entries(h).filter(([k]) => ['access-control-allow-origin', 'cache-control', 'vary', 'etag', 'content-type'].includes(k)));
   console.log(JSON.stringify({ endpoint, at: new Date().toISOString(), requests: sent.map(keep), responses: answered.map(a => ({ status: a.status, headers: show(a.headers) })),
     page: { ...facts, said }, refused_off_origin: [...new Set(refused)], page_errors: errors }, null, 2));
+  if (!answered.length) process.exitCode = 1;
 } finally { await browser.close(); }

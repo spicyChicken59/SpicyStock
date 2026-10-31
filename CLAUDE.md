@@ -13082,7 +13082,7 @@ Five survivors were equivalent. Two skeptics refuted a finding about a PR-body s
 - healthcheck `/healthz` at 120 seconds, restart Always, serverless off, automatic deploys disabled;
 - the worker enabled with the existing Alpaca pair, entered in Railway's Variables by the owner's agent and never in chat.
 
-The owner set the Compute alert and hard limit $5 above the $20 plan himself, and they stay. The deploy log shows the reader, the sync and the worker each starting and finishing with exit code 0 on a Saturday: the worker skips provider work outside a session.
+The owner set the Compute alert and hard limit $5 above the $20 plan himself, and they stay. The deploy log shows the reader started (it runs until the service stops and never logs a finish), and the sync and the worker each starting and finishing with exit code 0 on a Saturday: the worker skips provider work outside a session.
 
 **Read from outside** (this session, once the owner allowed the host in its network settings):
 

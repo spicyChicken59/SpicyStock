@@ -9,8 +9,9 @@ workspace's Compute alert and hard limit $5 above it by hand, and they stay as s
 `PORT` 8080, healthcheck `/healthz` at 120 seconds, restart Always, serverless off,
 automatic deploys disabled. Its HTTPS route is
 `https://spicystock-production.up.railway.app`. With the worker enabled (the
-existing Alpaca pair in the service's Variables) the deploy log shows the reader,
-the 300-second sync and the 30-second worker each starting and finishing with exit
+existing Alpaca pair in the service's Variables) the deploy log shows the reader
+started (it runs until the service stops, so it never logs a finish) and the
+300-second sync and the 30-second worker each starting and finishing with exit
 code 0 on a weekend, where the worker skips provider work. Read from outside on
 31 October: `/healthz` 200 with `no-store`; `/morning.json` 503 `unavailable` (no
 receipt yet: a weekend), `no-store`, `Vary: Origin`, CORS for the site's origin
