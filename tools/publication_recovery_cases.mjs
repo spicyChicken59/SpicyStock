@@ -5,6 +5,7 @@ import { createServer } from 'node:http';
 import { readFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import { offline } from './offline_shell.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..'), NOW = '2026-09-11T13:35:00Z';
 const KEY = 'spicystock:handoff:v1', DEADLINE = 15000;
@@ -57,7 +58,10 @@ export async function checkPublicationRecovery({ browser, check, eq, shotsDir })
       if (url.pathname === '/docs/issuer-evidence.json') { res.writeHead(404); res.end('No issuer observation in this recovery control.'); return; }
       const override = url.pathname === '/docs/app.js' ? process.env.SCSTOCK_APP
         : url.pathname === '/docs/app-morning.js' ? process.env.SCSTOCK_MORNING : null;
-      const file = path.join(ROOT, decodeURIComponent(url.pathname)), body = await readFile(override || file);
+      const file = path.join(ROOT, decodeURIComponent(url.pathname));
+      let body = await readFile(override || file);
+      // the shell names the deployed morning endpoint; this suite reads its own fixture receipt
+      if (file === path.join(ROOT, 'docs', 'index.html')) body = offline(body.toString('utf8'));
       res.writeHead(200, { 'content-type': mime[path.extname(file)] || 'application/octet-stream' }); res.end(body);
     } catch { res.writeHead(404); res.end('not found'); }
   });

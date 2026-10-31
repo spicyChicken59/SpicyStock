@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5661 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5664 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -13106,6 +13106,8 @@ Two mutants each fail their named check, and the control passes 131/131:
 - the endpoint suite back on its literal replace: four request checks fail.
 
 The morning, status, endpoint-reader, finder and focus suites pass 2901/2901; continuity 137; decision inspection 257/257. **The pull request is held until the first in-window receipt from Railway is read** (Monday 2 November, 8:00 to 9:00 AM CT (14:00 to 15:00 UTC, after the US clock change), for the 30 October publication, a RED night with no ticket: a delivery check, not quote coverage), as the runbook orders.
+
+**CI found the harness the survey missed.** The page job on `c2249a10` timed out in the publication-recovery suite. That suite runs its own server, which served the shell unchanged, so the page read the live endpoint in place of the suite's fixture receipt and waited for a *loaded* state that never came. My survey had looked for page loads, not for servers. The suite's server blanks the endpoint now (139/139). `tests/test_offline_shell.py` holds every tool that runs a server or a DOM to blanking it, or to an exemption that says why it never serves the shell (the chart check serves its own harness page). Without the fix the test names the suite, and an exemption that stops being true fails too.
 
 **Lead, not worked.** The service answers 503 both when the store holds no receipt for the current publication and when it cannot be read. The page says *The published morning file could not be read* for either. A 404 for the first would let the page say no check has run yet.
 
