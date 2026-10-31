@@ -13002,3 +13002,70 @@ Each new test's mutant dies in it; a control survives.
 - request v3's acceptance rate;
 - a morning check for any ticket;
 - any trading edge.
+
+## Checkpoint, 31 Oct 2026 -- #205 accepted; a stock with no bar before the session counted beside the stale tail (#206)
+
+**#205, accepted.** Merged as `f0c0e499` on `main` at 04:31 UTC on 31 October. On the merge commit: Tests 41168911961 passed, Secret scan 41168911946 passed, the dashboard publisher 41168911911 succeeded and Pages 41168932667 deployed (41168911559 cancelled as superseded). The 30 October retry slot (`16 0`, run 41173017896) was created at 05:32 UTC, 316 minutes late. Its guard skipped publication, and the issuer run its completion started (41173065409) skipped collection at its guard. `main` did not move.
+
+**What the record showed.** Two publications were each degraded by one gapped frame alone, a stock new to that night's directory:
+- the 19 October revision `d179f206`, an *Evening backfill* re-run made on 20 October, with LCU (the first 19 October publication, `a34a2978`, had no gapped frame);
+- the 30 October publication `e4063d25`, with NORD.
+
+`run.input_tolerance` read each `not_tolerated` / `other_exceptions` ("missing the previous session"). Both nights' reads were within the refusal tolerance. The records carry the gapped count, its identity and the sample, and nothing that says whether the frame had any earlier row.
+
+**The rule (`pipeline.input_tolerance_version`, 3).**
+- `market_data.history_begins_on()` (into `DownloadStats.first_session`) finds a gapped frame every row of which the provider dated the session. That is how an exchange listing's first day looks in the 260-session request window.
+- It is decided on the rows themselves, not on `drop_gapped()`'s map. That map gives the session itself both to such a frame and to one whose earlier rows it cannot read.
+- Such stocks are counted beside the stale stocks against the same 1% limit, named in `first_sessions` (counted and not named past `STALE_NAMES_MAX`) and never measured.
+- A frame with any earlier row -- a hole, or unreadable rows -- is the gap it always was.
+- An open plan on such a stock is held and named "frames with no bar before the session under open model plans".
+- The version is archived, so `rules_version` moves. The validator holds a block to the version its rules archived: rules that archive none are held to version 2, and a version-2 block carrying the fields is refused.
+- The sentence, the mail ("No bar before X in the request window: Y."), the cover dek, the coverage line and Method say it, and Method states the rule each record archived.
+- The ledger and its acceptance are unchanged: a status rule only.
+
+**Projected over the record** (read-only, each retained publication's blocks re-derived under version 3): `d179f206` and `e4063d25` become tolerated *if* their one gapped frame had no earlier row; no other retained verdict moves.
+
+**CI found what the sandbox's focused runs had not.** The two new fields grow the red fixture's rest by 45 bytes (7.5 a burst), within the publication ceiling's headroom. `test_the_rests_tripwires_spread_a_difference_not_a_mean` held "no tripwire moves" with a burst removed, which is true only while the rest had not grown at all: the first shape this file names. It now holds each counted tripwire unmoved and the rest's whole difference equal. A mean of the rest, and a spread over the baseline's burst count, each fail it.
+
+**The review, worked.** A workflow by execution over `2b57a0b2`: three lenses, two skeptics per finding. Every upheld finding was reproduced here before it was touched.
+
+The defects:
+- A frame whose earlier rows came back unreadable (NaN close or volume, or an unreadable stamp) was called a first session, and its night published green with a false sentence. Upheld by both skeptics.
+- The words claimed "the provider's history begins on X". A stock resuming after a halt longer than the window looks the same, so the words now say only what the request window shows.
+- An open plan on such a stock was named "stale".
+- A version-2 block carrying the fields validated, and the mail printed its names.
+- A named shape fault was re-read into "block is malformed".
+- README, the code comments and the PR stated LCU's and NORD's missing history as fact.
+
+The tests lens ran its own mutants. Sixteen survivors were holes, each closed in `36a3a3df` with a case that fails for its own rule:
+- the over-limit sentence with first sessions;
+- the plural;
+- the not-tolerated tail;
+- each membership clause of the validator on the forgery only it sees;
+- the names bound on both sides (a list carried past it is now refused);
+- an unknown version (the writer had taken 3.0, since `3.0 == 3`; it is type-strict now);
+- the evening's benchmark argument;
+- two page guards.
+
+Five survivors were equivalent. Two skeptics refuted a finding about a PR-body sentence already corrected.
+
+**Recorded, not fixed.** The ledger carries no per-frame fact that tells a first session from a hole. A block relabelling a hole as a first session re-derives cleanly, and past 8 gapped frames a name outside the ledger's sample is checked only when every gapped frame is claimed.
+
+**Mutation passes**, each mutant in a detached worktree, judged by the whole test files naming its rule:
+- over `bd3e7fb2`: 11 mutants (`history_begins_on`'s three readings, the old map, the benchmark, the early return, the version-2 fields, the mail gate, the held problem, the held union, the request-window words), all dead, a control alive;
+- over the test-hole commit: 15 mutants, all dead in their named tests, a control alive;
+- page: two routed mutants of the guards, each failing its named check (353/354), a control 354/354.
+
+**Measured** (this sandbox, Python 3.12.3, Node 22, Chromium through Playwright 1.56.1):
+- full suite at `2b57a0b2`: 5612 passed and 34 skipped; its one failure was the tripwire fixed in `03ed2834`;
+- at `36a3a3df`: `test_inputs` and `test_docs` pass with 5661 collected;
+- every fixture and cascade `--check` current;
+- the `inputs` browser suite 354/354, with first-session screenshots at 390 and 1280 looked at;
+- CI: green on `03ed2834` and `bd3e7fb2`.
+
+**Not claimable:**
+- a live night with a stock new to the directory under version 3;
+- that LCU or NORD had no earlier provider bar;
+- Railway serving the morning host;
+- a morning check for any ticket;
+- any trading edge.
