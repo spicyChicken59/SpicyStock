@@ -199,6 +199,9 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
       ['irrelevant form', x => { x.filings[0].filing.form = '10-K'; }],
       ['bare proxy form', x => { x.filings[0].filing.form = 'DEF 14A'; }],
       ['dotted primary document', x => { x.filings[0].filing.primary_document = '.'; }],
+      // an acquisition form is linked by its document: the counted-only row rule never reaches it
+      ['doubled-dot primary document', x => { x.filings[0].filing.primary_document = 'issuer.n.v..htm'; }],
+      ['empty primary document', x => { x.filings[0].filing.primary_document = ''; }],
       ['foreign index source', x => { x.filings[0].index_source.url = 'https://data.sec.gov/submissions/CIK0001654126.json'; }],
       ['altered source digest', x => { x.filings[0].index_source.raw_sha256 = '0'.repeat(64); }],
       ['out of window', x => { x.filings[0].filing.filing_date = '2025-01-01'; }],
@@ -336,6 +339,16 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
       eq(name + ' genuine semantic producer result is readable', (await status(page)).state, 'loaded');
       await page.locator('[data-issuer-choice]').selectOption('burst:AAPL');
       check(name + ' keeps its observed index scope', (await bodyText(page)).includes('· ' + coverage));
+      // The index sentence carries its reason once, ending in one full stop.
+      check(name + ' ends the index reason with one full stop', !/\.\. Observed range/.test(await bodyText(page)));
+      if (name === 'metadata-invalid' || name === 'rows-invalid') {
+        check(name + ' says refused rows, not missing history, when the range reaches the window',
+          (await bodyText(page)).includes('the row rules refuse were not read; their content is not cleared. Observed range'));
+      }
+      if (name === 'short-index') {
+        check('a short index still says its history was not established',
+          (await bodyText(page)).includes('has not been established; older content is not cleared. Observed range'));
+      }
       eq(name + ' presents only actually retained documents', await page.locator('[data-issuer-document]').count(), documents);
       // The review block's state follows the index that produced it: a verified issuer whose
       // only in-window row was refused observed nothing and checked nothing (unknown, in its own
@@ -544,6 +557,16 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
       await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
       eq('coherently altered primary ' + name + ' diagnostic is refused', (await status(page)).state, 'unavailable');
       eq('coherently altered primary ' + name + ' leaves no invalid source link', await page.locator('[data-issuer-error]').count(), 0);
+    }
+    // a listed current report beyond the three selected is guarded by the filing rule alone
+    for (const [name, filename] of [['a doubled-dot', 'aapl..htm'], ['an empty', '']]) {
+      transport.current = changed(null, b => {
+        const index = b.issuers[0].index, filing = index.listed_filings[index.listed_filings.length - 1];
+        if (index.selected_accessions.includes(filing.accession)) throw new Error('fixture lists no unselected report');
+        filing.primary_document = filename;
+      });
+      await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
+      eq('an unselected listed report with ' + name + ' document is refused', (await status(page)).state, 'unavailable');
     }
     transport.current = variants['http-denied']; await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
     eq('genuine HTTP403 receipt reloads after diagnostic refusals', (await status(page)).state, 'loaded');

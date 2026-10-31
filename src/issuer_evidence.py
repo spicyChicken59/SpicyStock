@@ -65,6 +65,16 @@ BASENAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.\-]{0,199}\Z")
 #: directory of the XSL stylesheet that renders it: ``xslF345X06/form4.xml``.
 #: Read only for a form the collector never stores or fetches (``_rendered``).
 RENDITION = re.compile(r"xsl[A-Za-z0-9_]{1,64}/(.+)\Z", re.S)
+#: SEC also lists some filings with no primary document at all, or with a
+#: name that carries a doubled dot (``marcus.corp..txt``): every such row its
+#: probe named on 31 October 2026 (run 41149821846) was a Schedule 13G or
+#: 13G/A, one of Marcus Corp's and six of Qiagen's. For a form the collector
+#: never stores or fetches the row is held to every other row rule by this
+#: name in place of its own, which is never used (``_unnamed``).
+UNNAMED = "unnamed"
+#: An index whose observed range reaches its window, partial only because rows
+#: SEC lists failed the row rules: those rows were not read.
+REFUSED_ROWS_REASON = "The index reaches the window, but rows SEC lists that the row rules refuse were not read; their content is not cleared."
 # Merger-proxy and tender-offer forms, with their amendments. Version 2 of the
 # review block (always written, zero and unknown said out loud, every listed
 # filing naming the retained index it was read from) under the key version 1
@@ -213,6 +223,22 @@ def _rendered(form, document):
         return None
     match = RENDITION.fullmatch(document)
     return match.group(1) if match and _basename(match.group(1)) else None
+
+
+def _unnamed(form, document):
+    """True when a row of a form the collector neither stores nor fetches names no usable document.
+
+    An empty document, or one name (no directory) that the basename rule
+    refuses only for its doubled dot. The row is counted under every other row
+    rule; its document is never read, listed, linked or fetched. A current
+    report or an acquisition form must still name one plain document, as
+    before, and every other shape (a directory other than the XSL rendering
+    path ``_rendered`` reads, a leading dot, another character, a non-string)
+    is still refused.
+    """
+    if not (isinstance(form, str) and isinstance(document, str)) or form in FORMS or form in ACQUISITION_FORMS:
+        return False
+    return document == "" or (bool(BASENAME.fullmatch(document)) and ".." in document)
 
 
 def _publication(raw):
@@ -662,7 +688,7 @@ def _parse_rows(columns, as_of):
     _require(all(not isinstance(values, list) or len(values) == count for values in columns.values()), "submissions extra column lengths")
     out, invalid, dates = [], 0, []
     window = as_of.date() - timedelta(days=LOOKBACK_DAYS)
-    seen = {}
+    valid, refused_listed = [], set()
     for i in range(count):
         item = {"accession": columns["accessionNumber"][i], "form": columns["form"][i],
                 "filing_date": columns["filingDate"][i], "report_date": columns["reportDate"][i] or None,
@@ -671,22 +697,50 @@ def _parse_rows(columns, as_of):
         try:
             item["accepted_at"] = _iso(item["accepted_at"])
             # A row listed under its XSL rendering directory is held to every
-            # other rule by its document's own name; the row keeps SEC's path.
+            # other rule by its document's own name, and an unnamed row of a
+            # form never stored by a fixed name; the row keeps SEC's value.
             rendered = _rendered(item["form"], item["primary_document"])
-            _filing(item if rendered is None else dict(item, primary_document=rendered), as_of)
+            unnamed = rendered is None and _unnamed(item["form"], item["primary_document"])
+            _filing(item if rendered is None and not unnamed else dict(item, primary_document=rendered or UNNAMED), as_of)
             filing_day = _day(item["filing_date"])
             _require(filing_day <= as_of.date(), "future filing date")
         except (ValueError, TypeError):
             invalid += 1
+            refused_listed.add(json.dumps(columns["accessionNumber"][i], sort_keys=True))
             continue
-        if item["accession"] in seen:
-            _require(item == seen[item["accession"]], "conflicting duplicate accession")
+        valid.append((item, filing_day, unnamed))
+    # An unnamed copy of an accession SEC lists again differently in this file
+    # -- beside a copy that names a usable document, another unnamed copy that
+    # differs, or a copy the row rules refuse -- is refused, as every unnamed
+    # row was before it was counted; two copies that both name a usable
+    # document and differ still refuse the index. Equal copies are one row.
+    named, variants = set(), {}
+    for item, _, unnamed in valid:
+        if unnamed:
+            copies = variants.setdefault(item["accession"], [])
+            if item not in copies:
+                copies.append(item)
+        else:
+            named.add(item["accession"])
+    seen, admitted_unnamed = {}, []
+    for item, filing_day, unnamed in valid:
+        accession = item["accession"]
+        if unnamed and (accession in named or len(variants[accession]) > 1
+                        or json.dumps(accession, sort_keys=True) in refused_listed):
+            invalid += 1
             continue
-        seen[item["accession"]] = item
+        if accession in seen:
+            _require(item == seen[accession], "conflicting duplicate accession")
+            continue
+        seen[accession] = item
         dates.append(item["filing_date"])
+        if unnamed:
+            admitted_unnamed.append(accession)
         if filing_day >= window:
             out.append(item)
-    return {"filings": out, "invalid_count": invalid,
+    # ``rows`` holds one row per accession the rules admitted, in the window
+    # or before it, for the comparison with a history file's copies.
+    return {"filings": out, "invalid_count": invalid, "unnamed": admitted_unnamed, "rows": seen,
             "range_start": min(dates) if dates else None, "range_end": max(dates) if dates else None}
 
 
@@ -1192,6 +1246,8 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
     index.update(range_start=parsed["range_start"], range_end=parsed["range_end"], history_files_advertised=len(parsed["history"]))
     filings = {filing["accession"]: filing for filing in parsed["filings"]}
     filing_sources = {accession: source for accession in filings}
+    rows, unnamed = dict(parsed["rows"]), set(parsed["unnamed"])
+    dated = [(accession, item["filing_date"]) for accession, item in rows.items()]
     if parsed["invalid_count"]:
         _error(row, "metadata_invalid", url)
     history = [h for h in parsed["history"] if _day(h["filing_to"]) >= _day(index["window_start"])
@@ -1205,16 +1261,43 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
                 raw, history_source = fetcher.get(history_url)
                 old = _parse_rows(_decode(raw, MAX_RESPONSE_BYTES), start)
                 fetcher.budget.check_time()
+                # Across the files the rule is the one inside a file: of two
+                # differing copies of an accession, each admitted by its own
+                # file, an unnamed copy is refused wherever it is read (both,
+                # when both are unnamed) and the named copy kept; two differing
+                # named copies in the window refuse this file, as before, and
+                # then none of its rows is read. A refused copy's date is not
+                # in the range.
+                old_unnamed = set(old["unnamed"])
+                twins = {accession for accession, item in old["rows"].items()
+                         if accession in rows and rows[accession] != item}
+                in_window = {filing["accession"] for filing in old["filings"]}
+                _require(all(accession in unnamed | old_unnamed for accession in twins
+                             if accession in filings and accession in in_window), "conflicting history accession")
+                refused = twins & old_unnamed
+                displaced = twins & unnamed
+                old["invalid_count"] += len(refused)
+                for accession in displaced:
+                    filings.pop(accession, None)
+                    filing_sources.pop(accession, None)
+                    del rows[accession]
+                unnamed -= displaced
+                if displaced and {"code": "metadata_invalid", "source_url": url} not in row["errors"]:
+                    _error(row, "metadata_invalid", url)
                 for filing in old["filings"]:
-                    _require(filing["accession"] not in filings or filings[filing["accession"]] == filing, "conflicting history accession")
-                for filing in old["filings"]:
-                    filings[filing["accession"]] = filing
-                    filing_sources.setdefault(filing["accession"], history_source)
+                    if filing["accession"] not in refused:
+                        filings[filing["accession"]] = filing
+                        filing_sources.setdefault(filing["accession"], history_source)
+                for accession, item in old["rows"].items():
+                    if accession not in refused:
+                        rows.setdefault(accession, item)
+                unnamed |= old_unnamed - refused
+                dated = [(accession, day) for accession, day in dated if accession not in displaced]
+                dated += [(accession, item["filing_date"]) for accession, item in old["rows"].items() if accession not in refused]
                 index["history_files_fetched"] += 1
                 index["history_sources"].append(history_source)
-                if old["range_start"] is not None:
-                    index["range_start"] = min(filter(None, (index["range_start"], old["range_start"])))
-                    index["range_end"] = max(filter(None, (index["range_end"], old["range_end"])))
+                index["range_start"] = min(day for _, day in dated) if dated else None
+                index["range_end"] = max(day for _, day in dated) if dated else None
                 if old["invalid_count"]:
                     _error(row, "metadata_invalid", history_url)
             except (SourceError, ValueError, KeyError, TypeError) as error:
@@ -1222,7 +1305,9 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
                        http_status=error.http_status if isinstance(error, SourceError) else None, phase="history")
     full_window = index["range_start"] is not None and index["range_start"] <= index["window_start"]
     index["coverage_status"] = "observed_window" if full_window and not row["errors"] else "partial"
-    index["reason"] = None if index["coverage_status"] == "observed_window" else "The full requested index history has not been established; older content is not cleared."
+    refused_only = full_window and all(error["code"] == "metadata_invalid" for error in row["errors"])
+    index["reason"] = (None if index["coverage_status"] == "observed_window" else REFUSED_ROWS_REASON if refused_only
+                       else "The full requested index history has not been established; older content is not cleared.")
     if not full_window:
         _error(row, "history_incomplete")
     ordered = sorted(filings.values(), key=lambda f: (f["accepted_at"], f["accession"]), reverse=True)

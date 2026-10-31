@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5505 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5620 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -12926,4 +12926,79 @@ Each new test's mutant dies in it; a control survives.
 - a live night under request v3;
 - that the acceptance rate holds;
 - a morning check for any of the week's tickets;
+- any trading edge.
+
+## Checkpoint, 31 Oct 2026 -- #202 to #205: the first night under request v3, the probe that names its issuers, a Railway build, and the SEC rows the collector only counts
+
+**#202, #203 and #204, accepted.**
+- **#202** (request v3) merged as `0a995dd7` at 23:26 UTC on 30 October. Tests run 41144514304 on that merge passed.
+- **#203** merged as `184e1578`, from head `0f247bba`, which passed all seven checks on Tests run 41146630460. It gives `issuer-evidence.yml` a `probe_tickers` dispatch input: up to four distinct tickers in SEC's hyphen spelling, passed through the environment to `tools.probe_sec_access --tickers`; anything else is refused whole, with exit 2, before any request.
+- **#204** merged as `053e1c64`, from head `adcfe7b9`, which passed all seven checks on Tests run 41153040747.
+
+**#204: the Railway build.** Railway refused the first deployment of the morning host on 30 October (23:5x UTC). The message, in full: "The Dockerfile failed validation. Please check the build logs for more details."
+- The `Dockerfile` had mounted an optional `proxy_ca` BuildKit secret (`RUN --mount=type=secret`) and carried a syntax directive.
+- What Railway refuses was read only in search excerpts:
+  - its forum quotes its builder refusing a secret mount, and a staff reply that secret mounts are not supported;
+  - its Dockerfile documentation requires a cache mount's id to carry the service's own id.
+- The image now installs `requirements-host.txt` with a plain `RUN` and its normal trust store. Nothing else in the image moves.
+- `docs/operations/morning-railway.md` gives a local proxied build a bind-mount recipe. Built here (Docker 29.9.2, buildx 0.38.1):
+  - it installs the 45 host pins;
+  - no trace of the proxy certificate appears in the exported filesystem, the history or the provenance;
+  - it refuses to start with no volume;
+  - on a bind-mounted ext volume, `/healthz` answers 200 and `/morning.json` answers 503.
+- `tests/test_host_dockerfile.py` reads the file as Docker does: comments are dropped before continuations are joined, and a byte-order mark is stripped. It holds the file to: no `RUN --mount`, no syntax directive or build secret, no `VOLUME`, the exact install line, and the supervisor entrypoint.
+- Two reviews by execution. The second ran 17 agents, none errored. Neither found an image defect. Seven low findings were upheld and fixed: the two test-reader holes above, a misdated refusal, a misattribution, a test's name and two PR-body errors.
+- **Not claimable:** that Railway builds it. Mo deploys from `main`; `/healthz` on the service's domain is the first reading, and the page's `spicystock-morning-endpoint` meta tag stays empty until that endpoint is verified, in a reviewed change of its own.
+
+**The 30 October night, the first under request v3.**
+- Run published `e4063d25`. RED: down 4% count 490, against an alarm of 385.8. No ticket.
+- `run.reads` 1 of 2: CLMT's reply was refused by reader authority. The refusal floor (#182) tolerated it (`verdict` `tolerated`, `refusal_limit` 1), as it had on 19 and 20 October.
+- `run.reader_usage`: 2 calls, 16,973 input and 1,254 output tokens.
+- `degraded`: `run.input_tolerance` read `not_tolerated` on `other_exceptions`. 16 stale stocks, all ending 29 October, within 47; but one stock was missing the previous session, a gap the tolerance does not cover. Not worked here.
+- `run.delivery`: 319.7 minutes after completion, after both slots, before the next open.
+- One night and two names say nothing about request v3's acceptance rate.
+
+**The probe, with issuers named.** Run 41149821846 on `main` (`184e1578`) with `probe_tickers: "MCS QGEN"`. SEC answered all 3 requests.
+- MCS: one row of its recent index was refused on `primary_document`, an SC 13G/A naming `marcus.corp..txt` (96 admitted rows fell in the window).
+- QGEN: six rows were refused, all SC 13G or 13G/A: three named a doubled-dot document, three named none (24 admitted rows fell in the window).
+- QGEN's index was byte for byte the one its 30 October collection read (`98c75f54…`). MCS's had changed since 29 October (`54e41963…`, 151,981 bytes, then; `e3505edc…`, 151,744, on the probe). So for MCS the cause is inferred, not observed.
+
+**#205: count an unnamed row of a form the collector never stores.**
+- **Design.** A read-and-design workflow (`wf_340ec2f8-085`) ran four readers, three prototyped designs and two judges by execution. Both judges chose the narrowest design.
+- **The rule.** `issuer_evidence._unnamed()`, beside #201's `_rendered()`, counts such a row for a form outside `FORMS` and `ACQUISITION_FORMS` whose document is empty, or one name the basename rule refuses only for its doubled dot.
+  - The row is held to every other row rule by a fixed name, and is never read, listed, linked or fetched.
+  - `_basename`, `_filing`, `_sec_url` and every validator are unchanged.
+- **Duplicate accessions.** Where SEC lists one accession more than once and the copies differ, an unnamed copy is refused wherever it is read and the named copy is kept. Two differing unnamed copies are both refused.
+  - A refused copy counts as one invalid row of its file, and its date is not in the range.
+  - An unnamed copy beside a copy in its own file that the row rules refuse is refused too.
+  - Two differing named copies still refuse the recent index, or the history file when both are in the window, as before; a refused history file is not read, so its copies refuse nothing.
+- **The reason sentence.** An index that is partial only on `metadata_invalid`, and whose range reaches the window, carries `REFUSED_ROWS_REASON`, not the missing-history sentence.
+- **The page** printed every index reason with two full stops; it now strips the reason's own.
+- **The probe:**
+  - names an unnamed copy under `unnamed_twin`, from a walk written apart from the collector's;
+  - prints each refused row's filing date;
+  - its artifact schema is `spicystock-sec-probe-v3`.
+- **The branch probe** (run 41158793431) read the same index bytes. It parsed MCS and QGEN with no row refused and the same rows in the window (96 and 24), so every formerly refused row was older than the window.
+- **Review.** A review by execution over `b3da391f` (`wf_65ff82b2-be2`, four lenses, two skeptics per finding):
+  - One behaviour defect was upheld by both skeptics: across the recent index and its history file the first version kept an unnamed recent copy over a named history copy. That could drop an acquisition form `main` listed (implausible in real data).
+  - Upheld and fixed with it:
+    - an out-of-window refused history copy stretched the range;
+    - the two-unnamed-copies order dependence;
+    - two test holes (which copy is kept across files; the probe's printed value for a twin);
+    - the probe's docstring and schema version;
+    - five wording errors, including the MCS bytes.
+  - Not upheld, by either skeptic: a case or whitespace variant of a stored form (`8-K `) being counted. The PR keeps the exact form sets the collector lists by.
+- **A second review over `0a09a635`** (`wf_71287756-50b`, two lenses, two skeptics a finding) ran an 800-case recent/history fuzz on both commits and an independent oracle of the stated rule; both matched, and the probe agreed with the collector on 1,811 random in-file indexes. Upheld by both skeptics and fixed:
+  - when every row of both files is a refused copy, the range kept the refused recent copy's date; it is unknown now;
+  - an unnamed copy beside a copy the row rules refuse was counted (main refused both); it is refused now, and the probe names both;
+  - five wording errors (this checkpoint's MCS "1 of 96" and "first live use" among them).
+- **Mutation pass over the fixes,** each mutant in a detached worktree, judged by the two issuer test files: eleven mutants, each dying in the test named for its rule, and a comment control surviving.
+  - The mutants: both in-file clauses, displacement, refusal, the range, out-of-window twins, the recent error, the probe's walk, its twin rule, its filing date, and the reason.
+  - On the page, reverting the full-stop fix fails 8 of the issuer suite's 645 checks.
+
+**Not claimable:**
+- that MCS or QGEN read `observed_window` in production: the next collection with them as candidates shows it;
+- that Railway builds the image;
+- request v3's acceptance rate;
+- a morning check for any ticket;
 - any trading edge.
