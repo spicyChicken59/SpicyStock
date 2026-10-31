@@ -10,7 +10,7 @@ WORKDIR /app
 COPY requirements.txt requirements-host.txt ./
 # No build secret and no RUN --mount. Railway's builder refused the earlier
 # file, which mounted an optional proxy_ca secret ("The Dockerfile failed
-# validation", 31 October 2026). Railway does not support secret mounts, and it
+# validation", 30 October 2026). Railway does not support secret mounts, and it
 # accepts a cache mount only when the mount's id carries the service's own id,
 # which this file does not hard-code. A build behind an intercepting proxy
 # supplies its certificate outside this file (docs/operations/morning-railway.md).

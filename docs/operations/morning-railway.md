@@ -134,12 +134,13 @@ secrets are not needed. Railway needs no custom CA setting for this deployment.
 
 The `Dockerfile` uses no build secret and no `RUN --mount`. Railway's builder
 refused the first deployment of the earlier file, which mounted an optional
-`proxy_ca` secret, with "The Dockerfile failed validation" (31 October 2026); the
-message names no line. Railway's forum, read only in search excerpts, quotes its
-builder refusing a secret mount ("other mount types are not supported") and a
-staff reply that secret mounts are not supported, and requires a cache mount's id
-to carry the service's own id. The earlier file's syntax directive was removed too;
-nothing read shows Railway refuses one.
+`proxy_ca` secret, with "The Dockerfile failed validation. Please check the build
+logs for more details." (30 October 2026); the message names no line. Read only
+in search excerpts: Railway's forum quotes its builder refusing a secret mount
+("other mount types are not supported") and a staff reply that secret mounts are
+not supported, and Railway's Dockerfile documentation requires a cache mount's id
+to carry the service's own id. The earlier file's syntax directive was removed
+too; nothing read shows Railway refuses one.
 
 A local build behind an intercepting proxy needs that proxy's certificate for
 pip, and the committed file carries none. Build from a copy kept outside the
