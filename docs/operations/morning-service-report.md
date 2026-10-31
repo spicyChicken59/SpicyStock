@@ -94,4 +94,5 @@ Ten consecutive expected sessions are still a future operating validation,
 including valid no-ticket mornings and any observed failures.
 
 See [deployment and bring-up](morning-deployment.md) for process separation,
-provider bindings, scheduling and the unchanged empty browser-endpoint default.
+provider bindings, scheduling and the browser endpoint, which names the Railway
+service deployed on 31 October 2026 ([the Railway runbook](morning-railway.md)).

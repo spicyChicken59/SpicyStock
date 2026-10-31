@@ -55,6 +55,21 @@ records the offline controls without claiming live-session acceptance.
 | Actual expected-session observations after deployment | Required result 4; milestone 5 | Review ten consecutive expected sessions using publication evidence, worker history, independent public-arrival measurements and measured usage/costs, including no-ticket sessions. |
 | Owner/broker evidence for settled cash, available Fidelity order terms and any actual executions | Required results 2 and 5; milestone 4 | Verify account facts at Fidelity; compute actual results only from reported entry, exit, quantity and costs. Real orders require separate explicit instruction. |
 
+## Morning host deployed — 31 October 2026
+
+Part of the first row of the table above is in place: the owner deployed the
+morning host on Railway (one service, a durable volume, US East, worker enabled with the
+existing Alpaca pair, automatic deploys off), and its HTTPS route was read from
+outside: `/healthz` 200, `/morning.json` 503 with no receipt yet (a weekend), CORS
+for the site's origin alone, and every other method, path and query refused. The
+site's endpoint tag names that route once its release is reviewed. What is still
+open: the first in-window receipt (Monday 2 November 2026, 8:00 to 9:00 AM CT, when
+the worker first may ask the provider anything, so entitlement is unconfirmed until
+then), ten consecutive expected sessions with measured pre-open arrival and expiry,
+restart and provider-failure behaviour on that host, and measured usage against the
+$20 plan. See the
+[Railway runbook](docs/operations/morning-railway.md).
+
 ## Release status — 9 October 2026
 
 Milestone 1's core changes are merged in

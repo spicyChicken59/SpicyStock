@@ -8,6 +8,7 @@ import {gunzipSync} from 'node:zlib';
 import {webcrypto} from 'node:crypto';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { offline } from './offline_shell.mjs';
 const ROOT=path.resolve(import.meta.dirname,'..');
 const baseline=process.argv.includes('--baseline');
 const source=async file=>baseline?execFileSync('git',['show','0233b309a43d3c3f64d30ee974d2be15d1fcea28:'+file],{cwd:ROOT,encoding:'utf8'}):readFile(path.join(ROOT,file),'utf8');
@@ -25,7 +26,7 @@ const pause=()=>new Promise(r=>setTimeout(r,15));
 const hub=()=>({values:new Map(),windows:[],locks:new Map(),requests:[],fail:null});
 async function open(data, shared=hub()) {
  const errors=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>{if(!/Not implemented.*(navigation|scrollTo)/i.test(e.message))errors.push(e.message);});
- const dom=new JSDOM(await source('docs/index.html'),{url:'https://stock.test/docs/index.html',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:vc});const w=dom.window;
+ const dom=new JSDOM(offline(await source('docs/index.html')),{url:'https://stock.test/docs/index.html',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:vc});const w=dom.window;
  shared.windows.push(w);
  const storage={get length(){return shared.values.size},key(i){return [...shared.values.keys()][i]??null},getItem(k){if(shared.fail==='read')throw Error('read blocked');return shared.values.get(k)??null},setItem(k,v){if(shared.fail==='write'||shared.fail==='quota'&&String(v).length>4000)throw Error('quota');if(shared.fail==='readback'&&!k.endsWith('.probe'))return;const old=shared.values.get(k)??null;shared.values.set(k,String(v));if(old!==String(v))setTimeout(()=>{for(const other of shared.windows)if(other!==w&&!other.closed)other.dispatchEvent(new other.StorageEvent('storage',{key:k,oldValue:old,newValue:String(v)}));},0)},removeItem(k){shared.values.delete(k)},clear(){shared.values.clear()}};
  Object.defineProperty(w,'localStorage',{value:storage});

@@ -1,10 +1,27 @@
 # Railway morning-service runbook
 
-This is a prepared deployment procedure, not an installed Railway service or
-schedule. No production service URL, provider binding or live-session acceptance
-is established by this document. The browser endpoint remains empty until the
-real HTTPS route is verified. The approved monthly ceiling is **$20 total**;
-account access and the controls below must be verified before provisioning.
+This is the deployment procedure, and below it the record of the one service it
+produced. The approved monthly ceiling is **$20 total**; the owner set the
+workspace's Compute alert and hard limit $5 above it by hand, and they stay as set.
+
+**Deployed 31 October 2026.** One service, `SpicyStock`, in the workspace project
+"alert-possibility", US East, one replica, a volume mounted at `/srv/spicystock`,
+`PORT` 8080, healthcheck `/healthz` at 120 seconds, restart Always, serverless off,
+automatic deploys disabled. Its HTTPS route is
+`https://spicystock-production.up.railway.app`. With the worker enabled (the
+existing Alpaca pair in the service's Variables) the deploy log shows the reader
+started (it runs until the service stops, so it never logs a finish) and the
+300-second sync and the 30-second worker each starting and finishing with exit
+code 0 on a weekend, where the worker skips provider work. Read from outside on
+31 October: `/healthz` 200 with `no-store`; `/morning.json` 503 `unavailable` (no
+receipt yet: a weekend), `no-store`, `Vary: Origin`, CORS for the site's origin
+alone; a query string 400, POST and OPTIONS 405 with `Allow: GET`, any other path
+404, and two reads byte-identical. `node tools/morning_endpoint_live.mjs` loads the
+page from this checkout under the site's own origin and lets only the endpoint
+through: the browser sends that origin and no cookie or referer, and reads the 503.
+The first receipt can come only in an applicable session's window (Monday 2
+November 2026, 8:00 to 9:00 AM CT, for the 30 October publication). Live-session
+acceptance -- ten consecutive expected sessions -- is not established here.
 
 Use the repository's root `Dockerfile` and `requirements-host.txt`. The image
 starts `python -m src.morning_host`, which supervises the public Gunicorn reader,
@@ -180,7 +197,9 @@ image keeps no proxy certificate.
 5. Only after the real TLS route and browser behavior are verified, release its
    exact HTTPS URL ending `/morning.json` in the existing
    `spicystock-morning-endpoint` meta tag in `docs/index.html`. Keep the tag empty
-   until then. Use the normal reviewed Pages release and verify phone/desktop
+   until then. Every offline check serves a copy of the shell with the tag
+   blanked (`tools/offline_shell.mjs`), so no check reads the live service in place
+   of its fixtures; the page smoke holds the copy it serves to that. Use the normal reviewed Pages release and verify phone/desktop
    reads, source changes, outages and visible expiry. Do not add a static fallback
    when the configured dynamic route fails.
 6. Read back workspace spending limits and current/projected costs. Check disk

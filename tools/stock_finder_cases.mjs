@@ -5,6 +5,7 @@
 import { readFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import { offline } from './offline_shell.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const FIXTURE = '/tests/fixtures/page/full.json', NOW = '2026-09-10T22:31:00Z';
@@ -197,7 +198,7 @@ export async function checkStockFinder({ browser, base, open, check, eq, shotsDi
 
   // A cached shell can predate this optional shortcut while requesting newer
   // JavaScript. Removing only the shortcut must not break the existing reader.
-  const olderShell = (await readFile(path.join(ROOT, 'docs/index.html'), 'utf8'))
+  const olderShell = offline(await readFile(path.join(ROOT, 'docs/index.html'), 'utf8'))
     .replace(/<button[^>]*id="find-stock"[^>]*>Find a stock<\/button>/, '');
   const oldContext = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
   try {
