@@ -1,89 +1,93 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-10-30T14:29:40.508807+00:00",
-  "generated_at": "2026-10-30T14:29:42.877149+00:00",
-  "observation_run_id": "41071862681",
-  "previous_observation_sha256": "5feab7e72a0436557bd4ac7e9aa5e416f645aabad9d23c5d07bd005b842fab92",
+  "collection_started_at": "2026-10-31T13:49:56.987756+00:00",
+  "generated_at": "2026-10-31T13:49:58.708609+00:00",
+  "observation_run_id": "41207285518",
+  "previous_observation_sha256": "dfa15efb9ac049f5d0b86f5beb666a8e5b7387056c52ddba2da16ae1a8a38a39",
   "dry_run": false,
   "publication": {
-    "data_sha256": "d017a8800b7e0b3967d0dd5495919ce95d41abaeb0d68ee431f0942918411112",
-    "context_sha256": "23bffad9b461c69f177215f1c7dfae2f6e375e2383cc98bdc7ed1a270db01128",
-    "run_id": "40988674329",
-    "rules_version": "14d0b9add6f2",
-    "measured_session": "2026-10-29",
-    "applicable_session": "2026-10-30",
-    "published_at": "2026-10-30T01:56:02.591551+00:00",
+    "data_sha256": "ea488fad33cb5af5d6156ccfb5dd6c495f848ae773604d2f6880acfc7798284a",
+    "context_sha256": "19efd5dd3fb088ca32f640cbbaa4c66092bc49717e7c6ca536b63396d49c59bf",
+    "run_id": "41155959854",
+    "rules_version": "635224f74888",
+    "measured_session": "2026-10-30",
+    "applicable_session": "2026-11-02",
+    "published_at": "2026-10-31T01:34:42.377850+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "0035601ed8839ae983c743bc705f3ab7c3ae7f1630cc00e66e58ae4661be2998"
+    "reader_sha256": "89a39c7469fa4cdc1e0fa28de6d7acf16f608b466cbd8076cc99c9bc77b726bc"
   },
   "frozen": {
-    "session": "2026-10-29",
-    "expected_session": "2026-10-29",
+    "session": "2026-10-30",
+    "expected_session": "2026-10-30",
     "feed": "sip",
     "adjustment": "split",
     "timeframe": "1Day",
     "lookback_days": 260,
     "stale_names_max": 100,
-    "universe_identity": "4e7df4a17e109440",
-    "universe_snapshot_sha256": "337cf3c68b7d708ac72d56db45071a4350fbda73fdddba5a77fc1eda12c6ee16",
-    "universe_size": 4770,
-    "intended_identity": "1605bb4bc2dc897d",
-    "coverage_sha256": "6ed36597917b050eae2614c41930e560c75d1f35638485ed8f1dabc9016bd1a1",
-    "rules_version": "14d0b9add6f2"
+    "universe_identity": "fe061d0bfd513e57",
+    "universe_snapshot_sha256": "6e61b6357fb1c1e4f30ebc946b32c55f7d4a015263eb8fd256b0cc71d24a703a",
+    "universe_size": 4769,
+    "intended_identity": "4b03cdcbc1e6853d",
+    "coverage_sha256": "e77b87520fcad5cb8e6baead35c42a6ff4e0655a8a63c13c505db5c04a971574",
+    "rules_version": "635224f74888"
   },
   "window": {
-    "next_session": "2026-10-30",
-    "next_open_at": "2026-10-30T09:30:00-04:00",
-    "before_next_open": false
+    "next_session": "2026-11-02",
+    "next_open_at": "2026-11-02T09:30:00-05:00",
+    "before_next_open": true
   },
   "original": {
     "acceptance_status": "degraded",
-    "intended_stocks": 4770,
-    "ready_stocks": 4756,
-    "fraction": 0.9970649895178197,
+    "intended_stocks": 4769,
+    "ready_stocks": 4752,
+    "fraction": 0.9964353113860348,
     "complete_intended": false,
     "capacity_excluded": 0,
-    "stale": 14,
-    "stale_stocks": 14,
-    "tolerance_verdict": "tolerated",
-    "tolerance_reasons": [],
+    "stale": 16,
+    "stale_stocks": 16,
+    "tolerance_verdict": "not_tolerated",
+    "tolerance_reasons": [
+      "other_exceptions"
+    ],
     "gaps": {
-      "stale": 14,
+      "stale": 16,
       "no_bars": 0,
       "dropped": 0,
       "unfetched_budget": 0,
       "unfetched_failure": 0,
-      "gapped": 0,
+      "gapped": 1,
       "unreadable": 0
     },
     "run_status": "degraded",
     "problem_kinds": [
-      "claude_partial"
+      "coverage_thin"
     ],
     "gate_read_run_status": false
   },
   "deficits": {
     "categories": {
       "stale": {
-        "count": 14,
-        "identity": "54ae9e2b76a4c6a7",
+        "count": 16,
+        "identity": "1e8beeafe6f9fb79",
         "named": true,
         "source": "record",
         "names": [
-          "AKA",
-          "ARKR",
-          "DIT",
+          "AUBN",
+          "BGM",
+          "GDEV",
+          "GSIW",
           "IOR",
+          "IOTR",
+          "JL",
+          "KELYB",
+          "LEGO",
           "MBBC",
-          "MDRR",
           "NCEW",
-          "NYC",
-          "PBHC",
-          "RDIB",
+          "PFX",
           "SENEB",
-          "TLIH",
-          "TULP",
-          "WLYB"
+          "TCBS",
+          "TRSG",
+          "TULP"
         ],
         "benchmark_in_population": false
       },
@@ -120,11 +124,13 @@
         "benchmark_in_population": false
       },
       "gapped": {
-        "count": 0,
-        "identity": "e3b0c44298fc1c14",
+        "count": 1,
+        "identity": "38597503e46c3aad",
         "named": true,
-        "source": null,
-        "names": [],
+        "source": "ledger",
+        "names": [
+          "NORD"
+        ],
         "benchmark_in_population": false
       },
       "unreadable": {
@@ -136,12 +142,12 @@
         "benchmark_in_population": false
       }
     },
-    "named_stocks": 14,
+    "named_stocks": 17,
     "unnamed_frames": 0,
     "ledger": {
-      "path": "quality-ledger/v1/d017a8800b7e0b3967d0dd5495919ce95d41abaeb0d68ee431f0942918411112.json.gz",
-      "sha256": "1a9842093742c9c08e5a31ec8c9bfa5e5aaee04b96bbf6e00b0d379e88661df7",
-      "used": false
+      "path": "quality-ledger/v1/ea488fad33cb5af5d6156ccfb5dd6c495f848ae773604d2f6880acfc7798284a.json.gz",
+      "sha256": "3a2f1ad3558fd4649a689216306e69253c3f988c0d207bf6dee425b09ee07a7b",
+      "used": true
     }
   },
   "policy": {
@@ -166,32 +172,225 @@
     "benchmark_requested": false,
     "basis": "the publication's own feed, adjustment, session and lookback"
   },
-  "status": "inapplicable",
-  "reason": "recovery_window_ended",
-  "requested": [],
+  "status": "partial",
+  "reason": null,
+  "requested": [
+    "AUBN",
+    "BGM",
+    "GDEV",
+    "GSIW",
+    "IOR",
+    "IOTR",
+    "JL",
+    "KELYB",
+    "LEGO",
+    "MBBC",
+    "NCEW",
+    "NORD",
+    "PFX",
+    "SENEB",
+    "TCBS",
+    "TRSG",
+    "TULP"
+  ],
   "source": {
     "provider": "Alpaca",
     "feed": "sip",
     "adjustment": "split",
     "timeframe": "1Day",
-    "status": "not_requested",
+    "status": "ok",
     "error_kind": null,
-    "checked_at": null,
-    "batch_attempts": 0,
-    "symbols_requested": 0,
-    "window": null
+    "checked_at": "2026-10-31T13:49:58.662859+00:00",
+    "batch_attempts": 1,
+    "symbols_requested": 17,
+    "window": {
+      "basis": "reconstructed_from_application_arguments_not_observed_wire_request",
+      "start": "2025-09-09T00:00:00+00:00",
+      "end": "2026-10-30T23:59:59+00:00"
+    }
   },
-  "rows": [],
+  "rows": [
+    {
+      "ticker": "AUBN",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "BGM",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "GDEV",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "GSIW",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "IOR",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "IOTR",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "JL",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "KELYB",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "LEGO",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "MBBC",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "NCEW",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "NORD",
+      "category": "gapped",
+      "original_ending": null,
+      "outcome": "arrived_not_ready",
+      "ending": "2026-10-30",
+      "ready_fault": "gapped",
+      "volume": 97957,
+      "flat": false
+    },
+    {
+      "ticker": "PFX",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "SENEB",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "TCBS",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "TRSG",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "TULP",
+      "category": "stale",
+      "original_ending": "2026-10-29",
+      "outcome": "recovered",
+      "ending": "2026-10-30",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    }
+  ],
   "recovered": {
-    "requested": 0,
-    "arrived": 0,
-    "session_ready": 0,
-    "arrived_not_ready": 0,
+    "requested": 17,
+    "arrived": 17,
+    "session_ready": 16,
+    "arrived_not_ready": 1,
     "still_stale": 0,
     "still_missing": 0,
     "not_returned": 0,
-    "zero_volume": 0,
-    "flat": 0
+    "zero_volume": 16,
+    "flat": 16
   },
   "coverage": {
     "scan": "not_run",
@@ -213,5 +412,5 @@
     "scheduled_dispatch_is_best_effort",
     "prior_session_followup_is_separate"
   ],
-  "sentence": "No source recovery for the 2026-10-29 publication at 10:29 AM ET on Fri 30 Oct: the next session opened before this check ran; nothing was fetched."
+  "sentence": "Source recovery for the 2026-10-30 publication: its 17 stocks without a usable 2026-10-30 bar, named in full, were asked for again at 9:49 AM ET on Sat 31 Oct, before the 2026-11-02 open, in 1 call to the bars endpoint; 16 now carry a 2026-10-30 bar that passes the session rules (16 with zero volume); 1 carries it but not the session before (NORD). The publication stays 4752 of 4769 intended stocks ready; its measurements, grades, plans and tickets are unchanged, and why a bar was absent is not established."
 }
