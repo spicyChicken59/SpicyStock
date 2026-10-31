@@ -130,9 +130,12 @@ Do not paste credentials into chat, logs, code, Docker `ARG`/`ENV` instructions,
 image layers or command arguments. The root launcher receives Railway's runtime
 variables and constructs sanitized child environments. Only the worker command
 receives the Alpaca pair; the reader and synchronizer do not. Unrelated application
-secrets are not needed. Railway needs no custom CA setting for this deployment;
-the optional Docker build secret `proxy_ca` exists only for a managed local build
-that requires its environment's trusted proxy certificate.
+secrets are not needed. Railway needs no custom CA setting for this deployment.
+The `Dockerfile` uses no build secret and no `RUN --mount`: Railway's builder
+refused the first deployment of the earlier file, which mounted an optional
+`proxy_ca` secret, with "The Dockerfile failed validation" (31 October 2026). A
+local build behind an intercepting proxy supplies its certificate outside the
+committed file.
 
 ## Bring up and verify
 
