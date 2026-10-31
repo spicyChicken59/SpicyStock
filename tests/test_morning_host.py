@@ -182,6 +182,14 @@ def _until(predicate, seconds=4):
     pytest.fail('bounded local subprocess did not reach expected state')
 
 
+def _written_pid(path):
+    """The pid a child wrote to `path`, once it is there: write_text() creates
+    the file before it writes, so a file that merely exists can still read
+    empty (CI, 31 Oct 2026: int('') on a loaded runner)."""
+    _until(lambda: path.exists() and path.read_text().strip().isdigit())
+    return int(path.read_text())
+
+
 def _cleanup(supervisor):
     if supervisor.active:
         def clean():
@@ -244,8 +252,7 @@ def test_deadline_kills_and_reaps_ignoring_parent_and_child(tmp_path, monkeypatc
     try:
         supervisor.step()
         process = supervisor.active['worker'].process
-        _until(ready.exists)
-        descendant = int(ready.read_text())
+        descendant = _written_pid(ready)
         _until(lambda: (supervisor.step(), not supervisor.active)[1])
         assert process.returncode == -signal.SIGKILL
         assert not Path(f'/proc/{descendant}').exists()
@@ -270,8 +277,7 @@ def test_normal_parent_exit_cannot_leave_descendant_or_start_overlap(tmp_path, m
     try:
         supervisor.step()
         process = supervisor.active['sync'].process
-        _until(ready.exists)
-        descendant = int(ready.read_text())
+        descendant = _written_pid(ready)
         _until(lambda: (supervisor.step(), not supervisor.active)[1])
         assert process.returncode == 0
         assert not host._group_exists(process)
