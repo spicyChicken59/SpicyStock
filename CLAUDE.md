@@ -13071,3 +13071,47 @@ Five survivors were equivalent. Two skeptics refuted a finding about a PR-body s
 - Railway serving the morning host;
 - a morning check for any ticket;
 - any trading edge.
+
+## Checkpoint, 31 Oct 2026 -- #206 accepted; the morning host on Railway, read from outside, and the site's endpoint held for its first receipt
+
+**#206, accepted.** Merged as `090dbd9c` on `main` with a merge commit over `f0c0e499`. The head `adeab46d` passed Tests run 41184737225 (pytest, page, the gate; the native cases skipped by the gate, as on a test-only push) and both secret scans. The merge commit's own Tests run 41186820939 passed pytest and page, its Secret scan 41186820940 passed, and publisher 41186820946 printed *Verified: every one of the 48 public files matches committed main* at 09:01:07 UTC. Pages 41186843378 deployed (41186820228 cancelled as superseded). The first night under input tolerance v3 is Monday 2 November's.
+
+**The morning host, deployed.** The owner deployed it on Railway on 31 October, through Muse driving the dashboard:
+- one service, `SpicyStock`, in the project "alert-possibility", US East, one replica;
+- a volume at `/srv/spicystock`, `PORT` 8080;
+- healthcheck `/healthz` at 120 seconds, restart Always, serverless off, automatic deploys disabled;
+- the worker enabled with the existing Alpaca pair, entered in Railway's Variables by the owner's agent and never in chat.
+
+The owner set the Compute alert and hard limit $5 above the $20 plan himself, and they stay. The deploy log shows the reader, the sync and the worker each starting and finishing with exit code 0 on a Saturday: the worker skips provider work outside a session.
+
+**Read from outside** (this session, once the owner allowed the host in its network settings):
+
+| Request | Result |
+|---|---|
+| `GET /healthz` | 200, `no-store` |
+| `GET /morning.json` from the site's origin | 503 `unavailable` (no receipt yet: a weekend), `no-store`, `Vary: Origin`, CORS for `https://spicychicken59.github.io` alone |
+| same from any other origin, or none | 503, no CORS header |
+| query string | 400 |
+| POST, OPTIONS | 405, `Allow: GET` |
+| any other path, or a trailing slash | 404 |
+| `/healthz` POST, or with a query | 405 / 400 |
+| two reads | byte-identical |
+
+`tools/morning_endpoint_live.mjs` (new, outside every gate) loads the page from this checkout under the site's own origin and lets only the endpoint through. The browser sent that origin and no cookie or referer, read the 503 with the CORS header, and the page says *Morning observations unavailable*.
+
+**The site's endpoint, prepared and held.** `docs/index.html` names `https://spicystock-production.up.railway.app/morning.json`. Every offline check serves a copy of the shell with it blanked: `tools/offline_shell.mjs`, used by the page smoke's server, the decision-inspection server, the continuity and evidence-focus DOM checks and the older-shell case. The endpoint suite sets its own with `withEndpoint()`. The page smoke checks that the shell it serves names no live endpoint.
+
+Two mutants each fail their named check, and the control passes 131/131:
+- the helper returning the shell unchanged: the guard fails, and two status checks fail because they read the live service;
+- the endpoint suite back on its literal replace: four request checks fail.
+
+The morning, status, endpoint-reader, finder and focus suites pass 2901/2901; continuity 137; decision inspection 257/257. **The pull request is held until the first in-window receipt from Railway is read** (Monday 2 November, 7:30 to 9:00 AM CT, for the 30 October publication, a RED night with no ticket: a delivery check, not quote coverage), as the runbook orders.
+
+**Lead, not worked.** The service answers 503 both when the store holds no receipt for the current publication and when it cannot be read. The page says *The published morning file could not be read* for either. A 404 for the first would let the page say no check has run yet.
+
+**Not claimable:**
+- an in-window receipt from Railway;
+- ten consecutive sessions with morning checks;
+- measured Railway usage;
+- the first night under tolerance v3;
+- any trading edge.

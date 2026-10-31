@@ -92,7 +92,8 @@ WSGI/TLS substitute.
 After the real HTTPS route has been validated, set the existing
 `spicystock-morning-endpoint` meta tag in `docs/index.html` to that exact HTTPS
 URL ending in `/morning.json`, then use the normal reviewed Pages release. Keep
-its value empty until a concrete route exists. It accepts no query, fragment,
+its value empty until a concrete route exists (it names the Railway route from
+31 October 2026: [the Railway runbook](morning-railway.md) records what was read). It accepts no query, fragment,
 user information or private account values. The browser's visible-window polling
 reads receipts only and cannot trigger provider work. A failed dynamic read
 remains unavailable; do not silently redirect it to an older static receipt.

@@ -2,6 +2,7 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { offline } from './offline_shell.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PANEL = '#detail .ss-chart-panel';
@@ -201,7 +202,7 @@ if (process.argv.includes('--dom')) {
   const shell = JSON.parse(await readFile(path.join(ROOT, 'tests/fixtures/page/full.json')));
   let failures = 0;
   for (const width of [1440, 390]) for (const row of excerpt.bursts) {
-    const dom = new JSDOM(await readFile(path.join(ROOT, 'docs/index.html'), 'utf8'), {
+    const dom = new JSDOM(offline(await readFile(path.join(ROOT, 'docs/index.html'), 'utf8')), {
       url: 'https://focus.test/docs/index.html#/explore/bursts/' + row.ticker,
       runScripts: 'outside-only', pretendToBeVisual: true, virtualConsole: new VirtualConsole()
     });

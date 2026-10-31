@@ -1350,13 +1350,20 @@ with Gunicorn under a separate operating-system user. `MORNING_WORKER_ENABLED`
 defaults to `false`; enabling it requires both existing Alpaca credentials.
 `PORT` defaults to `8080`. The reader and synchronizer receive neither provider
 credential. `/healthz` measures reader-process availability, not receipt freshness.
-Host spending controls, the volume, TLS route and provider bindings still need
-to be configured and verified; building the image establishes no live delivery.
+Host spending controls, the volume, the TLS route and the provider bindings were
+configured on Railway on 31 October 2026 ([the Railway runbook](docs/operations/morning-railway.md)
+records them); deploying the image establishes no live delivery until a session's
+receipt has been read.
 
 An optional deployment adapter reads one fixed public HTTPS `/morning.json`
 endpoint from the committed `spicystock-morning-endpoint` meta tag in
-`docs/index.html`. It is empty by default: the shipped site still reads the
-same-origin static file and does not poll. Only a reviewed deployment may set
+`docs/index.html`. It names the Railway service,
+`https://spicystock-production.up.railway.app/morning.json` (deployed and read
+from outside on 31 October 2026; [the Railway runbook](docs/operations/morning-railway.md)
+records what was read); empty, the site reads the same-origin static file and
+does not poll. Every offline check serves a copy of the shell with the tag blanked
+(`tools/offline_shell.mjs`), and `tools/morning_endpoint_live.mjs` reads the live
+endpoint from the site's own origin, outside every gate. Only a reviewed deployment may set
 that exact URL; query strings, fragments, credentials, other paths and malformed
 configuration are refused. Browser preferences, local reports, notes and ticker
 selections never configure the destination or enter its request. The configured
