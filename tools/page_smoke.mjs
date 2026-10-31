@@ -4350,6 +4350,15 @@ async function checkStaleTolerance(browser, base) {
       d.run.coverage.gapped = 1; d.rules.pipeline.stale_tolerance_fraction = 0.02;
       Object.assign(d.run.input_tolerance, { fraction: 0.02, limit: 2, first_sessions: null, first_session_stocks: 1 });
     },
+    // a block whose first-session fields no whole count or no names can read: the page counts
+    // and names nothing it cannot read (the validator refuses both before publication)
+    'a negative first-session count': (d) => {
+      Object.assign(d.run.input_tolerance, { first_sessions: [], first_session_stocks: -1 });
+    },
+    'first-session names that are not names': (d) => {
+      d.run.coverage.gapped = 1; d.rules.pipeline.stale_tolerance_fraction = 0.02;
+      Object.assign(d.run.input_tolerance, { fraction: 0.02, limit: 2, first_sessions: [1], first_session_stocks: 1 });
+    },
     // the rule's second version (every record to 30 Oct 2026) archived no tolerance version
     // and counted no first session: the page states the rule it was published under
     'a record from before the first-session rule': (d) => {
@@ -4437,6 +4446,12 @@ async function checkStaleTolerance(browser, base) {
         check('thin ' + name + ': the dek still counts it', dek.includes('1 stock had no bar before ' + evaluatedWords), dek);
         check('thin ' + name + ': the coverage line names none it was not given', !coverage.includes('No bar before'), coverage.slice(-400));
         check('thin ' + name + ': Method still counts it', method.includes('1 stale stock and 1 stock with no earlier bar'), method);
+      } else if (name === 'a negative first-session count') {
+        check('thin ' + name + ': the page counts no first session it cannot read', !dek.includes('had no bar before') &&
+          !/with no earlier bar against a limit/.test(method) && !coverage.includes('No bar before'), [dek, method.slice(0, 300)]);
+      } else if (name === 'first-session names that are not names') {
+        check('thin ' + name + ': the count is read and no name is printed', dek.includes('1 stock had no bar before ' + evaluatedWords) &&
+          !coverage.includes('No bar before'), [dek, coverage.slice(-300)]);
       } else if (name === 'a record from before the first-session rule') {
         check('thin ' + name + ': Method keeps the second version\'s rule', method.includes('stale frames ending within the ' + d.rules.pipeline.stale_sessions_max + ' sessions before it — ' + pct + ',') &&
           !method.includes('no bar before the session') && !method.includes('together,'), method.slice(0, 900));

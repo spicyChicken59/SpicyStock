@@ -234,7 +234,7 @@ def stale_tolerance(cov, fraction, *, names, benchmark, held=(), names_max, endi
     beside the stale stocks against the same limit, and an open model plan's
     stock among them is held as a stale one is. Version 2 is the rule as it
     was, for the records made under it."""
-    if version not in TOLERANCE_VERSIONS:
+    if type(version) is not int or version not in TOLERANCE_VERSIONS:
         raise ValueError(f"unknown input tolerance version {version!r}")
     a = cov['acceptance']
     limit = stale_limit(a['intended_stocks'], fraction)
@@ -517,6 +517,8 @@ def _first_faults(cov, tol, first, count, names_max):
         return ['input tolerance first sessions are not a count of the gapped frames']
     if first is None:
         return ['input tolerance drops a first-session membership it could carry'] if count <= names_max else []
+    if count > names_max:
+        return ['input tolerance carries a first-session membership past the names bound']
     if (not isinstance(first, list) or not all(isinstance(n, str) for n in first)
             or first != sorted(set(first)) or len(first) != count or tol['benchmark'] in first):
         return ['input tolerance first sessions are not the stocks it counted']

@@ -747,6 +747,118 @@ def test_a_block_is_held_to_the_version_its_rules_archived(version, archived, fa
     assert checked(cov, tolerance_first(cov, stats, version=version), archived=archived) == faults
 
 
+def test_a_block_of_an_unknown_version_is_named_never_derived():
+    """A version the code does not know is refused by name wherever it is met:
+    stale_tolerance() raises rather than write one, and the validator names a
+    block of one -- under rules that archive it, or a version that is no
+    whole number -- rather than re-derive it into "malformed"."""
+    from src import inputs
+    cov, stats = ledger(stale=(), frames={'QAAC': tape(dates=FIRST_DATES)})
+    for version in (1, 4, 3.0, '3'):
+        with pytest.raises(ValueError, match='unknown input tolerance version'):
+            tolerance_first(cov, stats, version=version)
+    three = tolerance_first(cov, stats)
+    assert checked(cov, dict(three, version=4), archived=4) == ['input tolerance version or verdict unknown']
+    assert checked(cov, dict(three), archived=3.0) == ['input tolerance version or verdict unknown']
+
+
+def test_the_over_limit_sentence_counts_both_against_the_limit():
+    """Two stale stocks and one with no earlier bar against a limit of two: the
+    sentence says the three together are more than the limit, never that the
+    two stale stocks alone are (two is not more than two)."""
+    from src import inputs
+    cov, stats = ledger(frames={'QAAC': tape(dates=FIRST_DATES)})
+    tol = tolerance_first(cov, stats)
+    assert (tol['verdict'], tol['reasons'], tol['limit'], tol['stale_stocks'], tol['first_session_stocks']) == \
+        ('not_tolerated', ['over_limit'], 2, 2, 1)
+    sentence = inputs.coverage_sentence({'coverage': cov, 'input_tolerance': tol})
+    assert sentence.endswith(f"Outside this run's input tolerance (2 stocks, 1%, within {pipeline.STALE_SESSIONS_MAX} "
+                             "sessions): 2 stale stocks and 1 stock with no earlier bar are more than the limit."), sentence
+
+
+def test_the_first_session_sentence_in_the_plural():
+    from src import inputs
+    cov, stats = ledger(stale=(), frames={'QAAC': tape(dates=FIRST_DATES), 'QAAD': tape(dates=FIRST_DATES)})
+    tol = tolerance_first(cov, stats)
+    assert (tol['verdict'], tol['first_sessions']) == ('tolerated', ['QAAC', 'QAAD'])
+    sentence = inputs.coverage_sentence({'coverage': cov, 'input_tolerance': tol})
+    assert sentence.endswith(
+        " 2 returned frames (QAAC, QAAD) had no bar before 2026-09-10 in this run's request window: every row the "
+        "provider returned for them is dated 2026-09-10, as on an exchange listing's first day, so there is no "
+        "session before to measure their move against, and they are not measured non-matches. That is within this "
+        "run's input tolerance of 2 stocks (1% of the intended stocks), so these frames do not degrade the run."), sentence
+
+
+def test_a_hole_beside_a_first_session_says_the_whole_tolerance():
+    from src import inputs
+    cov, stats = ledger(stale=(), frames={'QAAC': tape(dates=FIRST_DATES), 'QAAD': tape(dates=HOLE_DATES)})
+    sentence = inputs.coverage_sentence({'coverage': cov, 'input_tolerance': tolerance_first(cov, stats)})
+    assert (f" Outside this run's input tolerance (2 stocks, 1%, within {pipeline.STALE_SESSIONS_MAX} sessions): "
+            "other gaps beside the stale frames (missing the previous session: 1).") in sentence, sentence
+
+
+def test_a_second_version_sentence_counts_no_first_session():
+    """The sentence reads first sessions only off a block whose version names
+    them, as the mail and the page do."""
+    from src import inputs
+    cov, stats = ledger(stale=('QAAA',), frames={'QAAC': tape(dates=FIRST_DATES)})
+    two = tolerance_first(cov, stats, version=2)
+    plain = inputs.coverage_sentence({'coverage': cov, 'input_tolerance': two})
+    carrying = dict(two, first_sessions=['QAAC'], first_session_stocks=1)
+    assert inputs.coverage_sentence({'coverage': cov, 'input_tolerance': carrying}) == plain
+    assert 'request window' not in plain
+
+
+def test_the_first_session_membership_and_its_names_bound():
+    """Named while the count is within the names bound, the bound itself
+    included; past it counted and not named, and a list carried past it, or one
+    dropped within it, is refused."""
+    from src import inputs
+    cov, stats = ledger(stale=(), frames={'QAAC': tape(dates=FIRST_DATES), 'QAAD': tape(dates=FIRST_DATES)})
+    def block(names_max):
+        return inputs.stale_tolerance(cov, 0.01, names=[], benchmark='SPY', names_max=names_max, endings={},
+                                      sessions_max=pipeline.STALE_SESSIONS_MAX, first=inputs.first_sessions(stats, 'SPY'))
+    assert block(2)['first_sessions'] == ['QAAC', 'QAAD'] and block(1)['first_sessions'] is None
+    assert block(1)['first_session_stocks'] == 2
+    assert checked(cov, block(2), names_max=2) == [] and checked(cov, block(1), names_max=1) == []
+    assert checked(cov, dict(block(1), first_sessions=['QAAC', 'QAAD']), names_max=1) == \
+        ['input tolerance carries a first-session membership past the names bound']
+    assert checked(cov, dict(block(2), first_sessions=None), names_max=2) == \
+        ['input tolerance drops a first-session membership it could carry']
+
+
+def test_each_first_session_membership_clause_refuses_for_its_own_reason():
+    """Each clause is the one that can see its forgery: an unsorted list within
+    the count; a name outside a COMPLETE gapped sample when only some gapped
+    frames are first sessions (the identity cannot be asked); a name outside
+    the gapped population when every gapped frame is claimed and the ledger's
+    sample is cut at its bound (only the identity can be asked)."""
+    from src import inputs, universe
+    def forged(cov, tol, names):
+        return checked(cov, dict(tol, first_sessions=names))
+    cov, stats = ledger(stale=(), frames={'QAAC': tape(dates=FIRST_DATES), 'QAAD': tape(dates=FIRST_DATES)})
+    assert forged(cov, tolerance_first(cov, stats), ['QAAD', 'QAAC']) == \
+        ['input tolerance first sessions are not the stocks it counted']
+    cov, stats = ledger(stale=(), frames={'QAAC': tape(dates=FIRST_DATES), 'QAAD': tape(dates=HOLE_DATES)})
+    assert len(cov['reasons']['gapped']['sample']) == cov['gapped'] == 2
+    assert forged(cov, tolerance_first(cov, stats), ['QAAE']) == \
+        ['input tolerance first sessions are not the gapped population the ledger counted']
+    many = {n: tape(dates=FIRST_DATES) for n in q_names(universe.SAMPLE_LIMIT + 1)}
+    cov, stats = ledger(30, stale=(), frames=many)   # 21 of 30 ready: degraded, not refused
+    assert cov['gapped'] == universe.SAMPLE_LIMIT + 1 > len(cov['reasons']['gapped']['sample'])
+    tol = tolerance_first(cov, stats, fraction=0.5)   # nine within a limit of fifteen: the forgery would publish ok
+    swapped = sorted(set(tol['first_sessions']) - {tol['first_sessions'][-1]} | {'QZZZ'})
+    run = {'coverage': cov, 'input_tolerance': dict(tol), 'problems': [{'kind': 'coverage_thin'}]}
+    run['input_tolerance']['sentence'] = inputs.coverage_sentence(run)
+    rules = {'stale_tolerance_fraction': 0.5, 'stale_names_max': pipeline.STALE_NAMES_MAX,
+             'stale_sessions_max': pipeline.STALE_SESSIONS_MAX, 'input_tolerance_version': inputs.TOLERANCE_VERSION}
+    assert tol['verdict'] == 'tolerated' and inputs.tolerance_faults(run, rules, set()) == []   # the run's own block
+    run = {'coverage': cov, 'input_tolerance': dict(tol, first_sessions=swapped), 'problems': [{'kind': 'coverage_thin'}]}
+    run['input_tolerance']['sentence'] = inputs.coverage_sentence(run)
+    assert inputs.tolerance_faults(run, rules, set()) == \
+        ['input tolerance first sessions are not the gapped population the ledger counted']
+
+
 def test_a_second_version_block_names_no_first_session_whatever_it_carries():
     """A version-2 block counts no first session: carrying the fields is a
     fault, and the mail names none from one, as the page does not."""
@@ -1021,6 +1133,21 @@ def test_a_stale_frame_under_an_open_model_plan_keeps_the_night_degraded(
             ['stale frames under open model plans: AAA']
     else:
         assert (tol['verdict'], tol['held']) == ('tolerated', []) and data['run']['problems'] == []
+    report.validate(data)
+
+
+def test_the_benchmark_with_no_earlier_bar_is_never_a_first_session(
+        wide, claude, fake_resend, fake_alpaca, tmp_path):
+    """The evening passes the benchmark to first_sessions(): SPY served with its
+    session bar alone, beside a stock served so, is the gap it always was, and
+    the night is degraded on it."""
+    from src import inputs, report
+    for name in ('QAAC', 'SPY'):
+        fake_alpaca.add_history(name, fake_alpaca.history[name].iloc[-1:])
+    rep, data, _ = evening(tmp_path, wide)
+    tol, cov = data['run']['input_tolerance'], data['run']['coverage']
+    assert cov['gapped'] == 2 and (tol['first_sessions'], tol['first_session_stocks']) == (['QAAC'], 1)
+    assert (rep.status, tol['verdict'], tol['reasons']) == ('degraded', 'not_tolerated', ['other_exceptions'])
     report.validate(data)
 
 
