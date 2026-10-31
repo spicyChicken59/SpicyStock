@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "45b39b4d90db"
+  "rules_version": "e44a709748ac"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -203,7 +203,7 @@
    }
   },
   "input_tolerance": {
-   "version": 2,
+   "version": 3,
    "verdict": "not_tolerated",
    "reasons": [
     "other_exceptions"
@@ -219,6 +219,8 @@
    "names": [],
    "endings": {},
    "held": [],
+   "first_sessions": [],
+   "first_session_stocks": 0,
    "sentence": "Incomplete input coverage: 20 of 31 intended stocks had usable session bars. 12 fetch names were never attempted (fetch counts include the benchmark); stocks excluded by capacity: 0; 0 scan/quality errors occurred. Results describe only the evaluated subset."
   },
   "stale_followup": {
@@ -950,7 +952,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "5bb895fdc1251fd97595f77200a31973a018abc2a2bab6314f3c26a440423c59"
+   "context_sha256": "fa5bcdc843e32aceabc12b0dcf38ae4caaf36621bdea52d1f37a01113281eace"
   },
   "sanitised": {
    "replaced": 0,
@@ -1505,6 +1507,7 @@
    "stale_tolerance_fraction": 0.01,
    "stale_sessions_max": 5,
    "stale_names_max": 100,
+   "input_tolerance_version": 3,
    "seed_stale_version": 1,
    "max_error_fraction": 0.05,
    "trade_grades": [
@@ -2088,7 +2091,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "45b39b4d90db"
+  "replay_rules_version": "e44a709748ac"
  },
  "observations": {
   "as_of": "2026-09-10",

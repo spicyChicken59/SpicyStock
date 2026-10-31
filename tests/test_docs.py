@@ -386,6 +386,13 @@ def test_the_readme_and_the_env_example_quote_the_two_tolerances_from_the_module
     assert f"{pipeline.STALE_TOLERANCE_FRACTION:.0%} of the intended stocks" in env and bound in env
     method = re.sub(r"\s+", " ", (ROOT / "knowledge" / "method.md").read_text())
     assert bound in method and "every session" in method
+    # from the rule's third version a stock with no bar before the session in the
+    # request window is counted beside the stale tail, and each document says so
+    from src import inputs
+    first = "stocks with no bar before the session evaluated in the run's request window"
+    text = re.sub(r"\s+", " ", README)
+    assert first in text and first in method and first in env, first
+    assert f"(`pipeline.input_tolerance_version`, {inputs.TOLERANCE_VERSION})" in text
     assert quarter + ", or within " + {1: "one"}[pipeline.READER_REFUSAL_MIN] + " if that is more" in method
 
 

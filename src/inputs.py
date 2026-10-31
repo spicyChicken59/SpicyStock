@@ -24,8 +24,25 @@ VERSION = 1
 # are strategy numbers and live in pipeline.RULES; these are the block's own
 # words. Version 2 carries where each stale frame ends (``endings``) and the
 # bound it was judged by (``sessions_max``); version 1 held every frame to the
-# previous session and the follow-up read that session alone.
-TOLERANCE_VERSION = 2
+# previous session and the follow-up read that session alone. Version 3 also
+# names the stocks with no bar before the evaluated session in the run's request
+# window (``first_sessions``): a gapped frame every row of which the provider
+# dated the session (market_data.history_begins_on()), as an exchange listing's
+# first day or a symbol new to the provider is, and not an input that went
+# missing. The 19 October 2026 revision (d179f206, LCU) and the 30 October
+# publication (NORD) were each degraded by one gapped frame alone, a stock new
+# to that night's directory; whether its frame had any earlier row the records
+# cannot show, which is what this version records. Such a stock is still set
+# aside, never measured, and counted against the same limit as the stale
+# stocks; a gapped frame with any earlier row -- a real hole, or earlier rows it
+# cannot read -- is the gap it always was.
+TOLERANCE_VERSION = 3
+#: the version a record wrote under rules that archive no tolerance version
+UNVERSIONED_TOLERANCE = 2
+#: the first version that names the stocks with no bar before the session
+FIRST_SESSIONS_VERSION = 3
+#: the block versions a record can carry, read under the rules it archived
+TOLERANCE_VERSIONS = (UNVERSIONED_TOLERANCE, FIRST_SESSIONS_VERSION)
 COMPLETE, TOLERATED, NOT_TOLERATED = "complete", "tolerated", "not_tolerated"
 TOLERANCE_VERDICTS = (COMPLETE, TOLERATED, NOT_TOLERATED)
 TOLERANCE_REASONS = ("other_exceptions", "behind_more", "over_limit", "open_plan")
@@ -187,7 +204,18 @@ def allowed_endings(evaluated, sessions_max):
     return {d.isoformat() for d in sessions.sessions_before(date.fromisoformat(str(evaluated)), sessions_max)}
 
 
-def stale_tolerance(cov, fraction, *, names, benchmark, held=(), names_max, endings, sessions_max):
+def first_sessions(stats, benchmark):
+    """The stocks among the gapped frames with no bar before the session in the
+    request window: every row the provider sent is dated the session, so there
+    is no row of any kind before it (market_data.history_begins_on(), read off the
+    frames by apply_session_rules() into ``stats.first_session``). A frame with
+    earlier rows it cannot read is a gap, not one of these. The benchmark is
+    never one: its gap is the gap it always was."""
+    return sorted(t for t in stats.first_session if t in stats.gapped and t != benchmark)
+
+
+def stale_tolerance(cov, fraction, *, names, benchmark, held=(), names_max, endings, sessions_max,
+                    first=(), first_count=None, version=TOLERANCE_VERSION):
     """Whether a degraded acceptance is ONLY the stale tail the run tolerates.
 
     Pure: it reads the ledger and never writes it, so acceptance stays
@@ -198,36 +226,53 @@ def stale_tolerance(cov, fraction, *, names, benchmark, held=(), names_max, endi
     ``stale_limit()`` stocks are stale. ``names`` are every stale frame's
     symbol; the benchmark among them is not a stock. ``endings`` is where each
     named frame ends (ISO date, None when unreadable), carried so the next
-    session's run can read every session each one missed."""
+    session's run can read every session each one missed.
+
+    Under version 3 a gapped frame with no bar before the evaluated session
+    in the request window (``first``, from first_sessions(); ``first_count`` when
+    the names are not carried) is not one of the other gaps: it is counted
+    beside the stale stocks against the same limit, and an open model plan's
+    stock among them is held as a stale one is. Version 2 is the rule as it
+    was, for the records made under it."""
+    if type(version) is not int or version not in TOLERANCE_VERSIONS:
+        raise ValueError(f"unknown input tolerance version {version!r}")
     a = cov['acceptance']
     limit = stale_limit(a['intended_stocks'], fraction)
     sess = cov['sessions']
     stale_stocks = cov['stale'] - int(benchmark in names)
+    first = sorted(first) if version >= FIRST_SESSIONS_VERSION else []
+    first_stocks = (len(first) if first_count is None else first_count) if version >= FIRST_SESSIONS_VERSION else 0
     reasons = []
     if a['status'] == 'ok':
         verdict = COMPLETE
     else:
-        if (any(cov[k] for k in OTHER_EXCEPTIONS) or a['capacity_excluded']
+        gaps = {k: cov[k] for k in OTHER_EXCEPTIONS}
+        gaps['gapped'] -= first_stocks
+        if (any(gaps.values()) or a['capacity_excluded']
                 or a['status'] != 'degraded'):
             reasons.append('other_exceptions')
         # every frame that does not end on the evaluated session ends within the bound before it
         behind = set(sess['latest_bar_dates']) - {sess['evaluated']}
         if cov['stale'] and not behind <= allowed_endings(sess['evaluated'], sessions_max):
             reasons.append('behind_more')
-        if stale_stocks > limit:
+        if stale_stocks + first_stocks > limit:
             reasons.append('over_limit')
         if held:
             reasons.append('open_plan')
         verdict = NOT_TOLERATED if reasons else TOLERATED
     names = sorted(names)
     carried = len(names) <= names_max
-    return {'version': TOLERANCE_VERSION, 'verdict': verdict, 'reasons': reasons,
-            'fraction': fraction, 'limit': limit, 'sessions_max': sessions_max,
-            'stale': cov['stale'], 'stale_stocks': stale_stocks,
-            'benchmark': benchmark, 'evaluated': sess['evaluated'], 'previous': sess['previous'],
-            'names': names if carried else None,
-            'endings': {n: endings.get(n) for n in names} if carried else None,
-            'held': sorted(held)}
+    block = {'version': version, 'verdict': verdict, 'reasons': reasons,
+             'fraction': fraction, 'limit': limit, 'sessions_max': sessions_max,
+             'stale': cov['stale'], 'stale_stocks': stale_stocks,
+             'benchmark': benchmark, 'evaluated': sess['evaluated'], 'previous': sess['previous'],
+             'names': names if carried else None,
+             'endings': {n: endings.get(n) for n in names} if carried else None,
+             'held': sorted(held)}
+    if version >= FIRST_SESSIONS_VERSION:
+        block['first_sessions'] = first if first_stocks <= names_max else None
+        block['first_session_stocks'] = first_stocks
+    return block
 
 
 def _count(n, one, many):
@@ -249,17 +294,36 @@ def _ending(cov, tol):
     return "ending " + ", ".join(parts)
 
 
+def first_session_version(tol):
+    """Whether a tolerance block's version names the stocks with no bar before
+    the session: a version-2 block names none, whatever fields it carries."""
+    return isinstance(tol, dict) and type(tol.get('version')) is int and tol['version'] >= FIRST_SESSIONS_VERSION
+
+
+def _first(tol):
+    """The version-3 count of stocks with no bar before the evaluated session
+    in the request window; 0 under version 2, which has no such count."""
+    n = tol.get('first_session_stocks')
+    return n if first_session_version(tol) and type(n) is int and n > 0 else 0
+
+
 def _why(cov, tol):
     words = []
+    first = _first(tol)
     for r in tol['reasons']:
         if r == 'other_exceptions':
-            gaps = [f"{OTHER_WORDS[k]}: {cov[k]}" for k in OTHER_EXCEPTIONS if cov[k]]
+            counts = {k: cov[k] - (first if k == 'gapped' else 0) for k in OTHER_EXCEPTIONS}
+            gaps = [f"{OTHER_WORDS[k]}: {counts[k]}" for k in OTHER_EXCEPTIONS if counts[k]]
             if cov['acceptance']['capacity_excluded']:
                 gaps.append(f"{OTHER_WORDS['capacity_excluded']}: {cov['acceptance']['capacity_excluded']}")
             words.append("other gaps beside the stale frames (" + ", ".join(gaps or ["coverage refused"]) + ")")
         elif r == 'behind_more':
             words.append(f"not every stale frame ends within the {_count(tol['sessions_max'] or 0, 'session', 'sessions')} "
                          f"before {tol['evaluated']} on a readable date")
+        elif r == 'over_limit' and first:
+            words.append(f"{_count(tol['stale_stocks'], 'stale stock', 'stale stocks')} and "
+                         f"{_count(first, 'stock with no earlier bar', 'stocks with no earlier bar')} "
+                         "are more than the limit")
         elif r == 'over_limit':
             words.append(f"{_count(tol['stale_stocks'], 'stale stock is', 'stale stocks are')} more than the limit")
         elif r == 'open_plan':
@@ -267,8 +331,26 @@ def _why(cov, tol):
     return "; ".join(words)
 
 
+def _first_clause(tol, first):
+    """The stocks with no bar before the evaluated session, in words: what the
+    request window shows, never more (a stock resuming after a halt longer than
+    the window looks the same as a listing's first day)."""
+    one = first == 1
+    named = tol.get('first_sessions')
+    readable = isinstance(named, list) and named and all(isinstance(n, str) for n in named)
+    who = f" ({', '.join(named)})" if readable else ""
+    return (f" {_count(first, 'returned frame', 'returned frames')}{who} had no bar before {tol['evaluated']} "
+            f"in this run's request window: every row the provider returned for {'it' if one else 'them'} "
+            f"is dated {tol['evaluated']}, as on an exchange listing's first day, so there is no session before "
+            f"to measure {'its' if one else 'their'} move against, and "
+            f"{'it is not a measured non-match' if one else 'they are not measured non-matches'}.")
+
+
 def _tolerance_clause(cov, tol):
     """The stale tail in words, appended to the incomplete-coverage sentence."""
+    first = _first(tol)
+    if first:
+        return _clause_with_first(cov, tol, first)
     one = cov['stale'] == 1
     s = (f" {_count(cov['stale'], 'returned frame', 'returned frames')} had no bar for {tol['evaluated']}, "
          f"{_ending(cov, tol)}. "
@@ -285,6 +367,32 @@ def _tolerance_clause(cov, tol):
                 f"{_why(cov, tol)}.")
 
 
+def _clause_with_first(cov, tol, first):
+    """The clause of a version-3 night with at least one stock whose provider
+    bar before the evaluated session: the stale tail first when there
+    is one, then those stocks, then the one verdict over both."""
+    stale = cov['stale']
+    s = ""
+    if stale:
+        one = stale == 1
+        s = (f" {_count(stale, 'returned frame', 'returned frames')} had no bar for {tol['evaluated']}, "
+             f"{_ending(cov, tol)}. "
+             f"{'Its' if one else 'Their'} {tol['evaluated']} input{' is' if one else 's are'} unknown, "
+             f"not {'a measured non-match' if one else 'measured non-matches'}.")
+    s += _first_clause(tol, first)
+    if tol['verdict'] == TOLERATED:
+        ending = (f", each stale frame ending within the {_count(tol['sessions_max'], 'session', 'sessions')} before"
+                  if stale else "")
+        reads = (f"; the next session's run, when it publishes, reads every session "
+                 f"{'the stale frame' if stale == 1 else 'the stale frames'} missed again." if stale else ".")
+        return s + (f" That is within this run's input tolerance of {_count(tol['limit'], 'stock', 'stocks')} "
+                    f"({_percent(tol['fraction'])} of the intended stocks){ending}, so "
+                    f"{'this frame does' if stale + first == 1 else 'these frames do'} not degrade the run{reads}")
+    return s + (f" Outside this run's input tolerance ({_count(tol['limit'], 'stock', 'stocks')}, "
+                f"{_percent(tol['fraction'])}, within {_count(tol['sessions_max'] or 0, 'session', 'sessions')}): "
+                f"{_why(cov, tol)}.")
+
+
 def coverage_sentence(run):
     """Published scope: complete means this selection, never the whole market.
 
@@ -296,7 +404,7 @@ def coverage_sentence(run):
     if accept.get('status') in ('degraded', 'fail'):
         tol = run.get('input_tolerance')
         clause = (_tolerance_clause(cov, tol) if isinstance(tol, dict) and 'version' in tol
-                  and accept.get('status') == 'degraded' and cov.get('stale') else "")
+                  and accept.get('status') == 'degraded' and (cov.get('stale') or _first(tol)) else "")
         return (f"Incomplete input coverage: {accept['ready_stocks']} of {accept['intended_stocks']} "
                 f"intended stocks had usable session bars. {cov.get('unfetched_budget', 0)} fetch names were never attempted "
                 f"(fetch counts include the benchmark); stocks excluded by capacity: {accept.get('capacity_excluded', 0)}; "
@@ -339,8 +447,12 @@ def tolerance_faults(run, pipeline_rules, plan_tickers):
     tol = run.get('input_tolerance')
     if tol is None:
         return ['input tolerance block missing']
+    # rules that archive the block's version hold it to that version; rules from
+    # before archived none and wrote version 2
+    expected = pipeline_rules.get('input_tolerance_version', UNVERSIONED_TOLERANCE)
     try:
-        if tol['version'] != TOLERANCE_VERSION or tol['verdict'] not in TOLERANCE_VERDICTS:
+        if (type(expected) is not int or expected not in TOLERANCE_VERSIONS or tol['version'] != expected
+                or tol['verdict'] not in TOLERANCE_VERDICTS):
             return ['input tolerance version or verdict unknown']
         if tol['fraction'] != pipeline_rules['stale_tolerance_fraction']:
             return ['input tolerance is not the archived stale_tolerance_fraction']
@@ -362,15 +474,27 @@ def tolerance_faults(run, pipeline_rules, plan_tickers):
               or Counter(str(e) for e in endings.values())
               != {d: n for d, n in cov['sessions']['latest_bar_dates'].items() if d != cov['sessions']['evaluated']}):
             faults.append("input tolerance endings are not the ledger's stale dates")
-        if held != sorted(set(held)) or (names is not None and not set(held) <= set(names)):
+        first, first_count = [], 0
+        if expected >= FIRST_SESSIONS_VERSION:
+            first, first_count = tol['first_sessions'], tol['first_session_stocks']
+            named_faults = _first_faults(cov, tol, first, first_count, pipeline_rules['stale_names_max'])
+            if named_faults:
+                # named, and never read further: every check below indexes into them
+                return faults + named_faults
+        elif 'first_sessions' in tol or 'first_session_stocks' in tol:
+            return faults + ['input tolerance carries first sessions its version does not']
+        named = set(names or []) | set(first or [])
+        if held != sorted(set(held)) or ((names is not None and first is not None) and not set(held) <= named):
             faults.append('input tolerance holds a stock it does not name')
-        if plan_tickers is not None and names is not None and held != sorted(set(names) & set(plan_tickers)):
-            faults.append('input tolerance does not hold the open model plans among the stale stocks')
+        if (plan_tickers is not None and names is not None and first is not None
+                and held != sorted(named & set(plan_tickers))):
+            faults.append('input tolerance does not hold the open model plans among the stocks it names')
         # without its names the block is re-derived over the one fact they carried: the benchmark's
         carried = names if names is not None else ([tol['benchmark']] if _benchmark_stale(cov, tol) else [])
         again = stale_tolerance(cov, tol['fraction'], names=carried, benchmark=tol['benchmark'], held=held,
                                 names_max=pipeline_rules['stale_names_max'], endings=endings or {},
-                                sessions_max=tol['sessions_max'])
+                                sessions_max=tol['sessions_max'], first=first or [],
+                                first_count=first_count, version=expected)
         if any(again[k] != tol[k] for k in ('verdict', 'reasons', 'limit', 'sessions_max', 'stale', 'stale_stocks',
                                              'evaluated', 'previous')):
             faults.append('input tolerance does not re-derive from the ledger')
@@ -382,6 +506,28 @@ def tolerance_faults(run, pipeline_rules, plan_tickers):
         return faults
     except (KeyError, TypeError, ValueError, AttributeError):
         return ['input tolerance block is malformed']
+
+
+def _first_faults(cov, tol, first, count, names_max):
+    """A version-3 block's first sessions held to the ledger it sits beside:
+    a count of gapped stocks no larger than the ledger's gapped count, names
+    carried whenever the bound allows, never the benchmark, and -- when every
+    gapped frame is one -- exactly the gapped population the ledger counted."""
+    if type(count) is not int or count < 0 or count > cov['gapped']:
+        return ['input tolerance first sessions are not a count of the gapped frames']
+    if first is None:
+        return ['input tolerance drops a first-session membership it could carry'] if count <= names_max else []
+    if count > names_max:
+        return ['input tolerance carries a first-session membership past the names bound']
+    if (not isinstance(first, list) or not all(isinstance(n, str) for n in first)
+            or first != sorted(set(first)) or len(first) != count or tol['benchmark'] in first):
+        return ['input tolerance first sessions are not the stocks it counted']
+    gapped = cov['reasons']['gapped']
+    if count == cov['gapped'] and universe.identity(first) != gapped['identity']:
+        return ['input tolerance first sessions are not the gapped population the ledger counted']
+    if cov['gapped'] == len(gapped['sample']) and not set(first) <= set(gapped['sample']):
+        return ['input tolerance first sessions are not the gapped population the ledger counted']
+    return []
 
 
 # -- the stale stocks the seed alone asked for -----------------------------------

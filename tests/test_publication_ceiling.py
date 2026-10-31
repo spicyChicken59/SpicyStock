@@ -477,13 +477,23 @@ REAL = {"burst": (0, 1), "funnel_row": (0, 1), "signal": (0, 2), "bar": (0, 2), 
 
 
 def test_the_rests_tripwires_spread_a_difference_not_a_mean(tmp_path):
-    """A fixture with a burst fewer, all else the same, moves no tripwire: the
-    rest is spread over the bursts as a difference, never divided anew."""
+    """A fixture with a burst fewer, all else the same, moves no counted
+    tripwire, and spreads the same whole difference of the rest over one burst
+    fewer: the rest is spread over the bursts as a difference, never divided
+    anew. (A mean of the rest would move by thousands of bytes a burst; and a
+    rest that has grown since the ceiling was measured -- the input tolerance's
+    first-session fields, 31 Oct 2026 -- moves the spread itself, so the whole
+    difference is what is held, not the spread.)"""
     data = json.loads(FIXTURE.read_bytes())
+    count = len(data["bursts"])
     data["bursts"] = [r for r in data["bursts"] if r["ticker"] != "AAPL"]
+    assert len(data["bursts"]) == count - 1
     copy = tmp_path / "red.json"
     copy.write_text(json.dumps(data))
-    assert {k: round(after - before, 9) for (k, after), before in zip(growth(copy).items(), growth().values())} == NONE
+    full, fewer = growth(), growth(copy)
+    assert {k: round(fewer[k] - full[k], 9) for k in BASELINE if k not in SPREAD} == \
+        {k: 0 for k in BASELINE if k not in SPREAD}
+    assert {k: round(fewer[k] * (count - 1), 9) for k in SPREAD} == {k: round(full[k] * count, 9) for k in SPREAD}
 
 
 @pytest.mark.parametrize("name", list(BASELINE))

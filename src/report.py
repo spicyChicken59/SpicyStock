@@ -1097,7 +1097,8 @@ def _problems_block(problems: Any) -> str:
 
 
 def _inputs_block(run: dict) -> str:
-    """The stale stocks tonight's run tolerated, by name, what the previous publication's
+    """The stale stocks tonight's run tolerated, by name, the stocks with no bar
+    before tonight's session in the request window, what the previous publication's
     stale stocks turned out to be, the chart reader's shortfall by cause and
     what its reads cost in calls and tokens: muted, beside the problems, so a
     night that is not degraded still says what it did not read and what it paid
@@ -1107,6 +1108,10 @@ def _inputs_block(run: dict) -> str:
     names, stale = tol.get("names"), tol.get("stale")
     if isinstance(names, list) and names and isinstance(stale, int) and stale:
         lines.append(f"Without a {tol.get('evaluated')} bar: {', '.join(str(n) for n in names)}.")
+    # only a block whose version names them (inputs.FIRST_SESSIONS_VERSION), as on the page
+    first = tol.get("first_sessions") if inputs.first_session_version(tol) else None
+    if isinstance(first, list) and first:
+        lines.append(f"No bar before {tol.get('evaluated')} in the request window: {', '.join(str(n) for n in first)}.")
     seed = _text(_get(run, "seed_stale", "sentence"))
     if seed:
         lines.append(seed)

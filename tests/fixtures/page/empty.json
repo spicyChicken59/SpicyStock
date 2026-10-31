@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "45b39b4d90db"
+  "rules_version": "e44a709748ac"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -188,7 +188,7 @@
    }
   },
   "input_tolerance": {
-   "version": 2,
+   "version": 3,
    "verdict": "complete",
    "reasons": [],
    "fraction": 0.01,
@@ -202,6 +202,8 @@
    "names": [],
    "endings": {},
    "held": [],
+   "first_sessions": [],
+   "first_session_stocks": 0,
    "sentence": "All 31 intended stocks had usable session bars; 31 were measured after session price eligibility. Coverage is of this selection, not every listed security."
   },
   "stale_followup": {
@@ -933,7 +935,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "55b0b6cb04a3504fdfeae43dd8a8ecda78d49ada50188ac43d5d3ab46616c282"
+   "context_sha256": "24aa9d75662d79eedc5d8cecc6c3c05ead8325bd77c4580ed843624676ea1419"
   },
   "sanitised": {
    "replaced": 0,
@@ -1488,6 +1490,7 @@
    "stale_tolerance_fraction": 0.01,
    "stale_sessions_max": 5,
    "stale_names_max": 100,
+   "input_tolerance_version": 3,
    "seed_stale_version": 1,
    "max_error_fraction": 0.05,
    "trade_grades": [
@@ -2092,7 +2095,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "45b39b4d90db"
+  "replay_rules_version": "e44a709748ac"
  },
  "observations": {
   "as_of": "2026-09-10",
