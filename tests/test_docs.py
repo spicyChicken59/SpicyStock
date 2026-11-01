@@ -781,3 +781,4 @@ def test_the_readme_and_the_method_quote_the_earnings_rules_from_the_module():
         assert words in section, words
     assert f"{E.PROJECTION_DAYS} days (P), within ±{E.ESTIMATE_SLACK_DAYS} days (P)" in METHOD
     assert f"more than {E.OVERDUE_DAYS} days before the signal (P)" in METHOD and "Not Bonde's rule" in METHOD
+    assert f"within a {E.DEADLINE_SECONDS}-second deadline" in ENV and "never clear" in ENV

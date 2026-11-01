@@ -90,6 +90,13 @@ def test_results_filed_after_the_signal_close_are_an_observed_fact():
     assert verdict(late)["verdict"] != "reported_after_signal"
 
 
+def test_an_acceptance_at_the_close_is_not_after_it():
+    # 4:00:00 PM EDT is 20:00:00 UTC: at the close, not after it; a second later is after
+    base = quarters("2025-10-30", through="2026-08-01")
+    assert verdict(base + [filing(S, "20:00:00")])["verdict"] == "already_reported"
+    assert verdict(base + [filing(S, "20:00:01")])["verdict"] == "reported_after_signal"
+
+
 def test_the_early_close_is_the_calendars():
     # Fri 27 Nov 2026 closes at 13:00 ET: a 13:30 ET acceptance is after that close
     session = "2026-11-27"
@@ -110,6 +117,11 @@ def test_overdue_and_already_reported():
     # one results filing since the estimate's low reports the cycle, however late
     got = verdict(overdue + [filing("2026-10-20")])
     assert got["verdict"] == "already_reported" and got["observed"]["filing_date"] == "2026-10-20"
+    # a report filed up to a week EARLIER than last year's date reports the cycle too
+    early = quarters("2025-10-27", through="2026-07-15")      # estimated Mon 26 Oct 2026
+    assert verdict(early)["verdict"] == "estimate_near"
+    assert verdict(early + [filing("2026-10-20")])["verdict"] == "already_reported"
+    assert verdict(early + [filing("2026-10-18")])["verdict"] == "estimate_near"
     # past the overdue horizon the old estimate no longer reads as a cycle
     stale = quarters("2025-08-01", through="2026-05-01")
     assert verdict(stale)["verdict"] in ("estimate_outside", "estimate_near", "estimate_inside")
@@ -186,12 +198,29 @@ def test_the_older_file_is_read_only_when_the_recent_one_is_short(fake_sec):
     row = block["rows"][0]
     assert (row["verdict"], row["reason"], row["error"]) == ("unknown", "history_not_read", "http_error")
     assert E.block_faults(block, S, [{"stage": "burst", "ticker": "EXEL"}]) == []
-    # a long recent file needs no older one
+    # a recent file that reaches back far enough is read alone, though SEC lists an older one
     fake_sec.fail.clear()
     fake_sec.calls.clear()
-    register_exel(fake_sec)
+    register_exel(fake_sec, history_from="2024-06-03")
+    block = E.collect([{"stage": "burst", "ticker": "EXEL"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert block["rows"][0]["verdict"] == "estimate_inside" and len(block["rows"][0]["sources"]) == 1
+    assert not any("submissions-001" in u for u in fake_sec.calls)
+    # ...even an older file whose dates overlap the window, which SEC's ordering never lists
+    fake_sec.calls.clear()
+    entry = register_exel(fake_sec)
+    fake_sec.issuer("EXEL", 939767, "EXELIXIS, INC.", entry["rows"], history=[("2026-01-05", "2026-01-05T20:05:00.000Z", "4", "")])
     E.collect([{"stage": "burst", "ticker": "EXEL"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
     assert not any("submissions-001" in u for u in fake_sec.calls)
+
+
+def test_the_newest_results_filings_are_the_ones_kept(fake_sec):
+    # fourteen quarters filed, twelve kept: the newest twelve, so this quarter's
+    # filing a week ago still reports the cycle
+    register_exel(fake_sec, -8, quarters=14)
+    block = E.collect([{"stage": "burst", "ticker": "EXEL"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    row = block["rows"][0]
+    assert len(row["results_filings"]) == E.MAX_RESULTS_FILINGS
+    assert row["verdict"] == "already_reported" and row["observed"]["filing_date"] == row["results_filings"][-1]["filing_date"]
 
 
 def test_sec_down_is_unavailable_never_clear(fake_sec):
