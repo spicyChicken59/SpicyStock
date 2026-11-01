@@ -527,3 +527,43 @@ def test_an_internal_failure_keeps_the_count_of_requests_made(fake_sec):
     block = E.safe_collect([{"stage": "burst", "ticker": "EXEL"}], S, fetch=fetch,
                            now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
     assert block["internal"] == "RuntimeError" and block["requests"] == 2
+
+
+def test_the_earliest_filing_after_the_close_is_the_one_named():
+    # results accepted the signal evening and a second filing on day 3, both inside the
+    # hold as SEC stood at its end: the evening one, before day 1, is the fact that matters
+    base = quarters("2025-11-20", through="2026-08-21")
+    two = base + [filing(S, "21:05:00"), filing("2026-11-03", "21:05:00")]
+    got = verdict(two, retrieved="2026-11-10T15:00:00Z")
+    assert (got["verdict"], got["placement"], got["observed"]["filing_date"]) == ("reported_after_signal", "pre_entry", S)
+
+
+def test_the_after_close_sentence_says_only_what_acceptance_proves():
+    got = verdict(quarters("2025-10-30", through="2026-08-01") + [filing(S, "20:40:00")])
+    assert E._row({"stage": "burst", "ticker": "X"}, S, DAYS, E._instant(NIGHT), got)["sentence"] == (
+        "Quarterly results (8-K item 2.02) were accepted by the SEC after the signal session's close and before "
+        "day 1's open (Thu 29 Oct 4:40 PM ET). The release they furnish may have come earlier, even before the "
+        "signal session's open; if it came after that close, the entry opens on the reaction. Check the release "
+        "time before entry.")
+
+
+def test_a_read_before_the_session_closed_is_refused(fake_sec):
+    # a block read at 3:30 PM ET, before the 4:00 PM close: refused by the record's validator
+    register_exel(fake_sec)
+    tickets = [{"stage": "burst", "ticker": "EXEL"}]
+    early = datetime(2026, 10, 29, 19, 30, tzinfo=timezone.utc)
+    block = E.collect(tickets, S, now=early)
+    assert E.block_faults(block, S, tickets) == []
+    data = {"rules": {"earnings_risk": {}}, "run": {"session": S, "earnings": block, "published_at": "2026-10-29T19:30:00Z"},
+            "bursts": [{"ticker": "EXEL", "plan": {}}], "trades": ["EXEL"], "watchlist": {"top": []}}
+    faults = E.record_faults(data)
+    assert any("outside its session's close" in f for f in faults), faults
+    assert "run.earnings mapping source" in faults
+
+
+def test_a_record_clock_out_of_range_is_named_never_raised(fake_sec):
+    block, tickets = a_block(fake_sec)
+    data = {"rules": {"earnings_risk": {}}, "run": {"session": S, "earnings": block,
+                                                    "published_at": "0001-01-01T00:00:00+01:00"},
+            "bursts": [{"ticker": "EXEL", "plan": {}}], "trades": ["EXEL"], "watchlist": {"top": []}}
+    assert E.record_faults(data) == ["run.earnings cannot be read against the record's clock (run.published_at)"]
