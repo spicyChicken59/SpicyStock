@@ -16,12 +16,14 @@ the plan's own hold window (``plan.dated_schedule()``'s five sessions after the
 signal session):
 
 * ``reported_after_signal`` -- an observed fact: a results 8-K accepted after
-  the signal session's scheduled close and before the run read SEC, so the
-  entry opens on the reaction;
+  the signal session's scheduled close and before the run read SEC (the
+  release it furnishes may have come earlier: acceptance is the latest it
+  could have been);
 * ``estimate_inside`` -- the estimate falls inside the window;
-* ``estimate_near`` -- the estimate's slack reaches the window;
-* ``overdue`` -- the estimate passed by more than its slack and no results
-  filing has come since, so a report could come any day;
+* ``estimate_near`` -- the estimate's range reaches the window's days;
+* ``overdue`` -- the estimate's range ended before day 1 and no results
+  filing has come since, or none has come for longer than any gap between
+  the issuer's own results filings, so a report could come any day;
 * ``already_reported`` -- this cycle's results were filed on or before the
   signal session; the next report is about a quarter away (an inference);
 * ``estimate_outside`` -- the estimate falls outside the window;
@@ -51,23 +53,29 @@ FOREIGN_FORMS = ("6-K", "6-K/A", "20-F", "20-F/A", "40-F", "40-F/A")
 PROJECTION_DAYS = 364        # DERIVED: 52 weeks, the same weekday a year on
 ESTIMATE_SLACK_DAYS = 7      # P: a report a week either side of last year's is the same cycle
 OVERDUE_DAYS = 45            # P: an estimate whose range ended this many days before the signal still reads as overdue
+# DERIVED: how far back a projection inside the horizon can come from
+REACH_DAYS = PROJECTION_DAYS + ESTIMATE_SLACK_DAYS + OVERDUE_DAYS
 MAX_TICKETS = 8              # four model slots per stage; never binds on a real night
-MAX_RESULTS_FILINGS = 12     # newest results filings kept per ticket (about three years of quarters)
+MAX_RESULTS_FILINGS = 24     # results filings kept per ticket: every one inside the reach, and the one before it
 MAX_HISTORY_FILES = 1
 DEADLINE_SECONDS = 60
+RETRIEVAL_WINDOW_SECONDS = 7200   # P: a row's SEC read lies within two hours of its record's clock
 SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
 HISTORY_URL = "https://data.sec.gov/submissions/{name}"
 VERDICTS = ("reported_after_signal", "estimate_inside", "estimate_near", "overdue",
             "already_reported", "estimate_outside", "unknown")
-UNKNOWN_REASONS = ("not_mapped", "foreign_issuer", "no_results_history", "no_recent_results", "history_short",
-                   "history_not_read", "rows_unreadable", "source_unavailable", "not_checked")
+UNKNOWN_REASONS = ("not_mapped", "identity_ambiguous", "foreign_issuer", "no_results_history", "no_recent_results",
+                   "history_short", "filings_short", "history_not_read", "rows_unreadable", "source_unavailable",
+                   "not_checked")
 # the reasons a row was read for and re-derived from; the rest carry no finding
 ASSESSED_REASONS = (None, "foreign_issuer", "no_results_history", "no_recent_results", "history_short",
-                    "history_not_read")
-UNREAD_REASONS = ("not_mapped", "rows_unreadable", "source_unavailable", "not_checked")
+                    "filings_short", "history_not_read")
+# a reason that says SEC was not read in full; a not-mapped or ambiguous symbol is SEC's answer
+UNREAD_REASONS = ("rows_unreadable", "source_unavailable", "not_checked")
 PLACEMENTS = ("pre_entry", "held", "boundary", "any_day")
 STATUSES = ("not_applicable", "checked", "partial", "unavailable")
 STAGES = ("burst", "anticipation")
+ERRORS = tuple(sorted(issuer_evidence.ERRORS | {"rows_unreadable", "not_mapped"}))
 
 RULES = {
     "earnings_risk.version": VERSION,
@@ -80,10 +88,13 @@ RULES = {
     "earnings_risk.projection_days": PROJECTION_DAYS,
     "earnings_risk.estimate_slack_days": ESTIMATE_SLACK_DAYS,
     "earnings_risk.overdue_days": OVERDUE_DAYS,
+    "earnings_risk.reach_days": REACH_DAYS,
     "earnings_risk.max_tickets": MAX_TICKETS,
     "earnings_risk.max_results_filings": MAX_RESULTS_FILINGS,
     "earnings_risk.max_history_files": MAX_HISTORY_FILES,
     "earnings_risk.deadline_seconds": DEADLINE_SECONDS,
+    "earnings_risk.retrieval_window_seconds": RETRIEVAL_WINDOW_SECONDS,
+    "earnings_risk.matching": "one_to_one",
     "earnings_risk.window": "plan.final_exit_day sessions after the signal session",
     "earnings_risk.unknown_policy": "never_clearance",
 }
@@ -91,11 +102,13 @@ RULES = {
 ACCESSION = re.compile(r"[0-9]{10}-[0-9]{2}-[0-9]{6}\Z")
 REASON_WORDS = {
     "not_mapped": "SEC's ticker list does not name this symbol",
+    "identity_ambiguous": "SEC's ticker list names this symbol for more than one company",
     "foreign_issuer": "a foreign issuer files its results on forms that carry no results item",
     "no_results_history": "no results filing (8-K item 2.02) in SEC's list",
-    "no_recent_results": "no results filing (8-K item 2.02) in the fourteen months before the signal",
-    "history_short": "its results filings do not reach back a year",
-    "history_not_read": "the filings SEC returned do not reach back a year and the older file was not read",
+    "no_recent_results": f"no results filing (8-K item 2.02) in the {REACH_DAYS} days before the signal",
+    "history_short": f"its results filings (8-K item 2.02) begin less than {REACH_DAYS} days before the signal",
+    "filings_short": f"the SEC filings read for it begin less than {REACH_DAYS} days before the signal",
+    "history_not_read": f"its older SEC filing list could not be read, so its filings do not reach back {REACH_DAYS} days",
     "rows_unreadable": "SEC's filing list could not be read",
     "source_unavailable": "SEC did not answer",
     "not_checked": "not checked in this run",
@@ -109,7 +122,7 @@ FETCH = None
 class SourceError(ValueError):
     def __init__(self, code):
         super().__init__(code)
-        self.code = code
+        self.code = code if code in ERRORS else "invalid_response"
 
 
 # ------------------------------------------------------------ the rule ---
@@ -130,7 +143,10 @@ def _instant(value) -> datetime:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if parsed.tzinfo is None:
         raise ValueError("earnings instant needs an offset")
-    return parsed.astimezone(timezone.utc)
+    try:
+        return parsed.astimezone(timezone.utc)
+    except OverflowError:
+        raise ValueError("earnings instant out of range") from None
 
 
 def _iso(moment: datetime) -> str:
@@ -158,36 +174,45 @@ def timing_of(filing) -> str:
     return "unknown"
 
 
-def assess(filings, session, days, retrieved_at, coverage_start, foreign) -> dict:
+def _brief(f) -> dict:
+    return {"accession": f["accession"], "filing_date": f["filing_date"].isoformat(), "accepted_at": f["accepted_at"]}
+
+
+def assess(filings, session, days, retrieved_at, coverage_start, foreign, history_error=None) -> dict:
     """One ticket's verdict from its results filings. Pure: every input is
-    retained on the row, so the validator re-derives it."""
+    retained on the row, so the validator re-derives it.
+
+    SEC is read as it stood at the earlier of the retrieval and the hold's last
+    close, so a later run reading a backfilled session sees what the hold saw.
+    Each of this year's filings reports at most one of last year's (one-to-one,
+    earliest first), so a preliminary release cannot also stand for the full
+    results still to come."""
     signal = _day(session)
     days = [_day(d) for d in days]
     retrieved = _instant(retrieved_at)
     first, last = days[0], days[-1]
     slack = timedelta(days=ESTIMATE_SLACK_DAYS)
+    close, day1_open, last_close = sessions.hours(signal)[1], sessions.hours(first)[0], sessions.hours(last)[1]
+    seen_until = min(retrieved, last_close)
     rows = sorted(({"accession": f["accession"], "filing_date": _day(f["filing_date"]),
                     "accepted_at": f.get("accepted_at")} for f in filings),
                   key=lambda f: (f["filing_date"], f["accession"]))
-    rows = [f for f in rows if f["filing_date"] <= retrieved.date()]
+    rows = [f for f in rows if f["filing_date"] <= seen_until.astimezone(sessions.MARKET_TZ).date()
+            and (f["accepted_at"] is None or _instant(f["accepted_at"]) <= seen_until)]
     out = {"verdict": "unknown", "placement": None, "projection": None, "observed": None, "reason": None}
 
-    close = sessions.hours(signal)[1]
-    day1_open = sessions.hours(first)[0]
-    observed = [f for f in rows if f["accepted_at"] and close < _instant(f["accepted_at"]) <= retrieved]
+    observed = sorted((f for f in rows if f["accepted_at"] and close < _instant(f["accepted_at"])),
+                      key=lambda f: _instant(f["accepted_at"]))
     if observed:
-        hit = observed[-1]
-        accepted = _instant(hit["accepted_at"])
+        hit = observed[0]
         out.update(verdict="reported_after_signal",
-                   placement="pre_entry" if accepted < day1_open else "held",
-                   observed={"accession": hit["accession"], "filing_date": hit["filing_date"].isoformat(),
-                             "accepted_at": hit["accepted_at"]})
+                   placement="pre_entry" if _instant(hit["accepted_at"]) < day1_open else "held",
+                   observed=_brief(hit))
         return out
 
-    # the oldest filing a projection inside the horizon can come from
-    needed = signal - timedelta(days=PROJECTION_DAYS) - slack - timedelta(days=OVERDUE_DAYS)
+    needed = signal - timedelta(days=REACH_DAYS)
     if coverage_start is None or _day(coverage_start) > needed:
-        out["reason"] = "history_not_read"
+        out["reason"] = "history_not_read" if history_error else "filings_short"
         return out
     if not rows:
         out["reason"] = "foreign_issuer" if foreign else "no_results_history"
@@ -199,48 +224,45 @@ def assess(filings, session, days, retrieved_at, coverage_start, foreign) -> dic
         out["reason"] = "no_recent_results"
         return out
 
+    def q_of(anchor):
+        return anchor["filing_date"] + timedelta(days=PROJECTION_DAYS)
+
     def project(anchor):
-        q = anchor["filing_date"] + timedelta(days=PROJECTION_DAYS)
+        q = q_of(anchor)
         return {"date": q.isoformat(), "low": (q - slack).isoformat(), "high": (q + slack).isoformat(),
                 "from_accession": anchor["accession"], "from_filing_date": anchor["filing_date"].isoformat(),
-                "slack_days": ESTIMATE_SLACK_DAYS, "timing_last_year": timing_of(
-                    {"filing_date": anchor["filing_date"].isoformat(), "accepted_at": anchor["accepted_at"]})}
+                "slack_days": ESTIMATE_SLACK_DAYS, "timing_last_year": timing_of(_brief(anchor))}
 
     horizon_low = signal - timedelta(days=OVERDUE_DAYS) - slack
-    classes = {"inside": [], "near": [], "overdue": [], "reported": []}
-    later = []
-    for anchor in rows:
-        q = anchor["filing_date"] + timedelta(days=PROJECTION_DAYS)
-        if q > last + slack:
-            later.append(anchor)
-            continue
-        if q < horizon_low:
-            continue
-        # any results filing since the estimate's low reports this cycle,
-        # however late against last year's date
-        reported = [f for f in rows if f["filing_date"] >= q - slack]
-        if reported:
-            classes["reported"].append((anchor, reported[0]))
-        elif signal <= q <= last:
-            classes["inside"].append(anchor)
-        elif q - slack <= last and q + slack >= signal:
-            classes["near"].append(anchor)
-        elif q + slack < signal:
-            classes["overdue"].append(anchor)
-    if classes["inside"]:
-        anchor = classes["inside"][0]
-        q = anchor["filing_date"] + timedelta(days=PROJECTION_DAYS)
-        out.update(verdict="estimate_inside", placement="pre_entry" if q < first else "held",
-                   projection=project(anchor))
-    elif classes["near"]:
-        out.update(verdict="estimate_near", placement="boundary", projection=project(classes["near"][0]))
-    elif classes["overdue"]:
-        out.update(verdict="overdue", placement="any_day", projection=project(classes["overdue"][-1]))
-    elif classes["reported"]:
-        anchor, filed = classes["reported"][-1]
-        out.update(verdict="already_reported", projection=project(anchor),
-                   observed={"accession": filed["accession"], "filing_date": filed["filing_date"].isoformat(),
-                             "accepted_at": filed["accepted_at"]})
+    anchors = sorted((a for a in rows if q_of(a) >= horizon_low), key=lambda a: (q_of(a), a["accession"]))
+    used, matched, unmatched = set(), [], []
+    for anchor in anchors:
+        q = q_of(anchor)
+        match = next((f for f in rows if f["filing_date"] >= q - slack and f["accession"] not in used), None)
+        if match is not None:
+            used.add(match["accession"])
+            matched.append((anchor, match))
+        else:
+            unmatched.append(anchor)
+    inside = [a for a in unmatched if signal <= q_of(a) <= last]
+    near = [a for a in unmatched if a not in inside and q_of(a) - slack <= last and q_of(a) + slack >= first]
+    late = [a for a in unmatched if q_of(a) + slack < first]
+    later = [a for a in unmatched if q_of(a) - slack > last]
+    newest = rows[-1]
+    gaps = [(b["filing_date"] - a["filing_date"]).days for a, b in zip(rows, rows[1:])]
+    cadence_late = bool(gaps) and (signal - newest["filing_date"]).days > max(gaps) + ESTIMATE_SLACK_DAYS
+    if inside:
+        out.update(verdict="estimate_inside", placement="pre_entry" if q_of(inside[0]) < first else "held",
+                   projection=project(inside[0]))
+    elif near:
+        out.update(verdict="estimate_near", placement="boundary", projection=project(near[0]))
+    elif late:
+        out.update(verdict="overdue", placement="any_day", projection=project(late[-1]))
+    elif cadence_late:
+        out.update(verdict="overdue", placement="any_day", observed=_brief(newest))
+    elif matched:
+        anchor, filed = matched[-1]
+        out.update(verdict="already_reported", projection=project(anchor), observed=_brief(filed))
     else:
         out.update(verdict="estimate_outside", projection=project(later[0]) if later else None)
     return out
@@ -271,10 +293,11 @@ def sentence(row) -> str:
     tail = " An estimate from SEC filings, not an announced date: check the company's announcement before entry."
     if verdict == "reported_after_signal":
         when = _et(row["observed"]["accepted_at"])
-        lead = ("before day 1's open, so the entry opens on the reaction" if row["placement"] == "pre_entry"
-                else "inside the hold window")
-        return (f"Quarterly results (8-K item 2.02) were filed with the SEC after the signal session's close "
-                f"(accepted {when}), {lead}.")
+        where = ("after the signal session's close and before day 1's open" if row["placement"] == "pre_entry"
+                 else f"during this ticket's hold window {span}")
+        return (f"Quarterly results (8-K item 2.02) were accepted by the SEC {where} ({when}). The release they "
+                "furnish may have come earlier, even before the signal session's open; if it came after that "
+                "close, the entry opens on the reaction. Check the release time before entry.")
     if verdict == "unknown":
         return (f"Earnings date not established: {REASON_WORDS[row['reason']]}. "
                 "Check the company's announcement before entry.")
@@ -289,6 +312,10 @@ def sentence(row) -> str:
     if verdict == "estimate_near":
         return f"Earnings estimated {about}, {source}: its range reaches this ticket's hold window {span}.{tail}"
     if verdict == "overdue":
+        if projection is None:
+            return (f"No results filing (8-K item 2.02) has come since {_long(row['observed']['filing_date'])}, "
+                    "longer than any gap between its earlier results filings: a report could come any day, "
+                    f"including inside this ticket's hold window {span}. Check the company's announcement before entry.")
         return (f"Earnings were estimated {about}, {source}, and no results filing has come since: "
                 f"a report could come any day, including inside this ticket's hold window {span}.{tail}")
     if verdict == "already_reported":
@@ -354,9 +381,47 @@ def _columns(value):
     return results, (min(dates) if dates else None), forms
 
 
-def parse_submissions(raw: bytes, cik: int, ticker: str):
+def _decode(raw):
+    """SEC's JSON under the issuer collector's own bounds: a byte limit, no
+    duplicate key, no non-finite number."""
     try:
-        value = json.loads(raw.decode("utf-8"))
+        return issuer_evidence._decode(raw, issuer_evidence.MAX_RESPONSE_BYTES)
+    except (ValueError, TypeError, RecursionError):
+        raise SourceError("rows_unreadable") from None
+
+
+def parse_mapping(raw) -> dict:
+    """SEC's ticker mapping, each symbol to the companies it names. A mapping
+    that cannot be read is SEC's answer failing, never a symbol it lacks."""
+    try:
+        value = issuer_evidence._decode(raw, issuer_evidence.MAX_RESPONSE_BYTES)
+        fields, data = value["fields"], value["data"]
+        if not (isinstance(fields, list) and len(set(fields)) == len(fields)
+                and all(k in fields for k in ("cik", "name", "ticker")) and isinstance(data, list)):
+            raise SourceError("invalid_response")
+        out: dict = {}
+        for row in data:
+            if not (isinstance(row, list) and len(row) == len(fields)):
+                raise SourceError("invalid_response")
+            item = dict(zip(fields, row))
+            if not (isinstance(item["ticker"], str) and type(item["cik"]) is int and 0 < item["cik"] < 10**10
+                    and isinstance(item["name"], str) and item["name"]):
+                continue
+            pair = {"cik": item["cik"], "name": item["name"]}
+            if pair not in out.setdefault(item["ticker"], []):
+                out[item["ticker"]].append(pair)
+        if not out:
+            raise SourceError("invalid_response")
+        return out
+    except SourceError:
+        raise
+    except (KeyError, TypeError, ValueError, RecursionError):
+        raise SourceError("invalid_response") from None
+
+
+def parse_submissions(raw: bytes, cik: int, ticker: str):
+    value = _decode(raw)
+    try:
         if not isinstance(value, dict) or str(value.get("cik", "")).lstrip("0") != str(cik):
             raise SourceError("rows_unreadable")
         tickers = value.get("tickers")
@@ -368,14 +433,14 @@ def parse_submissions(raw: bytes, cik: int, ticker: str):
             raise SourceError("rows_unreadable")
     except SourceError:
         raise
-    except (KeyError, TypeError, ValueError, UnicodeDecodeError):
+    except (KeyError, TypeError, AttributeError):
         raise SourceError("rows_unreadable") from None
     results, start, forms = _columns(recent)
     history = []
     for item in files:
         try:
             name = item["name"]
-            if (isinstance(name, str) and re.fullmatch(f"CIK{cik:010d}-submissions-[0-9]{{3}}\\.json", name)):
+            if isinstance(name, str) and re.fullmatch(f"CIK{cik:010d}-submissions-[0-9]{{3}}\\.json", name):
                 history.append({"name": name, "filing_to": _day(item["filingTo"]).isoformat()})
         except (KeyError, TypeError, ValueError):
             continue
@@ -390,13 +455,21 @@ def _budget(seconds):
 
 
 def _default_fetch(seconds):
+    """SEC through the issuer collector's own transport (its User-Agent, its
+    spacing, its bounds, no redirect). Every failure it can raise is a named
+    source error, so one failed request is one ticket's unknown row."""
+    import http.client
     transport, budget = issuer_evidence._Transport(None), _budget(seconds)
 
     def fetch(url):
         try:
             return transport.fetch(url, budget)["body"]
         except issuer_evidence.SourceError as exc:
-            raise SourceError(exc.code if exc.code in issuer_evidence.ERRORS else "invalid_response") from None
+            raise SourceError(exc.code) from None
+        except (http.client.HTTPException, OSError):
+            raise SourceError("network_error") from None
+        except Exception:  # noqa: BLE001 - a bound or a shape the transport refused
+            raise SourceError("invalid_response") from None
     fetch.remaining = budget.remaining
     return fetch
 
@@ -430,7 +503,7 @@ def _counts(rows) -> dict:
 def _status(rows) -> str:
     if not rows:
         return "not_applicable"
-    unread = sum(1 for r in rows if r.get("reason") in UNREAD_REASONS and r.get("reason") != "not_mapped")
+    unread = sum(1 for r in rows if r.get("reason") in UNREAD_REASONS)
     return "unavailable" if unread == len(rows) else "partial" if unread else "checked"
 
 
@@ -447,6 +520,15 @@ def _row(ticket, session, days, retrieved, result=None, *, reason=None, error=No
     return row
 
 
+def _kept(results, needed) -> list[dict]:
+    """Every results filing inside the reach and the newest one before it,
+    which shows the list reaches back; the newest ``MAX_RESULTS_FILINGS``."""
+    results = sorted(results, key=lambda r: (r["filing_date"], r["accession"]))
+    inside = [r for r in results if _day(r["filing_date"]) >= needed]
+    before = [r for r in results if _day(r["filing_date"]) < needed][-1:]
+    return (before + inside)[-MAX_RESULTS_FILINGS:]
+
+
 def _read(get, cik, ticker, session, clock_now):
     """One issuer's results filings from its SEC list, and the older file when
     the recent one does not reach back far enough. A failed older file leaves
@@ -457,18 +539,16 @@ def _read(get, cik, ticker, session, clock_now):
     parsed = parse_submissions(raw, cik, ticker)
     sources, error = [_source(url, raw, retrieved)], None
     results, start = list(parsed["results"]), parsed["coverage_start"]
-    needed = _day(session) - timedelta(days=PROJECTION_DAYS + ESTIMATE_SLACK_DAYS + OVERDUE_DAYS)
+    needed = _day(session) - timedelta(days=REACH_DAYS)
     older = sorted((h for h in parsed["history"] if _day(h["filing_to"]) >= needed),
                    key=lambda h: (h["filing_to"], h["name"]), reverse=True)[:MAX_HISTORY_FILES]
     if (start is None or start > needed) and older:
         url = HISTORY_URL.format(name=older[0]["name"])
         try:
             hraw = get(url)
-            more, hstart, hforms = _columns(json.loads(hraw.decode("utf-8")))
+            more, hstart, hforms = _columns(_decode(hraw))
         except SourceError as exc:
             error = exc.code
-        except (UnicodeDecodeError, ValueError):
-            error = "rows_unreadable"
         else:
             sources.append(_source(url, hraw, clock_now()))
             known = {r["accession"] for r in results}
@@ -476,14 +556,12 @@ def _read(get, cik, ticker, session, clock_now):
             parsed["forms"] |= hforms
             if hstart is not None:
                 start = hstart if start is None else min(start, hstart)
-    results = sorted(results, key=lambda r: (r["filing_date"], r["accession"]), reverse=True)[:MAX_RESULTS_FILINGS]
-    results.sort(key=lambda r: (r["filing_date"], r["accession"]))
-    return {"filings": results, "coverage_start": start.isoformat() if start else None,
+    return {"filings": _kept(results, needed), "coverage_start": start.isoformat() if start else None,
             "foreign": bool(parsed["forms"] & set(FOREIGN_FORMS)), "sources": sources,
             "retrieved": retrieved, "error": error}
 
 
-def collect(tickets, session, *, fetch=None, now=None, deadline_seconds=DEADLINE_SECONDS) -> dict:
+def collect(tickets, session, *, fetch=None, now=None, deadline_seconds=DEADLINE_SECONDS, _state=None) -> dict:
     """One evening's warnings. ``fetch(url) -> bytes`` raises
     :class:`SourceError` on failure; None reads SEC. A source failure is an
     unknown row, never a raise; ``safe_collect()`` catches the rest."""
@@ -493,6 +571,8 @@ def collect(tickets, session, *, fetch=None, now=None, deadline_seconds=DEADLINE
     tickets = list(tickets)
     block = {"version": VERSION, "policy": POLICY, "source": SOURCE, "session": session,
              "status": "not_applicable", "mapping": None, "rows": [], "counts": {}, "requests": 0}
+    if _state is not None:
+        _state["block"] = block
     if tickets:
         started = time.monotonic()
         fetch = fetch or FETCH or _default_fetch(deadline_seconds)
@@ -503,10 +583,11 @@ def collect(tickets, session, *, fetch=None, now=None, deadline_seconds=DEADLINE
             block["requests"] += 1
             return fetch(url)
 
-        mapping_raw, mapping_error, read = None, None, {}
+        mapping, mapping_error, read = None, None, {}
         try:
-            mapping_raw = get(issuer_evidence.MAPPING_URL)
-            block["mapping"] = _source(issuer_evidence.MAPPING_URL, mapping_raw, clock_now())
+            raw = get(issuer_evidence.MAPPING_URL)
+            block["mapping"] = _source(issuer_evidence.MAPPING_URL, raw, clock_now())
+            mapping = parse_mapping(raw)
         except SourceError as exc:
             mapping_error = exc.code
         for i, ticket in enumerate(tickets):
@@ -517,18 +598,18 @@ def collect(tickets, session, *, fetch=None, now=None, deadline_seconds=DEADLINE
                 block["rows"].append(_row(ticket, session, days, clock_now(), reason="source_unavailable",
                                           error=mapping_error))
                 continue
-            try:
-                identity = issuer_evidence.parse_mapping(mapping_raw, ticket["ticker"])
-            except issuer_evidence.SourceError:
-                block["rows"].append(_row(ticket, session, days, clock_now(), reason="not_mapped"))
+            identities = mapping.get(ticket["ticker"], [])
+            if len(identities) != 1:
+                block["rows"].append(_row(ticket, session, days, clock_now(),
+                                          reason="not_mapped" if not identities else "identity_ambiguous"))
                 continue
-            cik, issuer = identity["cik"], identity["name"]
+            cik, issuer = identities[0]["cik"], identities[0]["name"]
             try:
                 if ticket["ticker"] not in read:
                     read[ticket["ticker"]] = _read(get, cik, ticket["ticker"], session, clock_now)
                 got = read[ticket["ticker"]]
-                result = assess(got["filings"], session, days, _iso(got["retrieved"]),
-                                got["coverage_start"], got["foreign"])
+                result = assess(got["filings"], session, days, _iso(got["retrieved"]), got["coverage_start"],
+                                got["foreign"], got["error"])
                 row = _row(ticket, session, days, got["retrieved"], result, cik=cik, issuer=issuer,
                            sources=got["sources"], error=got["error"], filings=got["filings"],
                            coverage_start=got["coverage_start"], foreign=got["foreign"])
@@ -545,10 +626,12 @@ def collect(tickets, session, *, fetch=None, now=None, deadline_seconds=DEADLINE
 
 def safe_collect(tickets, session, **kwargs) -> dict:
     """The evening's call: a warning never fails a night. Anything the
-    collector did not name becomes a block whose every row was not checked."""
+    collector did not name becomes a block whose every row was not checked,
+    with the requests it had already made counted."""
     tickets = list(tickets)
+    state: dict = {}
     try:
-        block = collect(tickets, session, **kwargs)
+        block = collect(tickets, session, _state=state, **kwargs)
         problems = block_faults(block, block["session"], tickets)
         if problems:
             raise ValueError(problems[0])
@@ -557,9 +640,10 @@ def safe_collect(tickets, session, **kwargs) -> dict:
         session = _day(session).isoformat()
         now = kwargs.get("now") or datetime.now(timezone.utc)
         rows = [_row(t, session, window(session), now, reason="not_checked") for t in tickets]
+        made = (state.get("block") or {}).get("requests", 0)
         block = {"version": VERSION, "policy": POLICY, "source": SOURCE, "session": session,
                  "status": _status(rows), "mapping": None, "rows": rows, "counts": _counts(rows),
-                 "requests": 0, "internal": type(exc).__name__}
+                 "requests": made if type(made) is int else 0, "internal": type(exc).__name__}
         block["sentence"] = block_sentence(block)
         return block
 
@@ -584,26 +668,32 @@ FILING_KEYS = {"accession", "filing_date", "accepted_at"}
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 
 
-def block_faults(block, session, tickets=None) -> list[str]:
+def block_faults(block, session, tickets=None, published_at=None) -> list[str]:
     """The block's shape one level in, and every read row re-derived from the
-    inputs it retains; ``tickets`` the record's own, in order. Names faults;
+    inputs it retains; ``tickets`` the record's own, in order; with
+    ``published_at``, every SEC read held between the signal session's close
+    and ``RETRIEVAL_WINDOW_SECONDS`` after the record's clock. Names faults;
     never raises."""
     try:
-        return _faults(block, session, tickets)
-    except (KeyError, TypeError, ValueError, AttributeError, IndexError) as exc:
+        return _faults(block, session, tickets, published_at)
+    except (KeyError, TypeError, ValueError, AttributeError, IndexError, ArithmeticError, RecursionError) as exc:
         return [f"earnings block is malformed ({type(exc).__name__})"]
 
 
-def _source_ok(value) -> bool:
-    if not (isinstance(value, dict) and set(value) == SOURCE_KEYS and isinstance(value["url"], str)
+def _source_ok(value, url, bounds) -> bool:
+    if not (isinstance(value, dict) and set(value) == SOURCE_KEYS and value["url"] == url
             and isinstance(value["sha256"], str) and SHA256.fullmatch(value["sha256"])
             and type(value["bytes"]) is int and value["bytes"] > 0):
         return False
-    _instant(value["retrieved_at"])
-    return True
+    return _within(value["retrieved_at"], bounds)
 
 
-def _faults(block, session, tickets) -> list[str]:
+def _within(instant, bounds) -> bool:
+    moment = _instant(instant)
+    return bounds is None or bounds[0] < moment <= bounds[1]
+
+
+def _faults(block, session, tickets, published_at) -> list[str]:
     if not isinstance(block, dict) or not BLOCK_KEYS <= set(block) <= BLOCK_KEYS | {"internal"}:
         return ["earnings block keys"]
     out = []
@@ -619,7 +709,11 @@ def _faults(block, session, tickets) -> list[str]:
         return out + ["earnings rows are not a list of objects"]
     if type(block["requests"]) is not int or block["requests"] < 0:
         out.append("earnings request count")
-    if block["mapping"] is not None and not _source_ok(block["mapping"]):
+    bounds = None
+    if published_at is not None:
+        bounds = (sessions.hours(_day(session))[1],
+                  _instant(published_at) + timedelta(seconds=RETRIEVAL_WINDOW_SECONDS))
+    if block["mapping"] is not None and not _source_ok(block["mapping"], issuer_evidence.MAPPING_URL, bounds):
         out.append("earnings mapping source")
     if "internal" in block and not isinstance(block["internal"], str):
         out.append("earnings internal failure word")
@@ -638,7 +732,8 @@ def _faults(block, session, tickets) -> list[str]:
                 or (r["verdict"] == "unknown") != (r["reason"] is not None):
             out.append(f"earnings verdict for {name}")
             continue
-        _instant(r["retrieved_at"])
+        if not _within(r["retrieved_at"], bounds):
+            out.append(f"earnings read for {name} lies outside its session's close and its record's clock")
         filings = r["results_filings"]
         if (not isinstance(filings, list) or len(filings) > MAX_RESULTS_FILINGS
                 or not all(isinstance(f, dict) and set(f) == FILING_KEYS and isinstance(f["accession"], str)
@@ -647,18 +742,24 @@ def _faults(block, session, tickets) -> list[str]:
             out.append(f"earnings results filings for {name}")
             continue
         if (not isinstance(r["foreign"], bool) or not isinstance(r["sources"], list)
-                or not all(_source_ok(x) for x in r["sources"])
-                or not (r["error"] is None or isinstance(r["error"], str))
-                or not (r["cik"] is None or (type(r["cik"]) is int and r["cik"] > 0))
+                or not (r["error"] is None or r["error"] in ERRORS)
+                or not (r["cik"] is None or (type(r["cik"]) is int and 0 < r["cik"] < 10**10))
                 or not (r["issuer"] is None or isinstance(r["issuer"], str))
                 or not (r["coverage_start"] is None or _day(r["coverage_start"]))):
             out.append(f"earnings row fields for {name}")
             continue
         if r["reason"] in ASSESSED_REASONS:
-            if not r["sources"] or r["cik"] is None:
-                out.append(f"earnings row for {name} carries a finding without its source")
+            history = f"CIK{r['cik']:010d}-submissions-" if r["cik"] else None
+            urls_ok = (r["cik"] is not None and 1 <= len(r["sources"]) <= 1 + MAX_HISTORY_FILES
+                       and _source_ok(r["sources"][0], SUBMISSIONS_URL.format(cik=r["cik"]), bounds)
+                       and r["sources"][0]["retrieved_at"] == r["retrieved_at"]
+                       and all(isinstance(x, dict) and isinstance(x.get("url"), str)
+                               and re.fullmatch(re.escape(HISTORY_URL.format(name=history)) + r"[0-9]{3}\.json", x["url"])
+                               and _source_ok(x, x["url"], bounds) for x in r["sources"][1:]))
+            if not urls_ok:
+                out.append(f"earnings row for {name} carries a finding without its SEC source")
                 continue
-            expected = assess(filings, session, days, r["retrieved_at"], r["coverage_start"], r["foreign"])
+            expected = assess(filings, session, days, r["retrieved_at"], r["coverage_start"], r["foreign"], r["error"])
             moved = [k for k in ("verdict", "placement", "projection", "observed", "reason") if r[k] != expected[k]]
             if moved:
                 out.append(f"earnings {moved[0]} for {name} is not what its filings give")
@@ -689,4 +790,9 @@ def record_faults(data) -> list[str]:
         return ["run.earnings is missing under rules that write it"]
     watchlist = data.get("watchlist") if isinstance(data.get("watchlist"), dict) else {}
     tickets = tickets_of(data.get("bursts"), data.get("trades"), watchlist.get("top"))
-    return [f"run.{f}" for f in block_faults(run["earnings"], run.get("session"), tickets)]
+    published = run.get("published_at")
+    try:
+        _instant(published)
+    except ValueError:
+        return ["run.earnings cannot be read against the record's clock (run.published_at)"]
+    return [f"run.{f}" for f in block_faults(run["earnings"], run.get("session"), tickets, published)]

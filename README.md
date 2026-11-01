@@ -1291,25 +1291,33 @@ lets a public page print a company's announced report date, so the evening run
 estimates one from SEC EDGAR, whose filings are public: the dates a company
 furnished its quarterly results (form 8-K, item 2.02). It reads SEC's ticker
 mapping once and each ticket's filing list once, and the older file only when
-the recent one does not reach back fourteen months: at most one mapping and
-two requests a ticket, within a 60-second deadline. Most companies report in
-the same week each year, so last year's results filing put 364 days later,
-within 7 days either side, is the estimate, read against the ticket's own hold
-window (the five sessions `plan.dated_schedule()` names). The verdicts:
-results filed with the SEC after the signal session's close (an observed
-fact); estimated inside the hold; estimated near it (the range reaches it);
-overdue (the estimate's range ended before the signal session, no more
-than 45 days before it, with no results filing since, so a report could come
-any day); already reported this
+the recent one does not reach back 416 days: at most one mapping and two
+requests a ticket, within a 60-second deadline, through the issuer collector's
+own transport and User-Agent. Most companies report in the same week each
+year, so last year's results filing put 364 days later, within 7 days either
+side, is the estimate, read against the ticket's own hold window (the five
+sessions `plan.dated_schedule()` names). Each of this year's results filings
+reports at most one of last year's, so a preliminary release does not stand
+for the full results still to come. The verdicts: a results 8-K accepted by
+the SEC after the signal session's close (an observed fact about the filing;
+the release it furnishes may have come earlier, and the sentence says so);
+estimated inside the hold; estimated near it (the estimate's range reaches a
+day of the hold); overdue (the estimate's range ended before day 1 of the
+hold, no more than 45 days before the signal, with no results filing since;
+or no results filing has come for longer than any gap between the issuer's
+own earlier ones), so a report could come any day; already reported this
 quarter; estimated outside the hold; or unknown, with its reason (not in SEC's
-ticker list, no results filings, a foreign issuer's forms, history too short
-or not read, SEC unavailable). Every estimate says it is one and not an
+ticker list or named there for two companies, no results filings, a foreign
+issuer's forms, filings that do not reach back 416 days or an older file that
+could not be read, SEC unavailable). Every estimate says it is one and not an
 announced date; unknown never reads as clear; and the warning never withholds,
 sizes or cuts a ticket: it is printed beside the ticket on the page, the
 tickets sheet and in the mail. A record made before the block says no report
 date was checked. `report.validate()` re-derives every read row from the
-filings it retains and refuses a block whose rows are not the record's tickets.
-The check is SpicyStock's, not Bonde's (`knowledge/method.md`).
+filings it retains, holds each SEC read between the signal session's close
+and two hours after the record's own clock and to SEC's own addresses, and
+refuses a block whose rows are not the record's tickets. The check is
+SpicyStock's, not Bonde's (`knowledge/method.md`).
 
 ### Morning observations
 

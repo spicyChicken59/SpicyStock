@@ -775,10 +775,12 @@ def test_the_readme_and_the_method_quote_the_earnings_rules_from_the_module():
     from src import earnings_risk as E
     section = README[README.index("### Earnings warnings"):README.index("### Morning observations")]
     for words in (f"policy `{E.POLICY}`", f"put {E.PROJECTION_DAYS} days later",
-                  f"within {E.ESTIMATE_SLACK_DAYS} days either side", f"no more than {E.OVERDUE_DAYS} days before it",
+                  f"within {E.ESTIMATE_SLACK_DAYS} days either side", f"no more than {E.OVERDUE_DAYS} days before the signal", f"does not reach back {E.REACH_DAYS} days",
                   f"within a {E.DEADLINE_SECONDS}-second deadline", f"(form {E.RESULTS_FORM}, item {E.RESULTS_ITEM})",
                   "never withholds, sizes or cuts a ticket", "unknown never reads as clear"):
         assert words in section, words
     assert f"{E.PROJECTION_DAYS} days (P), within ±{E.ESTIMATE_SLACK_DAYS} days (P)" in METHOD
     assert f"more than {E.OVERDUE_DAYS} days before the signal (P)" in METHOD and "Not Bonde's rule" in METHOD
     assert f"within a {E.DEADLINE_SECONDS}-second deadline" in ENV and "never clear" in ENV
+    # the README spells the validator's read window in words: it is the module's two hours
+    assert E.RETRIEVAL_WINDOW_SECONDS == 2 * 3600 and "two hours after the record's own clock" in section

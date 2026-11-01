@@ -439,6 +439,8 @@ class FakeSec:
         self.issuers: dict[str, dict] = {}
         self.calls: list[str] = []
         self.fail: dict[str, str] = {}
+        #: when set, the mapping URL answers these bytes instead of the issuers'
+        self.mapping_body: bytes | None = None
 
     def issuer(self, ticker: str, cik: int, name: str, filings=(), *, start=None, foreign: bool = False,
                history: list | None = None, tickers: list | None = None) -> dict:
@@ -496,6 +498,8 @@ class FakeSec:
         for part, code in self.fail.items():
             if part in url:
                 raise earnings_risk.SourceError(code)
+        if url == issuer_evidence.MAPPING_URL and self.mapping_body is not None:
+            return self.mapping_body
         if url == issuer_evidence.MAPPING_URL:
             data = [[e["cik"], e["name"], t, "Nasdaq"] for e in self.issuers.values() for t in e["tickers"]]
             return json.dumps({"fields": self.MAPPING_FIELDS, "data": data}).encode()

@@ -170,8 +170,10 @@ Not Bonde's rule: no inspected source of his sets an earnings hold, and this
 build adopts none. The warning is SpicyStock's, about a gap a stop does not
 protect against, and it never vetoes, sizes or cuts a ticket. The estimate is
 last year's results filing (SEC form 8-K, item 2.02) put 52 weeks on, 364 days
-(P), within ±7 days (P); an estimate whose range ended more than 45 days
-before the signal (P) no longer reads as overdue. Every estimate says it is one, and a ticket
+(P), within ±7 days (P), each of this year's filings standing for at most
+one of last year's; an estimate whose range ended more than 45 days before
+the signal (P) no longer reads as overdue, though an issuer with no results
+filing for longer than any gap between its own earlier ones still does. Every estimate says it is one, and a ticket
 SEC did not answer for is unknown, never clear.
 
 ## What the evidence says (E)
