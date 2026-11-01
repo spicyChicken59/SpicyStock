@@ -411,12 +411,15 @@ def tickets_of(bursts, trades, top) -> list[dict]:
     ``trades``, then the setting-up list's plans that still carry an order
     after the combined allocation -- the same two rules the picks are written by."""
     from src import plan as plan_module
-    trades = set(trades or [])
-    out = [{"stage": "burst", "ticker": row["ticker"]} for row in bursts or []
-           if isinstance(row, dict) and row.get("ticker") in trades and isinstance(row.get("plan"), dict)]
-    out += [{"stage": "anticipation", "ticker": row["ticker"]} for row in top or []
-            if isinstance(row, dict) and isinstance(row.get("plan"), dict) and row["plan"].get("eligible")
-            and row["plan"].get("action") in plan_module.ORDER_ACTIONS]
+    # a shape the record should never carry is no ticket, never a raise: the
+    # validator reads this over whatever a file holds
+    named = lambda row: isinstance(row, dict) and isinstance(row.get("ticker"), str) and isinstance(row.get("plan"), dict)
+    trades = {t for t in trades if isinstance(t, str)} if isinstance(trades, list) else set()
+    out = [{"stage": "burst", "ticker": row["ticker"]} for row in (bursts if isinstance(bursts, list) else [])
+           if named(row) and row["ticker"] in trades]
+    out += [{"stage": "anticipation", "ticker": row["ticker"]} for row in (top if isinstance(top, list) else [])
+            if named(row) and row["plan"].get("eligible") and isinstance(row["plan"].get("action"), str)
+            and row["plan"]["action"] in plan_module.ORDER_ACTIONS]
     return out
 
 
@@ -685,7 +688,5 @@ def record_faults(data) -> list[str]:
     if "earnings" not in run:
         return ["run.earnings is missing under rules that write it"]
     watchlist = data.get("watchlist") if isinstance(data.get("watchlist"), dict) else {}
-    tickets = tickets_of(data.get("bursts") if isinstance(data.get("bursts"), list) else [],
-                         data.get("trades") if isinstance(data.get("trades"), list) else [],
-                         watchlist.get("top") if isinstance(watchlist.get("top"), list) else [])
+    tickets = tickets_of(data.get("bursts"), data.get("trades"), watchlist.get("top"))
     return [f"run.{f}" for f in block_faults(run["earnings"], run.get("session"), tickets)]

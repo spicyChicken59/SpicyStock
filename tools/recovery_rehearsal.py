@@ -46,8 +46,8 @@ sys.path.insert(0, str(ROOT))
 import pandas as pd  # noqa: E402
 import yaml  # noqa: E402
 
-from src import charts, funnel, grader, intraday, market_data, pipeline  # noqa: E402
-from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient, FakeResend  # noqa: E402
+from src import charts, earnings_risk, funnel, grader, intraday, market_data, pipeline  # noqa: E402
+from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient, FakeResend, FakeSec  # noqa: E402
 from tests.synthetic import make_ohlcv  # noqa: E402
 from tests.test_quality import frame as qframe, ideal_bars  # noqa: E402
 from tests.test_watchlist import coil  # noqa: E402
@@ -392,7 +392,9 @@ def rehearse() -> dict:
                 mock.patch.object(resend_module.Emails, "send", lambda params, options=None: resend.send(params)), \
                 mock.patch.object(resend_module, "api_key", None, create=True), \
                 mock.patch.object(charts, "render_chart", render), \
+                mock.patch.object(earnings_risk, "FETCH", FakeSec()), \
                 mock.patch.object(pipeline.grader, "MODEL", env["CLAUDE_MODEL"]):
+            # SEC is the suite's double too: a rehearsal never reaches a live source
             night = Night(fake, claude, resend, frames, docs, code)
             for scenario in SCENARIOS:
                 nights.append(night.run(scenario, root))
