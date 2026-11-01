@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "b37f962039ff"
+  "rules_version": "35a2539819be"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -952,7 +952,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "53302de536f15251007dd942a9b64baa8d6762b0e867b2002353aea6b4a583cc"
+   "context_sha256": "821d4d501812a0b698233b8aed2f81b53345aa93a59ec6cab17d3358a9343b34"
   },
   "earnings": {
    "version": 1,
@@ -1529,10 +1529,13 @@
    "projection_days": 364,
    "estimate_slack_days": 7,
    "overdue_days": 45,
+   "reach_days": 416,
    "max_tickets": 8,
-   "max_results_filings": 12,
+   "max_results_filings": 24,
    "max_history_files": 1,
    "deadline_seconds": 60,
+   "retrieval_window_seconds": 7200,
+   "matching": "one_to_one",
    "window": "plan.final_exit_day sessions after the signal session",
    "unknown_policy": "never_clearance"
   },
@@ -2128,7 +2131,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "b37f962039ff"
+  "replay_rules_version": "35a2539819be"
  },
  "observations": {
   "as_of": "2026-09-10",
