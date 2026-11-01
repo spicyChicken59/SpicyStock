@@ -76,12 +76,34 @@ export async function checkEarnings({ browser, base, open, check, eq, shotsDir }
     } finally { await context.close(); }
   }
 
+  // ---- two tickets in one stage: each prints its own row, never the other's
+  {
+    const next = JSON.parse(await readFile(path.join(FIXTURES, 'next.json'), 'utf8'));
+    const rows = next.run.earnings.rows.filter((r) => r.stage === 'burst');
+    const [nvda, coil] = ['NVDA', 'COIL'].map((t) => rows.find((r) => r.ticker === t));
+    check('the next fixture carries two burst tickets with different warnings', !!nvda && !!coil && nvda.sentence !== coil.sentence && next.trades.includes('NVDA') && next.trades.includes('COIL'));
+    const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/next.json', '2026-09-11T22:31:00Z', 1280,
+      { reducedMotion: 'reduce', lens: 'all', hash: '#/explore/bursts/COIL' });
+    try {
+      const risk = await riskOf(page);
+      check('two tickets: COIL\'s risk item prints COIL\'s row', risk.includes(coil.sentence), risk);
+      check('two tickets: and not NVDA\'s', !risk.includes(nvda.sentence), risk);
+      for (const r of [nvda, coil]) {
+        const sheet = await page.locator(`#orders-table [data-earnings="${r.ticker}"]`).evaluateAll((n) => n.map((x) => x.textContent));
+        eq(`two tickets: the sheet gives ${r.ticker} its own sentence`, sheet, [`${r.ticker}: ${r.sentence}`]);
+      }
+      eq('two tickets: page errors', [...errors], []);
+    } finally { await context.close(); }
+  }
+
   // ---- shapes the generator never writes, served under the page's own file
   const cases = [
     ['before', (d) => { delete d.run.earnings; delete d.rules.earnings_risk; }, BEFORE, 'this record predates the earnings warning'],
     ['row', (d) => { d.run.earnings.rows[0].verdict = 'clear'; d.run.earnings.rows[0].sentence = 'No earnings risk.'; }, UNREAD, null],
     ['block', (d) => { d.run.earnings = 'x'; }, UNREAD, 'in a shape this page cannot read'],
     ['rows', (d) => { d.run.earnings.rows = { AAPL: row }; }, UNREAD, null],
+    // a row with a verdict the page knows and no sentence is still unreadable, never silence
+    ['sentence', (d) => { d.run.earnings.rows.find((r) => r.ticker === 'AAPL').sentence = ''; }, UNREAD, null],
   ];
   for (const [name, mutate, words, methodWords] of cases) {
     const record = clone(full); mutate(record);

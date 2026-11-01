@@ -345,7 +345,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5661 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5753 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -13072,3 +13072,54 @@ Five survivors were equivalent. Two skeptics refuted a finding about a PR-body s
 - Railway serving the morning host;
 - a morning check for any ticket;
 - any trading edge.
+
+## Checkpoint, 1 Nov 2026 -- each ticket's earnings warning, from SEC results filings (`run.earnings`)
+
+**What it does.** `src/earnings_risk.py` reads SEC's ticker list and each
+ticket's own filing list, finds its quarterly-results filings (8-K item
+2.02), and places last year's report, moved forward 364 days and given
+±7 days, against the ticket's own hold window (`plan.next_sessions(S,
+FINAL_EXIT_DAY)`). It warns and never withholds a ticket. A results filing
+accepted after the signal session's close is named as observed; an issuer
+later than its own longest gap between reports plus 7 days reads overdue;
+anything it could not read is `unknown` with its reason and is never read as
+clear. `report.validate()` re-derives every read row from its own filings
+under rules that archive `earnings_risk`; the page and the mail print each
+row's sentence verbatim beside its ticket.
+
+**Held, not pushed.** The work sits as local commits on a worktree branch
+while PR #207 (the morning endpoint) waits for Monday's first in-window
+Railway receipt; the designated branch carries #207. After #207 merges, the
+branch restarts from `main` and these commits go up as their own PR.
+
+**The review, and its size.** A design pass of 18 agents and a review of 48
+(three finders, two skeptics a finding) were far more than this change
+needed; Mo asked whether 79 agents were needed for one warning, and they
+were not. The review was stopped with its third finder's 24 findings
+unjudged, and each was checked here by hand instead. Six wording findings
+were already fixed (the near test measured from day 1, "a year" and
+"fourteen months" for a 416-day reach, an unreadable mapping read as a
+symbol SEC lacks). The rest were test holes, each closed with a case that
+fails for its own rule: two tickets in one stage, in the mail and on the
+page; the overdue sentence's "not an announced date"; the block sentence
+never calling unknown or overdue clear; an unmapped row relabelled outside;
+the validator re-deriving placement, observed and reason; Eastern time and
+noon in the acceptance; a report accepted during day 1 placed held; a
+foreign issuer through `collect()`, including forms only in the older file;
+the 60-second deadline; a before-open anchor in the sentence; the window's
+last day; the 416-day edge; a report exactly a week early; an unreadable
+issuer list named unreadable; a row with no sentence on the page. A
+mislabelled case, a misleading comment and a false docstring were
+corrected. Not checkable from a record, and said so here: a `not_mapped`
+row relabelled `identity_ambiguous` (neither carries a source to re-derive
+from; both stay unknown).
+
+**Measured** (this sandbox, Python 3.12.3): `tests/test_earnings_risk.py`
+89 passed; the earnings browser suite 68/68; 5753 tests collected. Sixteen
+targeted mutants in a scratch copy, each dying in the test named for its
+rule, and two page mutants (the row lookup without its ticker, the empty
+sentence guard dropped) failing their named checks; a control survives in
+each harness.
+
+**Next action.** After #207 merges, restart the branch from `main`, run the
+full suite and the fixture checks, push, open the PR and drive it to green.
