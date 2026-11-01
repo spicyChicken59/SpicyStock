@@ -155,7 +155,8 @@ and the previous publication's stale stocks read again from this run's frames
 the minute bars of earlier plans' first days a daily bar could not place
 (`run.intraday`, `src/intraday.py`; every walk below reads them) →
 charts and Claude (down-only; `run.reads` by cause) → plans and the cash
-budget → the record (`picks.json`, open plans, scorecard, and the stale
+budget → each ticket's earnings warning, estimated from its SEC results
+filings and never a refusal (`run.earnings`, `src/earnings_risk.py`) → the record (`picks.json`, open plans, scorecard, and the stale
 frames joined to the universe's seed-only additions: `run.seed_stale`,
 `inputs.seed_stale()`, the names on the seed alone or the one reason the join
 could not be made) → `report.build()`

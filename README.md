@@ -1283,6 +1283,34 @@ price/volume fields do not establish entry validity. The workflow sends no
 email, forwards no delivery credentials, writes `docs/live.json` and commits
 nothing. Use the separate morning-observation path for dated quote checks.
 
+### Earnings warnings
+
+Each ticket the record publishes carries one earnings sentence
+(`run.earnings`, `src/earnings_risk.py`, policy `warn_only`). No free source
+lets a public page print a company's announced report date, so the evening run
+estimates one from SEC EDGAR, whose filings are public: the dates a company
+furnished its quarterly results (form 8-K, item 2.02). It reads SEC's ticker
+mapping once and each ticket's filing list once, and the older file only when
+the recent one does not reach back fourteen months: at most one mapping and
+two requests a ticket, within a 60-second deadline. Most companies report in
+the same week each year, so last year's results filing put 364 days later,
+within 7 days either side, is the estimate, read against the ticket's own hold
+window (the five sessions `plan.dated_schedule()` names). The verdicts:
+results filed with the SEC after the signal session's close (an observed
+fact); estimated inside the hold; estimated near it (the range reaches it);
+overdue (the estimate's range ended before the signal session, no more
+than 45 days before it, with no results filing since, so a report could come
+any day); already reported this
+quarter; estimated outside the hold; or unknown, with its reason (not in SEC's
+ticker list, no results filings, a foreign issuer's forms, history too short
+or not read, SEC unavailable). Every estimate says it is one and not an
+announced date; unknown never reads as clear; and the warning never withholds,
+sizes or cuts a ticket: it is printed beside the ticket on the page, the
+tickets sheet and in the mail. A record made before the block says no report
+date was checked. `report.validate()` re-derives every read row from the
+filings it retains and refuses a block whose rows are not the record's tickets.
+The check is SpicyStock's, not Bonde's (`knowledge/method.md`).
+
 ### Morning observations
 
 `morning.yml` collects a small, read-only `docs/morning.json` beside the
@@ -2371,6 +2399,7 @@ src/            history.py (public recovery and coverage)
                 research_outcomes.py (frozen cohort follow-through from dated retained observations)
                 research_observations.py (dated IEX observation of the bound research cohort's allocation-fit rows; one request a run, never a ticket)
                 source_recovery.py (one bounded re-request of the publication's named missing or stale stocks under its own frozen basis; the record unchanged, never a signal)
+                earnings_risk.py (each ticket's earnings warning, estimated from SEC results filings a year back against the plan's hold; a warning, never a refusal; unknown never clear)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)

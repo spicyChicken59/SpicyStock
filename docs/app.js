@@ -1258,6 +1258,10 @@
     if (text((run.reader_usage || {}).sentence)) line(run.reader_usage.sentence);
     // the minute bars read for first days a daily bar could not place, in the record's own sentence
     if (text((run.intraday || {}).sentence)) line('Minute bars: ' + run.intraday.sentence);
+    // each ticket's earnings warning, in the record's own sentence; never a refusal
+    if (run.earnings === undefined) line('Earnings: this record predates the earnings warning; no ticket’s report date was checked.');
+    else if (text((run.earnings || {}).sentence)) line(run.earnings.sentence);
+    else line('Earnings: this record carries an earnings block in a shape this page cannot read, so no ticket’s report date is said to be checked.');
     line('Rules ' + (app.rules_version || '—') + ': a digest of recorded policy and universe identity. A changed digest can reflect membership alone; it does not necessarily mean the strategy changed. Universe identity ' + (uni.identity || '—') + '.');
     line('Timing: ' + num(run.elapsed_seconds) + ' s for the run, ' + num(run.fetch_seconds) + ' s of it fetching; generated ' + (run.published_at || '—') + '.');
     // where THIS publication fell against the service's schedule, and what that
@@ -4378,9 +4382,28 @@
     return risk ? 'Plan-derived risk: ' + cap(sentence(risk))
       : 'Stock-specific risk unavailable: no accepted reader or plan risk was recorded for this publication.';
   }
+  // A ticket's earnings warning as run.earnings wrote it (src/earnings_risk.py):
+  // printed verbatim, an estimate from SEC results filings the page never
+  // recomputes, a warning and never a refusal. A record from before the block,
+  // or one whose row cannot be read, says the date was not checked, never clear.
+  const EARNINGS_VERDICTS = ['reported_after_signal', 'estimate_inside', 'estimate_near', 'overdue', 'already_reported', 'estimate_outside', 'unknown'];
+  function earningsOf(c) {
+    const block = ((current || {}).run || {}).earnings;
+    if (block === undefined) return { present: false, row: null };
+    const rows = block && typeof block === 'object' && Array.isArray(block.rows) ? block.rows : [];
+    const stage = c.stage === 'bursts' ? 'burst' : 'anticipation';
+    const row = rows.find(r => r && typeof r === 'object' && r.stage === stage && r.ticker === c.ticker) || null;
+    return { present: true, row: row && EARNINGS_VERDICTS.includes(row.verdict) && text(row.sentence) ? row : null };
+  }
+  function earningsLine(c) {
+    if (c.status !== 'ticket') return '';
+    const e = earningsOf(c);
+    if (!e.present) return 'Earnings date not checked: this record predates the earnings warning. Check the company’s announcement before entry.';
+    return e.row ? e.row.sentence : 'Earnings date not established: this record carries no readable earnings row for this ticket. Check the company’s announcement before entry.';
+  }
   function riskSummary(c) {
     const plan = c.plan || {};
-    return [stockRisk(c),
+    return [stockRisk(c), earningsLine(c),
       !(c.stage === 'bursts' && readerRisk(c.row.claude)) && !firstText(plan.stop_risk_reason, plan.hazards, plan.notes)
         ? 'This does not mean no risk; inspect non-passing criteria and entry restrictions. Model prices omit slippage.' : '',
       c.series.length ? '' : (c.stage === 'bursts' && SCStock.sourceReference(c.row, current) ? 'Browser chart not loaded. Use Load recorded chart to inspect the retained source evidence.' : 'No bars are archived for this name, so there is no chart to read.')];
@@ -4888,6 +4911,7 @@
     table.appendChild(el('tfoot', null, el('tr', null, el('td', { colspan: '10', text: plural(rows.length, 'order') + ' · ' + usd(committed, 0) + ' would be committed at the limits · ' + usd(risk, 0) + ' planned price-to-stop risk · ' + (isNum(acct.equity) && acct.equity ? (100 * committed / acct.equity).toFixed(1) : '—') + '% of the configured equity' }))));
     sheet.appendChild(table);
     if (rows.length) sheet.appendChild(partFillNote());
+    rows.forEach(b => { const words = earningsLine(model.byId['bursts:' + b.ticker] || { status: '' }); if (words) sheet.appendChild(el('p', { 'class': 'sc-hint', 'data-earnings': b.ticker, text: b.ticker + ': ' + words })); });
     const notes = acct.notes || [];
     if (notes.length) sheet.appendChild(el('details', { 'class': 'sc-details' }, [el('summary', { text: 'the configured sizing assumptions this sheet follows' }), el('ul', { 'class': 'ss-notes' }, notes.map((n) => el('li', { text: n })))]));
   }

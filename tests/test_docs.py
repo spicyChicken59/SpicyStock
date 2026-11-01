@@ -767,3 +767,17 @@ def test_the_readme_counts_the_fields_the_smoke_drops():
     assert len(fields) == len(set(fields)) and {"run.input_tolerance", "run.stale_followup", "run.reads.causes"} <= set(fields)
     words = {17: "seventeen", 18: "eighteen", 19: "nineteen", 20: "twenty", 21: "twenty-one", 22: "twenty-two"}
     assert f"drops {words[len(fields)]} fields in turn" in README, len(fields)
+
+
+def test_the_readme_and_the_method_quote_the_earnings_rules_from_the_module():
+    # the earnings warning's numbers, read off src/earnings_risk.py, in the
+    # sentences that state them; and the method says whose rule it is
+    from src import earnings_risk as E
+    section = README[README.index("### Earnings warnings"):README.index("### Morning observations")]
+    for words in (f"policy `{E.POLICY}`", f"put {E.PROJECTION_DAYS} days later",
+                  f"within {E.ESTIMATE_SLACK_DAYS} days either side", f"no more than {E.OVERDUE_DAYS} days before it",
+                  f"within a {E.DEADLINE_SECONDS}-second deadline", f"(form {E.RESULTS_FORM}, item {E.RESULTS_ITEM})",
+                  "never withholds, sizes or cuts a ticket", "unknown never reads as clear"):
+        assert words in section, words
+    assert f"{E.PROJECTION_DAYS} days (P), within ±{E.ESTIMATE_SLACK_DAYS} days (P)" in METHOD
+    assert f"more than {E.OVERDUE_DAYS} days before the signal (P)" in METHOD and "Not Bonde's rule" in METHOD
