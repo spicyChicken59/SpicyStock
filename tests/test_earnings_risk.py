@@ -1,0 +1,742 @@
+"""The earnings warning (src/earnings_risk.py): an estimate from SEC results
+filings, read against each ticket's own hold window, never a refusal.
+
+The sessions and windows below are real XNYS dates, ``plan.next_sessions``'
+own answer, so Thanksgiving and its early close are the calendar's, not ours.
+The synthetic filing dates ``quarters()`` writes step 91 days and are not
+rolled off weekends; the rule reads a filing's date and its acceptance only.
+"""
+from __future__ import annotations
+
+import json
+from datetime import date, datetime, timedelta, timezone
+
+import pytest
+
+from src import earnings_risk as E, plan, report
+from tests.fakes import FakeSec
+
+S = "2026-10-29"                       # a Thursday; its hold is Fri 30 Oct to Thu 5 Nov
+NIGHT = "2026-10-29T23:00:00Z"
+DAYS = E.window(S)
+ACC = iter(range(1, 10**6))
+
+
+def filing(day: str, accepted: str | None = "20:05:00") -> dict:
+    return {"accession": f"0000939767-{int(day[2:4]):02d}-{next(ACC):06d}", "filing_date": day,
+            "accepted_at": f"{day}T{accepted}Z" if accepted else None}
+
+
+def quarters(anchor: str, *, through: str = S, before: int = 6) -> list[dict]:
+    """Results every 91 days through ``through``, one on ``anchor``."""
+    a = date.fromisoformat(anchor)
+    days = [a + timedelta(days=91 * k) for k in range(-before, 8)]
+    return [filing(d.isoformat()) for d in days if d <= date.fromisoformat(through)]
+
+
+def verdict(filings, *, session=S, retrieved=NIGHT, start="2023-01-03", foreign=False, history_error=None):
+    return E.assess(filings, session, E.window(session), retrieved, start, foreign, history_error)
+
+
+# ------------------------------------------------------------------ the rule ---
+def test_the_window_is_the_plans_own_hold():
+    assert DAYS == [d.isoformat() for d in plan.next_sessions(date.fromisoformat(S), plan.FINAL_EXIT_DAY)]
+    assert DAYS == ["2026-10-30", "2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05"]
+    # Thanksgiving is skipped and the Friday after it is a day of the hold
+    assert E.window("2026-11-24") == ["2026-11-25", "2026-11-27", "2026-11-30", "2026-12-01", "2026-12-02"]
+
+
+@pytest.mark.parametrize("offset, expected, placement", [
+    (-1, "estimate_near", "boundary"),
+    (3, "estimate_inside", "held"),
+    (7, "estimate_inside", "held"),
+    (1, "estimate_inside", "held"),
+    (0, "estimate_inside", "pre_entry"),
+    (8, "estimate_near", "boundary"),
+    (14, "estimate_near", "boundary"),
+    (-6, "estimate_near", "boundary"),
+    (16, "estimate_outside", None),
+])
+def test_last_years_report_placed_against_the_hold(offset, expected, placement):
+    # last year's results 364 days before the signal plus ``offset``: the estimate is S + offset
+    anchor = (date.fromisoformat(S) - timedelta(days=364) + timedelta(days=offset)).isoformat()
+    q = date.fromisoformat(S) + timedelta(days=offset)
+    # an estimate before the signal is either still awaited or already filed;
+    # these cases keep nothing filed after the anchor's quarter
+    filings = quarters(anchor, through=(date.fromisoformat(S) - timedelta(days=30)).isoformat())
+    got = verdict(filings)
+    assert (got["verdict"], got["placement"]) == (expected, placement), (offset, got)
+    assert got["projection"]["date"] == q.isoformat()
+    assert got["projection"]["low"] == (q - timedelta(days=E.ESTIMATE_SLACK_DAYS)).isoformat()
+
+
+def test_a_report_on_the_signal_evening_is_before_day_one():
+    anchor = (date.fromisoformat(S) - timedelta(days=364)).isoformat()
+    got = verdict(quarters(anchor, through="2026-09-01"))
+    assert (got["verdict"], got["placement"], got["projection"]["date"]) == ("estimate_inside", "pre_entry", S)
+
+
+def test_results_filed_after_the_signal_close_are_an_observed_fact():
+    filings = quarters("2025-10-30", through="2026-08-01") + [filing(S, "20:30:00")]
+    got = verdict(filings)
+    assert (got["verdict"], got["placement"]) == ("reported_after_signal", "pre_entry")
+    assert got["observed"]["accepted_at"] == f"{S}T20:30:00Z" and got["projection"] is None
+    # accepted before the close is this session's own news: already reported, not after the signal
+    earlier = quarters("2025-10-30", through="2026-08-01") + [filing(S, "12:00:00")]
+    assert verdict(earlier)["verdict"] == "already_reported"
+    # a filing accepted after the run read SEC is never named as seen after the signal
+    late = quarters("2025-10-30", through="2026-08-01") + [filing(S, "23:30:00")]
+    assert verdict(late)["verdict"] != "reported_after_signal"
+
+
+def test_an_acceptance_at_the_close_is_not_after_it():
+    # 4:00:00 PM EDT is 20:00:00 UTC: at the close, not after it; a second later is after
+    base = quarters("2025-10-30", through="2026-08-01")
+    assert verdict(base + [filing(S, "20:00:00")])["verdict"] == "already_reported"
+    assert verdict(base + [filing(S, "20:00:01")])["verdict"] == "reported_after_signal"
+
+
+def test_the_early_close_is_the_calendars():
+    # Fri 27 Nov 2026 closes at 13:00 ET: a 13:30 ET acceptance is after that close
+    session = "2026-11-27"
+    filings = quarters("2025-11-20", through="2026-09-01", ) + [filing(session, "18:30:00")]
+    got = verdict(filings, session=session, retrieved="2026-11-27T23:00:00Z")
+    assert got["verdict"] == "reported_after_signal"
+    # the same 13:30 ET on an ordinary Thursday is before its close
+    filings = quarters("2025-11-20", through="2026-09-01") + [filing("2026-11-19", "18:30:00")]
+    got = verdict(filings, session="2026-11-19", retrieved="2026-11-19T23:00:00Z")
+    assert got["verdict"] != "reported_after_signal"
+
+
+def test_overdue_and_already_reported():
+    # last year 15 Sep 2025: estimated 14 Sep 2026, and nothing filed since July
+    overdue = quarters("2025-09-15", through="2026-07-01")
+    got = verdict(overdue)
+    assert (got["verdict"], got["placement"], got["projection"]["date"]) == ("overdue", "any_day", "2026-09-14")
+    # one results filing since the estimate's low reports the cycle, however late
+    got = verdict(overdue + [filing("2026-10-20")])
+    assert got["verdict"] == "already_reported" and got["observed"]["filing_date"] == "2026-10-20"
+    # a report filed up to a week EARLIER than last year's date reports the cycle too
+    early = quarters("2025-10-27", through="2026-07-15")      # estimated Mon 26 Oct 2026
+    assert verdict(early)["verdict"] == "estimate_near"
+    assert verdict(early + [filing("2026-10-20")])["verdict"] == "already_reported"
+    assert verdict(early + [filing("2026-10-18")])["verdict"] == "estimate_near"
+    # past the overdue horizon the old estimate no longer reads as a cycle
+    stale = quarters("2025-08-01", through="2026-05-01")
+    assert verdict(stale)["verdict"] in ("estimate_outside", "estimate_near", "estimate_inside")
+    assert verdict(stale)["verdict"] != "overdue"
+
+
+@pytest.mark.parametrize("case, reason", [
+    ("late_start", "filings_short"), ("no_start", "filings_short"), ("older_unread", "history_not_read"),
+    ("none", "no_results_history"), ("foreign", "foreign_issuer"), ("short", "history_short"),
+    ("silent", "no_recent_results"),
+])
+def test_unknown_is_never_clearance(case, reason):
+    # an observed filing after the signal needs no history; these have none
+    kwargs = {"late_start": dict(filings=quarters("2025-10-30", through="2026-08-01"), start="2026-01-02"),
+              "no_start": dict(filings=[], start=None),
+              "older_unread": dict(filings=quarters("2025-10-30", through="2026-08-01"), start="2026-01-02",
+                                   history_error="http_error"),
+              "none": dict(filings=[], start="2023-01-03"),
+              "foreign": dict(filings=[], start="2023-01-03", foreign=True),
+              "short": dict(filings=[filing("2026-05-01"), filing("2026-08-01")], start="2023-01-03"),
+              "silent": dict(filings=[filing("2024-08-01"), filing("2024-11-01")], start="2023-01-03")}[case]
+    filings = kwargs.pop("filings")
+    got = verdict(filings, **kwargs)
+    assert (got["verdict"], got["reason"], got["projection"], got["placement"]) == ("unknown", reason, None, None)
+    row = E._row({"stage": "burst", "ticker": "X"}, S, DAYS, E._instant(NIGHT), got)
+    assert row["sentence"].startswith("Earnings date not established: ") and "before entry" in row["sentence"]
+
+
+def test_timing_reads_the_acceptance_in_eastern_time_across_the_clock_change():
+    # 14:00 UTC is 10:00 EDT on 27 Oct and 9:00 EST on 3 Nov 2026
+    assert E.timing_of({"filing_date": "2026-10-27", "accepted_at": "2026-10-27T14:00:00Z"}) == "unknown"
+    assert E.timing_of({"filing_date": "2026-11-03", "accepted_at": "2026-11-03T14:00:00Z"}) == "before_open"
+    assert E.timing_of({"filing_date": "2026-11-03", "accepted_at": None}) == "unknown"
+    # an acceptance the evening before is not that filing date's open
+    assert E.timing_of({"filing_date": "2026-11-03", "accepted_at": "2026-11-02T23:00:00Z"}) == "unknown"
+
+
+def test_every_estimate_says_it_is_one():
+    for offset in (2, 10, 20):
+        anchor = (date.fromisoformat(S) - timedelta(days=364) + timedelta(days=offset)).isoformat()
+        got = verdict(quarters(anchor, through=(date.fromisoformat(S) - timedelta(days=30)).isoformat()))
+        words = E._row({"stage": "burst", "ticker": "X"}, S, DAYS, E._instant(NIGHT), got)["sentence"]
+        assert "estimated" in words and ("not an announced date" in words or "not clearance" in words), words
+
+
+# ------------------------------------------------------------- the source ---
+def register_exel(sec: FakeSec, offset: int = 3, **kw) -> dict:
+    return sec.quarterly("EXEL", 939767, "EXELIXIS, INC.", S, offset, **kw)
+
+
+def test_collect_reads_the_mapping_once_and_each_issuer_once(fake_sec):
+    register_exel(fake_sec)
+    tickets = [{"stage": "burst", "ticker": "EXEL"}, {"stage": "anticipation", "ticker": "EXEL"},
+               {"stage": "anticipation", "ticker": "NOPE"}]
+    block = E.collect(tickets, S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert [r["verdict"] for r in block["rows"]] == ["estimate_inside", "estimate_inside", "unknown"]
+    assert block["rows"][2]["reason"] == "not_mapped" and block["status"] == "checked"
+    assert block["requests"] == 2 and len(fake_sec.calls) == 2
+    assert block["counts"] == {"estimate_inside": 2, "unknown": 1}
+    assert E.block_faults(block, S, tickets) == []
+    row = block["rows"][0]
+    assert row["cik"] == 939767 and row["sources"][0]["url"] == E.SUBMISSIONS_URL.format(cik=939767)
+    assert row["results_filings"] == sorted(row["results_filings"], key=lambda f: f["filing_date"])
+    assert len(row["results_filings"]) <= E.MAX_RESULTS_FILINGS
+
+
+def test_the_older_file_is_read_only_when_the_recent_one_is_short(fake_sec):
+    register_exel(fake_sec, history_from="2026-03-01")
+    block = E.collect([{"stage": "burst", "ticker": "EXEL"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    row = block["rows"][0]
+    assert row["verdict"] == "estimate_inside" and len(row["sources"]) == 2 and row["error"] is None
+    assert any("submissions-001" in u for u in fake_sec.calls)
+    # the older file refused: the recent rows stay, read as history not read, with the error named
+    fake_sec.calls.clear()
+    fake_sec.fail["submissions-001"] = "http_error"
+    block = E.collect([{"stage": "burst", "ticker": "EXEL"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    row = block["rows"][0]
+    assert (row["verdict"], row["reason"], row["error"]) == ("unknown", "history_not_read", "http_error")
+    assert E.block_faults(block, S, [{"stage": "burst", "ticker": "EXEL"}]) == []
+    # a recent file that reaches back far enough is read alone, though SEC lists an older one
+    fake_sec.fail.clear()
+    fake_sec.calls.clear()
+    register_exel(fake_sec, history_from="2024-06-03")
+    block = E.collect([{"stage": "burst", "ticker": "EXEL"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert block["rows"][0]["verdict"] == "estimate_inside" and len(block["rows"][0]["sources"]) == 1
+    assert not any("submissions-001" in u for u in fake_sec.calls)
+    # ...even an older file whose dates overlap the window, which SEC's ordering never lists
+    fake_sec.calls.clear()
+    entry = register_exel(fake_sec)
+    fake_sec.issuer("EXEL", 939767, "EXELIXIS, INC.", entry["rows"], history=[("2026-01-05", "2026-01-05T20:05:00.000Z", "4", "")])
+    E.collect([{"stage": "burst", "ticker": "EXEL"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert not any("submissions-001" in u for u in fake_sec.calls)
+
+
+def test_the_newest_results_filings_are_the_ones_kept(fake_sec):
+    # fourteen quarters filed: every one inside the reach is kept, with the one before
+    # it, so this quarter's filing a week ago still reports the cycle
+    register_exel(fake_sec, -8, quarters=14)
+    block = E.collect([{"stage": "burst", "ticker": "EXEL"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    row = block["rows"][0]
+    needed = date.fromisoformat(S) - timedelta(days=E.REACH_DAYS)
+    dates = [date.fromisoformat(f["filing_date"]) for f in row["results_filings"]]
+    assert dates[0] < needed <= dates[1] and len(dates) < 14
+    assert row["verdict"] == "already_reported" and row["observed"]["filing_date"] == row["results_filings"][-1]["filing_date"]
+
+
+def test_an_issuer_filing_three_results_a_quarter_is_read_whole(fake_sec):
+    # a preliminary release, the results and a supplement each quarter: 39 filings back to 2023;
+    # the twelve newest alone would not reach back, and the issuer would read history_short
+    rows = []
+    for k in range(13):
+        base = date(2023, 7, 18) + timedelta(days=91 * k)
+        rows += [(d.isoformat(), f"{d.isoformat()}T20:05:00.000Z", "8-K", "2.02")
+                 for d in (base, base + timedelta(days=5), base + timedelta(days=9))]
+    fake_sec.issuer("EXEL", 939767, "EXELIXIS, INC.", rows, start="2023-01-03")
+    block = E.collect([{"stage": "burst", "ticker": "EXEL"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    row = block["rows"][0]
+    assert row["reason"] != "history_short" and row["verdict"] != "unknown", row["sentence"]
+    assert len(row["results_filings"]) <= E.MAX_RESULTS_FILINGS
+
+
+def test_sec_down_is_unavailable_never_clear(fake_sec):
+    register_exel(fake_sec)
+    fake_sec.fail[E.issuer_evidence.MAPPING_URL] = "http_error"
+    tickets = [{"stage": "burst", "ticker": "EXEL"}]
+    block = E.collect(tickets, S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert block["status"] == "unavailable" and block["mapping"] is None
+    assert [(r["reason"], r["error"]) for r in block["rows"]] == [("source_unavailable", "http_error")]
+    assert "No SEC filing list was read" in block["sentence"]
+    assert E.block_faults(block, S, tickets) == []
+    # the issuer's list refused after a mapping that answered: that row alone
+    fake_sec.fail = {"CIK0000939767": "rate_limit"}
+    block = E.collect(tickets + [{"stage": "burst", "ticker": "NOPE"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert block["status"] == "partial" and [r["reason"] for r in block["rows"]] == ["source_unavailable", "not_mapped"]
+
+
+def test_tickets_past_the_bound_are_not_checked(fake_sec, monkeypatch):
+    monkeypatch.setattr(E, "MAX_TICKETS", 1)
+    register_exel(fake_sec)
+    tickets = [{"stage": "burst", "ticker": "EXEL"}, {"stage": "burst", "ticker": "EXEL"}]
+    block = E.collect(tickets, S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert [r["reason"] for r in block["rows"]] == [None, "not_checked"] and block["status"] == "partial"
+
+
+def test_an_unexpected_failure_is_a_block_of_unchecked_rows(fake_sec):
+    def broken(url):
+        raise RuntimeError("socket refused")
+    tickets = [{"stage": "burst", "ticker": "EXEL"}]
+    block = E.safe_collect(tickets, S, fetch=broken, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert block["internal"] == "RuntimeError" and block["status"] == "unavailable"
+    assert [r["reason"] for r in block["rows"]] == ["not_checked"]
+    assert E.block_faults(block, S, tickets) == []
+    assert E.safe_collect([], S)["status"] == "not_applicable"
+
+
+def test_parse_submissions_refuses_another_issuers_list(fake_sec):
+    register_exel(fake_sec)
+    raw = fake_sec(E.SUBMISSIONS_URL.format(cik=939767))
+    with pytest.raises(E.SourceError) as err:
+        E.parse_submissions(raw, 939768, "EXEL")
+    assert err.value.code == "rows_unreadable"
+    with pytest.raises(E.SourceError) as err:
+        E.parse_submissions(raw, 939767, "ZZZ")
+    assert err.value.code == "not_mapped"
+    columns = json.loads(raw)["filings"]["recent"]
+    columns["form"].pop()
+    with pytest.raises(E.SourceError):
+        E._columns(columns)
+
+
+def test_only_item_two_oh_two_is_a_results_filing():
+    cols = {"accessionNumber": ["0000000001-26-000001", "0000000001-26-000002", "0000000001-26-000003"],
+            "filingDate": ["2026-05-01", "2026-05-02", "2026-05-03"],
+            "acceptanceDateTime": ["2026-05-01T20:00:00.000Z", "2026-05-02T20:00:00.000Z", ""],
+            "form": ["8-K", "8-K", "8-K/A"], "items": ["2.02,9.01", "5.02,2.020", "2.02"]}
+    results, start, forms = E._columns(cols)
+    assert [r["accession"] for r in results] == ["0000000001-26-000001"]
+    assert start == date(2026, 5, 1) and forms == {"8-K", "8-K/A"}
+
+
+# ------------------------------------------------------------- validation ---
+def a_block(fake_sec, tickets=None):
+    register_exel(fake_sec)
+    tickets = tickets or [{"stage": "burst", "ticker": "EXEL"}]
+    return E.collect(tickets, S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc)), tickets
+
+
+@pytest.mark.parametrize("forge, words", [
+    (lambda b: b["rows"][0].update(verdict="estimate_outside"), "is not what its filings give"),
+    (lambda b: b["rows"][0]["projection"].update(date="2026-12-01"), "projection"),
+    (lambda b: b["rows"][0].update(sentence="Clear."), "earnings sentence for EXEL"),
+    # the anchor filing dropped: the verdict the row keeps is no longer its filings'
+    (lambda b: b["rows"][0]["results_filings"].remove(next(
+        f for f in b["rows"][0]["results_filings"] if f["accession"] == b["rows"][0]["projection"]["from_accession"])),
+     "is not what its filings give"),
+    (lambda b: b.update(status="checked", rows=[]), "earnings status"),
+    (lambda b: b.update(counts={}), "earnings counts"),
+    (lambda b: b.update(sentence="Earnings fine."), "earnings sentence"),
+    (lambda b: b["rows"][0].update(window=b["rows"][0]["window"][:4]), "is not the plan's hold"),
+    (lambda b: b["rows"][0].update(extra=1), "row keys"),
+    (lambda b: b["rows"][0].update(reason="not_mapped", verdict="unknown"), "beside an unread source"),
+    (lambda b: b["rows"][0].update(reason="weird", verdict="unknown"), "earnings verdict"),
+    (lambda b: b.update(version=2), "version"),
+    (lambda b: b.update(session="2026-10-28"), "session"),
+    (lambda b: b["rows"][0]["sources"].clear(), "without its SEC source"),
+    (lambda b: b["rows"][0]["sources"][0].update(url="https://example.com/not-sec.json"), "without its SEC source"),
+    (lambda b: b["mapping"].update(url="https://example.com/mapping.json"), "earnings mapping source"),
+    (lambda b: b["rows"][0].update(retrieved_at="0001-01-01T00:00:00+01:00"), "malformed"),
+    (lambda b: b["rows"][0].update(error="something"), "row fields"),
+])
+def test_the_validator_refuses_a_forged_block(fake_sec, forge, words):
+    block, tickets = a_block(fake_sec)
+    assert E.block_faults(block, S, tickets) == []
+    forge(block)
+    faults = E.block_faults(block, S, tickets)
+    assert faults and any(words in f for f in faults), faults
+
+
+def test_the_rows_are_the_records_tickets(fake_sec):
+    block, tickets = a_block(fake_sec)
+    assert E.block_faults(block, S, tickets + [{"stage": "anticipation", "ticker": "COIL"}]) == \
+        ["earnings rows are not the record's tickets"]
+    assert E.block_faults(block, S, [{"stage": "anticipation", "ticker": "EXEL"}]) == \
+        ["earnings rows are not the record's tickets"]
+
+
+@pytest.mark.parametrize("shape", ["x", [1], 5, None, {"rows": "x"}])
+def test_a_malformed_block_is_named_never_raised(fake_sec, shape):
+    block, tickets = a_block(fake_sec)
+    assert E.block_faults(shape, S, tickets)
+    for key in list(block):
+        broken = dict(block, **{key: shape})
+        assert isinstance(E.block_faults(broken, S, tickets), list)
+    for key in list(block["rows"][0]):
+        broken = dict(block, rows=[dict(block["rows"][0], **{key: shape})])
+        assert isinstance(E.block_faults(broken, S, tickets), list)
+
+
+def test_record_faults_asks_only_under_rules_that_write_the_block(fake_sec):
+    assert E.record_faults({"rules": {"plan": {}}, "run": {}}) == []
+    assert E.record_faults({"rules": {"earnings_risk": {}}, "run": {"session": S}}) == \
+        ["run.earnings is missing under rules that write it"]
+    block, _ = a_block(fake_sec)
+    data = {"rules": {"earnings_risk": {}}, "run": {"session": S, "earnings": block, "published_at": NIGHT},
+            "bursts": [{"ticker": "EXEL", "plan": {}}], "trades": ["EXEL"], "watchlist": {"top": []}}
+    assert E.record_faults(data) == []
+    data["trades"] = []
+    assert E.record_faults(data) == ["run.earnings rows are not the record's tickets"]
+    data["trades"] = ["EXEL"]
+    # every SEC read lies between the signal session's close and two hours after the record's clock
+    data["run"]["published_at"] = "2026-10-29T19:00:00Z"
+    assert any("outside its session's close" in f for f in E.record_faults(data))
+    data["run"]["published_at"] = "2026-10-29T22:30:00Z"
+    assert E.record_faults(data) == []
+    data["run"]["published_at"] = None
+    assert E.record_faults(data) == ["run.earnings cannot be read against the record's clock (run.published_at)"]
+
+
+def test_a_carried_block_is_kept_only_for_its_own_tickets(fake_sec):
+    block, tickets = a_block(fake_sec)
+    assert E.carried(block, S, tickets) is block
+    fresh = E.carried(block, S, [], now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert fresh is not block and fresh["status"] == "not_applicable"
+    assert E.carried(None, S, tickets, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))["rows"][0]["ticker"] == "EXEL"
+
+
+def test_the_rules_are_archived_and_read_by_the_code():
+    from types import SimpleNamespace
+    from src import pipeline
+    rules = pipeline.build_rules(SimpleNamespace(identity="test"))
+    archived = rules["earnings_risk"]
+    assert archived["projection_days"] == E.PROJECTION_DAYS and archived["estimate_slack_days"] == E.ESTIMATE_SLACK_DAYS
+    assert archived["policy"] == "warn_only" and archived["unknown_policy"] == "never_clearance"
+    assert archived["results_item"] == "2.02"
+
+
+def test_the_mail_prints_each_tickets_warning_verbatim(fake_sec):
+    block, _ = a_block(fake_sec)
+    data = {"run": {"earnings": block}}
+    assert report._earnings_line(data, "burst", "EXEL").endswith(f"{report.esc(block['rows'][0]['sentence'])}</p>")
+    assert report._earnings_line(data, "anticipation", "EXEL") == ""
+    assert report._earnings_line({"run": {}}, "burst", "EXEL") == ""
+
+
+# ------------------------------------------------------------- the review's cases ---
+def test_a_preliminary_release_reports_one_of_last_years_two_filings_not_both():
+    # last year a preliminary release on 23 Oct and the results on 28 Oct; this year only the
+    # preliminary has come: the results estimated 27 Oct are still inside the hold
+    session = "2026-10-23"
+    filings = [filing(d) for d in ("2024-07-29", "2024-10-28", "2025-01-28", "2025-04-28", "2025-07-28",
+                                    "2025-10-23", "2025-10-28", "2026-01-27", "2026-04-28", "2026-07-28", "2026-10-22")]
+    got = verdict(filings, session=session, retrieved="2026-10-23T23:00:00Z")
+    assert (got["verdict"], got["projection"]["date"]) == ("estimate_inside", "2026-10-27"), got
+    # and both this year: reported
+    both = filings + [filing("2026-10-23", "12:00:00")]
+    assert verdict(both, session=session, retrieved="2026-10-23T23:00:00Z")["verdict"] == "already_reported"
+
+
+def test_an_issuer_late_by_its_own_cadence_is_overdue_not_estimated_outside():
+    # quarterly every 91 days, the report due about 28 Aug never came: 62 days late
+    filings = [filing(d.isoformat()) for k in range(8)
+               if (d := date(2026, 5, 29) - timedelta(days=91 * k))]
+    got = verdict(filings)
+    assert (got["verdict"], got["placement"], got["projection"]) == ("overdue", "any_day", None), got
+    words = E._row({"stage": "burst", "ticker": "X"}, S, DAYS, E._instant(NIGHT), got)["sentence"]
+    assert words.startswith("No results filing (8-K item 2.02) has come since 29 May 2026") and "any day" in words
+    # 41 days late is the estimate's own overdue
+    recent = [filing(d.isoformat()) for k in range(8) if (d := date(2026, 6, 19) - timedelta(days=91 * k))]
+    assert verdict(recent)["verdict"] == "overdue" and verdict(recent)["projection"]["date"] == "2026-09-18"
+    # an annual-only filer a year on is not late
+    annual = [filing("2024-11-10"), filing("2025-11-10")]
+    assert verdict(annual)["verdict"] != "overdue"
+
+
+def test_an_estimate_whose_range_ends_before_day_one_is_overdue_not_near():
+    # estimated 22 Oct, range 15-29 Oct: it ends on the signal day, before day 1 (Fri 30 Oct)
+    got = verdict(quarters("2025-10-23", through="2026-07-25"))
+    assert (got["verdict"], got["projection"]["date"]) == ("overdue", "2026-10-22"), got
+    # before Thanksgiving: a range ending on the closed Thursday is before day 1 too
+    got = verdict(quarters("2025-11-20", through="2026-08-21"), session="2026-11-25", retrieved="2026-11-25T23:00:00Z")
+    assert got["verdict"] == "overdue", got
+    # a range that reaches day 1 is near
+    assert verdict(quarters("2025-10-24", through="2026-07-25"))["verdict"] == "estimate_near"
+
+
+def test_acceptance_after_the_close_is_not_said_to_prove_the_release_came_after_it():
+    filings = quarters("2025-10-30", through="2026-08-01") + [filing(S, "20:40:00")]
+    got = verdict(filings)
+    words = E._row({"stage": "burst", "ticker": "X"}, S, DAYS, E._instant(NIGHT), got)["sentence"]
+    assert "accepted by the SEC after the signal session's close" in words
+    assert "may have come earlier" in words and "Check the release time" in words
+    assert "so the entry opens on the reaction" not in words
+
+
+def test_a_later_read_sees_sec_as_it_stood_through_the_hold():
+    # a backfill read on 18 Nov: a filing on 16 Nov, after the hold, is not "inside the hold"
+    base = quarters("2025-11-20", through="2026-08-21")
+    got = verdict(base + [filing("2026-11-16", "21:05:00")], retrieved="2026-11-18T23:00:00Z")
+    assert got["verdict"] != "reported_after_signal"
+    # the earliest after-close filing is the one named, and one inside the hold is held
+    two = base + [filing("2026-11-02", "21:05:00"), filing("2027-02-09", "21:05:00")]
+    got = verdict(two, retrieved="2027-02-10T15:00:00Z")
+    assert (got["verdict"], got["placement"], got["observed"]["filing_date"]) == ("reported_after_signal", "held", "2026-11-02")
+    assert "during this ticket's hold window" in E._row({"stage": "burst", "ticker": "X"}, S, DAYS,
+                                                       E._instant("2027-02-10T15:00:00Z"), got)["sentence"]
+
+
+def test_the_unknown_reasons_say_what_was_read(fake_sec):
+    # no older file listed: the list read begins within the reach
+    rows = [(d, f"{d}T20:05:00.000Z", "8-K", "2.02") for d in ("2026-05-05", "2026-08-04")]
+    fake_sec.issuer("NEWCO", 1990001, "NEWCO INC", rows + [("2026-02-20", "2026-02-20T12:00:00.000Z", "S-1", "")])
+    block = E.collect([{"stage": "burst", "ticker": "NEWCO"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    row = block["rows"][0]
+    assert (row["reason"], row["error"]) == ("filings_short", None) and "older" not in row["sentence"]
+    assert f"{E.REACH_DAYS} days" in row["sentence"]
+    assert "fourteen months" not in " ".join(E.REASON_WORDS.values())
+
+
+def test_an_unreadable_mapping_is_sec_failing_never_a_symbol_it_lacks(fake_sec, monkeypatch):
+    register_exel(fake_sec)
+    monkeypatch.setattr(fake_sec, "mapping_body", b"<html>Request Rate Threshold Exceeded</html>", raising=False)
+    tickets = [{"stage": "burst", "ticker": "EXEL"}]
+    block = E.collect(tickets, S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert block["status"] == "unavailable"
+    assert [(r["reason"], r["error"]) for r in block["rows"]] == [("source_unavailable", "invalid_response")]
+    assert E.block_faults(block, S, tickets) == []
+    # a symbol the mapping names for two companies is ambiguous, not mapped to either
+    monkeypatch.setattr(fake_sec, "mapping_body", None, raising=False)
+    fake_sec.issuer("EXL2", 939768, "OTHER EXELIXIS", [], tickers=["EXEL"])
+    block = E.collect(tickets, S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert block["rows"][0]["reason"] == "identity_ambiguous" and block["status"] == "checked"
+
+
+def test_a_transport_failure_of_any_kind_is_one_tickets_unknown_row(fake_sec, monkeypatch):
+    import http.client
+    register_exel(fake_sec)
+    fake_sec.quarterly("AAPL", 320193, "Apple Inc.", S, 3)
+    calls = []
+
+    def fetch(self, url, budget):
+        calls.append(url)
+        if "CIK0000320193" in url:
+            raise http.client.IncompleteRead(b"partial")
+        return {"body": fake_sec(url)}
+    monkeypatch.setattr(E.issuer_evidence._Transport, "fetch", fetch)
+    monkeypatch.setattr(E, "FETCH", None)
+    tickets = [{"stage": "burst", "ticker": "EXEL"}, {"stage": "burst", "ticker": "AAPL"}]
+    block = E.safe_collect(tickets, S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert "internal" not in block and block["requests"] == 3 and len(calls) == 3
+    assert [(r["verdict"], r["reason"], r["error"]) for r in block["rows"]] == \
+        [("estimate_inside", None, None), ("unknown", "source_unavailable", "network_error")]
+
+
+def test_an_internal_failure_keeps_the_count_of_requests_made(fake_sec):
+    register_exel(fake_sec)
+    count = {"n": 0}
+
+    def fetch(url):
+        count["n"] += 1
+        if count["n"] == 2:
+            raise RuntimeError("a bug")
+        return fake_sec(url)
+    block = E.safe_collect([{"stage": "burst", "ticker": "EXEL"}], S, fetch=fetch,
+                           now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert block["internal"] == "RuntimeError" and block["requests"] == 2
+
+
+def test_the_earliest_filing_after_the_close_is_the_one_named():
+    # results accepted the signal evening and a second filing on day 3, both inside the
+    # hold as SEC stood at its end: the evening one, before day 1, is the fact that matters
+    base = quarters("2025-11-20", through="2026-08-21")
+    two = base + [filing(S, "21:05:00"), filing("2026-11-03", "21:05:00")]
+    got = verdict(two, retrieved="2026-11-10T15:00:00Z")
+    assert (got["verdict"], got["placement"], got["observed"]["filing_date"]) == ("reported_after_signal", "pre_entry", S)
+
+
+def test_the_after_close_sentence_says_only_what_acceptance_proves():
+    got = verdict(quarters("2025-10-30", through="2026-08-01") + [filing(S, "20:40:00")])
+    assert E._row({"stage": "burst", "ticker": "X"}, S, DAYS, E._instant(NIGHT), got)["sentence"] == (
+        "Quarterly results (8-K item 2.02) were accepted by the SEC after the signal session's close and before "
+        "day 1's open (Thu 29 Oct 4:40 PM ET). The release they furnish may have come earlier, even before the "
+        "signal session's open; if it came after that close, the entry opens on the reaction. Check the release "
+        "time before entry.")
+
+
+def test_a_read_before_the_session_closed_is_refused(fake_sec):
+    # a block read at 3:30 PM ET, before the 4:00 PM close: refused by the record's validator
+    register_exel(fake_sec)
+    tickets = [{"stage": "burst", "ticker": "EXEL"}]
+    early = datetime(2026, 10, 29, 19, 30, tzinfo=timezone.utc)
+    block = E.collect(tickets, S, now=early)
+    assert E.block_faults(block, S, tickets) == []
+    data = {"rules": {"earnings_risk": {}}, "run": {"session": S, "earnings": block, "published_at": "2026-10-29T19:30:00Z"},
+            "bursts": [{"ticker": "EXEL", "plan": {}}], "trades": ["EXEL"], "watchlist": {"top": []}}
+    faults = E.record_faults(data)
+    assert any("outside its session's close" in f for f in faults), faults
+    assert "run.earnings mapping source" in faults
+
+
+def test_a_record_clock_out_of_range_is_named_never_raised(fake_sec):
+    block, tickets = a_block(fake_sec)
+    data = {"rules": {"earnings_risk": {}}, "run": {"session": S, "earnings": block,
+                                                    "published_at": "0001-01-01T00:00:00+01:00"},
+            "bursts": [{"ticker": "EXEL", "plan": {}}], "trades": ["EXEL"], "watchlist": {"top": []}}
+    assert E.record_faults(data) == ["run.earnings cannot be read against the record's clock (run.published_at)"]
+
+
+# ------------------------------------------------------------- the third review's cases ---
+def test_an_overdue_estimate_says_it_is_one():
+    got = verdict(quarters("2025-09-15", through="2026-07-01"))
+    assert got["verdict"] == "overdue" and got["projection"] is not None
+    words = E._row({"stage": "burst", "ticker": "X"}, S, DAYS, E._instant(NIGHT), got)["sentence"]
+    assert "not an announced date" in words, words
+
+
+def test_the_block_sentence_never_calls_an_unknown_or_overdue_ticket_clear():
+    rows = [{"verdict": v} for v in E.VERDICTS]
+    block = {"status": "partial", "rows": rows, "counts": {v: 1 for v in E.VERDICTS}}
+    words = E.block_sentence(block)
+    assert "1 not established" in words and "1 overdue, so any day" in words
+    assert "clear" not in words.lower() and words.endswith("An estimate warns and never withholds a ticket.")
+    assert "No SEC filing list was read" in E.block_sentence(dict(block, status="unavailable"))
+
+
+def _rederive(block):
+    block["counts"] = E._counts(block["rows"])
+    block["status"] = E._status(block["rows"])
+    block["sentence"] = E.block_sentence(block)
+
+
+def test_an_unmapped_ticket_relabelled_outside_is_refused(fake_sec):
+    block, tickets = a_block(fake_sec, [{"stage": "burst", "ticker": "NOPE"}])
+    row = block["rows"][0]
+    assert (row["verdict"], row["reason"]) == ("unknown", "not_mapped") and E.block_faults(block, S, tickets) == []
+    row["verdict"] = "estimate_outside"
+    row["sentence"] = E.sentence(row)
+    _rederive(block)
+    assert "not clearance" in row["sentence"]          # the forgery would read as an inference, not as unknown
+    assert "earnings verdict for NOPE" in E.block_faults(block, S, tickets)
+
+
+def test_the_validator_rederives_placement_and_reason(fake_sec):
+    register_exel(fake_sec)
+    # two results filings a few months apart: too short a history to estimate from
+    fake_sec.issuer("SHRT", 222222, "SHORT CO", [("2026-05-01", "2026-05-01T20:05:00.000Z", "8-K", "2.02"),
+                                                  ("2026-08-03", "2026-08-03T20:05:00.000Z", "8-K", "2.02")],
+                    start="2023-01-03")
+    tickets = [{"stage": "burst", "ticker": "EXEL"}, {"stage": "burst", "ticker": "SHRT"}]
+    block = E.collect(tickets, S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    exel, shrt = block["rows"]
+    assert (exel["placement"], shrt["reason"]) == ("held", "history_short") and E.block_faults(block, S, tickets) == []
+    for row, key, value in ((exel, "placement", "pre_entry"), (shrt, "reason", "no_recent_results")):
+        forged = json.loads(json.dumps(block))
+        target = next(r for r in forged["rows"] if r["ticker"] == row["ticker"])
+        target[key] = value
+        target["sentence"] = E.sentence(target)
+        _rederive(forged)
+        faults = E.block_faults(forged, S, tickets)
+        assert f"earnings {key} for {row['ticker']} is not what its filings give" in faults, faults
+
+
+def test_the_validator_rederives_what_was_observed(fake_sec):
+    register_exel(fake_sec)
+    entry = fake_sec.issuers["EXEL"]
+    entry["rows"].append((S, f"{S}T20:30:00.000Z", "8-K", "2.02,9.01"))
+    tickets = [{"stage": "burst", "ticker": "EXEL"}]
+    block = E.collect(tickets, S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    row = block["rows"][0]
+    assert row["verdict"] == "reported_after_signal" and E.block_faults(block, S, tickets) == []
+    row["observed"] = dict(row["observed"], accepted_at=f"{S}T21:30:00Z")
+    row["sentence"] = E.sentence(row)
+    _rederive(block)
+    assert "earnings observed for EXEL is not what its filings give" in E.block_faults(block, S, tickets)
+
+
+def test_a_malformed_key_is_named(fake_sec):
+    block, tickets = a_block(fake_sec)
+    for key, bad in (("requests", "x"), ("requests", True), ("policy", 5), ("source", 5), ("version", "1"),
+                     ("version", 1.0), ("rows", "x"), ("counts", "x"), ("status", "clear"), ("mapping", "x")):
+        faults = E.block_faults(dict(block, **{key: bad}), S, tickets)
+        assert faults, (key, bad)
+    for key, bad in (("sources", "x"), ("results_filings", "x"), ("cik", "x"), ("window", "x"), ("sentence", 5)):
+        broken = dict(block, rows=[dict(block["rows"][0], **{key: bad})])
+        assert E.block_faults(broken, S, tickets), (key, bad)
+
+
+def test_an_acceptance_is_printed_in_eastern_time():
+    assert E._et("2026-10-29T20:30:00Z") == "Thu 29 Oct 4:30 PM ET"           # EDT
+    assert E._et("2026-11-03T21:30:00Z") == "Tue 3 Nov 4:30 PM ET"            # EST
+    assert E._et("2026-10-29T16:00:00Z") == "Thu 29 Oct 12:00 PM ET"          # noon is PM
+    assert E._et("2026-10-29T15:59:00Z") == "Thu 29 Oct 11:59 AM ET"
+    assert E._et("2026-10-29T04:00:00Z") == "Thu 29 Oct 12:00 AM ET"          # midnight is 12 AM
+
+
+def test_results_accepted_during_day_one_are_held_not_before_the_open():
+    # a re-run made after day 1's close sees an 8-K accepted at 10:00 AM ET on day 1
+    base = quarters("2025-10-30", through="2026-08-01")
+    got = verdict(base + [filing(DAYS[0], "14:00:00")], retrieved="2026-10-30T23:00:00Z")
+    assert (got["verdict"], got["placement"]) == ("reported_after_signal", "held")
+    words = E._row({"stage": "burst", "ticker": "X"}, S, DAYS, E._instant("2026-10-30T23:00:00Z"), got)["sentence"]
+    assert "during this ticket's hold window" in words and "before day 1's open" not in words, words
+
+
+def test_a_foreign_issuer_is_read_as_one_through_collect(fake_sec):
+    fake_sec.issuer("ZIM", 1654126, "ZIM Integrated Shipping", [("2026-08-20", "2026-08-20T11:00:00.000Z", "6-K", "")],
+                    start="2023-03-01", foreign=True)
+    block = E.collect([{"stage": "anticipation", "ticker": "ZIM"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert (block["rows"][0]["verdict"], block["rows"][0]["reason"]) == ("unknown", "foreign_issuer")
+    # the forms of the older file count too: a 20-F only there still makes a foreign issuer
+    fake_sec.issuer("ZIM", 1654126, "ZIM Integrated Shipping", [("2026-08-20", "2026-08-20T11:00:00.000Z", "6-K", "")],
+                    history=[("2025-12-01", "2025-12-01T12:00:00.000Z", "20-F", ""),
+                             ("2023-03-01", "2023-03-01T12:00:00.000Z", "20-F", "")])
+    fake_sec.issuers["ZIM"]["rows"] = [("2026-08-20", "2026-08-20T11:00:00.000Z", "4", "")]
+    block = E.collect([{"stage": "anticipation", "ticker": "ZIM"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert block["rows"][0]["reason"] == "foreign_issuer", block["rows"][0]
+
+
+def test_the_deadline_stops_reading_and_says_so(fake_sec):
+    register_exel(fake_sec)
+    block = E.collect([{"stage": "burst", "ticker": "EXEL"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc),
+                      deadline_seconds=0)
+    assert block["status"] == "unavailable" and block["requests"] == 0
+    assert [(r["reason"], r["error"]) for r in block["rows"]] == [("source_unavailable", "time_budget")]
+
+
+def test_last_years_before_open_report_is_named_in_the_sentence():
+    anchor = (date.fromisoformat(S) - timedelta(days=364) + timedelta(days=4)).isoformat()   # Mon 3 Nov 2025
+    filings = quarters(anchor, through=(date.fromisoformat(S) - timedelta(days=30)).isoformat())
+    for f in filings:
+        if f["filing_date"] == anchor:
+            f["accepted_at"] = f"{anchor}T12:00:00Z"                                          # 7:00 AM EST
+    got = verdict(filings)
+    assert got["verdict"] == "estimate_inside" and got["projection"]["timing_last_year"] == "before_open"
+    words = E._row({"stage": "burst", "ticker": "X"}, S, DAYS, E._instant(NIGHT), got)["sentence"]
+    assert "accepted before that day's open" in words, words
+
+
+def test_the_reach_is_inclusive_at_its_edge():
+    edge = date.fromisoformat(S) - timedelta(days=E.REACH_DAYS)
+    got = verdict([filing(edge.isoformat())])
+    assert got["verdict"] == "overdue", got
+    got = verdict([filing((edge - timedelta(days=1)).isoformat())])
+    assert (got["verdict"], got["reason"]) == ("unknown", "no_recent_results"), got
+    # a list that begins exactly at the edge reaches it; a day later does not
+    assert verdict([filing(edge.isoformat())], start=edge.isoformat())["verdict"] == "overdue"
+    assert verdict([filing(edge.isoformat())], start=(edge + timedelta(days=1)).isoformat())["reason"] == "filings_short"
+
+
+def test_a_report_exactly_a_week_early_reports_the_cycle():
+    overdue = quarters("2025-09-15", through="2026-07-01")                   # estimated 14 Sep 2026
+    assert verdict(overdue + [filing("2026-09-07")])["verdict"] == "already_reported"
+
+
+def test_an_unreadable_issuer_list_is_named_unreadable_not_unanswered(fake_sec, monkeypatch):
+    register_exel(fake_sec)
+    real = fake_sec.__class__.__call__
+
+    def answer(self, url):
+        body = real(self, url)
+        if "submissions/CIK" in url:
+            data = json.loads(body)
+            data["filings"]["recent"].pop("items")
+            return json.dumps(data).encode()
+        return body
+    monkeypatch.setattr(fake_sec.__class__, "__call__", answer)
+    block = E.collect([{"stage": "burst", "ticker": "EXEL"}], S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    assert block["rows"][0]["reason"] == "rows_unreadable", block["rows"][0]
+
+
+def test_two_tickets_of_one_stage_each_get_their_own_line(fake_sec):
+    register_exel(fake_sec)
+    fake_sec.quarterly("ACME", 123456, "ACME CORP", S, 40)
+    tickets = [{"stage": "burst", "ticker": "EXEL"}, {"stage": "burst", "ticker": "ACME"}]
+    block = E.collect(tickets, S, now=datetime(2026, 10, 29, 23, tzinfo=timezone.utc))
+    first, second = block["rows"]
+    assert first["sentence"] != second["sentence"]
+    data = {"run": {"earnings": block}}
+    assert report._earnings_line(data, "burst", "EXEL").endswith(f"{report.esc(first['sentence'])}</p>")
+    assert report._earnings_line(data, "burst", "ACME").endswith(f"{report.esc(second['sentence'])}</p>")

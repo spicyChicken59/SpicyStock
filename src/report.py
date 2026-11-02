@@ -148,7 +148,10 @@ CONTRACT: dict[str, str] = {
            "token classes -- under the model the run asked; it carries no price. run.intraday is the minute "
            "bars read for plans whose first day the daily bar could not place (a day that reached the trigger "
            "after the open): what tonight needed, asked for, fetched and stored under docs/intraday/, and the "
-           "failures by kind; a plan walked from them names its object in minute_evidence.",
+           "failures by kind; a plan walked from them names its object in minute_evidence. run.earnings "
+           "is each published ticket's earnings warning, estimated from the company's SEC results filings "
+           "(8-K item 2.02) a year back and read against the plan's hold window: an estimate and never an "
+           "announced date, a warning and never a refusal, and a ticket SEC did not answer for says unknown.",
     "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
     "account": "The configured sizing assumptions every plan below was computed from: equity, risk per "
                "trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
@@ -707,9 +710,10 @@ def validate(data: dict) -> None:
     faults.extend(delivery.faults(run, rules_pipeline))
     faults.extend(reader_coverage.reads_faults(data))
     faults.extend(reader_coverage.usage_faults(data))
-    from src import funnel, intraday
+    from src import funnel, intraday, earnings_risk
     faults.extend(funnel.faults(data))
     faults.extend(intraday.record_faults(data))
+    faults.extend(earnings_risk.record_faults(data))
     verdict = _get(data, "breadth", "regime", "verdict")
     if verdict is not None and verdict not in REGIMES:
         faults.append(f"breadth.regime.verdict {verdict!r} is not one of {REGIMES}")
@@ -951,6 +955,17 @@ def _alert_order(row: dict) -> str | None:
     plan's -- or None; the same rule for the row and the part-fill sentence."""
     plan = row.get("plan") if isinstance(row.get("plan"), dict) else {}
     return _text(_first(row.get("order_line"), plan.get("order_line")))
+
+
+def _earnings_line(data: dict, stage: str, ticker: Any) -> str:
+    """The ticket's earnings warning, verbatim from run.earnings, or nothing
+    when the record carries none for it."""
+    rows = _get(data, "run", "earnings", "rows")
+    for row in rows if isinstance(rows, list) else []:
+        if isinstance(row, dict) and row.get("stage") == stage and row.get("ticker") == ticker:
+            words = _text(row.get("sentence"))
+            return f'<p style="{_S_MUTED}">{esc(words)}</p>' if words else ""
+    return ""
 
 
 def _trade_block(burst: dict, breadth: dict | None) -> str:
@@ -1210,7 +1225,9 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
                f'{esc(cal.get("library", ""))} {esc(cal.get("library_version", ""))}. Exchange schedules may change.</p>')
     out.append(f'<h2 style="{_S_H2}">Next-session orders</h2>')
     if trades:
-        out.extend(_trade_block(b, data.get("breadth")) for b in trades)
+        for b in trades:
+            out.append(_trade_block(b, data.get("breadth")))
+            out.append(_earnings_line(data, "burst", b.get("ticker")))
         if any(_trade_order(b) for b in trades):
             out.append(_part_fill_note())
     else:
@@ -1239,7 +1256,9 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
         out.append('<p style="margin:0 0 12px">No open model plans. SpicyStock does not know what you hold; '
                    'if you hold nothing from this screener, nothing to do.</p>')
     out.append(f'<h2 style="{_S_H2}">Alerts — set these before the open</h2>')
-    out.extend(_alert_row(r) for r in alerts)
+    for r in alerts:
+        out.append(_alert_row(r))
+        out.append(_earnings_line(data, "anticipation", r.get("ticker")))
     if any(_alert_order(r) for r in alerts):
         out.append(_part_fill_note())
     if not alerts:

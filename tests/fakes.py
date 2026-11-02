@@ -420,3 +420,101 @@ class FakeResend:
             raise self.raises
         self.sent.append(params)
         return dict(self.response)
+
+
+# ------------------------------------------------------------------ SEC ----
+
+
+class FakeSec:
+    """SEC EDGAR double for src/earnings_risk.py: the ticker mapping, each
+    issuer's filing list and its older file, served by URL as the bytes SEC
+    would send. Register an issuer with ``issuer()`` (its filings by hand) or
+    ``quarterly()`` (a results filing every 91 days around an anchor). A
+    ticker no issuer names is absent from the mapping, as SEC's would be.
+    ``fail[substring] = code`` refuses every URL containing the substring."""
+
+    MAPPING_FIELDS = ["cik", "name", "ticker", "exchange"]
+
+    def __init__(self) -> None:
+        self.issuers: dict[str, dict] = {}
+        self.calls: list[str] = []
+        self.fail: dict[str, str] = {}
+        #: when set, the mapping URL answers these bytes instead of the issuers'
+        self.mapping_body: bytes | None = None
+
+    def issuer(self, ticker: str, cik: int, name: str, filings=(), *, start=None, foreign: bool = False,
+               history: list | None = None, tickers: list | None = None) -> dict:
+        """``filings``: (filing_date, accepted_at, form, items) tuples, the
+        recent file's rows; ``start`` adds one older annual report so the list
+        reaches back that far; ``history``: rows of the one older file."""
+        rows = [tuple(f) for f in filings]
+        if start is not None:
+            rows.append((str(start), f"{start}T12:00:00.000Z", "20-F" if foreign else "10-K", ""))
+        entry = {"cik": cik, "name": name, "tickers": list(tickers or [ticker]), "rows": rows,
+                 "history": [tuple(f) for f in history] if history is not None else None}
+        self.issuers[ticker] = entry
+        return entry
+
+    def quarterly(self, ticker: str, cik: int, name: str, session, anchor_offset_days: int, *,
+                  accepted: str = "20:05:00", quarters: int = 12, history_from=None) -> dict:
+        """Results filed every 91 days, one of them ``anchor_offset_days``
+        after the signal session less a year (a weekend date the Monday
+        after), none after the session. With
+        ``history_from`` every filing before it moves to the older file."""
+        from datetime import date as _date, timedelta as _td
+        session = _date.fromisoformat(str(session))
+        anchor = session - _td(days=364) + _td(days=anchor_offset_days)
+        # EDGAR files on weekdays: a weekend date rolls to the Monday after
+        rolled = (anchor + _td(days=91 * k) for k in range(-quarters, quarters))
+        rolled = (d + _td(days=7 - d.weekday()) if d.weekday() >= 5 else d for d in rolled)
+        days = sorted(d for d in rolled if session - _td(days=91 * quarters) <= d <= session)
+        rows = [(d.isoformat(), f"{d.isoformat()}T{accepted}.000Z", "8-K", "2.02,9.01") for d in days]
+        start = session - _td(days=91 * quarters + 30)
+        if history_from is None:
+            return self.issuer(ticker, cik, name, rows, start=start)
+        cut = _date.fromisoformat(str(history_from))
+        recent = [r for r in rows if _date.fromisoformat(r[0]) >= cut] + [(cut.isoformat(), f"{cut}T12:00:00.000Z", "4", "")]
+        older = [r for r in rows if _date.fromisoformat(r[0]) < cut] + [(start.isoformat(), f"{start}T12:00:00.000Z", "10-K", "")]
+        return self.issuer(ticker, cik, name, recent, history=older)
+
+    @staticmethod
+    def _columns(cik: int, rows) -> dict:
+        cols: dict[str, list] = {k: [] for k in ("accessionNumber", "filingDate", "reportDate", "acceptanceDateTime",
+                                                  "form", "items", "primaryDocument")}
+        for i, (filed, accepted, form, items) in enumerate(sorted(rows, key=lambda r: r[0], reverse=True)):
+            cols["accessionNumber"].append(f"{cik % 10**10:010d}-{int(filed[2:4]):02d}-{i + 1:06d}")
+            cols["filingDate"].append(filed)
+            cols["reportDate"].append(filed)
+            cols["acceptanceDateTime"].append(accepted)
+            cols["form"].append(form)
+            cols["items"].append(items)
+            cols["primaryDocument"].append("doc.htm")
+        return cols
+
+    def __call__(self, url: str) -> bytes:
+        import re as _re
+        from src import earnings_risk, issuer_evidence
+        self.calls.append(url)
+        for part, code in self.fail.items():
+            if part in url:
+                raise earnings_risk.SourceError(code)
+        if url == issuer_evidence.MAPPING_URL and self.mapping_body is not None:
+            return self.mapping_body
+        if url == issuer_evidence.MAPPING_URL:
+            data = [[e["cik"], e["name"], t, "Nasdaq"] for e in self.issuers.values() for t in e["tickers"]]
+            return json.dumps({"fields": self.MAPPING_FIELDS, "data": data}).encode()
+        match = _re.fullmatch(r"https://data\.sec\.gov/submissions/CIK([0-9]{10})(-submissions-001)?\.json", url)
+        entry = next((e for e in self.issuers.values() if match and e["cik"] == int(match.group(1))), None)
+        if entry is None:
+            raise earnings_risk.SourceError("http_error")
+        if match.group(2):
+            if entry["history"] is None:
+                raise earnings_risk.SourceError("http_error")
+            return json.dumps(self._columns(entry["cik"] + 7, entry["history"])).encode()
+        files = []
+        if entry["history"] is not None:
+            dates = sorted(r[0] for r in entry["history"])
+            files.append({"name": f"CIK{entry['cik']:010d}-submissions-001.json", "filingCount": len(dates),
+                          "filingFrom": dates[0], "filingTo": dates[-1]})
+        return json.dumps({"cik": str(entry["cik"]), "name": entry["name"], "tickers": entry["tickers"],
+                           "filings": {"recent": self._columns(entry["cik"], entry["rows"]), "files": files}}).encode()

@@ -23,7 +23,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient, FakeResend  # noqa: E402
+from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient, FakeResend, FakeSec  # noqa: E402
 from tests.synthetic import make_ohlcv, seed_for  # noqa: E402
 
 
@@ -55,6 +55,18 @@ def _no_network(monkeypatch):
     monkeypatch.setattr(socket.socket, "connect", _blocked)
     monkeypatch.setattr(socket.socket, "connect_ex", _blocked)
     monkeypatch.setattr(socket, "create_connection", _blocked)
+
+
+@pytest.fixture(autouse=True)
+def fake_sec(monkeypatch) -> FakeSec:
+    """SEC EDGAR, for the earnings warning: an in-memory double every test
+    gets, naming no issuer until a test registers one, so a run that writes a
+    ticket reads it as not mapped rather than reaching for the network."""
+    from src import earnings_risk
+
+    double = FakeSec()
+    monkeypatch.setattr(earnings_risk, "FETCH", double)
+    return double
 
 
 # ------------------------------------------------------- synthetic frames ----

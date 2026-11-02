@@ -129,6 +129,39 @@ def test_a_clean_night_publishes_a_trade_with_its_ticket_and_records_the_pick(ma
     assert len(fake_resend.sent) == 1 and "Trade next session" in fake_resend.sent[0]["subject"]
 
 
+def test_each_ticket_carries_its_earnings_warning_and_the_night_is_not_refused_for_it(market, claude, fake_resend,
+                                                                                     fake_sec, tmp_path):
+    # AAA reported last year two days after this session's date: estimated inside the hold;
+    # SEC's list names no COIL, so its warning is unknown, never clear
+    fake_sec.quarterly("AAA", 1001, "AAA HOLDINGS INC", SESSION, 2)
+    rep, data, docs = evening(tmp_path, market)
+    assert rep.exit_code() == 0 and rep.status == "ok", rep.problems
+    block = data["run"]["earnings"]
+    assert [(r["stage"], r["ticker"], r["verdict"], r["reason"]) for r in block["rows"]] == \
+        [("burst", "AAA", "estimate_inside", None), ("anticipation", "COIL", "unknown", "not_mapped")]
+    assert block["status"] == "checked" and block["requests"] == 2
+    assert block["rows"][0]["window"] == list(dict.fromkeys(r["date"] for r in data["bursts"][0]["plan"]["exit_schedule"]))
+    assert block["rows"][0]["retrieved_at"] == "2026-09-10T22:30:00Z"
+    # a warning, never a refusal: the ticket and the pick stand
+    assert data["trades"] == ["AAA"] and data["bursts"][0]["plan"]["order_json"]
+    report.validate(data)
+    assert data["rules"]["earnings_risk"]["policy"] == "warn_only"
+    mail = _mail_text(fake_resend.sent[0]["html"])
+    assert block["rows"][0]["sentence"] in mail and block["rows"][1]["sentence"] in mail
+    # a forged verdict is refused by the record's own validator
+    block["rows"][0]["verdict"] = "estimate_outside"
+    with pytest.raises(ValueError, match="earnings"):
+        report.validate(data)
+
+
+def test_sec_down_leaves_every_ticket_unknown_and_publishes(market, claude, fake_resend, fake_sec, tmp_path):
+    fake_sec.fail["sec.gov"] = "network_error"
+    rep, data, _ = evening(tmp_path, market)
+    assert rep.exit_code() == 0 and data["trades"] == ["AAA"]
+    block = data["run"]["earnings"]
+    assert block["status"] == "unavailable" and {r["reason"] for r in block["rows"]} == {"source_unavailable"}
+
+
 def test_the_next_night_follows_the_pick_from_bars_alone(market, claude, fake_resend, tmp_path):
     evening(tmp_path, market)
     rep, data, docs = evening(tmp_path, market, now=datetime(2026, 9, 11, 22, 30, tzinfo=timezone.utc))
