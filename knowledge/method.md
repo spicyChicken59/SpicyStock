@@ -164,6 +164,18 @@ box high + a few cents (B), stop = the low of the last 2–3 days (B), refused
 over 4% (B). "Most good anticipation setups break out in the first 10 to 15
 minutes" (B), so the order is placed the night before.
 
+## Earnings warnings (`src/earnings_risk.py`)
+
+Not Bonde's rule: no inspected source of his sets an earnings hold, and this
+build adopts none. The warning is SpicyStock's, about a gap a stop does not
+protect against, and it never vetoes, sizes or cuts a ticket. The estimate is
+last year's results filing (SEC form 8-K, item 2.02) put 52 weeks on, 364 days
+(P), within ±7 days (P), each of this year's filings standing for at most
+one of last year's; an estimate whose range ended more than 45 days before
+the signal (P) no longer reads as overdue, though an issuer with no results
+filing for longer than any gap between its own earlier ones still does. Every estimate says it is one, and a ticket
+SEC did not answer for is unknown, never clear.
+
 ## What the evidence says (E)
 
 The one pre-registered test of mechanised 2LYNCH gates (n=10,947) found the

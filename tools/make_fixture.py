@@ -65,8 +65,8 @@ sys.path.insert(0, str(ROOT))
 
 import pandas as pd  # noqa: E402
 
-from src import sessions as exchange_sessions, charts, market_data, pipeline, plan, record, scans  # noqa: E402
-from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient  # noqa: E402
+from src import sessions as exchange_sessions, charts, earnings_risk, market_data, pipeline, plan, record, scans  # noqa: E402
+from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient, FakeSec  # noqa: E402
 from tests.synthetic import make_ohlcv  # noqa: E402
 from tests.test_quality import burst_bar, frame as qframe, ideal_bars, quiet as quiet_bar  # noqa: E402
 from tests.test_watchlist import coil  # noqa: E402
@@ -418,6 +418,24 @@ def prior_picks(fake: FakeAlpaca, measured: date = SESSION) -> dict:
 
 
 # ------------------------------------------------------------------ run ----
+#: SEC results filings for the names a fixture night can ticket, each placed
+#: against that night's own session: last year's report this many days after
+#: the session's date a year earlier, accepted at this UTC time. AAPL's
+#: estimate falls inside its hold; AMD's well after it, released before the
+#: open; NVDA's last week and filed since (already reported); COIL and every
+#: other name are not in the double's mapping, so unknown, never clear.
+FIXTURE_EARNINGS = {"AAPL": (320193, "Apple Inc.", 2, "20:30:00"),
+                    "AMD": (2488, "ADVANCED MICRO DEVICES INC", 40, "11:00:00"),
+                    "NVDA": (1045810, "NVIDIA CORP", -8, "20:20:00")}
+
+
+def fixture_sec(session: date) -> FakeSec:
+    sec = FakeSec()
+    for ticker, (cik, name, offset, accepted) in FIXTURE_EARNINGS.items():
+        sec.quarterly(ticker, cik, name, session, offset, accepted=accepted)
+    return sec
+
+
 def run_variant(variant: str, docs: Path) -> dict:
     measured = date(2026, 9, 4) if variant == "closed" else date(2024, 11, 27) if variant == "early" else SESSION
     at = datetime(2026, 9, 4, 22, 30, tzinfo=timezone.utc) if variant == "closed" else datetime(2024, 11, 27, 23, 30, tzinfo=timezone.utc) if variant == "early" else FOLLOW_EVENING if variant in SEQUELS else EVENING
@@ -481,6 +499,7 @@ def run_variant(variant: str, docs: Path) -> dict:
             mock.patch("anthropic.Anthropic", make_client), \
             mock.patch.object(charts, "render_chart", render), \
             mock.patch.object(pipeline.grader, "MODEL", "claude-sonnet-4-6"), \
+            mock.patch.object(earnings_risk, "FETCH", fixture_sec(FOLLOW_SESSION if variant in SEQUELS else measured)), \
             mock.patch.object(pipeline, "FETCH_CHUNK", max(1, len(tickers) * 2 // 3) if variant == "partial" else pipeline.FETCH_CHUNK):
         if variant == "thin":
             # the first evening: two stocks behind (one by two sessions, one by
@@ -558,6 +577,9 @@ def expected_shape(variant: str, data: dict) -> None:
         vrt = next(p for p in data["open_plans"] if p["ticker"] == "VRT")
         assert vrt["shares"] == 3 and vrt["sold"] == 2 and vrt["remaining"] == 1, (vrt["shares"], vrt["sold"], vrt["remaining"])
         assert data["watchlist"]["top"], "no coiled name"
+        # the ticket's earnings warning: estimated inside its hold, and a warning only
+        earnings = [(r["ticker"], r["verdict"], r["placement"]) for r in data["run"]["earnings"]["rows"]]
+        assert earnings == [("AAPL", "estimate_inside", "held")], earnings
         dollar = [b for b in data["bursts"] if b["scan"] == "dollar"]
         assert dollar and all(isinstance(b["volume_vs_prior"], float) and 0 < b["volume_vs_prior"] < 1 for b in dollar), \
             [(b["ticker"], b.get("volume_vs_prior")) for b in dollar]

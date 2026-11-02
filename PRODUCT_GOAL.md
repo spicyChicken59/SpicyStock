@@ -51,7 +51,7 @@ records the offline controls without claiming live-session acceptance.
 | Remaining dependency | Affected acceptance | Pending validation |
 | --- | --- | --- |
 | Identified hosting account/project, durable storage, scheduler, HTTPS route and worker-only provider bindings with confirmed entitlement/cost | Required results 1 and 4; milestones 2 and 5 | Activate the reviewed endpoint, measure actual pre-open arrival and in-window expiry, and verify restart and provider-failure behavior on that host. |
-| Authorized sources and access for current issuer news and future earnings | Required results 1 and 2; milestone 2 | Retain source timestamps, coverage and exclusions for applicable candidates; unavailable coverage cannot become clearance. |
+| Authorized sources and access for current issuer news and future earnings | Required results 1 and 2; milestone 2 | Retain source timestamps, coverage and exclusions for applicable candidates; unavailable coverage cannot become clearance. Since 1 November 2026 each ticket carries an earnings date estimated from SEC results filings, a warning and never a refusal (`src/earnings_risk.py`); an announced-date source and issuer news remain open. |
 | Actual expected-session observations after deployment | Required result 4; milestone 5 | Review ten consecutive expected sessions using publication evidence, worker history, independent public-arrival measurements and measured usage/costs, including no-ticket sessions. |
 | Owner/broker evidence for settled cash, available Fidelity order terms and any actual executions | Required results 2 and 5; milestone 4 | Verify account facts at Fidelity; compute actual results only from reported entry, exit, quantity and costs. Real orders require separate explicit instruction. |
 

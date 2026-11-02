@@ -21,7 +21,7 @@ import pandas as pd
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
 from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
 from src import universe, reader_coverage, followup
-from src import watchlist, allocation, event_risk, review_selection, funnel, delivery, intraday
+from src import watchlist, allocation, event_risk, review_selection, funnel, delivery, intraday, earnings_risk
 
 log = logging.getLogger("spicystock.pipeline")
 
@@ -677,7 +677,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, funnel.RULES, intraday.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, funnel.RULES, intraday.RULES, earnings_risk.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.session_min_price": universe.MIN_PRICE,
@@ -720,6 +720,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
     rep = RunReport()
     started = time.monotonic()
     rep.stage = "preflight"
+    clock_pinned = now is not None
     now = now or datetime.now(timezone.utc)
     try:
         rep.calendar_outcome = sessions.run_decision(now, clock.pinned_session())
@@ -956,6 +957,15 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             beyond_cap = [t for t in carried.get("beyond_cap", []) if t in {b["ticker"] for b in published_carried}]
             budget = carried.get("cash_budget") or budget
             lists = carried.get("watchlist") or lists
+        # each published ticket's earnings, estimated from its SEC results filings:
+        # a warning beside the ticket, never a refusal (src/earnings_risk.py)
+        tickets = earnings_risk.tickets_of(published_carried if carried else bursts, trades, lists.get("top", []))
+        clock_kw = {"now": now} if clock_pinned else {}
+        run_block["earnings"] = (earnings_risk.carried((carried.get("run") or {}).get("earnings"), session, tickets, **clock_kw)
+                                 if carried else earnings_risk.safe_collect(tickets, session, **clock_kw))
+        log.info("Earnings: %s", run_block["earnings"]["sentence"])
+        for row in run_block["earnings"]["rows"]:
+            log.info("Earnings %s %s: %s", row["stage"], row["ticker"], row["sentence"])
         if not closed and not dry_run:
             picks = [pick_of(b["plan"], "burst", b["grade"], b["score"]) for b in bursts if b["ticker"] in trades]
             picks += [pick_of(row["plan"], "anticipation", "watch", row.get("ti65"))

@@ -155,7 +155,8 @@ and the previous publication's stale stocks read again from this run's frames
 the minute bars of earlier plans' first days a daily bar could not place
 (`run.intraday`, `src/intraday.py`; every walk below reads them) →
 charts and Claude (down-only; `run.reads` by cause) → plans and the cash
-budget → the record (`picks.json`, open plans, scorecard, and the stale
+budget → each ticket's earnings warning, estimated from its SEC results
+filings and never a refusal (`run.earnings`, `src/earnings_risk.py`) → the record (`picks.json`, open plans, scorecard, and the stale
 frames joined to the universe's seed-only additions: `run.seed_stale`,
 `inputs.seed_stale()`, the names on the seed alone or the one reason the join
 could not be made) → `report.build()`
@@ -344,7 +345,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5664 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5756 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -13127,3 +13128,58 @@ Split one each way and fixed anyway: PRODUCT_GOAL's "in place", and the live too
 - measured Railway usage;
 - the first night under tolerance v3;
 - any trading edge.
+
+## Checkpoint, 1 Nov 2026 -- each ticket's earnings warning, from SEC results filings (`run.earnings`)
+
+**What it does.** `src/earnings_risk.py` reads SEC's ticker list and each
+ticket's own filing list, finds its quarterly-results filings (8-K item
+2.02), and places last year's report, moved forward 364 days and given
+±7 days, against the ticket's own hold window (`plan.next_sessions(S,
+FINAL_EXIT_DAY)`). It warns and never withholds a ticket. A results filing
+accepted after the signal session's close is named as observed; an issuer
+later than its own longest gap between reports plus 7 days reads overdue;
+anything it could not read is `unknown` with its reason and is never read as
+clear. `report.validate()` re-derives every read row from its own filings
+under rules that archive `earnings_risk`; the page and the mail print each
+row's sentence verbatim beside its ticket.
+
+**Held, then put up.** The work waited as local commits while PR #207 (the
+morning endpoint) waited for Monday's first in-window Railway receipt, since
+the designated branch carried #207. On 1 November, at Mo's word, it was
+backed up to `claude/spicystock-earnings-vfd3o2` without a pull request; on
+2 November, once #207 merged, it went up from the designated branch,
+restarted from `main`.
+
+**The review, and its size.** A design pass of 18 agents and a review of 48
+(three finders, two skeptics a finding) were far more than this change
+needed; Mo asked whether 79 agents were needed for one warning, and they
+were not. The review was stopped with its third finder's 24 findings
+unjudged, and each was checked here by hand instead. Six wording findings
+were already fixed (the near test measured from day 1, "a year" and
+"fourteen months" for a 416-day reach, an unreadable mapping read as a
+symbol SEC lacks). The rest were test holes, each closed with a case that
+fails for its own rule: two tickets in one stage, in the mail and on the
+page; the overdue sentence's "not an announced date"; the block sentence
+never calling unknown or overdue clear; an unmapped row relabelled outside;
+the validator re-deriving placement, observed and reason; Eastern time and
+noon in the acceptance; a report accepted during day 1 placed held; a
+foreign issuer through `collect()`, including forms only in the older file;
+the 60-second deadline; a before-open anchor in the sentence; the window's
+last day; the 416-day edge; a report exactly a week early; an unreadable
+issuer list named unreadable; a row with no sentence on the page. A
+mislabelled case, a misleading comment and a false docstring were
+corrected. Not checkable from a record, and said so here: a `not_mapped`
+row relabelled `identity_ambiguous` (neither carries a source to re-derive
+from; both stay unknown).
+
+**Measured** (this sandbox, Python 3.12.3): `tests/test_earnings_risk.py`
+89 passed; the earnings browser suite 68/68; 5753 tests collected before
+#207 merged, 5756 with it. Sixteen
+targeted mutants in a scratch copy, each dying in the test named for its
+rule, and two page mutants (the row lookup without its ticker, the empty
+sentence guard dropped) failing their named checks; a control survives in
+each harness.
+
+**Next action.** The pull request's CI, then its merge; the first evening
+after the merge writes the first `run.earnings`: read its rows, their
+verdicts and reasons, and its request count, and record them here.
