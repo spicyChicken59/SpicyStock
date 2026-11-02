@@ -13183,3 +13183,49 @@ each harness.
 **Next action.** The pull request's CI, then its merge; the first evening
 after the merge writes the first `run.earnings`: read its rows, their
 verdicts and reasons, and its request count, and record them here.
+
+## Checkpoint, 2 Nov 2026 -- #207 accepted on Railway's first in-window receipt; a second Railway project fails every deploy
+
+**The receipt, read from outside** at 15:53 UTC, after the window, so only
+its last receipt was seen: `GET /morning.json` with the site's origin
+answered 200 with CORS for that origin alone; the ETag equals the body's
+SHA-256 (`6b11ccbc…`); generated 14:59:28 UTC (8:59 CT, the window's last
+minute), expiring five minutes later; `status` `no_tickets`, `entry_phase`
+`open`; bound to run `41155959854` (measured 30 October, applicable
+2 November), its data and reader digests equal to `docs/data.json`
+(`ea488fad…`) and `docs/reader.json` (`89a39c74…`) on `main`;
+`observation_run_id` `service-1-92`, the store's first generation. A RED
+night with no ticket: a delivery check, not quote coverage. The session's
+own reminder for 8:45 CT had not fired by 15:53 UTC (still enabled, its run
+time past); it was deleted and the reading done by hand.
+
+**GitHub's morning workflow ran in the window too**: a `workflow_dispatch`
+of `morning.yml` created at 14:30:54 UTC (8:30 CT; the owner's routine is set
+for 8:21 CT), committing `docs/morning.json` (`9f936434`, `no_tickets`,
+generated 14:31:35 UTC), the research observation (`6bb4d120`) and the
+issuer evidence (`54c4b56f`). With 23 October, two in-window morning checks.
+
+**#207 merged** as `d3034171` with a merge commit over `54c4b56f`, its head
+`422a029a` green on all seven checks since 31 October. Publisher
+`41476756003` waited for `index.html` and printed *Verified: every one of the
+48 public files matches committed main* at 15:59:21 UTC; Pages `41476810135`
+deployed.
+
+**The failed deployments Mo saw.** Railway reports its deployments to GitHub,
+and two Railway projects are connected to this repository. `alert-possibility`
+is the morning host: two deployments on 31 October, the last (`090dbd9c`)
+succeeding at 09:20 UTC and serving since, with automatic deploys off.
+`skillful-light` has automatic deploys on and has failed every one of its ten
+deployments, 30 October 23:59 UTC to 2 November 14:34 UTC: the first four
+within about 25 seconds (the Dockerfile validation refusal #204 fixed), the
+six after #204 building and then failing 5 to 9 seconds after Railway called
+them deployed -- the shape of the image refusing to start without its volume,
+not confirmed, since that project's logs cannot be read from here. It is the
+first attempt of 30 October, left connected, and every push to `main` now
+starts a deploy there that fails. The fix is the owner's: delete
+`skillful-light` (or disconnect its repository) in Railway; keep
+`alert-possibility`, which carries the volume and the Alpaca pair.
+
+**Not claimable:** quote coverage on a night with an admitted plan; ten
+consecutive sessions with morning checks; the first night under tolerance v3
+(tonight's publication); any trading edge.
