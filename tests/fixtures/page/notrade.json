@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "e44a709748ac"
+  "rules_version": "35a2539819be"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -952,7 +952,53 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "6e49ff32d18c1636e51003f2ef7ecba6de278d84eb452003426046c3febeb428"
+   "context_sha256": "2b3da4ad4ba9c6bbd7a7830aebb51c08b4ad097cb9af0cf7c2ff8d6ab1772206"
+  },
+  "earnings": {
+   "version": 1,
+   "policy": "warn_only",
+   "source": "sec_edgar_submissions",
+   "session": "2026-09-10",
+   "status": "checked",
+   "mapping": {
+    "url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "sha256": "7815824bc9fbf1bb6222fe9825a98840799a7a2e7687e5504c77fc33e639458a",
+    "bytes": 200,
+    "retrieved_at": "2026-09-10T22:30:00Z"
+   },
+   "rows": [
+    {
+     "stage": "anticipation",
+     "ticker": "COIL",
+     "session": "2026-09-10",
+     "window": [
+      "2026-09-11",
+      "2026-09-14",
+      "2026-09-15",
+      "2026-09-16",
+      "2026-09-17"
+     ],
+     "cik": null,
+     "issuer": null,
+     "sources": [],
+     "error": null,
+     "retrieved_at": "2026-09-10T22:30:00Z",
+     "results_filings": [],
+     "coverage_start": null,
+     "foreign": false,
+     "verdict": "unknown",
+     "placement": null,
+     "projection": null,
+     "observed": null,
+     "reason": "not_mapped",
+     "sentence": "Earnings date not established: SEC's ticker list does not name this symbol. Check the company's announcement before entry."
+    }
+   ],
+   "counts": {
+    "unknown": 1
+   },
+   "requests": 1,
+   "sentence": "Earnings, estimated from SEC results filings for 1 ticket: 1 not established. An estimate warns and never withholds a ticket."
   },
   "sanitised": {
    "replaced": 0,
@@ -1498,6 +1544,34 @@
    "object_max_bytes": 65536,
    "price_decimals": 4,
    "holdback_minutes": 16
+  },
+  "earnings_risk": {
+   "version": 1,
+   "policy": "warn_only",
+   "source": "sec_edgar_submissions",
+   "coverage": "sec_results_filings_derived",
+   "results_form": "8-K",
+   "results_item": "2.02",
+   "foreign_forms": [
+    "6-K",
+    "6-K/A",
+    "20-F",
+    "20-F/A",
+    "40-F",
+    "40-F/A"
+   ],
+   "projection_days": 364,
+   "estimate_slack_days": 7,
+   "overdue_days": 45,
+   "reach_days": 416,
+   "max_tickets": 8,
+   "max_results_filings": 24,
+   "max_history_files": 1,
+   "deadline_seconds": 60,
+   "retrieval_window_seconds": 7200,
+   "matching": "one_to_one",
+   "window": "plan.final_exit_day sessions after the signal session",
+   "unknown_policy": "never_clearance"
   },
   "pipeline": {
    "max_reads": 12,
@@ -2181,8 +2255,8 @@
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2026-09-10",
-    "rules_version": "e44a709748ac",
-    "context_sha256": "6e49ff32d18c1636e51003f2ef7ecba6de278d84eb452003426046c3febeb428",
+    "rules_version": "35a2539819be",
+    "context_sha256": "2b3da4ad4ba9c6bbd7a7830aebb51c08b4ad097cb9af0cf7c2ff8d6ab1772206",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -2195,7 +2269,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "ea809726936817919a53c2f33e6ea7c837b9e3a4d6550f32fe264ab1334536e2"
+    "id": "8093dca2e49f1cf6f2b28af955e4ca508ad322489f167842b4ce81c6d60209fd"
    },
    "series": [
     {
@@ -3429,8 +3503,8 @@
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2026-09-10",
-    "rules_version": "e44a709748ac",
-    "context_sha256": "6e49ff32d18c1636e51003f2ef7ecba6de278d84eb452003426046c3febeb428",
+    "rules_version": "35a2539819be",
+    "context_sha256": "2b3da4ad4ba9c6bbd7a7830aebb51c08b4ad097cb9af0cf7c2ff8d6ab1772206",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -3443,7 +3517,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "af59873e0b06b465f2f51af8e6fab72570ca9e2838e79c10e9c5ddde38e579fb"
+    "id": "7bd0de0b42198d475627c8bdf94013f9c0f24c23cb907ac659f753923e68e5e8"
    },
    "series": [
     {
@@ -4803,8 +4877,8 @@
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2026-09-10",
-    "rules_version": "e44a709748ac",
-    "context_sha256": "6e49ff32d18c1636e51003f2ef7ecba6de278d84eb452003426046c3febeb428",
+    "rules_version": "35a2539819be",
+    "context_sha256": "2b3da4ad4ba9c6bbd7a7830aebb51c08b4ad097cb9af0cf7c2ff8d6ab1772206",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -4817,7 +4891,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "9ae43e9980d18fc6741c178f5770a625ece7fe74391f6c15d19ea8a1ed47752f"
+    "id": "3496b79d56eb5d021162e0d7de78e46aa8feedbd191197ad2007c099fbe6b455"
    },
    "series": [
     {
@@ -6121,8 +6195,8 @@
     "kind": "burst",
     "ticker": "AMD",
     "session": "2026-09-10",
-    "rules_version": "e44a709748ac",
-    "context_sha256": "6e49ff32d18c1636e51003f2ef7ecba6de278d84eb452003426046c3febeb428",
+    "rules_version": "35a2539819be",
+    "context_sha256": "2b3da4ad4ba9c6bbd7a7830aebb51c08b4ad097cb9af0cf7c2ff8d6ab1772206",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -6135,7 +6209,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "fa0e4c8bc64c58cfa5b2b7f729f9054c56ebdf2f4db594d7a99f50ace9bbf3b3"
+    "id": "505a467ac5d5d29410d325f9b13e4fbbb5d7c676d19cce644ff954d4417cc94a"
    },
    "series": [
     {
@@ -7407,8 +7481,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-10",
-    "rules_version": "e44a709748ac",
-    "context_sha256": "6e49ff32d18c1636e51003f2ef7ecba6de278d84eb452003426046c3febeb428",
+    "rules_version": "35a2539819be",
+    "context_sha256": "2b3da4ad4ba9c6bbd7a7830aebb51c08b4ad097cb9af0cf7c2ff8d6ab1772206",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -7421,7 +7495,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "bfc96f6e47362f47c338a64a33b8cce6b465b0dfed86a20a22ddb761c74d9730"
+    "id": "c4a4ffd2fddbff31101c57c3361db3b1b09bee437c1b3c01777a876fd212cfd4"
    },
    "series": [
     {
@@ -8737,8 +8811,8 @@
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2026-09-10",
-    "rules_version": "e44a709748ac",
-    "context_sha256": "6e49ff32d18c1636e51003f2ef7ecba6de278d84eb452003426046c3febeb428",
+    "rules_version": "35a2539819be",
+    "context_sha256": "2b3da4ad4ba9c6bbd7a7830aebb51c08b4ad097cb9af0cf7c2ff8d6ab1772206",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -8751,7 +8825,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "0791a6708d1983ae37ce08ec7c73a659fb1f813b4899db4878e1ca463ba80d9c"
+    "id": "803a98961878f04907a8ab4f04c3d493c4e5629b9890a70ee784e0d8fcbca1c9"
    },
    "series": [
     {
@@ -9973,8 +10047,8 @@
      },
      "evidence_ref": {
       "version": 1,
-      "id": "a5e1037e854fe05ee2b3e834538997040bd77198dd1792e458fa62dba3f2fdf2",
-      "context_sha256": "6e49ff32d18c1636e51003f2ef7ecba6de278d84eb452003426046c3febeb428",
+      "id": "adabd0292194469437f45176ac0cde05c1e656f56f34f907394de0bb0e87d44a",
+      "context_sha256": "2b3da4ad4ba9c6bbd7a7830aebb51c08b4ad097cb9af0cf7c2ff8d6ab1772206",
       "plan_sha256": "6afd53a2b4e72ad1d0d6e1323938a78f5af7c5b9165a60b45f9d4c83c3a09cdd",
       "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
      }
@@ -10982,8 +11056,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2026-09-10",
-     "rules_version": "e44a709748ac",
-     "context_sha256": "6e49ff32d18c1636e51003f2ef7ecba6de278d84eb452003426046c3febeb428",
+     "rules_version": "35a2539819be",
+     "context_sha256": "2b3da4ad4ba9c6bbd7a7830aebb51c08b4ad097cb9af0cf7c2ff8d6ab1772206",
      "gate": {
       "regime": "green",
       "final_grade": "watch",
@@ -10992,7 +11066,7 @@
       "reason": null,
       "detail": null
      },
-     "id": "a5e1037e854fe05ee2b3e834538997040bd77198dd1792e458fa62dba3f2fdf2"
+     "id": "adabd0292194469437f45176ac0cde05c1e656f56f34f907394de0bb0e87d44a"
     }
    }
   ],
@@ -11245,7 +11319,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "e44a709748ac"
+  "replay_rules_version": "35a2539819be"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -11463,53 +11537,53 @@
    }
   },
   "signals": {
-   "burst:PLUG:2026-09-10:e44a709748ac": {
+   "burst:PLUG:2026-09-10:35a2539819be": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "e44a709748ac",
+    "rules_version": "35a2539819be",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:e44a709748ac": {
+   "burst:DLLR:2026-09-10:35a2539819be": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "e44a709748ac",
+    "rules_version": "35a2539819be",
     "coverage": "observed"
    },
-   "burst:AAPL:2026-09-10:e44a709748ac": {
+   "burst:AAPL:2026-09-10:35a2539819be": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "e44a709748ac",
+    "rules_version": "35a2539819be",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:e44a709748ac": {
+   "burst:AMD:2026-09-10:35a2539819be": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "e44a709748ac",
+    "rules_version": "35a2539819be",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:e44a709748ac": {
+   "burst:NVDA:2026-09-10:35a2539819be": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "e44a709748ac",
+    "rules_version": "35a2539819be",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:e44a709748ac": {
+   "burst:TSLA:2026-09-10:35a2539819be": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "e44a709748ac",
+    "rules_version": "35a2539819be",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:e44a709748ac": {
+   "anticipation:COIL:2026-09-10:35a2539819be": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "e44a709748ac",
+    "rules_version": "35a2539819be",
     "coverage": "observed"
    }
   },
@@ -11697,7 +11771,7 @@
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
   "cover": "The night's verdict as sentences: h1, dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
-  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is what the night's chart reads cost in the API's own units -- calls sent, replies received, the four token classes -- under the model the run asked; it carries no price. run.intraday is the minute bars read for plans whose first day the daily bar could not place (a day that reached the trigger after the open): what tonight needed, asked for, fetched and stored under docs/intraday/, and the failures by kind; a plan walked from them names its object in minute_evidence.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is what the night's chart reads cost in the API's own units -- calls sent, replies received, the four token classes -- under the model the run asked; it carries no price. run.intraday is the minute bars read for plans whose first day the daily bar could not place (a day that reached the trigger after the open): what tonight needed, asked for, fetched and stored under docs/intraday/, and the failures by kind; a plan walked from them names its object in minute_evidence. run.earnings is each published ticket's earnings warning, estimated from the company's SEC results filings (8-K item 2.02) a year back and read against the plan's hold window: an estimate and never an announced date, a warning and never a refusal, and a ticket SEC did not answer for says unknown.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",
