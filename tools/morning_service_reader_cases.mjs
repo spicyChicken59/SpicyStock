@@ -3,6 +3,7 @@
 import { readFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import { withEndpoint } from './offline_shell.mjs';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const ENDPOINT = 'https://receipts.example.invalid/morning.json';
 const NOW = '2026-09-11T13:35:00Z';
@@ -41,7 +42,7 @@ export async function checkMorningServiceReader({ browser, base, open, check, eq
             return fetch.apply(this, arguments);
           };
         });
-        await page.route('**/docs/index.html', route => route.fulfill({ contentType: 'text/html', body: html.replace('name="spicystock-morning-endpoint" content=""', 'name="spicystock-morning-endpoint" content="' + endpoint.replaceAll('&', '&amp;').replaceAll('"', '&quot;') + '"') }));
+        await page.route('**/docs/index.html', route => route.fulfill({ contentType: 'text/html', body: withEndpoint(html, endpoint) }));
         await page.route('**/service-publication.json', route => route.fulfill({ contentType: 'application/json', body: options.raw || raw }));
         await page.route('**/morning.json', async route => {
           requests.push({ url: route.request().url(), method: route.request().method(), body: route.request().postData(), headers: await route.request().allHeaders() });

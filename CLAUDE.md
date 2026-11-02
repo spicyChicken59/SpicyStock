@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5661 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5664 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -13070,4 +13070,60 @@ Five survivors were equivalent. Two skeptics refuted a finding about a PR-body s
 - that LCU or NORD had no earlier provider bar;
 - Railway serving the morning host;
 - a morning check for any ticket;
+- any trading edge.
+
+## Checkpoint, 31 Oct 2026 -- #206 accepted; the morning host on Railway, read from outside, and the site's endpoint held for its first receipt
+
+**#206, accepted.** Merged as `090dbd9c` on `main` with a merge commit over `f0c0e499`. The head `adeab46d` passed Tests run 41184737225 (pytest, page, the gate; the native cases skipped by the gate, as on a test-only push) and both secret scans. The merge commit's own Tests run 41186820939 passed pytest and page, its Secret scan 41186820940 passed, and publisher 41186820946 printed *Verified: every one of the 48 public files matches committed main* at 09:01:07 UTC. Pages 41186843378 deployed (41186820228 cancelled as superseded). The first night under input tolerance v3 is Monday 2 November's.
+
+**The morning host, deployed.** The owner deployed it on Railway on 31 October, through Muse driving the dashboard:
+- one service, `SpicyStock`, in the project "alert-possibility", US East, one replica;
+- a volume at `/srv/spicystock`, `PORT` 8080;
+- healthcheck `/healthz` at 120 seconds, restart Always, serverless off, automatic deploys disabled;
+- the worker enabled with the existing Alpaca pair, entered in Railway's Variables by the owner's agent and never in chat.
+
+The owner set the Compute alert and hard limit $5 above the $20 plan himself, and they stay. The deploy log shows the reader started (it runs until the service stops and never logs a finish), and the sync and the worker each starting and finishing with exit code 0 on a Saturday: the worker skips provider work outside a session.
+
+**Read from outside** (this session, once the owner allowed the host in its network settings):
+
+| Request | Result |
+|---|---|
+| `GET /healthz` | 200, `no-store` |
+| `GET /morning.json` from the site's origin | 503 `unavailable` (no receipt yet: a weekend), `no-store`, `Vary: Origin`, CORS for `https://spicychicken59.github.io` alone |
+| same from any other origin, or none | 503, no CORS header |
+| query string | 400 |
+| POST, OPTIONS | 405, `Allow: GET` |
+| any other path, or a trailing slash | 404 |
+| `/healthz` POST, or with a query | 405 / 400 |
+| two reads | byte-identical |
+
+`tools/morning_endpoint_live.mjs` (new, outside every gate) loads the page from this checkout under the site's own origin and lets only the endpoint through. The browser sent that origin and no cookie or referer, read the 503 with the CORS header, and the page says *Morning observations unavailable*.
+
+**The site's endpoint, prepared and held.** `docs/index.html` names `https://spicystock-production.up.railway.app/morning.json`. Every offline check serves a copy of the shell with it blanked: `tools/offline_shell.mjs`, used by the page smoke's server, the decision-inspection server, the continuity and evidence-focus DOM checks and the older-shell case. The endpoint suite sets its own with `withEndpoint()`. The page smoke checks that the shell it serves names no live endpoint.
+
+Two mutants each fail their named check, and the control passes 131/131:
+- the helper returning the shell unchanged: the guard fails, and two status checks fail because they read the live service;
+- the endpoint suite back on its literal replace: four request checks fail.
+
+The morning, status, endpoint-reader, finder and focus suites pass 2901/2901; continuity 137; decision inspection 257/257. **The pull request is held until the first in-window receipt from Railway is read** (Monday 2 November, 8:00 to 9:00 AM CT (14:00 to 15:00 UTC, after the US clock change), for the 30 October publication, a RED night with no ticket: a delivery check, not quote coverage), as the runbook orders.
+
+**CI found the harness the survey missed.** The page job on `c2249a10` timed out in the publication-recovery suite. That suite runs its own server, which served the shell unchanged, so the page read the live endpoint in place of the suite's fixture receipt and waited for a *loaded* state that never came. My survey had looked for page loads, not for servers. The suite's server blanks the endpoint now (139/139). `tests/test_offline_shell.py` holds every tool that runs a server or a DOM to blanking it, or to an exemption that says why it never serves the shell (the chart check serves its own harness page). Without the fix the test names the suite, and an exemption that stops being true fails too.
+
+**The review, worked.** A workflow by execution over `c2249a10`, two lenses (offline checks; words and the live tool), two skeptics a finding. The offline lens ran the full smoke with the Railway host blocked at the network and every request to it logged. The one live read was the publication-recovery suite's (above). With its fix the full smoke passed 17311/17311 and made no request to the host.
+
+Upheld by both skeptics, each fixed:
+- the guard failed a shell that predates the tag, which the helper serves as it is (`historical_journeys --baseline` serves one); it now fails only a shell naming a non-empty endpoint;
+- the reader never logs a finish;
+- `.env.example` and the service-report doc called the endpoint empty;
+- the live tool exited 0 when nothing answered.
+
+Split one each way and fixed anyway: PRODUCT_GOAL's "in place", and the live tool's hash named as the receipt's binding. Refuted and hardened all the same: the live tool printed header values; it prints presence now. Refuted and left: other spellings of the tag (`tests/test_offline_shell.py` holds the shell to the one spelling the helper matches); continuity having no check of its own.
+
+**Lead, not worked.** The service answers 503 both when the store holds no receipt for the current publication and when it cannot be read. The page says *The published morning file could not be read* for either. A 404 for the first would let the page say no check has run yet.
+
+**Not claimable:**
+- an in-window receipt from Railway;
+- ten consecutive sessions with morning checks;
+- measured Railway usage;
+- the first night under tolerance v3;
 - any trading edge.

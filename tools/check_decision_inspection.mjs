@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { offline } from './offline_shell.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);
@@ -63,7 +64,9 @@ async function server() {
       let file = path.resolve(ROOT, '.' + decodeURIComponent(url.pathname));
       if (!file.startsWith(ROOT + path.sep)) throw Error('outside test root');
       if ((await stat(file)).isDirectory()) file = path.join(file, 'index.html');
-      const raw = await readFile(overrides[url.pathname] || file);
+      let raw = await readFile(overrides[url.pathname] || file);
+      // the shell names the deployed morning endpoint; an offline check never reads it
+      if (file === path.join(ROOT, 'docs', 'index.html')) raw = offline(raw.toString('utf8'));
       response.writeHead(200, { 'content-type': mime[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
       response.end(raw);
     } catch { response.writeHead(404); response.end('not found'); }

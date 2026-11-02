@@ -17,6 +17,7 @@
    exception, a failed request that is not a chart PNG or a Google font).
    Needs playwright (npm install --no-save playwright) and its chromium. */
 import { createServer } from 'node:http';
+import { offline } from './offline_shell.mjs';
 import { checkActionability } from './actionability_cases.mjs';
 import { checkEvidenceFocus } from './evidence_focus_cases.mjs';
 import { checkReading } from './reading_cases.mjs';
@@ -209,7 +210,9 @@ async function serve() {
         : url.pathname === '/docs/app-observations.js' ? process.env.SCSTOCK_OBSERVATIONS
         : url.pathname === '/docs/app-findings.js' ? process.env.SCSTOCK_FINDINGS
         : url.pathname === '/docs/index.html' ? process.env.SCSTOCK_INDEX : null;
-      const body = await readFile(override || file);
+      let body = await readFile(override || file);
+      // the shell names the deployed morning endpoint; an offline check never reads it
+      if (file === path.join(ROOT, 'docs', 'index.html')) body = offline(body.toString('utf8'));
       res.writeHead(200, { 'content-type': MIME[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
       res.end(body);
     } catch (e) {
@@ -4544,6 +4547,12 @@ async function main() {
   const { server, base } = await serve();
   const browser = await chromium.launch();
   try {
+    // the committed shell names the deployed morning endpoint (docs/index.html);
+    // the copy this server serves names none: the tag blanked, or absent from a
+    // shell that predates it (historical_journeys --baseline serves one)
+    const shell = await (await fetch(base + '/docs/index.html')).text();
+    check('the served page shell names no live morning endpoint', !/<meta name="spicystock-morning-endpoint" content="[^"]+"/.test(shell),
+      (shell.match(/<meta name="spicystock-morning-endpoint"[^>]*>/) || ['no endpoint tag'])[0]);
     let full = JSON.parse(await readFile(path.join(FIXTURES, 'full.json'), 'utf8'));
     // Two lanes over one browser, each its own contexts. Lane A is every suite
     // that writes the smoke's own scratch records under tests/fixtures/page/
