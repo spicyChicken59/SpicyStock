@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-11-02T14:31:33.842388+00:00",
-  "generated_at": "2026-11-02T14:31:35.236211+00:00",
-  "expires_at": "2026-11-02T14:36:35.236211+00:00",
-  "observation_run_id": "41462669937",
-  "previous_observation_sha256": "e3f7e758f9da7587d29f548c4c17ddbe316e945ad0eb7b42a0790bde85809c80",
+  "collection_started_at": "2026-11-03T14:22:18.869963+00:00",
+  "generated_at": "2026-11-03T14:22:21.481046+00:00",
+  "expires_at": "2026-11-03T14:27:21.481046+00:00",
+  "observation_run_id": "41652903622",
+  "previous_observation_sha256": "ccb7fa275ecc38d242bc9170cac98d9f73c04c68ebc496bc2e48ff7054b4c5a6",
   "dry_run": false,
   "publication": {
-    "data_sha256": "ea488fad33cb5af5d6156ccfb5dd6c495f848ae773604d2f6880acfc7798284a",
-    "context_sha256": "19efd5dd3fb088ca32f640cbbaa4c66092bc49717e7c6ca536b63396d49c59bf",
-    "run_id": "41155959854",
-    "rules_version": "635224f74888",
-    "measured_session": "2026-10-30",
-    "applicable_session": "2026-11-02",
-    "published_at": "2026-10-31T01:34:42.377850+00:00",
+    "data_sha256": "9907055e8d07564067bf5378017a0fb766e85056d5de97a64f3efb2daa1c6363",
+    "context_sha256": "b7e165b5b93ea0689e6634fe0bdefcde1c22ccd24eb9ea1bce56daaf1069daf5",
+    "run_id": "41575117262",
+    "rules_version": "bd6f4463d83b",
+    "measured_session": "2026-11-02",
+    "applicable_session": "2026-11-03",
+    "published_at": "2026-11-03T03:56:43.010816+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "89a39c7469fa4cdc1e0fa28de6d7acf16f608b466cbd8076cc99c9bc77b726bc"
+    "reader_sha256": "7336044331ebd8fc3a96d009f05d246913771eb1d7140edee7e03ba4d1162427"
   },
   "policy": {
     "version": 1,
@@ -80,25 +80,25 @@
       ]
     }
   },
-  "status": "no_tickets",
+  "status": "partial",
   "reason": null,
-  "entry_phase": "open",
+  "entry_phase": "upcoming",
   "sources": {
     "iex": {
-      "status": "not_requested",
+      "status": "ok",
       "feed": "iex",
       "scope": "single_venue",
-      "entitlement": "not_requested",
-      "checked_at": null,
+      "entitlement": "request_succeeded",
+      "checked_at": "2026-11-03T14:22:21.345113+00:00",
       "error_kind": null,
       "minimum_delay_seconds": 0
     },
     "delayed_sip": {
-      "status": "not_requested",
+      "status": "ok",
       "feed": "delayed_sip",
       "scope": "consolidated_delayed",
-      "entitlement": "not_requested",
-      "checked_at": null,
+      "entitlement": "request_succeeded",
+      "checked_at": "2026-11-03T14:22:21.392290+00:00",
       "error_kind": null,
       "minimum_delay_seconds": 900
     }
@@ -108,17 +108,17 @@
       "provider": "Nasdaq Trader current trade halts RSS",
       "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
       "scope": "Nasdaq and other exchange-listed securities reported in this RSS snapshot; absence is not clearance.",
-      "status": "not_requested",
-      "checked_at": "2026-11-02T14:31:35.236160Z",
-      "fetched_at": null,
-      "source_published_at": null,
-      "expires_at": null,
-      "source_sha256": null,
-      "http_date": null,
-      "item_count": null,
-      "source_age_seconds": null,
-      "receipt_age_seconds": null,
-      "reason": "No admitted candidates required a halt lookup."
+      "status": "fresh",
+      "checked_at": "2026-11-03T14:22:21.475075Z",
+      "fetched_at": "2026-11-03T14:22:21.475025Z",
+      "source_published_at": "2026-11-03T14:21:58Z",
+      "expires_at": "2026-11-03T14:24:58Z",
+      "source_sha256": "286d374b79d86ee4740e06c3943d0784406653e56dd194fff41a504af5b32a35",
+      "http_date": "Tue, 03 Nov 2026 14:22:21 GMT",
+      "item_count": 16,
+      "source_age_seconds": 23.475075,
+      "receipt_age_seconds": 5e-05,
+      "reason": "Snapshot retrieved; unmatched names are not cleared."
     },
     "issuer_news": {
       "status": "not_checked",
@@ -132,7 +132,86 @@
   "halt_memory": {},
   "corporate_memory": {},
   "corporate_resolutions": [],
-  "rows": [],
+  "rows": [
+    {
+      "ticker": "ESRT",
+      "kind": "anticipation",
+      "evidence_id": "1527354690441fdd74432855ff9749d789d96c2f02c79f7341e1e4677c7422d9",
+      "plan_sha256": "b3b53dc710ecd2521fc787250e889f6835849c4ac4c00a7beaf5f91165b14df5",
+      "levels": {
+        "trigger": 5.12,
+        "limit": 5.17,
+        "stop": 4.97,
+        "entry_low": 5.12,
+        "day2_spent_above": null
+      },
+      "trade": {
+        "status": "stale",
+        "timestamp": "2026-11-02T20:59:49.095094+00:00",
+        "age_seconds": 62552.385952,
+        "price": 4.985,
+        "exchange": "V",
+        "conditions": [
+          " "
+        ]
+      },
+      "quote": {
+        "status": "stale",
+        "timestamp": "2026-11-03T14:19:58.966481+00:00",
+        "age_seconds": 142.514565,
+        "bid": 4.3,
+        "ask": 6.04,
+        "bid_size": 100.0,
+        "ask_size": 100.0,
+        "bid_exchange": "V",
+        "ask_exchange": "V",
+        "conditions": [
+          "R"
+        ],
+        "spread_usd": 1.74,
+        "spread_pct": 33.655706
+      },
+      "price_checks": {
+        "trade": "unknown",
+        "ask": "unknown"
+      },
+      "delayed_volume": {
+        "status": "prior_session",
+        "daily_timestamp": "2026-11-02T05:00:00+00:00",
+        "previous_timestamp": "2026-10-30T04:00:00+00:00",
+        "latest_trade_timestamp": "2026-11-03T13:14:20.742976+00:00",
+        "session": "2026-11-02",
+        "partial_volume": 3143580.0,
+        "previous_volume": 4349057.0,
+        "comparison": "unknown",
+        "data_through": null
+      },
+      "events": {
+        "halt": {
+          "status": "not_listed",
+          "blocks_entry": null,
+          "reason": "No matching halt in this snapshot; absence is not trading clearance.",
+          "events": [],
+          "event_count": 0,
+          "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+          "retained_source": null
+        },
+        "corporate_action": {
+          "version": 1,
+          "coverage": "manual_known_events_only",
+          "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
+          "registry_reviewed_on": "2026-10-20",
+          "session": "2026-11-03",
+          "symbol": "ESRT",
+          "blocked": false,
+          "status": "not_in_registry",
+          "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+          "matches": []
+        },
+        "retained_corporate_actions": []
+      }
+    }
+  ],
   "limits": [
     "dated_best_effort_snapshot",
     "iex_single_venue_not_consolidated",
