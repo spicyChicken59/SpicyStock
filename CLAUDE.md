@@ -13302,9 +13302,15 @@ delayed SIP `unavailable` / `local_budget`; ESRT's trade $5.08 at 14:30:04,
 `fresh`, 18 items); at 14:51:08 (`observed`, both feeds ok; trade $5.06,
 $5.06 / $5.07); at 14:52:04 (trade $5.09, 8.7 s old, $5.08 / $5.09, still
 below the $5.12 trigger). Three sessions carry an in-window morning check
-(23 October, 2 and 3 November). **Not claimable:** whether ESRT reached its
-trigger before the 9:00 CT cutoff (the window was open when this was
-written); any fill; any trade, which is Mo's to place or not.
+(23 October, 2 and 3 November). **The window's end, read after it:** the service's last receipt was
+generated at 14:59:38 UTC (8:59:38 CT; trade $5.055 at 14:59:18, $5.05 /
+$5.06) and was still the one served at 15:02 -- the worker stops at the
+cutoff, as designed. At every reading from 14:30:04 to 14:59:18 UTC ESRT
+traded between $5.055 and $5.095, below the $5.12 trigger; the receipts are
+~30-second IEX snapshots, so a print at the trigger between them is not
+excluded, only unobserved. By the ticket's own terms a day order unfilled
+at the window's end is cancelled. **Not claimable:** any fill; any trade,
+which is Mo's to place or not.
 
 **Leads.** The delayed-SIP feed read `local_budget` at 14:30:29 and `ok` by
 14:51: the service's own request budget, not the provider; worth reading its
