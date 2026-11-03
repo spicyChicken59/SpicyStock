@@ -450,6 +450,56 @@
    },
    "date": "2026-10-29",
    "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "1527354690441fdd74432855ff9749d789d96c2f02c79f7341e1e4677c7422d9",
+    "context_sha256": "b7e165b5b93ea0689e6634fe0bdefcde1c22ccd24eb9ea1bce56daaf1069daf5",
+    "plan_sha256": "b3b53dc710ecd2521fc787250e889f6835849c4ac4c00a7beaf5f91165b14df5",
+    "pick_sha256": "bc6d916d26f60d8ec159ced8a98916b1dde88d49f235265ad80216c1b5899736"
+   },
+   "ticker": "ESRT",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": 1.0978,
+   "entry_ref": 5.12,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 5.12,
+   "limit": 5.17,
+   "stop": 4.97,
+   "shares": 12,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 5.53,
+    "high": 6.14,
+    "note": "under $5 bursts can run 20-40%",
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "order_json": {
+    "symbol": "ESRT",
+    "action": "buy",
+    "quantity": 12,
+    "order_type": "stop_limit",
+    "stop_price": 5.12,
+    "limit_price": 5.17,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 12,
+     "order_type": "stop",
+     "stop_price": 4.97,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-11-02",
+   "regime": "yellow"
   }
  ]
 }
