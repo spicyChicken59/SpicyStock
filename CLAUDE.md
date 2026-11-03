@@ -13229,3 +13229,85 @@ starts a deploy there that fails. The fix is the owner's: delete
 **Not claimable:** quote coverage on a night with an admitted plan; ten
 consecutive sessions with morning checks; the first night under tolerance v3
 (tonight's publication); any trading edge.
+
+## Checkpoint, 3 Nov 2026 -- the first earnings warning on a live ticket; the first morning with live quotes
+
+**The 2 November evening, read off `main`.** Run 41575117262, the `16 23`
+cron (the winter primary, since the clocks changed on 1 November), created
+03:56 UTC, 4 h 40 min after its slot; the summer `16 22` cron's run
+41572319326 was created at 03:27 and its guard said *Not the active UTC
+slot*, every step after it skipped. The pipeline ran 03:56:43 to 04:01:26
+(169.8 s, the fetch 66.2 s), the record landed as `3cd890ec` at 04:01:33 and
+the issuer evidence as `37506da4` at 04:04; the mail was delivered.
+`run.delivery`: 401.7 minutes after completion, after both slots, before the
+3 November open. `run.status` **ok** beside a degraded acceptance (4,754 of
+4,769 intended stocks ready): the first night under input tolerance v3,
+`tolerated`, 15 stale stocks every one ending 30 October, `first_sessions`
+empty, within the limit of 47; `run.seed_stale` names none on the seed alone.
+`run.stale_followup` read 30 October's 16 stale stocks again: 13 `no_match`,
+3 `price_excluded`, all 16 at zero volume.
+
+**YELLOW** -- the first non-RED night since 29 October: the 10-session ratio
+1.19 (2,062 up against 1,738 down), up 50% in a month 16 against the hot mark
+of 11. `funnel`: 722 reaction candidates, mechanical A+ 3, A 79, B 169, C 103,
+skip 368; the three A+ were read and every one lowered by the reader
+(`review_downgraded` 3), so 0 reaction tickets; `run.reads` 4 of 4
+`complete`, no refusal (the second night under request v3 with every reply
+accepted); `run.reader_usage` 4 calls, 33,817 input tokens (18,165 uncached,
+3,913 written to the cache, 11,739 read) and 1,995 output. Anticipation: 930
+momentum names, 214 quiet, 9 passing the coil checks, 4 listed -- **ESRT a
+ticket**, 12 shares, buy stop $5.12, limit $5.17, stop $4.97 (the lowest low
+of the last three sessions; $0.20 a share, $2.40 at the limit; compress 0.63;
+size multiplier 0.25), UTHR and PSNL withheld at the stop rule (4.39% and
+4.11% past the line at the limit) and MG refused for its known cash
+acquisition. The cash block: $62.04 committed, $2.40 at risk, $57.50 reserved
+for the MCS model position, 2 of 4 slots. The first ticket the record has
+published since ZIM on 9 October.
+
+**The first `run.earnings`, and it fired.** Version 1, `checked`, 2 requests
+(SEC's ticker list, 522,737 bytes, and ESRT's filing list). ESRT's row is
+`reported_after_signal`: its quarterly-results 8-K (item 2.02, accession
+`0001541401-26-000035`) was accepted at 22:27:31 UTC on 2 November -- 5:27
+PM EST, after the signal session's close and before day 1's open -- so the
+entry opens on the earnings reaction, and the row says so: *Quarterly results
+(8-K item 2.02) were accepted by the SEC after the signal session's close
+and before day 1's open (Mon 2 Nov 5:27 PM ET). The release they furnish may
+have come earlier ... Check the release time before entry.* Its results
+history reads 29 Oct 2025, 17 Feb, 29 Apr, 29 Jul and 2 Nov 2026. The log's
+own line matches the record's. The rule was built for this case and met it
+on its first night.
+
+**The storage lines**, all inside their caps: canonical record 11,728,074 of
+50,331,648 bytes (722 bursts, 5,881,728 bytes of observations; 11,728,076
+after delivery); reader projection 5,846,795 and reader observations
+5,881,728, each of 33,554,432; reader observation archive 18 of 84 objects,
+100,578,780 of 134,217,728 bytes (75%, past the 80% warning on the 30 October
+dry runs and under it tonight); evidence archive 12,843 objects, 77,131,437
+of 134,217,728 bytes, 1,464 unnamed objects (7,184,040 bytes) removed;
+recovery catalog 17 of 84 records over 16 sessions, 81,952,576 of 134,217,728;
+quality ledger entry 1,414,636 of 8,388,608 bytes expanded. `run.intraday`
+wanted 0 and retained 4.
+
+**The 3 November morning, the first with an admitted plan to quote.** Mo's
+8:21 CT routine dispatched `morning.yml` (the run created 14:21 UTC): it
+committed the pre-open receipt `a86c7060` at 14:22:21 UTC (`partial`, phase
+`upcoming`; ESRT's last trade $4.985 from the 2 November close, a pre-market
+quote of $4.30 / $6.04, both marked stale, every price check `unknown` --
+right for pre-open), the research observation `0cc3f5e7` and the issuer
+evidence `b72efd37`. The Railway service served its second generation
+(`service-2-*`) through the window, each receipt's ETag equal to its body's
+SHA-256 and bound to run 41575117262: at 14:30:32 UTC (`partial`: IEX ok,
+delayed SIP `unavailable` / `local_budget`; ESRT's trade $5.08 at 14:30:04,
+28 s old, bid $5.03 / ask $5.09, 4.8 s old, both `below_entry_floor`; halts
+`fresh`, 18 items); at 14:51:08 (`observed`, both feeds ok; trade $5.06,
+$5.06 / $5.07); at 14:52:04 (trade $5.09, 8.7 s old, $5.08 / $5.09, still
+below the $5.12 trigger). Three sessions carry an in-window morning check
+(23 October, 2 and 3 November). **Not claimable:** whether ESRT reached its
+trigger before the 9:00 CT cutoff (the window was open when this was
+written); any fill; any trade, which is Mo's to place or not.
+
+**Leads.** The delayed-SIP feed read `local_budget` at 14:30:29 and `ok` by
+14:51: the service's own request budget, not the provider; worth reading its
+journal. The `skillful-light` Railway project is still connected: it failed
+deployments on `37506da4` (04:04 UTC) and `b72efd37` (14:25), and will on
+every push to `main` until Mo deletes it.
