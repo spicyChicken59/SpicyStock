@@ -784,3 +784,21 @@ def test_the_readme_and_the_method_quote_the_earnings_rules_from_the_module():
     assert f"within a {E.DEADLINE_SECONDS}-second deadline" in ENV and "never clear" in ENV
     # the README spells the validator's read window in words: it is the module's two hours
     assert E.RETRIEVAL_WINDOW_SECONDS == 2 * 3600 and "two hours after the record's own clock" in section
+
+
+def test_the_page_holds_the_morning_source_error_kinds_to_the_module():
+    """The browser refuses a receipt whose source names an error kind it does not
+    know, so the page's list is the module's; a kind the worker can write but
+    the page cannot read would refuse every receipt that carries it."""
+    from src import morning
+    page = (ROOT / "docs" / "app-observations.js").read_text(encoding="utf-8")
+    listed = re.search(r"const SOURCE_ERRORS = new Set\(\[(.*?)\]\);", page).group(1)
+    kinds = [None if k.strip() == "null" else k.strip().strip("'") for k in listed.split(",")]
+    assert kinds == list(morning.SOURCE_ERRORS)
+    # every local deferral the worker can write is one the module and the page name
+    from src import morning_service_worker as worker
+    reasons = {worker.Deferred(r).local_reason for r in ("worker_provider_backoff", "worker_provider_interval", "worker_provider_daily_budget")}
+    assert reasons == {"local_backoff", "local_interval", "local_budget"} and reasons <= set(morning.SOURCE_ERRORS)
+    # and the page explains each one in its own words
+    for kind in sorted(reasons):
+        assert re.search(r"observed\.error_kind === '%s' \? 'No provider request was made in this collection: " % kind, page), kind

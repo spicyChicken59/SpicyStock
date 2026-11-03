@@ -28,7 +28,13 @@ CONNECT_SECONDS = 3
 READ_SECONDS = 4
 MAX_SNAPSHOT_BYTES = 2 * 1024 * 1024
 ALPACA_URL = 'https://data.alpaca.markets/v2/stocks/snapshots'
-FEEDS = {'iex': (30, 120), 'delayed_sip': (30, 120), 'nasdaq': (60, 60)}
+# (minimum seconds between two requests of a feed, requests a feed a day).
+# The supervisor launches a cycle every morning_host.WORKER_SECONDS (30 s) and
+# a feed is reserved when its request leaves, so the spacing floor must sit
+# below the cycle: at 30 s an ordinary cycle whose request left a fraction of
+# a second earlier than the last one's was skipped for spacing (3 Nov 2026).
+# The halts feed keeps its 60 s floor and is served from cache between polls.
+FEEDS = {'iex': (20, 120), 'delayed_sip': (20, 120), 'nasdaq': (60, 60)}
 RATE_BACKOFF_SECONDS = 300
 ERROR_BACKOFF_SECONDS = 60
 MAX_BACKOFF_SECONDS = 86400
@@ -45,8 +51,9 @@ class Deferred(ValueError):
     def __init__(self, reason, status_code=None):
         super().__init__(reason)
         self.status_code = status_code
-        self.local_reason = ('local_backoff' if reason == 'worker_provider_backoff' else
-                             'local_budget' if reason in ('worker_provider_interval', 'worker_provider_daily_budget') else None)
+        self.local_reason = {'worker_provider_backoff': 'local_backoff',
+                             'worker_provider_interval': 'local_interval',
+                             'worker_provider_daily_budget': 'local_budget'}.get(reason)
 
 
 def _retry_after(value, at):

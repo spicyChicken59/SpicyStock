@@ -345,7 +345,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5756 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5760 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -13317,3 +13317,43 @@ which is Mo's to place or not.
 journal. The `skillful-light` Railway project is still connected: it failed
 deployments on `37506da4` (04:04 UTC) and `b72efd37` (14:25), and will on
 every push to `main` until Mo deletes it.
+
+## Checkpoint, 3 Nov 2026 -- a feed polled too soon is not a budget problem
+
+**Reproduced off the morning's own receipts.** Railway's 14:30:32 UTC receipt
+read `partial`, its delayed-SIP source `unavailable` / `local_budget`, while
+IEX was `ok` in the same cycle and both were `ok` again at 14:51. The worker
+(`src/morning_service_worker.py`) reserves a feed when its request leaves and
+refuses a reservation less than `FEEDS[feed][0]` seconds after the feed's last
+one; the supervisor (`src/morning_host.py`) launches a cycle every
+`WORKER_SECONDS`, 30, measured from the launch before. With the floor also at
+30, a cycle whose request left a fraction of a second earlier than the last
+cycle's -- a faster start, a faster IEX reply before the SIP request -- was
+refused for spacing, and the receipt and the page called it a budget problem.
+The daily budget (120 a feed) was never near: the deferral cleared within
+twenty minutes, which a spent day cannot.
+
+**The rule.** The IEX and delayed-SIP floors are 20 seconds, below the cycle;
+the halts feed keeps 60 and its cache. `Deferred.local_reason` names three
+deferrals apart: `local_interval` (polled too soon; the previous reading
+stands), `local_budget` (the day's requests spent), `local_backoff` (after a
+provider failure). `morning.SOURCE_ERRORS` and the page's validator admit the
+new kind; the page prints each in its own words. `tests/test_docs.py` holds the
+page's list to the module's and each kind to a sentence of its own. The 120-a-
+day budget stands: at a 30-second cycle it is the hour from 8:00 to 9:00 CT,
+and the observed cycle runs nearer 40 seconds.
+
+**Measured** (this sandbox, Python 3.12.3, Node 22, Chromium through Playwright
+1.63): the worker, collector, host and docs tests 231 passed; the
+morning-service-reader suite 123/123; 5760 tests collected. Four Python mutants
+in a detached worktree (the floor back at 30, an interval deferral labelled
+budget, the module's list and its reader without the kind) die in the test
+naming each; three page mutants through a routed copy (the set without the
+kind, the HTTP-contradiction check without it, the interval worded as budget)
+die in the reader suite; a control survives in each harness. The full suite is
+CI's on the pull request.
+
+**Not claimable:** a live cycle under the new floor. The Railway service runs
+the image Mo deployed on 31 October; it reads this only after a redeploy, which
+is his step. Until then the page understands both the old receipts' `local_
+budget` and the new kind.

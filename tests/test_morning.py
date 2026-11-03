@@ -490,7 +490,7 @@ def test_malformed_nested_observation_types_raise_a_public_validation_error(muta
         morning.validate_observation(out, publication())
 
 
-@pytest.mark.parametrize("reason", ["local_budget", "local_backoff"])
+@pytest.mark.parametrize("reason", ["local_interval", "local_budget", "local_backoff"])
 def test_local_service_refusals_do_not_claim_new_provider_http_observations(reason):
     class Deferred(Exception):
         local_reason = reason

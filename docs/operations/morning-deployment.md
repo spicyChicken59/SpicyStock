@@ -13,7 +13,7 @@ requirements for all three processes.
 | Process | Invocation from the checkout | Scheduler target | Access |
 | --- | --- | --- | --- |
 | Publication synchronization | `python -m tools.sync_morning_service --database /srv/spicystock/morning.sqlite` | Every 300 seconds | Fixed public GitHub sources; write service database; no provider secrets |
-| Bounded collection worker | `python -m src.morning_service_worker --database /srv/spicystock/morning.sqlite` | Every 30 seconds | Provider secrets; fixed Alpaca/Nasdaq sources; write service database |
+| Bounded collection worker | `python -m src.morning_service_worker --database /srv/spicystock/morning.sqlite` | Every 30 seconds; each feed reserved at most once per 20 s (halts 60 s) and 120 times a day | Provider secrets; fixed Alpaca/Nasdaq sources; write service database |
 | Public receipt reader | WSGI callable below | Continuously supervised | Read-only database access; no provider secrets or collection command |
 
 These are invocation targets, not measured delivery guarantees. Run the timers

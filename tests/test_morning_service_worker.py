@@ -470,3 +470,29 @@ def test_replay_database_cannot_be_opened_for_worker(tmp_path, capsys):
     service.Store(path, mode='replay')
     assert worker.main(['--database', str(path)]) == 1
     assert capsys.readouterr().out == '{"mode":"bounded_private_worker","result":"refused"}\n'
+
+
+def test_each_feeds_spacing_floor_sits_below_the_worker_cycle():
+    # The supervisor launches a cycle every WORKER_SECONDS and a feed is reserved
+    # when its request leaves, so a floor equal to the cycle skipped ordinary
+    # cycles for sub-second jitter (3 Nov 2026). Below it, only a scheduler
+    # running faster than its own cycle is ever refused for spacing.
+    from src import morning_host
+    for feed in ('iex', 'delayed_sip'):
+        assert worker.FEEDS[feed][0] < morning_host.WORKER_SECONDS, feed
+    assert worker.FEEDS['nasdaq'][0] == morning_halts.MIN_POLL_INTERVAL_SECONDS
+
+
+def test_a_reservation_inside_the_spacing_is_an_interval_deferral_not_a_budget(tmp_path):
+    store, claim, clock = state(tmp_path)
+    for feed in ('iex', 'delayed_sip'):
+        ledger(store, claim, clock).reserve(feed)
+        clock.move(worker.FEEDS[feed][0] - 1)
+        with pytest.raises(worker.Deferred, match='interval') as refused:
+            ledger(service.Store(store.path), claim, clock).reserve(feed)
+        assert refused.value.local_reason == 'local_interval' and refused.value.status_code is None
+        # at the floor the request is admitted again, and the day's budget was charged once
+        clock.move(1)
+        assert ledger(service.Store(store.path), claim, clock).reserve(feed) == 2
+    with sqlite3.connect(store.path) as db:
+        assert [r[0] for r in db.execute("SELECT used FROM provider_attempts WHERE feed IN ('iex','delayed_sip') ORDER BY feed")] == [2, 2]

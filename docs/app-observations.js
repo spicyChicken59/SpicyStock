@@ -5,7 +5,7 @@
   const api = w.SCStock = w.SCStock || {}, d = w.document;
   const MAX_BYTES = 512 * 1024, QUOTE_AGE = 60, RECEIPT_AGE = 300, FUTURE_SKEW = 5;
   const RELOAD_MS = 30000;
-  const SOURCE_ERRORS = new Set([null, 'missing_credentials', 'authentication', 'entitlement', 'rate_limit', 'timeout', 'provider_error', 'local_budget', 'local_backoff']);
+  const SOURCE_ERRORS = new Set([null, 'missing_credentials', 'authentication', 'entitlement', 'rate_limit', 'timeout', 'provider_error', 'local_interval', 'local_budget', 'local_backoff']);
   // Deployment-owned HTML is the only configuration source. Capture it once;
   // private inputs, storage, query parameters and later DOM edits cannot route
   // requests. An invalid opt-in fails closed instead of choosing a fallback.
@@ -253,7 +253,7 @@
       require(source && source.feed === feed && source.scope === (feed === 'iex' ? 'single_venue' : 'consolidated_delayed') && source.minimum_delay_seconds === (feed === 'iex' ? 0 : 900), 'Feed source or scope is invalid.');
       require(value.rows.length ? ['ok', 'unavailable'].includes(source.status) && source.entitlement === (source.status === 'ok' ? 'request_succeeded' : 'unavailable') && dateMs(source.checked_at) >= started && dateMs(source.checked_at) <= generated : source.status === 'not_requested' && source.entitlement === 'not_requested', 'Feed entitlement observation is invalid.');
       require(SOURCE_ERRORS.has(source.error_kind) && (source.status === 'unavailable' ? source.error_kind !== null : source.error_kind === null), 'Feed failure observation is invalid.');
-      require(!['local_budget', 'local_backoff'].includes(source.error_kind) || source.status_code === undefined || source.status_code === null, 'A local deferral cannot claim a provider HTTP response.');
+      require(!['local_interval', 'local_budget', 'local_backoff'].includes(source.error_kind) || source.status_code === undefined || source.status_code === null, 'A local deferral cannot claim a provider HTTP response.');
     }
     const coverage = value.coverage || {};
     require(coverage.issuer_news && coverage.issuer_news.status === 'not_checked' && coverage.earnings && coverage.earnings.status === 'not_checked', 'Unsupported event coverage claim.');
@@ -565,7 +565,8 @@
     }
     if (receipt) for (const feed of ['iex', 'delayed_sip']) {
       const observed = receipt.sources[feed];
-      const explanation = observed.error_kind === 'local_budget' ? 'No provider request was made in this collection: local request budget/cadence.'
+      const explanation = observed.error_kind === 'local_interval' ? 'No provider request was made in this collection: this feed was polled less than its minimum spacing ago, so the cycle skipped it; the previous reading stands.'
+        : observed.error_kind === 'local_budget' ? 'No provider request was made in this collection: today\u2019s request budget for this feed is spent.'
         : observed.error_kind === 'local_backoff' ? 'No provider request was made in this collection: backoff after earlier provider failure.'
         : 'This describes that request, not a future entitlement guarantee.';
       line(body, feed === 'iex' ? 'IEX access:' : 'Delayed SIP access:', words(observed.entitlement) + ' · ' + atCT(observed.checked_at) + (observed.error_kind ? ' · ' + words(observed.error_kind) : '') + '. ' + explanation);
