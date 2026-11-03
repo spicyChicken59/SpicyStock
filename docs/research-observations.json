@@ -1,31 +1,31 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-11-02T14:31:38.290435+00:00",
-  "generated_at": "2026-11-02T14:31:39.618902+00:00",
-  "expires_at": "2026-11-02T14:36:39.618902+00:00",
-  "observation_run_id": "41462669937",
-  "previous_observation_sha256": "9cf4fffc7085490b25e01e860206b52ac6a043c8f77ac92f448fe0afa4116eed",
+  "collection_started_at": "2026-11-03T14:22:25.529594+00:00",
+  "generated_at": "2026-11-03T14:22:27.940796+00:00",
+  "expires_at": "2026-11-03T14:27:27.940796+00:00",
+  "observation_run_id": "41652903622",
+  "previous_observation_sha256": "c2dc6278fb45103c9c47f359c6552dd42e0a3dde20a8956ad190dbac7c5ccabc",
   "dry_run": false,
   "publication": {
-    "data_sha256": "ea488fad33cb5af5d6156ccfb5dd6c495f848ae773604d2f6880acfc7798284a",
-    "context_sha256": "19efd5dd3fb088ca32f640cbbaa4c66092bc49717e7c6ca536b63396d49c59bf",
-    "run_id": "41155959854",
-    "rules_version": "635224f74888",
-    "measured_session": "2026-10-30",
-    "applicable_session": "2026-11-02",
-    "published_at": "2026-10-31T01:34:42.377850+00:00",
+    "data_sha256": "9907055e8d07564067bf5378017a0fb766e85056d5de97a64f3efb2daa1c6363",
+    "context_sha256": "b7e165b5b93ea0689e6634fe0bdefcde1c22ccd24eb9ea1bce56daaf1069daf5",
+    "run_id": "41575117262",
+    "rules_version": "bd6f4463d83b",
+    "measured_session": "2026-11-02",
+    "applicable_session": "2026-11-03",
+    "published_at": "2026-11-03T03:56:43.010816+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "89a39c7469fa4cdc1e0fa28de6d7acf16f608b466cbd8076cc99c9bc77b726bc"
+    "reader_sha256": "7336044331ebd8fc3a96d009f05d246913771eb1d7140edee7e03ba4d1162427"
   },
   "cohort": {
-    "receipt_sha256": "f19263b6f7bab0e634da74a762043e9e3917c3fc398bf3a09282dec627ddfcab",
-    "bundle_sha256": "ad786d102b70ce15ef4ec28d9a61e8015950e9979f37d60896fee51bffc5b07e",
-    "bundle_path": "stop-research/ad786d102b70ce15ef4ec28d9a61e8015950e9979f37d60896fee51bffc5b07e.json",
-    "bundle_bytes": 3490,
+    "receipt_sha256": "75ab6249da1328c346e843f08959bda8b0fa8043f9478fc02a13cee820555409",
+    "bundle_sha256": "0995d08fb03afddb55894c4a22fbfe487a6441e80e9ec5692640e78b1a68cceb",
+    "bundle_path": "stop-research/0995d08fb03afddb55894c4a22fbfe487a6441e80e9ec5692640e78b1a68cceb.json",
+    "bundle_bytes": 7491,
     "policy_id": "anticipation_stop_width_4_to_5_v1",
-    "generated_at": "2026-10-31T01:37:19.052414+00:00",
+    "generated_at": "2026-11-03T04:00:49.060259+00:00",
     "status": "recorded",
-    "applicable_session": "2026-11-02",
+    "applicable_session": "2026-11-03",
     "bound": true
   },
   "policy": {
@@ -43,18 +43,18 @@
     "max_collection_seconds": 180,
     "market_timezone": "America/New_York"
   },
-  "status": "no_research_rows",
+  "status": "partial",
   "reason": null,
-  "entry_phase": "open",
+  "entry_phase": "upcoming",
   "source": {
-    "status": "not_requested",
+    "status": "ok",
     "feed": "iex",
     "scope": "single_venue",
-    "entitlement": "not_requested",
-    "checked_at": null,
+    "entitlement": "request_succeeded",
+    "checked_at": "2026-11-03T14:22:27.939998+00:00",
     "error_kind": null,
     "minimum_delay_seconds": 0,
-    "requests": 0
+    "requests": 1
   },
   "coverage": {
     "halts": "not_checked",
@@ -63,7 +63,63 @@
     "earnings": "not_checked",
     "corporate_action": "archived_cohort_registry_only"
   },
-  "rows": [],
+  "rows": [
+    {
+      "rank": 3,
+      "ticker": "PSNL",
+      "kind": "anticipation",
+      "evidence": {
+        "id": "63752fa8158ccd691b6ad4925f164c647de9c4162b41c8938aa8dd64660c7089",
+        "inputs_sha256": "89088e45ac467fe3905743f31e1052984ac891ae3bdb768e0ac6a4e6f7d2439e",
+        "plan_sha256": "94455ec14de0a5887ad3dc74cef9d29a7c11a5a8f219259e650a3583a0092a8a",
+        "source_sha256": "b5b72b43f772e8454d51118a17a86e492ad35aab4c6b87beb78f52fa2853119b"
+      },
+      "projection_sha256": "2b62717b61c3c072fb4d897dd16107fc2d81c30a681356d4becd87f01fb5b2aa",
+      "levels": {
+        "trigger": 16.15,
+        "limit": 16.31,
+        "stop": 15.64,
+        "entry_low": 16.15,
+        "day2_spent_above": null
+      },
+      "event": {
+        "blocked": false,
+        "event_ids": [],
+        "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
+        "status": "not_in_registry"
+      },
+      "trade": {
+        "status": "stale",
+        "timestamp": "2026-11-02T20:59:51.446148+00:00",
+        "age_seconds": 62556.494648,
+        "price": 15.77,
+        "exchange": "V",
+        "conditions": [
+          "@"
+        ]
+      },
+      "quote": {
+        "status": "stale",
+        "timestamp": "2026-11-03T14:19:58.565615+00:00",
+        "age_seconds": 149.375181,
+        "bid": 13.51,
+        "ask": 18.23,
+        "bid_size": 100,
+        "ask_size": 100,
+        "bid_exchange": "V",
+        "ask_exchange": "V",
+        "conditions": [
+          "R"
+        ],
+        "spread_usd": 4.72,
+        "spread_pct": 29.74165091
+      },
+      "price_checks": {
+        "trade": "unknown",
+        "ask": "unknown"
+      }
+    }
+  ],
   "limits": [
     "dated_best_effort_snapshot",
     "iex_single_venue_not_consolidated",
