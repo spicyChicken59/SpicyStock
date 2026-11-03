@@ -148,7 +148,7 @@ export async function checkMorningServiceReader({ browser, base, open, check, eq
     eq('expired restriction still withholds copying', await retained.page.locator('#detail [data-copy]').count(), 0);
   } finally { await retained.context.close(); }
 
-  for (const [kind, phrase] of [['local_budget', 'local request budget/cadence'], ['local_backoff', 'backoff after earlier provider failure']]) {
+  for (const [kind, phrase] of [['local_interval', 'this feed was polled less than its minimum spacing ago, so the cycle skipped it; the previous reading stands.'], ['local_budget', 'today\u2019s request budget for this feed is spent.'], ['local_backoff', 'backoff after earlier provider failure.']]) {
     const deferred = structuredClone(outage);
     for (const source of Object.values(deferred.sources)) source.error_kind = kind;
     const tab = await setup({ receipt: deferred });

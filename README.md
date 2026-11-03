@@ -1419,10 +1419,18 @@ This disabled-by-default adapter establishes no hosting, scheduler, source
 coverage or live-session delivery reliability; those remain deployment and
 operating acceptance requirements.
 
-Locally deferred collections distinguish a request budget/cadence limit from
-backoff after an earlier provider failure. They explicitly say no provider
-request was made in that collection, keep quote fields unavailable, and cannot
-claim a new provider HTTP result or entitlement observation. Unsupported or
+Locally deferred collections name why no request was made: `local_interval`
+(the feed was polled less than its minimum spacing ago, so the cycle skipped
+it and the previous reading stands), `local_budget` (the feed's requests for
+the day are spent) or `local_backoff` (backoff after an earlier provider
+failure). The service's worker runs a cycle every 30 seconds and reserves a
+feed when its request leaves, so each feed's spacing floor (20 seconds for
+the IEX and delayed-SIP snapshots, 60 for the halts feed, which is served
+from cache between polls) sits below the cycle: an ordinary cycle is never
+skipped for spacing. Each feed is bounded to 120 requests a day. They
+explicitly say no provider request was made in that collection, keep quote
+fields unavailable, and cannot claim a new provider HTTP result or entitlement
+observation. Unsupported or
 contradictory source failure kinds are refused by the browser receipt validator.
 Unavailable feeds must carry empty unavailable price/volume fields and unknown
 comparisons; contradictory copied prices or volume are refused as well.
