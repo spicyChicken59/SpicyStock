@@ -20,7 +20,9 @@ see the goal's continuation contract.
 One evening run over an explicitly selected US-stock universe, one page that says what
 to do next session and why, one email that says the same in fewer words. The
 method is Pradeep Bonde's (Stockbee) momentum burst: reaction candidates
-discovered by either the 4% or Dollar route, then judged for expansion out of
+discovered by either the 4% or Dollar route, admitted to the trade band when
+the 4% scan found them or the dollar scan found them on a range-expansion,
+higher-volume day (`src/admission.py`), then judged for expansion out of
 a quiet base, bought the next morning inside a narrow zone with
 the stop under the burst bar, sold into strength over three to five days,
 and only when breadth allows it. `knowledge/method.md` says whose number
@@ -403,12 +405,18 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    into a sliver. Narrow panes also keep ticket levels in two columns.
    A **lens** narrows the stage, each option a question asked of a field the
    run wrote and each wearing the count it will show: *A-quality* (the A and
-   A+ grades this record archived), *All bursts*, *With ticket* (a ticket
+   A+ grades this record archived whose discovery is admitted: the 4% scan,
+   or the dollar scan on a range-expansion, higher-volume day -- a record
+   from before the admission rule reads every A as admitted, and a block the
+   page cannot read hides nothing), *All bursts*, *With ticket* (a ticket
    written into the published record) and *Following* (tonight's candidates
    already on this browser's shelf); Setting up has the last three. The
-   first visit opens on A-quality when the record archived an A or A+ burst
-   and on every burst otherwise, so the first screen is never empty — on the
-   published 401-burst night that is 52 stocks rather than 401. A lens the
+   first visit opens on A-quality when the record archived an admitted A or
+   A+ burst and on every burst otherwise, so the first screen is never empty
+   — on the published 401-burst night that is 52 stocks rather than 401. A
+   name the admission stopped wears the chip *dollar scan alone*, its card
+   and decision summary print the record's own reason, and its Discovery
+   sentence carries the admission in the record's words. A lens the
    reader chooses is remembered in this browser and never widened behind
    their back: an empty one stays empty, explains itself and offers one
    click out. *With ticket* is a reading of the record and never a
@@ -914,15 +922,45 @@ archived, and a record from before the block is asked for none. The run:
   Bonde's historical variants from DERIVED segmentation, ratios and C A+ policy.
   The [retained C audit](docs/input-truthfulness/2026-09-22-consolidation-source-fidelity.md)
   reproduces the measurements and their sensitivity without retuning thresholds.
+- **admission** — which discovered candidates the trade band and the chart
+  reads may consider (`src/admission.py`, the owner's rule of 4 November 2026):
+  a name the 4% scan discovered is admitted; a name the dollar scan alone
+  discovered is admitted only when its burst day passed the checklist's RE and
+  VOL checks (a range at least the largest of the prior five sessions' and
+  volume above the previous session's), the two expansion checks the
+  checklist already measures but does not score. The dollar scan's $0.90 body
+  asks nothing of a day's gain, range or volume and does not scale with price:
+  over the 35 retained sessions to 3 November 2026, 1,913 of 2,473 mechanical
+  A-band grades came through it alone, 1,757 of them on a day under +4%, and
+  187 of 244 chart reads went to such names. Every reaction row carries
+  `admission` (the route, the basis -- `burst_route`, `dollar_expansion` or
+  `dollar_no_expansion` -- the two checks as recorded and the reason in the
+  record's words) and `run.admission` counts the night by basis and over the
+  A-band names without a veto, with one sentence the Method view and the mail
+  print verbatim. Admission is never a grade: a stopped name keeps its
+  checklist grade as research, earns no plan, no ticket and no chart read, is
+  blocked by the review selection as `route_not_admitted`, stops at the
+  funnel's `route` stage and is sealed in its plan gate as
+  `route_not_admitted`; the headline's reader-wait counts only admitted names.
+  `report.validate()` re-derives every block from the row's own route and
+  checks and refuses a record whose rules archive the family without them, or
+  one that carries them under rules that archive none. A record from before
+  the rule reads every graded name as admitted. The scan formulas and the
+  checklist are unchanged, and the rules digest moves.
 - **grade** — Claude reads the chart and the numbers for up to twelve
   bursts and may only LOWER a grade, never raise it. The versioned
-  `account_feasible_first_research_v1` policy prioritizes private pre-review
-  plans that satisfy the mechanical grade/regime, veto, known-event, entry
-  geometry and whole-share checks. Their existing mechanical grade / descending
-  score / ticker order is preserved. All feasible names are covered when the
-  twelve-name budget permits; none is displaced for research. At most 2 spare
-  reads go to infeasible mechanical A+/A research: one by that same rank, then
-  one by the lowest SHA-256 of policy, measured session and ticker. With no
+  `account_feasible_first_research_v2` policy prioritizes private pre-review
+  plans that satisfy the mechanical grade/regime, veto, discovery admission,
+  known-event, entry geometry and whole-share checks. Their existing mechanical
+  grade / descending score / ticker order is preserved. All feasible names are
+  covered when the twelve-name budget permits; none is displaced for research.
+  At most 2 spare reads go to infeasible mechanical A+/A research whose
+  discovery is admitted: one by that same rank, then one by the lowest SHA-256
+  of policy, measured session and ticker. A name the admission stopped is
+  blocked as `route_not_admitted` and is not research either. Version 1 (10
+  October to 3 November 2026) had no such blocker and is replayed under its own
+  frozen rules (`review_selection.RULES_V1`), so every retained publication
+  still verifies. With no
   feasible names this is at most two reads, and an empty research pool makes
   no model calls. This near-admission sample is not an unbiased market sample.
   `bursts[].review_selection` retains each purpose and checked blocker;
@@ -954,7 +992,10 @@ archived, and a record from before the block is asked for none. The run:
   Each reaction row archives a versioned `discovery`
   block from those same scan rules and measurements: `burst`, `dollar` or
   both, with applicable and explicitly inapplicable rules kept apart. A
-  dollar-only candidate does not require a +4% close-to-close gain. Quality
+  dollar-only candidate does not require a +4% close-to-close gain to be
+  discovered; to be admitted to the trade band and the reads it needs the
+  range-expansion, higher-volume day above, so every dollar-only candidate the
+  reader sees has one. Quality
   can still be lowered for independent chart/checklist evidence. Recognized
   contradictory replies are rejected whole into mechanical fallback without
   a retry; their score and explanation are not published as chart judgement.
@@ -1239,7 +1280,9 @@ archived, and a record from before the block is asked for none. The run:
   cleaned record (`src/funnel.py`): every discovered reaction candidate and every
   listed anticipation setup is given exactly one terminal stage, in the order the
   run applies its gates -- the regime (RED stops everything at `market`), the
-  mechanical grade against the regime's admitted band, the quality veto, then for
+  mechanical grade against the regime's admitted band, the quality veto, from
+  funnel version 3 the discovery admission (`route`: the dollar scan alone,
+  without a range-expansion, higher-volume day), then for
   a name the review budget never reached the selection's own recorded blockers
   (`preview_event`, `preview_geometry`, `preview_sizing`, `preview_no_order`,
   `review_budget`), for a reviewed name the reader's state (`review_refused`,
@@ -1248,7 +1291,8 @@ archived, and a record from before the block is asked for none. The run:
   (`event`, `geometry`, `sizing`, `allocation_slot`, `allocation_cash`,
   `allocation_occupied`, `ticket`). The stage counts sum to the discovered count
   by construction, `potentially_usable` counts the names that passed the first
-  three gates, the labels the page and the mail print travel in the block, and
+  gates (the grade and the veto; from version 3 the admission too, and the
+  sentence says which), the labels the page and the mail print travel in the block, and
   `report.validate()` refuses a block the record does not re-derive. A record made
   under older rules is read for what it recorded -- a field it lacks is `unknown`,
   never guessed, as is a regime that is not a verdict the rules name and a row
@@ -2204,7 +2248,8 @@ once with no record at all.
 `bursts[]`, `trades[]`, `beyond_cap[]`, `cash_budget`, `watchlist`,
 `open_plans[]`, `scorecard`, `nights[]`, `account`, `rules`, `closest_miss`,
 `funnel` (where every discovered reaction candidate and every listed anticipation
-setup stopped: one terminal stage each, in the order the run applies its gates,
+setup stopped: one terminal stage each, in the order the run applies its gates
+-- the admission's `route` stage among them from version 3 --
 so the stage counts sum to the discovered count; `src/funnel.py` derives it from
 the fields beside it, the validator re-derives it, and its labels travel with it
 so the page and the mail print the record's own words -- a stage is the record's
@@ -2416,6 +2461,7 @@ src/            history.py (public recovery and coverage)
                 followup.py (the next session's read of the previous publication's stale stocks, from its own fetch; never a signal)
                 intraday.py (one-minute bars for a plan's first day the daily bar cannot place: fetched once, bounded, retained content-addressed; read again by every walk)
                 quality_ledger.py (immutable publication input/grade/model-outcome facts)
+                admission.py (which discovered candidates the trade band and the chart reads may consider: the 4% route, or the dollar route on a range-expansion, higher-volume day; read off the recorded route and the checklist's own RE and VOL checks, never a grade, and re-derived by the validator)
                 review_selection.py (feasible-first chart review and bounded spare research)
                 funnel.py (one terminal stage per discovered candidate, read off the record's own fields and re-derived by the validator; the candidate funnel)
                 stop_research.py (registered source-bound anticipation comparison and immutable cohorts)

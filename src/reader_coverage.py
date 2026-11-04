@@ -6,7 +6,7 @@ pipeline, which knows its budget; missing legacy evidence stays unknown.
 from fractions import Fraction
 import math
 
-from src import grader, reader_authority
+from src import admission, grader, reader_authority
 
 POLICY = "accepted_required_v1"
 ACCEPTED = "accepted"
@@ -139,7 +139,10 @@ def reads(rows, *, admitted_grades, refusal_fraction, refusal_min=0, version=REA
         if cause == "request" and not c.get("attempts"):
             unasked += 1
     limit = _limit(requested, refusal_fraction, refusal_min)
-    refused_admissible = sorted(b["ticker"] for b in refused if not b.get("vetoes")
+    # a refused name the regime would otherwise have planned: in the admitted band, no
+    # veto, and (from admission v1) admitted by its discovery -- a row from before the
+    # rule carries no block and reads as admitted
+    refused_admissible = sorted(b["ticker"] for b in refused if not b.get("vetoes") and admission.admitted(b)
                                 and (admitted_grades is None or b.get("grade") in admitted_grades))
     verdict = _verdict(requested, done, causes, limit, refused_admissible)
     out = {"requested": requested, "done": done,

@@ -1,6 +1,8 @@
 # Reaction discovery: dated source contract
 
-Contract revision: **reaction-discovery-sources-v1**, inspected **2026-09-16**.
+Contract revision: **reaction-discovery-sources-v2**, inspected **2026-09-16**,
+the admission layer added **2026-11-04** (the formulas and their attribution are
+the v1 text, unchanged).
 Implementation baseline: `660e9beefd1125203628f8a162ddae4d6f3c3549`.
 This is the source contract for reaction discovery; `src/scans.py` executes
 the rules and `src/discovery.py` records their admission decision.
@@ -72,12 +74,16 @@ repository evaluates completed daily bars. It does not reproduce his timing.
 **IMPLEMENTATION — identity:** a burst-only match is `burst`, a Dollar-only
 match is `dollar`, and a match on both is `both`. Discovery v1 retains the
 applicable and inapplicable rules and measured inputs. A Dollar candidate
-below +4% remains legitimate; its route alone cannot improve or lower quality.
+below +4% remains legitimate as a DISCOVERY; its route alone cannot improve or
+lower quality. Whether it may be planned and read is the separate admission
+layer below (4 November 2026), which reads the route beside the checklist's
+own RE and VOL checks and changes no discovery formula.
 
 ## Layers after discovery
 
 | Layer | Classification and boundary |
 | --- | --- |
+| Admission | IMPLEMENTATION (`src/admission.py`, 4 November 2026, the owner's decision): a 4%-route candidate may be planned and read; a dollar-only candidate only when its burst day passed the checklist's recorded RE and VOL checks, Bonde's own burst-day words ("bigger than the last 5 to 10 days bars", "volume above yesterday") applied as a gate. Discovery is unchanged: the row keeps its `discovery` block and its checklist grade; `admission` says whether the trade band and the chart reads could consider it. Over the 35 retained sessions to 3 November 2026, 1,913 of 2,473 mechanical A-band grades were dollar-only, 1,757 of them under +4%; the $0.90 body does not scale with price. No formula, threshold or source label above changes. |
 | A-quality | PRIMARY concept: [Q14] reviews candidates after either scan. Near-high close, range/volume context and consolidation belong here. IMPLEMENTATION: numeric proxies, score weights, mechanical grade and down-only chart-reader handling stay in `quality.py`/`grader.py`; this research does not re-certify every quality threshold. |
 | Breadth | IMPLEMENTATION action gate in `breadth.py`/`pipeline.py`, separately source-discussed in [method.md](method.md). It can withhold a ticket without undoing discovery or rewriting a grade. No breadth threshold is validated or changed by this milestone. |
 | Entry/plan | IMPLEMENTATION execution model in `plan.py`, separately source-discussed in [method.md](method.md). Entry timing, risk, stops and ticket limits are not discovery conditions. |

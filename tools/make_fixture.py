@@ -135,7 +135,9 @@ def burst_frames() -> dict[str, pd.DataFrame]:
     one whose limit IS the day-2 ceiling; one narrowed under the close +1%,
     so the indicative entry is capped at the limit; and one no limit above
     its buy stop can hold a stop under -- then one loose-base B, one H-only
-    miss (an anticipation setup), one $-only day, and the coil."""
+    miss (an anticipation setup), one $-only day graded B, one $-only day the
+    checklist grades A whose burst day shows no expansion (MSFT, the shape of
+    the real 3 November 2026 night: the admission stops it), and the coil."""
     return {
         "AAPL": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000)),
         "AMD": qframe(ideal_bars(burst_gain=5.2, close_pos=0.9, burst_vol=2_600_000, base_quiet=12, **AT_CEILING)),
@@ -143,8 +145,18 @@ def burst_frames() -> dict[str, pd.DataFrame]:
         "TSLA": qframe(ideal_bars(burst_gain=6.0, close_pos=0.95, burst_vol=3_000_000, **NO_TICKET_BAR)),
         "PLUG": qframe(ideal_bars(burst_gain=5.0, close_pos=0.55)),
         "DLLR": dollar_only(),
+        "MSFT": qframe(ideal_bars(**DOLLAR_NO_EXPANSION)),
         "COIL": coil(),
     }
+
+
+#: (P) a dollar-only day the checklist grades A that the admission stops: a
+#: +2% close over the previous session on a $1.43 body (the dollar scan's day,
+#: never the 4% scan's), inside a 1.5%-wide bar that is narrower than the base's
+#: 2%-wide bars (RE fails) on five-sixths of the previous session's volume (VOL
+#: fails); the base's width also fails C, so the checklist scores it 8.0 and
+#: grades it A -- the shape 32 of the 34 dollar-only A names of 3 November 2026 had.
+DOLLAR_NO_EXPANSION = dict(burst_gain=2.0, close_pos=0.9, burst_vol=500_000, burst_range_pct=1.5, base_range=2.0)
 
 
 def dollar_only() -> pd.DataFrame:
@@ -300,7 +312,7 @@ def sequel_frames(revised: bool) -> dict[str, pd.DataFrame]:
     frames = {**burst_frames(), **base_frames()}
     hold_tape(frames)
     tails: dict[str, list[float]] = {}
-    for name in ("TSLA", "AMD", "PLUG", "DLLR"):
+    for name in ("TSLA", "AMD", "PLUG", "DLLR", "MSFT"):
         tails[name] = quiet_tail(frames[name])
     for name in BASE_NAMES:
         tails[name] = quiet_tail(frames[name])
@@ -583,6 +595,16 @@ def expected_shape(variant: str, data: dict) -> None:
         dollar = [b for b in data["bursts"] if b["scan"] == "dollar"]
         assert dollar and all(isinstance(b["volume_vs_prior"], float) and 0 < b["volume_vs_prior"] < 1 for b in dollar), \
             [(b["ticker"], b.get("volume_vs_prior")) for b in dollar]
+        # the discovery admission: the dollar-only A name is stopped at the route with no read
+        # and no plan, while every 4%-route name is admitted (src/admission.py)
+        by_ticker = {b["ticker"]: b for b in data["bursts"]}
+        msft = by_ticker["MSFT"]
+        assert msft["grade_mechanical"] == "A" and msft["admission"]["basis"] == "dollar_no_expansion", msft["admission"]
+        assert msft["admission"]["admitted"] is False and msft["plan"] is None and msft["claude"] is None
+        assert msft["review_selection"]["blockers"] == ["route_not_admitted"], msft["review_selection"]
+        assert all(b["admission"]["basis"] == "burst_route" for b in data["bursts"] if b["scan"] != "dollar")
+        assert data["funnel"]["reaction"]["stages"]["route"] == 1, data["funnel"]["reaction"]["stages"]
+        assert data["run"]["admission"]["in_band"] == {"total": 5, "burst_route": 4, "dollar_expansion": 0, "dollar_no_expansion": 1}, data["run"]["admission"]
         assert problems == []
     elif variant == "degraded":
         assert set(problems) == {"claude_unavailable", "chart_missing"}, problems

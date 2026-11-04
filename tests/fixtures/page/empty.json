@@ -4,11 +4,11 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "35a2539819be"
+  "rules_version": "2bce356f881f"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
-  "dek": "No bursts found. All 31 intended stocks had usable session bars; 31 were measured after session price eligibility. Coverage is of this selection, not every listed security.",
+  "dek": "No bursts found. All 32 intended stocks had usable session bars; 32 were measured after session price eligibility. Coverage is of this selection, not every listed security.",
   "action_label": "Open model plans",
   "action_target": "#hold",
   "verb": "keep cash"
@@ -23,15 +23,15 @@
   "model": "claude-sonnet-4-6",
   "feed": "sip",
   "universe": {
-   "label": "31 named on the command line (--tickers)",
-   "size": 31,
+   "label": "32 named on the command line (--tickers)",
+   "size": 32,
    "source": "explicit",
    "source_kind": "explicit",
    "fetched_at": null,
-   "identity": "f97bc6805de5df88",
+   "identity": "1b97e33400ee217a",
    "snapshot_sha256": null,
    "counts": {
-    "admitted": 31
+    "admitted": 32
    },
    "selection": {
     "kind": "explicit",
@@ -50,14 +50,14 @@
      "identity": "e3b0c44298fc1c14",
      "sample": []
     },
-    "manual_admitted": 31,
-    "before_capacity": 31,
+    "manual_admitted": 32,
+    "before_capacity": 32,
     "capacity_excluded": {
      "count": 0,
      "identity": "e3b0c44298fc1c14",
      "sample": []
     },
-    "intended": 31
+    "intended": 32
    },
    "snapshot_relation": "unrecorded",
    "scan_session": "2026-09-10",
@@ -75,9 +75,9 @@
   },
   "coverage": {
    "version": 1,
-   "intended": 32,
-   "requested": 32,
-   "with_bars": 32,
+   "intended": 33,
+   "requested": 33,
+   "with_bars": 33,
    "no_bars": 0,
    "dropped": 0,
    "unfetched_budget": 0,
@@ -86,13 +86,13 @@
    "stale": 0,
    "gapped": 0,
    "unreadable": 0,
-   "on_session": 32,
-   "session_ready": 32,
+   "on_session": 33,
+   "session_ready": 33,
    "benchmark_ready": 1,
-   "scan_ready": 31,
+   "scan_ready": 32,
    "price_excluded": 0,
    "not_scanned_closed": 0,
-   "measured": 31,
+   "measured": 32,
    "scan_errors": 0,
    "scan_unattempted": 0,
    "quality_success": 0,
@@ -101,20 +101,20 @@
     "burst": 0,
     "dollar": 0,
     "both": 0,
-    "neither": 31
+    "neither": 32
    },
    "errors": 0,
    "duplicate_symbols": 0,
    "duplicate_bars": 0,
-   "returned_bars": 8960,
+   "returned_bars": 9240,
    "batch_attempts": 1,
-   "intended_identity": "12ecde3aab5494ac",
+   "intended_identity": "2eeaf7357449213e",
    "benchmark_added": 1,
    "acceptance": {
     "status": "ok",
     "denominator": "intended stocks, excluding benchmark",
-    "intended_stocks": 31,
-    "ready_stocks": 31,
+    "intended_stocks": 32,
+    "ready_stocks": 32,
     "fraction": 1.0,
     "minimum_fraction": 0.5,
     "complete_evaluation": true,
@@ -124,15 +124,15 @@
    "sessions": {
     "expected": "2026-09-10",
     "evaluated": "2026-09-10",
-    "expected_present": 32,
+    "expected_present": 33,
     "latest_bar_dates": {
-     "2026-09-10": 32
+     "2026-09-10": 33
     },
     "previous": "2026-09-09",
     "previous_observed": false,
-    "previous_printed": 32,
-    "closure_voters": 32,
-    "closure_agreed": 32
+    "previous_printed": 33,
+    "closure_voters": 33,
+    "closure_agreed": 33
    },
    "reasons": {
     "no_bars": {
@@ -204,7 +204,7 @@
    "held": [],
    "first_sessions": [],
    "first_session_stocks": 0,
-   "sentence": "All 31 intended stocks had usable session bars; 31 were measured after session price eligibility. Coverage is of this selection, not every listed security."
+   "sentence": "All 32 intended stocks had usable session bars; 32 were measured after session price eligibility. Coverage is of this selection, not every listed security."
   },
   "stale_followup": {
    "version": 2,
@@ -283,8 +283,8 @@
    "sentence": "Chart reader cost: no calls."
   },
   "review_selection": {
-   "version": 1,
-   "policy": "account_feasible_first_research_v1",
+   "version": 2,
+   "policy": "account_feasible_first_research_v2",
    "session": "2026-09-10",
    "max_reads": 12,
    "research_max": 2,
@@ -293,6 +293,7 @@
    "blockers": {
     "grade_not_admitted": 0,
     "quality_veto": 0,
+    "route_not_admitted": 0,
     "preview_unavailable": 0,
     "known_event": 0,
     "plan_withheld": 0,
@@ -935,7 +936,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "77496aa7094233e0bc79dc1671c0762b754531aa45d2c54100da12dfc3b4a78d"
+   "context_sha256": "c4032feb89d4ad75ac095310aa32f4964ddad0848d84342466e03adb5cc01e5d"
   },
   "earnings": {
    "version": 1,
@@ -952,6 +953,24 @@
   "sanitised": {
    "replaced": 0,
    "paths": []
+  },
+  "admission": {
+   "version": 1,
+   "policy": "burst_route_or_dollar_expansion_v1",
+   "candidates": 0,
+   "admitted": 0,
+   "by_basis": {
+    "burst_route": 0,
+    "dollar_expansion": 0,
+    "dollar_no_expansion": 0
+   },
+   "in_band": {
+    "total": 0,
+    "burst_route": 0,
+    "dollar_expansion": 0,
+    "dollar_no_expansion": 0
+   },
+   "sentence": "Admission: no reaction candidate was discovered."
   }
  },
  "nights": [
@@ -1041,6 +1060,18 @@
    "discovery_version": 1,
    "reader_authority_version": 1,
    "reader_request_version": 3
+  },
+  "admission": {
+   "version": 1,
+   "policy": "burst_route_or_dollar_expansion_v1",
+   "burst_routes": [
+    "burst",
+    "both"
+   ],
+   "dollar_checks": [
+    "RE",
+    "VOL"
+   ]
   },
   "quality": {
    "base_search_sessions": 40,
@@ -1455,8 +1486,8 @@
    }
   },
   "review_selection": {
-   "version": 1,
-   "policy": "account_feasible_first_research_v1",
+   "version": 2,
+   "policy": "account_feasible_first_research_v2",
    "research_max": 2,
    "ranked_research": 1,
    "grade_order": [
@@ -1468,11 +1499,11 @@
    ],
    "order": "mechanical_grade,descending_score,ticker",
    "rotation": "sha256(policy|measured_session|ticker),ticker",
-   "research_pool": "infeasible mechanical pipeline.trade_grades",
+   "research_pool": "infeasible mechanical pipeline.trade_grades, discovery admitted",
    "feasibility": "private per-candidate plan before reader and combined allocation"
   },
   "funnel": {
-   "version": 2,
+   "version": 3,
    "policy": "candidate_funnel_v1"
   },
   "intraday": {
@@ -1588,7 +1619,7 @@
    "directory_quote_filter": false,
    "max_discovery": 8000,
    "sample_limit": 8,
-   "identity": "f97bc6805de5df88"
+   "identity": "1b97e33400ee217a"
   },
   "inputs": {
    "version": 1
@@ -1607,7 +1638,7 @@
   "up13_34d": 0,
   "down13_34d": 0,
   "pct_above_40ma": 100.0,
-  "universe": 31,
+  "universe": 32,
   "ratio_5d": null,
   "ratio_10d": null,
   "up4_5d": 0,
@@ -1618,16 +1649,16 @@
    "verdict": "green",
    "size_multiplier": 1.0,
    "reasons": [
-    "down 4%: 0 < the scaled alarm of 3.3 (700 of 6,500)",
+    "down 4%: 0 < the scaled alarm of 3.4 (700 of 6,500)",
     "10-session ratio undefined (0 up, 0 down)",
     "5-session ratio undefined (0 up, 0 down)",
     "up 50% in a month: 0 <= the scaled hot mark of 0.1 (20 of 6,500)"
    ],
    "oversold_extreme": true,
    "thresholds": {
-    "universe": 31,
+    "universe": 32,
     "reference_universe": 6500,
-    "down4_alarm": 3.3,
+    "down4_alarm": 3.4,
     "up50_month_hot": 0.1,
     "down25_quarter_oversold": 1.0,
     "ratio_10d_red": 1.0,
@@ -2135,7 +2166,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "35a2539819be"
+  "replay_rules_version": "2bce356f881f"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -2210,7 +2241,7 @@
  },
  "closest_miss": null,
  "funnel": {
-  "version": 2,
+  "version": 3,
   "policy": "candidate_funnel_v1",
   "regime": "green",
   "admitted_grades": [
@@ -2231,6 +2262,7 @@
     "market": 0,
     "grade": 0,
     "veto": 0,
+    "route": 0,
     "preview_event": 0,
     "preview_geometry": 0,
     "preview_sizing": 0,
@@ -2289,6 +2321,7 @@
    "market": "market",
    "grade": "grade",
    "veto": "veto",
+   "route": "route",
    "preview_event": "preview",
    "preview_geometry": "preview",
    "preview_sizing": "preview",
@@ -2320,6 +2353,7 @@
    "market": "market gate: the regime admits no new longs",
    "grade": "mechanical grade below the regime's admitted band",
    "veto": "quality veto",
+   "route": "dollar scan alone, without a range-expansion, higher-volume day",
    "preview_event": "known corporate event, in the pre-review preview",
    "preview_geometry": "stop rule at the limit, in the pre-review preview",
    "preview_sizing": "no whole share, in the pre-review preview",
@@ -2347,7 +2381,7 @@
    "ticket": "ticket",
    "unknown": "not readable from this record"
   },
-  "sentence": "Candidate funnel under a GREEN market: 0 reaction candidates discovered, 0 potentially usable (mechanical grade in the admitted band, no veto), 0 reaction tickets. Anticipation: 0 momentum names, 0 quiet, 0 passing the coil checks, 0 listed, 0 tickets. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
+  "sentence": "Candidate funnel under a GREEN market: 0 reaction candidates discovered, 0 potentially usable (mechanical grade in the admitted band, no veto, discovery admitted), 0 reaction tickets. Anticipation: 0 momentum names, 0 quiet, 0 passing the coil checks, 0 listed, 0 tickets. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
  },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",

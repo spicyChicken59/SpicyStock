@@ -1344,3 +1344,72 @@ def test_the_mail_on_an_empty_credit_balance_says_to_top_up(market, claude, fake
     assert len(claude.calls) == 1
     text = _mail_text(data)
     assert "the account's credit balance is too low" in text and 'Top up the Anthropic account before the next run.' in text
+
+
+# ------------------------------------------------ the discovery admission ----
+def _admitted(ticker="XYZ", **over):
+    """A burst as the pipeline writes it since the admission rule: an A+ on the 4%
+    route, read but not reviewed yet (src/admission.py)."""
+    from src import admission
+    over.setdefault("scan", "burst")
+    b = _burst(ticker, claude=None, reader_coverage="not_selected_budget", plan=None,
+               quality={"checks": [{"letter": "RE", "passed": True}, {"letter": "VOL", "passed": True}], "vetoes": []}, **over)
+    b["admission"] = admission.block(b)
+    return b
+
+
+def _stopped(ticker="DNO", **over):
+    """A dollar-only A the admission stopped: no range expansion, volume under the prior session's."""
+    from src import admission
+    b = _admitted(ticker, scan="dollar", grade="A", **over)
+    b["quality"]["checks"] = [{"letter": "RE", "passed": False}, {"letter": "VOL", "passed": False}]
+    b["admission"] = admission.block(b)
+    assert b["admission"]["admitted"] is False
+    return b
+
+
+def test_reader_pending_counts_only_the_admitted_a_band_names():
+    """A dollar-only A the admission stopped is research only and waits on no
+    reader, so it is not pending; a row from before the rule reads as admitted."""
+    waiting, stopped = _admitted(), _stopped()
+    assert report.reader_pending([waiting, stopped]) == [waiting]
+    before = _burst("OLD", claude=None, reader_coverage="not_selected_budget", plan=None)
+    assert report.reader_pending([before]) == [before]
+    half = _stopped("HLF")
+    half["admission"] = {"admitted": True}   # a block that is not the row's own still answers for pending alone
+    assert report.reader_pending([half]) == [half]
+
+
+def test_the_headline_waits_on_the_reader_only_for_an_admitted_a_band_name():
+    assert cover(_run(), _breadth("green"), [], [_admitted(), _miss()], None)["h1"] == report.H1_READER_WAIT
+    assert cover(_run(), _breadth("green"), [], [_stopped(), _miss()], None)["h1"] == "Nothing qualifies. Keep cash."
+    dek = cover(_run(), _breadth("green"), [], [_stopped(), _miss()], None)["dek"]
+    assert dek.startswith("2 bursts found, none A-quality."), dek
+
+
+def test_the_closest_miss_names_the_admission_in_the_records_words():
+    from src import admission
+    stopped = _stopped(score=9.1)
+    assert report.miss_reason(stopped) == admission.LABELS["dollar_no_expansion"]
+    miss = report.closest_miss([stopped, _miss()], [], [])
+    assert miss["ticker"] == "DNO" and miss["sentence"] == "DNO came closest at A 9.1: " + admission.LABELS["dollar_no_expansion"] + "."
+    # an admitted name waiting on review keeps the reader sentence; a reviewed one its checks
+    assert report.miss_reason(_admitted()).startswith("accepted reader review missing")
+
+
+def test_the_mail_prints_the_nights_admission_sentence_and_nothing_for_a_record_before_the_rule():
+    from src import admission
+    miss = _miss()
+    miss["scan"] = "burst"   # the helper's own spelling is no route the scanner writes; under the rule every row carries a block
+    miss["admission"] = admission.block(miss)
+    bursts = [_admitted(), _stopped(), miss]
+    block = admission.summary(bursts, ("A+", "A"))
+    # under rules that archive the admission family build() composes run.admission itself, off the rows
+    rules = {**_night()["rules"], "admission": {k.partition(".")[2]: v for k, v in admission.RULES.items()},
+             "pipeline": {"trade_grades": ["A+", "A"]}}
+    night = _night(trades=[], bursts=bursts, rules=rules)
+    text = _rendered(digest_html(build(**night)))
+    assert "// discovery admission" in text and block["sentence"] in text, text
+    assert "2 came through the dollar scan alone" not in text and "1 came through the dollar scan alone without one and is research only" in text
+    before = _rendered(digest_html(build(**_night(trades=[]))))
+    assert "// discovery admission" not in before and "Admission:" not in before

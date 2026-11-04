@@ -802,3 +802,40 @@ def test_the_page_holds_the_morning_source_error_kinds_to_the_module():
     # and the page explains each one in its own words
     for kind in sorted(reasons):
         assert re.search(r"observed\.error_kind === '%s' \? 'No provider request was made in this collection: " % kind, page), kind
+
+
+# -------------------------------------------- the discovery admission ----
+def test_the_documents_and_the_page_hold_the_admission_rule_to_the_module():
+    """src/admission.py decides which discovered candidates the trade band and
+    the reads may consider; the README, the method, the rulebook the reader is
+    sent, the source contract and the page print its words, and the page's
+    lists are held to the module's."""
+    from src import admission, funnel, review_selection
+    page = (ROOT / "docs" / "app.js").read_text()
+    # the page's own lists
+    bases = re.search(r"const ADMISSION_BASES = \[([^\]]*)\];", page).group(1)
+    assert re.findall(r"'(\w+)'", bases) == list(admission.BASES)
+    checks = re.search(r"const ADMISSION_CHECKS = \[([^\]]*)\];", page).group(1)
+    assert re.findall(r"'(\w+)'", checks) == [name for _, name in admission.DOLLAR_CHECKS]
+    assert f"a.policy === '{admission.POLICY}'" in page
+    assert re.search(r"route: \['dollar scan alone', 'neutral'\]", page), "the chip for a name the admission stopped"
+    assert "the A and A+ grades this record archived and admitted" in page
+    # the two selection policies the Morning desk reconciles, named as the module names them
+    policies = re.search(r"const POLICIES = \{ (.*?) \};", page, re.S).group(1)
+    assert f"1: {{ name: '{review_selection.POLICY_V1}', research_pool: '{review_selection.RULES_V1['research_pool']}', route: false }}" in policies
+    assert f"2: {{ name: '{review_selection.POLICY}', research_pool: '{review_selection.RULES['review_selection.research_pool']}', route: true }}" in policies
+    assert "route_not_admitted" in page and "route_not_admitted" in review_selection.BLOCKERS
+    # the funnel's usable words, version by version, and its route stage
+    assert funnel.USABLE_WORDS_BY_VERSION[3].endswith(", discovery admitted") and "', discovery admitted'" in page
+    assert funnel.LABELS["route"] == admission.NOT_ADMITTED_WORDS == "dollar scan alone, without a range-expansion, higher-volume day"
+    # the documents say the rule in the module's words and name the policy strings
+    assert "admitted only when its burst day passed the checklist's RE and VOL checks" in README
+    assert "`route_not_admitted`" in README and "`route`" in README and review_selection.POLICY in README
+    assert review_selection.POLICY in METHOD and "Admission (`src/admission.py`, P, 4 November 2026)" in METHOD
+    assert "a dollar-only candidate is admitted only when its burst day passed the recorded RE and VOL checks" in STRATEGY
+    contract = prose(ROOT / "knowledge" / "reaction-discovery.md")
+    assert "reaction-discovery-sources-v2" in contract and "| Admission | IMPLEMENTATION (`src/admission.py`, 4 November 2026" in contract
+    assert "src/admission.py" in ENV and "discovery admission" in ENV
+    # the module's own numbers in the documents: the 35 retained sessions to 3 November 2026
+    for words in ("1,913 of 2,473", "1,757 of them"):
+        assert words in README and words in METHOD, words

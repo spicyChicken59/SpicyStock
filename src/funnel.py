@@ -12,17 +12,18 @@ what it recorded.
 """
 from collections import Counter
 
-from src import allocation, grader, plan, reader_coverage
+from src import admission, allocation, grader, plan, reader_coverage
 
-VERSION = 2   # 2: review_request, a request the API refused as invalid (reads version 2)
+VERSION = 3   # 2: review_request, a request the API refused as invalid (reads version 2);
+              # 3: route, a dollar-only name without a range-expansion, higher-volume day (admission v1)
 #: the reads version each funnel version reads a reviewed name's cause in
-READS_VERSION_BY_FUNNEL = {1: 1, 2: 2}
+READS_VERSION_BY_FUNNEL = {1: 1, 2: 2, 3: 2}
 POLICY = "candidate_funnel_v1"
 RULES = {"funnel.version": VERSION, "funnel.policy": POLICY}
 
 #: the terminal stages a reaction candidate can stop at, in gate order
 REACTION_STAGES = (
-    "market", "grade", "veto",
+    "market", "grade", "veto", "route",
     "preview_event", "preview_geometry", "preview_sizing", "preview_no_order", "preview_unavailable",
     "review_budget", "review_unselected", "review_refused", "review_format", "review_account",
     "review_credit", "review_request", "review_transport", "review_downgraded", "review_unknown",
@@ -32,7 +33,10 @@ REACTION_STAGES = (
 )
 #: the reaction stages each archived version could write: a record is re-derived
 #: and held under its own, never under stages it had no word for
-REACTION_STAGES_BY_VERSION = {1: tuple(s for s in REACTION_STAGES if s != "review_request"), 2: REACTION_STAGES}
+REACTION_STAGES_BY_VERSION = {1: tuple(s for s in REACTION_STAGES if s not in ("review_request", "route")),
+                              2: tuple(s for s in REACTION_STAGES if s != "route"), 3: REACTION_STAGES}
+#: the first funnel version that reads a candidate's admission (src/admission.py)
+ADMISSION_FROM_VERSION = 3
 #: the terminal stages a listed anticipation setup can stop at
 ANTICIPATION_STAGES = (
     "market", "plan_error", "plan_unavailable",
@@ -41,7 +45,7 @@ ANTICIPATION_STAGES = (
 )
 #: the group each stage is printed under
 GROUPS = {
-    "market": "market", "grade": "grade", "veto": "veto",
+    "market": "market", "grade": "grade", "veto": "veto", "route": "route",
     "preview_event": "preview", "preview_geometry": "preview", "preview_sizing": "preview",
     "preview_no_order": "preview", "preview_unavailable": "preview",
     "review_budget": "review", "review_unselected": "review", "review_refused": "review",
@@ -59,6 +63,7 @@ LABELS = {
     "market": "market gate: the regime admits no new longs",
     "grade": "mechanical grade below the regime's admitted band",
     "veto": "quality veto",
+    "route": admission.NOT_ADMITTED_WORDS,
     "preview_event": "known corporate event, in the pre-review preview",
     "preview_geometry": "stop rule at the limit, in the pre-review preview",
     "preview_sizing": "no whole share, in the pre-review preview",
@@ -95,6 +100,10 @@ CUT_STAGES = {"slot_cap": "allocation_slot", "equity": "allocation_cash", "no_sh
               "existing_position": "allocation_occupied", "duplicate": "allocation_occupied",
               "no_new_longs": "market"}
 WATCH_COUNTS = ("momentum", "quiet", "admitted", "top", "also_quiet")
+#: what "potentially usable" counted under each version, in the sentence's words
+USABLE_WORDS_BY_VERSION = {1: "mechanical grade in the admitted band, no veto",
+                           2: "mechanical grade in the admitted band, no veto",
+                           3: "mechanical grade in the admitted band, no veto, discovery admitted"}
 
 
 def _get(obj, *keys):
@@ -166,9 +175,11 @@ def archived_version(data):
 
 def reaction_stage(row, admitted, cash_budget, trades, version=VERSION):
     """The one terminal stage of a reaction candidate, in the pipeline's order:
-    the regime, the mechanical grade, the veto, then the review selection's
-    recorded reasons for an unreviewed name, the reader's state for a reviewed
-    one, and the constructed plan's own allocation."""
+    the regime, the mechanical grade, the veto, from version 3 the discovery
+    admission (a dollar-only name without a range-expansion, higher-volume
+    day stops at ``route``), then the review selection's recorded reasons for
+    an unreviewed name, the reader's state for a reviewed one, and the
+    constructed plan's own allocation."""
     if admitted is None:
         return "unknown"
     if not admitted:
@@ -180,6 +191,8 @@ def reaction_stage(row, admitted, cash_budget, trades, version=VERSION):
         return "grade"
     if row.get("vetoes"):
         return "veto"
+    if version >= ADMISSION_FROM_VERSION and not admission.admitted(row):
+        return "route"
     selection = row.get("review_selection")
     reader = row.get("claude")
     # a record from before the selection block names a selected name by its reader
@@ -241,7 +254,10 @@ def build(data):
     reaction_rows = [{"ticker": b.get("ticker"), "stage": reaction_stage(b, admitted, cash_budget, trades, version)}
                      for b in bursts]
     anticipation_rows = [{"ticker": r.get("ticker"), "stage": anticipation_stage(r, admitted, cash_budget)} for r in top]
-    usable = sum(1 for b in bursts if admitted and b.get("grade_mechanical") in admitted and not b.get("vetoes"))
+    # the names the first gates let through: the grade and the veto, and from
+    # version 3 the discovery admission, which stops a name before any review
+    usable = sum(1 for b in bursts if admitted and b.get("grade_mechanical") in admitted and not b.get("vetoes")
+                 and (version < ADMISSION_FROM_VERSION or admission.admitted(b)))
     counts = _get(data, "watchlist", "counts")
     counts = counts if isinstance(counts, dict) else {}
     block = {
@@ -282,9 +298,10 @@ def sentence(block):
     regime = block.get("regime")
     market = (f"under a {regime.upper()} market" if isinstance(regime, str) and regime
               else "under a market this record does not name")
+    usable_words = USABLE_WORDS_BY_VERSION.get(block.get("version"), USABLE_WORDS_BY_VERSION[VERSION])
     parts = [f"Candidate funnel {market}: {r['discovered']} reaction "
              f"{'candidate' if r['discovered'] == 1 else 'candidates'} discovered, "
-             f"{r['potentially_usable']} potentially usable (mechanical grade in the admitted band, no veto), "
+             f"{r['potentially_usable']} potentially usable ({usable_words}), "
              f"{r['stages'].get('ticket', 0)} reaction {'ticket' if r['stages'].get('ticket', 0) == 1 else 'tickets'}."]
     stopped = _stopped(r["stages"])
     if stopped:

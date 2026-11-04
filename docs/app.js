@@ -207,7 +207,7 @@
   // offered by blocked(st) and the run's own fields, not by this list.
   // `following` reads this browser's shelf. Nothing here scans or grades.
   const LENSES = {
-    bursts: [['a', 'A-quality', 'the A and A+ grades this record archived'], ['all', 'All bursts', 'every burst the scan archived'],
+    bursts: [['a', 'A-quality', 'the A and A+ grades this record archived and admitted: the 4% scan, or the dollar scan on a range-expansion, higher-volume day'], ['all', 'All bursts', 'every burst the scan archived'],
       ['ticket', 'With ticket', 'a ticket written into the published record'], ['following', 'Saved in this scan', 'tonight’s candidates you already saved in this browser']],
     'setting-up': [['all', 'All setups', 'every coil the anticipation scans admitted'],
       ['ticket', 'With ticket', 'a ticket written into the published record'], ['following', 'Saved in this scan', 'tonight’s candidates you already saved in this browser']]
@@ -661,7 +661,7 @@
     box.setAttribute('data-review-state', review ? 'reconciled' : 'unknown');
     $('cover-review-summary').textContent = review ? 'Chart reviews: ' +
       (review.requested ? num(review.accepted) + ' of ' + num(review.requested) + ' selected accepted' : 'none selected') +
-      ' · ' + num(review.unreviewedQuality) + ' mechanical A+/A not reviewed' : 'Chart reviews: selection not reconciled for this record';
+      ' · ' + num(review.unreviewedQuality) + ' ' + review.unreviewedWord + ' not reviewed' : 'Chart reviews: selection not reconciled for this record';
     $('cover-review').textContent = review ? review.summary : 'Review selection and selected-batch completion are not reconciled for this record; the original verdict is shown.';
     $('cover-published-label').textContent = 'Original published verdict · ' + (run.session || 'session unknown');
     $('cover-published').textContent = (cover.h1 || 'No verdict recorded.') + ' ' + (cover.dek || 'No summary recorded.');
@@ -796,9 +796,10 @@
         regime_gate: reg.verdict === 'red' || (reg.verdict === 'yellow' && Array.isArray(allowed) && !allowed.includes(b.grade)),
         quality_grade: Array.isArray(allowed) && !allowed.includes(b.grade),
         quality_veto: (b.vetoes || []).length > 0,
+        route_not_admitted: !!(data.rules || {}).admission && admissionOf(b).admitted === false,
         reader_coverage: rules.reader_policy === 'accepted_required_v1' && readerCoverage(b).state !== 'accepted'
       };
-      const labels = { regime_gate: 'market gate', quality_grade: 'quality-grade gate', quality_veto: 'quality veto', reader_coverage: 'accepted reader review prerequisite' };
+      const labels = { regime_gate: 'market gate', quality_grade: 'quality-grade gate', quality_veto: 'quality veto', route_not_admitted: 'discovery admission gate', reader_coverage: 'accepted reader review prerequisite' };
       const skipped = e.version === 1 && planning.inputs === null && planning.error === null && skips[gate.reason];
       reasons.push(skipped
         ? 'Planning skipped at the recorded ' + labels[gate.reason] + '. Structural stop, whole-share size and allocation were not evaluated in this published plan path. No executable levels were published.'
@@ -966,8 +967,14 @@
   }
   function reviewSelectionFacts(data) {
     const run = data.run || {}, s = run.review_selection, rules = data.rules || {}, policy = rules.review_selection;
-    if (!s || !policy || s.version !== 1 || policy.version !== s.version ||
-        s.policy !== 'account_feasible_first_research_v1' || policy.policy !== s.policy || s.session !== run.session) return null;
+    // the two archived policies this page reconciles: version 1 (10 Oct to 3 Nov 2026), whose research
+    // pool was every infeasible mechanical A-band name, and version 2, which also blocks a name the
+    // discovery admission stopped (route_not_admitted) and keeps it out of that pool
+    const POLICIES = { 1: { name: 'account_feasible_first_research_v1', research_pool: 'infeasible mechanical pipeline.trade_grades', route: false },
+      2: { name: 'account_feasible_first_research_v2', research_pool: 'infeasible mechanical pipeline.trade_grades, discovery admitted', route: true } };
+    const archived = s && policy && Object.prototype.hasOwnProperty.call(POLICIES, s.version) ? POLICIES[s.version] : null;
+    if (!s || !policy || !archived || policy.version !== s.version ||
+        s.policy !== archived.name || policy.policy !== s.policy || s.session !== run.session) return null;
     const fields = ['discovered', 'feasible', 'research_pool', 'requested', 'max_reads', 'research_max', 'feasible_unselected', 'unused_capacity'];
     const count = (v) => Number.isSafeInteger(v) && v >= 0;
     const purposes = ['opportunity', 'research_ranked', 'research_rotating'], groups = s.by_purpose || {};
@@ -992,10 +999,10 @@
     // a reading of archived facts, never another planner or order authority.
     const result = { note, detail: null }, reads = run.reads || {}, pipeline = rules.pipeline || {};
     const failures = Object.prototype.hasOwnProperty.call(READ_FAILURES_BY_VERSION, reads.version) ? READ_FAILURES_BY_VERSION[reads.version] : null;
-    const blockers = ['grade_not_admitted', 'quality_veto', 'preview_unavailable', 'known_event', 'plan_withheld', 'no_whole_share', 'no_order'];
+    const blockers = ['grade_not_admitted', 'quality_veto'].concat(archived.route ? ['route_not_admitted'] : [], ['preview_unavailable', 'known_event', 'plan_withheld', 'no_whole_share', 'no_order']);
     const grades = ['A+', 'A', 'B', 'C', 'skip'], regime = ((data.breadth || {}).regime || {}).verdict;
     const semantics = { order: 'mechanical_grade,descending_score,ticker', rotation: 'sha256(policy|measured_session|ticker),ticker',
-      research_pool: 'infeasible mechanical pipeline.trade_grades', feasibility: 'private per-candidate plan before reader and combined allocation' };
+      research_pool: archived.research_pool, feasibility: 'private per-candidate plan before reader and combined allocation' };
     if (!Object.entries(semantics).every(([key, value]) => policy[key] === value) ||
         JSON.stringify(policy.grade_order) !== JSON.stringify(grades) || !count(policy.ranked_research) || policy.ranked_research > policy.research_max ||
         pipeline.reader_policy !== 'accepted_required_v1' || !failures ||
@@ -1024,15 +1031,20 @@
           decision.feasible !== (decision.blockers.length === 0) || (decision.feasible && decision.research_pool) ||
           decision.selected !== selected.has(row.ticker) || !sourceDecision ||
           !['policy', 'feasible', 'blockers', 'research_pool', 'selected', 'purpose'].every(k => JSON.stringify(decision[k]) === JSON.stringify(sourceDecision[k])) ||
-          decision.research_pool !== (!decision.feasible && pipeline.trade_grades.includes(row.grade_mechanical)) ||
+          decision.research_pool !== (!decision.feasible && pipeline.trade_grades.includes(row.grade_mechanical) && !decision.blockers.includes('route_not_admitted')) ||
           decision.blockers.includes('grade_not_admitted') !== !admitted.includes(row.grade_mechanical) ||
-          !Array.isArray(row.vetoes) || decision.blockers.includes('quality_veto') !== (row.vetoes.length > 0)) return result;
+          !Array.isArray(row.vetoes) || decision.blockers.includes('quality_veto') !== (row.vetoes.length > 0) ||
+          // under version 2 the route blocker is the row's own admission, re-derived here from its
+          // discovery route and the checklist's RE and VOL checks and held to the block the run wrote
+          (archived.route && (typeof routeAdmitted(row) !== 'boolean' || admissionOf(row).admitted !== routeAdmitted(row) ||
+            decision.blockers.includes('route_not_admitted') !== !routeAdmitted(row)))) return result;
       seen.add(row.ticker);
       feasible += Number(decision.feasible); pool += Number(decision.research_pool);
       decision.blockers.forEach(k => { blocked[k] += 1; });
       const accepted = readerCoverage(row).state === 'accepted';
       if (!accepted && row.grade !== row.grade_mechanical) return result;
-      if (!accepted && ['A+', 'A'].includes(row.grade)) unreviewedQuality += 1;
+      // the A-band names still waiting on review: under version 2 only the admitted ones wait
+      if (!accepted && ['A+', 'A'].includes(row.grade) && (!archived.route || routeAdmitted(row))) unreviewedQuality += 1;
       if (!decision.selected) {
         const purpose = decision.feasible ? 'budget_not_selected' : decision.research_pool ? 'research_cap_not_selected' : 'outside_research_pool';
         if (decision.purpose !== purpose || cl != null || row.reader_coverage !== 'not_selected_budget') return result;
@@ -1058,7 +1070,7 @@
         causes[cause] += 1;
         if (cause === 'refused') {
           group.refused += 1; refused.push(row.ticker);
-          if (Array.isArray(row.vetoes) && !row.vetoes.length && admitted.includes(row.grade)) refusedAdmissible.push(row.ticker);
+          if (Array.isArray(row.vetoes) && !row.vetoes.length && admitted.includes(row.grade) && (!archived.route || routeAdmitted(row))) refusedAdmissible.push(row.ticker);
         }
       }
     }
@@ -1083,10 +1095,11 @@
         (verdict === 'tolerated' ? 'Refusals are within the archived tolerance; those names still lack accepted review.' :
           verdict === 'unavailable' ? 'The selected reader batch is unavailable.' : 'The selected reader batch is incomplete.'));
     const unselected = s.discovered - s.requested;
+    const unreviewedWord = archived.route ? 'admitted mechanical A+/A' : 'mechanical A+/A';
     const coverage = 'Broader coverage: ' + num(unselected) + ' of ' + num(s.discovered) + ' reaction candidates not selected; ' +
-      num(unreviewedQuality) + ' mechanical A+/A lack accepted review.';
+      num(unreviewedQuality) + ' ' + unreviewedWord + ' lack accepted review.';
     result.detail = { feasible, opportunity, research, requested: s.requested, accepted, unaccepted, refused: causes.refused,
-      unselected, unreviewedQuality, verdict, selection, batch, coverage,
+      unselected, unreviewedQuality, unreviewedWord, verdict, selection, batch, coverage,
       summary: selection + ' ' + batch + ' ' + coverage + ' Selection is not ticket admission; anticipation is separate.' };
     return result;
   }
@@ -1256,6 +1269,14 @@
     // the API's token classes; the page prices nothing, because the record
     // archives no price
     if (text((run.reader_usage || {}).sentence)) line(run.reader_usage.sentence);
+    // which candidates the trade band and the reads could consider, by discovery route, in the
+    // record's own sentence, and the rule the record archived (src/admission.py): the page
+    // re-derives nothing here and quotes no rule a record did not archive
+    if (text((run.admission || {}).sentence)) line(run.admission.sentence);
+    const admissionRule = (data.rules || {}).admission;
+    if (admissionRule === undefined) line('Admission rule: this record predates the discovery admission; every graded name could be planned and read, the dollar scan’s days included.');
+    else if (admissionRule && typeof admissionRule === 'object' && admissionRule.version === 1 && Array.isArray(admissionRule.dollar_checks) && admissionRule.dollar_checks.every((k) => typeof k === 'string')) line('Admission rule, as this record archived it: a name the 4% scan discovered is admitted; a name the dollar scan alone discovered is admitted only when its burst day passes the checklist’s ' + admissionRule.dollar_checks.join(' and ') + ' checks (a range at least the largest of the prior five sessions’ and volume above the previous session’s). Admission is never a grade; a name it stops keeps its checklist grade as research and is sent to no chart reader.');
+    else line('Admission rule: this record archives an admission rule in a shape this page cannot read.');
     // the minute bars read for first days a daily bar could not place, in the record's own sentence
     if (text((run.intraday || {}).sentence)) line('Minute bars: ' + run.intraday.sentence);
     // each ticket's earnings warning, in the record's own sentence; never a refusal
@@ -1688,6 +1709,7 @@
   // own. Nothing here scans, grades, sizes or fetches.
   const STATUS_WORDS = {
     ticket: ['ticket', 'good'], vetoed: ['vetoed', 'danger'], below_grade: ['no ticket', 'neutral'], not_admitted: ['no ticket', 'neutral'],
+    route: ['dollar scan alone', 'neutral'],
     no_plan: ['no ticket', 'neutral'], no_order: ['no order', 'neutral'], watch: ['watch', 'neutral'],
     reader_required: ['research only', 'neutral'], existing_position: ['already reserved', 'neutral'],
     duplicate: ['duplicate setup', 'neutral']
@@ -1759,13 +1781,48 @@
     return 'No ticket tonight' + (w && w !== NO_TICKET ? ' (' + w + ')' : '') + '.';
   };
   const listRule = (data, key, fallback) => { const r = ((data.rules || {}).pipeline || {})[key]; return Array.isArray(r) && r.length ? r : fallback; };
+  // bursts[].admission as src/admission.py wrote it: whether the trade band and the
+  // chart reads could consider this name -- the 4% scan's route, or the dollar scan's
+  // on a range-expansion, higher-volume day -- read whole or not at all. A record from
+  // before the rule carries none and every graded name reads as admitted; a block in
+  // a shape this page cannot read is neither admitted nor stopped. Never a grade.
+  const ADMISSION_BASES = ['burst_route', 'dollar_expansion', 'dollar_no_expansion'];
+  const ADMISSION_CHECKS = ['range_expansion', 'higher_volume'];
+  function admissionOf(b) {
+    const a = b && b.admission;
+    if (a === undefined) return { present: false, admitted: null, basis: null, reason: '', expansion: null };
+    const plain = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
+    const shown = plain(a) ? a.expansion : null;
+    const ok = plain(a) && a.version === 1 && a.policy === 'burst_route_or_dollar_expansion_v1' && typeof a.route === 'string' &&
+      ADMISSION_BASES.includes(a.basis) && typeof a.admitted === 'boolean' && a.admitted === (a.basis !== 'dollar_no_expansion') &&
+      plain(shown) && ADMISSION_CHECKS.every((k) => shown[k] === true || shown[k] === false || shown[k] === null) &&
+      typeof a.reason === 'string' && a.reason.trim() !== '';
+    if (!ok) return { present: true, unreadable: true, admitted: null, basis: null, reason: '', expansion: null };
+    return { present: true, admitted: a.admitted, basis: a.basis, reason: a.reason, expansion: shown };
+  }
+  // the same rule re-derived from the row's own route and checklist, for the Morning
+  // desk's reconciliation of a version-2 selection: a reading, never a permission
+  function routeAdmitted(b) {
+    if (!b || typeof b.scan !== 'string') return null;
+    if (b.scan === 'burst' || b.scan === 'both') return true;
+    if (b.scan !== 'dollar') return null;
+    const checks = ((b.quality || {}).checks || []);
+    const passed = (letter) => { const c = checks.find((x) => x && x.letter === letter); return c ? c.passed === true : false; };
+    return passed('RE') && passed('VOL');
+  }
+  function admissionWords(b) {
+    const a = admissionOf(b);
+    if (!a.present) return ' Admission: this record predates the discovery admission rule; every graded name could be planned and read, the dollar scan’s days included.';
+    if (a.unreadable) return ' Admission: this record carries an admission block in a shape this page cannot read, so the name is neither read as admitted nor as stopped.';
+    return ' Admission: ' + cap(a.reason) + '.';
+  }
   function buildModel(data) {
     const trades = data.trades || [], cb = data.cash_budget || {}, cuts = {};
     (cb.cut || []).forEach((c) => { if (c && c.ticker && (!c.setup_kind || c.setup_kind === 'burst') && !cuts[c.ticker]) cuts[c.ticker] = c; });
     const reg = (data.breadth || {}).regime || {}, verdict = reg.verdict;
     const tradeGrades = listRule(data, 'trade_grades', ['A+', 'A']), yellowGrades = listRule(data, 'yellow_grades', ['A+']);
     const bursts = (data.bursts || []).filter((b) => b && b.ticker).map((b, i) => {
-      const plan = b.plan || null, q = b.quality || {}, vetoes = q.vetoes || b.vetoes || [], cut = cuts[b.ticker] || null;
+      const plan = b.plan || null, q = b.quality || {}, vetoes = q.vetoes || b.vetoes || [], cut = cuts[b.ticker] || null, adm = admissionOf(b);
       let status, reason;
       if (trades.indexOf(b.ticker) >= 0 && plan && plan.order_json) { status = 'ticket'; reason = plan.order_line || ''; }
       else if (cut && cut.kind) { status = cut.kind; reason = cut.reason || ''; }
@@ -1778,6 +1835,8 @@
         status = 'below_grade';
         reason = 'graded ' + (b.grade || '—') + ', under the ' + tradeGrades.join('/') + ' line' + (miss ? ' · misses ‘' + (miss.label || words(miss.key) || 'a check') + '’' : '');
       }
+      // the discovery admission stopped it: the record's own reason, before the night's regime
+      else if (adm.present && adm.admitted === false) { status = 'route'; reason = adm.reason; }
       else if (verdict === 'yellow' && yellowGrades.indexOf(b.grade) < 0) { status = 'not_admitted'; reason = 'a yellow night admits ' + yellowGrades.join('/') + ' only'; }
       else if (reg.size_multiplier === 0 || verdict === 'red') { status = 'no_new_longs'; reason = 'no new longs: breadth is ' + (verdict || 'red'); }
       else if (!plan && readerCoverage(b).state !== 'accepted') { status = 'reader_required'; reason = readerCoverage(b).label + ': accepted review required before a new plan. Mechanical evidence remains available for research.'; }
@@ -1786,7 +1845,7 @@
       const flags = (b.flags || []).slice();
       (plan && plan.flags || []).forEach((f) => { if (flags.indexOf(f) < 0) flags.push(f); });
       return { id: 'bursts:' + b.ticker, stage: 'bursts', ticker: b.ticker, name: text(b.name), rank: isNum(b.rank) ? b.rank : i + 1,
-        grade: b.grade || null, score: b.score, status: status, reason: reason, cut: cut, plan: plan, row: b, quiet: false, flags: flags,
+        grade: b.grade || null, score: b.score, admitted: adm.admitted, status: status, reason: reason, cut: cut, plan: plan, row: b, quiet: false, flags: flags,
         series: Array.isArray(b.series) ? b.series.filter((x) => x && x.date) : [],
         measures: [['gain', pct(b.gain_pct)], ['vol', isNum(volumeRatio(b).value) ? volumeTimes(b) + '×' : '—'], ['close', usd(b.close)]] };
     });
@@ -1837,9 +1896,14 @@
   }
   // the lens a first visit opens on: A-quality when this record archived an
   // A or A+ burst, else every burst -- never an empty first screen
+  // A-quality is an A or A+ this record archived whose discovery is admitted
+  // (admissionOf(): a name the dollar scan alone found without a range-expansion,
+  // higher-volume day is research only); a record from before the rule reads
+  // every A as admitted, and a block the page cannot read hides nothing
+  const aQuality = (c) => model.tradeGrades.indexOf(c.grade) >= 0 && c.admitted !== false;
   function defaultLens(stage) {
     if (stage !== 'bursts') return 'all';
-    return model && model.stages.bursts.some((c) => model.tradeGrades.indexOf(c.grade) >= 0) ? 'a' : 'all';
+    return model && model.stages.bursts.some(aQuality) ? 'a' : 'all';
   }
   const lensOf = (stage) => state.lens[stage] || defaultLens(stage);
   // the ids this browser's shelf holds for tonight's record, rebuilt only when
@@ -1862,7 +1926,7 @@
     } catch (e) { return false; }
   }
   function lensPass(c, lens) {
-    if (lens === 'a') return model.tradeGrades.indexOf(c.grade) >= 0;
+    if (lens === 'a') return aQuality(c);
     if (lens === 'ticket') return c.status === 'ticket';
     if (lens === 'following') return isFollowed(c);
     return true;
@@ -4410,14 +4474,14 @@
   }
   function discoveryReason(b) {
     const rec = b.discovery || {}, m = rec.measurements || {}, rules = rec.applicable_rules || {};
-    if (rec.version !== 1 || !Array.isArray(rec.admitted_by)) return 'Discovery: ' + (b.scan ? words(b.scan) + ' scan' : 'route not recorded') + '. The detailed admission record is unavailable; the grade and ticket are separate.';
+    if (rec.version !== 1 || !Array.isArray(rec.admitted_by)) return 'Discovery: ' + (b.scan ? words(b.scan) + ' scan' : 'route not recorded') + '. The detailed admission record is unavailable; the grade and ticket are separate.' + admissionWords(b);
     const facts = rec.admitted_by.map(key => {
       const r = rules[key] || {};
       if (key === 'dollar' && isNum(r.min_move) && isNum(r.min_volume_exclusive)) return 'Dollar discovery: close − open was ' + usd(m.dollar_move) + ' (recorded rule ≥ ' + usd(r.min_move) + '); volume ' + num(m.volume) + ' shares (rule > ' + num(r.min_volume_exclusive) + ').';
       if (key === 'burst' && isNum(r.min_ratio) && isNum(r.min_volume) && r.volume_above_prior === true) return '4% breakout discovery: close ' + usd(m.close) + ' vs prior close ' + usd(m.prev_close) + ' (recorded ratio ≥ ' + String(r.min_ratio) + '); volume ' + num(m.volume) + ' vs ' + num(m.prev_volume) + ' prior-session shares, with a ' + num(r.min_volume) + '-share minimum.';
       return 'Discovery route ' + key + ': recorded rule format is not recognised; inspect the original source.';
     });
-    return facts.join(' ');
+    return facts.join(' ') + admissionWords(b);
   }
   function burstDecision(c) {
     const b = c.row, plan = c.plan || {}, q = b.quality || {}, cl = b.claude || {}, checks = q.checks || [];
@@ -4972,7 +5036,7 @@
     // this family's is an empty cell, not an unreported one
     const cell = (v) => el('td', { 'class': 'ss-funnel__n', text: Number.isInteger(v) ? num(v) : '' });
     tbody.appendChild(el('tr', { 'data-funnel-row': 'discovered' }, [el('th', { scope: 'row', text: 'discovered bursts · listed setups' }), cell(fu.reaction.discovered), cell(fu.anticipation.listed)]));
-    if (Number.isInteger(fu.reaction.potentially_usable) && fu.reaction.potentially_usable >= 0) tbody.appendChild(el('tr', { 'data-funnel-row': 'potentially_usable' }, [el('th', { scope: 'row', text: 'potentially usable: mechanical grade in the admitted band, no veto' }), cell(fu.reaction.potentially_usable), cell(null)]));
+    if (Number.isInteger(fu.reaction.potentially_usable) && fu.reaction.potentially_usable >= 0) tbody.appendChild(el('tr', { 'data-funnel-row': 'potentially_usable' }, [el('th', { scope: 'row', text: 'potentially usable: mechanical grade in the admitted band, no veto' + (Number.isInteger(fu.version) && fu.version >= 3 ? ', discovery admitted' : '') }), cell(fu.reaction.potentially_usable), cell(null)]));
     rows.forEach((k) => tbody.appendChild(el('tr', { 'data-funnel-row': k }, [
       el('th', { scope: 'row', text: text(fu.labels[k]) || words(k) }),
       cell(k in fu.reaction.stages ? fu.reaction.stages[k] : null), cell(k in fu.anticipation.stages ? fu.anticipation.stages[k] : null)

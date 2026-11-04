@@ -4,11 +4,11 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "35a2539819be"
+  "rules_version": "2bce356f881f"
  },
  "cover": {
   "h1": "No new burst tickets. Reader review incomplete.",
-  "dek": "6 bursts found; 4 with mechanical A+/A grades lack accepted reader review. They remain visible for research, without new plans or tickets. Missing review is not a measured setup failure. The closest miss is below.",
+  "dek": "7 bursts found; 4 with mechanical A+/A grades lack accepted reader review. They remain visible for research, without new plans or tickets. Missing review is not a measured setup failure. The closest miss is below.",
   "action_label": "Open model plans",
   "action_target": "#hold",
   "verb": "keep cash"
@@ -34,15 +34,15 @@
   "model": "claude-sonnet-4-6",
   "feed": "sip",
   "universe": {
-   "label": "31 named on the command line (--tickers)",
-   "size": 31,
+   "label": "32 named on the command line (--tickers)",
+   "size": 32,
    "source": "explicit",
    "source_kind": "explicit",
    "fetched_at": null,
-   "identity": "f97bc6805de5df88",
+   "identity": "1b97e33400ee217a",
    "snapshot_sha256": null,
    "counts": {
-    "admitted": 31
+    "admitted": 32
    },
    "selection": {
     "kind": "explicit",
@@ -61,14 +61,14 @@
      "identity": "e3b0c44298fc1c14",
      "sample": []
     },
-    "manual_admitted": 31,
-    "before_capacity": 31,
+    "manual_admitted": 32,
+    "before_capacity": 32,
     "capacity_excluded": {
      "count": 0,
      "identity": "e3b0c44298fc1c14",
      "sample": []
     },
-    "intended": 31
+    "intended": 32
    },
    "snapshot_relation": "unrecorded",
    "scan_session": "2026-09-10",
@@ -86,9 +86,9 @@
   },
   "coverage": {
    "version": 1,
-   "intended": 32,
-   "requested": 32,
-   "with_bars": 32,
+   "intended": 33,
+   "requested": 33,
+   "with_bars": 33,
    "no_bars": 0,
    "dropped": 0,
    "unfetched_budget": 0,
@@ -97,35 +97,35 @@
    "stale": 0,
    "gapped": 0,
    "unreadable": 0,
-   "on_session": 32,
-   "session_ready": 32,
+   "on_session": 33,
+   "session_ready": 33,
    "benchmark_ready": 1,
-   "scan_ready": 31,
+   "scan_ready": 32,
    "price_excluded": 0,
    "not_scanned_closed": 0,
-   "measured": 31,
+   "measured": 32,
    "scan_errors": 0,
    "scan_unattempted": 0,
-   "quality_success": 6,
+   "quality_success": 7,
    "quality_errors": 0,
    "matched": {
     "burst": 1,
-    "dollar": 1,
+    "dollar": 2,
     "both": 4,
     "neither": 25
    },
    "errors": 0,
    "duplicate_symbols": 0,
    "duplicate_bars": 0,
-   "returned_bars": 8142,
+   "returned_bars": 8255,
    "batch_attempts": 1,
-   "intended_identity": "12ecde3aab5494ac",
+   "intended_identity": "2eeaf7357449213e",
    "benchmark_added": 1,
    "acceptance": {
     "status": "ok",
     "denominator": "intended stocks, excluding benchmark",
-    "intended_stocks": 31,
-    "ready_stocks": 31,
+    "intended_stocks": 32,
+    "ready_stocks": 32,
     "fraction": 1.0,
     "minimum_fraction": 0.5,
     "complete_evaluation": true,
@@ -135,15 +135,15 @@
    "sessions": {
     "expected": "2026-09-10",
     "evaluated": "2026-09-10",
-    "expected_present": 32,
+    "expected_present": 33,
     "latest_bar_dates": {
-     "2026-09-10": 32
+     "2026-09-10": 33
     },
     "previous": "2026-09-09",
     "previous_observed": false,
-    "previous_printed": 32,
-    "closure_voters": 32,
-    "closure_agreed": 32
+    "previous_printed": 33,
+    "closure_voters": 33,
+    "closure_agreed": 33
    },
    "reasons": {
     "no_bars": {
@@ -215,7 +215,7 @@
    "held": [],
    "first_sessions": [],
    "first_session_stocks": 0,
-   "sentence": "All 31 intended stocks had usable session bars; 31 were measured after session price eligibility. Coverage is of this selection, not every listed security."
+   "sentence": "All 32 intended stocks had usable session bars; 32 were measured after session price eligibility. Coverage is of this selection, not every listed security."
   },
   "stale_followup": {
    "version": 2,
@@ -250,10 +250,10 @@
    "reason": "explicit_universe",
    "sentence": ""
   },
-  "bursts": 6,
+  "bursts": 7,
   "graded": {
    "a_plus": 4,
-   "a": 0,
+   "a": 1,
    "b": 2,
    "c": 0,
    "skip": 0
@@ -294,16 +294,17 @@
    "sentence": "Chart reader cost: 8 calls for 4 names, 0 replies; 0 input tokens (0 uncached, 0 written to the cache, 0 read from it) and 0 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price."
   },
   "review_selection": {
-   "version": 1,
-   "policy": "account_feasible_first_research_v1",
+   "version": 2,
+   "policy": "account_feasible_first_research_v2",
    "session": "2026-09-10",
    "max_reads": 12,
    "research_max": 2,
-   "discovered": 6,
+   "discovered": 7,
    "feasible": 3,
    "blockers": {
     "grade_not_admitted": 2,
     "quality_veto": 0,
+    "route_not_admitted": 2,
     "preview_unavailable": 0,
     "known_event": 0,
     "plan_withheld": 1,
@@ -963,7 +964,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "f82efc8f10b23170ce846b9a68c7c7ea15acc538a661b4cffe68518894d4dda4"
+   "context_sha256": "789dd2d193539b2db70dce85aa4d02ef72cd874548864b61fe4dac28086f057f"
   },
   "earnings": {
    "version": 1,
@@ -1014,6 +1015,24 @@
   "sanitised": {
    "replaced": 0,
    "paths": []
+  },
+  "admission": {
+   "version": 1,
+   "policy": "burst_route_or_dollar_expansion_v1",
+   "candidates": 7,
+   "admitted": 5,
+   "by_basis": {
+    "burst_route": 5,
+    "dollar_expansion": 0,
+    "dollar_no_expansion": 2
+   },
+   "in_band": {
+    "total": 5,
+    "burst_route": 4,
+    "dollar_expansion": 0,
+    "dollar_no_expansion": 1
+   },
+   "sentence": "Admission: 7 reaction candidates, 5 admitted to the trade band and the chart reads (5 by the 4% scan, 0 by the dollar scan on a range-expansion, higher-volume day); 2 came through the dollar scan alone without one and are research only. Of the 5 mechanical A-band names without a veto, 4 are admitted and 1 is not. Admission is read off the recorded discovery route and the checklist's own range-expansion and volume checks; it is never a grade, and the chart reader never sees a name it stops."
   }
  },
  "nights": [
@@ -1103,6 +1122,18 @@
    "discovery_version": 1,
    "reader_authority_version": 1,
    "reader_request_version": 3
+  },
+  "admission": {
+   "version": 1,
+   "policy": "burst_route_or_dollar_expansion_v1",
+   "burst_routes": [
+    "burst",
+    "both"
+   ],
+   "dollar_checks": [
+    "RE",
+    "VOL"
+   ]
   },
   "quality": {
    "base_search_sessions": 40,
@@ -1517,8 +1548,8 @@
    }
   },
   "review_selection": {
-   "version": 1,
-   "policy": "account_feasible_first_research_v1",
+   "version": 2,
+   "policy": "account_feasible_first_research_v2",
    "research_max": 2,
    "ranked_research": 1,
    "grade_order": [
@@ -1530,11 +1561,11 @@
    ],
    "order": "mechanical_grade,descending_score,ticker",
    "rotation": "sha256(policy|measured_session|ticker),ticker",
-   "research_pool": "infeasible mechanical pipeline.trade_grades",
+   "research_pool": "infeasible mechanical pipeline.trade_grades, discovery admitted",
    "feasibility": "private per-candidate plan before reader and combined allocation"
   },
   "funnel": {
-   "version": 2,
+   "version": 3,
    "policy": "candidate_funnel_v1"
   },
   "intraday": {
@@ -1650,7 +1681,7 @@
    "directory_quote_filter": false,
    "max_discovery": 8000,
    "sample_limit": 8,
-   "identity": "f97bc6805de5df88"
+   "identity": "1b97e33400ee217a"
   },
   "inputs": {
    "version": 1
@@ -1666,10 +1697,10 @@
   "down25_month": 0,
   "up50_month": 0,
   "down50_month": 0,
-  "up13_34d": 7,
+  "up13_34d": 8,
   "down13_34d": 0,
-  "pct_above_40ma": 58.1,
-  "universe": 31,
+  "pct_above_40ma": 59.4,
+  "universe": 32,
   "ratio_5d": 4.0,
   "ratio_10d": 2.75,
   "up4_5d": 8,
@@ -1680,7 +1711,7 @@
    "verdict": "green",
    "size_multiplier": 1.0,
    "reasons": [
-    "down 4%: 0 < the scaled alarm of 3.3 (700 of 6,500)",
+    "down 4%: 0 < the scaled alarm of 3.4 (700 of 6,500)",
     "10-session ratio 2.75 (11 up, 4 down) >= 1.0",
     "5-session ratio 4.0 (8 up, 2 down) >= 0.5",
     "10-session ratio 2.75 (11 up, 4 down) >= 2.0",
@@ -1688,9 +1719,9 @@
    ],
    "oversold_extreme": true,
    "thresholds": {
-    "universe": 31,
+    "universe": 32,
     "reference_universe": 6500,
-    "down4_alarm": 3.3,
+    "down4_alarm": 3.4,
     "up50_month_hot": 0.1,
     "down25_quarter_oversold": 1.0,
     "ratio_10d_red": 1.0,
@@ -2212,10 +2243,22 @@
      "dollar_move": 5.25
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "both",
+    "basis": "burst_route",
+    "admitted": true,
+    "expansion": {
+     "range_expansion": true,
+     "higher_volume": true
+    },
+    "reason": "admitted by the 4% scan"
+   },
    "grade": "A+",
    "plan": null,
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": true,
     "blockers": [],
     "research_pool": false,
@@ -2233,21 +2276,21 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "eee83b19e0df43ffb8a8615c2af7224d5273a5b01eb1a26eb769374c83fd287b",
+    "request_text_sha256": "38bb35b6aeb2832ee629f7ea9c44f05e2bbd588d632f5eb727f7803c9cdd6bfd",
     "input": {
      "metrics_sha256": "1ac72010c1e945e02533ca79815c882966c2609e161c7d34df8c02f5d7714a79",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "5ebc2af26409cc10d2eea6f543af1bad0a141516c43ecb8c8484edfc2b892b9c",
+      "request_sha256": "f661390c17456a3e86d9976aeec246558d4b67a781f24237a93ef60d4480e90a",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "5ebc2af26409cc10d2eea6f543af1bad0a141516c43ecb8c8484edfc2b892b9c",
+      "request_sha256": "f661390c17456a3e86d9976aeec246558d4b67a781f24237a93ef60d4480e90a",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -2286,7 +2329,7 @@
     "quality_sha256": "750c78d48b7ab1fb6d227e5fdddc6189a5cd964b9af1f0e8639aa4ac311d075f",
     "planning": {
      "inputs": null,
-     "regime_sha256": "c469f217694a86b46390e4490c49e814b1c5e390c31ffd03b798659288863774",
+     "regime_sha256": "1ab2c24fbdfa38c8bc398c0e677084790e152ae0944aad7a0c264cc61e5b44cd",
      "session": "2026-09-10",
      "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
      "error": null,
@@ -2294,13 +2337,13 @@
     },
     "reader_input": {
      "metrics_sha256": "1ac72010c1e945e02533ca79815c882966c2609e161c7d34df8c02f5d7714a79",
-     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_object": "d299ff49abe1bb4faaf9e57b8ebeaa0573e25f8a9990f6797324eb9c0c0acc92",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "eee83b19e0df43ffb8a8615c2af7224d5273a5b01eb1a26eb769374c83fd287b"
+     "request_text_sha256": "38bb35b6aeb2832ee629f7ea9c44f05e2bbd588d632f5eb727f7803c9cdd6bfd"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": true,
      "blockers": [],
      "research_pool": false,
@@ -2308,15 +2351,15 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "979e451962611cd3380ff07b95834776e058790b7c03c58f95da55509c5ceeb1",
+    "reader_sha256": "c9d64fc65de6a853e5b28e99c17106f9c28e918d1325e3d63d77dbf00ca98d4e",
     "reader_source": "fallback",
     "final_grade": "A+",
     "version": 1,
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2026-09-10",
-    "rules_version": "35a2539819be",
-    "context_sha256": "f82efc8f10b23170ce846b9a68c7c7ea15acc538a661b4cffe68518894d4dda4",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "789dd2d193539b2db70dce85aa4d02ef72cd874548864b61fe4dac28086f057f",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -2329,7 +2372,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "570caa0642067edd64b8f9e53fc82bfec2eec9e6ef2c66b6de5af6e1e217b1df"
+    "id": "ad947154e39609d0dd22bc47deca01d103cc49ab3a3e4f0b2ac207a2fe10e01f"
    },
    "series": [
     {
@@ -3509,10 +3552,22 @@
      "dollar_move": null
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "burst",
+    "basis": "burst_route",
+    "admitted": true,
+    "expansion": {
+     "range_expansion": false,
+     "higher_volume": true
+    },
+    "reason": "admitted by the 4% scan"
+   },
    "grade": "A+",
    "plan": null,
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": true,
     "blockers": [],
     "research_pool": false,
@@ -3530,21 +3585,21 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "85ddfd4b0acc7121ea8c921980ded1fd5f48a3c8bc31775133dc208d06d758bf",
+    "request_text_sha256": "27e2f9c24b8bf93dd56981cbcc061dac0fe5d980e770d7a48f4b84c53c0a3d2a",
     "input": {
      "metrics_sha256": "4beb88212ca7691cc0b98b34c823653b13394b13cba15ffa48e2ab534cd91167",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": null
     },
     "attempts": [
      {
-      "request_sha256": "abf343dc1000bd8a6ff22cb99580dccc946fea88c4acfa0dc0fb1d092cddacec",
+      "request_sha256": "cb5372c489f51c350a57045cd048e121e421fef63e37718a875b2018b62e796d",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "abf343dc1000bd8a6ff22cb99580dccc946fea88c4acfa0dc0fb1d092cddacec",
+      "request_sha256": "cb5372c489f51c350a57045cd048e121e421fef63e37718a875b2018b62e796d",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -3583,7 +3638,7 @@
     "quality_sha256": "8b2421270c4a1a7fe655964f8695ab62dbc8c097ab9093398769e40d77b78768",
     "planning": {
      "inputs": null,
-     "regime_sha256": "c469f217694a86b46390e4490c49e814b1c5e390c31ffd03b798659288863774",
+     "regime_sha256": "1ab2c24fbdfa38c8bc398c0e677084790e152ae0944aad7a0c264cc61e5b44cd",
      "session": "2026-09-10",
      "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
      "error": null,
@@ -3591,13 +3646,13 @@
     },
     "reader_input": {
      "metrics_sha256": "4beb88212ca7691cc0b98b34c823653b13394b13cba15ffa48e2ab534cd91167",
-     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_object": "d299ff49abe1bb4faaf9e57b8ebeaa0573e25f8a9990f6797324eb9c0c0acc92",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": null,
-     "request_text_sha256": "85ddfd4b0acc7121ea8c921980ded1fd5f48a3c8bc31775133dc208d06d758bf"
+     "request_text_sha256": "27e2f9c24b8bf93dd56981cbcc061dac0fe5d980e770d7a48f4b84c53c0a3d2a"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": true,
      "blockers": [],
      "research_pool": false,
@@ -3605,15 +3660,15 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "1a66f8546cd965ad8ff2948d5fab7e091d5683f3b45d1ec8298326dca345a266",
+    "reader_sha256": "3737f9fb505ae26bf79fbff0703d2cebbf4ea038288ef9f3ae6c9505dc9764c1",
     "reader_source": "fallback",
     "final_grade": "A+",
     "version": 1,
     "kind": "burst",
     "ticker": "AMD",
     "session": "2026-09-10",
-    "rules_version": "35a2539819be",
-    "context_sha256": "f82efc8f10b23170ce846b9a68c7c7ea15acc538a661b4cffe68518894d4dda4",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "789dd2d193539b2db70dce85aa4d02ef72cd874548864b61fe4dac28086f057f",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -3626,7 +3681,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "7218956804949bfd66d4c1d2a59b55a87b8614fefffd478610e63b671f84ee20"
+    "id": "9a868a2f20d18ef70f18bc9b9594e690e9e7579ea8b779918523ea0118333824"
    },
    "series": [
     {
@@ -4774,10 +4829,22 @@
      "dollar_move": 3.42
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "both",
+    "basis": "burst_route",
+    "admitted": true,
+    "expansion": {
+     "range_expansion": true,
+     "higher_volume": true
+    },
+    "reason": "admitted by the 4% scan"
+   },
    "grade": "A+",
    "plan": null,
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": true,
     "blockers": [],
     "research_pool": false,
@@ -4795,21 +4862,21 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "264755071d9434fc26af36c1ab1f08b56beb1310b47fec8ff214216e129e1809",
+    "request_text_sha256": "6da3a2f37c9b97d53499ac8deaf40c455d92abda778e8bafecdb14b25e025516",
     "input": {
      "metrics_sha256": "743d3815c73ef97ddc8e3592eb17f805f23d0850762dcaf13807a1e8c8df5d90",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "d067fb618de501569582804f64ed7b7767768eebe1f174a2ad7b29ffdedba891",
+      "request_sha256": "889d71cde6f0c912d751829e516bce35ed72ce639451df9899fc388b3f6de6ff",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "d067fb618de501569582804f64ed7b7767768eebe1f174a2ad7b29ffdedba891",
+      "request_sha256": "889d71cde6f0c912d751829e516bce35ed72ce639451df9899fc388b3f6de6ff",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -4848,7 +4915,7 @@
     "quality_sha256": "12279adfeccce3d20926714b5fecba487e61446cafd75bc760482ddd2c0a204c",
     "planning": {
      "inputs": null,
-     "regime_sha256": "c469f217694a86b46390e4490c49e814b1c5e390c31ffd03b798659288863774",
+     "regime_sha256": "1ab2c24fbdfa38c8bc398c0e677084790e152ae0944aad7a0c264cc61e5b44cd",
      "session": "2026-09-10",
      "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
      "error": null,
@@ -4856,13 +4923,13 @@
     },
     "reader_input": {
      "metrics_sha256": "743d3815c73ef97ddc8e3592eb17f805f23d0850762dcaf13807a1e8c8df5d90",
-     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_object": "d299ff49abe1bb4faaf9e57b8ebeaa0573e25f8a9990f6797324eb9c0c0acc92",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "264755071d9434fc26af36c1ab1f08b56beb1310b47fec8ff214216e129e1809"
+     "request_text_sha256": "6da3a2f37c9b97d53499ac8deaf40c455d92abda778e8bafecdb14b25e025516"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": true,
      "blockers": [],
      "research_pool": false,
@@ -4870,15 +4937,15 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "a334f7c0cac52641f4ffff0861d68f37bbfcf9cad72d047c63286b38abf1db0e",
+    "reader_sha256": "f40a50bba4d362b242d0692a29e4bf14ee119f47396b15b244010e69af6bfe92",
     "reader_source": "fallback",
     "final_grade": "A+",
     "version": 1,
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-10",
-    "rules_version": "35a2539819be",
-    "context_sha256": "f82efc8f10b23170ce846b9a68c7c7ea15acc538a661b4cffe68518894d4dda4",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "789dd2d193539b2db70dce85aa4d02ef72cd874548864b61fe4dac28086f057f",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -4891,7 +4958,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "d3abbfff2724d07868811d897def10d4ec2972687bc582ec541b84eea8379c84"
+    "id": "b3ca1ce664576ba6cde2d8dde4b4bbe80be16381d66af7b8bb0d097e7dfbc74e"
    },
    "series": [
     {
@@ -6079,10 +6146,22 @@
      "dollar_move": 9.5
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "both",
+    "basis": "burst_route",
+    "admitted": true,
+    "expansion": {
+     "range_expansion": true,
+     "higher_volume": true
+    },
+    "reason": "admitted by the 4% scan"
+   },
    "grade": "A+",
    "plan": null,
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": false,
     "blockers": [
      "plan_withheld"
@@ -6102,21 +6181,21 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "addc68906331926d7a0d84c4b8ba62ea2fa3475c3ffb1b557f64daae6ac6043e",
+    "request_text_sha256": "2436e1fccfe153368e0887553b01da9d6c2fe0dca0cd8bf697cb4d470ff8e4af",
     "input": {
      "metrics_sha256": "2aac16bc43f20aaf6d7d76b2461fbf886ebd7ae52d360437214a4d5f68d1c0cf",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "28f2ccbeb8beca579b39fa8bd8de1b9e8b4f9b2344ddc222ac264b0b752214c5",
+      "request_sha256": "17d8cc4c6670565d5b30db9921318244b7b33d907ae80607cd782453e6e42d1e",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "28f2ccbeb8beca579b39fa8bd8de1b9e8b4f9b2344ddc222ac264b0b752214c5",
+      "request_sha256": "17d8cc4c6670565d5b30db9921318244b7b33d907ae80607cd782453e6e42d1e",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -6155,7 +6234,7 @@
     "quality_sha256": "c7074aa4ee1a9e15aa7a777620c34f1fdb725848ac32d7214bccd8c8b901b239",
     "planning": {
      "inputs": null,
-     "regime_sha256": "c469f217694a86b46390e4490c49e814b1c5e390c31ffd03b798659288863774",
+     "regime_sha256": "1ab2c24fbdfa38c8bc398c0e677084790e152ae0944aad7a0c264cc61e5b44cd",
      "session": "2026-09-10",
      "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
      "error": null,
@@ -6163,13 +6242,13 @@
     },
     "reader_input": {
      "metrics_sha256": "2aac16bc43f20aaf6d7d76b2461fbf886ebd7ae52d360437214a4d5f68d1c0cf",
-     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_object": "d299ff49abe1bb4faaf9e57b8ebeaa0573e25f8a9990f6797324eb9c0c0acc92",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "addc68906331926d7a0d84c4b8ba62ea2fa3475c3ffb1b557f64daae6ac6043e"
+     "request_text_sha256": "2436e1fccfe153368e0887553b01da9d6c2fe0dca0cd8bf697cb4d470ff8e4af"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": false,
      "blockers": [
       "plan_withheld"
@@ -6179,15 +6258,15 @@
      "purpose": "research_ranked"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "9a34a6d1390521b3aac0d85535984fe0df43d98d788cffa9c8a0233d87c9af5b",
+    "reader_sha256": "5d83629026f0af053f99553fb8b4c0a80c76254de5aba9b1fcce670c21a77b8d",
     "reader_source": "fallback",
     "final_grade": "A+",
     "version": 1,
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2026-09-10",
-    "rules_version": "35a2539819be",
-    "context_sha256": "f82efc8f10b23170ce846b9a68c7c7ea15acc538a661b4cffe68518894d4dda4",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "789dd2d193539b2db70dce85aa4d02ef72cd874548864b61fe4dac28086f057f",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -6200,7 +6279,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "761d5e97fbfe75dba7e957fea079396b1358ca0d6fe22b412c1a85ac7b48d293"
+    "id": "daf73c7f94daf7d652e7ad1e74893ff1bdac8b468e09eb6aa2361832b1ca482d"
    },
    "series": [
     {
@@ -7111,6 +7190,1265 @@
    "summary": "TSLA: +6.0% on 5.0× volume out of a base 3.3% deep. A+ 10.0, 6 of 6 criteria."
   },
   {
+   "ticker": "MSFT",
+   "name": "",
+   "flags": [],
+   "scan": "dollar",
+   "close": 119.52,
+   "prev_close": 117.18,
+   "open": 118.09,
+   "high": 119.7,
+   "low": 117.91,
+   "gain_pct": 2.0,
+   "volume": 500000.0,
+   "volume_vs_prior": 0.8333,
+   "prev_volume": 600000,
+   "dollar_volume": 59760000.0,
+   "dollar_move": 1.43,
+   "extension_pct": 1.5,
+   "quality": {
+    "checks": [
+     {
+      "key": "two_days",
+      "letter": "2",
+      "label": "not up two days in a row",
+      "values": {
+       "up_run": 0,
+       "up_closes": 0,
+       "prior_day_pct": -0.17
+      },
+      "value": 0,
+      "display": "up_run=0 up_closes=0 prior_day_pct=-0.17",
+      "threshold": "up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "linearity",
+      "letter": "L",
+      "label": "linearity of the prior leg",
+      "values": {
+       "er": 0.75,
+       "r2": 0.98,
+       "leg_sessions": 17,
+       "leg_gain_pct": 17.6
+      },
+      "value": 0.75,
+      "display": "er=0.75 r2=0.98 leg_sessions=17 leg_gain_pct=17.6",
+      "threshold": "ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "young_trend",
+      "letter": "Y",
+      "label": "young trend: first or second breakout",
+      "values": {
+       "breakouts_in_move": 0,
+       "sessions_since_move_start": 33,
+       "gain_since_move_start_pct": 19.5
+      },
+      "value": 0,
+      "display": "breakouts_in_move=0 sessions_since_move_start=33 gain_since_move_start_pct=19.5",
+      "threshold": "prior breakouts since the move started <= 1 (0 for A+)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "narrow_or_negative",
+      "letter": "N",
+      "label": "narrow or negative day before",
+      "values": {
+       "prior_day_pct": -0.17,
+       "prior_range_pct": 0.8,
+       "negative": true,
+       "narrow": true,
+       "median_range_pct": 2.2
+      },
+      "value": -0.17,
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=2.2",
+      "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "consolidation",
+      "letter": "C",
+      "label": "consolidation quality",
+      "values": {
+       "base_sessions": 16,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.24,
+       "tightness": 1.17,
+       "base_volume_vs_leg": 0.42,
+       "base_volume_vs_avg": 0.59
+      },
+      "value": 16,
+      "display": "base_sessions=16 breakdowns=0 bursts_in_base=0 giveback=0.24 tightness=1.17 base_volume_vs_leg=0.42 base_volume_vs_avg=0.59",
+      "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+      "passed": false,
+      "pass": false,
+      "marginal": false,
+      "a_plus": false,
+      "note": "the base ranged wider than the sessions before it",
+      "partial": false,
+      "status": "FAIL"
+     },
+     {
+      "key": "close_near_high",
+      "letter": "H",
+      "label": "close near the high",
+      "values": {
+       "close_pos": 0.9,
+       "close_above_open": true
+      },
+      "value": 0.9,
+      "display": "close_pos=0.9 close_above_open=True",
+      "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "range_expansion",
+      "letter": "RE",
+      "label": "range expansion",
+      "values": {
+       "vs_prior_5": 0.68,
+       "vs_prior_10": 0.68,
+       "bar_range_pct": 1.5
+      },
+      "value": 0.68,
+      "display": "vs_prior_5=0.68 vs_prior_10=0.68 bar_range_pct=1.5",
+      "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
+      "passed": false,
+      "pass": false,
+      "marginal": false,
+      "a_plus": false,
+      "note": "the burst bar is not the widest of the last five",
+      "partial": false,
+      "status": "FAIL"
+     },
+     {
+      "key": "volume",
+      "letter": "VOL",
+      "label": "higher volume",
+      "values": {
+       "volume_vs_prior": 0.83,
+       "volume_vs_avg50": 0.49,
+       "volume_rank_60": 60,
+       "cv_required": false
+      },
+      "value": 0.83,
+      "display": "volume_vs_prior=0.83 volume_vs_avg50=0.49 volume_rank_60=60 cv_required=False",
+      "threshold": "volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average",
+      "passed": false,
+      "pass": false,
+      "marginal": false,
+      "a_plus": false,
+      "note": "volume did not exceed the prior session's",
+      "partial": false,
+      "status": "FAIL"
+     }
+    ],
+    "vetoes": [],
+    "passes": 5,
+    "of": 6,
+    "a_plus_count": 5,
+    "score": 8.0,
+    "grade": "A",
+    "reclass": null,
+    "notes": [
+     "extension: close 1.5% vs its 20-SMA, 1.7% over 20 sessions"
+    ],
+    "base": {
+     "start": "2026-08-18",
+     "end": "2026-09-09",
+     "start_index": 96,
+     "end_index": 111,
+     "sessions": 16,
+     "high": 121.67,
+     "low": 116.2,
+     "depth_pct": 4.5,
+     "breakdown_dates": []
+    },
+    "leg": {
+     "start": 79,
+     "end": 95,
+     "length": 17,
+     "gain_pct": 17.6,
+     "high": 121.67,
+     "low": 99.2,
+     "er": 0.75,
+     "r2": 0.98
+    },
+    "burst": {
+     "gain_pct": 2.0,
+     "gap_pct": 0.8,
+     "bar_range_pct": 1.5,
+     "close_pos": 0.9,
+     "volume_vs_prior": 0.83,
+     "volume_vs_avg50": 0.49,
+     "volume_rank_60": 60
+    },
+    "unreadable": null,
+    "weights": {
+     "2": 1.5,
+     "L": 2.0,
+     "Y": 1.5,
+     "N": 1.5,
+     "C": 2.0,
+     "H": 1.5
+    }
+   },
+   "grade_mechanical": "A",
+   "score": 8.0,
+   "vetoes": [],
+   "reclass": null,
+   "discovery": {
+    "version": 1,
+    "admitted_by": [
+     "dollar"
+    ],
+    "applicable_rules": {
+     "dollar": {
+      "min_move": 0.9,
+      "min_volume_exclusive": 100000
+     }
+    },
+    "inapplicable_rules": {
+     "burst": {
+      "min_ratio": 1.04,
+      "volume_above_prior": true,
+      "min_volume": 100000
+     }
+    },
+    "measurements": {
+     "close": 119.52,
+     "prev_close": 117.18,
+     "open": 118.09,
+     "gain_pct": 2.0,
+     "volume": 500000,
+     "prev_volume": 600000,
+     "volume_vs_prior": 0.8333,
+     "dollar_move": 1.43
+    }
+   },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "dollar",
+    "basis": "dollar_no_expansion",
+    "admitted": false,
+    "expansion": {
+     "range_expansion": false,
+     "higher_volume": false
+    },
+    "reason": "dollar scan alone, without a range-expansion, higher-volume day: research only, no ticket and no chart read"
+   },
+   "grade": "A",
+   "plan": null,
+   "review_selection": {
+    "policy": "account_feasible_first_research_v2",
+    "feasible": false,
+    "blockers": [
+     "route_not_admitted"
+    ],
+    "research_pool": false,
+    "selected": false,
+    "purpose": "outside_research_pool"
+   },
+   "claude": null,
+   "reader_coverage": "not_selected_budget",
+   "rank": 5,
+   "evidence": {
+    "source": {
+     "sha256": "ae9d57891ffe3efcb3bec3c715b46f546d408b2d7c4359f767bdd3101c078af4",
+     "rows": 113,
+     "evaluated_session": "2026-09-10",
+     "previous_session": "2026-09-09",
+     "scan_sha256": "b7fc8ac83c1de50126a0adfb23153f0fb42ebea4d1adef8c21a6dddf11a8504f",
+     "quality_sha256": "b7fc8ac83c1de50126a0adfb23153f0fb42ebea4d1adef8c21a6dddf11a8504f"
+    },
+    "facts_sha256": "162f5a56d579afee4181b3c70a3fbd023fb037b4be1d7c29f330a2ee02d22653",
+    "discovery_sha256": "be43ded0842ca208b3b2d1ab1064a05c6690c1e781e34c9fd507b08e5699bcaf",
+    "quality_sha256": "59bf34625db3e511193cb53a5c84dc32aff2f86652817313ff325a5de347aba8",
+    "planning": {
+     "inputs": null,
+     "regime_sha256": "1ab2c24fbdfa38c8bc398c0e677084790e152ae0944aad7a0c264cc61e5b44cd",
+     "session": "2026-09-10",
+     "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+     "error": null,
+     "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
+    },
+    "review_selection": {
+     "policy": "account_feasible_first_research_v2",
+     "feasible": false,
+     "blockers": [
+      "route_not_admitted"
+     ],
+     "research_pool": false,
+     "selected": false,
+     "purpose": "outside_research_pool"
+    },
+    "reader_coverage": "not_selected_budget",
+    "reader_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+    "reader_source": "not_graded",
+    "final_grade": "A",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "MSFT",
+    "session": "2026-09-10",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "789dd2d193539b2db70dce85aa4d02ef72cd874548864b61fe4dac28086f057f",
+    "gate": {
+     "reader_coverage": "not_selected_budget",
+     "regime": "green",
+     "final_grade": "A",
+     "allowed_grades": [
+      "A+",
+      "A"
+     ],
+     "ticket": false,
+     "reason": "route_not_admitted",
+     "detail": null
+    },
+    "id": "1f905cc62b415ded8d927b6a52e2f80db3e7b3750cf393dd0ecae5da962b3000"
+   },
+   "series": [
+    {
+     "date": "2026-03-31",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-02",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-06",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-07",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-14",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-27",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-28",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-30",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-04",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-05",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-06",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-07",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-11",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-12",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-14",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-18",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-19",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-26",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-27",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-28",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-05-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-02",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-03",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-04",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-05",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-11",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-12",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-18",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-25",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-26",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-06-30",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-02",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-06",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-07",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-14",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-07-27",
+     "o": 100.0,
+     "h": 101.76,
+     "l": 99.5,
+     "c": 101.25,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-07-28",
+     "o": 101.25,
+     "h": 103.03,
+     "l": 100.74,
+     "c": 102.52,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-07-29",
+     "o": 102.52,
+     "h": 104.32,
+     "l": 102.01,
+     "c": 103.8,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-07-30",
+     "o": 103.8,
+     "h": 105.63,
+     "l": 103.28,
+     "c": 105.1,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-07-31",
+     "o": 105.1,
+     "h": 106.94,
+     "l": 104.57,
+     "c": 106.41,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-03",
+     "o": 106.41,
+     "h": 108.28,
+     "l": 105.88,
+     "c": 107.74,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-04",
+     "o": 107.74,
+     "h": 109.64,
+     "l": 107.2,
+     "c": 109.09,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-05",
+     "o": 109.09,
+     "h": 111.0,
+     "l": 108.54,
+     "c": 110.45,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-06",
+     "o": 110.45,
+     "h": 112.39,
+     "l": 109.9,
+     "c": 111.83,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-07",
+     "o": 111.83,
+     "h": 113.8,
+     "l": 111.27,
+     "c": 113.23,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-10",
+     "o": 113.23,
+     "h": 115.22,
+     "l": 112.66,
+     "c": 114.65,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-11",
+     "o": 114.65,
+     "h": 116.66,
+     "l": 114.08,
+     "c": 116.08,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-12",
+     "o": 116.08,
+     "h": 118.12,
+     "l": 115.5,
+     "c": 117.53,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-13",
+     "o": 117.53,
+     "h": 119.59,
+     "l": 116.94,
+     "c": 119.0,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-14",
+     "o": 119.0,
+     "h": 121.09,
+     "l": 118.41,
+     "c": 120.49,
+     "v": 1500000.0
+    },
+    {
+     "date": "2026-08-17",
+     "o": 120.49,
+     "h": 121.67,
+     "l": 116.4,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-18",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-19",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-20",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-21",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-24",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-25",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-26",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-27",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-28",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-31",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-01",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-02",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-03",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-04",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-08",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-09",
+     "o": 117.38,
+     "h": 117.73,
+     "l": 116.83,
+     "c": 117.18,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-09-10",
+     "o": 118.09,
+     "h": 119.7,
+     "l": 117.91,
+     "c": 119.52,
+     "v": 500000.0
+    }
+   ],
+   "summary": "MSFT: +2.0% on 0.8× volume out of a base 4.5% deep. A 8.0, 5 of 6 criteria."
+  },
+  {
    "ticker": "PLUG",
    "name": "",
    "flags": [],
@@ -7381,10 +8719,22 @@
      "dollar_move": 3.84
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "both",
+    "basis": "burst_route",
+    "admitted": true,
+    "expansion": {
+     "range_expansion": true,
+     "higher_volume": true
+    },
+    "reason": "admitted by the 4% scan"
+   },
    "grade": "B",
    "plan": null,
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": false,
     "blockers": [
      "grade_not_admitted"
@@ -7395,7 +8745,7 @@
    },
    "claude": null,
    "reader_coverage": "not_selected_budget",
-   "rank": 5,
+   "rank": 6,
    "evidence": {
     "source": {
      "sha256": "f106909bff8ee9f502f1647e96d7b61b338694c962bbe7b6462d536b6b8174af",
@@ -7410,14 +8760,14 @@
     "quality_sha256": "061ce857a3eaad29e6275c4642c75fac57c7841dd65de1ab69e4ac09c940fc9f",
     "planning": {
      "inputs": null,
-     "regime_sha256": "c469f217694a86b46390e4490c49e814b1c5e390c31ffd03b798659288863774",
+     "regime_sha256": "1ab2c24fbdfa38c8bc398c0e677084790e152ae0944aad7a0c264cc61e5b44cd",
      "session": "2026-09-10",
      "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
      "error": null,
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": false,
      "blockers": [
       "grade_not_admitted"
@@ -7434,8 +8784,8 @@
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2026-09-10",
-    "rules_version": "35a2539819be",
-    "context_sha256": "f82efc8f10b23170ce846b9a68c7c7ea15acc538a661b4cffe68518894d4dda4",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "789dd2d193539b2db70dce85aa4d02ef72cd874548864b61fe4dac28086f057f",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -7448,7 +8798,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "89210bbd0b664922f1a960a8e3cbe84298ffe243b51efe9eb1d8311384e4839b"
+    "id": "f68712eac0ef6cd2cfcf3aa8990961af51b9aec0261cc3eeec97d7d0db626f4c"
    },
    "series": [
     {
@@ -8629,13 +9979,26 @@
      "dollar_move": 1.43
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "dollar",
+    "basis": "dollar_no_expansion",
+    "admitted": false,
+    "expansion": {
+     "range_expansion": true,
+     "higher_volume": false
+    },
+    "reason": "dollar scan alone, without a range-expansion, higher-volume day: research only, no ticket and no chart read"
+   },
    "grade": "B",
    "plan": null,
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": false,
     "blockers": [
-     "grade_not_admitted"
+     "grade_not_admitted",
+     "route_not_admitted"
     ],
     "research_pool": false,
     "selected": false,
@@ -8643,7 +10006,7 @@
    },
    "claude": null,
    "reader_coverage": "not_selected_budget",
-   "rank": 6,
+   "rank": 7,
    "evidence": {
     "source": {
      "sha256": "48b11dcb993276043b03a80e1bff670217a7ef8d97e28b7ca5c6b725270936ff",
@@ -8658,17 +10021,18 @@
     "quality_sha256": "ab7b4ee41775df078d62097a1642a32aa57169efaaffceca50ab9b0f5e9b39b9",
     "planning": {
      "inputs": null,
-     "regime_sha256": "c469f217694a86b46390e4490c49e814b1c5e390c31ffd03b798659288863774",
+     "regime_sha256": "1ab2c24fbdfa38c8bc398c0e677084790e152ae0944aad7a0c264cc61e5b44cd",
      "session": "2026-09-10",
      "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
      "error": null,
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": false,
      "blockers": [
-      "grade_not_admitted"
+      "grade_not_admitted",
+      "route_not_admitted"
      ],
      "research_pool": false,
      "selected": false,
@@ -8682,8 +10046,8 @@
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2026-09-10",
-    "rules_version": "35a2539819be",
-    "context_sha256": "f82efc8f10b23170ce846b9a68c7c7ea15acc538a661b4cffe68518894d4dda4",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "789dd2d193539b2db70dce85aa4d02ef72cd874548864b61fe4dac28086f057f",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -8696,7 +10060,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "ed811d867a8a0c21a4ecbb810184368503f2753b8febc4c55df278c0eeb133c9"
+    "id": "0651d04ecba0ea7ecc5f78e9582e5574f487ff1fd65002387c600b6da3496cb9"
    },
    "series": [
     {
@@ -9974,8 +11338,8 @@
      },
      "evidence_ref": {
       "version": 1,
-      "id": "a583e84a94b82f17777f1df5ed116e38c45880dcc31673238aa84c6bef78abc5",
-      "context_sha256": "f82efc8f10b23170ce846b9a68c7c7ea15acc538a661b4cffe68518894d4dda4",
+      "id": "f7f8b02192af41fe17a8a5dc017f300ce7872c2ea4f9a9e9c6b3ab0f516f1a8e",
+      "context_sha256": "789dd2d193539b2db70dce85aa4d02ef72cd874548864b61fe4dac28086f057f",
       "plan_sha256": "6afd53a2b4e72ad1d0d6e1323938a78f5af7c5b9165a60b45f9d4c83c3a09cdd",
       "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
      }
@@ -10973,7 +12337,7 @@
        },
        "size_multiplier": 1.0
       },
-      "regime_sha256": "c469f217694a86b46390e4490c49e814b1c5e390c31ffd03b798659288863774",
+      "regime_sha256": "1ab2c24fbdfa38c8bc398c0e677084790e152ae0944aad7a0c264cc61e5b44cd",
       "session": "2026-09-10",
       "output_sha256": "6afd53a2b4e72ad1d0d6e1323938a78f5af7c5b9165a60b45f9d4c83c3a09cdd",
       "error": null,
@@ -10983,8 +12347,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2026-09-10",
-     "rules_version": "35a2539819be",
-     "context_sha256": "f82efc8f10b23170ce846b9a68c7c7ea15acc538a661b4cffe68518894d4dda4",
+     "rules_version": "2bce356f881f",
+     "context_sha256": "789dd2d193539b2db70dce85aa4d02ef72cd874548864b61fe4dac28086f057f",
      "gate": {
       "regime": "green",
       "final_grade": "watch",
@@ -10993,13 +12357,13 @@
       "reason": null,
       "detail": null
      },
-     "id": "a583e84a94b82f17777f1df5ed116e38c45880dcc31673238aa84c6bef78abc5"
+     "id": "f7f8b02192af41fe17a8a5dc017f300ce7872c2ea4f9a9e9c6b3ab0f516f1a8e"
     }
    }
   ],
   "also_quiet": [],
   "counts": {
-   "momentum": 9,
+   "momentum": 10,
    "quiet": 4,
    "admitted": 1,
    "eligible": 1,
@@ -11246,7 +12610,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "35a2539819be"
+  "replay_rules_version": "2bce356f881f"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -11331,6 +12695,27 @@
       "l": 71.2,
       "c": 72.93,
       "v": 2781939.0,
+      "from_session": "2026-09-10",
+      "source": "public observation history"
+     }
+    ]
+   },
+   "MSFT": {
+    "date": "2026-09-10",
+    "o": 118.09,
+    "h": 119.7,
+    "l": 117.91,
+    "c": 119.52,
+    "v": 500000.0,
+    "since": "2026-09-10",
+    "history": [
+     {
+      "date": "2026-09-10",
+      "o": 118.09,
+      "h": 119.7,
+      "l": 117.91,
+      "c": 119.52,
+      "v": 500000.0,
       "from_session": "2026-09-10",
       "source": "public observation history"
      }
@@ -11464,53 +12849,60 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:35a2539819be": {
+   "burst:AAPL:2026-09-10:2bce356f881f": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:35a2539819be": {
+   "burst:AMD:2026-09-10:2bce356f881f": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:35a2539819be": {
+   "burst:NVDA:2026-09-10:2bce356f881f": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:35a2539819be": {
+   "burst:TSLA:2026-09-10:2bce356f881f": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:35a2539819be": {
+   "burst:MSFT:2026-09-10:2bce356f881f": {
+    "ticker": "MSFT",
+    "session": "2026-09-10",
+    "kind": "burst",
+    "rules_version": "2bce356f881f",
+    "coverage": "observed"
+   },
+   "burst:PLUG:2026-09-10:2bce356f881f": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:35a2539819be": {
+   "burst:DLLR:2026-09-10:2bce356f881f": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:35a2539819be": {
+   "anticipation:COIL:2026-09-10:2bce356f881f": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    }
   },
@@ -11524,7 +12916,7 @@
   "sentence": "AAPL came closest at A+ 10.0: accepted reader review missing; mechanical grade retained for research, not a measured setup failure."
  },
  "funnel": {
-  "version": 2,
+  "version": 3,
   "policy": "candidate_funnel_v1",
   "regime": "green",
   "admitted_grades": [
@@ -11532,11 +12924,11 @@
    "A"
   ],
   "reaction": {
-   "discovered": 6,
+   "discovered": 7,
    "potentially_usable": 4,
    "by_mechanical_grade": {
     "A+": 4,
-    "A": 0,
+    "A": 1,
     "B": 2,
     "C": 0,
     "skip": 0
@@ -11545,6 +12937,7 @@
     "market": 0,
     "grade": 2,
     "veto": 0,
+    "route": 1,
     "preview_event": 0,
     "preview_geometry": 0,
     "preview_sizing": 0,
@@ -11590,6 +12983,10 @@
      "stage": "review_transport"
     },
     {
+     "ticker": "MSFT",
+     "stage": "route"
+    },
+    {
      "ticker": "PLUG",
      "stage": "grade"
     },
@@ -11602,7 +12999,7 @@
   "anticipation": {
    "listed": 1,
    "counts": {
-    "momentum": 9,
+    "momentum": 10,
     "quiet": 4,
     "admitted": 1,
     "top": 1,
@@ -11633,6 +13030,7 @@
    "market": "market",
    "grade": "grade",
    "veto": "veto",
+   "route": "route",
    "preview_event": "preview",
    "preview_geometry": "preview",
    "preview_sizing": "preview",
@@ -11664,6 +13062,7 @@
    "market": "market gate: the regime admits no new longs",
    "grade": "mechanical grade below the regime's admitted band",
    "veto": "quality veto",
+   "route": "dollar scan alone, without a range-expansion, higher-volume day",
    "preview_event": "known corporate event, in the pre-review preview",
    "preview_geometry": "stop rule at the limit, in the pre-review preview",
    "preview_sizing": "no whole share, in the pre-review preview",
@@ -11691,7 +13090,7 @@
    "ticket": "ticket",
    "unknown": "not readable from this record"
   },
-  "sentence": "Candidate funnel under a GREEN market: 6 reaction candidates discovered, 4 potentially usable (mechanical grade in the admitted band, no veto), 0 reaction tickets. Reaction candidates stopped at: 2 mechanical grade below the regime's admitted band, 4 review got no usable answer from the API. Anticipation: 9 momentum names, 4 quiet, 1 passing the coil checks, 1 listed, 1 ticket. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
+  "sentence": "Candidate funnel under a GREEN market: 7 reaction candidates discovered, 4 potentially usable (mechanical grade in the admitted band, no veto, discovery admitted), 0 reaction tickets. Reaction candidates stopped at: 2 mechanical grade below the regime's admitted band, 1 dollar scan alone, without a range-expansion, higher-volume day, 4 review got no usable answer from the API. Anticipation: 10 momentum names, 4 quiet, 1 passing the coil checks, 1 listed, 1 ticket. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
  },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",

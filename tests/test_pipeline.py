@@ -656,3 +656,93 @@ def test_a_clean_night_publishes_observations_for_its_signals(market, claude, fa
     for row in data["watchlist"]["top"]:
         assert row["ticker"] in block["symbols"]
     assert data["_contract"]["observations"]
+
+
+# ------------------------------------------------ the discovery admission ----
+def dollar_a_frame(expansion: bool) -> pd.DataFrame:
+    """A dollar-only day the checklist grades in the A band (src/admission.py).
+    With ``expansion``: +2.5% over the previous close on a $2.88 body, a bar 3%
+    wide against a base of 0.8%-wide bars, on double the previous session's
+    volume -- RE and VOL pass, the 4% scan does not match. Without: +2% on a
+    $1.43 body inside a 1.5%-wide bar narrower than the base's 2%-wide bars,
+    on five-sixths of the previous session's volume -- RE and VOL fail, and
+    the wider base fails C, so the checklist scores it 8.0 and grades it A,
+    the shape 32 of the 34 dollar-only A names of 3 November 2026 had."""
+    if expansion:
+        return qframe(ideal_bars(burst_gain=2.5, close_pos=0.9, burst_vol=1_200_000, burst_range_pct=3.0))
+    return qframe(ideal_bars(burst_gain=2.0, close_pos=0.9, burst_vol=500_000, burst_range_pct=1.5, base_range=2.0))
+
+
+def _market_with(fake_alpaca, seed, ticker, frame):
+    """The night's universe with one more name beside the A+ burst and the coil."""
+    fake_alpaca.add_history("AAA", a_plus_frame())
+    fake_alpaca.add_history(ticker, frame)
+    fake_alpaca.add_history("COIL", coil())
+    for name, df in base_frames(11, seed).items():
+        fake_alpaca.add_history(name, df)
+    fake_alpaca.add_history("SPY", make_ohlcv("base", seed=[seed, 999], days=260))
+    return ["AAA", ticker, "COIL"] + [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(11)]
+
+
+def test_a_dollar_only_a_without_expansion_is_research_only_whatever_the_reader_would_say(fake_alpaca, seed, claude, fake_resend, tmp_path):
+    """The rule of 4 November 2026: a dollar-only day without a range-expansion,
+    higher-volume day is not admitted. The checklist still grades it A; the run
+    asks no reader about it, plans nothing for it, blocks it at the selection
+    and the funnel, seals its gate as the admission, and counts it as A-band
+    not admitted -- while the 4% burst beside it is planned and traded."""
+    from src import admission, provenance
+    tickers = _market_with(fake_alpaca, seed, "DNO", dollar_a_frame(expansion=False))
+    rep, data, docs = evening(tmp_path, tickers)
+    assert rep.exit_code() == 0 and rep.status == "ok", rep.problems
+    rows = {b["ticker"]: b for b in data["bursts"]}
+    dno = rows["DNO"]
+    assert dno["scan"] == "dollar" and dno["grade_mechanical"] == "A" and dno["grade"] == "A" and dno["vetoes"] == []
+    assert dno["admission"] == admission.block(dno)
+    assert dno["admission"]["basis"] == "dollar_no_expansion" and dno["admission"]["admitted"] is False
+    assert dno["admission"]["expansion"] == {"range_expansion": False, "higher_volume": False}
+    # no read, no plan, blocked at the selection and not research either
+    assert dno["claude"] is None and dno["reader_coverage"] == "not_selected_budget" and dno["plan"] is None
+    assert dno["review_selection"]["blockers"] == ["route_not_admitted"]
+    assert dno["review_selection"]["research_pool"] is False and dno["review_selection"]["purpose"] == "outside_research_pool"
+    assert data["run"]["reads"]["requested"] == 1 and data["run"]["review_selection"]["blockers"]["route_not_admitted"] == 1
+    assert data["run"]["review_selection"]["policy"] == "account_feasible_first_research_v2"
+    # the burst beside it is planned and traded as before
+    assert data["trades"] == ["AAA"] and rows["AAA"]["admission"]["basis"] == "burst_route"
+    assert data["cover"]["h1"] == "Trade next session. 1 A-quality burst."
+    # the night's own accounting
+    assert data["run"]["admission"] == admission.summary(data["bursts"], ["A+", "A"])
+    assert data["run"]["admission"]["in_band"] == {"total": 2, "burst_route": 1, "dollar_expansion": 0, "dollar_no_expansion": 1}
+    assert "1 came through the dollar scan alone without one and is research only" in data["run"]["admission"]["sentence"]
+    stages = {r["ticker"]: r["stage"] for r in data["funnel"]["reaction"]["rows"]}
+    assert stages["DNO"] == "route" and data["funnel"]["reaction"]["stages"]["route"] == 1
+    assert data["funnel"]["reaction"]["potentially_usable"] == 1 and data["funnel"]["version"] == 3
+    assert dno["evidence"]["gate"]["reason"] == "route_not_admitted" and dno["evidence"]["gate"]["ticket"] is False
+    assert data["rules"]["admission"]["version"] == 1 and data["rules"]["admission"]["dollar_checks"] == ["RE", "VOL"]
+    assert provenance.verify(data, objects=docs / "evidence")["status"] == "PASS"
+    assert report.validate(data) is None
+    # the mail says so in the record's words
+    assert "// discovery admission" in _mail_text(fake_resend.sent[-1]["html"]) and data["run"]["admission"]["sentence"] in _mail_text(fake_resend.sent[-1]["html"])
+
+
+def test_a_dollar_only_a_with_expansion_is_admitted_read_and_planned_like_a_burst(fake_alpaca, seed, claude, fake_resend, tmp_path):
+    """The same route on a range-expansion, higher-volume day is admitted: the
+    reader is asked, an accepted review lets it be planned, and its ticket is
+    the dollar scan's own (plan.scan 'dollar')."""
+    from src import admission, provenance
+    tickers = _market_with(fake_alpaca, seed, "DEX", dollar_a_frame(expansion=True))
+    rep, data, docs = evening(tmp_path, tickers)
+    assert rep.exit_code() == 0 and rep.status == "ok", rep.problems
+    rows = {b["ticker"]: b for b in data["bursts"]}
+    dex = rows["DEX"]
+    assert dex["scan"] == "dollar" and dex["grade_mechanical"] in ("A+", "A") and dex["gain_pct"] < 4
+    assert dex["admission"]["basis"] == "dollar_expansion" and dex["admission"]["admitted"] is True
+    assert dex["admission"]["expansion"] == {"range_expansion": True, "higher_volume": True}
+    assert dex["review_selection"]["feasible"] is True and dex["review_selection"]["selected"] is True
+    assert dex["claude"]["source"] == "claude" and dex["reader_coverage"] == "accepted"
+    assert dex["plan"] is not None and dex["plan"]["scan"] == "dollar"
+    assert set(data["trades"]) == {"AAA", "DEX"} and data["run"]["reads"]["requested"] == 2
+    assert data["run"]["admission"]["in_band"] == {"total": 2, "burst_route": 1, "dollar_expansion": 1, "dollar_no_expansion": 0}
+    stages = {r["ticker"]: r["stage"] for r in data["funnel"]["reaction"]["rows"]}
+    assert stages["DEX"] == "ticket" and data["funnel"]["reaction"]["stages"]["route"] == 0
+    assert dex["evidence"]["gate"]["ticket"] is True and dex["evidence"]["gate"]["reason"] is None
+    assert provenance.verify(data, objects=docs / "evidence")["status"] == "PASS"

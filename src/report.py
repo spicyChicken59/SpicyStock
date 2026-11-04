@@ -28,7 +28,7 @@ from typing import Any
 
 import resend
 
-from src import timing, inputs, sessions, delivery
+from src import timing, inputs, sessions, delivery, admission
 
 log = logging.getLogger(__name__)
 
@@ -346,8 +346,13 @@ def breadth_sentence(breadth: Any) -> str:
 
 
 def reader_pending(bursts):
+    """The A-band bursts still waiting on an accepted reader review: a name the
+    discovery admission stopped (src/admission.py) is research only and waits
+    on nothing, so it is not among them; a row from before the rule reads as
+    admitted."""
     return [b for b in bursts if isinstance(b, dict) and b.get("grade") in ("A+", "A")
-            and b.get("reader_coverage") in ("fallback", "not_selected_budget", "unknown")]
+            and b.get("reader_coverage") in ("fallback", "not_selected_budget", "unknown")
+            and admission.admitted(b)]
 
 
 def no_trade_sentence(bursts: Any, closest_miss: Any) -> str:
@@ -523,6 +528,9 @@ def miss_reason(burst: dict) -> str | None:
     reason, else its vetoes, else the first failing check's label."""
     if reader_pending([burst]) and not burst.get("plan"):
         return "accepted reader review missing; mechanical grade retained for research, not a measured setup failure"
+    # a name the discovery admission stopped: the row's own reason, in the record's words
+    if isinstance(burst.get("admission"), dict) and not admission.admitted(burst) and _text(burst["admission"].get("reason")):
+        return _text(burst["admission"]["reason"])
     quality = burst.get("quality") if isinstance(burst.get("quality"), dict) else {}
     stated = _text(_first(quality.get("why"), quality.get("first_fail")))
     if stated:
@@ -711,6 +719,7 @@ def validate(data: dict) -> None:
     faults.extend(reader_coverage.reads_faults(data))
     faults.extend(reader_coverage.usage_faults(data))
     from src import funnel, intraday, earnings_risk
+    faults.extend(admission.faults(data))
     faults.extend(funnel.faults(data))
     faults.extend(intraday.record_faults(data))
     faults.extend(earnings_risk.record_faults(data))
@@ -829,6 +838,10 @@ def build(run: dict, account: dict, rules: dict, breadth: dict, bursts: list[dic
     data.update(body)
     data["closest_miss"] = miss
     from src import funnel   # lazy: it sits under the pipeline's modules, which import this one
+    # which candidates the trade band and the reads could consider, by discovery
+    # route: composed here, off the cleaned rows, under the rules that archive it
+    if isinstance(rules.get("admission"), dict):
+        data["run"]["admission"] = admission.summary(body["bursts"], (rules.get("pipeline") or {}).get("trade_grades") or [])
     data["funnel"] = funnel.build(data)
     data["_contract"] = dict(CONTRACT)
     validate(data)
@@ -1158,6 +1171,16 @@ def _delivery_block(run: dict) -> str:
     return f'<div><p style="{_S_MUTED}">// delivery</p><p style="{_S_MUTED}">{esc(sentence)}</p></div>'
 
 
+def _admission_block(run: dict) -> str:
+    """Which candidates the trade band and the reads could consider, by
+    discovery route, in the record's own sentence (src/admission.py); nothing
+    for a record from before the rule."""
+    sentence = _text(_get(run, "admission", "sentence"))
+    if not sentence:
+        return ""
+    return f'<div><p style="{_S_MUTED}">// discovery admission</p><p style="{_S_MUTED}">{esc(sentence)}</p></div>'
+
+
 def _funnel_block(data: dict) -> str:
     """Where the night's candidates stopped, in the record's own sentence: the
     same words the page prints, composed from counts and labels alone."""
@@ -1265,6 +1288,7 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
         out.append('<p style="margin:0 0 12px">No anticipation names for this measured session.</p>')
     out.append(_problems_block(recorded))
     out.append(_inputs_block(run))
+    out.append(_admission_block(run))
     out.append(_delivery_block(run))
     out.append(_funnel_block(data))
     out.append(f'<p style="margin:16px 0 0">Full plan, charts and the order sheet: '

@@ -615,3 +615,31 @@ def test_required_evidence_install_failure_keeps_pipeline_unpublished(
     assert "required evidence installation failed" in rep.failure
     assert data is None and not (docs / record.PICKS_FILE).exists()
     assert not list((docs / provenance.OBJECT_DIR).iterdir())
+
+
+def test_the_sealed_gate_names_the_discovery_admission_only_under_rules_that_archive_it():
+    """A dollar-only A the admission stopped is sealed with its own reason, after the
+    grade and the veto and before the reader prerequisite; a record from before the
+    rule re-derives its gates without the reason, as they were sealed."""
+    from src import provenance
+    data = fixture("full")
+    msft = next(b for b in data["bursts"] if b["ticker"] == "MSFT")
+    assert msft["admission"]["admitted"] is False and msft["plan"] is None
+    assert msft["evidence"]["gate"]["reason"] == "route_not_admitted" and msft["evidence"]["gate"]["ticket"] is False
+    assert provenance.gate(data, msft) == msft["evidence"]["gate"]
+    assert all(b["evidence"]["gate"]["reason"] != "route_not_admitted" for b in data["bursts"] if b["admission"]["admitted"])
+    # the same row under rules that archive no admission: the reader prerequisite, as before the rule
+    before = deepcopy(data)
+    del before["rules"]["admission"]
+    assert provenance.gate(before, msft)["reason"] == "reader_coverage"
+    legacy = json.loads((ROOT / "tests/fixtures/morning/full-publication.json").read_bytes())
+    assert "admission" not in legacy["rules"]
+    assert all(b["evidence"]["gate"]["reason"] != "route_not_admitted" for b in legacy["bursts"])
+    assert provenance.verify(legacy, require_sources=False)["status"] == "PASS"
+    # a forged admission on the stopped row breaks the sealed gate, not only the admission check
+    forged = deepcopy(data)
+    row = next(b for b in forged["bursts"] if b["ticker"] == "MSFT")
+    row["admission"]["admitted"] = True
+    assert provenance.gate(forged, row)["reason"] == "reader_coverage"
+    result = provenance.verify(forged, require_sources=False)
+    assert result["status"] == "FAIL" and any("regime gate decision mismatch" in r for r in result["breaks"]), result

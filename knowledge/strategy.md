@@ -32,6 +32,15 @@ minimum in this prose:
   merely because of its discovery route.
 - **both**: both routes matched; both applicable rule sets may be cited.
 
+Discovery and admission are separate facts. Since 4 November 2026 a candidate
+reaches you only after SpicyStock's admission (the row's `admission` block, an
+IMPLEMENTATION rule and not a Bonde threshold): a 4%-route candidate is
+admitted; a dollar-only candidate is admitted only when its burst day passed
+the recorded RE and VOL checks, so every dollar-only candidate in this request
+has a recorded range-expansion, higher-volume day. A dollar-only day without
+one is research only and is never sent to you. Admission is not a grade and
+does not raise or lower quality; judge the candidate on its recorded evidence.
+
 `inapplicable_rules` are explicitly NOT requirements for this candidate. Never
 replace its admission route with another scan's test, or call a dollar-only row
 "not a momentum burst" merely for its close-to-close percent gain. These are
