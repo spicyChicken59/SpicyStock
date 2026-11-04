@@ -350,6 +350,29 @@ def test_a_stopped_name_is_never_previewed_in_the_replay_whatever_its_preview_wo
     assert receipt == dear["run"]["review_selection"]
 
 
+def test_a_version_one_record_whose_rows_carry_blocks_is_replayed_as_version_one_read_them():
+    """Version 1 read no admission block, so neither does its replay: a row the
+    block says is stopped is previewed and judged by its preview, never blocked
+    at the route (the receipt's blocker keys are version 1's seven). No retained
+    version-1 record carries a block; this holds the rule for one that would."""
+    import copy, json
+    from pathlib import Path
+    data = json.loads((Path(__file__).parent / "fixtures" / "page" / "full.json").read_text())
+    v1 = copy.deepcopy(data)
+    v1["rules"]["review_selection"] = dict(selection.RULES_V1)
+    msft = next(b for b in v1["bursts"] if b["ticker"] == "MSFT")
+    assert msft["admission"]["admitted"] is False
+    decisions, receipt = selection.replay(v1)
+    assert receipt["version"] == 1 and receipt["policy"] == selection.POLICY_V1
+    assert set(receipt["blockers"]) == set(selection.BLOCKERS_BY_POLICY[selection.POLICY_V1])
+    assert "route_not_admitted" not in decisions["MSFT"]["blockers"]
+    # previewed, not skipped: at its price the preview sizes to whole shares, so version 1 finds it feasible
+    assert decisions["MSFT"]["feasible"] is True and decisions["MSFT"]["blockers"] == []
+    # under the current policy the same row is stopped at the route and never previewed
+    decisions, _ = selection.replay(data)
+    assert decisions["MSFT"]["blockers"] == ["route_not_admitted"] and decisions["MSFT"]["feasible"] is False
+
+
 def test_the_retained_version_one_publication_replays_exactly_and_still_verifies():
     """The 9 October 2026 publication (the stop-research fixture, its exact
     bytes) archived version 1: the current module replays every decision and
