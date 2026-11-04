@@ -178,9 +178,28 @@ def test_the_dispatch_form_has_the_three_boxes_and_forwards_each():
         assert env[secret] == f"${{{{ secrets.{secret} }}}}"
     for var in ("SCAN_FEED", "SCAN_UNIVERSE"):
         assert env[var] == f"${{{{ vars.{var} }}}}"
-    assert env['ACCOUNT_EQUITY'] == '2000'
+    assert env['ACCOUNT_EQUITY'] == '30000'
     assert env['RISK_PCT'] == '0.5'
     assert env["GITHUB_RUN_ID_FOR_RECORD"] == "${{ github.run_id }}"
+
+
+def test_the_pages_current_cash_reference_is_the_workflows_sizing():
+    """The Morning desk compares a publication's archived account with the
+    owner's reference for the session it measured (docs/app-morning.js
+    REFERENCES); the current reference and evening.yml's versioned sizing are
+    one number, so the desk can never refuse the sizing the run writes."""
+    import re
+    env = steps(load("evening.yml"), "scan")["Run evening pipeline"]["env"]
+    page = (ROOT / "docs" / "app-morning.js").read_text(encoding="utf-8")
+    refs = re.findall(r"Object\.freeze\(\{ since: (null|'\d{4}-\d{2}-\d{2}'), equity: (\d+), riskPct: ([\d.]+), positionPct: (\d+), maxOpenPositions: (\d+) \}\)", page)
+    assert len(refs) >= 2, refs
+    since, equity, risk, cap, slots = refs[0]
+    assert since != "null", "the current reference is dated"
+    assert equity == env["ACCOUNT_EQUITY"] and float(risk) == float(env["RISK_PCT"])
+    assert (cap, slots) == ("25", "4")
+    assert refs[-1][0] == "null", "the oldest reference applies to every earlier session"
+    dates = [r[0] for r in refs[:-1]]
+    assert dates == sorted(dates, reverse=True), "newest reference first"
 
 
 def test_the_persist_step_keeps_every_code_that_published_and_never_a_rehearsal():
@@ -558,6 +577,7 @@ def test_ci_runs_the_suite_the_fixture_check_the_chart_check_and_the_page_smoke(
         'python tools/freeze_validation_cases.py --check']
     page = steps(wf, "page")["Open the page against every fixture and read it back"]["run"]
     assert "node tools/handoff_model_cases.mjs" in page
+    assert "node tools/owner_model_cases.mjs" in page
     # the page's own verdicts that tests/test_private_results.py holds the tool to
     assert "node tools/private_results_parity.mjs --check" in page
     assert "node tools/chart_check.mjs" in page and "node tools/page_smoke.mjs --shots" in page

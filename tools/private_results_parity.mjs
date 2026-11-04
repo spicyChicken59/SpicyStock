@@ -18,6 +18,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import vm from 'node:vm';
 import { gzipSync, gunzipSync } from 'node:zlib';
+import { createHash } from 'node:crypto';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 // Gzipped: the cases share most of their bytes. --check compares the text, so
@@ -28,6 +29,9 @@ const scripts = await Promise.all(['docs/app-cash-preview.js', process.env.SCSTO
 const base = JSON.parse(await readFile(path.join(ROOT, 'tests/fixtures/first-trade/backup.json'), 'utf8'));
 const receipt = JSON.parse(await readFile(path.join(ROOT, 'tests/fixtures/stop-research/current-receipt.json'), 'utf8'));
 const bundle = JSON.parse(await readFile(path.join(ROOT, 'tests/fixtures/stop-research/current-bundle.json'), 'utf8'));
+const publicationBytes = await readFile(path.join(ROOT, 'tests/fixtures/cash-preview/publication-multiple.json'));
+const publication = JSON.parse(publicationBytes.toString('utf8'));
+const publicationSha = createHash('sha256').update(publicationBytes).digest('hex');
 
 function page(raw) {
   const store = new Map([[KEY, raw]]);
@@ -40,12 +44,17 @@ function page(raw) {
   const status = handoff.status();
   if (status.error) return { accepted: false, records: [] };
   return { accepted: true, records: handoff.list().map(item => {
-    const summary = handoff.summary(item), result = summary.completed_result, beyond = summary.beyond_stop;
+    const summary = handoff.summary(item), result = summary.completed_result, beyond = summary.beyond_stop, reference = summary.reference_exits;
     return { id: item.id, kind: item.kind, state: result.state, missing: [...result.missing].sort(),
       gross_microusd: result.gross_microusd, fees_microusd: result.fees_microusd, net_microusd: result.net_microusd,
       gross_display: result.gross_display, fees_display: result.fees_display, net_display: result.net_display, outcome: result.outcome,
       beyond_stop: beyond && { per_share_microusd: beyond.per_share_microusd, total_microusd: beyond.total_microusd, quantity: beyond.quantity,
-        per_share_display: beyond.per_share_display, total_display: beyond.total_display } };
+        per_share_display: beyond.per_share_display, total_display: beyond.total_display },
+      // An owner trade's reference arithmetic (the sell-half level, the record's
+      // placed sessions, the fill's New York date); never a decision.
+      reference_exits: reference && { sell_half_pct: reference.sell_half_pct, sell_half_day: reference.sell_half_day, final_exit_day: reference.final_exit_day, entry_day: reference.entry_day,
+        level: reference.level, fill_session: reference.fill_session, fill_on_entry_session: reference.fill_on_entry_session, entry_session: reference.entry_session,
+        sell_half_session: reference.sell_half_session, final_session: reference.final_session, stop_price: reference.stop_price } };
   }) };
 }
 
@@ -69,13 +78,37 @@ function independent() {
     report_updated_at: '2026-10-12T15:00:00.000Z' }] };
 }
 const indep = mutate => () => { const store = independent(); mutate(store); return JSON.stringify(store); };
+// An owner's own trade on a listed name without a ticket (NVDA: an A+ burst the
+// fixture's allocation left without an order), as the page's reportOwner()
+// freezes it: the publication, the row as read, the archived exit rules and the
+// day-3 / day-5 sessions the record's calendar places after its applicable one.
+function ownerTrade() {
+  const row = publication.bursts.find(row => row.ticker === 'NVDA'), rules = publication.rules.plan, timing = publication.run.timing;
+  const sessions = publication.run.calendar.schedule.sessions.map(s => s.session), at = sessions.indexOf(timing.applicable_session);
+  const source = { ticker: 'NVDA', stage: 'bursts', publication: { sha256: publicationSha, session: publication.run.session, published_at: publication.run.published_at, rules_version: publication.app.rules_version },
+    row: { rank: publication.bursts.indexOf(row) + 1, grade: row.grade, score: row.score, scan: typeof row.scan === 'string' ? row.scan : null, admitted: null, status: 'no_order', reason: '' },
+    evidence_id: row.evidence && row.evidence.id ? row.evidence.id : null,
+    rules: { sell_half_pct: rules.sell_half_pct, sell_half_day: rules.sell_half_day, final_exit_day: rules.final_exit_day, entry_day: rules.entry_day },
+    schedule: { entry_session: sessions[at], sell_half_session: sessions[at + rules.sell_half_day - rules.entry_day], final_session: sessions[at + rules.final_exit_day - rules.entry_day] } };
+  const empty = Object.fromEntries(Object.keys(base.items[0].report).map(key => [key, null]));
+  return { version: 4, items: [{ version: 4, kind: 'owner_trade', id: source.publication.sha256 + ':owner:' + source.stage + ':' + source.ticker, revision: 1,
+    created_at: '2026-09-11T14:05:00.000Z', updated_at: '2026-09-11T14:05:00.000Z', source,
+    report: { ...empty, submitted_quantity: 102, filled_quantity: 102, cancelled_quantity: 0, average_price: '70.345', filled_at: '2026-09-11T13:41:00.000Z',
+      protected_quantity: 102, protection_confirmed_at: '2026-09-11T13:42:00.000Z', account_label: 'Rollover IRA', stop_price: '67.85' },
+    report_updated_at: '2026-09-11T14:05:00.000Z' }] };
+}
+const own = mutate => () => { const store = ownerTrade(); mutate(store); return JSON.stringify(store); };
+const ownRaw = build => () => build(ownerTrade());
+const ownerRow = store => store.items[0];
 const on = mutate => () => { const store = copy(base); mutate(store); return JSON.stringify(store); };
 const raw = build => () => build(copy(base));
 
 // name -> the bytes. Accept and refuse are whatever the page says; the names say why each is here.
 const CASES = [
   ['the rehearsal backup', () => JSON.stringify(base)],
-  ['an empty store', () => JSON.stringify({ version: 3, items: [] })],
+  ['an empty store', () => JSON.stringify({ version: 4, items: [] })],
+  ['a version 3 empty store', () => JSON.stringify({ version: 3, items: [] })],
+  ['a version 3 store', on(store => { store.version = 3; for (const item of store.items) { item.version = 3; for (const key of ['account_label', 'stop_price']) delete item.report[key]; } })],
   ['a draft with no report', on(store => { const item = coil(store); for (const key of Object.keys(item.report)) item.report[key] = null; item.report_updated_at = null; })],
   ['version 2', on(store => { store.version = 2; for (const item of store.items) { item.version = 2; delete item.kind; } })],
   ['version 1', on(store => { store.version = 1; for (const item of store.items) { item.version = 1; delete item.kind; for (const key of ['average_exit_price', 'entry_fees', 'exit_fees']) delete item.report[key]; } })],
@@ -107,9 +140,11 @@ const CASES = [
   // the envelope
   ['a byte-order mark', () => '﻿' + JSON.stringify(base)],
   ['a NaN literal', raw(store => { coil(store).revision = '__LITERAL__'; return literal(store, 'NaN'); })],
-  ['store version 4', on(store => { store.version = 4; })],
+  ['store version 5', on(store => { store.version = 5; for (const item of store.items) item.version = 5; })],
+  ['version 3 records under a version 4 envelope', on(store => { store.version = 4; for (const item of store.items) { item.version = 3; for (const key of ['account_label', 'stop_price']) delete item.report[key]; } })],
+  ['a version 3 store whose records carry version 4 fields', on(store => { store.version = 3; for (const item of store.items) item.version = 3; })],
   ['store version true', on(store => { store.version = true; for (const item of store.items) { item.version = true; delete item.kind; for (const key of ['average_exit_price', 'entry_fees', 'exit_fees']) delete item.report[key]; } })],
-  ['items not a list', () => JSON.stringify({ version: 3, items: {} })],
+  ['items not a list', () => JSON.stringify({ version: 4, items: {} })],
   ['an extra envelope field', on(store => { store.note = 'x'; })],
   ['two records with one identity', on(store => { store.items.push(copy(store.items[0])); })],
   ['101 records', on(store => { const first = store.items[0]; store.items = Array.from({ length: 101 }, (_, i) => ({ ...copy(first), id: first.id.slice(0, 65) + i.toString(16).padStart(64, '0') })); })],
@@ -192,6 +227,66 @@ const CASES = [
   ['an independent report cohort digest wrapped in an array', indep(store => { const cohort = store.items[0].source.cohort; cohort.sha256 = [cohort.sha256]; })],
   ['an independent report rules version wrapped in an array', indep(store => { const pub = store.items[0].source.publication; pub.rules_version = [pub.rules_version]; })],
   ['an independent report run id wrapped in an array', indep(store => { const pub = store.items[0].source.publication; pub.run_id = [pub.run_id]; })],
+  // an owner's own trade (version 4)
+  ['an owner trade', own(() => {})],
+  ['an owner trade with no fill reported yet', own(store => { Object.assign(ownerRow(store).report, { filled_quantity: null, average_price: null, filled_at: null, protected_quantity: null, protection_confirmed_at: null }); })],
+  ['an owner trade without a stop or a label', own(store => { Object.assign(ownerRow(store).report, { account_label: null, stop_price: null }); })],
+  ['an owner trade filled on another session than the record counts from', own(store => { ownerRow(store).report.filled_at = '2026-09-14T13:41:00.000Z'; })],
+  ['an owner trade filled before the New York day the clock names', own(store => { ownerRow(store).report.filled_at = '2026-09-12T03:30:00.000Z'; })],
+  ['an owner trade exited under its reported stop', own(store => { Object.assign(ownerRow(store).report, { exited_quantity: 102, exited_at: '2026-09-14T13:35:00.000Z', average_exit_price: '67.1', entry_fees: '0.00', exit_fees: '0.01' }); })],
+  ['an owner trade exited at a sub-cent gain', own(store => { Object.assign(ownerRow(store).report, { exited_quantity: 102, exited_at: '2026-09-15T19:55:00.000Z', average_exit_price: '70.345004', entry_fees: '0.00', exit_fees: '0.00' }); })],
+  ['an owner trade with a cent-rounding sell-half level', own(store => { ownerRow(store).report.average_price = '61.72'; })],
+  ['an owner trade whose record places no sessions', own(store => { ownerRow(store).source.schedule = null; })],
+  ['an owner trade on the anticipation stage', own(store => { const item = ownerRow(store); item.source.stage = 'setting-up'; item.source.row = { rank: 1, grade: null, score: null, scan: null, admitted: null, status: 'no_order', reason: 'coil without a ticket' }; item.id = item.source.publication.sha256 + ':owner:setting-up:NVDA'; })],
+  ['an owner trade with an integral float stop level', ownRaw(store => { ownerRow(store).source.rules.sell_half_pct = '__LITERAL__'; return literal(store, '8.0'); })],
+  ['an owner trade with a label of forty characters', own(store => { ownerRow(store).report.account_label = 'R'.repeat(40); })],
+  ['an owner trade with a label of forty-one characters', own(store => { ownerRow(store).report.account_label = 'R'.repeat(41); })],
+  ['an owner trade with a control character in its label', own(store => { ownerRow(store).report.account_label = 'Roth\u0007IRA'; })],
+  ['an owner trade with an untrimmed label', own(store => { ownerRow(store).report.account_label = ' Roth IRA '; })],
+  ['an owner trade with a label that is not a string', own(store => { ownerRow(store).report.account_label = 7; })],
+  ['an owner trade with a zero stop price', own(store => { ownerRow(store).report.stop_price = '0'; })],
+  ['an owner trade with a seven-decimal stop price', own(store => { ownerRow(store).report.stop_price = '67.8500001'; })],
+  ['an owner trade under a version 3 envelope', own(store => { store.version = 3; const item = ownerRow(store); item.version = 3; for (const key of ['account_label', 'stop_price']) delete item.report[key]; })],
+  ['an owner trade with no report clock', own(store => { const item = ownerRow(store); for (const key of Object.keys(item.report)) item.report[key] = null; item.report_updated_at = null; })],
+  ['an owner trade whose identity is not its source', own(store => { ownerRow(store).id = ownerRow(store).source.publication.sha256 + ':owner:bursts:AAPL'; })],
+  ['an owner trade carrying a draft', own(store => { ownerRow(store).draft = { quantity: 1, cash_cents: 200000, fee_cents: 0 }; })],
+  ['an owner trade carrying a plan', own(store => { ownerRow(store).plan = copy(base.items[0].plan); })],
+  ['an owner trade on an unknown stage', own(store => { ownerRow(store).source.stage = 'coil'; })],
+  ['an owner trade with a lower-case ticker', own(store => { ownerRow(store).source.ticker = 'nvda'; })],
+  ['an owner trade with an extra source field', own(store => { ownerRow(store).source.note = 'x'; })],
+  ['an owner trade with a rank of zero', own(store => { ownerRow(store).source.row.rank = 0; })],
+  ['an owner trade with an integral float rank', ownRaw(store => { ownerRow(store).source.row.rank = '__LITERAL__'; return literal(store, '3.0'); })],
+  ['an owner trade with a boolean rank', own(store => { ownerRow(store).source.row.rank = true; })],
+  ['an owner trade with a boolean score', own(store => { ownerRow(store).source.row.score = true; })],
+  ['an owner trade with a negative score', own(store => { ownerRow(store).source.row.score = -1; })],
+  ['an owner trade with a grade of nine letters', own(store => { ownerRow(store).source.row.grade = 'A'.repeat(9); })],
+  ['an owner trade with a scan route in capitals', own(store => { ownerRow(store).source.row.scan = 'Both'; })],
+  ['an owner trade with an admission that is not a boolean', own(store => { ownerRow(store).source.row.admitted = 1; })],
+  ['an owner trade with a status in capitals', own(store => { ownerRow(store).source.row.status = 'No_order'; })],
+  ['an owner trade with a reason of 2001 UTF-16 units', own(store => { ownerRow(store).source.row.reason = 'x'.repeat(2001); })],
+  ['an owner trade with a reason of 2000 UTF-16 units', own(store => { ownerRow(store).source.row.reason = 'x'.repeat(2000); })],
+  ['an owner trade with a reason of 1001 astral characters', own(store => { ownerRow(store).source.row.reason = '\u{1F600}'.repeat(1001); })],
+  ['an owner trade with an evidence id that is not hex', own(store => { ownerRow(store).source.evidence_id = 'g'.repeat(64); })],
+  ['an owner trade with a three-decimal sell-half percentage', own(store => { ownerRow(store).source.rules.sell_half_pct = 8.001; })],
+  ['an owner trade with a zero sell-half percentage', own(store => { ownerRow(store).source.rules.sell_half_pct = 0; })],
+  ['an owner trade whose exit day precedes its sell-half day', own(store => { const rules = ownerRow(store).source.rules; rules.sell_half_day = 5; rules.final_exit_day = 3; })],
+  ['an owner trade whose entry day is its sell-half day', own(store => { ownerRow(store).source.rules.sell_half_day = 1; })],
+  ['an owner trade with a day past thirty', own(store => { ownerRow(store).source.rules.final_exit_day = 31; })],
+  ['an owner trade with an integral float day', ownRaw(store => { ownerRow(store).source.rules.final_exit_day = '__LITERAL__'; return literal(store, '5.0'); })],
+  ['an owner trade whose placed sessions are out of order', own(store => { const schedule = ownerRow(store).source.schedule; [schedule.sell_half_session, schedule.final_session] = [schedule.final_session, schedule.sell_half_session]; })],
+  ['an owner trade whose placed session is not a date', own(store => { ownerRow(store).source.schedule.final_session = '2026-13-01'; })],
+  ['an owner trade with an extra placed session', own(store => { ownerRow(store).source.schedule.extra = '2026-09-18'; })],
+  ['an owner trade with a publication clock without seconds', own(store => { ownerRow(store).source.publication.published_at = '2026-09-10T22:30+00:00'; })],
+  ['an owner trade with a microsecond publication clock', own(store => { ownerRow(store).source.publication.published_at = '2026-09-10T22:30:00.553690+00:00'; })],
+  ['an owner trade with a rules digest of eleven characters', own(store => { ownerRow(store).source.publication.rules_version = 'abcdef01234'; })],
+  ['an owner trade ticker wrapped in an array', own(store => { ownerRow(store).source.ticker = [ownerRow(store).source.ticker]; })],
+  ['an owner trade publication digest wrapped in an array', own(store => { const pub = ownerRow(store).source.publication; pub.sha256 = [pub.sha256]; })],
+  ['an owner trade beside the rehearsal records', () => { const store = copy(base); store.items.push(ownerTrade().items[0]); return JSON.stringify(store); }],
+  // JavaScript's \d is ASCII; a date or clock spelled in other digits is refused
+  ['an owner trade with a placed session in fullwidth digits', own(store => { ownerRow(store).source.schedule.final_session = '\uff12\uff10\uff12\uff16-09-17'; })],
+  ['an owner trade with a record clock in fullwidth digits', own(store => { ownerRow(store).created_at = '\uff12\uff10\uff12\uff16-09-11T14:05:00.000Z'; })],
+  ['a fill clock in fullwidth digits', on(report({ filled_at: '\uff12\uff10\uff12\uff16-09-11T13:41:00.000Z' }))],
+  ['a publication session in fullwidth digits', on(store => { coil(store).publication.session = '\uff12\uff10\uff12\uff16-09-10'; })],
 ];
 
 const corpus = { version: 1, generated_by: 'tools/private_results_parity.mjs',

@@ -36,8 +36,11 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import math
 import json
 import re
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import subprocess
 import sys
 from pathlib import Path
@@ -48,7 +51,7 @@ VERSION = 1
 RECORD_PATH = "docs/data.json"
 
 # The page's own bounds (docs/app-handoff.js).
-STORE_VERSIONS = {1, 2, 3}
+STORE_VERSIONS = {1, 2, 3, 4}
 MAX_ITEMS = 100
 MAX_BYTES = 1048576
 MAX_SHARES = 1000000
@@ -61,30 +64,62 @@ LEGACY_FIELDS = ("submitted_quantity", "submitted_at", "filled_quantity", "avera
                  "cancelled_quantity", "cancelled_at", "exited_quantity", "exited_at",
                  "protected_quantity", "protection_confirmed_at")
 RESULT_FIELDS = ("average_exit_price", "entry_fees", "exit_fees")
+# Version 4: the owner's own account label and the protective stop at the broker.
+OWNER_FIELDS = ("account_label", "stop_price")
+LABEL_MAX = 40
 QUANTITIES = ("submitted_quantity", "filled_quantity", "cancelled_quantity", "exited_quantity", "protected_quantity")
 TIMES = ("submitted_at", "filled_at", "cancelled_at", "exited_at", "protection_confirmed_at")
 REFERENCE_KEYS = ("version", "id", "context_sha256", "plan_sha256", "pick_sha256")
 TIMING_KEYS = ("applicable_session", "opens_at", "cutoff_at", "closes_at")
 MODEL_FIELDS = ("status", "day", "sessions", "shares", "fill", "uncertainty", "exit_price", "result_pct",
                 "half_sold", "sold", "remaining", "last_date")
-KINDS = ("planned_handoff", "independent_research")
+KINDS = ("planned_handoff", "independent_research", "owner_trade")
+OWNER_ROW_KEYS = ("rank", "grade", "score", "scan", "admitted", "status", "reason")
+OWNER_RULES_KEYS = ("sell_half_pct", "sell_half_day", "final_exit_day", "entry_day")
+OWNER_SCHEDULE_KEYS = ("entry_session", "sell_half_session", "final_session")
+# JavaScript's String.prototype.trim(): WhiteSpace and LineTerminator code points.
+JS_SPACE = "\t\n\v\f\r \u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff"
 
 HEX = re.compile(r"[a-f0-9]{64}")
 RULES = re.compile(r"[a-f0-9]{12}")
-DAY = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
+DAY = re.compile(r"(\d{4})-(\d{2})-(\d{2})", re.ASCII)
 SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,14}")
-PRICE = re.compile(r"(\d{1,10})(?:\.(\d{1,6}))?")
-FEE = re.compile(r"(\d+)\.(\d{2})")
+PRICE = re.compile(r"(\d{1,10})(?:\.(\d{1,6}))?", re.ASCII)
+FEE = re.compile(r"(\d+)\.(\d{2})", re.ASCII)
 # The page's timestamp(): a calendar date, hours 00-23, optional seconds with at
 # most three fractional digits, Z or an offset.
-TIMESTAMP = re.compile(r"(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d)(?:\.(\d{1,3}))?)?(Z|([+-])(0\d|1[0-4]):([0-5]\d))")
+TIMESTAMP = re.compile(r"(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d)(?:\.(\d{1,3}))?)?(Z|([+-])(0\d|1[0-4]):([0-5]\d))", re.ASCII)
 # What the page stores for a reported broker event: Date.toISOString().
-STORED_TIME = re.compile(r"\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d\.\d{3}Z")
+STORED_TIME = re.compile(r"\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d\.\d{3}Z", re.ASCII)
 # The page's sourceTime(): an upstream clock's fourth to sixth fractional digit
 # is cut before timestamp() reads it.
-MICROSECONDS = re.compile(r"(\.\d{3})\d{1,3}(?=Z|[+-])")
+MICROSECONDS = re.compile(r"(\.\d{3})\d{1,3}(?=Z|[+-])", re.ASCII)
 RUN_ID = re.compile(r"[A-Za-z0-9_-]{1,100}")
 SCHEDULE_KEY = re.compile(r"[a-z0-9_]{1,80}")
+STATUS = re.compile(r"[a-z_]{1,40}")
+GRADE = re.compile(r"[A-Za-z+]{1,8}")
+SCAN = re.compile(r"[a-z_]{1,20}")
+CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+
+
+def fields_for(version: int):
+    """The report fields a store version writes."""
+    if version == 1:
+        return LEGACY_FIELDS
+    if version < 4:
+        return LEGACY_FIELDS + RESULT_FIELDS
+    return LEGACY_FIELDS + RESULT_FIELDS + OWNER_FIELDS
+
+
+def _utf16_units(text: str) -> int:
+    return len(text.encode("utf-16-le", "surrogatepass")) // 2
+
+
+def _label(value) -> bool:
+    """The page's stored account label: trimmed as JavaScript trims, at most
+    LABEL_MAX UTF-16 units, no control characters."""
+    return (isinstance(value, str) and value != "" and value.strip(JS_SPACE) == value
+            and _utf16_units(value) <= LABEL_MAX and not CONTROL.search(value))
 
 
 class Refused(ValueError):
@@ -194,9 +229,13 @@ def _cents(value) -> int | None:
 
 def report_problem(report, version: int) -> str | None:
     """Why a stored report is not one the page's normalizeReport() writes."""
-    fields = LEGACY_FIELDS if version == 1 else LEGACY_FIELDS + RESULT_FIELDS
-    if not _keys(report, fields):
+    if not _keys(report, fields_for(version)):
         return "report fields"
+    if version >= 4:
+        if report["account_label"] is not None and not _label(report["account_label"]):
+            return "account_label"
+        if report["stop_price"] is not None and not _price(report["stop_price"]):
+            return "stop_price"
     for key in QUANTITIES:
         value = report[key]
         if value is not None and not (_int(value) and 0 <= value <= MAX_SHARES):
@@ -298,6 +337,67 @@ def _planned_problem(item) -> str | None:
     return None
 
 
+def _publication_problem(pub) -> bool:
+    """A planned handoff's or an owner trade's publication block, as the page's publicationValid()."""
+    return (not _keys(pub, ("sha256", "session", "published_at", "rules_version")) or not isinstance(pub["sha256"], str)
+            or not HEX.fullmatch(pub["sha256"]) or not _date(pub["session"]) or _ms(pub["published_at"], source=True) is None
+            or not isinstance(pub["rules_version"], str) or not RULES.fullmatch(pub["rules_version"]))
+
+
+def _rules_ok(rules) -> bool:
+    """The page's rulesValid(): a sell-half percentage of at most two places and ordered day numbers."""
+    if not _keys(rules, OWNER_RULES_KEYS):
+        return False
+    pct = rules["sell_half_pct"]
+    if isinstance(pct, bool) or not isinstance(pct, (int, float)) or not math.isfinite(pct) or not 0 < pct <= 100:
+        return False
+    if round(pct * 100) != pct * 100:
+        return False
+    days = [rules["entry_day"], rules["sell_half_day"], rules["final_exit_day"]]
+    return all(_int(day) and 1 <= day <= 30 for day in days) and days[0] < days[1] < days[2]
+
+
+def _schedule_ok(schedule) -> bool:
+    if schedule is None:
+        return True
+    return (_keys(schedule, OWNER_SCHEDULE_KEYS) and all(_date(schedule[key]) for key in OWNER_SCHEDULE_KEYS)
+            and schedule["entry_session"] < schedule["sell_half_session"] < schedule["final_session"])
+
+
+def owner_id(source) -> str:
+    return source["publication"]["sha256"] + ":owner:" + source["stage"] + ":" + source["ticker"]
+
+
+def _owner_problem(item) -> str | None:
+    """Why an owner trade is not one the page's ownerValid() accepts."""
+    source = item["source"]
+    if (not _keys(source, ("ticker", "stage", "publication", "row", "evidence_id", "rules", "schedule"))
+            or not isinstance(source["ticker"], str) or not SYMBOL.fullmatch(source["ticker"]) or source["stage"] not in ("bursts", "setting-up")):
+        return "source"
+    if _publication_problem(source["publication"]):
+        return "source.publication"
+    row = source["row"]
+    if (not _keys(row, OWNER_ROW_KEYS) or not (row["rank"] is None or (_int(row["rank"]) and row["rank"] >= 1))
+            or not (row["grade"] is None or (isinstance(row["grade"], str) and GRADE.fullmatch(row["grade"])))
+            or not (row["score"] is None or (not isinstance(row["score"], bool) and isinstance(row["score"], (int, float)) and math.isfinite(row["score"]) and row["score"] >= 0))
+            or not (row["scan"] is None or (isinstance(row["scan"], str) and SCAN.fullmatch(row["scan"])))
+            or not (row["admitted"] is None or isinstance(row["admitted"], bool))
+            or not isinstance(row["status"], str) or not STATUS.fullmatch(row["status"])
+            or not isinstance(row["reason"], str) or _utf16_units(row["reason"]) > MAX_INSTRUCTION):
+        return "source.row"
+    if not (source["evidence_id"] is None or (isinstance(source["evidence_id"], str) and HEX.fullmatch(source["evidence_id"]))):
+        return "source.evidence_id"
+    if not _rules_ok(source["rules"]):
+        return "source.rules"
+    if not _schedule_ok(source["schedule"]):
+        return "source.schedule"
+    if item["id"] != owner_id(source):
+        return "id"
+    if item["report_updated_at"] is None:
+        return "an owner trade with no report"
+    return None
+
+
 def _independent_problem(item) -> str | None:
     source = item["source"]
     if (not _keys(source, ("ticker", "stage", "publication", "cohort", "evidence", "baseline_admitted"))
@@ -332,12 +432,13 @@ def item_problem(item, version: int) -> str | None:
     """Why a stored record is not one the page's validItem() accepts."""
     if not isinstance(item, dict):
         return "record"
-    kind = item.get("kind", "planned_handoff") if version == 3 else "planned_handoff"
-    if kind not in KINDS:
+    kind = item.get("kind", "planned_handoff") if version >= 3 else "planned_handoff"
+    # Version 3 named two kinds; the owner's own trade is version 4's.
+    if kind not in KINDS or (version == 3 and kind == "owner_trade"):
         return "kind"
     fields = {"version", "id", "revision", "created_at", "updated_at", "report", "report_updated_at"}
-    fields |= {"source"} if kind == "independent_research" else {"publication", "plan", "draft"}
-    fields |= {"kind"} if version == 3 else set()
+    fields |= {"source"} if kind != "planned_handoff" else {"publication", "plan", "draft"}
+    fields |= {"kind"} if version >= 3 else set()
     if set(item) != fields:
         return "record fields"
     if not _is(item["version"], version) or not _int(item["revision"]) or item["revision"] < 1 or not isinstance(item["id"], str):
@@ -355,7 +456,11 @@ def item_problem(item, version: int) -> str | None:
         at = _ms(item["report_updated_at"])
         if at is None or at > updated:
             return "report clock"
-    return _independent_problem(item) if kind == "independent_research" else _planned_problem(item)
+    if kind == "independent_research":
+        return _independent_problem(item)
+    if kind == "owner_trade":
+        return _owner_problem(item)
+    return _planned_problem(item)
 
 
 def _number(text: str):
@@ -380,7 +485,7 @@ def load_backup(raw: bytes) -> dict:
         raise Refused("the file is not UTF-8 JSON the page reads: " + str(error)[:80]) from None
     if (not _keys(store, ("version", "items")) or not _int(store["version"]) or store["version"] not in STORE_VERSIONS
             or not isinstance(store["items"], list)):
-        raise Refused("not a private-backup envelope of a version the page writes (1, 2 or 3)")
+        raise Refused("not a private-backup envelope of a version the page writes (1 to 4)")
     if len(store["items"]) > MAX_ITEMS:
         raise Refused(f"more than {MAX_ITEMS} records")
     for index, item in enumerate(store["items"]):
@@ -390,12 +495,14 @@ def load_backup(raw: bytes) -> dict:
     ids = [item["id"] for item in store["items"]]
     if len(set(ids)) != len(ids):
         raise Refused("two records share one identity")
-    if store["version"] < 3:
-        # Read as the page normalizes it, never written back.
+    if store["version"] < 4:
+        # Read as the page normalizes it, never written back: the fields a
+        # version lacked are unknown, and a record before kinds is planned.
+        added = [key for key in fields_for(4) if key not in fields_for(store["version"])]
         for item in store["items"]:
-            item["kind"] = "planned_handoff"
-            if store["version"] == 1:
-                item["report"].update({key: None for key in RESULT_FIELDS})
+            if store["version"] < 3:
+                item["kind"] = "planned_handoff"
+            item["report"].update({key: None for key in added})
     return store
 
 
@@ -455,10 +562,17 @@ def completed_result(report) -> dict:
 
 
 def beyond_stop(item, result) -> dict | None:
-    """The page's beyondStop(): an average exit under the frozen protective stop."""
-    if item["kind"] != "planned_handoff" or result["state"] != "complete":
+    """The page's beyondStop(): an average exit under the protective stop -- the
+    frozen published one of a planned handoff, or the one the owner reported on
+    their own trade."""
+    if item["kind"] == "independent_research" or result["state"] != "complete":
         return None
-    stop = _cents(item["plan"]["order"]["then"]["stop_price"]) * 10_000
+    if item["kind"] == "owner_trade":
+        if item["report"]["stop_price"] is None:
+            return None
+        stop = micros(item["report"]["stop_price"])
+    else:
+        stop = _cents(item["plan"]["order"]["then"]["stop_price"]) * 10_000
     exit_price = micros(item["report"]["average_exit_price"])
     if exit_price >= stop:
         return None
@@ -467,6 +581,40 @@ def beyond_stop(item, result) -> dict | None:
     return {"stop": exact(stop), "per_share": exact(per_share), "total": exact(total), "quantity": result["quantity"],
             "stop_microusd": stop, "per_share_microusd": per_share, "total_microusd": total,
             "display": {"per_share": display(per_share), "total": display(total)}}
+
+
+def sell_half_level(price: str, pct) -> str:
+    """The page's sellHalfLevel(): the fill raised by the archived percentage,
+    in exact micro-dollars, then cents half-up, as a decimal string."""
+    micros_ = micros(price) * (10_000 + round(pct * 100)) // 10_000
+    cents = (micros_ + 5_000) // 10_000
+    return f"{cents // 100}.{cents % 100:02d}"
+
+
+def exchange_date(stored_time: str) -> str | None:
+    """The page's exchangeDate(): the New York date a stored instant falls on."""
+    ms = _ms(stored_time, stored=True)
+    if ms is None:
+        return None
+    instant = datetime.fromtimestamp(ms / 1000, tz=timezone.utc).astimezone(ZoneInfo("America/New_York"))
+    return instant.strftime("%Y-%m-%d")
+
+
+def reference_exits(item) -> dict | None:
+    """The page's referenceExits(): an owner trade's sell-half level and the
+    record's day-3 and day-5 sessions, reference arithmetic that decides nothing."""
+    if item["kind"] != "owner_trade":
+        return None
+    source, report = item["source"], item["report"]
+    rules, schedule = source["rules"], source["schedule"]
+    level = None if report["average_price"] is None else sell_half_level(report["average_price"], rules["sell_half_pct"])
+    fill_session = exchange_date(report["filled_at"]) if report["filled_at"] else None
+    on_entry = (fill_session == schedule["entry_session"]) if schedule and fill_session else None
+    return {"sell_half_pct": rules["sell_half_pct"], "sell_half_day": rules["sell_half_day"], "final_exit_day": rules["final_exit_day"],
+            "entry_day": rules["entry_day"], "level": level, "fill_session": fill_session, "fill_on_entry_session": on_entry,
+            "entry_session": schedule["entry_session"] if schedule else None,
+            "sell_half_session": schedule["sell_half_session"] if schedule else None,
+            "final_session": schedule["final_session"] if schedule else None, "stop_price": report["stop_price"]}
 
 
 def draft_of(item) -> dict | None:
@@ -555,16 +703,72 @@ UNCHECKED = {
     "planned_handoff": ("draft",),
     "independent_research": ("source.publication.reader_projection_version", "source.publication.reader_sha256",
                              "source.cohort", "source.evidence.inputs_sha256", "source.baseline_admitted"),
+    # the status word and the reason are the page's own reading of the row at the
+    # time, not fields the record carries verbatim
+    "owner_trade": ("source.row.status", "source.row.reason"),
 }
 
 
+def _setting_up_rows(data):
+    """The page's setting-up list: watchlist.top, then the also-quiet coils that
+    are on no list tonight, each after the whole top list and a name in both
+    read once, from top (app.js coil(r, top.length + i, true))."""
+    watchlist = data.get("watchlist") or {}
+    top = [row for row in (watchlist.get("top") or []) if isinstance(row, dict)]
+    seen = {row.get("ticker") for row in top}
+    quiet = [row for row in (watchlist.get("also_quiet") or []) if isinstance(row, dict) and row.get("ticker") not in seen]
+    return top + quiet
+
+
 def _row(data, stage, ticker):
-    if stage == "bursts":
-        rows = data.get("bursts") or []
-    else:
-        rows = (data.get("watchlist") or {}).get("top") or []
+    rows = (data.get("bursts") or []) if stage == "bursts" else _setting_up_rows(data)
     found = [row for row in rows if isinstance(row, dict) and row.get("ticker") == ticker]
     return found[0] if len(found) == 1 else None
+
+
+def _listed_rank(data, stage, ticker):
+    """The page's rank: a burst row's own, a setting-up row's position in the list."""
+    if stage == "bursts":
+        row = _row(data, stage, ticker)
+        return (row or {}).get("rank")
+    for index, row in enumerate(_setting_up_rows(data)):
+        if row.get("ticker") == ticker:
+            return index + 1
+    return None
+
+
+def _admission(row):
+    """The page's admissionOf(): the block's own verdict, or None where the record carries none it can read."""
+    block = row.get("admission")
+    if not isinstance(block, dict):
+        return None
+    shown = block.get("expansion")
+    ok = (block.get("version") == 1 and block.get("policy") == "burst_route_or_dollar_expansion_v1" and isinstance(block.get("route"), str)
+          and block.get("basis") in ("burst_route", "dollar_expansion", "dollar_no_expansion") and isinstance(block.get("admitted"), bool)
+          and block["admitted"] == (block["basis"] != "dollar_no_expansion") and isinstance(shown, dict)
+          and all(shown.get(key) in (True, False, None) for key in ("range_expansion", "higher_volume"))
+          and isinstance(block.get("reason"), str) and block["reason"].strip() != "")
+    return block["admitted"] if ok else None
+
+
+def _calendar_schedule(data, rules):
+    """The page's sessionsFrom(): day 3 and day 5 on the record's own calendar."""
+    run = data.get("run") or {}
+    entry = (run.get("timing") or {}).get("applicable_session")
+    sessions = ((run.get("calendar") or {}).get("schedule") or {}).get("sessions")
+    if not _date(entry) or not isinstance(sessions, list):
+        return None
+    dates = [s.get("session") if isinstance(s, dict) else None for s in sessions]
+    if entry not in dates:
+        return None
+    start = dates.index(entry)
+
+    def at(day):
+        index = start + (day - rules["entry_day"])
+        return dates[index] if 0 <= index < len(dates) else None
+
+    schedule = {"entry_session": entry, "sell_half_session": at(rules["sell_half_day"]), "final_session": at(rules["final_exit_day"])}
+    return schedule if _schedule_ok(schedule) else None
 
 
 def trace(item, publications) -> dict:
@@ -572,8 +776,8 @@ def trace(item, publications) -> dict:
     unchecked = list(UNCHECKED[item["kind"]])
     if publications is None:
         return {"status": "not_checked", "publication": None, "mismatches": [], "unchecked": unchecked}
-    planned = item["kind"] == "planned_handoff"
-    sha = item["publication"]["sha256"] if planned else item["source"]["publication"]["data_sha256"]
+    planned, own = item["kind"] == "planned_handoff", item["kind"] == "owner_trade"
+    sha = item["publication"]["sha256"] if planned else item["source"]["publication"]["sha256" if own else "data_sha256"]
     match = next((pub for pub in publications if pub.sha256 == sha), None)
     if match is None:
         return {"status": "publication_not_found", "publication": None, "mismatches": [],
@@ -596,6 +800,33 @@ def trace(item, publications) -> dict:
                                        ("plan.order", plan["order"], published.get("order_json")),
                                        ("plan.exit_schedule", plan["exit_schedule"], published.get("exit_schedule")),
                                        ("plan.timing", plan["timing"], {k: (run.get("timing") or {}).get(k) for k in TIMING_KEYS})):
+                if ours != theirs:
+                    mismatches.append(name)
+    elif own:
+        source, pub = item["source"], item["source"]["publication"]
+        for name, ours, theirs in (("source.publication.session", pub["session"], run.get("session")),
+                                   ("source.publication.published_at", pub["published_at"], run.get("published_at")),
+                                   ("source.publication.rules_version", pub["rules_version"], (data.get("app") or {}).get("rules_version"))):
+            if ours != theirs:
+                mismatches.append(name)
+        row = _row(data, source["stage"], source["ticker"])
+        if row is None:
+            mismatches.append("source: no single " + source["stage"] + " row for " + source["ticker"])
+        else:
+            listed = source["row"]
+            compared = [("source.row.rank", listed["rank"], _listed_rank(data, source["stage"], source["ticker"]))]
+            if source["stage"] == "bursts":
+                compared += [("source.row.grade", listed["grade"], row.get("grade")), ("source.row.score", listed["score"], row.get("score")),
+                             ("source.row.scan", listed["scan"], row.get("scan")), ("source.row.admitted", listed["admitted"], _admission(row))]
+            else:
+                # the page writes none of the four for a setting-up name (a coil
+                # carries no mechanical grade, score, scan or admission)
+                compared += [("source.row." + key, listed[key], None) for key in ("grade", "score", "scan", "admitted")]
+            compared.append(("source.evidence_id", source["evidence_id"], ((row.get("evidence") or {}).get("id") if isinstance(row.get("evidence"), dict) else None)))
+            plan_rules = (data.get("rules") or {}).get("plan") or {}
+            compared.append(("source.rules", source["rules"], {key: plan_rules.get(key) for key in OWNER_RULES_KEYS}))
+            compared.append(("source.schedule", source["schedule"], _calendar_schedule(data, source["rules"]) if _rules_ok(source["rules"]) else None))
+            for name, ours, theirs in compared:
                 if ours != theirs:
                     mismatches.append(name)
     else:
@@ -625,6 +856,8 @@ def trace(item, publications) -> dict:
 
 def model_outcome(item, publications) -> dict:
     """The model's own replay of the same plan, newest supplied publication first."""
+    if item["kind"] == "owner_trade":
+        return {"status": "not_applicable", "reason": "an owner trade on a name the run did not ticket has no published model plan"}
     if item["kind"] != "planned_handoff":
         return {"status": "not_applicable", "reason": "an independent research report has no published model plan"}
     if publications is None:
@@ -646,7 +879,7 @@ def read(raw: bytes, publications=None) -> dict:
     store = load_backup(raw)
     records, total, complete = [], 0, 0
     for item in store["items"]:
-        planned = item["kind"] == "planned_handoff"
+        planned, own = item["kind"] == "planned_handoff", item["kind"] == "owner_trade"
         result = completed_result(item["report"])
         reported_block = {**result, "beyond_stop": beyond_stop(item, result)}
         if result["state"] == "complete":
@@ -656,9 +889,9 @@ def read(raw: bytes, publications=None) -> dict:
             "id": item["id"], "kind": item["kind"],
             "ticker": item["plan"]["ticker"] if planned else item["source"]["ticker"],
             "stage": item["plan"]["stage"] if planned else item["source"]["stage"],
-            "session": item["publication"]["session"] if planned else item["source"]["publication"]["measured_session"],
+            "session": item["publication"]["session"] if planned else item["source"]["publication"]["session" if own else "measured_session"],
             "revision": item["revision"], "report_updated_at": item["report_updated_at"],
-            "facts": item["report"], "draft": draft_of(item),
+            "facts": item["report"], "draft": draft_of(item), "reference": reference_exits(item),
             "trace": trace(item, publications),
             "reported": reported_block,
             "model": model_outcome(item, publications),
@@ -702,6 +935,15 @@ def text(reading: dict) -> str:
                              f"exited for {beyond['display']['total']} less than at the stop (a gap or slippage)")
         else:
             lines.append("    reported: no completed result -- " + "; ".join(result["reasons"]))
+        reference = record["reference"]
+        if reference:
+            level = "no sell-half level yet (report the average fill)" if reference["level"] is None else f"sell-half reference ${reference['level']} (+{reference['sell_half_pct']}% of the reported fill)"
+            sessions = (f"day {reference['sell_half_day']} {reference['sell_half_session']}, day {reference['final_exit_day']} {reference['final_session']} from {reference['entry_session']}"
+                        if reference["entry_session"] else "the record's calendar places no sessions")
+            stop = "no reported stop" if reference["stop_price"] is None else f"reported stop ${reference['stop_price']}"
+            label = record["facts"]["account_label"]
+            account = "no account label" if label is None else f"account {label}"
+            lines.append(f"    owner trade reference (the record's rules, deciding nothing): {level}; {sessions}; {stop}; {account}")
         model = record["model"]
         if model["status"] == "observed":
             plan = model["plan"]

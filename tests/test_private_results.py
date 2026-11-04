@@ -47,7 +47,7 @@ def item_of(store, ticker):
 def test_the_rehearsal_backup_is_bound_to_the_publication_it_was_prepared_from():
     sha = hashlib.sha256(PUBLICATION.read_bytes()).hexdigest()
     store = json.loads(BACKUP)
-    assert store["version"] == 3 and len(store["items"]) == 2
+    assert store["version"] == 4 and len(store["items"]) == 2
     assert {item["publication"]["sha256"] for item in store["items"]} == {sha}, (
         "the cash-preview publication moved: regenerate the rehearsal with "
         "SCSTOCK_FIRST_TRADE_WRITE=1 node tools/page_smoke.mjs --only firsttrade")
@@ -191,7 +191,8 @@ def _set(ticker, **fields):
     (lambda s: item_of(s, "COIL")["plan"]["reference"].update(version=2), "plan.reference"),
     (lambda s: item_of(s, "COIL").update(created_at="2026-09-16T00:00:00.000Z"), "record clocks"),
     (lambda s: s["items"].append(copy.deepcopy(s["items"][0])), "share one identity"),
-    (lambda s: s.update(version=4), "envelope"),
+    (lambda s: s.update(version=5), "envelope"),
+    (lambda s: [item.update(version=3) for item in s["items"]], "record identity"),
 ])
 def test_a_record_the_page_would_refuse_is_refused_by_name(mutate, named):
     with pytest.raises(pr.Refused, match=named.replace("(", r"\(").replace(")", r"\)")):
@@ -225,7 +226,7 @@ def test_a_legacy_store_is_read_as_the_page_normalizes_it():
         for item in store["items"]:
             item["version"] = 1
             del item["kind"]
-            for key in pr.RESULT_FIELDS:
+            for key in pr.RESULT_FIELDS + pr.OWNER_FIELDS:
                 del item["report"][key]
     reading = pr.read(backup_with(legacy), pr.from_files([PUBLICATION]))
     assert reading["backup"]["version"] == 1
@@ -291,7 +292,9 @@ def _ours(record) -> dict:
             "outcome": result.get("outcome"),
             "beyond_stop": beyond and {"per_share_microusd": str(beyond["per_share_microusd"]), "total_microusd": str(beyond["total_microusd"]),
                                        "quantity": beyond["quantity"], "per_share_display": beyond["display"]["per_share"],
-                                       "total_display": beyond["display"]["total"]}}
+                                       "total_display": beyond["display"]["total"]},
+            # an owner trade's reference arithmetic, None for every other kind
+            "reference_exits": record["reference"]}
 
 
 @pytest.mark.parametrize("case", PARITY["cases"], ids=[case["name"] for case in PARITY["cases"]])
@@ -316,14 +319,14 @@ def planned_from(path: Path, ticker: str, report: dict) -> dict:
     plan = row["plan"]
     sha = hashlib.sha256(raw).hexdigest()
     return {
-        "version": 3, "kind": "planned_handoff", "id": sha + ":" + plan["evidence_ref"]["id"], "revision": 2,
+        "version": 4, "kind": "planned_handoff", "id": sha + ":" + plan["evidence_ref"]["id"], "revision": 2,
         "created_at": "2026-09-11T13:35:00.000Z", "updated_at": "2026-09-11T20:00:00.000Z",
         "publication": {"sha256": sha, "session": data["run"]["session"], "published_at": data["run"]["published_at"],
                         "rules_version": data["app"]["rules_version"]},
         "plan": {"reference": plan["evidence_ref"], "ticker": ticker, "stage": "bursts", "order": plan["order_json"],
                  "timing": {k: data["run"]["timing"][k] for k in pr.TIMING_KEYS}, "exit_schedule": plan["exit_schedule"]},
         "draft": {"quantity": 1, "cash_cents": 200000, "fee_cents": 0},
-        "report": {**{k: None for k in pr.LEGACY_FIELDS + pr.RESULT_FIELDS}, **report},
+        "report": {**{k: None for k in pr.fields_for(4)}, **report},
         "report_updated_at": "2026-09-11T20:00:00.000Z",
     }
 
@@ -334,7 +337,7 @@ AAPL_REPORT = {"submitted_quantity": 1, "submitted_at": "2026-09-11T13:31:00.000
 
 
 def aapl_backup() -> bytes:
-    return json.dumps({"version": 3, "items": [planned_from(PAGE / "full.json", "AAPL", AAPL_REPORT)]}).encode("utf-8")
+    return json.dumps({"version": 4, "items": [planned_from(PAGE / "full.json", "AAPL", AAPL_REPORT)]}).encode("utf-8")
 
 
 def test_the_model_outcome_is_read_off_a_later_publication_and_never_added():
@@ -546,6 +549,245 @@ def test_the_tool_reads_and_writes_nothing_else(tmp_path, monkeypatch):
     before, checkout = tree(), status()
     assert pr.main([str(backup), "--publication", str(PUBLICATION)]) == 0
     assert tree() == before and status() == checkout
+
+
+# --- an owner's own trade on a listed name without a ticket ----------------------
+
+def owner_item(**report) -> dict:
+    """An owner trade as the page's reportOwner() freezes it over the cash-preview
+    publication's NVDA row (an A+ burst left without an order); its broker facts
+    are the test's, synthetic."""
+    raw = PUBLICATION.read_bytes()
+    data = json.loads(raw)
+    row = next(r for r in data["bursts"] if r["ticker"] == "NVDA")
+    rules = {k: data["rules"]["plan"][k] for k in pr.OWNER_RULES_KEYS}
+    source = {"ticker": "NVDA", "stage": "bursts",
+              "publication": {"sha256": hashlib.sha256(raw).hexdigest(), "session": data["run"]["session"],
+                              "published_at": data["run"]["published_at"], "rules_version": data["app"]["rules_version"]},
+              # admitted as the page reads the row's admission block (pr._admission mirrors admissionOf())
+              "row": {"rank": row["rank"], "grade": row["grade"], "score": row["score"], "scan": row["scan"], "admitted": pr._admission(row),
+                      "status": "no_order", "reason": ""},
+              "evidence_id": row["evidence"]["id"], "rules": rules,
+              "schedule": {"entry_session": "2026-09-11", "sell_half_session": "2026-09-15", "final_session": "2026-09-17"}}
+    report = {**{k: None for k in pr.fields_for(4)}, "submitted_quantity": 102, "filled_quantity": 102, "cancelled_quantity": 0,
+              "average_price": "70.345", "filled_at": "2026-09-11T13:41:00.000Z", "protected_quantity": 102,
+              "protection_confirmed_at": "2026-09-11T13:42:00.000Z", "account_label": "Rollover IRA", "stop_price": "67.85", **report}
+    return {"version": 4, "kind": "owner_trade", "id": pr.owner_id(source), "revision": 1, "created_at": "2026-09-11T14:05:00.000Z",
+            "updated_at": "2026-09-11T14:05:00.000Z", "source": source, "report": report, "report_updated_at": "2026-09-11T14:05:00.000Z"}
+
+
+def owner_backup(**report) -> bytes:
+    return json.dumps({"version": 4, "items": [owner_item(**report)]}).encode("utf-8")
+
+
+def test_an_owner_trade_traces_to_the_listed_row_and_the_records_own_calendar():
+    reading = pr.read(owner_backup(), pr.from_files([PUBLICATION]))
+    row = reading["records"][0]
+    assert row["kind"] == "owner_trade" and row["trace"]["status"] == "traced" and row["trace"]["mismatches"] == []
+    # the frozen row is the publication's: NVDA is the third burst, A+ 10.0 by both scans, no ticket
+    # the status word and the reason are the page's own reading of the row, named as not compared
+    assert row["trace"]["unchecked"] == ["source.row.status", "source.row.reason"]
+    assert row["model"]["status"] == "not_applicable" and row["draft"] is None
+    # day 3 and day 5 counted from the applicable session on the record's own XNYS calendar
+    data = json.loads(PUBLICATION.read_bytes())
+    sessions = [s["session"] for s in data["run"]["calendar"]["schedule"]["sessions"]]
+    at = sessions.index(data["run"]["timing"]["applicable_session"])
+    assert data["run"]["timing"]["applicable_session"] == "2026-09-11"
+    assert (sessions[at + 2], sessions[at + 4]) == ("2026-09-15", "2026-09-17")
+    assert row["reference"]["sell_half_session"] == "2026-09-15" and row["reference"]["final_session"] == "2026-09-17"
+
+
+@pytest.mark.parametrize("path, value", [
+    (("source", "row", "rank"), 2),
+    (("source", "row", "grade"), "A"),
+    (("source", "row", "score"), 9.5),
+    (("source", "row", "scan"), "dollar"),
+    (("source", "row", "admitted"), False),
+    (("source", "evidence_id"), "0" * 64),
+    (("source", "rules", "sell_half_pct"), 9),
+    (("source", "schedule", "final_session"), "2026-09-18"),
+    (("source", "publication", "session"), "2026-09-09"),
+    (("source", "publication", "published_at"), "2026-09-10T22:31:00+00:00"),
+    (("source", "publication", "rules_version"), "000000000000"),
+])
+def test_an_owner_trade_names_each_frozen_fact_its_publication_does_not_carry(path, value):
+    store = json.loads(owner_backup())
+    target = store["items"][0]
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = value
+    row = pr.read(json.dumps(store).encode(), pr.from_files([PUBLICATION]))["records"][0]
+    assert row["trace"]["mismatches"] == [".".join(path if path[1] != "rules" and path[1] != "schedule" else path[:2])]
+
+
+def setting_up_publication(tmp_path, quiet: bool) -> tuple[Path, dict]:
+    """The cash-preview publication with a second coil, ZZCO, listed on the top
+    list or among the also-quiet coils the page lists after it."""
+    data = json.loads(PUBLICATION.read_bytes())
+    extra = copy.deepcopy(data["watchlist"]["top"][0])
+    extra["ticker"] = "ZZCO"
+    extra["plan"] = None
+    data["watchlist"]["also_quiet" if quiet else "top"].append(extra)
+    path = tmp_path / "data.json"
+    path.write_bytes(json.dumps(data).encode("utf-8"))
+    return path, data
+
+
+def setting_up_owner(path: Path, data: dict, rank: int, **row) -> bytes:
+    rules = {k: data["rules"]["plan"][k] for k in pr.OWNER_RULES_KEYS}
+    source = {"ticker": "ZZCO", "stage": "setting-up",
+              "publication": {"sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "session": data["run"]["session"],
+                              "published_at": data["run"]["published_at"], "rules_version": data["app"]["rules_version"]},
+              "row": {"rank": rank, "grade": None, "score": None, "scan": None, "admitted": None, "status": "watch", "reason": "", **row},
+              # the copied coil keeps its evidence identity, which the page freezes
+              "evidence_id": next(r for r in data["watchlist"]["top"] + data["watchlist"]["also_quiet"] if r["ticker"] == "ZZCO")["evidence"]["id"],
+              "rules": rules,
+              "schedule": {"entry_session": "2026-09-11", "sell_half_session": "2026-09-15", "final_session": "2026-09-17"}}
+    item = {**owner_item(), "source": source, "id": pr.owner_id(source)}
+    return json.dumps({"version": 4, "items": [item]}).encode("utf-8")
+
+
+@pytest.mark.parametrize("quiet, rank", [(False, 2), (True, 2)])
+def test_a_setting_up_owner_trade_is_ranked_as_the_page_lists_it(tmp_path, quiet, rank):
+    # the page lists watchlist.top first, then the also-quiet coils after the
+    # whole top list: COIL is the one top row, so ZZCO is second either way
+    path, data = setting_up_publication(tmp_path, quiet)
+    row = pr.read(setting_up_owner(path, data, rank), pr.from_files([path]))["records"][0]
+    assert row["trace"]["status"] == "traced" and row["trace"]["mismatches"] == []
+    wrong = pr.read(setting_up_owner(path, data, rank + 1), pr.from_files([path]))["records"][0]
+    assert wrong["trace"]["mismatches"] == ["source.row.rank"]
+
+
+def test_a_setting_up_owner_trade_claiming_a_grade_is_named(tmp_path):
+    # a coil carries no mechanical grade, score, scan or admission on the page;
+    # a record claiming one is a mismatch, not an unchecked field
+    path, data = setting_up_publication(tmp_path, False)
+    row = pr.read(setting_up_owner(path, data, 2, grade="A+", score=10, scan="both", admitted=True), pr.from_files([path]))["records"][0]
+    assert row["trace"]["mismatches"] == ["source.row.grade", "source.row.score", "source.row.scan", "source.row.admitted"]
+
+
+@pytest.mark.parametrize("mutate, named", [
+    (lambda i: i["source"]["schedule"].update(final_session="\uff12\uff10\uff12\uff16-09-17"), "source.schedule"),
+    (lambda i: i.update(created_at="\uff12\uff10\uff12\uff16-09-11T14:05:00.000Z"), "record clocks"),
+    (lambda i: i["report"].update(filled_at="\uff12\uff10\uff12\uff16-09-11T13:41:00.000Z"), "report"),
+    (lambda i: i["source"]["publication"].update(session="\uff12\uff10\uff12\uff16-09-10"), "source.publication"),
+    (lambda i: i["report"].update(stop_price="\uff16\uff17.85"), "report"),
+])
+def test_a_date_price_or_clock_in_other_digits_is_refused_as_the_page_refuses_it(mutate, named):
+    # JavaScript's \d is ASCII; Python's matches every Unicode digit
+    store = json.loads(owner_backup())
+    mutate(store["items"][0])
+    with pytest.raises(pr.Refused, match=named):
+        pr.read(json.dumps(store).encode("utf-8"))
+
+
+def test_an_owner_trade_on_a_ticketed_or_absent_name_is_a_mismatch_not_a_refusal():
+    # the page refuses to create one on a ticketed name; a stored one is still
+    # read, and traced against whatever row the publication carries
+    store = json.loads(owner_backup())
+    store["items"][0]["source"]["ticker"] = "ZZZZ"
+    store["items"][0]["id"] = pr.owner_id(store["items"][0]["source"])
+    row = pr.read(json.dumps(store).encode(), pr.from_files([PUBLICATION]))["records"][0]
+    assert row["trace"]["mismatches"] == ["source: no single bursts row for ZZZZ"]
+
+
+@pytest.mark.parametrize("price, pct, expected", [
+    ("70.345", 8, "75.97"),   # 75.9726 -> cents, half up
+    ("61.72", 8, "66.66"),    # 66.6576
+    ("64.545", 8, "69.71"),   # 69.7086
+    ("100", 8, "108.00"),
+    ("0.000001", 8, "0.00"),
+    ("99.995", 0.01, "100.00"),  # 100.0049995 -> half up at the cent
+    ("10", 12.5, "11.25"),
+])
+def test_the_sell_half_level_by_hand(price, pct, expected):
+    assert pr.sell_half_level(price, pct) == expected
+
+
+@pytest.mark.parametrize("stored, expected", [
+    ("2026-09-11T13:41:00.000Z", "2026-09-11"),   # 9:41 New York
+    ("2026-09-12T03:30:00.000Z", "2026-09-11"),   # 11:30 PM New York the evening before
+    ("2026-09-12T04:00:00.000Z", "2026-09-12"),   # midnight New York, EDT
+    ("2026-12-01T04:30:00.000Z", "2026-11-30"),   # 11:30 PM New York, EST
+    ("2026-12-01T05:00:00.000Z", "2026-12-01"),
+])
+def test_the_fill_day_is_the_new_york_date(stored, expected):
+    assert pr.exchange_date(stored) == expected
+
+
+def test_the_reference_exits_are_the_pages():
+    row = pr.read(owner_backup())["records"][0]
+    assert row["reference"] == {"sell_half_pct": 8, "sell_half_day": 3, "final_exit_day": 5, "entry_day": 1, "level": "75.97",
+                                "fill_session": "2026-09-11", "fill_on_entry_session": True, "entry_session": "2026-09-11",
+                                "sell_half_session": "2026-09-15", "final_session": "2026-09-17", "stop_price": "67.85"}
+    other = pr.read(owner_backup(filled_at="2026-09-14T13:41:00.000Z"))["records"][0]["reference"]
+    assert other["fill_session"] == "2026-09-14" and other["fill_on_entry_session"] is False
+    unfilled = pr.read(owner_backup(filled_quantity=None, average_price=None, filled_at=None, protected_quantity=None,
+                                     protection_confirmed_at=None))["records"][0]["reference"]
+    assert unfilled["level"] is None and unfilled["fill_session"] is None and unfilled["fill_on_entry_session"] is None
+    store = json.loads(owner_backup())
+    store["items"][0]["source"]["schedule"] = None
+    placed_none = pr.read(json.dumps(store).encode())["records"][0]["reference"]
+    assert placed_none["entry_session"] is None and placed_none["fill_on_entry_session"] is None and placed_none["level"] == "75.97"
+
+
+def test_an_owner_trades_gap_is_counted_against_its_reported_stop():
+    row = pr.read(owner_backup(exited_quantity=102, exited_at="2026-09-14T13:35:00.000Z", average_exit_price="67.1",
+                               entry_fees="0.00", exit_fees="0.01"))["records"][0]
+    beyond = row["reported"]["beyond_stop"]
+    assert beyond["per_share_microusd"] == 750000 and beyond["total_microusd"] == 76500000 and beyond["quantity"] == 102
+    assert beyond["display"] == {"per_share": "$0.75", "total": "$76.50"}
+    assert row["reported"]["state"] == "complete" and row["reported"]["outcome"] == "loss"
+    assert pr.read(owner_backup(exited_quantity=102, exited_at="2026-09-14T13:35:00.000Z", average_exit_price="67.1",
+                                entry_fees="0.00", exit_fees="0.01", stop_price=None))["records"][0]["reported"]["beyond_stop"] is None
+
+
+def test_a_version_3_backup_is_read_with_the_owner_fields_unknown():
+    item = owner_item()
+    store = json.loads(BACKUP)
+    store["version"] = 3
+    for record in store["items"]:
+        record["version"] = 3
+        for key in pr.OWNER_FIELDS:
+            del record["report"][key]
+    reading = pr.read(json.dumps(store).encode("utf-8"))
+    assert reading["backup"]["version"] == 3 and all(rec["facts"]["account_label"] is None and rec["facts"]["stop_price"] is None for rec in reading["records"])
+    # an owner trade is version 4's: under a version 3 envelope it is refused by name
+    store["items"].append({**item, "version": 3, "report": {k: v for k, v in item["report"].items() if k not in pr.OWNER_FIELDS}})
+    with pytest.raises(pr.Refused, match=r"kind"):
+        pr.read(json.dumps(store).encode("utf-8"))
+
+
+@pytest.mark.parametrize("mutate, named", [
+    (lambda i: i["report"].update(account_label="R" * 41), "report"),
+    (lambda i: i["report"].update(account_label=" Roth IRA "), "report"),
+    (lambda i: i["report"].update(stop_price="0"), "report"),
+    (lambda i: i["report"].update(stop_price="67.8500001"), "report"),
+    (lambda i: i["source"]["row"].update(rank=0), "source.row"),
+    (lambda i: i["source"]["row"].update(status="No_order"), "source.row"),
+    (lambda i: i["source"]["row"].update(reason="x" * 2001), "source.row"),
+    (lambda i: i["source"].update(evidence_id="g" * 64), "source.evidence_id"),
+    (lambda i: i["source"]["rules"].update(sell_half_pct=8.001), "source.rules"),
+    (lambda i: i["source"]["rules"].update(sell_half_day=1), "source.rules"),
+    (lambda i: i["source"]["schedule"].update(final_session="2026-09-15"), "source.schedule"),
+    (lambda i: i["source"].update(stage="coil"), "source"),
+    (lambda i: i.update(id="0" * 64 + ":owner:bursts:NVDA"), "id"),
+    (lambda i: i.update(draft={"quantity": 1, "cash_cents": 200000, "fee_cents": 0}), "record fields"),
+    (lambda i: (i["report"].update({k: None for k in i["report"]}), i.update(report_updated_at=None)), "an owner trade with no report"),
+])
+def test_an_owner_trade_the_page_would_refuse_is_refused_by_name(mutate, named):
+    store = json.loads(owner_backup())
+    mutate(store["items"][0])
+    with pytest.raises(pr.Refused, match=named.replace("(", r"\(").replace(")", r"\)")):
+        pr.read(json.dumps(store).encode("utf-8"))
+
+
+def test_the_text_prints_the_owner_reference_and_decides_nothing(capsys):
+    reading = pr.read(owner_backup(), pr.from_files([PUBLICATION]))
+    out = pr.text(reading)
+    assert "owner trade reference (the record's rules, deciding nothing): sell-half reference $75.97 (+8% of the reported fill); day 3 2026-09-15, day 5 2026-09-17 from 2026-09-11; reported stop $67.85; account Rollover IRA" in out
+    unlabeled = pr.text(pr.read(owner_backup(account_label=None), pr.from_files([PUBLICATION])))
+    assert "reported stop $67.85; no account label" in unlabeled
 
 
 def test_a_file_or_history_it_cannot_read_is_one_line_and_exit_3(tmp_path, capsys):

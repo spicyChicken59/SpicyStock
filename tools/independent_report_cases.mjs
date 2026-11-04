@@ -96,7 +96,7 @@ export async function checkIndependentReports({ browser, base, open, check, eq, 
         await page.locator('[data-stop-report="KE"]').focus(); await page.keyboard.press('Enter');
         eq(name + ': open creates only a transient blank editor', await page.locator('#morning-handoffs').getAttribute('data-handoff-mode'), 'independent-unsaved');
         eq(name + ': keyboard reporting focuses its heading', await page.evaluate(() => document.activeElement.id), 'handoff-title');
-        eq(name + ': every actual field is blank including quantity, fees and prices', await page.locator('[data-handoff-field]').evaluateAll(nodes => nodes.map(node => node.value)), Array(14).fill(''));
+        eq(name + ': every actual field is blank including quantity, fees and prices', await page.locator('[data-handoff-field]').evaluateAll(nodes => nodes.map(node => node.value)), Array(16).fill(''));
         eq(name + ': opening creates no private record', [await rawStore(page), (await saved(page)).length], [null, 0]);
         check(name + ': original not-admitted source and no entry permission remain explicit', /Original production baseline: not admitted.*grants no entry permission/.test(await text(page, '[data-handoff-research-source]')));
         eq(name + ': verbose source references begin as a closed disclosure', await page.locator('[data-handoff-research-references]').evaluate(node => node.open), false);
@@ -296,7 +296,8 @@ export async function checkIndependentReports({ browser, base, open, check, eq, 
       try {
         await page.locator('#morning-open').click(); await page.locator('#morning-handoffs > summary').click();
         eq('legacy v' + version + ': opening preserves exact original storage bytes', await rawStore(page), raw);
-        eq('legacy v' + version + ': in-memory normalization adds only planned kind/version', (await saved(page)).map(item => [item.version, item.kind, item.plan.ticker, item.draft.quantity]), [[3, 'planned_handoff', 'COIL', 2]]);
+        eq('legacy v' + version + ': in-memory normalization adds only planned kind/version', (await saved(page)).map(item => [item.version, item.kind, item.plan.ticker, item.draft.quantity]), [[4, 'planned_handoff', 'COIL', 2]]);
+        eq('legacy v' + version + ': the account label and stop read unknown', (await saved(page)).map(item => [item.report.account_label, item.report.stop_price]), [[null, null]]);
         eq('legacy v' + version + ': unknown actual costs remain blank', [await field(page, 'entry_fees').inputValue(), await field(page, 'exit_fees').inputValue()], ['', '']);
         const old = JSON.parse(raw).items[0];
         if (!await page.locator('[data-handoff-report]').evaluate(node => node.open)) await page.locator('[data-handoff-report] > summary').click();
@@ -304,7 +305,7 @@ export async function checkIndependentReports({ browser, base, open, check, eq, 
         eq('legacy v' + version + ': invalid correction does not trigger migration', await rawStore(page), raw);
         await field(page, 'entry_fees').fill('0.00'); await save(page);
         const upgraded = JSON.parse(await rawStore(page));
-        eq('legacy v' + version + ': explicit valid save writes v3 planned form', [upgraded.version, upgraded.items[0].version, upgraded.items[0].kind], [3, 3, 'planned_handoff']);
+        eq('legacy v' + version + ': explicit valid save writes v4 planned form', [upgraded.version, upgraded.items[0].version, upgraded.items[0].kind], [4, 4, 'planned_handoff']);
         eq('legacy v' + version + ': explicit migration preserves original terms and private draft', [upgraded.items[0].plan, upgraded.items[0].draft, upgraded.items[0].publication], [old.plan, old.draft, old.publication]);
         eq('legacy v' + version + ': no uncaught errors', Array.from(tab.errors), []);
       } finally { await tab.context.close(); }

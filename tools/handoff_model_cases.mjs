@@ -52,15 +52,18 @@ const journalFixtures = Object.fromEntries(await Promise.all(['observed', 'cohor
 })));
 
 const plain = value => JSON.parse(JSON.stringify(value));
-const reportFields = patch => ({ submitted_quantity: '', submitted_at: '', filled_quantity: '', average_price: '', filled_at: '', cancelled_quantity: '', cancelled_at: '', exited_quantity: '', exited_at: '', protected_quantity: '', protection_confirmed_at: '', average_exit_price: '', entry_fees: '', exit_fees: '', ...patch });
+const reportFields = patch => ({ submitted_quantity: '', submitted_at: '', filled_quantity: '', average_price: '', filled_at: '', cancelled_quantity: '', cancelled_at: '', exited_quantity: '', exited_at: '', protected_quantity: '', protection_confirmed_at: '', average_exit_price: '', entry_fees: '', exit_fees: '', account_label: '', stop_price: '', ...patch });
+// Version 4 added the owner's account label and reported stop to every report.
+const OWNER_NULLS = { account_label: null, stop_price: null };
 
 function environment(options = {}) {
   const state = { now: NOW, hash: HASH, restriction: null, readFails: false, writeFails: false, writes: 0, badReadback: false, blockLock: null, ...options };
   const store = options.store || new Map(), events = new Map();
   const data = options.data ? plain(options.data) : JSON.parse(raw);
-  const makeCandidate = (row, stage) => ({ ticker: row.ticker, stage, status: row.plan?.eligible ? 'ticket' : 'withheld', plan: row.plan, row });
+  const makeCandidate = (row, stage, index) => ({ ticker: row.ticker, stage, rank: index + 1, grade: stage === 'bursts' ? row.grade ?? null : null, score: stage === 'bursts' ? row.score ?? null : null,
+    admitted: null, status: row.plan?.eligible ? 'ticket' : 'withheld', reason: row.plan?.eligible ? row.plan.order_line || '' : row.plan?.reason || '', plan: row.plan, row });
   const api = { data, avail: { offered: true, reason: '', pub: { state: 'fresh' }, timing: {}, phase: 'open' },
-    model: { stages: { bursts: data.trades.map(row => makeCandidate(row, 'bursts')), 'setting-up': data.watchlist.top.map(row => makeCandidate(row, 'setting-up')) } },
+    model: { stages: { bursts: data.trades.map((row, index) => makeCandidate(row, 'bursts', index)), 'setting-up': data.watchlist.top.map((row, index) => makeCandidate(row, 'setting-up', index)) } },
     observations: { facts: () => ({ canonicalHash: state.hash }), refusal: () => state.restriction } };
   api.reclock = () => { api.avail.offered = Date.parse(state.now) < Date.parse(data.run.timing.cutoff_at); api.avail.reason = api.avail.offered ? '' : 'Entry window ended.'; };
   let queue = Promise.resolve();
@@ -179,7 +182,7 @@ test('retained journal first save still requires explicit positive reconciled fi
     const row = journalEnvironment(name, ticker), saved = await row.create({ submitted_quantity: '9', filled_quantity: '7' }); assert.equal(saved.ok, true, saved.error);
     assert.deepEqual(plain(saved.item.source), row.source); assert.equal(saved.item.id, row.source.publication.data_sha256 + ':' + row.source.evidence.id);
     for (const [key, value] of Object.entries(saved.item.report)) assert.equal(value, key === 'submitted_quantity' ? 9 : key === 'filled_quantity' ? 7 : null, key);
-    assert.equal(saved.item.version, 3); assert.equal(saved.item.kind, 'independent_research'); assert.equal('draft' in saved.item, false); assert.equal('plan' in saved.item, false);
+    assert.equal(saved.item.version, 4); assert.equal(saved.item.kind, 'independent_research'); assert.equal('draft' in saved.item, false); assert.equal('plan' in saved.item, false);
     assert.equal(row.handoff.summary(saved.item).completed_result.state, 'incomplete'); assert.equal(row.handoff.summary(saved.item).reported_held_quantity, null);
     assert.equal(row.handoff.readback(saved.item), ''); assert.equal(row.handoff.copy(saved.item.id).ok, false);
   }
@@ -243,7 +246,7 @@ test('independent creation requires a positive actual fill and reconciled submit
     assert.equal(env.state.writes, 0); assert.equal(env.store.size, 0);
   }
   const saved = await env.create({ submitted_quantity: '9', filled_quantity: '7' }); assert.equal(saved.ok, true, saved.error);
-  assert.equal(saved.item.kind, 'independent_research'); assert.equal(saved.item.version, 3);
+  assert.equal(saved.item.kind, 'independent_research'); assert.equal(saved.item.version, 4);
   for (const key of ['draft', 'plan', 'order', 'publication', 'cash']) assert.equal(key in saved.item, false, key);
   assert.equal(saved.item.report.submitted_quantity, 9); assert.equal(saved.item.report.filled_quantity, 7);
   for (const [key, value] of Object.entries(saved.item.report)) if (!['submitted_quantity', 'filled_quantity'].includes(key)) assert.equal(value, null, key);
@@ -345,19 +348,19 @@ test('independent save failures retain exact prior and proposed reports and lock
   const env = researchEnvironment('current', 'KE', { store: new Map([['spicystock:handoff:v1', LEGACY_V2_RAW]]) }); env.state.writeFails = true;
   const failed = await env.create({ submitted_quantity: '1', filled_quantity: '1' }); assert.equal(failed.ok, false);
   assert.equal(env.store.get(env.handoff.KEY), LEGACY_V2_RAW); assert.equal(env.handoff.recovery().prior, LEGACY_V2_RAW);
-  const proposed = JSON.parse(env.handoff.recovery().proposed); assert.equal(proposed.version, 3); assert.equal(proposed.items.length, 2); assert.equal(proposed.items[1].kind, 'independent_research');
+  const proposed = JSON.parse(env.handoff.recovery().proposed); assert.equal(proposed.version, 4); assert.equal(proposed.items.length, 2); assert.equal(proposed.items[1].kind, 'independent_research');
   env.state.writeFails = false; const saved = await env.create({ submitted_quantity: '1', filled_quantity: '1' }); assert.equal(saved.ok, true, saved.error);
   assert.equal(env.handoff.list()[0].report.entry_fees, '1.23');
   const blocked = researchEnvironment('current', 'KE', { noLocks: true }); assert.equal((await blocked.create({ submitted_quantity: '1', filled_quantity: '1' })).ok, false); assert.equal(blocked.state.writes, 0);
 });
 
-test('genuine v2 costs and all semantic fields survive read-only migration then explicit v3 save', async () => {
+test('genuine v2 costs and all semantic fields survive read-only migration then explicit v4 save', async () => {
   const old = JSON.parse(LEGACY_V2_RAW).items[0], env = environment({ now: '2030-01-02T16:00:00Z', store: new Map([['spicystock:handoff:v1', LEGACY_V2_RAW]]) });
   assert.equal(env.handoff.status().available, true); const item = env.handoff.list()[0];
-  assert.deepEqual(plain(item), { ...old, version: 3, kind: 'planned_handoff' }); assert.equal(env.state.writes, 0); assert.equal(env.store.get(env.handoff.KEY), LEGACY_V2_RAW);
+  assert.deepEqual(plain(item), { ...old, version: 4, kind: 'planned_handoff', report: { ...old.report, ...OWNER_NULLS } }); assert.equal(env.state.writes, 0); assert.equal(env.store.get(env.handoff.KEY), LEGACY_V2_RAW);
   assert.equal(env.handoff.summary(item).completed_result.net_microusd, '33430185');
   const saved = await env.handoff.report(item.id, item.report, item.revision); assert.equal(saved.ok, true, saved.error);
-  assert.equal(JSON.parse(env.store.get(env.handoff.KEY)).version, 3); assert.deepEqual(plain(saved.item.report), old.report);
+  assert.equal(JSON.parse(env.store.get(env.handoff.KEY)).version, 4); assert.deepEqual(plain(saved.item.report), { ...old.report, ...OWNER_NULLS });
   for (const key of ['id', 'publication', 'plan', 'draft', 'created_at']) assert.deepEqual(plain(saved.item[key]), old[key]);
 });
 
@@ -405,7 +408,7 @@ test('mixed planned and independent backups preserve unknown corrections source 
   const created = await source.create({ submitted_quantity: '9', filled_quantity: '7' }); assert.equal(created.ok, true, created.error);
   const corrected = await source.handoff.report(created.item.id, reportFields({}), 1); assert.equal(corrected.ok, true, corrected.error);
   const original = source.store.get(source.handoff.KEY), backup = source.handoff.exportBackup();
-  assert.equal(backup.ok, true, backup.error); assert.equal(backup.summary.version, 3); assert.equal(backup.summary.count, 2); assert.equal(backup.summary.planned_count, 1); assert.equal(backup.summary.independent_count, 1);
+  assert.equal(backup.ok, true, backup.error); assert.equal(backup.summary.version, 4); assert.equal(backup.summary.count, 2); assert.equal(backup.summary.planned_count, 1); assert.equal(backup.summary.independent_count, 1); assert.equal(backup.summary.owner_count, 0);
   assert.equal(backup.summary.records[1].ticker, 'KE'); assert.equal(backup.summary.records[1].session, '2026-10-09'); assert.equal(backup.summary.records[1].published_at, source.source.publication.published_at);
   const dest = environment({ now: '2030-01-02T16:00:00Z', hash: null }); dest.api.data = null; dest.api.model = null;
   const preview = dest.handoff.previewBackup(backup.raw); assert.equal(preview.ok, true, preview.error);
@@ -936,8 +939,8 @@ test('corrections recompute results after expiry and events without restoring en
 test('a genuine v1 record reads as unknown new fields without a single storage write', async () => {
   const original = JSON.parse(LEGACY_RAW), old = original.items[0], env = environment({ store: new Map([['spicystock:handoff:v1', LEGACY_RAW]]) });
   assert.equal(env.handoff.status().available, true);
-  const item = env.handoff.list()[0]; assert.equal(item.version, 3); assert.equal(item.kind, 'planned_handoff');
-  const expected = { ...old, version: 3, kind: 'planned_handoff', report: { ...old.report, average_exit_price: null, entry_fees: null, exit_fees: null } };
+  const item = env.handoff.list()[0]; assert.equal(item.version, 4); assert.equal(item.kind, 'planned_handoff');
+  const expected = { ...old, version: 4, kind: 'planned_handoff', report: { ...old.report, average_exit_price: null, entry_fees: null, exit_fees: null, ...OWNER_NULLS } };
   assert.deepEqual(plain(item), expected); assert.equal(env.handoff.find(item.id).revision, old.revision);
   assert.equal(env.handoff.summary(item).completed_result.state, 'incomplete'); assert.equal(env.handoff.summary(item).completed_result.net_display, null);
   assert.equal(env.handoff.copy(item.id).ok, false); assert.equal(env.store.get(env.handoff.KEY), LEGACY_RAW); assert.equal(env.state.writes, 0);
@@ -951,7 +954,7 @@ test('an explicit valid save upgrades v1 once while preserving original semantic
   assert.equal(bad.ok, false); assert.equal(env.store.get(env.handoff.KEY), LEGACY_RAW); assert.equal(env.state.writes, 0);
   const saved = await env.handoff.report(item.id, { ...item.report, average_exit_price: '115', entry_fees: '0.05', exit_fees: '0.07' }, item.revision);
   assert.equal(saved.ok, true, saved.error); assert.equal(env.state.writes, 1);
-  const raw = env.store.get(env.handoff.KEY), store = JSON.parse(raw); assert.equal(store.version, 3); assert.equal(store.items[0].version, 3);
+  const raw = env.store.get(env.handoff.KEY), store = JSON.parse(raw); assert.equal(store.version, 4); assert.equal(store.items[0].version, 4);
   assert.equal(saved.item.revision, old.revision + 1); assert.equal(saved.item.created_at, old.created_at);
   for (const key of ['id', 'publication', 'plan', 'draft']) assert.deepEqual(plain(saved.item[key]), old[key]);
   for (const key of Object.keys(old.report)) assert.deepEqual(saved.item.report[key], old.report[key], key);
@@ -959,12 +962,12 @@ test('an explicit valid save upgrades v1 once while preserving original semantic
   env.handoff.list(); env.handoff.status(); assert.equal(env.store.get(env.handoff.KEY), raw); assert.equal(env.state.writes, 1);
 });
 
-test('failed v1 upgrades retain exact old bytes plus proposed v3 recovery and reject stale retries', async () => {
+test('failed v1 upgrades retain exact old bytes plus proposed v4 recovery and reject stale retries', async () => {
   const env = environment({ store: new Map([['spicystock:handoff:v1', LEGACY_RAW]]) }), item = env.handoff.list()[0]; env.state.writeFails = true;
   const fields = { ...item.report, average_exit_price: '115', entry_fees: '0', exit_fees: '0' };
   assert.equal((await env.handoff.report(item.id, fields, item.revision)).ok, false);
   assert.equal(env.store.get(env.handoff.KEY), LEGACY_RAW); assert.equal(env.handoff.recovery().prior, LEGACY_RAW);
-  const proposed = JSON.parse(env.handoff.recovery().proposed); assert.equal(proposed.version, 3); assert.equal(proposed.items[0].report.entry_fees, '0.00');
+  const proposed = JSON.parse(env.handoff.recovery().proposed); assert.equal(proposed.version, 4); assert.equal(proposed.items[0].report.entry_fees, '0.00');
   assert.equal(env.handoff.find(item.id).report.entry_fees, null);
   env.state.writeFails = false;
   const saved = await env.handoff.report(item.id, fields, item.revision); assert.equal(saved.ok, true, saved.error);

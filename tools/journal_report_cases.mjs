@@ -114,7 +114,7 @@ export async function checkJournalReports({ browser, base, open, check, eq, shot
       await capture(page, 'journal-original-row-' + width, '[data-outcome-cohort="' + fixture.bundle.cohorts[0].source.sha256 + '"] [data-outcome-row="COIL"]');
       await row(page, fixture, 'COIL').locator('[data-outcome-report]').focus(); await page.keyboard.press('Enter');
       eq(name + ': keyboard action focuses blank private heading', await page.evaluate(() => document.activeElement.id), 'handoff-title');
-      eq(name + ': no model quantity, price, time, exit, protection or fee defaults', await page.locator('[data-handoff-field]').evaluateAll(nodes => nodes.map(node => node.value)), Array(14).fill(''));
+      eq(name + ': no model quantity, price, time, exit, protection or fee defaults', await page.locator('[data-handoff-field]').evaluateAll(nodes => nodes.map(node => node.value)), Array(16).fill(''));
       eq(name + ': opening creates neither storage nor write', [await rawStore(page), await page.evaluate(() => window.__journalWrites)], [null, 0]);
       const expected = original(fixture, 0, 'COIL');
       check(name + ': original publication is genuinely older than active journal', expected.publication.data_sha256 !== fixture.receipt.publication.data_sha256);

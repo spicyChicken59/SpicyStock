@@ -1,7 +1,7 @@
 # SpicyStock
 
 The active [product goal and milestones](PRODUCT_GOAL.md) are a usable morning
-trading workspace for a $2,000 cash account in Chicago time: trustworthy data,
+trading workspace for one Fidelity model account ($30,000 across two IRAs from 4 November 2026; $2,000 before it) in Chicago time: trustworthy data,
 clear conditional setups, bounded sizing and an explained wait when nothing
 qualifies. Milestone 1 is live with morning preparation, combined cash
 allocation, known corporate-action exclusions and dependable session handling.
@@ -76,9 +76,14 @@ page prints its figures as the file writes them and adds no figure of its own.
 **Morning desk.** The masthead's preparation button opens the published session's entry
 window in America/Chicago, publication and market state, separate reaction and
 setting-up ticket counts, and the account assumptions beside the next step.
-The personal reference is a $2,000 cash account, $10 base planned risk and a
-$500 per-name cap before existing strategy reductions. An older publication
-sized for another account says so; the published tickets retain their quantities.
+The personal reference is read by the session a publication measured
+(`docs/app-morning.js` `REFERENCES`): from the 4 November 2026 session, two
+Fidelity IRAs read as one $30,000 model account, $150 base planned risk and a
+$7,500 per-name cap before existing strategy reductions; before it, the $2,000
+cash account, $10 risk and $500 cap every earlier publication was sized at. The
+current reference and `evening.yml`'s versioned sizing are held to one number by
+`tests/test_workflows.py`. A publication sized for another account than its
+session's reference says so; the published tickets retain their quantities.
 Optional settled cash begins unknown and stays in this tab. A separate cash-aware
 preview uses that entered cash, an explicit fees buffer, and an optional smaller
 whole-share quantity. It caps the calculation at the published shares and the
@@ -192,6 +197,37 @@ save; reopening the same verified original preserves unsaved broker inputs.
 Different cohort revisions sharing an original publication/evidence identity
 open the same private record. Conditional model outcomes never supply fill facts.
 
+**Your own trade on a listed name.** A stock the record lists without a ticket
+(a burst below the admitted band, a withheld setup, a quiet coil) offers
+**Record a trade I made on this name** in its action area; a ticketed name does
+not, since its draft and broker report are the ticket's own. The button opens the
+Morning desk on a blank version-4 record of kind `owner_trade`: every field
+starts blank, nothing is written until an explicit save, and a save needs a
+positive quantity actually filled with its submitted quantity. The record
+freezes the publication (its SHA-256, session, publish time and rules digest)
+and the row as the page read it (rank, mechanical grade and score, the scan that
+found it, the discovery admission, the recorded status and reason, the evidence
+identity when the record carries one; a setting-up name is ranked after the
+whole top list when it is an also-quiet coil, and carries no grade, score, scan
+or admission), the archived exit rules
+(`rules.plan.sell_half_pct`, `sell_half_day`, `final_exit_day`, `entry_day`) and
+the day-3 and day-5 sessions `run.calendar` places after the applicable session,
+or null when it places none. Its identity is the publication, the stage and the
+ticker, so one name in one record has one such record; opening the button again
+chooses it. Two report fields are the owner's alone: a broker account label (at
+most 40 printable characters) and the protective stop price actually placed.
+Beside the facts the desk prints a **model exit reference**: the sell-half level
+(the reported average fill plus `sell_half_pct`, rounded to the cent half up),
+the record's day-3 and day-5 sessions counted from the applicable session as day
+1, the reported stop, and, when the reported fill's New York date is not that
+session, a sentence saying the dates are the record's and not the trade's. It is
+reference arithmetic from the record's own rules; it does not decide that an exit
+is due, grants no entry permission, changes nothing published, and never reads a
+quote. A practice record (a page fixture) refuses the button by name, as does a
+publication the page has not verified or a name the current record does not
+list. The reported stop, not a published one, is what the completed result's gap
+line is measured against.
+
 **Personal completed-trade result.** A separate, user-reported result requires
 positive entry fills, all filled shares exited, and submitted shares fully
 reconciled as filled or cancelled (including an explicit zero cancellation).
@@ -215,16 +251,19 @@ exited for than they would have at the stop (a gap or slippage). It is read
 from reported averages, so it cannot say which shares went past the stop or how
 far each did, and a gap on part of a position can sit inside an average at or
 above the stop, which names nothing. An independent research report has no
-frozen stop and no such line.
+frozen stop and no such line; an owner trade's line is measured against the
+stop the owner reported, and is absent while none is.
 
-Existing version-1 and version-2 private records remain readable. Missing
-version-1 result fields stay unknown; recorded version-2 prices and costs retain
-their validation and values. Reading adapts them in memory without rewriting
-storage. An explicit successful save writes version 3, retaining the original
-identities and previously reported facts and distinguishing planned handoffs
-from independent research reports. Failed writes retain prior and proposed
-recovery bytes; unknown versions remain untouched. Upgrading does not expand
-the shared 100-record / 1 MiB limit.
+Existing version-1, version-2 and version-3 private records remain readable.
+Missing version-1 result fields stay unknown; recorded version-2 prices and
+costs retain their validation and values; a version-3 record reads with its
+account label and reported stop unknown. Reading adapts them in memory without
+rewriting storage. An explicit successful save writes version 4, retaining the
+original identities and previously reported facts and distinguishing planned
+handoffs, independent research reports and owner trades (version 3 named the
+first two; an owner trade under a version-3 envelope is refused). Failed writes
+retain prior and proposed recovery bytes; unknown versions remain untouched.
+Upgrading does not expand the shared 100-record / 1 MiB limit.
 
 **Local private backup.** In Private broker handoffs and reports, **Download
 private backup** saves the exact supported store bytes to a file on this device.
@@ -256,10 +295,17 @@ from -- the record whose bytes hash to the SHA-256 it froze, among
 `--publication` files or this checkout's history of `docs/data.json` (`--git`),
 and in it the plan whose evidence reference, order, entry window and exit
 schedule are the frozen ones (an independent report: the setting-up row whose
-evidence it names); and prints the model's own daily-bar replay of the same plan
-beside it, read off the newest supplied publication after the plan's session,
-never added to the reported figure. Each trace names what it did not compare:
-a planned handoff's draft (the owner's own choice), and an independent report's
+evidence it names; an owner trade: the listed row's rank, grade, score, scan,
+admission and evidence identity, the archived exit rules and the calendar's
+day-3 and day-5 sessions, re-derived from the publication -- a setting-up row
+from `watchlist.top` or the also-quiet coils after it, whose four graded fields
+must be null); and prints the
+model's own daily-bar replay of the same plan beside it, read off the newest
+supplied publication after the plan's session, never added to the reported
+figure (an owner trade has no model plan and says so; its reference exits are
+re-derived the page's way instead). Each trace names what it did not compare:
+a planned handoff's draft (the owner's own choice), an owner trade's status
+word and reason (the page's own reading of the row), and an independent report's
 reader digest, cohort, inputs digest and baseline admission, none of which
 `docs/data.json` carries. It writes nothing but an explicit `--json` and makes
 no network request. Exit 0 when every record re-derived and, where a
@@ -1725,8 +1771,18 @@ Inspection preserves private preparation and adds no current quote or order.
 The producer uses the actual retained planning inputs and the same pure planner,
 changing only the anticipation cap. Original trigger, limit and structural stop
 must match; the 4% calculation must reproduce original geometry, sizing and
-multipliers before a comparison is accepted. The reference remains $2,000,
-0.5% base risk, a 25% per-name cap and four slots. Existing market, watchlist,
+multipliers before a comparison is accepted. The comparison's reference is the
+$2,000, 0.5% base risk, 25% per-name cap and four slots it was registered at
+(`stop_research.ACCOUNT`, archived in its policy): inside the registered period
+a publication sized at another account is refused by name and the previous
+receipt kept, so a changed account is never read as the registered experiment;
+outside the period no row is computed, the publication's baseline is reconciled
+under its own archived account and the receipt's reservations state that
+account, so the outside-period receipt is still written for each later
+publication (the owner's account moved to $30,000 from the 4 November 2026
+session, two sessions before the registration ends, so the comparison's last two
+sessions are refused and its last recorded receipt is the 3 November
+publication's). Existing market, watchlist,
 known-event, whole-share and shared-allocation rules still apply. A stop beyond
 the ideal distance still halves the risk budget; widening the cap does not
 increase the configured dollar-risk budget.
@@ -2056,7 +2112,7 @@ evidence of correct binding and publication, not pre-open delivery or a trade.
 Six repository secrets: `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`,
 `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_TO`. Two
 optional repository variables: `SCAN_FEED`, `SCAN_UNIVERSE`. The production
-evening workflow explicitly sets `ACCOUNT_EQUITY=2000` and `RISK_PCT=0.5`;
+evening workflow explicitly sets `ACCOUNT_EQUITY=30000` and `RISK_PCT=0.5` (`2000` before the 4 November 2026 session);
 edit that versioned configuration when the owner's sizing reference changes.
 Local `Account.from_env()` defaults remain the historical $10,000 model and
 accept local `ACCOUNT_EQUITY` / `RISK_PCT` overrides. GitHub Pages from `main`
