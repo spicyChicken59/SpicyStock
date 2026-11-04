@@ -425,6 +425,8 @@ async function checkDetail(page, variant, b, data, blocked) {
       check(`${variant} ${b.ticker} no-ticket reason printed`, action.toLowerCase().includes(cut.reason.slice(0, 60).toLowerCase()), cut.reason.slice(0, 60));
     } else if (status === 'below_grade') check(`${variant} ${b.ticker} says the grade is under the line`, action.includes('graded ' + b.grade) || action.includes('Graded ' + b.grade), action);
     else if (status === 'no_new_longs') check(`${variant} ${b.ticker} says no new longs`, /no new longs/i.test(action), action);
+    // a name the discovery admission stopped: the record's own reason, printed before the night's regime (src/admission.py)
+    else if (status === 'route') check(`${variant} ${b.ticker} says the admission stopped it`, action.includes('dollar scan alone') && action.includes(b.admission.reason.charAt(0).toUpperCase() + b.admission.reason.slice(1)), action.slice(0, 200));
   }
   // the conditions: one tile per criterion, the verdict in words
   const tiles = await page.locator('#disc-checklist .ss-checks .sc-signal').evaluateAll((els) => els.map((e) => [e.dataset.check, e.dataset.verdict]));
