@@ -2138,7 +2138,10 @@ ceiling — strictly under and strictly over, because a limit at the buy stop
 is a ticket with no band. It reports candidate coverage, the retired
 ceiling's stop-rule rejections, what production admits and refuses (by
 refusal), and what inputs are missing, each kept apart from the regime,
-grade and budget exclusions, and it counts what the narrower limit carried
+grade, veto, discovery-admission and budget exclusions (a dollar-only name
+without a range-expansion, higher-volume day is counted under its own gate and
+left out of the green-night population, since it never reaches the stop rule),
+and it counts what the narrower limit carried
 with it. It changes no rule, writes nothing, reads no forward return, and is
 not a backtest or a claim about either ceiling.
 
