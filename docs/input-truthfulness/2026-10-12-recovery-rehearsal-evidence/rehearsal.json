@@ -64,13 +64,13 @@
     "reader_usage": {
      "calls": 2,
      "candidates": 2,
-     "input_tokens": 6998,
+     "input_tokens": 7306,
      "model": "claude-sonnet-4-6",
      "responses": 2,
-     "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 6,998 input tokens (2,218 uncached, 2,390 written to the cache, 2,390 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
+     "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 7,306 input tokens (2,218 uncached, 2,544 written to the cache, 2,544 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
      "tokens": {
-      "cache_read": 2390,
-      "cache_write": 2390,
+      "cache_read": 2544,
+      "cache_write": 2544,
       "output": 180,
       "uncached": 2218
      },
@@ -98,8 +98,8 @@
     ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "733b7fc79c525a3f2bdb4aaacf188e2812923593a3a325af976c713795021d2c",
-    "picks_json": "b71dea31aac2d808fac09ed2f16ffd195dba1a133e60fe059133e64414494def"
+    "data_json_without_clock_fields": "f916e8a4073f698c2f38f83db433a53c3dd5d971bba0e2a3f1340f10f4d74422",
+    "picks_json": "eed341d9242e2e1a6b41b271a3eb73356a7ae5bd31e01ef06c1a46096aee0e0a"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -165,8 +165,8 @@
    "previous": {
     "outcome": "preserved",
     "publication": {
-     "data_json_without_clock_fields": "733b7fc79c525a3f2bdb4aaacf188e2812923593a3a325af976c713795021d2c",
-     "picks_json": "b71dea31aac2d808fac09ed2f16ffd195dba1a133e60fe059133e64414494def"
+     "data_json_without_clock_fields": "f916e8a4073f698c2f38f83db433a53c3dd5d971bba0e2a3f1340f10f4d74422",
+     "picks_json": "eed341d9242e2e1a6b41b271a3eb73356a7ae5bd31e01ef06c1a46096aee0e0a"
     }
    },
    "publication": null,
@@ -245,8 +245,8 @@
    "previous": {
     "outcome": "preserved",
     "publication": {
-     "data_json_without_clock_fields": "733b7fc79c525a3f2bdb4aaacf188e2812923593a3a325af976c713795021d2c",
-     "picks_json": "b71dea31aac2d808fac09ed2f16ffd195dba1a133e60fe059133e64414494def"
+     "data_json_without_clock_fields": "f916e8a4073f698c2f38f83db433a53c3dd5d971bba0e2a3f1340f10f4d74422",
+     "picks_json": "eed341d9242e2e1a6b41b271a3eb73356a7ae5bd31e01ef06c1a46096aee0e0a"
     }
    },
    "publication": null,
@@ -333,8 +333,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "733b7fc79c525a3f2bdb4aaacf188e2812923593a3a325af976c713795021d2c",
-     "picks_json": "b71dea31aac2d808fac09ed2f16ffd195dba1a133e60fe059133e64414494def"
+     "data_json_without_clock_fields": "f916e8a4073f698c2f38f83db433a53c3dd5d971bba0e2a3f1340f10f4d74422",
+     "picks_json": "eed341d9242e2e1a6b41b271a3eb73356a7ae5bd31e01ef06c1a46096aee0e0a"
     }
    },
    "publication": {
@@ -354,12 +354,12 @@
     "reader_usage": {
      "calls": 2,
      "candidates": 2,
-     "input_tokens": 6998,
+     "input_tokens": 7306,
      "model": "claude-sonnet-4-6",
      "responses": 2,
-     "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 6,998 input tokens (2,218 uncached, 0 written to the cache, 4,780 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
+     "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 7,306 input tokens (2,218 uncached, 0 written to the cache, 5,088 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
      "tokens": {
-      "cache_read": 4780,
+      "cache_read": 5088,
       "cache_write": 0,
       "output": 180,
       "uncached": 2218
@@ -385,8 +385,8 @@
     "trades": []
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "26ea03d6fb829a5c756a88ce74b6aa46d6a4b9fb62155423940975b883f984c9",
-    "picks_json": "2e3faef3766ec3d1d22097780c4f58403d642f89e3d66be4719606a96d7e1601"
+    "data_json_without_clock_fields": "1634d55227df981c43cc40ef88b3670b039ce658736e989f479aebd70db31b91",
+    "picks_json": "51015f736072fd7321c0cd5a4c5f897b8a016a61ff6092a5033ba2a48d79429e"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -454,8 +454,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "26ea03d6fb829a5c756a88ce74b6aa46d6a4b9fb62155423940975b883f984c9",
-     "picks_json": "2e3faef3766ec3d1d22097780c4f58403d642f89e3d66be4719606a96d7e1601"
+     "data_json_without_clock_fields": "1634d55227df981c43cc40ef88b3670b039ce658736e989f479aebd70db31b91",
+     "picks_json": "51015f736072fd7321c0cd5a4c5f897b8a016a61ff6092a5033ba2a48d79429e"
     }
    },
    "publication": {
@@ -508,8 +508,8 @@
     "trades": []
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "c0859a6ef018036444381a59288550be4d8c5e7c6a3d05b02fab0d4ce5bf7417",
-    "picks_json": "fde4057ddc36e9d68837a87be6490f5774e8a7b1e811c7713441eef0588c954c"
+    "data_json_without_clock_fields": "465aa2e633153a5c9a4c32b3151a9b87798690f3f9df50fee5b8411f07bceeb7",
+    "picks_json": "a46afc1453dc7e7d8a3e2a2f50bc982d959ca7d2da35c222761479a78588354b"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -579,8 +579,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "c0859a6ef018036444381a59288550be4d8c5e7c6a3d05b02fab0d4ce5bf7417",
-     "picks_json": "fde4057ddc36e9d68837a87be6490f5774e8a7b1e811c7713441eef0588c954c"
+     "data_json_without_clock_fields": "465aa2e633153a5c9a4c32b3151a9b87798690f3f9df50fee5b8411f07bceeb7",
+     "picks_json": "a46afc1453dc7e7d8a3e2a2f50bc982d959ca7d2da35c222761479a78588354b"
     }
    },
    "publication": {
@@ -633,8 +633,8 @@
     "trades": []
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "dbebe1c86863d5f68562acdc58ba2dfb2ee868e5e92ff9d9caa5ea06609530df",
-    "picks_json": "f62d367d3eb0289efcb42ccf77d1d60d7a959ef56d54d4c5cf757b75e24bfe84"
+    "data_json_without_clock_fields": "ddab807add04f39c75bf15c1763864a12f1386dd6f8a10d7bf2c38127afa98bd",
+    "picks_json": "6025247458014e6196f7c0bbed5edcbfb4fc9e9decf8c0d39570d0ae7493932e"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -702,8 +702,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "dbebe1c86863d5f68562acdc58ba2dfb2ee868e5e92ff9d9caa5ea06609530df",
-     "picks_json": "f62d367d3eb0289efcb42ccf77d1d60d7a959ef56d54d4c5cf757b75e24bfe84"
+     "data_json_without_clock_fields": "ddab807add04f39c75bf15c1763864a12f1386dd6f8a10d7bf2c38127afa98bd",
+     "picks_json": "6025247458014e6196f7c0bbed5edcbfb4fc9e9decf8c0d39570d0ae7493932e"
     }
    },
    "publication": {
@@ -725,12 +725,12 @@
     "reader_usage": {
      "calls": 2,
      "candidates": 2,
-     "input_tokens": 6998,
+     "input_tokens": 7306,
      "model": "claude-sonnet-4-6",
      "responses": 2,
-     "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 6,998 input tokens (2,218 uncached, 0 written to the cache, 4,780 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
+     "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 7,306 input tokens (2,218 uncached, 0 written to the cache, 5,088 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
      "tokens": {
-      "cache_read": 4780,
+      "cache_read": 5088,
       "cache_write": 0,
       "output": 180,
       "uncached": 2218
@@ -759,8 +759,8 @@
     ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "e3cac11d144a4ed3686cbf3fef00dea898ba26f4c110be7b242e1d43aa2108d2",
-    "picks_json": "648b0da6c0e9f4b6d7a01e8808e029a39b328f66992ab34fa280930d4ea24524"
+    "data_json_without_clock_fields": "9fb1b0d0535608602f44692b6636ad3cce07e61a77f7dbd48f7884e1d7bbff9f",
+    "picks_json": "7c03f348d24cb72336fd5f4448a1a160fc6056041f68f2ad0710fb26ec100ff1"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -838,8 +838,8 @@
    "previous": {
     "outcome": "preserved",
     "publication": {
-     "data_json_without_clock_fields": "e3cac11d144a4ed3686cbf3fef00dea898ba26f4c110be7b242e1d43aa2108d2",
-     "picks_json": "648b0da6c0e9f4b6d7a01e8808e029a39b328f66992ab34fa280930d4ea24524"
+     "data_json_without_clock_fields": "9fb1b0d0535608602f44692b6636ad3cce07e61a77f7dbd48f7884e1d7bbff9f",
+     "picks_json": "7c03f348d24cb72336fd5f4448a1a160fc6056041f68f2ad0710fb26ec100ff1"
     }
    },
    "publication": null,
@@ -910,8 +910,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "e3cac11d144a4ed3686cbf3fef00dea898ba26f4c110be7b242e1d43aa2108d2",
-     "picks_json": "648b0da6c0e9f4b6d7a01e8808e029a39b328f66992ab34fa280930d4ea24524"
+     "data_json_without_clock_fields": "9fb1b0d0535608602f44692b6636ad3cce07e61a77f7dbd48f7884e1d7bbff9f",
+     "picks_json": "7c03f348d24cb72336fd5f4448a1a160fc6056041f68f2ad0710fb26ec100ff1"
     }
    },
    "publication": {
@@ -931,12 +931,12 @@
     "reader_usage": {
      "calls": 2,
      "candidates": 2,
-     "input_tokens": 6998,
+     "input_tokens": 7306,
      "model": "claude-sonnet-4-6",
      "responses": 2,
-     "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 6,998 input tokens (2,218 uncached, 0 written to the cache, 4,780 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
+     "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 7,306 input tokens (2,218 uncached, 0 written to the cache, 5,088 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
      "tokens": {
-      "cache_read": 4780,
+      "cache_read": 5088,
       "cache_write": 0,
       "output": 180,
       "uncached": 2218
@@ -965,8 +965,8 @@
     ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "f93d131ec44a7b57a3edcb9c3cc009a34cf33e69716c5743c9c9ccbc09180526",
-    "picks_json": "6a0de3202107f25898d63f72d21d50f0f9f3d1313ba6799177f59bf06e7a6dfe"
+    "data_json_without_clock_fields": "ce0e0780e4985be83a92e81299352d16d2fae1b84cbc9f59c6807a0ab1b2e1af",
+    "picks_json": "c5e143cdf9c5a8e96c74852dea1f395ef998c14bb136992c5cd6401f3ef6b13f"
    },
    "reader_calls_bound": {
     "attempts": 2,

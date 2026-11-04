@@ -228,7 +228,8 @@ export async function checkExplorePanes({ browser, base, data, open, check, eq, 
     await align(page); await settle(page);
     const initial = await bounds(page), original = await selected(page);
     const total = await cards(page).count();
-    check(tag + ': long fixture population is fully rendered', total === (stage === 'bursts' ? 46 : 19), total);
+    // the expanded record's own counts (the fixture market plus the labelled copies), never a literal
+    check(tag + ': long fixture population is fully rendered', total === (stage === 'bursts' ? record.bursts.length : record.watchlist.top.length), [total, record.bursts.length, record.watchlist.top.length]);
     check(tag + ': matching outer pane tops and bottoms', near(initial.picks.top, initial.detail.top) && near(initial.picks.bottom, initial.detail.bottom), initial);
     check(tag + ': panes fit a comfortable viewport height', initial.picks.height >= height * .5 && initial.picks.height < height, initial);
     check(tag + ': list has real vertical scroll capacity', initial.list.scrollHeight > initial.list.clientHeight + 500, initial.list);

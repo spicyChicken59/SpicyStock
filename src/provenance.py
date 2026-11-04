@@ -22,7 +22,7 @@ import zlib
 import numpy as np
 import pandas as pd
 
-from src import discovery, grader, plan, quality, reader_authority, reader_coverage, scans, watchlist, sessions, inputs, allocation, event_risk, review_selection
+from src import discovery, grader, plan, quality, reader_authority, reader_coverage, scans, watchlist, sessions, inputs, allocation, event_risk, review_selection, admission
 
 VERSION = 1
 OBJECT_DIR = "evidence"
@@ -175,8 +175,12 @@ def gate(data, row):
     p = plain_plan(row)
     coverage_required = rules.get("reader_policy") == reader_coverage.POLICY
     cut = allocation.cut_for(p or {"ticker": row["ticker"], "kind": "burst"}, data["cash_budget"])
+    # the discovery admission is a gate only under rules that archive it (src/admission.py):
+    # a record from before it is re-derived without the reason, as it was sealed
+    route_gated = isinstance(data["rules"].get("admission"), dict)
     reason = ("regime_gate" if regime == "red" or (regime == "yellow" and row["grade"] not in allowed)
               else "quality_grade" if row["grade"] not in allowed else "quality_veto" if row["vetoes"]
+              else "route_not_admitted" if route_gated and not admission.admitted(row)
               else "reader_coverage" if coverage_required and not reader_coverage.accepted(row)
               else "plan_error" if p is None else cut["kind"] if cut
               else "plan_withheld" if not p.get("eligible") else "no_order" if p.get("action") not in plan.ORDER_ACTIONS
@@ -520,8 +524,8 @@ archive. Integrity-only callers explicitly disable the source replay requirement
                     mismatches.append(key)
         selection_supported = False
         if "review_selection" in data["rules"]:
-            selection_supported = digest(data["rules"]["review_selection"]) == digest(
-                {k.partition(".")[2]: v for k, v in review_selection.RULES.items()})
+            # the current family, or version 1's frozen copy, which the module replays as written
+            selection_supported = review_selection.supported(data["rules"]["review_selection"])
             if not selection_supported:
                 mismatches.append("review_selection")
         if "event_risk" in data["rules"]:

@@ -43,6 +43,18 @@ warning, not a filter Bonde applies).
   the 2017 4% version has a strict one. See the source contract for these
   dated differences; no formula changed during source verification.
 - 4% breakdown: the mirror, `c/c1 <= 0.96` (B).
+- Admission (`src/admission.py`, P, 4 November 2026): a name the 4% scan
+  discovered may be planned and read; a name the dollar scan alone discovered
+  may be only when its burst day passed the checklist's RE and VOL checks --
+  RE Bonde's own phrase for a burst day, "a day which is up bigger than the
+  last 5 to 10 days bars" (B), VOL the 4% scan's own volume test, v > v1
+  (scan) -- applied as a gate by SpicyStock (P). The
+  $0.90 body is a 2017 number that does not scale with price: over the 35
+  retained sessions to 3 November 2026, 1,913 of 2,473 mechanical A-band
+  grades came through the dollar scan alone, 1,757 of them on a day under +4%.
+  Admission is never a grade; a name it stops keeps its checklist grade as
+  research, earns no ticket and is sent to no chart reader. The scan formulas
+  and the checklist are unchanged.
 - Anticipation pool: Double Trouble `c/minl252 >= 1.8`, TI65
   `avgc7/avgc65 > 1.05`, MDT `c/avgc126 > 1.19`, each with `minv3.1 > 100000`
   (B), on a quiet day of −1%..+1% (B, 2014; ±0.4% is his 2018 tightening).
@@ -84,11 +96,14 @@ reader evidence carries; it narrows what a reply can say and never widens what
 the validator accepts.
 
 Review selection (`src/review_selection.py`) is DERIVED (P) resource allocation,
-not a Bonde threshold or a performance claim. `account_feasible_first_research_v1`
+not a Bonde threshold or a performance claim. `account_feasible_first_research_v2`
 keeps the twelve-read ceiling. Feasible private mechanical plans get first
 priority in mechanical-grade / descending-score / ticker order; at most 2
-spare reviews sample infeasible mechanical A+/A names, one ranked and one
-rotated by SHA-256 of policy, measured session and ticker. No feasible review
+spare reviews sample infeasible mechanical A+/A names whose discovery is
+admitted, one ranked and one rotated by SHA-256 of policy, measured session
+and ticker. A name the admission stopped is blocked (`route_not_admitted`)
+and is not research either; version 1 (10 October to 3 November 2026) had no
+such blocker and is replayed under its own frozen rules. No feasible review
 is displaced. This near-admission research pool is explicitly selection-biased.
 Per-candidate blockers/purposes and requested/result/attempt counts are retained
 under the rules identity. Final accepted review, regime, sizing, event and

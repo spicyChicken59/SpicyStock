@@ -30,7 +30,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src import breadth, pipeline, plan, reader_coverage  # noqa: E402
+from src import admission, breadth, pipeline, plan, reader_coverage  # noqa: E402
 from tools import candidate_funnel as funnel_tool  # noqa: E402
 from tools import entry_limit_study as study  # noqa: E402
 
@@ -154,7 +154,9 @@ def reading(data: dict, *, source: str, identity: str, overrides: dict[str, Any]
             continue
         rows += 1
         grade = row.get("grade_mechanical")
-        vetoed = bool(row.get("vetoes"))
+        # the band is the grade, the veto and (from admission v1) the discovery admission;
+        # a row from before the rule carries no block and reads as admitted
+        vetoed = bool(row.get("vetoes")) or not admission.admitted(row)
         for band, (_, admitted, m) in bands.items():
             at = sized[m]
             if grade in GRADES:

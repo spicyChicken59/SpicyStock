@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "35a2539819be"
+  "rules_version": "2bce356f881f"
  },
  "cover": {
   "h1": "Trade next session. 2 A-quality bursts.",
@@ -23,15 +23,15 @@
   "model": "claude-sonnet-4-6",
   "feed": "sip",
   "universe": {
-   "label": "31 named on the command line (--tickers)",
-   "size": 31,
+   "label": "32 named on the command line (--tickers)",
+   "size": 32,
    "source": "explicit",
    "source_kind": "explicit",
    "fetched_at": null,
-   "identity": "f97bc6805de5df88",
+   "identity": "1b97e33400ee217a",
    "snapshot_sha256": null,
    "counts": {
-    "admitted": 31
+    "admitted": 32
    },
    "selection": {
     "kind": "explicit",
@@ -50,14 +50,14 @@
      "identity": "e3b0c44298fc1c14",
      "sample": []
     },
-    "manual_admitted": 31,
-    "before_capacity": 31,
+    "manual_admitted": 32,
+    "before_capacity": 32,
     "capacity_excluded": {
      "count": 0,
      "identity": "e3b0c44298fc1c14",
      "sample": []
     },
-    "intended": 31
+    "intended": 32
    },
    "snapshot_relation": "unrecorded",
    "scan_session": "2026-09-11",
@@ -75,9 +75,9 @@
   },
   "coverage": {
    "version": 1,
-   "intended": 32,
-   "requested": 32,
-   "with_bars": 32,
+   "intended": 33,
+   "requested": 33,
+   "with_bars": 33,
    "no_bars": 0,
    "dropped": 0,
    "unfetched_budget": 0,
@@ -86,13 +86,13 @@
    "stale": 0,
    "gapped": 0,
    "unreadable": 0,
-   "on_session": 32,
-   "session_ready": 32,
+   "on_session": 33,
+   "session_ready": 33,
    "benchmark_ready": 1,
-   "scan_ready": 31,
+   "scan_ready": 32,
    "price_excluded": 0,
    "not_scanned_closed": 0,
-   "measured": 31,
+   "measured": 32,
    "scan_errors": 0,
    "scan_unattempted": 0,
    "quality_success": 2,
@@ -101,20 +101,20 @@
     "burst": 0,
     "dollar": 0,
     "both": 2,
-    "neither": 29
+    "neither": 30
    },
    "errors": 0,
    "duplicate_symbols": 0,
    "duplicate_bars": 0,
-   "returned_bars": 8173,
+   "returned_bars": 8287,
    "batch_attempts": 1,
-   "intended_identity": "12ecde3aab5494ac",
+   "intended_identity": "2eeaf7357449213e",
    "benchmark_added": 1,
    "acceptance": {
     "status": "ok",
     "denominator": "intended stocks, excluding benchmark",
-    "intended_stocks": 31,
-    "ready_stocks": 31,
+    "intended_stocks": 32,
+    "ready_stocks": 32,
     "fraction": 1.0,
     "minimum_fraction": 0.5,
     "complete_evaluation": true,
@@ -124,15 +124,15 @@
    "sessions": {
     "expected": "2026-09-11",
     "evaluated": "2026-09-11",
-    "expected_present": 32,
+    "expected_present": 33,
     "latest_bar_dates": {
-     "2026-09-11": 32
+     "2026-09-11": 33
     },
     "previous": "2026-09-10",
     "previous_observed": false,
-    "previous_printed": 32,
-    "closure_voters": 32,
-    "closure_agreed": 32
+    "previous_printed": 33,
+    "closure_voters": 33,
+    "closure_agreed": 33
    },
    "reasons": {
     "no_bars": {
@@ -204,7 +204,7 @@
    "held": [],
    "first_sessions": [],
    "first_session_stocks": 0,
-   "sentence": "All 31 intended stocks had usable session bars; 31 were measured after session price eligibility. Coverage is of this selection, not every listed security."
+   "sentence": "All 32 intended stocks had usable session bars; 32 were measured after session price eligibility. Coverage is of this selection, not every listed security."
   },
   "stale_followup": {
    "version": 2,
@@ -274,17 +274,17 @@
    "calls": 2,
    "responses": 2,
    "tokens": {
-    "cache_write": 2390,
-    "cache_read": 2390,
+    "cache_write": 2544,
+    "cache_read": 2544,
     "uncached": 2218,
     "output": 180
    },
-   "input_tokens": 6998,
-   "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 6,998 input tokens (2,218 uncached, 2,390 written to the cache, 2,390 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price."
+   "input_tokens": 7306,
+   "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 7,306 input tokens (2,218 uncached, 2,544 written to the cache, 2,544 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price."
   },
   "review_selection": {
-   "version": 1,
-   "policy": "account_feasible_first_research_v1",
+   "version": 2,
+   "policy": "account_feasible_first_research_v2",
    "session": "2026-09-11",
    "max_reads": 12,
    "research_max": 2,
@@ -293,6 +293,7 @@
    "blockers": {
     "grade_not_admitted": 0,
     "quality_veto": 0,
+    "route_not_admitted": 0,
     "preview_unavailable": 0,
     "known_event": 0,
     "plan_withheld": 0,
@@ -944,7 +945,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "ff38b91d8f9bedfb81cebe742d3065cf06daf56c354e91a8a1fd0bc53c9c2e24"
+   "context_sha256": "caf5bb3fb0e9b3c490e29012eee9a95ec8417641188ab8d8c5fc9d5319e18939"
   },
   "earnings": {
    "version": 1,
@@ -1072,6 +1073,24 @@
   "sanitised": {
    "replaced": 0,
    "paths": []
+  },
+  "admission": {
+   "version": 1,
+   "policy": "burst_route_or_dollar_expansion_v1",
+   "candidates": 2,
+   "admitted": 2,
+   "by_basis": {
+    "burst_route": 2,
+    "dollar_expansion": 0,
+    "dollar_no_expansion": 0
+   },
+   "in_band": {
+    "total": 2,
+    "burst_route": 2,
+    "dollar_expansion": 0,
+    "dollar_no_expansion": 0
+   },
+   "sentence": "Admission: 2 reaction candidates, 2 admitted to the trade band and the chart reads (2 by the 4% scan, 0 by the dollar scan on a range-expansion, higher-volume day); 0 came through the dollar scan alone without one and are research only. Of the 2 mechanical A-band names without a veto, 2 are admitted and 0 are not. Admission is read off the recorded discovery route and the checklist's own range-expansion and volume checks; it is never a grade, and the chart reader never sees a name it stops."
   }
  },
  "nights": [
@@ -1166,6 +1185,18 @@
    "discovery_version": 1,
    "reader_authority_version": 1,
    "reader_request_version": 3
+  },
+  "admission": {
+   "version": 1,
+   "policy": "burst_route_or_dollar_expansion_v1",
+   "burst_routes": [
+    "burst",
+    "both"
+   ],
+   "dollar_checks": [
+    "RE",
+    "VOL"
+   ]
   },
   "quality": {
    "base_search_sessions": 40,
@@ -1580,8 +1611,8 @@
    }
   },
   "review_selection": {
-   "version": 1,
-   "policy": "account_feasible_first_research_v1",
+   "version": 2,
+   "policy": "account_feasible_first_research_v2",
    "research_max": 2,
    "ranked_research": 1,
    "grade_order": [
@@ -1593,11 +1624,11 @@
    ],
    "order": "mechanical_grade,descending_score,ticker",
    "rotation": "sha256(policy|measured_session|ticker),ticker",
-   "research_pool": "infeasible mechanical pipeline.trade_grades",
+   "research_pool": "infeasible mechanical pipeline.trade_grades, discovery admitted",
    "feasibility": "private per-candidate plan before reader and combined allocation"
   },
   "funnel": {
-   "version": 2,
+   "version": 3,
    "policy": "candidate_funnel_v1"
   },
   "intraday": {
@@ -1713,7 +1744,7 @@
    "directory_quote_filter": false,
    "max_discovery": 8000,
    "sample_limit": 8,
-   "identity": "f97bc6805de5df88"
+   "identity": "1b97e33400ee217a"
   },
   "inputs": {
    "version": 1
@@ -1729,10 +1760,10 @@
   "down25_month": 0,
   "up50_month": 0,
   "down50_month": 0,
-  "up13_34d": 8,
+  "up13_34d": 9,
   "down13_34d": 0,
-  "pct_above_40ma": 58.1,
-  "universe": 31,
+  "pct_above_40ma": 59.4,
+  "universe": 32,
   "ratio_5d": 4.5,
   "ratio_10d": 4.0,
   "up4_5d": 9,
@@ -1743,7 +1774,7 @@
    "verdict": "green",
    "size_multiplier": 1.0,
    "reasons": [
-    "down 4%: 0 < the scaled alarm of 3.3 (700 of 6,500)",
+    "down 4%: 0 < the scaled alarm of 3.4 (700 of 6,500)",
     "10-session ratio 4.0 (12 up, 3 down) >= 1.0",
     "5-session ratio 4.5 (9 up, 2 down) >= 0.5",
     "10-session ratio 4.0 (12 up, 3 down) >= 2.0",
@@ -1751,9 +1782,9 @@
    ],
    "oversold_extreme": true,
    "thresholds": {
-    "universe": 31,
+    "universe": 32,
     "reference_universe": 6500,
-    "down4_alarm": 3.3,
+    "down4_alarm": 3.4,
     "up50_month_hot": 0.1,
     "down25_quarter_oversold": 1.0,
     "ratio_10d_red": 1.0,
@@ -2275,6 +2306,18 @@
      "dollar_move": 5.19
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "both",
+    "basis": "burst_route",
+    "admitted": true,
+    "expansion": {
+     "range_expansion": true,
+     "higher_volume": true
+    },
+    "reason": "admitted by the 4% scan"
+   },
    "grade": "A",
    "plan": {
     "ticker": "NVDA",
@@ -2545,14 +2588,14 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "6369af7fb02250cd567967a0efd952c71bfb703ea8833b855d239b82d713f07a",
-     "context_sha256": "ff38b91d8f9bedfb81cebe742d3065cf06daf56c354e91a8a1fd0bc53c9c2e24",
+     "id": "2cba3b8094bcec88d8fa354ee2bcf4171da59b154a95bfba84732f58c8e3b726",
+     "context_sha256": "caf5bb3fb0e9b3c490e29012eee9a95ec8417641188ab8d8c5fc9d5319e18939",
      "plan_sha256": "2e97c86bc0d9b0a3d5f58a15e01a6ae6f78ae311ac47c457ffa8a7832bdac587",
      "pick_sha256": "60f4999a826dafe140bcd6d80a1a5c4ea23e905b2a2a9923f7a42d18f9c31485"
     }
    },
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": true,
     "blockers": [],
     "research_pool": false,
@@ -2574,15 +2617,15 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "ea0773c657aa8d069825d1e11451ce3551e7a2db58dd3c4b990d577d93e42939",
+    "request_text_sha256": "ca5d6cef7872f34176fcb545bbcb30b8a40d0282a06ce20f755eb7676eb71ff8",
     "input": {
      "metrics_sha256": "08504fd41421496d9fbd9d1c72844f71b9f235e7867c1ddaf406c63848f21c47",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "eb91f97a54c107ddf10b4c0ce4db00c25a1ffd55cad29da690b2552d30eb5bb8",
+      "request_sha256": "af63ccb9a24087de8d97f23285ba313ce595f0e5088f2d587ef66bcfc8f305f4",
       "correction": false,
       "outcome": "model",
       "response": {
@@ -2602,14 +2645,14 @@
     "calls": 1,
     "responses": 1,
     "tokens": {
-     "cache_write": 2390,
+     "cache_write": 2544,
      "cache_read": 0,
      "uncached": 1109,
      "output": 90
     },
     "attempts": [
      {
-      "cache_write": 2390,
+      "cache_write": 2544,
       "cache_read": 0,
       "uncached": 1109,
       "output": 90
@@ -2649,7 +2692,7 @@
       "scan": "4pct",
       "extension_pct": 12.0
      },
-     "regime_sha256": "af0374e40239e48b1ad3f672a19e269acdd8afbd705133621f43d75644ed61e1",
+     "regime_sha256": "230dd18557aab52477f733659567a590601fcd4c1ce6ec48a9b7e74989193906",
      "session": "2026-09-11",
      "output_sha256": "2e97c86bc0d9b0a3d5f58a15e01a6ae6f78ae311ac47c457ffa8a7832bdac587",
      "error": null,
@@ -2657,13 +2700,13 @@
     },
     "reader_input": {
      "metrics_sha256": "08504fd41421496d9fbd9d1c72844f71b9f235e7867c1ddaf406c63848f21c47",
-     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_object": "d299ff49abe1bb4faaf9e57b8ebeaa0573e25f8a9990f6797324eb9c0c0acc92",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "ea0773c657aa8d069825d1e11451ce3551e7a2db58dd3c4b990d577d93e42939"
+     "request_text_sha256": "ca5d6cef7872f34176fcb545bbcb30b8a40d0282a06ce20f755eb7676eb71ff8"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": true,
      "blockers": [],
      "research_pool": false,
@@ -2671,15 +2714,15 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "accepted",
-    "reader_sha256": "7629e458f048b34300c90bc4aebf9efd697a1ef7349dfb471212b3c6dc2e5f11",
+    "reader_sha256": "7684154ca34b756ceb4236b90f8d3aa5d9650e7e7ae97d3704e1afc3f13e0b0a",
     "reader_source": "claude",
     "final_grade": "A",
     "version": 1,
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-11",
-    "rules_version": "35a2539819be",
-    "context_sha256": "ff38b91d8f9bedfb81cebe742d3065cf06daf56c354e91a8a1fd0bc53c9c2e24",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "caf5bb3fb0e9b3c490e29012eee9a95ec8417641188ab8d8c5fc9d5319e18939",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -2692,7 +2735,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "6369af7fb02250cd567967a0efd952c71bfb703ea8833b855d239b82d713f07a"
+    "id": "2cba3b8094bcec88d8fa354ee2bcf4171da59b154a95bfba84732f58c8e3b726"
    },
    "series": [
     {
@@ -3889,6 +3932,18 @@
      "dollar_move": 3.92
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "both",
+    "basis": "burst_route",
+    "admitted": true,
+    "expansion": {
+     "range_expansion": true,
+     "higher_volume": true
+    },
+    "reason": "admitted by the 4% scan"
+   },
    "grade": "A",
    "plan": {
     "ticker": "COIL",
@@ -4159,14 +4214,14 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "0256fb951ceb8760608b41c053a97cc5a3fc5e5bba536056789bc8d18ee5e9d8",
-     "context_sha256": "ff38b91d8f9bedfb81cebe742d3065cf06daf56c354e91a8a1fd0bc53c9c2e24",
+     "id": "653c5f244b265f85bd362145458d2b652247e1df6ec4a9470015d9d351b60716",
+     "context_sha256": "caf5bb3fb0e9b3c490e29012eee9a95ec8417641188ab8d8c5fc9d5319e18939",
      "plan_sha256": "ca9b0e0f41f338615bae69660fde525051f0de2906fffa6cfcf2c59b9d2305ab",
      "pick_sha256": "c7182ae8b763598bbf333e0823e9638fc4a711148fae0b2757ec663c49eb930f"
     }
    },
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": true,
     "blockers": [],
     "research_pool": false,
@@ -4188,15 +4243,15 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "f8f7e710058eb400328d10445a2bb4c7e168189f7448ba1c3ec93ad42d202b41",
+    "request_text_sha256": "c4658759a0da64186a29ac7142c759ddc34377445da6468a5ae102384d4ea1f1",
     "input": {
      "metrics_sha256": "1db803ad3cfeb5fb955cd85d29dcef5674f89124d9c7c4a2ebad6987d11f97f6",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "258e6645968620dad89155cdce69ceb9d29699977e5fa312b28171870b697ee6",
+      "request_sha256": "270d8804fd2a085cc7b194249800dbfe1be4a2f565be7c975285e900d6791252",
       "correction": false,
       "outcome": "model",
       "response": {
@@ -4217,14 +4272,14 @@
     "responses": 1,
     "tokens": {
      "cache_write": 0,
-     "cache_read": 2390,
+     "cache_read": 2544,
      "uncached": 1109,
      "output": 90
     },
     "attempts": [
      {
       "cache_write": 0,
-      "cache_read": 2390,
+      "cache_read": 2544,
       "uncached": 1109,
       "output": 90
      }
@@ -4263,7 +4318,7 @@
       "scan": "4pct",
       "extension_pct": 7.1
      },
-     "regime_sha256": "af0374e40239e48b1ad3f672a19e269acdd8afbd705133621f43d75644ed61e1",
+     "regime_sha256": "230dd18557aab52477f733659567a590601fcd4c1ce6ec48a9b7e74989193906",
      "session": "2026-09-11",
      "output_sha256": "ca9b0e0f41f338615bae69660fde525051f0de2906fffa6cfcf2c59b9d2305ab",
      "error": null,
@@ -4271,13 +4326,13 @@
     },
     "reader_input": {
      "metrics_sha256": "1db803ad3cfeb5fb955cd85d29dcef5674f89124d9c7c4a2ebad6987d11f97f6",
-     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_object": "d299ff49abe1bb4faaf9e57b8ebeaa0573e25f8a9990f6797324eb9c0c0acc92",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "f8f7e710058eb400328d10445a2bb4c7e168189f7448ba1c3ec93ad42d202b41"
+     "request_text_sha256": "c4658759a0da64186a29ac7142c759ddc34377445da6468a5ae102384d4ea1f1"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": true,
      "blockers": [],
      "research_pool": false,
@@ -4285,15 +4340,15 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "accepted",
-    "reader_sha256": "d05abe80fde6b60d6fcf8fd6c944524578a30ced526fd6763bdab46452e46f25",
+    "reader_sha256": "3cabd66ffea2f655cd303ba4c45e2190e2ef6e4393fd04ceff08e9f110666dca",
     "reader_source": "claude",
     "final_grade": "A",
     "version": 1,
     "kind": "burst",
     "ticker": "COIL",
     "session": "2026-09-11",
-    "rules_version": "35a2539819be",
-    "context_sha256": "ff38b91d8f9bedfb81cebe742d3065cf06daf56c354e91a8a1fd0bc53c9c2e24",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "caf5bb3fb0e9b3c490e29012eee9a95ec8417641188ab8d8c5fc9d5319e18939",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -4306,7 +4361,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "0256fb951ceb8760608b41c053a97cc5a3fc5e5bba536056789bc8d18ee5e9d8"
+    "id": "653c5f244b265f85bd362145458d2b652247e1df6ec4a9470015d9d351b60716"
    },
    "series": [
     {
@@ -5366,8 +5421,8 @@
    }
   ],
   "counts": {
-   "momentum": 9,
-   "quiet": 6,
+   "momentum": 10,
+   "quiet": 7,
    "admitted": 0,
    "eligible": 0,
    "coiled": 0,
@@ -5625,8 +5680,8 @@
    "limit": 126.47,
    "evidence_ref": {
     "version": 1,
-    "id": "55693b38bd88e5f9e01807fd79a90c768ebf236418267a6267d4359e818b8688",
-    "context_sha256": "e42f36448eb7a0b76ea072119a8eed1e5ac70b4624e8a8008ae36f659c292456",
+    "id": "2eb879f3815ea01f3db9d1eb0aad02bfeda0c661963ffebe58d69ea31c8c3838",
+    "context_sha256": "1493b229fd2d9ba39834b1dfeaefcae0328242e84dd3552219c86dfff06ec9f2",
     "plan_sha256": "0f9a29ecc5c1d5c64d66fe20dde133b7798eabb86df158a16f01a0a06f3f3c83",
     "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
    }
@@ -5687,7 +5742,7 @@
    "expected_session": "2026-09-11",
    "evaluated_session": "2026-09-11"
   },
-  "replay_rules_version": "35a2539819be"
+  "replay_rules_version": "2bce356f881f"
  },
  "observations": {
   "as_of": "2026-09-11",
@@ -5812,6 +5867,37 @@
       "l": 72.49,
       "c": 72.71,
       "v": 973679.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     }
+    ]
+   },
+   "MSFT": {
+    "date": "2026-09-11",
+    "o": 119.52,
+    "h": 119.88,
+    "l": 118.8,
+    "c": 119.16,
+    "v": 175000.0,
+    "since": "2026-09-10",
+    "history": [
+     {
+      "date": "2026-09-10",
+      "o": 118.09,
+      "h": 119.7,
+      "l": 117.91,
+      "c": 119.52,
+      "v": 500000.0,
+      "from_session": "2026-09-11",
+      "source": "public observation history"
+     },
+     {
+      "date": "2026-09-11",
+      "o": 119.52,
+      "h": 119.88,
+      "l": 118.8,
+      "c": 119.16,
+      "v": 175000.0,
       "from_session": "2026-09-11",
       "source": "public observation history"
      }
@@ -5995,74 +6081,81 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:35a2539819be": {
+   "burst:AAPL:2026-09-10:2bce356f881f": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:35a2539819be": {
+   "burst:AMD:2026-09-10:2bce356f881f": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:35a2539819be": {
+   "burst:NVDA:2026-09-10:2bce356f881f": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:35a2539819be": {
+   "burst:TSLA:2026-09-10:2bce356f881f": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:35a2539819be": {
+   "burst:MSFT:2026-09-10:2bce356f881f": {
+    "ticker": "MSFT",
+    "session": "2026-09-10",
+    "kind": "burst",
+    "rules_version": "2bce356f881f",
+    "coverage": "observed"
+   },
+   "burst:PLUG:2026-09-10:2bce356f881f": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:35a2539819be": {
+   "burst:DLLR:2026-09-10:2bce356f881f": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:35a2539819be": {
+   "anticipation:COIL:2026-09-10:2bce356f881f": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-11:35a2539819be": {
+   "burst:NVDA:2026-09-11:2bce356f881f": {
     "ticker": "NVDA",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:COIL:2026-09-11:35a2539819be": {
+   "burst:COIL:2026-09-11:2bce356f881f": {
     "ticker": "COIL",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "anticipation:VRT:2026-09-11:35a2539819be": {
+   "anticipation:VRT:2026-09-11:2bce356f881f": {
     "ticker": "VRT",
     "session": "2026-09-11",
     "kind": "anticipation",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    }
   },
@@ -6070,7 +6163,7 @@
  },
  "closest_miss": null,
  "funnel": {
-  "version": 2,
+  "version": 3,
   "policy": "candidate_funnel_v1",
   "regime": "green",
   "admitted_grades": [
@@ -6091,6 +6184,7 @@
     "market": 0,
     "grade": 0,
     "veto": 0,
+    "route": 0,
     "preview_event": 0,
     "preview_geometry": 0,
     "preview_sizing": 0,
@@ -6132,8 +6226,8 @@
   "anticipation": {
    "listed": 0,
    "counts": {
-    "momentum": 9,
-    "quiet": 6,
+    "momentum": 10,
+    "quiet": 7,
     "admitted": 0,
     "top": 0,
     "also_quiet": 1
@@ -6158,6 +6252,7 @@
    "market": "market",
    "grade": "grade",
    "veto": "veto",
+   "route": "route",
    "preview_event": "preview",
    "preview_geometry": "preview",
    "preview_sizing": "preview",
@@ -6189,6 +6284,7 @@
    "market": "market gate: the regime admits no new longs",
    "grade": "mechanical grade below the regime's admitted band",
    "veto": "quality veto",
+   "route": "dollar scan alone, without a range-expansion, higher-volume day",
    "preview_event": "known corporate event, in the pre-review preview",
    "preview_geometry": "stop rule at the limit, in the pre-review preview",
    "preview_sizing": "no whole share, in the pre-review preview",
@@ -6216,7 +6312,7 @@
    "ticket": "ticket",
    "unknown": "not readable from this record"
   },
-  "sentence": "Candidate funnel under a GREEN market: 2 reaction candidates discovered, 2 potentially usable (mechanical grade in the admitted band, no veto), 2 reaction tickets. Anticipation: 9 momentum names, 6 quiet, 0 passing the coil checks, 0 listed, 0 tickets. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
+  "sentence": "Candidate funnel under a GREEN market: 2 reaction candidates discovered, 2 potentially usable (mechanical grade in the admitted band, no veto, discovery admitted), 2 reaction tickets. Anticipation: 10 momentum names, 7 quiet, 0 passing the coil checks, 0 listed, 0 tickets. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
  },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",

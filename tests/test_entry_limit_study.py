@@ -331,7 +331,7 @@ def test_a_rescue_the_account_cannot_size_is_counted_apart():
     # a refused plan still carries a share count: it must never be counted
     refused = [r for r in rows if not r["production"]["eligible"]]
     assert all(r["production"]["shares_at_full_size"] >= 0 for r in refused)
-    green = [r for r in rows if r["grade"] in pipeline.TRADE_GRADES and not r["vetoed"]]
+    green = [r for r in rows if r["grade"] in pipeline.TRADE_GRADES and not r["vetoed"] and r["admitted"]]
     assert c["green_night"]["production_with_an_order_at_full_size"] == sum(
         1 for r in green if r["production"]["eligible"] and r["production"]["shares_at_full_size"] >= 1)
 
@@ -343,11 +343,11 @@ def test_a_yellow_night_counts_its_own_narrower_grade_line_as_well():
     assert green["exclusions"]["grades_admitted"] == list(pipeline.TRADE_GRADES)
     assert green["exclusions"]["excluded_by_grade_tonight"] is None
     data = json.loads((FIXTURES / "yellow.json").read_text())
-    # yellow.json carries only A+ and C bursts, so "not in (A+,)" and
-    # "not in (A+, A)" would select the same rows and either computation
-    # would pass. A grade-A burst is what makes the two numbers differ.
-    assert not any(b["grade"] == "A" for b in data["bursts"])
-    data["bursts"][-1]["grade"] = "A"
+    # under "not in (A+,)" and "not in (A+, A)" the same rows are selected unless
+    # a grade-A burst is among them, so one is made sure of: the fixture market
+    # carries MSFT, a dollar-only A, and a fixture without one is relabelled
+    if not any(b["grade"] == "A" for b in data["bursts"]):
+        data["bursts"][-1]["grade"] = "A"
     yellow = study.study(data)
     assert yellow["exclusions"]["grades_admitted"] == list(pipeline.YELLOW_GRADES)
     rows = yellow["rows"]
@@ -357,6 +357,29 @@ def test_a_yellow_night_counts_its_own_narrower_grade_line_as_well():
     assert standing == sum(1 for r in rows if r["grade"] not in pipeline.TRADE_GRADES)
     assert tonight > standing, (tonight, standing)   # the A burst is excluded tonight and not by the standing line
     assert set(pipeline.YELLOW_GRADES) < set(pipeline.TRADE_GRADES)
+
+
+def test_the_discovery_admission_is_its_own_gate_before_the_stop_rule():
+    """A dollar-only name without a range-expansion, higher-volume day never
+    reaches the stop rule (src/admission.py); the study counts it under its own
+    gate and leaves it out of the green-night population. A record from before
+    the rule carries no block and every name reads as admitted."""
+    data = json.loads((FIXTURES / "full.json").read_text())
+    stopped = [b["ticker"] for b in data["bursts"] if b["admission"]["admitted"] is False]
+    assert stopped == ["MSFT", "DLLR"]
+    out = study.study(data)
+    x = out["exclusions"]
+    assert x["excluded_by_admission"] == 2
+    assert [r["ticker"] for r in out["rows"] if not r["admitted"]] == stopped
+    reach = [r["ticker"] for r in out["rows"] if r["grade"] in pipeline.TRADE_GRADES and not r["vetoed"] and r["admitted"]]
+    assert "MSFT" not in reach and x["would_reach_the_stop_rule_on_a_green_night"] == len(reach) == out["counts"]["green_night"]["population"]
+    before = json.loads((FIXTURES / "full.json").read_text())
+    for b in before["bursts"]:
+        del b["admission"]
+    out = study.study(before)
+    assert out["exclusions"]["excluded_by_admission"] == 0
+    assert out["exclusions"]["would_reach_the_stop_rule_on_a_green_night"] == len(reach) + 1
+    assert "excluded by the discovery admission          2" in study.report_text("full", study.study(data))
 
 
 def test_a_red_night_is_counted_as_a_regime_exclusion_not_a_stop_rejection():

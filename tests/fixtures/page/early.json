@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "35a2539819be"
+  "rules_version": "2bce356f881f"
  },
  "cover": {
   "h1": "Trade next session. 1 A-quality burst.",
@@ -23,15 +23,15 @@
   "model": "claude-sonnet-4-6",
   "feed": "sip",
   "universe": {
-   "label": "31 named on the command line (--tickers)",
-   "size": 31,
+   "label": "32 named on the command line (--tickers)",
+   "size": 32,
    "source": "explicit",
    "source_kind": "explicit",
    "fetched_at": null,
-   "identity": "f97bc6805de5df88",
+   "identity": "1b97e33400ee217a",
    "snapshot_sha256": null,
    "counts": {
-    "admitted": 31
+    "admitted": 32
    },
    "selection": {
     "kind": "explicit",
@@ -50,14 +50,14 @@
      "identity": "e3b0c44298fc1c14",
      "sample": []
     },
-    "manual_admitted": 31,
-    "before_capacity": 31,
+    "manual_admitted": 32,
+    "before_capacity": 32,
     "capacity_excluded": {
      "count": 0,
      "identity": "e3b0c44298fc1c14",
      "sample": []
     },
-    "intended": 31
+    "intended": 32
    },
    "snapshot_relation": "unrecorded",
    "scan_session": "2024-11-27",
@@ -75,9 +75,9 @@
   },
   "coverage": {
    "version": 1,
-   "intended": 32,
-   "requested": 32,
-   "with_bars": 32,
+   "intended": 33,
+   "requested": 33,
+   "with_bars": 33,
    "no_bars": 0,
    "dropped": 0,
    "unfetched_budget": 0,
@@ -86,35 +86,35 @@
    "stale": 0,
    "gapped": 0,
    "unreadable": 0,
-   "on_session": 32,
-   "session_ready": 32,
+   "on_session": 33,
+   "session_ready": 33,
    "benchmark_ready": 1,
-   "scan_ready": 31,
+   "scan_ready": 32,
    "price_excluded": 0,
    "not_scanned_closed": 0,
-   "measured": 31,
+   "measured": 32,
    "scan_errors": 0,
    "scan_unattempted": 0,
-   "quality_success": 6,
+   "quality_success": 7,
    "quality_errors": 0,
    "matched": {
     "burst": 1,
-    "dollar": 1,
+    "dollar": 2,
     "both": 4,
     "neither": 25
    },
    "errors": 0,
    "duplicate_symbols": 0,
    "duplicate_bars": 0,
-   "returned_bars": 8142,
+   "returned_bars": 8255,
    "batch_attempts": 1,
-   "intended_identity": "12ecde3aab5494ac",
+   "intended_identity": "2eeaf7357449213e",
    "benchmark_added": 1,
    "acceptance": {
     "status": "ok",
     "denominator": "intended stocks, excluding benchmark",
-    "intended_stocks": 31,
-    "ready_stocks": 31,
+    "intended_stocks": 32,
+    "ready_stocks": 32,
     "fraction": 1.0,
     "minimum_fraction": 0.5,
     "complete_evaluation": true,
@@ -124,15 +124,15 @@
    "sessions": {
     "expected": "2024-11-27",
     "evaluated": "2024-11-27",
-    "expected_present": 32,
+    "expected_present": 33,
     "latest_bar_dates": {
-     "2024-11-27": 32
+     "2024-11-27": 33
     },
     "previous": "2024-11-26",
     "previous_observed": false,
-    "previous_printed": 32,
-    "closure_voters": 32,
-    "closure_agreed": 32
+    "previous_printed": 33,
+    "closure_voters": 33,
+    "closure_agreed": 33
    },
    "reasons": {
     "no_bars": {
@@ -204,7 +204,7 @@
    "held": [],
    "first_sessions": [],
    "first_session_stocks": 0,
-   "sentence": "All 31 intended stocks had usable session bars; 31 were measured after session price eligibility. Coverage is of this selection, not every listed security."
+   "sentence": "All 32 intended stocks had usable session bars; 32 were measured after session price eligibility. Coverage is of this selection, not every listed security."
   },
   "stale_followup": {
    "version": 2,
@@ -239,10 +239,10 @@
    "reason": "explicit_universe",
    "sentence": ""
   },
-  "bursts": 6,
+  "bursts": 7,
   "graded": {
    "a_plus": 4,
-   "a": 0,
+   "a": 1,
    "b": 2,
    "c": 0,
    "skip": 0
@@ -274,25 +274,26 @@
    "calls": 4,
    "responses": 4,
    "tokens": {
-    "cache_write": 2390,
-    "cache_read": 7170,
+    "cache_write": 2544,
+    "cache_read": 7632,
     "uncached": 4436,
     "output": 360
    },
-   "input_tokens": 13996,
-   "sentence": "Chart reader cost: 4 calls for 4 names, 4 replies; 13,996 input tokens (4,436 uncached, 2,390 written to the cache, 7,170 read from it) and 360 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price."
+   "input_tokens": 14612,
+   "sentence": "Chart reader cost: 4 calls for 4 names, 4 replies; 14,612 input tokens (4,436 uncached, 2,544 written to the cache, 7,632 read from it) and 360 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price."
   },
   "review_selection": {
-   "version": 1,
-   "policy": "account_feasible_first_research_v1",
+   "version": 2,
+   "policy": "account_feasible_first_research_v2",
    "session": "2024-11-27",
    "max_reads": 12,
    "research_max": 2,
-   "discovered": 6,
+   "discovered": 7,
    "feasible": 3,
    "blockers": {
     "grade_not_admitted": 2,
     "quality_veto": 0,
+    "route_not_admitted": 2,
     "preview_unavailable": 0,
     "known_event": 0,
     "plan_withheld": 1,
@@ -931,7 +932,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "1d06b4b541b9d6ca1d3afe6a5c70f597b4fd137a624677cb9141b9370833ebad"
+   "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e"
   },
   "earnings": {
    "version": 1,
@@ -1023,6 +1024,24 @@
   "sanitised": {
    "replaced": 0,
    "paths": []
+  },
+  "admission": {
+   "version": 1,
+   "policy": "burst_route_or_dollar_expansion_v1",
+   "candidates": 7,
+   "admitted": 5,
+   "by_basis": {
+    "burst_route": 5,
+    "dollar_expansion": 0,
+    "dollar_no_expansion": 2
+   },
+   "in_band": {
+    "total": 5,
+    "burst_route": 4,
+    "dollar_expansion": 0,
+    "dollar_no_expansion": 1
+   },
+   "sentence": "Admission: 7 reaction candidates, 5 admitted to the trade band and the chart reads (5 by the 4% scan, 0 by the dollar scan on a range-expansion, higher-volume day); 2 came through the dollar scan alone without one and are research only. Of the 5 mechanical A-band names without a veto, 4 are admitted and 1 is not. Admission is read off the recorded discovery route and the checklist's own range-expansion and volume checks; it is never a grade, and the chart reader never sees a name it stops."
   }
  },
  "nights": [
@@ -1112,6 +1131,18 @@
    "discovery_version": 1,
    "reader_authority_version": 1,
    "reader_request_version": 3
+  },
+  "admission": {
+   "version": 1,
+   "policy": "burst_route_or_dollar_expansion_v1",
+   "burst_routes": [
+    "burst",
+    "both"
+   ],
+   "dollar_checks": [
+    "RE",
+    "VOL"
+   ]
   },
   "quality": {
    "base_search_sessions": 40,
@@ -1526,8 +1557,8 @@
    }
   },
   "review_selection": {
-   "version": 1,
-   "policy": "account_feasible_first_research_v1",
+   "version": 2,
+   "policy": "account_feasible_first_research_v2",
    "research_max": 2,
    "ranked_research": 1,
    "grade_order": [
@@ -1539,11 +1570,11 @@
    ],
    "order": "mechanical_grade,descending_score,ticker",
    "rotation": "sha256(policy|measured_session|ticker),ticker",
-   "research_pool": "infeasible mechanical pipeline.trade_grades",
+   "research_pool": "infeasible mechanical pipeline.trade_grades, discovery admitted",
    "feasibility": "private per-candidate plan before reader and combined allocation"
   },
   "funnel": {
-   "version": 2,
+   "version": 3,
    "policy": "candidate_funnel_v1"
   },
   "intraday": {
@@ -1659,7 +1690,7 @@
    "directory_quote_filter": false,
    "max_discovery": 8000,
    "sample_limit": 8,
-   "identity": "f97bc6805de5df88"
+   "identity": "1b97e33400ee217a"
   },
   "inputs": {
    "version": 1
@@ -1675,10 +1706,10 @@
   "down25_month": 0,
   "up50_month": 0,
   "down50_month": 0,
-  "up13_34d": 7,
+  "up13_34d": 8,
   "down13_34d": 0,
-  "pct_above_40ma": 58.1,
-  "universe": 31,
+  "pct_above_40ma": 59.4,
+  "universe": 32,
   "ratio_5d": 4.0,
   "ratio_10d": 2.75,
   "up4_5d": 8,
@@ -1689,7 +1720,7 @@
    "verdict": "green",
    "size_multiplier": 1.0,
    "reasons": [
-    "down 4%: 0 < the scaled alarm of 3.3 (700 of 6,500)",
+    "down 4%: 0 < the scaled alarm of 3.4 (700 of 6,500)",
     "10-session ratio 2.75 (11 up, 4 down) >= 1.0",
     "5-session ratio 4.0 (8 up, 2 down) >= 0.5",
     "10-session ratio 2.75 (11 up, 4 down) >= 2.0",
@@ -1697,9 +1728,9 @@
    ],
    "oversold_extreme": true,
    "thresholds": {
-    "universe": 31,
+    "universe": 32,
     "reference_universe": 6500,
-    "down4_alarm": 3.3,
+    "down4_alarm": 3.4,
     "up50_month_hot": 0.1,
     "down25_quarter_oversold": 1.0,
     "ratio_10d_red": 1.0,
@@ -2221,6 +2252,18 @@
      "dollar_move": 5.25
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "both",
+    "basis": "burst_route",
+    "admitted": true,
+    "expansion": {
+     "range_expansion": true,
+     "higher_volume": true
+    },
+    "reason": "admitted by the 4% scan"
+   },
    "grade": "A+",
    "plan": {
     "ticker": "AAPL",
@@ -2491,14 +2534,14 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "ef6b2ab824905ddb7a0ea5dd4207acc3b6b9f5887b5b33f8ee2ca04825d4f322",
-     "context_sha256": "1d06b4b541b9d6ca1d3afe6a5c70f597b4fd137a624677cb9141b9370833ebad",
+     "id": "a9556474943fb10880e21995568f089919b965465938ee598a025b5afbfca91d",
+     "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e",
      "plan_sha256": "5eb8545198bc5b03820a25b5f5dc0493c1b9e8e084594dc66292692909a40031",
      "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
     }
    },
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": true,
     "blockers": [],
     "research_pool": false,
@@ -2520,15 +2563,15 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "4b3cb0fb61ff9105889f21e73503b80d72f9507d8a27aaea6333887a07464f07",
+    "request_text_sha256": "a562857f4a02dbf27eced66f630ff336c839550a5b465ab4e924238002abe0e1",
     "input": {
      "metrics_sha256": "04654b4d9eced94d92f1303eaba66a817fbbdf26c17cfa9b62c38449e896fb3f",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "5c0468e4d12740cae911ec6ff46bf37d69d9e6785534c262a7444c8afe865eda",
+      "request_sha256": "456385cb0033180eabe95dd2b099433606bec77e51a680b913cb6bd3a7a0d20b",
       "correction": false,
       "outcome": "model",
       "response": {
@@ -2548,14 +2591,14 @@
     "calls": 1,
     "responses": 1,
     "tokens": {
-     "cache_write": 2390,
+     "cache_write": 2544,
      "cache_read": 0,
      "uncached": 1109,
      "output": 90
     },
     "attempts": [
      {
-      "cache_write": 2390,
+      "cache_write": 2544,
       "cache_read": 0,
       "uncached": 1109,
       "output": 90
@@ -2595,7 +2638,7 @@
       "scan": "4pct",
       "extension_pct": 5.2
      },
-     "regime_sha256": "efd474e151754744fd057274ab46dc06db000260b0f726df2a4e41ba61ee73a4",
+     "regime_sha256": "70acfbccdf291e7990dfd6b3f244011f80d2b5c6e5e932fad2576bcf60efc02c",
      "session": "2024-11-27",
      "output_sha256": "5eb8545198bc5b03820a25b5f5dc0493c1b9e8e084594dc66292692909a40031",
      "error": null,
@@ -2603,13 +2646,13 @@
     },
     "reader_input": {
      "metrics_sha256": "04654b4d9eced94d92f1303eaba66a817fbbdf26c17cfa9b62c38449e896fb3f",
-     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_object": "d299ff49abe1bb4faaf9e57b8ebeaa0573e25f8a9990f6797324eb9c0c0acc92",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "4b3cb0fb61ff9105889f21e73503b80d72f9507d8a27aaea6333887a07464f07"
+     "request_text_sha256": "a562857f4a02dbf27eced66f630ff336c839550a5b465ab4e924238002abe0e1"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": true,
      "blockers": [],
      "research_pool": false,
@@ -2617,15 +2660,15 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "accepted",
-    "reader_sha256": "ccf725d91f4dcf2c9c7a5073ca0dd34d525506986c2b0f8279736cfae4fa562e",
+    "reader_sha256": "7f9281870122bcfb7fa363787d2ec01a7cc013db803bc72a8db0923bda4c973f",
     "reader_source": "claude",
     "final_grade": "A+",
     "version": 1,
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2024-11-27",
-    "rules_version": "35a2539819be",
-    "context_sha256": "1d06b4b541b9d6ca1d3afe6a5c70f597b4fd137a624677cb9141b9370833ebad",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -2638,7 +2681,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "ef6b2ab824905ddb7a0ea5dd4207acc3b6b9f5887b5b33f8ee2ca04825d4f322"
+    "id": "a9556474943fb10880e21995568f089919b965465938ee598a025b5afbfca91d"
    },
    "series": [
     {
@@ -3818,6 +3861,18 @@
      "dollar_move": null
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "burst",
+    "basis": "burst_route",
+    "admitted": true,
+    "expansion": {
+     "range_expansion": false,
+     "higher_volume": true
+    },
+    "reason": "admitted by the 4% scan"
+   },
    "grade": "A+",
    "plan": {
     "ticker": "AMD",
@@ -4066,14 +4121,14 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "0e1a7deb92febd4a7cc0f3cf7f05b9c27af2ca9cd8b250aa0d19b757a5b4b1d3",
-     "context_sha256": "1d06b4b541b9d6ca1d3afe6a5c70f597b4fd137a624677cb9141b9370833ebad",
+     "id": "70a0b2b91866e43728094b51bc5c0e1b8ba9f534a710f7636967fdcdbae87398",
+     "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e",
      "plan_sha256": "14764e6d37a745f1afca02daa26e3476f105fbf9b36ee249ec2618ab52e58820",
      "pick_sha256": "8791448fea08a08339f01fec5d7b8f9dc3048b3c461320b8e5ad2b011c0b29b5"
     }
    },
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": true,
     "blockers": [],
     "research_pool": false,
@@ -4095,15 +4150,15 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "91ed944255692cee7ae839ecff38760399daad9f19f812ecf07251e318d8e1f4",
+    "request_text_sha256": "4560576900f4d5dc4beef5608ce4237257fc3a9605a1d9cce4c21d0662e0c404",
     "input": {
      "metrics_sha256": "84c69fb8b68b96d356c18e065ef1ba912ed9b776caa491f90e47f06aac0fc237",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "51d6e39c16800d319a3f0a6434d6da9e2410e62c01748fb4e42ea3f2796f22de",
+      "request_sha256": "5e5aea301fddaba07d39002bbcfa7603444bbdee4c4162c7b91c221d5e8188b5",
       "correction": false,
       "outcome": "model",
       "response": {
@@ -4124,14 +4179,14 @@
     "responses": 1,
     "tokens": {
      "cache_write": 0,
-     "cache_read": 2390,
+     "cache_read": 2544,
      "uncached": 1109,
      "output": 90
     },
     "attempts": [
      {
       "cache_write": 0,
-      "cache_read": 2390,
+      "cache_read": 2544,
       "uncached": 1109,
       "output": 90
      }
@@ -4170,7 +4225,7 @@
       "scan": "4pct",
       "extension_pct": 4.9
      },
-     "regime_sha256": "efd474e151754744fd057274ab46dc06db000260b0f726df2a4e41ba61ee73a4",
+     "regime_sha256": "70acfbccdf291e7990dfd6b3f244011f80d2b5c6e5e932fad2576bcf60efc02c",
      "session": "2024-11-27",
      "output_sha256": "14764e6d37a745f1afca02daa26e3476f105fbf9b36ee249ec2618ab52e58820",
      "error": null,
@@ -4178,13 +4233,13 @@
     },
     "reader_input": {
      "metrics_sha256": "84c69fb8b68b96d356c18e065ef1ba912ed9b776caa491f90e47f06aac0fc237",
-     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_object": "d299ff49abe1bb4faaf9e57b8ebeaa0573e25f8a9990f6797324eb9c0c0acc92",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "91ed944255692cee7ae839ecff38760399daad9f19f812ecf07251e318d8e1f4"
+     "request_text_sha256": "4560576900f4d5dc4beef5608ce4237257fc3a9605a1d9cce4c21d0662e0c404"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": true,
      "blockers": [],
      "research_pool": false,
@@ -4192,15 +4247,15 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "accepted",
-    "reader_sha256": "81afef9319c9f5e8e6380e68a648a11dea778c26d6f820fc7963361180d6038a",
+    "reader_sha256": "b43964f1dd06bd1d7c7e9495062f9e92da29607d93b96edc603d9ac663c23d8e",
     "reader_source": "claude",
     "final_grade": "A+",
     "version": 1,
     "kind": "burst",
     "ticker": "AMD",
     "session": "2024-11-27",
-    "rules_version": "35a2539819be",
-    "context_sha256": "1d06b4b541b9d6ca1d3afe6a5c70f597b4fd137a624677cb9141b9370833ebad",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -4213,7 +4268,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out"
     },
-    "id": "0e1a7deb92febd4a7cc0f3cf7f05b9c27af2ca9cd8b250aa0d19b757a5b4b1d3"
+    "id": "70a0b2b91866e43728094b51bc5c0e1b8ba9f534a710f7636967fdcdbae87398"
    },
    "series": [
     {
@@ -5361,6 +5416,18 @@
      "dollar_move": 3.42
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "both",
+    "basis": "burst_route",
+    "admitted": true,
+    "expansion": {
+     "range_expansion": true,
+     "higher_volume": true
+    },
+    "reason": "admitted by the 4% scan"
+   },
    "grade": "A+",
    "plan": {
     "ticker": "NVDA",
@@ -5610,14 +5677,14 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "fb1c8694f5e79772819624682cad4de78816c76861679c8afdb5b1a14eae074d",
-     "context_sha256": "1d06b4b541b9d6ca1d3afe6a5c70f597b4fd137a624677cb9141b9370833ebad",
+     "id": "e8fd53b6733ab550ea6a843206851976f34f1dbb4db5341a61a7fb741d7660ad",
+     "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e",
      "plan_sha256": "b9fb0af7e4bfcfb631f6137597577a5a91edaea265807dc91d29e249f9f569f0",
      "pick_sha256": "9e72b4c052e89621468bcd96ecd0f750df8860cf900623561da6e4ba30bc9b7a"
     }
    },
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": true,
     "blockers": [],
     "research_pool": false,
@@ -5639,15 +5706,15 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "e4b094bf02877ac661425351fdbbd53aec29dc2fe48cf56fba294e66cadab9c7",
+    "request_text_sha256": "31ac2aa8fc241a3f4134eb4d7179fdaedf6f4c40076cbfe897360108c6c2ccef",
     "input": {
      "metrics_sha256": "74f8620612db276cc8679f68569bcb1485643a981df607f7d9fb56ebaf5dde96",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "1a2e8b85c775b913deb16bdcd33fd2c8f49d5e9620df5002c8e91ed57e302644",
+      "request_sha256": "1f353b3513c305681f6399d829d4b8069f7c4c9610d2352e1d20b12827ba2299",
       "correction": false,
       "outcome": "model",
       "response": {
@@ -5668,14 +5735,14 @@
     "responses": 1,
     "tokens": {
      "cache_write": 0,
-     "cache_read": 2390,
+     "cache_read": 2544,
      "uncached": 1109,
      "output": 90
     },
     "attempts": [
      {
       "cache_write": 0,
-      "cache_read": 2390,
+      "cache_read": 2544,
       "uncached": 1109,
       "output": 90
      }
@@ -5714,7 +5781,7 @@
       "scan": "4pct",
       "extension_pct": 6.8
      },
-     "regime_sha256": "efd474e151754744fd057274ab46dc06db000260b0f726df2a4e41ba61ee73a4",
+     "regime_sha256": "70acfbccdf291e7990dfd6b3f244011f80d2b5c6e5e932fad2576bcf60efc02c",
      "session": "2024-11-27",
      "output_sha256": "b9fb0af7e4bfcfb631f6137597577a5a91edaea265807dc91d29e249f9f569f0",
      "error": null,
@@ -5722,13 +5789,13 @@
     },
     "reader_input": {
      "metrics_sha256": "74f8620612db276cc8679f68569bcb1485643a981df607f7d9fb56ebaf5dde96",
-     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_object": "d299ff49abe1bb4faaf9e57b8ebeaa0573e25f8a9990f6797324eb9c0c0acc92",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "e4b094bf02877ac661425351fdbbd53aec29dc2fe48cf56fba294e66cadab9c7"
+     "request_text_sha256": "31ac2aa8fc241a3f4134eb4d7179fdaedf6f4c40076cbfe897360108c6c2ccef"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": true,
      "blockers": [],
      "research_pool": false,
@@ -5736,15 +5803,15 @@
      "purpose": "opportunity"
     },
     "reader_coverage": "accepted",
-    "reader_sha256": "0d0ceb35d084cda72cca2c71737aa2c42cbfe31b366787fabf4dc70a393d68b1",
+    "reader_sha256": "a438b7cdec0696bad052b5f0b5ec631ffaf820b92b55cb4f163ccc704d4c4159",
     "reader_source": "claude",
     "final_grade": "A+",
     "version": 1,
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2024-11-27",
-    "rules_version": "35a2539819be",
-    "context_sha256": "1d06b4b541b9d6ca1d3afe6a5c70f597b4fd137a624677cb9141b9370833ebad",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -5757,7 +5824,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out"
     },
-    "id": "fb1c8694f5e79772819624682cad4de78816c76861679c8afdb5b1a14eae074d"
+    "id": "e8fd53b6733ab550ea6a843206851976f34f1dbb4db5341a61a7fb741d7660ad"
    },
    "series": [
     {
@@ -6945,6 +7012,18 @@
      "dollar_move": 9.5
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "both",
+    "basis": "burst_route",
+    "admitted": true,
+    "expansion": {
+     "range_expansion": true,
+     "higher_volume": true
+    },
+    "reason": "admitted by the 4% scan"
+   },
    "grade": "A+",
    "plan": {
     "ticker": "TSLA",
@@ -7194,14 +7273,14 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "97c4f92ebd504fac71b0f238df87c33b049e91d9acb8479988ccd64df524977c",
-     "context_sha256": "1d06b4b541b9d6ca1d3afe6a5c70f597b4fd137a624677cb9141b9370833ebad",
+     "id": "8179529e90f77480d0f873dd0f9c00a5dcd228c5becc36bf30bb35db38a30d4e",
+     "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e",
      "plan_sha256": "1b56cbbb451930675ff8911c78b20334ce8b6453f0fbb0decee1eccd51fa28e2",
      "pick_sha256": "2cd8ba442340b9e81c517f18affaceb6a5c62b97d88cb26325ef13ee328ae974"
     }
    },
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": false,
     "blockers": [
      "plan_withheld"
@@ -7225,15 +7304,15 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "dbf106b68c85acb1ceaa3d1232dc164bcae2998dc8d6eed1437c6fce84d6416a",
+    "request_text_sha256": "2a1d6c5f9e5f5b999116feba4d0d07b0ad6c34496c1804fcc69cfb7bed72b728",
     "input": {
      "metrics_sha256": "60e61bc374b158907a6ab364bef78f814ae9cb11a074a71ac71c840870a814bd",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "1985725411eea43b74785fbcea474aa7cb8c4fcd4200086374214cd6f2c6d8d2",
+      "request_sha256": "4eee41205065ca3bb30c9a907724fe1ddbed2dfda05bfb2f1303db9e7158bf67",
       "correction": false,
       "outcome": "model",
       "response": {
@@ -7254,14 +7333,14 @@
     "responses": 1,
     "tokens": {
      "cache_write": 0,
-     "cache_read": 2390,
+     "cache_read": 2544,
      "uncached": 1109,
      "output": 90
     },
     "attempts": [
      {
       "cache_write": 0,
-      "cache_read": 2390,
+      "cache_read": 2544,
       "uncached": 1109,
       "output": 90
      }
@@ -7300,7 +7379,7 @@
       "scan": "4pct",
       "extension_pct": 5.2
      },
-     "regime_sha256": "efd474e151754744fd057274ab46dc06db000260b0f726df2a4e41ba61ee73a4",
+     "regime_sha256": "70acfbccdf291e7990dfd6b3f244011f80d2b5c6e5e932fad2576bcf60efc02c",
      "session": "2024-11-27",
      "output_sha256": "1b56cbbb451930675ff8911c78b20334ce8b6453f0fbb0decee1eccd51fa28e2",
      "error": null,
@@ -7308,13 +7387,13 @@
     },
     "reader_input": {
      "metrics_sha256": "60e61bc374b158907a6ab364bef78f814ae9cb11a074a71ac71c840870a814bd",
-     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
+     "system_object": "d299ff49abe1bb4faaf9e57b8ebeaa0573e25f8a9990f6797324eb9c0c0acc92",
+     "system_sha256": "492327562c4e500ff507bf26354088d68868ce947b5bd97fd8284775e5ae79a5",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "dbf106b68c85acb1ceaa3d1232dc164bcae2998dc8d6eed1437c6fce84d6416a"
+     "request_text_sha256": "2a1d6c5f9e5f5b999116feba4d0d07b0ad6c34496c1804fcc69cfb7bed72b728"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": false,
      "blockers": [
       "plan_withheld"
@@ -7324,15 +7403,15 @@
      "purpose": "research_ranked"
     },
     "reader_coverage": "accepted",
-    "reader_sha256": "085c956c44504be8e44ddddc3f9b7a33cd8ffd0b16f74c013b4a5d4477803a18",
+    "reader_sha256": "9745de58563d528f3a71792e47c1b4789768278df0a75416ecd9e65df0ca5ce7",
     "reader_source": "claude",
     "final_grade": "A+",
     "version": 1,
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2024-11-27",
-    "rules_version": "35a2539819be",
-    "context_sha256": "1d06b4b541b9d6ca1d3afe6a5c70f597b4fd137a624677cb9141b9370833ebad",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -7345,7 +7424,7 @@
      "reason": "withheld",
      "detail": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
     },
-    "id": "97c4f92ebd504fac71b0f238df87c33b049e91d9acb8479988ccd64df524977c"
+    "id": "8179529e90f77480d0f873dd0f9c00a5dcd228c5becc36bf30bb35db38a30d4e"
    },
    "series": [
     {
@@ -8256,6 +8335,1265 @@
    "summary": "TSLA: +6.0% on 5.0× volume out of a base 3.3% deep. Buy 121.73–129.18 next session in the first 30 minutes, stop 124.01, aim 135.49–150.54. A+ 10.0, 6 of 6 criteria."
   },
   {
+   "ticker": "MSFT",
+   "name": "",
+   "flags": [],
+   "scan": "dollar",
+   "close": 119.52,
+   "prev_close": 117.18,
+   "open": 118.09,
+   "high": 119.7,
+   "low": 117.91,
+   "gain_pct": 2.0,
+   "volume": 500000.0,
+   "volume_vs_prior": 0.8333,
+   "prev_volume": 600000,
+   "dollar_volume": 59760000.0,
+   "dollar_move": 1.43,
+   "extension_pct": 1.5,
+   "quality": {
+    "checks": [
+     {
+      "key": "two_days",
+      "letter": "2",
+      "label": "not up two days in a row",
+      "values": {
+       "up_run": 0,
+       "up_closes": 0,
+       "prior_day_pct": -0.17
+      },
+      "value": 0,
+      "display": "up_run=0 up_closes=0 prior_day_pct=-0.17",
+      "threshold": "up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "linearity",
+      "letter": "L",
+      "label": "linearity of the prior leg",
+      "values": {
+       "er": 0.75,
+       "r2": 0.98,
+       "leg_sessions": 17,
+       "leg_gain_pct": 17.6
+      },
+      "value": 0.75,
+      "display": "er=0.75 r2=0.98 leg_sessions=17 leg_gain_pct=17.6",
+      "threshold": "ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "young_trend",
+      "letter": "Y",
+      "label": "young trend: first or second breakout",
+      "values": {
+       "breakouts_in_move": 0,
+       "sessions_since_move_start": 33,
+       "gain_since_move_start_pct": 19.5
+      },
+      "value": 0,
+      "display": "breakouts_in_move=0 sessions_since_move_start=33 gain_since_move_start_pct=19.5",
+      "threshold": "prior breakouts since the move started <= 1 (0 for A+)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "narrow_or_negative",
+      "letter": "N",
+      "label": "narrow or negative day before",
+      "values": {
+       "prior_day_pct": -0.17,
+       "prior_range_pct": 0.8,
+       "negative": true,
+       "narrow": true,
+       "median_range_pct": 2.2
+      },
+      "value": -0.17,
+      "display": "prior_day_pct=-0.17 prior_range_pct=0.8 negative=True narrow=True median_range_pct=2.2",
+      "threshold": "prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "consolidation",
+      "letter": "C",
+      "label": "consolidation quality",
+      "values": {
+       "base_sessions": 16,
+       "breakdowns": 0,
+       "bursts_in_base": 0,
+       "giveback": 0.24,
+       "tightness": 1.17,
+       "base_volume_vs_leg": 0.42,
+       "base_volume_vs_avg": 0.59
+      },
+      "value": 16,
+      "display": "base_sessions=16 breakdowns=0 bursts_in_base=0 giveback=0.24 tightness=1.17 base_volume_vs_leg=0.42 base_volume_vs_avg=0.59",
+      "threshold": "base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+      "passed": false,
+      "pass": false,
+      "marginal": false,
+      "a_plus": false,
+      "note": "the base ranged wider than the sessions before it",
+      "partial": false,
+      "status": "FAIL"
+     },
+     {
+      "key": "close_near_high",
+      "letter": "H",
+      "label": "close near the high",
+      "values": {
+       "close_pos": 0.9,
+       "close_above_open": true
+      },
+      "value": 0.9,
+      "display": "close_pos=0.9 close_above_open=True",
+      "threshold": "close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+      "passed": true,
+      "pass": true,
+      "marginal": false,
+      "a_plus": true,
+      "note": "",
+      "partial": false,
+      "status": "PASS"
+     },
+     {
+      "key": "range_expansion",
+      "letter": "RE",
+      "label": "range expansion",
+      "values": {
+       "vs_prior_5": 0.68,
+       "vs_prior_10": 0.68,
+       "bar_range_pct": 1.5
+      },
+      "value": 0.68,
+      "display": "vs_prior_5=0.68 vs_prior_10=0.68 bar_range_pct=1.5",
+      "threshold": "today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
+      "passed": false,
+      "pass": false,
+      "marginal": false,
+      "a_plus": false,
+      "note": "the burst bar is not the widest of the last five",
+      "partial": false,
+      "status": "FAIL"
+     },
+     {
+      "key": "volume",
+      "letter": "VOL",
+      "label": "higher volume",
+      "values": {
+       "volume_vs_prior": 0.83,
+       "volume_vs_avg50": 0.49,
+       "volume_rank_60": 60,
+       "cv_required": false
+      },
+      "value": 0.83,
+      "display": "volume_vs_prior=0.83 volume_vs_avg50=0.49 volume_rank_60=60 cv_required=False",
+      "threshold": "volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average",
+      "passed": false,
+      "pass": false,
+      "marginal": false,
+      "a_plus": false,
+      "note": "volume did not exceed the prior session's",
+      "partial": false,
+      "status": "FAIL"
+     }
+    ],
+    "vetoes": [],
+    "passes": 5,
+    "of": 6,
+    "a_plus_count": 5,
+    "score": 8.0,
+    "grade": "A",
+    "reclass": null,
+    "notes": [
+     "extension: close 1.5% vs its 20-SMA, 1.7% over 20 sessions"
+    ],
+    "base": {
+     "start": "2024-11-05",
+     "end": "2024-11-26",
+     "start_index": 96,
+     "end_index": 111,
+     "sessions": 16,
+     "high": 121.67,
+     "low": 116.2,
+     "depth_pct": 4.5,
+     "breakdown_dates": []
+    },
+    "leg": {
+     "start": 79,
+     "end": 95,
+     "length": 17,
+     "gain_pct": 17.6,
+     "high": 121.67,
+     "low": 99.2,
+     "er": 0.75,
+     "r2": 0.98
+    },
+    "burst": {
+     "gain_pct": 2.0,
+     "gap_pct": 0.8,
+     "bar_range_pct": 1.5,
+     "close_pos": 0.9,
+     "volume_vs_prior": 0.83,
+     "volume_vs_avg50": 0.49,
+     "volume_rank_60": 60
+    },
+    "unreadable": null,
+    "weights": {
+     "2": 1.5,
+     "L": 2.0,
+     "Y": 1.5,
+     "N": 1.5,
+     "C": 2.0,
+     "H": 1.5
+    }
+   },
+   "grade_mechanical": "A",
+   "score": 8.0,
+   "vetoes": [],
+   "reclass": null,
+   "discovery": {
+    "version": 1,
+    "admitted_by": [
+     "dollar"
+    ],
+    "applicable_rules": {
+     "dollar": {
+      "min_move": 0.9,
+      "min_volume_exclusive": 100000
+     }
+    },
+    "inapplicable_rules": {
+     "burst": {
+      "min_ratio": 1.04,
+      "volume_above_prior": true,
+      "min_volume": 100000
+     }
+    },
+    "measurements": {
+     "close": 119.52,
+     "prev_close": 117.18,
+     "open": 118.09,
+     "gain_pct": 2.0,
+     "volume": 500000,
+     "prev_volume": 600000,
+     "volume_vs_prior": 0.8333,
+     "dollar_move": 1.43
+    }
+   },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "dollar",
+    "basis": "dollar_no_expansion",
+    "admitted": false,
+    "expansion": {
+     "range_expansion": false,
+     "higher_volume": false
+    },
+    "reason": "dollar scan alone, without a range-expansion, higher-volume day: research only, no ticket and no chart read"
+   },
+   "grade": "A",
+   "plan": null,
+   "review_selection": {
+    "policy": "account_feasible_first_research_v2",
+    "feasible": false,
+    "blockers": [
+     "route_not_admitted"
+    ],
+    "research_pool": false,
+    "selected": false,
+    "purpose": "outside_research_pool"
+   },
+   "claude": null,
+   "reader_coverage": "not_selected_budget",
+   "rank": 5,
+   "evidence": {
+    "source": {
+     "sha256": "e25e2c4ec17ed103b83f2d147c1799e61877130621a82ab2458148c4e9d35f45",
+     "rows": 113,
+     "evaluated_session": "2024-11-27",
+     "previous_session": "2024-11-26",
+     "scan_sha256": "ce39ca07ebb84152f588caac05490847bdd4122888acc542a59e836c1214a02b",
+     "quality_sha256": "ce39ca07ebb84152f588caac05490847bdd4122888acc542a59e836c1214a02b"
+    },
+    "facts_sha256": "162f5a56d579afee4181b3c70a3fbd023fb037b4be1d7c29f330a2ee02d22653",
+    "discovery_sha256": "be43ded0842ca208b3b2d1ab1064a05c6690c1e781e34c9fd507b08e5699bcaf",
+    "quality_sha256": "6fd0af79aff1dda1ca2d55df1eaf10dfaa96a2396ea197b0b61d5b63f996bfff",
+    "planning": {
+     "inputs": null,
+     "regime_sha256": "70acfbccdf291e7990dfd6b3f244011f80d2b5c6e5e932fad2576bcf60efc02c",
+     "session": "2024-11-27",
+     "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+     "error": null,
+     "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
+    },
+    "review_selection": {
+     "policy": "account_feasible_first_research_v2",
+     "feasible": false,
+     "blockers": [
+      "route_not_admitted"
+     ],
+     "research_pool": false,
+     "selected": false,
+     "purpose": "outside_research_pool"
+    },
+    "reader_coverage": "not_selected_budget",
+    "reader_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+    "reader_source": "not_graded",
+    "final_grade": "A",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "MSFT",
+    "session": "2024-11-27",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e",
+    "gate": {
+     "reader_coverage": "not_selected_budget",
+     "regime": "green",
+     "final_grade": "A",
+     "allowed_grades": [
+      "A+",
+      "A"
+     ],
+     "ticket": false,
+     "reason": "route_not_admitted",
+     "detail": null
+    },
+    "id": "4259acf48c2a424cb318bda9331998a02318146a3436998adc3da92cdda47755"
+   },
+   "series": [
+    {
+     "date": "2024-06-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-06-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-06-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-06-25",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-06-26",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-06-27",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-06-28",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-02",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-03",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-05",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-11",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-12",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-18",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-19",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-25",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-26",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-30",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-07-31",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-02",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-05",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-06",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-07",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-12",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-14",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-15",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-19",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-21",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-22",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-26",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-27",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-28",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-29",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-08-30",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-03",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-04",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-05",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-06",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-11",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-12",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-13",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-16",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-17",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-18",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-19",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-20",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-23",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-24",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-25",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-26",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-27",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-09-30",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-10-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-10-02",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-10-03",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-10-04",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-10-07",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-10-08",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-10-09",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-10-10",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-10-11",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2024-10-14",
+     "o": 100.0,
+     "h": 101.76,
+     "l": 99.5,
+     "c": 101.25,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-10-15",
+     "o": 101.25,
+     "h": 103.03,
+     "l": 100.74,
+     "c": 102.52,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-10-16",
+     "o": 102.52,
+     "h": 104.32,
+     "l": 102.01,
+     "c": 103.8,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-10-17",
+     "o": 103.8,
+     "h": 105.63,
+     "l": 103.28,
+     "c": 105.1,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-10-18",
+     "o": 105.1,
+     "h": 106.94,
+     "l": 104.57,
+     "c": 106.41,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-10-21",
+     "o": 106.41,
+     "h": 108.28,
+     "l": 105.88,
+     "c": 107.74,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-10-22",
+     "o": 107.74,
+     "h": 109.64,
+     "l": 107.2,
+     "c": 109.09,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-10-23",
+     "o": 109.09,
+     "h": 111.0,
+     "l": 108.54,
+     "c": 110.45,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-10-24",
+     "o": 110.45,
+     "h": 112.39,
+     "l": 109.9,
+     "c": 111.83,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-10-25",
+     "o": 111.83,
+     "h": 113.8,
+     "l": 111.27,
+     "c": 113.23,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-10-28",
+     "o": 113.23,
+     "h": 115.22,
+     "l": 112.66,
+     "c": 114.65,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-10-29",
+     "o": 114.65,
+     "h": 116.66,
+     "l": 114.08,
+     "c": 116.08,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-10-30",
+     "o": 116.08,
+     "h": 118.12,
+     "l": 115.5,
+     "c": 117.53,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-10-31",
+     "o": 117.53,
+     "h": 119.59,
+     "l": 116.94,
+     "c": 119.0,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-11-01",
+     "o": 119.0,
+     "h": 121.09,
+     "l": 118.41,
+     "c": 120.49,
+     "v": 1500000.0
+    },
+    {
+     "date": "2024-11-04",
+     "o": 120.49,
+     "h": 121.67,
+     "l": 116.4,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-05",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-06",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-07",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-08",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-11",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-12",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-13",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-14",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-15",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-18",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-19",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-20",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-21",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-22",
+     "o": 117.38,
+     "h": 118.76,
+     "l": 116.2,
+     "c": 117.58,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-25",
+     "o": 117.58,
+     "h": 118.75,
+     "l": 116.21,
+     "c": 117.38,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-26",
+     "o": 117.38,
+     "h": 117.73,
+     "l": 116.83,
+     "c": 117.18,
+     "v": 600000.0
+    },
+    {
+     "date": "2024-11-27",
+     "o": 118.09,
+     "h": 119.7,
+     "l": 117.91,
+     "c": 119.52,
+     "v": 500000.0
+    }
+   ],
+   "summary": "MSFT: +2.0% on 0.8× volume out of a base 4.5% deep. A 8.0, 5 of 6 criteria."
+  },
+  {
    "ticker": "PLUG",
    "name": "",
    "flags": [],
@@ -8526,10 +9864,22 @@
      "dollar_move": 3.84
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "both",
+    "basis": "burst_route",
+    "admitted": true,
+    "expansion": {
+     "range_expansion": true,
+     "higher_volume": true
+    },
+    "reason": "admitted by the 4% scan"
+   },
    "grade": "B",
    "plan": null,
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": false,
     "blockers": [
      "grade_not_admitted"
@@ -8540,7 +9890,7 @@
    },
    "claude": null,
    "reader_coverage": "not_selected_budget",
-   "rank": 5,
+   "rank": 6,
    "evidence": {
     "source": {
      "sha256": "4c8e55049cfd0629cc2c389b7dedb4729780d548ece7487056b6566a43fbaae8",
@@ -8555,14 +9905,14 @@
     "quality_sha256": "1cbf7ce58a0bf1376dc5507b8e6b2a5e4b0004b40b3d266477a3ec86a4bfb3c0",
     "planning": {
      "inputs": null,
-     "regime_sha256": "efd474e151754744fd057274ab46dc06db000260b0f726df2a4e41ba61ee73a4",
+     "regime_sha256": "70acfbccdf291e7990dfd6b3f244011f80d2b5c6e5e932fad2576bcf60efc02c",
      "session": "2024-11-27",
      "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
      "error": null,
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": false,
      "blockers": [
       "grade_not_admitted"
@@ -8579,8 +9929,8 @@
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2024-11-27",
-    "rules_version": "35a2539819be",
-    "context_sha256": "1d06b4b541b9d6ca1d3afe6a5c70f597b4fd137a624677cb9141b9370833ebad",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -8593,7 +9943,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "7cfe3c2a4f04d237a21710c5656b4007ca6631214f3c69aafc699d766a8b7a2d"
+    "id": "d7f07879c7eeaa743b82eb68bf47bf68a3e1f4b8bec1dada1a3db2c37bb2e2ce"
    },
    "series": [
     {
@@ -9774,13 +11124,26 @@
      "dollar_move": 1.43
     }
    },
+   "admission": {
+    "version": 1,
+    "policy": "burst_route_or_dollar_expansion_v1",
+    "route": "dollar",
+    "basis": "dollar_no_expansion",
+    "admitted": false,
+    "expansion": {
+     "range_expansion": true,
+     "higher_volume": false
+    },
+    "reason": "dollar scan alone, without a range-expansion, higher-volume day: research only, no ticket and no chart read"
+   },
    "grade": "B",
    "plan": null,
    "review_selection": {
-    "policy": "account_feasible_first_research_v1",
+    "policy": "account_feasible_first_research_v2",
     "feasible": false,
     "blockers": [
-     "grade_not_admitted"
+     "grade_not_admitted",
+     "route_not_admitted"
     ],
     "research_pool": false,
     "selected": false,
@@ -9788,7 +11151,7 @@
    },
    "claude": null,
    "reader_coverage": "not_selected_budget",
-   "rank": 6,
+   "rank": 7,
    "evidence": {
     "source": {
      "sha256": "f97290905a511feaff247139f7d0c55b84929b335d5b09fde57ffea2bc28f16c",
@@ -9803,17 +11166,18 @@
     "quality_sha256": "80c96755cee2ef4f86aeaed29fa9ccbc1969a22ba166a22c7cb333c08152185b",
     "planning": {
      "inputs": null,
-     "regime_sha256": "efd474e151754744fd057274ab46dc06db000260b0f726df2a4e41ba61ee73a4",
+     "regime_sha256": "70acfbccdf291e7990dfd6b3f244011f80d2b5c6e5e932fad2576bcf60efc02c",
      "session": "2024-11-27",
      "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
      "error": null,
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "review_selection": {
-     "policy": "account_feasible_first_research_v1",
+     "policy": "account_feasible_first_research_v2",
      "feasible": false,
      "blockers": [
-      "grade_not_admitted"
+      "grade_not_admitted",
+      "route_not_admitted"
      ],
      "research_pool": false,
      "selected": false,
@@ -9827,8 +11191,8 @@
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2024-11-27",
-    "rules_version": "35a2539819be",
-    "context_sha256": "1d06b4b541b9d6ca1d3afe6a5c70f597b4fd137a624677cb9141b9370833ebad",
+    "rules_version": "2bce356f881f",
+    "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -9841,7 +11205,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "145638e52abd04c1982038441fb56cf9c14c984c7ea1acb03cc7fd8e61d51ac6"
+    "id": "3c86294e1bfe93aab14935f75a88cbae45b180c5cad7c1ed0c268b80f1fb81a2"
    },
    "series": [
     {
@@ -11159,8 +12523,8 @@
      },
      "evidence_ref": {
       "version": 1,
-      "id": "686924cc5507920f1437a5acb556cf01f9f05e6432293dfc43f183a88056d3cf",
-      "context_sha256": "1d06b4b541b9d6ca1d3afe6a5c70f597b4fd137a624677cb9141b9370833ebad",
+      "id": "dbc2dd9812955b86b8c183684fd5547a2bc589181d605d4182af264fe26a9531",
+      "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e",
       "plan_sha256": "88ac58a662b37c67c0f47a1ee797efe4a000062a616d7d1bed9b06192d209a27",
       "pick_sha256": "ee35be7c2467fd384e7258f64381c37bd2af9327638a86cc7de6a77583f2f2d5"
      }
@@ -12158,7 +13522,7 @@
        },
        "size_multiplier": 1.0
       },
-      "regime_sha256": "efd474e151754744fd057274ab46dc06db000260b0f726df2a4e41ba61ee73a4",
+      "regime_sha256": "70acfbccdf291e7990dfd6b3f244011f80d2b5c6e5e932fad2576bcf60efc02c",
       "session": "2024-11-27",
       "output_sha256": "88ac58a662b37c67c0f47a1ee797efe4a000062a616d7d1bed9b06192d209a27",
       "error": null,
@@ -12168,8 +13532,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2024-11-27",
-     "rules_version": "35a2539819be",
-     "context_sha256": "1d06b4b541b9d6ca1d3afe6a5c70f597b4fd137a624677cb9141b9370833ebad",
+     "rules_version": "2bce356f881f",
+     "context_sha256": "6052950ec7f8bd8096ae3da2608ba5f282daec8e2c0c2154b87419c05343b20e",
      "gate": {
       "regime": "green",
       "final_grade": "watch",
@@ -12178,13 +13542,13 @@
       "reason": "no_order",
       "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take COIL only if a plan above is not held or stops out"
      },
-     "id": "686924cc5507920f1437a5acb556cf01f9f05e6432293dfc43f183a88056d3cf"
+     "id": "dbc2dd9812955b86b8c183684fd5547a2bc589181d605d4182af264fe26a9531"
     }
    }
   ],
   "also_quiet": [],
   "counts": {
-   "momentum": 9,
+   "momentum": 10,
    "quiet": 4,
    "admitted": 1,
    "eligible": 1,
@@ -12431,7 +13795,7 @@
    "expected_session": "2024-11-27",
    "evaluated_session": "2024-11-27"
   },
-  "replay_rules_version": "35a2539819be"
+  "replay_rules_version": "2bce356f881f"
  },
  "observations": {
   "as_of": "2024-11-27",
@@ -12516,6 +13880,27 @@
       "l": 71.2,
       "c": 72.93,
       "v": 2781939.0,
+      "from_session": "2024-11-27",
+      "source": "public observation history"
+     }
+    ]
+   },
+   "MSFT": {
+    "date": "2024-11-27",
+    "o": 118.09,
+    "h": 119.7,
+    "l": 117.91,
+    "c": 119.52,
+    "v": 500000.0,
+    "since": "2024-11-27",
+    "history": [
+     {
+      "date": "2024-11-27",
+      "o": 118.09,
+      "h": 119.7,
+      "l": 117.91,
+      "c": 119.52,
+      "v": 500000.0,
       "from_session": "2024-11-27",
       "source": "public observation history"
      }
@@ -12649,53 +14034,60 @@
    }
   },
   "signals": {
-   "burst:AAPL:2024-11-27:35a2539819be": {
+   "burst:AAPL:2024-11-27:2bce356f881f": {
     "ticker": "AAPL",
     "session": "2024-11-27",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:AMD:2024-11-27:35a2539819be": {
+   "burst:AMD:2024-11-27:2bce356f881f": {
     "ticker": "AMD",
     "session": "2024-11-27",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:NVDA:2024-11-27:35a2539819be": {
+   "burst:NVDA:2024-11-27:2bce356f881f": {
     "ticker": "NVDA",
     "session": "2024-11-27",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:TSLA:2024-11-27:35a2539819be": {
+   "burst:TSLA:2024-11-27:2bce356f881f": {
     "ticker": "TSLA",
     "session": "2024-11-27",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:PLUG:2024-11-27:35a2539819be": {
+   "burst:MSFT:2024-11-27:2bce356f881f": {
+    "ticker": "MSFT",
+    "session": "2024-11-27",
+    "kind": "burst",
+    "rules_version": "2bce356f881f",
+    "coverage": "observed"
+   },
+   "burst:PLUG:2024-11-27:2bce356f881f": {
     "ticker": "PLUG",
     "session": "2024-11-27",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "burst:DLLR:2024-11-27:35a2539819be": {
+   "burst:DLLR:2024-11-27:2bce356f881f": {
     "ticker": "DLLR",
     "session": "2024-11-27",
     "kind": "burst",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    },
-   "anticipation:COIL:2024-11-27:35a2539819be": {
+   "anticipation:COIL:2024-11-27:2bce356f881f": {
     "ticker": "COIL",
     "session": "2024-11-27",
     "kind": "anticipation",
-    "rules_version": "35a2539819be",
+    "rules_version": "2bce356f881f",
     "coverage": "observed"
    }
   },
@@ -12709,7 +14101,7 @@
   "sentence": "PLUG came closest at B 8.5: fails close near the high."
  },
  "funnel": {
-  "version": 2,
+  "version": 3,
   "policy": "candidate_funnel_v1",
   "regime": "green",
   "admitted_grades": [
@@ -12717,11 +14109,11 @@
    "A"
   ],
   "reaction": {
-   "discovered": 6,
+   "discovered": 7,
    "potentially_usable": 4,
    "by_mechanical_grade": {
     "A+": 4,
-    "A": 0,
+    "A": 1,
     "B": 2,
     "C": 0,
     "skip": 0
@@ -12730,6 +14122,7 @@
     "market": 0,
     "grade": 2,
     "veto": 0,
+    "route": 1,
     "preview_event": 0,
     "preview_geometry": 0,
     "preview_sizing": 0,
@@ -12775,6 +14168,10 @@
      "stage": "geometry"
     },
     {
+     "ticker": "MSFT",
+     "stage": "route"
+    },
+    {
      "ticker": "PLUG",
      "stage": "grade"
     },
@@ -12787,7 +14184,7 @@
   "anticipation": {
    "listed": 1,
    "counts": {
-    "momentum": 9,
+    "momentum": 10,
     "quiet": 4,
     "admitted": 1,
     "top": 1,
@@ -12818,6 +14215,7 @@
    "market": "market",
    "grade": "grade",
    "veto": "veto",
+   "route": "route",
    "preview_event": "preview",
    "preview_geometry": "preview",
    "preview_sizing": "preview",
@@ -12849,6 +14247,7 @@
    "market": "market gate: the regime admits no new longs",
    "grade": "mechanical grade below the regime's admitted band",
    "veto": "quality veto",
+   "route": "dollar scan alone, without a range-expansion, higher-volume day",
    "preview_event": "known corporate event, in the pre-review preview",
    "preview_geometry": "stop rule at the limit, in the pre-review preview",
    "preview_sizing": "no whole share, in the pre-review preview",
@@ -12876,7 +14275,7 @@
    "ticket": "ticket",
    "unknown": "not readable from this record"
   },
-  "sentence": "Candidate funnel under a GREEN market: 6 reaction candidates discovered, 4 potentially usable (mechanical grade in the admitted band, no veto), 1 reaction ticket. Reaction candidates stopped at: 2 mechanical grade below the regime's admitted band, 1 ticket withheld: stop rule at the limit, 2 slot cap. Anticipation: 9 momentum names, 4 quiet, 1 passing the coil checks, 1 listed, 0 tickets. Listed setups stopped at: 1 slot cap. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
+  "sentence": "Candidate funnel under a GREEN market: 7 reaction candidates discovered, 4 potentially usable (mechanical grade in the admitted band, no veto, discovery admitted), 1 reaction ticket. Reaction candidates stopped at: 2 mechanical grade below the regime's admitted band, 1 dollar scan alone, without a range-expansion, higher-volume day, 1 ticket withheld: stop rule at the limit, 2 slot cap. Anticipation: 10 momentum names, 4 quiet, 1 passing the coil checks, 1 listed, 0 tickets. Listed setups stopped at: 1 slot cap. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
  },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",

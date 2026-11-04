@@ -49,7 +49,7 @@ from typing import Any, Iterable, Mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src import pipeline, plan, allocation, event_risk  # noqa: E402
+from src import admission, pipeline, plan, allocation, event_risk  # noqa: E402
 
 
 #: The candidates the oracle may read, in ``plan.burst_stop``'s own order.
@@ -251,6 +251,8 @@ def study(record: dict) -> dict[str, Any]:
                                  f"this study re-derives from the spec")
         rows.append({
             "ticker": row["ticker"], "grade": row.get("grade"), "vetoed": bool(row.get("vetoes")),
+            # the discovery admission (src/admission.py): a row from before the rule reads as admitted
+            "admitted": admission.admitted(row),
             "admitted_by_regime": row.get("grade") in admits and not row.get("vetoes"),
             "cut_kind": cut.get(row["ticker"]),
             "close": row["close"], "low": row["low"], "high": row["high"],
@@ -301,8 +303,11 @@ def study(record: dict) -> dict[str, Any]:
         "excluded_by_grade_tonight": (sum(1 for r in rows if r["grade"] not in admits)
                                       if admits and tuple(admits) != tuple(pipeline.TRADE_GRADES) else None),
         "excluded_by_veto": sum(1 for r in rows if r["vetoed"]),
+        # the discovery admission is its own gate, before any plan: a dollar-only name
+        # without a range-expansion, higher-volume day never reaches the stop rule
+        "excluded_by_admission": sum(1 for r in rows if not r["admitted"]),
         "would_reach_the_stop_rule_on_a_green_night": sum(
-            1 for r in rows if r["grade"] in pipeline.TRADE_GRADES and not r["vetoed"]),
+            1 for r in rows if r["grade"] in pipeline.TRADE_GRADES and not r["vetoed"] and r["admitted"]),
         "size_multiplier": multiplier,
         "excluded_by_budget": {k: sum(1 for v in cut.values() if v == k)
                                for k in sorted(set(cut.values())) if k in BUDGET_CUT_KINDS},
@@ -312,7 +317,7 @@ def study(record: dict) -> dict[str, Any]:
         "cut_for_no_new_longs": sum(1 for v in cut.values() if v == "no_new_longs"),
         "cut_for_no_whole_share": sum(1 for v in cut.values() if v == "no_shares"),
     }
-    green = [r for r in rows if r["grade"] in pipeline.TRADE_GRADES and not r["vetoed"]]
+    green = [r for r in rows if r["grade"] in pipeline.TRADE_GRADES and not r["vetoed"] and r["admitted"]]
     counts["green_night"] = {
         "population": len(green),
         "fixed_eligible": sum(1 for r in green if r["fixed"]["eligible"]),
@@ -399,6 +404,7 @@ def report_text(name: str, s: dict[str, Any]) -> str:
         w(f"  excluded by grade tonight (this regime admits {'/'.join(x['grades_admitted'])} only) "
           f"{x['excluded_by_grade_tonight']}")
     w(f"  excluded by a veto                           {x['excluded_by_veto']}")
+    w(f"  excluded by the discovery admission          {x['excluded_by_admission']}")
     w(f"  excluded by allocation (capacity, symbols)  {x['excluded_by_budget'] or 'none recorded'}")
     w(f"  withheld by known corporate events          {x['cut_by_known_event']}")
     w(f"  cut as withheld \u2014 the stop rule's own refusal, counted above, not here: {x['cut_as_withheld_by_the_stop_rule']}")

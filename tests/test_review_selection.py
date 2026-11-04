@@ -88,11 +88,19 @@ def test_research_rotation_uses_archived_session_seed_and_survives_input_permuta
     rows = [candidate(f"R{i:02}", shares=0) for i in range(20)]
     decisions, selected = choose(rows)
     expected = min((r["ticker"] for r in rows[1:]), key=lambda t:
-                   (hashlib.sha256(f"account_feasible_first_research_v1|{SESSION}|{t}".encode()).hexdigest(), t))
+                   (hashlib.sha256(f"{selection.POLICY}|{SESSION}|{t}".encode()).hexdigest(), t))
     assert selected == ["R00", expected]
     assert choose(list(reversed(rows))) == (decisions, selected)
-    assert choose(rows, session="2026-09-14")[1] == ["R00", "R11"]
     assert len(set(selected)) == len(selected)
+    # the seed is the POLICY the selection runs under, so a version-1 record replayed
+    # under its own policy rotates as it did: the pick the 14 Sep session had on 10 Oct
+    v1 = selection.select(rows, "2026-09-14", max_reads=12, admitted=("A+", "A"), research_grades=("A+", "A"),
+                          policy=selection.POLICY_V1)
+    assert v1[1] == ["R00", "R11"]
+    assert all(d["policy"] == selection.POLICY_V1 for d in v1[0].values())
+    assert choose(rows, session="2026-09-14")[1][0] == "R00"
+    with pytest.raises(ValueError, match="unknown review selection policy"):
+        selection.select(rows, SESSION, max_reads=12, admitted=("A+", "A"), research_grades=("A+", "A"), policy="other")
 
 
 @pytest.mark.parametrize("budget", [0, 1, 2])
@@ -240,7 +248,9 @@ def test_selection_rules_are_archived_and_keep_existing_budget_and_grade_authori
     from src import universe
     rules = pipeline.build_rules(universe.Universe(["AAA"], {}, {}, "explicit", None, {}, "test"))
     assert rules["review_selection"]["research_max"] == 2
-    assert rules["review_selection"]["policy"] == "account_feasible_first_research_v1"
+    assert rules["review_selection"]["policy"] == "account_feasible_first_research_v2" == selection.POLICY
+    assert rules["review_selection"]["version"] == 2
+    assert rules["review_selection"]["research_pool"] == "infeasible mechanical pipeline.trade_grades, discovery admitted"
     assert rules["pipeline"]["max_reads"] == 12
     assert rules["pipeline"]["reader_policy"] == "accepted_required_v1"
     assert rules["pipeline"]["trade_grades"] == ["A+", "A"]
@@ -254,3 +264,129 @@ def test_documents_name_the_archived_research_budget_and_selection_boundary():
         assert f"at most {selection.RESEARCH_MAX}" in content.lower()
     assert selection.POLICY in (root / "README.md").read_text()
     assert selection.POLICY in (root / "knowledge/method.md").read_text()
+
+
+# ------------------------------------------------- the discovery admission ----
+def dollar_only(ticker, *, expansion, grade="A", score=8):
+    """A dollar-only candidate as the pipeline writes it: its admission block
+    read off the route and the checklist's RE and VOL (src/admission.py)."""
+    from src import admission
+    checks = [{"letter": "RE", "passed": expansion, "pass": expansion}, {"letter": "VOL", "passed": expansion, "pass": expansion}]
+    row = {**candidate(ticker, grade=grade, score=score), "scan": "dollar", "quality": {"checks": checks}}
+    row["admission"] = admission.block(row)
+    return row
+
+
+def test_a_dollar_only_name_without_expansion_is_blocked_at_the_route_and_is_not_research():
+    """The second policy: a name the discovery admission stopped is blocked as
+    route_not_admitted -- never feasible, never research -- so no read is
+    spent on a name that cannot be planned; the same name on a
+    range-expansion, higher-volume day is as feasible as any 4% burst."""
+    stopped = dollar_only("DNO", expansion=False, score=10)
+    shown = dollar_only("DEX", expansion=True, score=9)
+    decisions, selected = choose([stopped, shown, candidate("FIT", grade="A", score=8)])
+    assert decisions["DNO"] == {"policy": selection.POLICY, "feasible": False, "blockers": ["route_not_admitted"],
+                                "research_pool": False, "selected": False, "purpose": "outside_research_pool"}
+    assert decisions["DEX"]["feasible"] is True and decisions["DEX"]["blockers"] == []
+    assert selected == ["DEX", "FIT"], selected
+    # with every other name infeasible, the stopped A+ is still not a research read
+    decisions, selected = choose([stopped, candidate("R00", grade="A", shares=0)], admitted=())
+    assert selected == ["R00"] and decisions["DNO"]["purpose"] == "outside_research_pool"
+    # the route blocker sits after the grade and the veto, in the receipt's order
+    vetoed = {**stopped, "vetoes": ["up_days"]}
+    assert selection.blockers(vetoed, ("A+",)) == ["grade_not_admitted", "quality_veto", "route_not_admitted"]
+    assert selection.BLOCKERS.index("route_not_admitted") == selection.BLOCKERS.index("quality_veto") + 1
+    receipt = selection.receipt([stopped, shown], *choose([stopped, shown]), SESSION, max_reads=12)
+    assert receipt["version"] == 2 and receipt["policy"] == selection.POLICY
+    assert receipt["blockers"]["route_not_admitted"] == 1 and set(receipt["blockers"]) == set(selection.BLOCKERS)
+
+
+def test_version_one_is_replayed_under_its_own_policy_with_no_route_blocker():
+    """A record from 10 Oct to 3 Nov 2026 archived version 1: its rows carry no
+    admission block and its receipt counted seven blockers. Replayed under its
+    own policy it reproduces exactly; a row that does carry a block is read as
+    version 1 read it, by its grade and veto alone."""
+    stopped = dollar_only("DNO", expansion=False)
+    decisions, selected = selection.select([stopped], SESSION, max_reads=12, admitted=("A+", "A"),
+                                           research_grades=("A+", "A"), policy=selection.POLICY_V1)
+    assert decisions["DNO"]["blockers"] == [] and decisions["DNO"]["feasible"] is True and selected == ["DNO"]
+    receipt = selection.receipt([stopped], decisions, selected, SESSION, max_reads=12, policy=selection.POLICY_V1)
+    assert receipt["version"] == 1 and receipt["policy"] == selection.POLICY_V1
+    assert list(receipt["blockers"]) == list(selection.BLOCKERS_BY_POLICY[selection.POLICY_V1]) and "route_not_admitted" not in receipt["blockers"]
+    with pytest.raises(ValueError, match="unknown review selection policy"):
+        selection.receipt([stopped], decisions, selected, SESSION, max_reads=12, policy="other")
+    # the frozen version-1 rules are what every such record archived, and nothing else is replayable
+    assert selection.supported(selection.RULES_V1) and selection.supported({k.partition(".")[2]: v for k, v in selection.RULES.items()})
+    assert not selection.supported({**selection.RULES_V1, "research_max": 3}) and not selection.supported("rules") and not selection.supported(None)
+    assert selection.RULES_V1["policy"] == selection.POLICY_V1 and selection.RULES_V1["version"] == 1
+    assert selection.RULES_V1["research_pool"] == "infeasible mechanical pipeline.trade_grades"
+
+
+def test_a_stopped_name_is_never_previewed_in_the_replay_whatever_its_preview_would_have_said():
+    """The run never previews a stopped name, so its archived blockers are the
+    route alone. A replay that previewed it would add the preview's own
+    blockers and call a legitimate night FAIL; the fixture's MSFT sizes to whole
+    shares at its price, so its prices are raised until a preview would have
+    refused it for no whole share, and the replay must still reproduce the
+    archived receipt. Under version 1 no block is read either way."""
+    import copy, json
+    from pathlib import Path
+    data = json.loads((Path(__file__).parent / "fixtures" / "page" / "full.json").read_text())
+    msft = next(b for b in data["bursts"] if b["ticker"] == "MSFT")
+    assert msft["admission"]["admitted"] is False and msft["review_selection"]["blockers"] == ["route_not_admitted"]
+    dear = copy.deepcopy(data)
+    row = next(b for b in dear["bursts"] if b["ticker"] == "MSFT")
+    for k in ("close", "low", "high", "open", "prev_close"):
+        row[k] = round(row[k] * 300, 2)
+    # a preview at that price would be refused for no whole share: the blockers would differ
+    from src import plan
+    preview = plan.burst_plan(ticker="MSFT", close=row["close"], low=row["low"], high=row["high"], open_=row["open"],
+                              prev_close=row["prev_close"], gain_pct=row["gain_pct"] or 0.0, account=plan.Account(),
+                              size_multiplier=1.0, scan="dollar", extension_pct=row.get("extension_pct"))
+    assert preview["shares"] == 0
+    decisions, receipt = selection.replay(dear)
+    assert decisions["MSFT"]["blockers"] == ["route_not_admitted"]
+    assert receipt["blockers"] == dear["run"]["review_selection"]["blockers"]
+    assert receipt == dear["run"]["review_selection"]
+
+
+def test_a_version_one_record_whose_rows_carry_blocks_is_replayed_as_version_one_read_them():
+    """Version 1 read no admission block, so neither does its replay: a row the
+    block says is stopped is previewed and judged by its preview, never blocked
+    at the route (the receipt's blocker keys are version 1's seven). No retained
+    version-1 record carries a block; this holds the rule for one that would."""
+    import copy, json
+    from pathlib import Path
+    data = json.loads((Path(__file__).parent / "fixtures" / "page" / "full.json").read_text())
+    v1 = copy.deepcopy(data)
+    v1["rules"]["review_selection"] = dict(selection.RULES_V1)
+    msft = next(b for b in v1["bursts"] if b["ticker"] == "MSFT")
+    assert msft["admission"]["admitted"] is False
+    decisions, receipt = selection.replay(v1)
+    assert receipt["version"] == 1 and receipt["policy"] == selection.POLICY_V1
+    assert set(receipt["blockers"]) == set(selection.BLOCKERS_BY_POLICY[selection.POLICY_V1])
+    assert "route_not_admitted" not in decisions["MSFT"]["blockers"]
+    # previewed, not skipped: at its price the preview sizes to whole shares, so version 1 finds it feasible
+    assert decisions["MSFT"]["feasible"] is True and decisions["MSFT"]["blockers"] == []
+    # under the current policy the same row is stopped at the route and never previewed
+    decisions, _ = selection.replay(data)
+    assert decisions["MSFT"]["blockers"] == ["route_not_admitted"] and decisions["MSFT"]["feasible"] is False
+
+
+def test_the_retained_version_one_publication_replays_exactly_and_still_verifies():
+    """The 9 October 2026 publication (the stop-research fixture, its exact
+    bytes) archived version 1: the current module replays every decision and
+    the receipt byte for byte under the frozen rules, and the verifier keeps
+    its PASS -- a record is never read under a policy it did not archive."""
+    root = Path(__file__).resolve().parents[1]
+    data = json.loads(gzip.decompress((root / "tests/fixtures/stop-research/current-publication.json.gz").read_bytes()))
+    assert data["rules"]["review_selection"] == selection.RULES_V1
+    decisions, receipt = selection.replay(data)
+    assert receipt == data["run"]["review_selection"]
+    assert all(decisions[b["ticker"]] == b["review_selection"] for b in data["bursts"])
+    assert provenance.verify(data, require_sources=False)["status"] == "PASS"
+    # a record archiving rules this module does not replay is refused by name, never guessed at
+    foreign = deepcopy(data)
+    foreign["rules"]["review_selection"]["policy"] = "future_implementation_v3"
+    with pytest.raises(ValueError, match="not ones this module replays"):
+        selection.replay(foreign)

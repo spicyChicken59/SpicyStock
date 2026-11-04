@@ -21,7 +21,7 @@ import pandas as pd
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
 from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
 from src import universe, reader_coverage, followup
-from src import watchlist, allocation, event_risk, review_selection, funnel, delivery, intraday, earnings_risk
+from src import watchlist, allocation, event_risk, review_selection, funnel, delivery, intraday, earnings_risk, admission
 
 log = logging.getLogger("spicystock.pipeline")
 
@@ -390,6 +390,10 @@ def scan_frames(frames: dict[str, pd.DataFrame], uni: universe.Universe,
         # The display row may retain finer provider precision; never substitute
         # those values for the ones that actually passed the scan.
         row["discovery"] = discovery.contract({**row, **(burst or {}), **(dollar or {})})
+        # whether the trade band and the chart reads may consider it: the 4% route, or
+        # the dollar route on a range-expansion, higher-volume day (src/admission.py);
+        # read off the route and the checklist's own checks, never a grade
+        row["admission"] = admission.block(row)
         provenance.capture(row, df)
         bursts.append(row)
     tally["measured"] = measured
@@ -568,7 +572,9 @@ def make_plans(bursts: list[dict], frames: dict[str, pd.DataFrame], account: pla
 
 
 def _make_plans(bursts, account, regime, open_count, session, *, require_reader):
-    """Construct plans after the applicable gates; the trades list in
+    """Construct plans after the applicable gates -- the regime's admitted
+    grades, the quality veto, the discovery admission (src/admission.py) and,
+    for the final plans, an accepted reader review; the trades list in
     rank order (the plans with an order that fit the slots and the equity)
     and the cash budget over them, with every cut plan named and its reason."""
     verdict = regime.get("verdict", "green")
@@ -578,7 +584,7 @@ def _make_plans(bursts, account, regime, open_count, session, *, require_reader)
     for b in bursts:
         b["plan"] = None
         provenance.seal_plan(b, None, regime, session)
-        if b["grade"] not in admitted or b["vetoes"]:
+        if b["grade"] not in admitted or b["vetoes"] or not admission.admitted(b):
             continue
         if require_reader and not reader_coverage.accepted(b):
             continue
@@ -677,7 +683,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, funnel.RULES, intraday.RULES, earnings_risk.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, admission.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, funnel.RULES, intraday.RULES, earnings_risk.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.session_min_price": universe.MIN_PRICE,

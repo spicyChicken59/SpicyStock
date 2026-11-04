@@ -160,7 +160,7 @@ def test_a_block_is_held_to_the_version_its_record_archived_never_to_stages_it_h
     forged = json.loads(json.dumps(older))
     forged["funnel"]["sentence"] = "every candidate reached a ticket"
     assert funnel.faults(forged) == ["funnel is not the record's own"]
-    for bad in (3, 0, True, "1", None):
+    for bad in (4, 0, True, "1", None):
         unknown = json.loads(json.dumps(older))
         unknown["rules"]["funnel"]["version"] = bad
         assert funnel.faults(unknown) == ["funnel archived version is unknown"], bad
@@ -271,7 +271,7 @@ def test_the_fixtures_between_them_reach_the_stages_the_record_can_write():
         block = load(path)["funnel"]
         reached |= {s for s, n in block["reaction"]["stages"].items() if n}
         reached |= {"anticipation:" + s for s, n in block["anticipation"]["stages"].items() if n}
-    assert {"market", "grade", "geometry", "allocation_slot", "ticket", "review_transport", "review_downgraded"} <= reached, reached
+    assert {"market", "grade", "route", "geometry", "allocation_slot", "ticket", "review_transport", "review_downgraded"} <= reached, reached
     assert {"anticipation:market", "anticipation:allocation_slot", "anticipation:ticket"} <= reached, reached
 
 
@@ -518,7 +518,9 @@ def expected_segments(stages):
 def test_the_sentence_is_counts_and_labels_alone():
     block = funnel.build(load(PAGE / "full.json"))
     s = block["sentence"]
-    assert s.startswith("Candidate funnel under a GREEN market: 6 reaction candidates discovered, 4 potentially usable")
+    assert s.startswith("Candidate funnel under a GREEN market: 7 reaction candidates discovered, 4 potentially usable "
+                        "(mechanical grade in the admitted band, no veto, discovery admitted)")
+    assert "1 dollar scan alone, without a range-expansion, higher-volume day" in s
     assert "1 reaction ticket." in s and "1 ticket withheld: stop rule at the limit" in s and "2 slot cap" in s
     assert "Listed setups stopped at: 1 slot cap." in s
     assert s.endswith("establishes no entry.")
@@ -562,7 +564,7 @@ def test_the_sentence_names_the_watchlists_counts_only_when_every_one_is_recorde
     for regime in (None, "", 5):
         unnamed = copy.deepcopy(block)
         unnamed["regime"] = regime
-        assert funnel.sentence(unnamed).startswith("Candidate funnel under a market this record does not name: 6 reaction"), regime
+        assert funnel.sentence(unnamed).startswith("Candidate funnel under a market this record does not name: 7 reaction"), regime
 
 
 # ---------------------------------------------------------- the validator ----
@@ -665,3 +667,75 @@ def test_the_retained_9_october_publication_is_read_for_what_it_recorded(product
     assert a["counts"] == {"momentum": 768, "quiet": 239, "admitted": 16, "top": 5, "also_quiet": 10}
     assert "479 reaction candidates discovered, 0 potentially usable" in block["sentence"]
     assert "2 known corporate event, 3 ticket withheld: stop rule at the limit" in block["sentence"]
+
+
+# ------------------------------------------------ the discovery admission ----
+def stopped_by_admission(ticker="DNO", grade="A"):
+    """A dollar-only row the admission stopped, as the pipeline writes it: the
+    block read off its route and its RE and VOL checks (src/admission.py)."""
+    from src import admission
+    row = {"ticker": ticker, "scan": "dollar", "grade_mechanical": grade, "grade": grade, "vetoes": [], "claude": None,
+           "quality": {"checks": [{"letter": "RE", "passed": False}, {"letter": "VOL", "passed": False}]},
+           "review_selection": unselected("route_not_admitted")}
+    row["admission"] = admission.block(row)
+    assert row["admission"]["admitted"] is False
+    return row
+
+
+def test_the_route_is_read_after_the_grade_and_the_veto_from_version_three():
+    row = stopped_by_admission()
+    assert funnel.reaction_stage(row, GREEN, {}, []) == "route"
+    assert funnel.reaction_stage(row, GREEN, {}, [], version=3) == "route"
+    # the grade and the veto come first, the market before them
+    assert funnel.reaction_stage({**row, "grade_mechanical": "B", "grade": "B"}, GREEN, {}, []) == "grade"
+    assert funnel.reaction_stage({**row, "vetoes": ["up_days"]}, GREEN, {}, []) == "veto"
+    assert funnel.reaction_stage(row, (), {}, []) == "market"
+    # version 2 had no word for it: such a record is re-derived by its other fields, and a
+    # recorded blocker that names no preview stage (route_not_admitted, grade_not_admitted)
+    # leaves it review_unknown, never a stage it did not reach; only an empty blockers list
+    # reads as the budget
+    assert funnel.reaction_stage(row, GREEN, {}, [], version=2) == "review_unknown"
+    assert funnel.reaction_stage({**row, "review_selection": unselected("grade_not_admitted")}, GREEN, {}, [], version=2) == "review_unknown"
+    assert funnel.reaction_stage({**row, "review_selection": unselected()}, GREEN, {}, [], version=2) == "review_budget"
+    assert funnel.reaction_stage({**row, "review_selection": unselected("no_whole_share")}, GREEN, {}, [], version=2) == "preview_sizing"
+    assert "route" not in funnel.REACTION_STAGES_BY_VERSION[2] and "route" not in funnel.REACTION_STAGES_BY_VERSION[1]
+    assert funnel.REACTION_STAGES_BY_VERSION[3] == funnel.REACTION_STAGES and funnel.ADMISSION_FROM_VERSION == 3
+    assert funnel.READS_VERSION_BY_FUNNEL[3] == 2
+    assert funnel.GROUPS["route"] == "route" and funnel.LABELS["route"] == "dollar scan alone, without a range-expansion, higher-volume day"
+
+
+def test_potentially_usable_needs_the_admission_from_version_three_and_not_before():
+    rules = {"pipeline": {"trade_grades": ["A+", "A"], "yellow_grades": ["A+"]},
+             "funnel": {"version": funnel.VERSION, "policy": funnel.POLICY}}
+    data = {"rules": rules, "breadth": {"regime": {"verdict": "green"}}, "cash_budget": {}, "trades": [],
+            "watchlist": {"top": [], "counts": {"momentum": 1, "quiet": 1, "admitted": 0, "top": 0, "also_quiet": 0}},
+            "bursts": [stopped_by_admission(),
+                       {"ticker": "BUD", "grade_mechanical": "A", "grade": "A", "vetoes": [], "claude": None,
+                        "review_selection": unselected()}]}
+    block = funnel.build(data)
+    assert block["version"] == 3 and block["reaction"]["potentially_usable"] == 1
+    assert [r["stage"] for r in block["reaction"]["rows"]] == ["route", "review_budget"]
+    assert block["reaction"]["stages"]["route"] == 1
+    assert "1 potentially usable (mechanical grade in the admitted band, no veto, discovery admitted)" in block["sentence"]
+    assert "Reaction candidates stopped at: 1 dollar scan alone, without a range-expansion, higher-volume day, 1 feasible, beyond the night's review budget." in block["sentence"]
+    assert funnel.faults({**data, "funnel": block}) == []
+    # the same record archived under version 2 counts the stopped name as usable and places it by its fields
+    older = json.loads(json.dumps(data))
+    older["rules"]["funnel"]["version"] = 2
+    block2 = funnel.build(older)
+    assert block2["version"] == 2 and block2["reaction"]["potentially_usable"] == 2
+    assert [r["stage"] for r in block2["reaction"]["rows"]] == ["review_unknown", "review_budget"]
+    assert "route" not in block2["reaction"]["stages"] and "(mechanical grade in the admitted band, no veto)" in block2["sentence"]
+    assert funnel.faults({**older, "funnel": block2}) == []
+    # a version-3 block is refused under version-2 rules, and the other way round
+    assert funnel.faults({**older, "funnel": block}) == ["funnel is not the record's own"]
+    assert funnel.faults({**data, "funnel": block2}) == ["funnel is not the record's own"]
+
+
+def test_the_full_fixture_stops_its_dollar_only_a_name_at_the_route(path=PAGE / "full.json"):
+    data = load(path)
+    rows = {r["ticker"]: r["stage"] for r in data["funnel"]["reaction"]["rows"]}
+    assert rows["MSFT"] == "route" and data["funnel"]["reaction"]["stages"]["route"] == 1
+    msft = next(b for b in data["bursts"] if b["ticker"] == "MSFT")
+    assert msft["grade_mechanical"] == "A" and msft["admission"]["admitted"] is False and msft["claude"] is None
+    assert data["funnel"]["reaction"]["potentially_usable"] == 4   # AAPL, AMD, NVDA, TSLA: the 4%-route A+ names

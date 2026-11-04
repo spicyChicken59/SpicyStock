@@ -345,7 +345,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5760 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5805 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -13357,3 +13357,244 @@ CI's on the pull request.
 the image Mo deployed on 31 October; it reads this only after a redeploy, which
 is his step. Until then the page understands both the old receipts' `local_
 budget` and the new kind.
+
+## Checkpoint, 4 Nov 2026 -- the first in-window morning check, and a dollar-only name admitted only on a range-expansion, higher-volume day (Mo's option 2)
+
+**The morning check, delivered.** The claude.ai scheduled task
+`trig_01PHrHcNQwyF3FVdoucGDVdL` (*SpicyStock morning check (8:21 CT, haiku)*,
+created 13:15 UTC on 4 November) fires at 8:21 CT into one persistent Haiku
+session (`session_01KfMJYmkWVJiLF4BvTfXLuD`) whose only job is one
+`workflow_dispatch` of `morning.yml` on `main`. On 4 November it fired at
+14:21:42 UTC and the dispatch, run 41846802416, was created at 14:21:52,
+inside the collector's window; its two receipts landed on `main` at 14:23:29
+and 14:23:35 (`2789a665`, `f0d5d09b`), 97 and 103 seconds after the dispatch,
+and the issuer collection its completion starts followed at 14:25:28
+(`73b60a71`). The Railway host bound its receipt to the 3 November
+publication (RED, no admitted plan: a check that ran and quoted nothing), and
+the firing cost about $0.018. A second routine of Mo's own, *SpicyStock second
+look* (7:09 CT, weekdays, created 14:11 UTC), reads the night's record and
+messages Mo; it writes nothing to this repository. Not claimable: ten
+consecutive sessions; a night with an admitted plan to quote.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` restarted from
+`main` at `cd08841b` (the 4 November source-recovery receipt), pushed as
+**PR #211**. `docs/data.json`, `docs/picks.json`, the compact reader, every
+receipt, the history, the evidence objects, the quality ledger, the workflows
+and the vendored design system are untouched; the pinned sources (`scans.py`,
+`quality.py`, `breadth.py`, `sessions.py`) are untouched; no run, mail,
+dispatch, provider call or credential.
+
+**What the owner found, reproduced.** Mo read the 3 November record's 52
+mechanical A names and found most were not bursts: 34 of the 52 came through
+the dollar scan alone (`bursts[].scan == "dollar"`), Bonde's 2017 `c-o>=.90
+and v>100000`, which asks nothing of the day's gain, range or volume against
+the previous session, so a $500 stock passes it on a 0.2% move. Over the 35
+retained publications from 16 September to 3 November, 1,913 of the 2,473
+mechanical A-band grades came through the dollar scan alone, 1,757 of them on
+a day under +4% and 91 on a day that did not close up (89 down, 2 flat), and
+187 of the 244 chart reads went to such names; the checklist's six scored
+letters measure the base and the trend, and the two burst-day expansion checks
+it records, RE and VOL, carry no weight. Three options were put to Mo (leave
+it; admit a dollar-only name only when its burst day passes RE and VOL; a 4%
+route only) and Mo chose the second.
+
+**The rule.** `src/admission.py` (`burst_route_or_dollar_expansion_v1`,
+version 1, archived as the `admission` rules family so `rules_version` moves):
+a name the 4% scan discovered (`burst` or `both`) is admitted; a name the
+dollar scan alone discovered is admitted only when its burst day passed the
+checklist's RE (range at least the largest of the prior five sessions',
+Bonde's own phrase) and VOL (volume above the previous session's, the 4%
+scan's own `v > v1`) checks. `block(row)` is read off `scan` and
+`quality.checks` alone and written as `bursts[].admission` (route, basis,
+`admitted`, the two checks as recorded, the reason in the words the page and
+the mail print; a check the checklist could not read is named as unread, never
+as an absence); `admitted()` reads a row from before the rule as admitted and
+a half-written block as not; `summary()` is `run.admission`, composed in
+`report.build()` off the cleaned rows (every basis counted, and the trade band
+without a veto split into admitted and not, with one sentence); `faults()`
+holds every row's block to its own re-derivation and `run.admission` to the
+summary over the re-derived blocks, under the version the rules archived, and
+refuses a block beside rules that archive none. Admission is never a grade: the
+checklist's grade stands on every row and a stopped name keeps it as research.
+
+**Where it reaches.** `pipeline._make_plans()` (the preview and the final
+plan), `review_selection` version 2 (`account_feasible_first_research_v2`: a
+stopped name is blocked `route_not_admitted` after the veto and is not
+research either, so no chart read is spent on a name that cannot be planned;
+version 1's rules are frozen as `RULES_V1`, `supported()` admits either, and
+`replay()` replays a record under the policy it archived with its own blockers
+and rotation seed, reading no block under version 1 as `select()` never did),
+`reader_coverage.reads()` (a refused stopped name is not admissible), `funnel`
+version 3 (stage `route` after the veto, in the record's words; "potentially
+usable" counts the admission from this version), the sealed plan gate
+(`provenance.gate`: `route_not_admitted`, only under rules that archive the
+family), `report.reader_pending()` (a stopped A waits on no reader, so the
+headline does not), `miss_reason()` (the record's own reason), the mail
+(`// discovery admission`), and the page: the A-quality lens holds the
+admitted A and A+ alone, a stopped name wears the chip *dollar scan alone* on
+its card while its action area and decision summary print the record's reason
+and its Discovery sentence the admission, no order is offered, Method prints
+the night's sentence and the rule the record archived (describing RE and VOL
+only when those are the archived checks), the funnel prints the route row, and
+the Morning desk reconciles a version-2 selection under its own blocker,
+re-deriving each row's route from its scan and checks and refusing a block or a
+receipt that contradicts it. A record from before the rule reads every A as
+admitted and is reconciled under version 1. The fixture market carries MSFT, a
+dollar-only A on a day with neither check (the C-failing 8.0 shape 32 of the
+34 dollar-only A names of 3 November had; stopped, no plan, no read).
+
+**Projected over the record** (read-only: `admission.block()` over each row of
+the newest real publication of each of the 38 retained sessions, 11 September
+to 3 November 2026, read off git): 18,670 reaction candidates, 5,448 on the 4%
+route, 872 on the dollar route with both checks and 12,350 on the dollar route
+without one. Of the 2,643 mechanical A-band names without a veto, 767 would be
+admitted and 1,876 stopped; of the 244 chart reads, 168 went to names the rule
+would have stopped, and of the 135 accepted reviews on the records that carry
+`reader_coverage` (24 September on), 90. The five names whose accepted review
+kept an A or A+ final grade were all on the 4% route or a dollar day with both
+checks; no reaction ticket has ever been published, so none is projected away.
+On 3 November's own record, Mo's night: 53 in the band, 24 admitted and 29
+stopped (21 of the 29 failing both checks). These are counts of a rule over
+archived rows, not an outcome. `tools/entry_limit_study.py` counts the
+admission as its own gate now (`excluded_by_admission`) and leaves a stopped
+name out of the green-night population; `tools/whole_share_feasibility.py`
+treats a stopped name as it treats a vetoed one.
+
+**Measured** (this sandbox, Python 3.12.3, Node 22, Chromium through Playwright
+1.63, on `0633d99d`; the three commits after it change the smoke's variant
+walk by two lines, add one review-selection test and move this file's count
+line): the full suite 5732 passed, 34 environment-gated skips and 37 failures
+of this sandbox's own, none of the branch's (the 35 `zstandard`-gated
+historical-package tests and the pinned-versions test, for the package this
+venv lacks, and the API-version test until the venv's SDK was put back at
+1.17.0 from the 2.2.0 it had drifted to; `tests/test_grader.py` passes on the
+restored venv); 13 page fixtures and every cascaded generator regenerated and
+current, their `--check`s run last (morning 21 pinned, issuer-evidence 44,
+stop-research 22, research-outcomes 40, research-observations 24,
+source-recovery 20, cash-preview 6, the first-trade backup and its 109-case
+parity corpus, the recovery rehearsal, the 5 frozen validation copies);
+continuity 137; the chart check 378/378; the `admission` suite 79/79 at 1280
+dark and 390 light over the full night, the retained 9 October publication and
+nine routed shapes; the full smoke with `--shots` 17789/17789 in its two
+lanes; gitleaks 8.24.3 over the changed files with the repository's config: no
+leaks. Screenshots of the stopped name at 1280 dark and 390 light were looked
+at: the card wears *dollar scan alone* under *not reviewed · call budget*, the
+funnel's route row prints the record's label and count, nothing scrolls
+sideways. CI: the page job passed on `0633d99d`, `461fb049` and `1799bd9e`,
+both native cases on `0633d99d` (central 16:39-17:15 UTC, stress 16:39-16:58),
+pytest on `1799bd9e` whole (5804 collected) after failing the count line alone
+on `0633d99d` and `461fb049` (5795 passed); the seven checks on `da77d0b0` and
+on the final head are recorded on PR #211.
+
+**CI found what the sandbox's focused runs had not.** The first head's page job
+failed 47 of 17,789 checks: every smoke assertion that computed the A-quality
+lens from the grade alone (the opening lens, the lens suite, the reach suite,
+the red night's count) and two map checks that clicked the fixture's last
+point, DLLR, which MSFT now sits within a finger of, so the nearby chooser
+opened instead. The smoke's A-quality set is the archived A and A+ the
+admission did not stop now (`aQualityOf()`), `burstStatus()` gives a stopped
+name the page's own `route`, and the two points are taken by Enter, which
+names one point. Its pytest job failed five: the record-shape fuzz, which found
+`admission.faults()` iterating `bursts = 5` (it reads a non-list field as no
+rows and lets the validator's own shape check name it); the sealed-gate test,
+which asked `verify()` for a break it reports only after the row's
+review-selection replay agrees (it asserts the break `verify()` does report);
+the funnel test, which asked version 2 to read a grade blocker as the budget (a
+blocker naming no preview stage leaves a version-2 row `review_unknown`); the
+pane suite's literal population count and the review-selection suite's
+collapsed line (each reads its record now); and the count line, which the
+runner collects one higher than this sandbox. The full local suite had found
+the same shape fuzz and sealed-gate failures, and the entry-limit study's
+yellow-night test, which assumed its fixture carried no grade-A burst.
+
+**The review, worked.** One reviewer by execution over the first commit
+(`e32ded5d`), in its own worktrees, returned nine findings and two notes, every
+one reproduced here before it was touched. The two highs were the two test
+expectations above, and the three mediums were holes the mutation pass had
+also shown: the planner's own gate had no test that could fail (the evening
+discards its preview and the final pass refuses a stopped name through the
+reader prerequisite, and MSFT's preview sizes to whole shares at its price, an
+incidental fact of the fixture), `replay()`'s preview skip had none (identical
+receipts at the fixture's price; MSFT's prices raised 300-fold tell them
+apart), and the refused-admissible rule had none. Each has its case: the
+planner driven without the reader (`_make_plans(..., require_reader=False)`,
+the path `tools/historical_backtest.py` takes), a replay that must reproduce
+the archived receipt whatever a preview would have said, a refused stopped
+name beside a refused one from before the rule. The lows: a stopped row one of
+whose checks the checklist could not read said "without a range-expansion,
+higher-volume day", an absence the record cannot show (its reason names the
+unread check now, `UNREAD_LABEL`, re-derived by the validator like the
+others); the Method line described RE and VOL under any archived check list (it
+describes them only when those are the archived checks, and a routed record
+archiving `['RE', 'C']` holds it); README said the card prints the reason (the
+card wears the chip; the action area and the decision summary print the
+reason, and the Discovery sentence the admission); "91 on a day that closed
+down" counted two flat days (89 down, 2 flat, said so); "volume above
+yesterday" was quoted as Bonde's words where the repository's own source notes
+mark only the RE phrase verbatim (RE is his phrase, VOL the 4% scan's own
+`v > v1`, in the docstring, the method and the source contract); and the
+fixture's "shape 32 of the 34 had" was the C-failing 8.0 shape, not the
+no-expansion one (29 of the 34 would be stopped, 21 failing both checks). Its
+note that `select()` under version 1 ignores a row's block while `replay()`
+read it under any policy is closed too: `replay()` reads no block under
+version 1, as `select()` never did. The reviewer's own sweep found the retained
+9 October and 3 November publications validating, verifying, replaying and
+funnelling identically under the base and the branch, the reader projection
+keeping the blocks, and the pinned sources untouched.
+
+**Mutation passes.** Page, through routed copies of `app.js` judged by the
+`admission` suite: thirteen mutants -- the lens ignoring the admission, the
+route chip never given, a half-written block read as stopped, the discovery
+sentence and the Method sentence dropped, the predating line dropped, the desk
+reconciling a block the checks contradict or a selection missing the route
+blocker, the desk counting stopped A names as unreviewed, its word fixed to
+version 2's, the funnel's usable label without the admission, the route
+re-derived on one check, the `both` route not a burst route -- all died, the
+control (a comment) alive. The first page pass showed two holes: a block
+forged admitted against its own route and checks was caught only by the
+blocker clause, and a receipt forged consistently without the route blocker
+only by the counts, so the suite drives both shapes now (`block-forged-
+admitted`, `blocker-forged-consistently`), and a third holds that one passing
+check is still stopped and still reconciles. Python, each mutant in a detached
+worktree, judged by the whole test files naming its rule (no `-k` filter):
+thirty-seven mutants and two controls at `0633d99d`. Over the rule and its
+block: a dollar-only name admitted on either check, every route read as a burst
+route, a row from before the rule stopped, a half-written block admitted, the
+band counted by the final grade, vetoed names counted in the band, the run
+block never compared, a row block compared by Python equality, the archived
+version unchecked, a block beside no rule accepted, the stopped count printed
+as the admitted count, the sentence's figures swapped, the validator never
+asking, `run.admission` never composed, no block written on the row, the rules
+not archiving the family, the mail's block dropped; over the selection: a
+stopped name in the research pool, the rotation seeded by the current policy,
+the receipt's version and its blockers always the current, any archived rules
+supported, a stopped name previewed, the route blocker under version 1 too;
+over the funnel: the route read before the veto, usable ignoring the
+admission, the route label altered, version 3's usable words the old ones,
+version 2's stages carrying `route`, `route` under every version; the sealed
+gate never naming the route, and naming it before the veto; a refused stopped
+name counted admissible; the planner ignoring the admission; a stopped name
+waiting on the reader; the closest miss ignoring the admission. Thirty-six
+died in the test naming their rule. **One survived**, `replay()` reading a
+row's block under version 1 too -- the second shape this file names: no
+retained version-1 record carries a block, so no test could see it. `da77d0b0`
+adds a synthetic one, whose stopped row must be previewed and judged by its
+preview under version 1 and stopped at the route under version 2, and the
+mutant dies there in that test, re-judged in its own worktree; both controls
+(a docstring word, a comment) stayed alive in every pass. A first pass over
+`e32ded5d` had its verdicts contaminated by that tree's own baseline failures,
+so the whole pass was run again at `0633d99d` and no verdict above rests on
+it.
+
+**Keep / fix / defer / omit.** Keep: admission is read off the recorded route
+and the checklist's own checks and is never a grade; the chart reader never
+sees a name it stops. Fix if it bites: a dollar-only name whose RE or VOL
+check could not be read (an unreadable prior session) is stopped, since a
+check that is None is not a pass, and its reason says which check went unread.
+Defer: whether the admitted population's reads are accepted more often, which
+only live nights can say. Omit: any change to the scans, the checklist's
+weights or the 4% route.
+
+**Not claimable:** a live night under the rule (the first evening after the
+merge writes the first `bursts[].admission` and `run.admission`); any trading
+edge.

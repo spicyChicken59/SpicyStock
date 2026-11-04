@@ -114,7 +114,8 @@ export async function checkReading({ browser, base, data, open, check, eq, shots
   await p.locator('#discover [data-discover="map"]').click(); await settle(p);
   check('map scale meaning is visible', (await txt(p, '#burst-map .ss-map__note')).includes('Equal vertical pixel distances are not equal ratio differences'));
   const mapChoice = data.bursts.at(-1).ticker;
-  await p.locator('#burst-map .ss-map__point[data-ticker="' + mapChoice + '"]').click(); await settle(p);
+  // Enter names one point and takes it; a click within a finger of another point opens the nearby chooser
+  await p.locator('#burst-map .ss-map__point[data-ticker="' + mapChoice + '"]').focus(); await p.keyboard.press('Enter'); await settle(p);
   eq('Map opens the selected stock detail', await txt(p, '#detail-h2'), mapChoice);
   await p.locator('#discover [data-discover="cards"]').click(); await settle(p);
   eq('Cards returns with the same stock', await txt(p, '#detail-h2'), mapChoice);
