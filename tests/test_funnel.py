@@ -690,9 +690,14 @@ def test_the_route_is_read_after_the_grade_and_the_veto_from_version_three():
     assert funnel.reaction_stage({**row, "grade_mechanical": "B", "grade": "B"}, GREEN, {}, []) == "grade"
     assert funnel.reaction_stage({**row, "vetoes": ["up_days"]}, GREEN, {}, []) == "veto"
     assert funnel.reaction_stage(row, (), {}, []) == "market"
-    # version 2 had no word for it: such a record is re-derived by its other fields
+    # version 2 had no word for it: such a record is re-derived by its other fields, and a
+    # recorded blocker that names no preview stage (route_not_admitted, grade_not_admitted)
+    # leaves it review_unknown, never a stage it did not reach; only an empty blockers list
+    # reads as the budget
     assert funnel.reaction_stage(row, GREEN, {}, [], version=2) == "review_unknown"
-    assert funnel.reaction_stage({**row, "review_selection": unselected("grade_not_admitted")}, GREEN, {}, [], version=2) == "review_budget"
+    assert funnel.reaction_stage({**row, "review_selection": unselected("grade_not_admitted")}, GREEN, {}, [], version=2) == "review_unknown"
+    assert funnel.reaction_stage({**row, "review_selection": unselected()}, GREEN, {}, [], version=2) == "review_budget"
+    assert funnel.reaction_stage({**row, "review_selection": unselected("no_whole_share")}, GREEN, {}, [], version=2) == "preview_sizing"
     assert "route" not in funnel.REACTION_STAGES_BY_VERSION[2] and "route" not in funnel.REACTION_STAGES_BY_VERSION[1]
     assert funnel.REACTION_STAGES_BY_VERSION[3] == funnel.REACTION_STAGES and funnel.ADMISSION_FROM_VERSION == 3
     assert funnel.READS_VERSION_BY_FUNNEL[3] == 2

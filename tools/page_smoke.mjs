@@ -297,10 +297,14 @@ const openAll = async (page, sel) => {
 };
 const active = (page) => page.evaluate(() => { const a = document.activeElement; return a ? (a.id || '') + '/' + (a.className || '') + '/' + (a.dataset ? a.dataset.ticker || '' : '') : ''; });
 const clickPick = async (page, ticker) => { await page.locator(`#pick-list .ss-pick[data-ticker="${ticker}"]`).click(); await page.waitForTimeout(150); };
+// the A-quality lens: the archived A and A+ grades the discovery admission did not
+// stop (src/admission.py: a dollar-only name without a range-expansion, higher-volume
+// day carries admission.admitted false; a record from before the rule carries no block)
+const aQualityOf = (b) => TRADE_GRADES.includes(b.grade) && !(b.admission && b.admission.admitted === false);
 // the lens: the page opens on A-quality when the record archived an A or A+
-// burst and on every burst otherwise (docs/app.js defaultLens(); the smoke
-// works it out again, off the record, rather than reading the page's answer)
-const openingLens = (data) => ((data.bursts || []).some((b) => TRADE_GRADES.includes(b.grade)) ? 'a' : 'all');
+// burst the admission did not stop, and on every burst otherwise (docs/app.js defaultLens();
+// the smoke works it out again, off the record, rather than reading the page's answer)
+const openingLens = (data) => ((data.bursts || []).some(aQualityOf) ? 'a' : 'all');
 const lensNow = (page) => page.locator('#lens .sc-tab[aria-pressed="true"]').first().getAttribute('data-lens');
 const setLens = async (page, lens) => { await page.locator(`#lens .sc-tab[data-lens="${lens}"]`).click(); await page.waitForTimeout(180); };
 const cardTickers = (page) => page.locator('#pick-list .ss-pick').evaluateAll((els) => els.map((e) => e.dataset.ticker));
@@ -328,6 +332,7 @@ function burstStatus(b, data) {
   if (b.plan && b.plan.action === 'no_new_longs') return 'no_new_longs';
   if ((b.quality.vetoes || []).length) return 'vetoed';
   if (!TRADE_GRADES.includes(b.grade)) return 'below_grade';
+  if (b.admission && b.admission.admitted === false) return 'route';   // the discovery admission stopped it (src/admission.py)
   if (data.breadth.regime.verdict === 'red') return 'no_new_longs';
   if (!b.plan && b.reader_coverage && b.reader_coverage !== 'accepted') return 'reader_required';
   return b.plan ? 'no_order' : 'no_plan';
@@ -626,7 +631,7 @@ async function checkVariant(browser, base, variant, data) {
     eq(`${variant} opens on the lens the record earns`, await lensNow(page), openingLens(data));
     eq(`${variant} the A-quality lens is exactly the archived A and A+ grades`,
       openingLens(data) === 'a' ? await cardTickers(page) : null,
-      openingLens(data) === 'a' ? data.bursts.filter((b) => TRADE_GRADES.includes(b.grade)).map((b) => b.ticker) : null);
+      openingLens(data) === 'a' ? data.bursts.filter(aQualityOf).map((b) => b.ticker) : null);
     await setLens(page, 'all');
     const picks = await pickOf();
     eq(`${variant} one card per burst, in rank order`, picks.map((p) => p[0]), data.bursts.map((b) => b.ticker));
@@ -1199,7 +1204,9 @@ async function checkMap(browser, base, data) {
   check('the map says position is a measurement, not a return', (await text(page, '#burst-map .ss-map__note')).includes('not a predicted return'), 'note');
   eq('the first burst is the selected point', pts.filter((p) => p[3] === 'true').map((p) => p[0]), [data.bursts[0].ticker]);
   const other = plottable[plottable.length - 1];
-  await page.click(`#burst-map .ss-map__point[data-ticker="${other.ticker}"]`); await page.waitForTimeout(250);
+  // Enter names one point and takes it; a click within a finger of another point opens the
+  // nearby chooser instead (checkMapScale), and the fixture's MSFT sits beside DLLR
+  await page.focus(`#burst-map .ss-map__point[data-ticker="${other.ticker}"]`); await page.keyboard.press('Enter'); await page.waitForTimeout(250);
   eq('a point opens the same detail as a card', [await hash(page), await text(page, '#detail-h2')], [`#/explore/bursts/${other.ticker}`, other.ticker]);
   check('the selection line describes the chosen point with its source and status', (await text(page, '#burst-map .ss-map__selection')).startsWith(other.ticker + ':'), await text(page, '#burst-map .ss-map__selection'));
   const rowsInTable = await count(page, '#burst-map .ss-map__table tbody tr');
@@ -2655,7 +2662,7 @@ async function checkTicketPrices(browser, base, data) {
 async function checkLens(browser, base, data) {
   console.log('-- the discovery lenses');
   const ticketed = data.bursts.filter((b) => burstStatus(b, data) === 'ticket').map((b) => b.ticker);
-  const aQuality = data.bursts.filter((b) => TRADE_GRADES.includes(b.grade)).map((b) => b.ticker);
+  const aQuality = data.bursts.filter(aQualityOf).map((b) => b.ticker);
   const all = data.bursts.map((b) => b.ticker);
   const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280);
 
@@ -2802,7 +2809,7 @@ async function checkLens(browser, base, data) {
   // a lens the reader chose survives a reload, empty or not: nothing is widened behind their back
   const red = JSON.parse(await readFile(path.join(FIXTURES, 'red.json'), 'utf8'));
   const r1 = await open(browser, base, '/tests/fixtures/page/red.json', FRESH_NOW, 1280);
-  eq('a red record still opens on its A-quality research', [await lensNow(r1.page), (await cardTickers(r1.page)).length], ['a', red.bursts.filter((b) => TRADE_GRADES.includes(b.grade)).length]);
+  eq('a red record still opens on its A-quality research', [await lensNow(r1.page), (await cardTickers(r1.page)).length], ['a', red.bursts.filter(aQualityOf).length]);
   eq('and offers no order anywhere on it', [await count(r1.page, '#detail pre[data-order]'), await count(r1.page, '#order-sheet tbody tr[data-ticker]')], [0, 0]);
   eq('no card on it claims a ticket', await count(r1.page, '#pick-list .ss-pick[data-status="ticket"]'), 0);
   await setLens(r1.page, 'ticket');
@@ -3257,7 +3264,7 @@ async function checkEvidence(browser, base, data) {
 // RECORD's own grades, never against the page's answer.
 async function checkReach(browser, base, data) {
   console.log('-- the lens, where the reader reaches past it');
-  const aQuality = data.bursts.filter((b) => TRADE_GRADES.includes(b.grade)).map((b) => b.ticker);
+  const aQuality = data.bursts.filter(aQualityOf).map((b) => b.ticker);
   const all = data.bursts.map((b) => b.ticker);
   const outside = all.filter((t) => !aQuality.includes(t));
   const coils = data.watchlist.top.map((c) => c.ticker);
