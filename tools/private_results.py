@@ -82,18 +82,18 @@ JS_SPACE = "\t\n\v\f\r \u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2
 
 HEX = re.compile(r"[a-f0-9]{64}")
 RULES = re.compile(r"[a-f0-9]{12}")
-DAY = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
+DAY = re.compile(r"(\d{4})-(\d{2})-(\d{2})", re.ASCII)
 SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,14}")
-PRICE = re.compile(r"(\d{1,10})(?:\.(\d{1,6}))?")
-FEE = re.compile(r"(\d+)\.(\d{2})")
+PRICE = re.compile(r"(\d{1,10})(?:\.(\d{1,6}))?", re.ASCII)
+FEE = re.compile(r"(\d+)\.(\d{2})", re.ASCII)
 # The page's timestamp(): a calendar date, hours 00-23, optional seconds with at
 # most three fractional digits, Z or an offset.
-TIMESTAMP = re.compile(r"(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d)(?:\.(\d{1,3}))?)?(Z|([+-])(0\d|1[0-4]):([0-5]\d))")
+TIMESTAMP = re.compile(r"(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d)(?:\.(\d{1,3}))?)?(Z|([+-])(0\d|1[0-4]):([0-5]\d))", re.ASCII)
 # What the page stores for a reported broker event: Date.toISOString().
-STORED_TIME = re.compile(r"\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d\.\d{3}Z")
+STORED_TIME = re.compile(r"\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d\.\d{3}Z", re.ASCII)
 # The page's sourceTime(): an upstream clock's fourth to sixth fractional digit
 # is cut before timestamp() reads it.
-MICROSECONDS = re.compile(r"(\.\d{3})\d{1,3}(?=Z|[+-])")
+MICROSECONDS = re.compile(r"(\.\d{3})\d{1,3}(?=Z|[+-])", re.ASCII)
 RUN_ID = re.compile(r"[A-Za-z0-9_-]{1,100}")
 SCHEDULE_KEY = re.compile(r"[a-z0-9_]{1,80}")
 STATUS = re.compile(r"[a-z_]{1,40}")
@@ -709,11 +709,19 @@ UNCHECKED = {
 }
 
 
+def _setting_up_rows(data):
+    """The page's setting-up list: watchlist.top, then the also-quiet coils that
+    are on no list tonight, each after the whole top list and a name in both
+    read once, from top (app.js coil(r, top.length + i, true))."""
+    watchlist = data.get("watchlist") or {}
+    top = [row for row in (watchlist.get("top") or []) if isinstance(row, dict)]
+    seen = {row.get("ticker") for row in top}
+    quiet = [row for row in (watchlist.get("also_quiet") or []) if isinstance(row, dict) and row.get("ticker") not in seen]
+    return top + quiet
+
+
 def _row(data, stage, ticker):
-    if stage == "bursts":
-        rows = data.get("bursts") or []
-    else:
-        rows = (data.get("watchlist") or {}).get("top") or []
+    rows = (data.get("bursts") or []) if stage == "bursts" else _setting_up_rows(data)
     found = [row for row in rows if isinstance(row, dict) and row.get("ticker") == ticker]
     return found[0] if len(found) == 1 else None
 
@@ -723,9 +731,8 @@ def _listed_rank(data, stage, ticker):
     if stage == "bursts":
         row = _row(data, stage, ticker)
         return (row or {}).get("rank")
-    rows = (data.get("watchlist") or {}).get("top") or []
-    for index, row in enumerate(rows):
-        if isinstance(row, dict) and row.get("ticker") == ticker:
+    for index, row in enumerate(_setting_up_rows(data)):
+        if row.get("ticker") == ticker:
             return index + 1
     return None
 
@@ -811,6 +818,10 @@ def trace(item, publications) -> dict:
             if source["stage"] == "bursts":
                 compared += [("source.row.grade", listed["grade"], row.get("grade")), ("source.row.score", listed["score"], row.get("score")),
                              ("source.row.scan", listed["scan"], row.get("scan")), ("source.row.admitted", listed["admitted"], _admission(row))]
+            else:
+                # the page writes none of the four for a setting-up name (a coil
+                # carries no mechanical grade, score, scan or admission)
+                compared += [("source.row." + key, listed[key], None) for key in ("grade", "score", "scan", "admitted")]
             compared.append(("source.evidence_id", source["evidence_id"], ((row.get("evidence") or {}).get("id") if isinstance(row.get("evidence"), dict) else None)))
             plan_rules = (data.get("rules") or {}).get("plan") or {}
             compared.append(("source.rules", source["rules"], {key: plan_rules.get(key) for key in OWNER_RULES_KEYS}))

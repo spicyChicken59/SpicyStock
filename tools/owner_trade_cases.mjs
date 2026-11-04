@@ -143,9 +143,11 @@ export async function checkOwnerTrades({ browser, base, open, check, eq, shotsDi
       eq(name + ': opening again chooses the saved record', [await page.locator('[data-handoff-mode]').first().getAttribute('data-handoff-mode'), (await records(page)).length], ['owner_trade', 1]);
       check(name + ': and says so', (await page.locator('[data-handoff-message]').textContent()).includes('already has a private record'));
       eq(name + ': the backup counts the owner trade apart', await page.evaluate(() => { const b = SCStock.handoff.exportBackup(); return [b.ok, b.summary.owner_count, b.summary.planned_count, b.summary.independent_count, b.summary.version]; }), [true, 1, 0, 0, 4]);
-      const later = tab.requests.slice(start);
-      eq(name + ': no request carries the owner\'s words', later.filter(r => /NVDA|Rollover|67\.85|70\.345/.test(r.url + (r.body || ''))), []);
-      eq(name + ': nothing is posted', later.filter(r => r.method !== 'GET'), []);
+      // every request since the page opened: the record's own loads among them,
+      // so the list is never empty and the words are looked for in each
+      check(name + ': the page made requests to look through', tab.requests.length > 0);
+      eq(name + ': no request carries the owner\'s words', tab.requests.filter(r => /NVDA|Rollover|67\.85|70\.345|\b102\b/.test(r.url + (r.body || ''))), []);
+      eq(name + ': nothing is posted', tab.requests.filter(r => r.method !== 'GET'), []);
       eq(name + ': no page error', Array.from(errors), []);
     } finally { await tab.context.close(); }
   });

@@ -230,7 +230,7 @@
     const previousSelection = research ? research.previousSelection : owner ? owner.previousSelection : selected;
     loadEditor(null); selected = null; research = null;
     owner = { request: JSON.parse(JSON.stringify(request)), source: JSON.parse(JSON.stringify(source)), previousSelection };
-    message('Not saved. Enter the positive fill and quantity actually submitted at your broker, your account label and your protective stop, then save explicitly. All other blank facts remain unknown.');
+    message('Not saved. Enter the positive fill and quantity actually submitted at your broker, and your account label and protective stop if you have them, then save explicitly. All other blank facts remain unknown.');
     update(); reveal(); return { ok: true };
   }
   async function copyDraft() {

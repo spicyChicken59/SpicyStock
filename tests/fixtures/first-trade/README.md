@@ -11,7 +11,7 @@ publication at the $2,000 / 0.5% cash account that admits one AAPL burst share
 ($62.10 trigger, $63.22 limit, $60.70 stop) and four COIL anticipation shares
 ($110.61, $111.72, $109.50). `page-results.json` is what the page printed for each
 record: the draft's cash and price-to-stop risk, and the completed result.
-`parity.json.gz` is the page's own verdict on 167 backups built from this one,
+`parity.json.gz` is the page's own verdict on 171 backups built from this one,
 from the stop-research fixture (an independent research report) and from the
 cash-preview publication's NVDA row (an owner trade, store version 4)
 (`tools/private_results_parity.mjs` runs `app-handoff.js` over each): accepted or

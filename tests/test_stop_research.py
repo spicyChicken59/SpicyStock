@@ -252,8 +252,9 @@ def test_other_account_and_unsupported_planner_are_refused(tmp_path, produced, m
 
 def test_outside_the_period_the_account_is_not_asked(tmp_path):
     # the owner's account moved to $30,000 from the 4 November 2026 session; a
-    # publication after the registration ends still writes its outside-period
-    # receipt, with no row, whatever its account
+    # publication outside the registered period (the fixture's applicable
+    # session precedes it; a session after it ends takes the same path) still
+    # writes its outside-period receipt, with no row, whatever its account
     spec = importlib.util.spec_from_file_location("stop_fixture", FIXTURES / "generate.py")
     module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
     publication = module.source_publication("outside", tmp_path, account_equity="30000")
@@ -263,14 +264,35 @@ def test_outside_the_period_the_account_is_not_asked(tmp_path):
     # its reservations are the publication's own account, stated as such
     reserves = built["bundle"]["reservations"]
     assert (reserves["equity_usd"], reserves["position_cap_usd"], reserves["max_slots"]) == (30000, 7500, 4)
-    # an in-period receipt still pins the registered account: a forged $30,000
-    # reservation on a recorded receipt is refused by name
-    forged = json.loads(built["bundle_bytes"])
-    forged["status"] = "recorded"
-    with pytest.raises(ValueError):
-        research.validate_bundle(built["receipt_bytes"], json.dumps(forged).encode())
     # the receipt and bundle it writes validate as every other outside-period one
     research.validate_bundle(built["receipt_bytes"], built["bundle_bytes"])
+    # the standalone validator still bounds an outside-period account: a cap over
+    # the equity, an absurd equity or more slots than recorded are refused by name
+    for forge in ({"position_cap_usd": 30001}, {"equity_usd": research.MAX_OUTSIDE_EQUITY_USD + 1, "position_cap_usd": 7500}, {"max_slots": 65}):
+        bundle = json.loads(built["bundle_bytes"])
+        bundle["reservations"].update(forge)
+        raw = research._encode(bundle)
+        receipt = json.loads(built["receipt_bytes"])
+        digest = hashlib.sha256(raw).hexdigest()
+        receipt["bundle"] = {"path": research.BUNDLE_DIR + "/" + digest + ".json", "sha256": digest, "bytes": len(raw)}
+        with pytest.raises(ValueError, match="reservation account differs|invalid reservation slots"):
+            research.validate_bundle(research._encode(receipt), raw)
+
+
+def test_a_recorded_receipt_still_pins_the_registered_account():
+    # the committed in-period receipt, its reservations respelled at the owner's
+    # new account and the receipt's bundle identity re-sealed over the forgery,
+    # so the only rule left to refuse it is the pin itself
+    receipt = json.loads((FIXTURES / "current-receipt.json").read_bytes())
+    bundle = json.loads((FIXTURES / "current-bundle.json").read_bytes())
+    assert bundle["status"] == "recorded" and bundle["reservations"]["equity_usd"] == 2000
+    bundle["reservations"]["equity_usd"] = 30000
+    bundle["reservations"]["position_cap_usd"] = 7500
+    bundle_raw = research._encode(bundle)
+    digest = hashlib.sha256(bundle_raw).hexdigest()
+    receipt["bundle"] = {"path": research.BUNDLE_DIR + "/" + digest + ".json", "sha256": digest, "bytes": len(bundle_raw)}
+    with pytest.raises(ValueError, match="reservation account differs"):
+        research.validate_bundle(research._encode(receipt), bundle_raw)
 
 
 def test_fixture_regeneration_is_required_in_ci():

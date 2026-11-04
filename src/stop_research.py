@@ -26,6 +26,10 @@ RESEARCH_STOP_PCT = 5.0
 START_SESSION = "2026-10-12"
 END_SESSION = "2026-11-06"
 ACCOUNT = {"equity": 2000, "risk_pct": 0.5, "max_position_pct": 25, "max_open_positions": 4}
+# An outside-period receipt states the publication's own account; the standalone
+# validator bounds it to a sane equity (the rebuild in validate_for_publication
+# holds the exact figures), the cap at or under it and the slots as recorded.
+MAX_OUTSIDE_EQUITY_USD = 10_000_000
 MAX_ROWS = 5
 MAX_BUNDLES = 128
 MAX_ARCHIVE_BYTES = 16 * 1024 * 1024
@@ -371,7 +375,7 @@ def validate_bundle(receipt_raw, bundle_raw):
     if bundle["status"] == "recorded":
         _require(reserves["equity_usd"] == ACCOUNT["equity"] and reserves["position_cap_usd"] == ACCOUNT["equity"] * ACCOUNT["max_position_pct"] / 100 and reserves["max_slots"] == ACCOUNT["max_open_positions"], "reservation account differs")
     else:
-        _require(reserves["equity_usd"] > 0 and reserves["position_cap_usd"] > 0 and _integer(reserves["max_slots"], 64) and reserves["max_slots"] > 0, "reservation account differs")
+        _require(0 < reserves["position_cap_usd"] <= reserves["equity_usd"] <= MAX_OUTSIDE_EQUITY_USD and _integer(reserves["max_slots"], 64) and reserves["max_slots"] > 0, "reservation account differs")
     for key in ("open_model_slots", "baseline_slots", "research_slots", "slots_used"):
         _require(_integer(reserves[key], 64), "invalid reservation slots")
     _require(reserves["baseline_slots"] == len(reserves["baseline_symbols"]) and reserves["open_model_slots"] >= len(reserves["open_symbols"]), "reservation symbols differ")
@@ -389,7 +393,7 @@ def validate_bundle(receipt_raw, bundle_raw):
     research = _cents(reserves["research_principal_usd"])
     _require(research <= available - baseline and _cents(reserves["remaining_model_principal_usd"]) == available - baseline - research, "remaining model principal differs")
     _require(reserves["slots_used"] == reserves["open_model_slots"] + reserves["baseline_slots"] + reserves["research_slots"], "total slots differ")
-    _require(reserves["baseline_slots"] + reserves["research_slots"] <= max(0, 4 - reserves["open_model_slots"]), "new allocation exceeds slots")
+    _require(reserves["baseline_slots"] + reserves["research_slots"] <= max(0, reserves["max_slots"] - reserves["open_model_slots"]), "new allocation exceeds slots")
     return bundle
 
 

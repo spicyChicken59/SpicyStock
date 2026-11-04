@@ -207,7 +207,9 @@ positive quantity actually filled with its submitted quantity. The record
 freezes the publication (its SHA-256, session, publish time and rules digest)
 and the row as the page read it (rank, mechanical grade and score, the scan that
 found it, the discovery admission, the recorded status and reason, the evidence
-identity when the record carries one), the archived exit rules
+identity when the record carries one; a setting-up name is ranked after the
+whole top list when it is an also-quiet coil, and carries no grade, score, scan
+or admission), the archived exit rules
 (`rules.plan.sell_half_pct`, `sell_half_day`, `final_exit_day`, `entry_day`) and
 the day-3 and day-5 sessions `run.calendar` places after the applicable session,
 or null when it places none. Its identity is the publication, the stage and the
@@ -295,7 +297,9 @@ and in it the plan whose evidence reference, order, entry window and exit
 schedule are the frozen ones (an independent report: the setting-up row whose
 evidence it names; an owner trade: the listed row's rank, grade, score, scan,
 admission and evidence identity, the archived exit rules and the calendar's
-day-3 and day-5 sessions, re-derived from the publication); and prints the
+day-3 and day-5 sessions, re-derived from the publication -- a setting-up row
+from `watchlist.top` or the also-quiet coils after it, whose four graded fields
+must be null); and prints the
 model's own daily-bar replay of the same plan beside it, read off the newest
 supplied publication after the plan's session, never added to the reported
 figure (an owner trade has no model plan and says so; its reference exits are
@@ -2108,7 +2112,7 @@ evidence of correct binding and publication, not pre-open delivery or a trade.
 Six repository secrets: `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`,
 `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_TO`. Two
 optional repository variables: `SCAN_FEED`, `SCAN_UNIVERSE`. The production
-evening workflow explicitly sets `ACCOUNT_EQUITY=2000` and `RISK_PCT=0.5`;
+evening workflow explicitly sets `ACCOUNT_EQUITY=30000` and `RISK_PCT=0.5` (`2000` before the 4 November 2026 session);
 edit that versioned configuration when the owner's sizing reference changes.
 Local `Account.from_env()` defaults remain the historical $10,000 model and
 accept local `ACCOUNT_EQUITY` / `RISK_PCT` overrides. GitHub Pages from `main`

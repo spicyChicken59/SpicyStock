@@ -282,6 +282,11 @@ const CASES = [
   ['an owner trade ticker wrapped in an array', own(store => { ownerRow(store).source.ticker = [ownerRow(store).source.ticker]; })],
   ['an owner trade publication digest wrapped in an array', own(store => { const pub = ownerRow(store).source.publication; pub.sha256 = [pub.sha256]; })],
   ['an owner trade beside the rehearsal records', () => { const store = copy(base); store.items.push(ownerTrade().items[0]); return JSON.stringify(store); }],
+  // JavaScript's \d is ASCII; a date or clock spelled in other digits is refused
+  ['an owner trade with a placed session in fullwidth digits', own(store => { ownerRow(store).source.schedule.final_session = '\uff12\uff10\uff12\uff16-09-17'; })],
+  ['an owner trade with a record clock in fullwidth digits', own(store => { ownerRow(store).created_at = '\uff12\uff10\uff12\uff16-09-11T14:05:00.000Z'; })],
+  ['a fill clock in fullwidth digits', on(report({ filled_at: '\uff12\uff10\uff12\uff16-09-11T13:41:00.000Z' }))],
+  ['a publication session in fullwidth digits', on(store => { coil(store).publication.session = '\uff12\uff10\uff12\uff16-09-10'; })],
 ];
 
 const corpus = { version: 1, generated_by: 'tools/private_results_parity.mjs',

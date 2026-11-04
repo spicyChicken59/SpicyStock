@@ -585,7 +585,8 @@ def test_an_owner_trade_traces_to_the_listed_row_and_the_records_own_calendar():
     row = reading["records"][0]
     assert row["kind"] == "owner_trade" and row["trace"]["status"] == "traced" and row["trace"]["mismatches"] == []
     # the frozen row is the publication's: NVDA is the third burst, A+ 10.0 by both scans, no ticket
-    assert row["trace"]["unchecked"] == list(pr.UNCHECKED["owner_trade"])
+    # the status word and the reason are the page's own reading of the row, named as not compared
+    assert row["trace"]["unchecked"] == ["source.row.status", "source.row.reason"]
     assert row["model"]["status"] == "not_applicable" and row["draft"] is None
     # day 3 and day 5 counted from the applicable session on the record's own XNYS calendar
     data = json.loads(PUBLICATION.read_bytes())
@@ -617,6 +618,67 @@ def test_an_owner_trade_names_each_frozen_fact_its_publication_does_not_carry(pa
     target[path[-1]] = value
     row = pr.read(json.dumps(store).encode(), pr.from_files([PUBLICATION]))["records"][0]
     assert row["trace"]["mismatches"] == [".".join(path if path[1] != "rules" and path[1] != "schedule" else path[:2])]
+
+
+def setting_up_publication(tmp_path, quiet: bool) -> tuple[Path, dict]:
+    """The cash-preview publication with a second coil, ZZCO, listed on the top
+    list or among the also-quiet coils the page lists after it."""
+    data = json.loads(PUBLICATION.read_bytes())
+    extra = copy.deepcopy(data["watchlist"]["top"][0])
+    extra["ticker"] = "ZZCO"
+    extra["plan"] = None
+    data["watchlist"]["also_quiet" if quiet else "top"].append(extra)
+    path = tmp_path / "data.json"
+    path.write_bytes(json.dumps(data).encode("utf-8"))
+    return path, data
+
+
+def setting_up_owner(path: Path, data: dict, rank: int, **row) -> bytes:
+    rules = {k: data["rules"]["plan"][k] for k in pr.OWNER_RULES_KEYS}
+    source = {"ticker": "ZZCO", "stage": "setting-up",
+              "publication": {"sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "session": data["run"]["session"],
+                              "published_at": data["run"]["published_at"], "rules_version": data["app"]["rules_version"]},
+              "row": {"rank": rank, "grade": None, "score": None, "scan": None, "admitted": None, "status": "watch", "reason": "", **row},
+              # the copied coil keeps its evidence identity, which the page freezes
+              "evidence_id": next(r for r in data["watchlist"]["top"] + data["watchlist"]["also_quiet"] if r["ticker"] == "ZZCO")["evidence"]["id"],
+              "rules": rules,
+              "schedule": {"entry_session": "2026-09-11", "sell_half_session": "2026-09-15", "final_session": "2026-09-17"}}
+    item = {**owner_item(), "source": source, "id": pr.owner_id(source)}
+    return json.dumps({"version": 4, "items": [item]}).encode("utf-8")
+
+
+@pytest.mark.parametrize("quiet, rank", [(False, 2), (True, 2)])
+def test_a_setting_up_owner_trade_is_ranked_as_the_page_lists_it(tmp_path, quiet, rank):
+    # the page lists watchlist.top first, then the also-quiet coils after the
+    # whole top list: COIL is the one top row, so ZZCO is second either way
+    path, data = setting_up_publication(tmp_path, quiet)
+    row = pr.read(setting_up_owner(path, data, rank), pr.from_files([path]))["records"][0]
+    assert row["trace"]["status"] == "traced" and row["trace"]["mismatches"] == []
+    wrong = pr.read(setting_up_owner(path, data, rank + 1), pr.from_files([path]))["records"][0]
+    assert wrong["trace"]["mismatches"] == ["source.row.rank"]
+
+
+def test_a_setting_up_owner_trade_claiming_a_grade_is_named(tmp_path):
+    # a coil carries no mechanical grade, score, scan or admission on the page;
+    # a record claiming one is a mismatch, not an unchecked field
+    path, data = setting_up_publication(tmp_path, False)
+    row = pr.read(setting_up_owner(path, data, 2, grade="A+", score=10, scan="both", admitted=True), pr.from_files([path]))["records"][0]
+    assert row["trace"]["mismatches"] == ["source.row.grade", "source.row.score", "source.row.scan", "source.row.admitted"]
+
+
+@pytest.mark.parametrize("mutate, named", [
+    (lambda i: i["source"]["schedule"].update(final_session="\uff12\uff10\uff12\uff16-09-17"), "source.schedule"),
+    (lambda i: i.update(created_at="\uff12\uff10\uff12\uff16-09-11T14:05:00.000Z"), "record clocks"),
+    (lambda i: i["report"].update(filled_at="\uff12\uff10\uff12\uff16-09-11T13:41:00.000Z"), "report"),
+    (lambda i: i["source"]["publication"].update(session="\uff12\uff10\uff12\uff16-09-10"), "source.publication"),
+    (lambda i: i["report"].update(stop_price="\uff16\uff17.85"), "report"),
+])
+def test_a_date_price_or_clock_in_other_digits_is_refused_as_the_page_refuses_it(mutate, named):
+    # JavaScript's \d is ASCII; Python's matches every Unicode digit
+    store = json.loads(owner_backup())
+    mutate(store["items"][0])
+    with pytest.raises(pr.Refused, match=named):
+        pr.read(json.dumps(store).encode("utf-8"))
 
 
 def test_an_owner_trade_on_a_ticketed_or_absent_name_is_a_mismatch_not_a_refusal():

@@ -661,8 +661,9 @@ Mo placed his first real trades on 4 November 2026, in two Fidelity IRAs, on
 three names the 3 November publication listed as mechanical grade A under a
 YELLOW market that admits A+ alone: none carried a SpicyStock ticket, and none
 was reviewed by the chart reader. Each was a separate limit buy and a GTC sell
-stop-loss, not the OTO ticket the plan disclosure prints; one plain limit filled
-under its limit. The quantities, prices and account labels are Mo's own and stay
+stop-loss, not the OTO ticket the plan disclosure prints; one limit buy was
+cancelled and re-entered higher before it filled, two filled under their
+limit and one at it. The quantities, prices and account labels are Mo's own and stay
 off this repository: the page's **Record a trade I made on this name** keeps
 them in his browser alone, bound to the publication's row, with the model's
 sell-half level and day-3/day-5 sessions beside them as reference arithmetic

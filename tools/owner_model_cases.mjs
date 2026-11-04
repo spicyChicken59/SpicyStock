@@ -11,7 +11,8 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 const ROOT = path.resolve(import.meta.dirname, '..');
-const scripts = await Promise.all(['docs/app-cash-preview.js', process.env.SCSTOCK_HANDOFF || 'docs/app-handoff.js'].map(f => readFile(`${ROOT}/${f}`, 'utf8')));
+// SCSTOCK_HANDOFF routes a copy of the store module, as the page smoke does for a mutant
+const scripts = await Promise.all(['docs/app-cash-preview.js', process.env.SCSTOCK_HANDOFF || 'docs/app-handoff.js'].map(f => readFile(path.resolve(ROOT, f), 'utf8')));
 const bytes = await readFile(`${ROOT}/tests/fixtures/cash-preview/publication-multiple.json`);
 const publication = JSON.parse(bytes.toString('utf8')), sha = createHash('sha256').update(bytes).digest('hex');
 function env({ now = '2026-09-11T14:05:00.000Z', fixture = false, hash = sha, store = new Map() } = {}) {
@@ -87,9 +88,12 @@ test('a gap past the reported stop is measured against it', async () => {
 test('the backup counts owner trades apart and a version 3 store reads without a write', async () => {
   const e = env(); await e.handoff.reportOwner(request, filled());
   const backup = e.handoff.exportBackup(); assert.equal(backup.summary.owner_count, 1); assert.equal(backup.summary.version, 4);
-  const v3 = JSON.parse(backup.raw); v3.version = 3; v3.items = v3.items.filter(i => i.kind !== 'owner_trade');
+  // a version 3 store holding the first-trade rehearsal's two planned records
+  const v3 = JSON.parse(await readFile(path.resolve(ROOT, 'tests/fixtures/first-trade/backup.json'), 'utf8')); v3.version = 3;
+  for (const item of v3.items) { item.version = 3; delete item.report.account_label; delete item.report.stop_price; }
   const seeded = env({ store: new Map([['spicystock:handoff:v1', JSON.stringify(v3)]]) });
   assert.equal(seeded.handoff.status().available, true); assert.equal(seeded.store.get('spicystock:handoff:v1'), JSON.stringify(v3));
+  assert.deepEqual(plain(seeded.handoff.list().map(i => [i.version, i.kind, i.report.account_label, i.report.stop_price])), [[4, 'planned_handoff', null, null], [4, 'planned_handoff', null, null]]);
   const owner3 = JSON.parse(backup.raw); owner3.version = 3; for (const item of owner3.items) { item.version = 3; delete item.report.account_label; delete item.report.stop_price; }
   assert.equal(env({ store: new Map([['spicystock:handoff:v1', JSON.stringify(owner3)]]) }).handoff.status().available, false, 'an owner trade under a version 3 envelope is refused');
 });
