@@ -667,7 +667,7 @@ def dollar_a_frame(expansion: bool) -> pd.DataFrame:
     $1.43 body inside a 1.5%-wide bar narrower than the base's 2%-wide bars,
     on five-sixths of the previous session's volume -- RE and VOL fail, and
     the wider base fails C, so the checklist scores it 8.0 and grades it A,
-    the shape 32 of the 34 dollar-only A names of 3 November 2026 had."""
+    the C-failing 8.0 shape 32 of the 34 dollar-only A names of 3 November 2026 had (29 of the 34 would be stopped, 21 failing both RE and VOL)."""
     if expansion:
         return qframe(ideal_bars(burst_gain=2.5, close_pos=0.9, burst_vol=1_200_000, burst_range_pct=3.0))
     return qframe(ideal_bars(burst_gain=2.0, close_pos=0.9, burst_vol=500_000, burst_range_pct=1.5, base_range=2.0))

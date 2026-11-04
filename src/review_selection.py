@@ -183,7 +183,10 @@ def replay(data):
     rows = []
     for original in data["bursts"]:
         row = {**original, "plan": None}
-        if row["grade_mechanical"] in admitted and not row["vetoes"] and admission.admitted(row):
+        # the preview the policy would have made: under version 2 a stopped name has none
+        # (the run never previews it); version 1 read no block, so neither does its replay
+        if row["grade_mechanical"] in admitted and not row["vetoes"] and (
+                ROUTE_BLOCKER not in BLOCKERS_BY_POLICY[policy] or admission.admitted(row)):
             try:
                 preview = plan.burst_plan(ticker=row["ticker"], close=row["close"], low=row["low"], high=row["high"],
                     open_=row["open"], prev_close=row["prev_close"], gain_pct=row["gain_pct"] or 0.0,

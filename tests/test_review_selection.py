@@ -322,6 +322,34 @@ def test_version_one_is_replayed_under_its_own_policy_with_no_route_blocker():
     assert selection.RULES_V1["research_pool"] == "infeasible mechanical pipeline.trade_grades"
 
 
+def test_a_stopped_name_is_never_previewed_in_the_replay_whatever_its_preview_would_have_said():
+    """The run never previews a stopped name, so its archived blockers are the
+    route alone. A replay that previewed it would add the preview's own
+    blockers and call a legitimate night FAIL; the fixture's MSFT sizes to whole
+    shares at its price, so its prices are raised until a preview would have
+    refused it for no whole share, and the replay must still reproduce the
+    archived receipt. Under version 1 no block is read either way."""
+    import copy, json
+    from pathlib import Path
+    data = json.loads((Path(__file__).parent / "fixtures" / "page" / "full.json").read_text())
+    msft = next(b for b in data["bursts"] if b["ticker"] == "MSFT")
+    assert msft["admission"]["admitted"] is False and msft["review_selection"]["blockers"] == ["route_not_admitted"]
+    dear = copy.deepcopy(data)
+    row = next(b for b in dear["bursts"] if b["ticker"] == "MSFT")
+    for k in ("close", "low", "high", "open", "prev_close"):
+        row[k] = round(row[k] * 300, 2)
+    # a preview at that price would be refused for no whole share: the blockers would differ
+    from src import plan
+    preview = plan.burst_plan(ticker="MSFT", close=row["close"], low=row["low"], high=row["high"], open_=row["open"],
+                              prev_close=row["prev_close"], gain_pct=row["gain_pct"] or 0.0, account=plan.Account(),
+                              size_multiplier=1.0, scan="dollar", extension_pct=row.get("extension_pct"))
+    assert preview["shares"] == 0
+    decisions, receipt = selection.replay(dear)
+    assert decisions["MSFT"]["blockers"] == ["route_not_admitted"]
+    assert receipt["blockers"] == dear["run"]["review_selection"]["blockers"]
+    assert receipt == dear["run"]["review_selection"]
+
+
 def test_the_retained_version_one_publication_replays_exactly_and_still_verifies():
     """The 9 October 2026 publication (the stop-research fixture, its exact
     bytes) archived version 1: the current module replays every decision and

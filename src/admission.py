@@ -13,17 +13,21 @@ which the dollar scan guarantees, and the two expansion checks it measures --
 RE and VOL -- carry no weight. Over the 35 retained publications from 16
 September to 3 November 2026, 1,913 of the 2,473 mechanical A-band grades came
 through the dollar scan alone, 1,757 of them on a day under +4% and 91 on a day
-that closed down, and 187 of the 244 chart reads went to such names.
+that did not close up (89 down, 2 flat), and 187 of the 244 chart reads went to
+such names.
 
 The rule, the owner's decision of 4 November 2026 (the second of three options
 put to him): a name the 4% scan discovered is admitted; a name the dollar scan
 alone discovered is admitted only when its burst day shows the two expansion
 checks the checklist already measures -- RE, today's range at least the
 largest of the prior five sessions', and VOL, volume above the previous
-session's (with the +CV rule where its base is long). Both are Bonde's own
-words for a burst day ("bigger than the last 5 to 10 days bars", "volume above
-yesterday"); no new number is written, the checks are the recorded ones, and
-the pinned scan and checklist modules are untouched. Admission is never a
+session's (with the +CV rule where its base is long). RE is Bonde's own phrase
+for a burst day ("a day which is up bigger than the last 5 to 10 days bars",
+``src/quality.py``) and VOL is the 4% scan's own volume test (v > v1) as the
+checklist records it; no new number is written, the checks are the recorded
+ones, and the pinned scan and checklist modules are untouched. A check the
+checklist could not read is not a pass, and the row's reason says so rather
+than asserting an absence the record cannot show. Admission is never a
 grade: the checklist's grade stands on every row, and a row that is not
 admitted keeps it as research.
 
@@ -57,6 +61,11 @@ LABELS = {
     "dollar_expansion": "admitted by the dollar scan on a range-expansion, higher-volume day",
     "dollar_no_expansion": NOT_ADMITTED_WORDS + ": research only, no ticket and no chart read",
 }
+#: the reason of a dollar-only row one of whose checks the checklist could not read
+#: (an unreadable prior session, or no 50-session average under the +CV rule): the
+#: basis is the same, and the words claim no absence the record cannot show
+UNREAD_WORDS = "dollar scan alone, with a range-expansion or higher-volume check the checklist could not read"
+UNREAD_LABEL = UNREAD_WORDS + ": research only, no ticket and no chart read"
 RULES = {"admission.version": VERSION, "admission.policy": POLICY,
          "admission.burst_routes": list(BURST_ROUTES),
          "admission.dollar_checks": [letter for letter, _ in DOLLAR_CHECKS]}
@@ -97,8 +106,10 @@ def block(row: dict) -> dict:
     ``quality.checks`` alone, so the validator re-derives it from the row."""
     shown = expansion(row)
     basis = basis_of(row.get("scan"), shown)
+    unread = basis == "dollar_no_expansion" and any(v is None for v in shown.values())
     return {"version": VERSION, "policy": POLICY, "route": row.get("scan"), "basis": basis,
-            "admitted": basis != "dollar_no_expansion", "expansion": shown, "reason": LABELS[basis]}
+            "admitted": basis != "dollar_no_expansion", "expansion": shown,
+            "reason": UNREAD_LABEL if unread else LABELS[basis]}
 
 
 def admitted(row: dict) -> bool:

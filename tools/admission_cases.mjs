@@ -175,6 +175,13 @@ export async function checkAdmission({ browser, base, open, check, eq, shotsDir 
         await page.evaluate(() => SCStock.navigate('#/method'));
         check(`${where}: Method names a record from before the rule`, (await methodLines(page)).some((l) => l.startsWith('Admission rule: this record predates')));
       }],
+    ['other-checks', (d) => { d.rules.admission = { ...d.rules.admission, dollar_checks: ['RE', 'C'] }; },
+      // the rule line names the checks the record archived and describes only the two it knows
+      async (page, where) => {
+        await page.evaluate(() => SCStock.navigate('#/method'));
+        const line = (await methodLines(page)).find((l) => l.startsWith('Admission rule, as this record archived it'));
+        check(`${where}: the rule line names the archived checks without describing checks it does not know`, !!line && line.includes('passes the checklist’s RE and C checks. Admission') && !line.includes('prior five sessions'), line);
+      }],
     ['unknown-rule-shape', (d) => { d.rules.admission = { version: 2 }; },
       async (page, where) => {
         await page.evaluate(() => SCStock.navigate('#/method'));

@@ -155,7 +155,7 @@ def burst_frames() -> dict[str, pd.DataFrame]:
 #: never the 4% scan's), inside a 1.5%-wide bar that is narrower than the base's
 #: 2%-wide bars (RE fails) on five-sixths of the previous session's volume (VOL
 #: fails); the base's width also fails C, so the checklist scores it 8.0 and
-#: grades it A -- the shape 32 of the 34 dollar-only A names of 3 November 2026 had.
+#: grades it A -- the C-failing 8.0 shape 32 of the 34 dollar-only A names of 3 November 2026 had (29 of the 34 would be stopped, 21 failing both RE and VOL).
 DOLLAR_NO_EXPANSION = dict(burst_gain=2.0, close_pos=0.9, burst_vol=500_000, burst_range_pct=1.5, base_range=2.0)
 
 

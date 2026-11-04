@@ -208,7 +208,7 @@ export async function checkReviewSelection(args) {
           const waits = fixture.data.cover.h1 === READER_WAIT;
           eq(name + ': the cover shows the selection line only under the reader-wait headline', await page.locator('#cover-review-summary').isVisible(), waits);
           if (waits) check(name + ': the collapsed line answers the headline with the batch and the unreviewed A-band', (await text(page, '#cover-review-summary')) ===
-            'Chart reviews: ' + (detail.requested ? detail.accepted + ' of ' + detail.requested + ' selected accepted' : 'none selected') + ' · ' + detail.unreviewedQuality + ' mechanical A+/A not reviewed', await text(page, '#cover-review-summary'));
+            'Chart reviews: ' + (detail.requested ? detail.accepted + ' of ' + detail.requested + ' selected accepted' : 'none selected') + ' · ' + detail.unreviewedQuality + ' ' + detail.unreviewedWord + ' not reviewed', await text(page, '#cover-review-summary'));
           check(name + ': final review/cash gates are never called cleared', /Final review and combined cash allocation still decide tickets/.test(facts.note));
           if (fixture.name === 'retained-current') {
             eq('actual retained f5: original canonical and reader bytes stay bound', await page.evaluate(() => { const f = SCStock.observations.facts(); return [f.canonicalHash, f.recordHash, f.projected]; }), [sha(fixture.raw), sha(fixture.reader), true]);

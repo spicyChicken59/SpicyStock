@@ -49,8 +49,12 @@ def row(scan, *, re=True, vol=True, grade="A", vetoes=(), ticker="X"):
 ])
 def test_the_block_is_the_route_and_the_two_expansion_checks(scan, re, vol, basis, admitted):
     b = admission.block(row(scan, re=re, vol=vol))
+    # a stopped row one of whose checks could not be read says so; "without a day" is said only of recorded checks
+    reason = admission.UNREAD_LABEL if not admitted and (re is None or vol is None) else admission.LABELS[basis]
     assert b == {"version": 1, "policy": admission.POLICY, "route": scan, "basis": basis, "admitted": admitted,
-                 "expansion": {"range_expansion": re, "higher_volume": vol}, "reason": admission.LABELS[basis]}
+                 "expansion": {"range_expansion": re, "higher_volume": vol}, "reason": reason}
+    if not admitted and (re is None or vol is None):
+        assert "could not read" in b["reason"] and "without" not in b["reason"]
     assert admission.admitted({**row(scan), "admission": b}) is admitted
 
 

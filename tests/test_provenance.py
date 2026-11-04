@@ -617,6 +617,19 @@ def test_required_evidence_install_failure_keeps_pipeline_unpublished(
     assert not list((docs / provenance.OBJECT_DIR).iterdir())
 
 
+def test_the_sealed_gate_reads_the_veto_before_the_admission():
+    """A name both vetoed and stopped is sealed as the veto: the gate's order is
+    the planner's own (the regime, the grade, the veto, then the admission)."""
+    from src import provenance
+    data = fixture("full")
+    row = deepcopy(next(b for b in data["bursts"] if b["ticker"] == "MSFT"))
+    assert row["admission"]["admitted"] is False and provenance.gate(data, row)["reason"] == "route_not_admitted"
+    row["vetoes"] = ["up_days"]
+    assert provenance.gate(data, row)["reason"] == "quality_veto"
+    row["grade"] = "B"
+    assert provenance.gate(data, row)["reason"] == "quality_grade"
+
+
 def test_the_sealed_gate_names_the_discovery_admission_only_under_rules_that_archive_it():
     """A dollar-only A the admission stopped is sealed with its own reason, after the
     grade and the veto and before the reader prerequisite; a record from before the

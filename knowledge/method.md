@@ -46,8 +46,9 @@ warning, not a filter Bonde applies).
 - Admission (`src/admission.py`, P, 4 November 2026): a name the 4% scan
   discovered may be planned and read; a name the dollar scan alone discovered
   may be only when its burst day passed the checklist's RE and VOL checks --
-  Bonde's own words for a burst day, "bigger than the last 5 to 10 days bars"
-  and "volume above yesterday" (B), applied as a gate by SpicyStock (P). The
+  RE Bonde's own phrase for a burst day, "a day which is up bigger than the
+  last 5 to 10 days bars" (B), VOL the 4% scan's own volume test, v > v1
+  (scan) -- applied as a gate by SpicyStock (P). The
   $0.90 body is a 2017 number that does not scale with price: over the 35
   retained sessions to 3 November 2026, 1,913 of 2,473 mechanical A-band
   grades came through the dollar scan alone, 1,757 of them on a day under +4%.
