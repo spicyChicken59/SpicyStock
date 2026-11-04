@@ -414,9 +414,9 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    first visit opens on A-quality when the record archived an admitted A or
    A+ burst and on every burst otherwise, so the first screen is never empty
    — on the published 401-burst night that is 52 stocks rather than 401. A
-   name the admission stopped wears the chip *dollar scan alone*, its card
-   and decision summary print the record's own reason, and its Discovery
-   sentence carries the admission in the record's words. A lens the
+   name the admission stopped wears the chip *dollar scan alone* on its card;
+   its action area and decision summary print the record's own reason, and
+   its Discovery sentence carries the admission in the record's words. A lens the
    reader chooses is remembered in this browser and never widened behind
    their back: an empty one stays empty, explains itself and offers one
    click out. *With ticket* is a reading of the record and never a
