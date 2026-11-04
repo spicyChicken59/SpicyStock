@@ -260,10 +260,10 @@ export async function checkPrivateBackup({ browser, base, open, check, eq, shots
         const mutations = [
           ['invalid JSON', '{'], ['unknown future version', JSON.stringify({ ...valid, version: 99 })],
           ['emergency recovery is not a healthy backup', JSON.stringify({ prior: mixedRaw, proposed: mixedRaw })],
-          ['duplicate original ID', JSON.stringify({ version: 3, items: [independent, independent] })],
+          ['duplicate original ID', JSON.stringify({ version: 4, items: [independent, independent] })],
           ['unknown envelope field', JSON.stringify({ ...valid, cloud_sync: true })],
-          ['inconsistent actual fills', JSON.stringify({ version: 3, items: [{ ...independent, report: { ...independent.report, filled_quantity: 10 } }] })],
-          ['report-only cannot acquire draft fields', JSON.stringify({ version: 3, items: [{ ...independent, draft: valid.items[0].draft }] })],
+          ['inconsistent actual fills', JSON.stringify({ version: 4, items: [{ ...independent, report: { ...independent.report, filled_quantity: 10 } }] })],
+          ['report-only cannot acquire draft fields', JSON.stringify({ version: 4, items: [{ ...independent, draft: valid.items[0].draft }] })],
           ['BOM-prefixed file', Buffer.concat([Buffer.from([239, 187, 191]), Buffer.from(mixedRaw)])],
           ['invalid UTF8 file', Buffer.concat([Buffer.from(mixedRaw), Buffer.from([255])])],
           ['invalid UTF8 inside valid JSON string', invalidText]
@@ -275,7 +275,7 @@ export async function checkPrivateBackup({ browser, base, open, check, eq, shots
           eq(name + ': invalid preview cannot poison readable destination status', await page.evaluate(() => SCStock.handoff.status().available), true);
         }
         const tooMany = Array.from({ length: 101 }, (_, index) => { const item = structuredClone(independent); item.source.evidence.id = index.toString(16).padStart(64, '0'); item.id = item.source.publication.data_sha256 + ':' + item.source.evidence.id; return item; });
-        await chooseFile(page, JSON.stringify({ version: 3, items: tooMany }));
+        await chooseFile(page, JSON.stringify({ version: 4, items: tooMany }));
         eq('101 distinct valid-shaped items: count cap refuses restore', [await stored(page), await page.locator('[data-handoff-backup-confirm]').isVisible()], [null, false]);
         const oversized = Buffer.concat([Buffer.from(mixedRaw), Buffer.alloc(MAX_BYTES + 1 - Buffer.byteLength(mixedRaw), 32)]);
         await page.evaluate(() => { window.__backupFileReads = []; });

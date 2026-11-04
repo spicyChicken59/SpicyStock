@@ -240,11 +240,37 @@ def test_real_open_model_reservations_keep_all_four_slots(tmp_path):
 def test_other_account_and_unsupported_planner_are_refused(tmp_path, produced, monkeypatch):
     spec = importlib.util.spec_from_file_location("stop_fixture", FIXTURES / "generate.py")
     module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
-    publication = module.source_publication("outside", tmp_path, account_equity="10000")
+    # inside the registered period the comparison is the $2,000 account's and
+    # another account is refused by name: a changed account is not the
+    # registered experiment
+    publication = module.source_publication("current", tmp_path / "in", account_equity="30000")
     with pytest.raises(ValueError, match="unsupported account"):
-        research.build(publication, objects=tmp_path / "evidence", generated_at=NOW)
+        research.build(publication, objects=tmp_path / "in" / "evidence", generated_at=NOW)
     monkeypatch.setitem(plan.RULES, "plan.max_stop_pct", 6.)
     with pytest.raises(ValueError): research.build(produced[0], objects=produced[1], generated_at=NOW)
+
+
+def test_outside_the_period_the_account_is_not_asked(tmp_path):
+    # the owner's account moved to $30,000 from the 4 November 2026 session; a
+    # publication after the registration ends still writes its outside-period
+    # receipt, with no row, whatever its account
+    spec = importlib.util.spec_from_file_location("stop_fixture", FIXTURES / "generate.py")
+    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    publication = module.source_publication("outside", tmp_path, account_equity="30000")
+    built = research.build(publication, objects=tmp_path / "evidence", generated_at=NOW)
+    assert built["receipt"]["status"] == "outside_period" and built["bundle"]["rows"] == []
+    assert json.loads(publication)["account"]["equity"] == 30000
+    # its reservations are the publication's own account, stated as such
+    reserves = built["bundle"]["reservations"]
+    assert (reserves["equity_usd"], reserves["position_cap_usd"], reserves["max_slots"]) == (30000, 7500, 4)
+    # an in-period receipt still pins the registered account: a forged $30,000
+    # reservation on a recorded receipt is refused by name
+    forged = json.loads(built["bundle_bytes"])
+    forged["status"] = "recorded"
+    with pytest.raises(ValueError):
+        research.validate_bundle(built["receipt_bytes"], json.dumps(forged).encode())
+    # the receipt and bundle it writes validate as every other outside-period one
+    research.validate_bundle(built["receipt_bytes"], built["bundle_bytes"])
 
 
 def test_fixture_regeneration_is_required_in_ci():

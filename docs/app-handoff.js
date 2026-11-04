@@ -1,16 +1,27 @@
 /* Private broker readback and manually reported cumulative entry facts. Nothing
    in this store submits an order, reserves cash, observes fills or edits a
    published plan. New preparation/copy uses current page guards; correcting
-   reported facts deliberately does not require a still-open entry window. */
+   reported facts deliberately does not require a still-open entry window.
+   Three kinds of record: a planned handoff (a personal draft of a published
+   ticket), an independent research report (a trade on a retained research
+   row) and, from version 4, an owner trade: a trade the owner made on a name
+   the record listed without a ticket, kept beside the record's own reasons
+   and the model's exit reference, never as a SpicyStock recommendation. */
 (function (w) {
   'use strict';
   const api = w.SCStock = w.SCStock || {};
-  const VERSION = 3, KEY = 'spicystock:handoff:v1', MAX_ITEMS = 100, MAX_BYTES = 1048576, MAX_SHARES = 1000000;
+  const VERSION = 4, KEY = 'spicystock:handoff:v1', MAX_ITEMS = 100, MAX_BYTES = 1048576, MAX_SHARES = 1000000;
   const HEX = /^[a-f0-9]{64}$/, DATE = /^\d{4}-\d{2}-\d{2}$/;
   const REF = ['id', 'context_sha256', 'plan_sha256', 'pick_sha256'];
   const LEGACY_FIELDS = ['submitted_quantity', 'submitted_at', 'filled_quantity', 'average_price', 'filled_at', 'cancelled_quantity', 'cancelled_at', 'exited_quantity', 'exited_at', 'protected_quantity', 'protection_confirmed_at'];
   const RESULT_FIELDS = ['average_exit_price', 'entry_fees', 'exit_fees'];
-  const FIELDS = [...LEGACY_FIELDS, ...RESULT_FIELDS];
+  // Version 4: the owner's own account label and the protective stop price
+  // reported at the broker, on every kind of record.
+  const OWNER_FIELDS = ['account_label', 'stop_price'];
+  const FIELDS = [...LEGACY_FIELDS, ...RESULT_FIELDS, ...OWNER_FIELDS];
+  const fieldsFor = version => version === 1 ? LEGACY_FIELDS : version < 4 ? [...LEGACY_FIELDS, ...RESULT_FIELDS] : FIELDS;
+  const KINDS = ['planned_handoff', 'independent_research', 'owner_trade'];
+  const SYMBOL = /^[A-Z][A-Z0-9.-]{0,14}$/, LABEL_MAX = 40;
   const QUANTITIES = ['submitted_quantity', 'filled_quantity', 'cancelled_quantity', 'exited_quantity', 'protected_quantity'];
   const TIMES = ['submitted_at', 'filled_at', 'cancelled_at', 'exited_at', 'protection_confirmed_at'];
   const listeners = [];
@@ -20,12 +31,16 @@
   const fail = error => ({ ok: false, error });
   const object = value => value && typeof value === 'object' && !Array.isArray(value);
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-  const emptyReport = (version = VERSION) => Object.fromEntries((version === 1 ? LEGACY_FIELDS : FIELDS).map(key => [key, null]));
+  const emptyReport = (version = VERSION) => Object.fromEntries(fieldsFor(version).map(key => [key, null]));
   // Clearing cumulative fields means unknown, never "no order was submitted".
   // Once reporting begins, corrections cannot revive a fresh entry draft.
   const reported = item => item.report_updated_at !== null || Object.values(item.report).some(value => value !== null);
   const independent = item => item.kind === 'independent_research';
+  const owner = item => item.kind === 'owner_trade';
+  // A report-only record has no personal draft and no order to copy.
+  const reportOnly = item => independent(item) || owner(item);
   const keyOf = candidate => candidate.stage + ':' + candidate.ticker;
+  const ownerId = source => source.publication.sha256 + ':owner:' + source.stage + ':' + source.ticker;
   const cents = value => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
   const dollars = value => '$' + (BigInt(value) / 100n).toLocaleString('en-US') + '.' + String(BigInt(value) % 100n).padStart(2, '0');
   const cashText = value => String(BigInt(value) / 100n) + '.' + String(BigInt(value) % 100n).padStart(2, '0');
@@ -57,8 +72,17 @@
     if (BigInt(whole) * 1000000n + BigInt(part.padEnd(6, '0')) <= 0n) return undefined;
     return String(BigInt(whole)) + (part.replace(/0+$/, '') ? '.' + part.replace(/0+$/, '') : '');
   }
+  // The owner's own label for a broker account ("Rollover IRA"): trimmed, at
+  // most LABEL_MAX characters, no control characters; blank is unknown.
+  function label(value) {
+    if (value === null || value === '') return null;
+    if (typeof value !== 'string') return undefined;
+    const trimmed = value.trim();
+    if (trimmed === '') return null;
+    return trimmed.length <= LABEL_MAX && !/[\u0000-\u001f\u007f-\u009f]/.test(trimmed) ? trimmed : undefined;
+  }
   function normalizeReport(fields, at, version = VERSION) {
-    if (!exactKeys(fields, version === 1 ? LEGACY_FIELDS : FIELDS)) return fail('Enter the complete set of manual report fields; blank means unknown.');
+    if (!exactKeys(fields, fieldsFor(version))) return fail('Enter the complete set of manual report fields; blank means unknown.');
     const out = emptyReport(version);
     for (const key of QUANTITIES) {
       out[key] = quantity(fields[key]);
@@ -74,6 +98,12 @@
         if (value === undefined) return fail('Actual fees must be non-negative dollar amounts with at most two decimals, or blank for unknown.');
         out[key] = value === null ? null : cashText(value);
       }
+    }
+    if (version >= 4) {
+      out.account_label = label(fields.account_label);
+      if (out.account_label === undefined) return fail('A broker account label is at most ' + LABEL_MAX + ' printable characters, or blank for unknown.');
+      out.stop_price = average(fields.stop_price);
+      if (out.stop_price === undefined) return fail('A protective stop price must be positive, with at most six decimal places, or blank for unknown.');
     }
     for (const key of TIMES) {
       const raw = fields[key];
@@ -109,8 +139,41 @@
       exactKeys(row, ['day', 'date', 'key', 'instruction']) && Number.isInteger(row.day) && row.day > 0 && row.day <= 30 && validDate(row.date) && row.date >= timing.applicable_session &&
       typeof row.key === 'string' && /^[a-z0-9_]{1,80}$/.test(row.key) && typeof row.instruction === 'string' && row.instruction.length > 0 && row.instruction.length <= 2000);
   }
+  function publicationValid(pub) {
+    return exactKeys(pub, ['sha256', 'session', 'published_at', 'rules_version']) && matches(HEX, pub.sha256) && validDate(pub.session) && sourceTime(pub.published_at) && matches(/^[a-f0-9]{12}$/, pub.rules_version);
+  }
+  // The exit rules an owner trade's reference arithmetic reads, copied from the
+  // record's archived plan rules when the trade is recorded.
+  function rulesValid(rules) {
+    if (!exactKeys(rules, ['sell_half_pct', 'sell_half_day', 'final_exit_day', 'entry_day'])) return false;
+    const pct = rules.sell_half_pct, days = [rules.entry_day, rules.sell_half_day, rules.final_exit_day];
+    if (typeof pct !== 'number' || !Number.isFinite(pct) || !(pct > 0 && pct <= 100) || Math.round(pct * 100) !== pct * 100) return false;
+    return days.every(day => Number.isInteger(day) && day >= 1 && day <= 30) && days[0] < days[1] && days[1] < days[2];
+  }
+  function scheduleValid(schedule) {
+    if (schedule === null) return true;
+    return exactKeys(schedule, ['entry_session', 'sell_half_session', 'final_session']) && [schedule.entry_session, schedule.sell_half_session, schedule.final_session].every(validDate) &&
+      schedule.entry_session < schedule.sell_half_session && schedule.sell_half_session < schedule.final_session;
+  }
+  // An owner trade's source: the publication, the listed row as the page read
+  // it (its rank, grade, route, admission, status and the record's own reason),
+  // the row's evidence identity when the record carries one, the archived exit
+  // rules and the day-3 and day-5 sessions the record's calendar places.
+  function ownerValid(source) {
+    if (!exactKeys(source, ['ticker', 'stage', 'publication', 'row', 'evidence_id', 'rules', 'schedule']) || !matches(SYMBOL, source.ticker) || !['bursts', 'setting-up'].includes(source.stage) || !publicationValid(source.publication)) return false;
+    const row = source.row;
+    if (!exactKeys(row, ['rank', 'grade', 'score', 'scan', 'admitted', 'status', 'reason'])) return false;
+    if (!(row.rank === null || (Number.isSafeInteger(row.rank) && row.rank >= 1))) return false;
+    if (!(row.grade === null || matches(/^[A-Za-z+]{1,8}$/, row.grade))) return false;
+    if (!(row.score === null || (typeof row.score === 'number' && Number.isFinite(row.score) && row.score >= 0))) return false;
+    if (!(row.scan === null || matches(/^[a-z_]{1,20}$/, row.scan))) return false;
+    if (!(row.admitted === null || typeof row.admitted === 'boolean')) return false;
+    if (!matches(/^[a-z_]{1,40}$/, row.status) || typeof row.reason !== 'string' || row.reason.length > 2000) return false;
+    if (!(source.evidence_id === null || matches(HEX, source.evidence_id))) return false;
+    return rulesValid(source.rules) && scheduleValid(source.schedule);
+  }
   function calculation(item) {
-    if (independent(item)) return null;
+    if (reportOnly(item)) return null;
     return api.cashPreview.calculate({ cash: cashText(item.draft.cash_cents), fees: cashText(item.draft.fee_cents), quantity: String(item.draft.quantity), order: item.plan.order });
   }
   // Source clocks retain upstream microseconds and spelling. Manual broker
@@ -135,16 +198,21 @@
   }
   function validItem(item, version = VERSION) {
     if (!object(item)) return false;
-    const isIndependent = version === VERSION && independent(item);
-    const fields = ['version', 'id', 'revision', 'created_at', 'updated_at', 'report', 'report_updated_at', ...(isIndependent ? ['source'] : ['publication', 'plan', 'draft']), ...(version === VERSION ? ['kind'] : [])];
-    if (!exactKeys(item, fields) || item.version !== version || (version === VERSION && !['planned_handoff', 'independent_research'].includes(item.kind)) || !Number.isSafeInteger(item.revision) || item.revision < 1 ||
+    // Version 3 named two kinds; version 4 adds the owner's own trade.
+    const kind = version >= 3 ? item.kind : 'planned_handoff', kinds = version === VERSION ? KINDS : KINDS.slice(0, 2);
+    if (version >= 3 && !kinds.includes(kind)) return false;
+    const isReportOnly = kind !== 'planned_handoff';
+    const fields = ['version', 'id', 'revision', 'created_at', 'updated_at', 'report', 'report_updated_at', ...(isReportOnly ? ['source'] : ['publication', 'plan', 'draft']), ...(version >= 3 ? ['kind'] : [])];
+    if (!exactKeys(item, fields) || item.version !== version || !Number.isSafeInteger(item.revision) || item.revision < 1 ||
         !timestamp(item.created_at) || !timestamp(item.updated_at) || Date.parse(item.created_at) > Date.parse(item.updated_at)) return false;
-    if (isIndependent) {
+    if (kind === 'independent_research') {
       if (!researchValid(item.source) || item.id !== item.source.publication.data_sha256 + ':' + item.source.evidence.id || item.report_updated_at === null) return false;
+    } else if (kind === 'owner_trade') {
+      if (!ownerValid(item.source) || item.id !== ownerId(item.source) || item.report_updated_at === null) return false;
     } else {
       if (!planValid(item.plan)) return false;
       const pub = item.publication, draft = item.draft;
-      if (!exactKeys(pub, ['sha256', 'session', 'published_at', 'rules_version']) || !matches(HEX, pub.sha256) || !validDate(pub.session) || !sourceTime(pub.published_at) || !matches(/^[a-f0-9]{12}$/, pub.rules_version) ||
+      if (!publicationValid(pub) ||
           item.id !== pub.sha256 + ':' + item.plan.reference.id || !exactKeys(draft, ['quantity', 'cash_cents', 'fee_cents']) || !Number.isInteger(draft.quantity) || draft.quantity < 1 || draft.quantity > MAX_SHARES || !cents(draft.cash_cents) || !cents(draft.fee_cents) || calculation(item).state !== 'calculated') return false;
     }
     const report = normalizeReport(item.report, null, version);
@@ -155,10 +223,13 @@
   function parseStore(raw) {
     if (typeof raw !== 'string' || /[\uD800-\uDFFF]/u.test(raw) || new w.TextEncoder().encode(raw).length > MAX_BYTES) throw new Error('size or encoding');
     const store = JSON.parse(raw);
-    if (!exactKeys(store, ['version', 'items']) || ![1, 2, VERSION].includes(store.version) || !Array.isArray(store.items) || store.items.length > MAX_ITEMS || !store.items.every(item => validItem(item, store.version)) || new Set(store.items.map(item => item.id)).size !== store.items.length) throw new Error('shape');
-    // The normalized view is not an export or restore serialization.
-    const items = store.version < VERSION ? store.items.map(item => ({ ...item, version: VERSION, kind: 'planned_handoff',
-      report: store.version === 1 ? { ...item.report, ...Object.fromEntries(RESULT_FIELDS.map(key => [key, null])) } : item.report })) : store.items;
+    if (!exactKeys(store, ['version', 'items']) || ![1, 2, 3, VERSION].includes(store.version) || !Array.isArray(store.items) || store.items.length > MAX_ITEMS || !store.items.every(item => validItem(item, store.version)) || new Set(store.items.map(item => item.id)).size !== store.items.length) throw new Error('shape');
+    // The normalized view is not an export or restore serialization: an older
+    // store's records read with the fields their version lacked as unknown and
+    // a kind of their own, and nothing is written until an explicit save.
+    const added = fieldsFor(VERSION).filter(key => !fieldsFor(store.version).includes(key));
+    const items = store.version < VERSION ? store.items.map(item => ({ ...item, version: VERSION, kind: store.version >= 3 ? item.kind : 'planned_handoff',
+      report: { ...item.report, ...Object.fromEntries(added.map(key => [key, null])) } })) : store.items;
     return { items, raw, version: store.version };
   }
   function load() {
@@ -228,6 +299,7 @@
   function availability(item) {
     if (!validItem(item)) return fail('This private draft is unreadable.');
     if (independent(item)) return fail('This is an independently reported trade. It has no entry draft or order to copy.');
+    if (owner(item)) return fail('This is your own recorded trade. It has no entry draft or order to copy.');
     const current = currentPlan(keyOf(item.plan), item.publication.sha256);
     if (!current.ok) return current;
     if (!same(current.snapshot, item.plan) || !same(current.publication, item.publication)) return fail('The published plan changed. This saved readback remains history; prepare from the current publication.');
@@ -251,6 +323,64 @@
       if (!validItem(item)) return fail('The exact published source cannot be stored as a private draft.');
       const items = loaded.items.filter(row => row.id !== id); items.push(item);
       const saved = save(loaded, items); return saved.ok ? { ok: true, item: clone(item) } : saved;
+    });
+  }
+  // The listed row an owner trade is recorded against, read off the current
+  // publication the way the page's own model read it. A ticket has its own
+  // draft and report; a practice record has no trade to record.
+  function currentCandidate(key, expectedPublication) {
+    const data = api.data, model = api.model;
+    if (!data || !model || !api.observations) return fail('No current publication is ready for an owner trade record.');
+    // a practice record is named first: a fixture page binds no canonical hash,
+    // and the reader deserves the reason that holds whatever hash it carries
+    if (data.fixture) return fail('This is a practice record. No trade of yours is recorded against a simulated publication.');
+    const observation = api.observations.facts();
+    if (!HEX.test(expectedPublication || '') || observation.canonicalHash !== expectedPublication) return fail('This record belongs to another or unverified publication. Open the stock in the current record before recording a trade.');
+    const colon = typeof key === 'string' ? key.indexOf(':') : -1, stage = colon > 0 ? key.slice(0, colon) : '', ticker = colon > 0 ? key.slice(colon + 1) : '';
+    const candidate = ((model.stages || {})[stage] || []).find(c => c && c.ticker === ticker);
+    if (!candidate) return fail('This stock is not in the current record’s ' + (stage || 'candidate') + ' list.');
+    if (candidate.status === 'ticket') return fail('This name carries a published ticket. Record it through the ticket’s personal draft and its broker report, not as an owner trade.');
+    const run = data.run || {}, app = data.app || {}, rulesPlan = (data.rules || {}).plan || {}, row = candidate.row || {};
+    const rules = { sell_half_pct: rulesPlan.sell_half_pct, sell_half_day: rulesPlan.sell_half_day, final_exit_day: rulesPlan.final_exit_day, entry_day: rulesPlan.entry_day };
+    if (!rulesValid(rules)) return fail('This record archives no readable exit rules, so an owner trade cannot be bound to it.');
+    const source = { ticker: candidate.ticker, stage, publication: { sha256: expectedPublication, session: run.session, published_at: run.published_at, rules_version: app.rules_version },
+      row: { rank: Number.isSafeInteger(candidate.rank) && candidate.rank >= 1 ? candidate.rank : null, grade: typeof candidate.grade === 'string' ? candidate.grade : null,
+        score: typeof candidate.score === 'number' && Number.isFinite(candidate.score) ? candidate.score : null, scan: typeof row.scan === 'string' ? row.scan : null,
+        admitted: stage === 'bursts' && typeof candidate.admitted === 'boolean' ? candidate.admitted : null, status: String(candidate.status), reason: typeof candidate.reason === 'string' ? candidate.reason : '' },
+      evidence_id: object(row.evidence) && matches(HEX, row.evidence.id) ? row.evidence.id : null, rules, schedule: sessionsFrom(run, rules) };
+    if (!ownerValid(source)) return fail('The current record cannot be stored as an owner trade source.');
+    return { ok: true, source };
+  }
+  // Day 3 and day 5 counted from the session the publication's plans are for,
+  // on the record's own calendar; null when the calendar does not place them.
+  function sessionsFrom(run, rules) {
+    const entry = (run.timing || {}).applicable_session, sessions = (((run.calendar || {}).schedule || {}).sessions || []);
+    if (!validDate(entry) || !Array.isArray(sessions)) return null;
+    const dates = sessions.map(s => object(s) ? s.session : null), start = dates.indexOf(entry);
+    if (start < 0) return null;
+    const at = day => dates[start + (day - rules.entry_day)];
+    const schedule = { entry_session: entry, sell_half_session: at(rules.sell_half_day), final_session: at(rules.final_exit_day) };
+    return scheduleValid(schedule) ? schedule : null;
+  }
+  function inspectOwner(request) {
+    const checked = currentCandidate(request && request.key, request && request.expectedPublication);
+    return checked.ok ? { ok: true, source: clone(checked.source) } : checked;
+  }
+  async function reportOwner(request, fields, expectedRevision = null) {
+    return transaction(loaded => {
+      if (api.reclock) api.reclock();
+      const checked = currentCandidate(request && request.key, request && request.expectedPublication);
+      if (!checked.ok) return checked;
+      const source = checked.source, id = ownerId(source);
+      if (loaded.items.some(item => item.id === id)) return { ...fail('A private record already exists for your trade on this name in this record. Open and correct that record instead of creating another.'), existingId: id };
+      if (expectedRevision !== null) return fail('A new owner trade record has no prior revision. Open the saved record to correct it.');
+      const at = new Date().toISOString(), normalized = normalizeReport(fields, at);
+      if (!normalized.ok) return normalized;
+      if (!(normalized.report.filled_quantity > 0)) return fail('Record a positive quantity actually filled at your broker before saving your own trade. Blank or zero is not an executed trade.');
+      const item = { version: VERSION, kind: 'owner_trade', id, revision: 1, created_at: at, updated_at: at, source, report: normalized.report, report_updated_at: at };
+      if (!validItem(item)) return fail('The current record cannot be stored as an owner trade source.');
+      const saved = save(loaded, [...loaded.items, item]);
+      return saved.ok ? { ok: true, item: clone(item) } : saved;
     });
   }
   function inspectResearch(request) {
@@ -301,11 +431,12 @@
   }
   function backupSummary(parsed) {
     return { version: parsed.version, count: parsed.items.length,
-      planned_count: parsed.items.filter(item => !independent(item)).length,
+      planned_count: parsed.items.filter(item => !reportOnly(item)).length,
       independent_count: parsed.items.filter(independent).length,
+      owner_count: parsed.items.filter(owner).length,
       records: parsed.items.map(item => {
-        const source = independent(item) ? item.source : item, pub = source.publication;
-        return { id: item.id, ticker: independent(item) ? source.ticker : item.plan.ticker, kind: item.kind,
+        const source = reportOnly(item) ? item.source : item, pub = source.publication;
+        return { id: item.id, ticker: reportOnly(item) ? source.ticker : item.plan.ticker, kind: item.kind,
           session: independent(item) ? pub.measured_session : pub.session, published_at: pub.published_at,
           created_at: item.created_at, updated_at: item.updated_at };
       }) };
@@ -372,14 +503,15 @@
     return { ...empty, state: 'complete', quantity: report.filled_quantity, gross_microusd: String(gross), fees_microusd: String(fees), net_microusd: String(net),
       gross_display: displayMicros(gross), fees_display: displayMicros(fees), net_display: displayMicros(net), outcome: net > 0n ? 'gain' : net < 0n ? 'loss' : 'breakeven' };
   }
-  // A complete result whose average exit is under the frozen protective stop
-  // fetched less than the stop would have: a gap or slippage past it. Read
-  // from averages, so it says how far under on average and how much less in
-  // all, never which shares; a gap on part of a position can hide inside an
+  // A complete result whose average exit is under the protective stop -- the
+  // one the published plan froze, or the one the owner reported on their own
+  // trade -- fetched less than the stop would have: a gap or slippage past it.
+  // Read from averages, so it says how far under on average and how much less
+  // in all, never which shares; a gap on part of a position can hide inside an
   // average at or over the stop.
   function beyondStop(item, result) {
-    if (independent(item) || !result || result.state !== 'complete') return null;
-    const stop = BigInt(api.cashPreview.cents(String(item.plan.order.then.stop_price))) * 10000n, exit = priceMicros(item.report.average_exit_price);
+    if (independent(item) || !result || result.state !== 'complete' || (owner(item) && item.report.stop_price === null)) return null;
+    const stop = owner(item) ? priceMicros(item.report.stop_price) : BigInt(api.cashPreview.cents(String(item.plan.order.then.stop_price))) * 10000n, exit = priceMicros(item.report.average_exit_price);
     if (exit >= stop) return null;
     const perShare = stop - exit, total = perShare * BigInt(result.quantity);
     return { stop_microusd: String(stop), per_share_microusd: String(perShare), total_microusd: String(total), quantity: result.quantity,
@@ -388,8 +520,8 @@
   function exitReview(item) {
     const report = item.report, hasReport = reported(item);
     const held = report.filled_quantity === null || report.exited_quantity === null ? null : report.filled_quantity - report.exited_quantity;
-    if (independent(item)) return { basis: held === null ? 'reported_unknown' : 'reported_remaining', quantity: held, model_half_quantity: null, model_remaining_quantity: null, needs_review: held === null,
-      message: 'This independent trade has no personal entry draft or archived exit instructions. Remaining holdings are ' + (held === null ? 'unknown; report actual entry fills and exits.' : held + ' reported whole ' + (held === 1 ? 'share.' : 'shares.')) + ' Check holdings and protection at your broker; no exit has been inferred or placed.' };
+    if (reportOnly(item)) return { basis: held === null ? 'reported_unknown' : 'reported_remaining', quantity: held, model_half_quantity: null, model_remaining_quantity: null, needs_review: held === null,
+      message: (owner(item) ? 'This is your own recorded trade; it has no personal entry draft or archived exit instructions.' : 'This independent trade has no personal entry draft or archived exit instructions.') + ' Remaining holdings are ' + (held === null ? 'unknown; report actual entry fills and exits.' : held + ' reported whole ' + (held === 1 ? 'share.' : 'shares.')) + ' Check holdings and protection at your broker; no exit has been inferred or placed.' };
     const quantity = hasReport ? held : item.draft.quantity;
     const basis = hasReport ? (quantity === null ? 'reported_unknown' : 'reported_remaining') : 'personal_draft';
     if (quantity === null) return { basis, quantity, model_half_quantity: null, model_remaining_quantity: null, needs_review: true,
@@ -406,12 +538,46 @@
         (quantity === 1 ? 'A one-share position cannot be partly exited in whole shares. ' : '') +
         'This is reference arithmetic and does not determine whether another exit is due. Review prior exits and choose feasible quantities at your broker before acting; fractional-share support is unknown.' };
   }
+  // The sell-half level from the owner's own average fill under the record's
+  // archived rule, and the day-3 and day-5 sessions the record's calendar
+  // placed: reference arithmetic, in the record's numbers, that decides nothing.
+  function sellHalfLevel(price, pct) {
+    const micros = priceMicros(price) * BigInt(10000 + Math.round(pct * 100)) / 10000n;
+    return cashText((micros + 5000n) / 10000n);
+  }
+  // The exchange date a reported instant falls on, for the session it was filled in.
+  function exchangeDate(iso) {
+    try {
+      const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(iso));
+      const get = type => (parts.find(part => part.type === type) || {}).value;
+      const date = get('year') + '-' + get('month') + '-' + get('day');
+      return validDate(date) ? date : null;
+    } catch (error) { return null; }
+  }
+  function referenceExits(item) {
+    const source = item.source, report = item.report, rules = source.rules, schedule = source.schedule;
+    const level = report.average_price === null ? null : sellHalfLevel(report.average_price, rules.sell_half_pct);
+    const fillSession = report.filled_at ? exchangeDate(report.filled_at) : null;
+    const onEntry = schedule && fillSession ? fillSession === schedule.entry_session : null;
+    const sentences = [];
+    sentences.push(level === null ? 'Report your average entry fill to see the sell-half reference level (+' + rules.sell_half_pct + '% of it under this record’s archived rule).'
+      : 'Sell-half reference: ' + dollars(api.cashPreview.cents(level)) + ' (+' + rules.sell_half_pct + '% of your reported average fill of $' + report.average_price + ', under this record’s archived rule).');
+    sentences.push(schedule ? 'The record’s calendar places day ' + rules.sell_half_day + ' on ' + schedule.sell_half_session + ' (sell at least half by its close) and day ' + rules.final_exit_day + ' on ' + schedule.final_session + ' (exit the remainder by its close), counted from ' + schedule.entry_session + ' as day ' + rules.entry_day + '.'
+      : 'This record’s calendar does not place the day-' + rules.sell_half_day + ' and day-' + rules.final_exit_day + ' sessions; count them yourself from your fill day.');
+    if (onEntry === false) sentences.push('Your reported fill falls on ' + fillSession + ' (New York), not on ' + schedule.entry_session + ', so those dates are the record’s and not your trade’s.');
+    sentences.push(report.stop_price === null ? 'No protective stop price is reported for this trade.' : 'Your reported protective stop: $' + report.stop_price + '.');
+    sentences.push('Reference arithmetic from the record’s own rules; it does not decide whether an exit is due and SpicyStock places and cancels nothing.');
+    return { sell_half_pct: rules.sell_half_pct, sell_half_day: rules.sell_half_day, final_exit_day: rules.final_exit_day, entry_day: rules.entry_day, level, fill_session: fillSession, fill_on_entry_session: onEntry,
+      entry_session: schedule ? schedule.entry_session : null, sell_half_session: schedule ? schedule.sell_half_session : null, final_session: schedule ? schedule.final_session : null, stop_price: report.stop_price, message: sentences.join(' ') };
+  }
   function summary(item) {
     if (!validItem(item)) return null;
     const report = item.report, filled = report.filled_quantity, submitted = report.submitted_quantity, cancelled = report.cancelled_quantity, exited = report.exited_quantity, protectedQty = report.protected_quantity;
     const held = filled === null || exited === null ? null : filled - exited;
     const warnings = [];
-    if (!independent(item)) {
+    const reference = owner(item) ? referenceExits(item) : null;
+    if (reference && reference.fill_on_entry_session === false) warnings.push('Reported fill date ' + reference.fill_session + ' (New York) is not the session this record’s exit reference counts from, ' + reference.entry_session + '.');
+    if (!reportOnly(item)) {
       if (submitted !== null && submitted !== item.draft.quantity) warnings.push('Reported submitted quantity differs from your personal draft; this is a broker fact, not a revised plan.');
       if (filled && report.average_price !== null && (Number(report.average_price) < item.plan.order.stop_price || Number(report.average_price) > item.plan.order.limit_price)) warnings.push('Reported average fill price is outside the published trigger-to-limit range.');
       if (report.filled_at && (Date.parse(report.filled_at) < Date.parse(item.plan.timing.opens_at) || Date.parse(report.filled_at) >= Date.parse(item.plan.timing.cutoff_at))) warnings.push('Reported fill time is outside the published entry window.');
@@ -421,13 +587,13 @@
     if (protection === 'over') warnings.push('Broker-confirmed protective quantity exceeds reported remaining holdings. Reconcile the sell quantity at your broker.');
     const completed = completedResult(report);
     return { state: !reported(item) ? 'draft' : filled === null ? 'reported_unknown_fill' : filled === 0 ? 'reported_no_fill' : held === 0 ? 'reported_closed' : submitted !== null && filled < submitted ? 'reported_partial_fill' : 'reported_filled',
-      planned_quantity: independent(item) ? null : item.draft.quantity, submitted_quantity: submitted, filled_quantity: filled, exited_quantity: exited, reported_held_quantity: held,
+      planned_quantity: reportOnly(item) ? null : item.draft.quantity, submitted_quantity: submitted, filled_quantity: filled, exited_quantity: exited, reported_held_quantity: held,
       unfilled_quantity: submitted === null || filled === null ? null : submitted - filled,
       uncancelled_quantity: submitted === null || filled === null || cancelled === null ? null : submitted - filled - cancelled,
-      cancelled_quantity: cancelled, protected_quantity: protectedQty, protection, warnings, exit_review: exitReview(item), calculation: calculation(item), completed_result: completed, beyond_stop: beyondStop(item, completed) };
+      cancelled_quantity: cancelled, protected_quantity: protectedQty, protection, warnings, exit_review: exitReview(item), calculation: calculation(item), completed_result: completed, beyond_stop: beyondStop(item, completed), reference_exits: reference };
   }
   function readback(item) {
-    if (!validItem(item) || independent(item)) return '';
+    if (!validItem(item) || reportOnly(item)) return '';
     const order = item.plan.order, qty = item.draft.quantity;
     return 'PERSONAL BROKER READBACK — ' + item.plan.ticker + '\n' +
       'BUY ' + qty + ' ' + item.plan.ticker + ' · STOP LIMIT · trigger ' + dollars(api.cashPreview.cents(String(order.stop_price))) + ' · limit ' + dollars(api.cashPreview.cents(String(order.limit_price))) + ' · DAY\n' +
@@ -445,7 +611,7 @@
   }
   try { w.addEventListener('storage', event => { if (event.key === KEY || event.key === null) notify(); }); } catch (error) { /* reads still validate each time */ }
   api.handoff = {
-    VERSION, KEY, MAX_ITEMS, MAX_BYTES, FIELDS: FIELDS.slice(), prepare, inspectResearch, reportResearch, report, remove, summary, availability, readback, copy, exportBackup, previewBackup, restoreBackup,
+    VERSION, KEY, MAX_ITEMS, MAX_BYTES, FIELDS: FIELDS.slice(), KINDS: KINDS.slice(), LABEL_MAX, prepare, inspectResearch, reportResearch, inspectOwner, reportOwner, report, remove, summary, availability, readback, copy, exportBackup, previewBackup, restoreBackup,
     list: () => clone(load().items), find: id => clone(load().items.find(item => item.id === id) || null),
     status: () => { const result = load(); return { available: result.ok && !!(w.navigator && w.navigator.locks), error: result.error || (!(w.navigator && w.navigator.locks) ? 'Private saving isn’t available in this browser. Open the secure site in a current browser; saved records remain readable.' : ''), count: result.items.length }; },
     recovery: () => pending ? clone(pending) : { prior: load().raw, proposed: null },

@@ -141,9 +141,11 @@ jobs:
           # Unset expands to '' = default.
           SCAN_FEED: ${{ vars.SCAN_FEED }}
           SCAN_UNIVERSE: ${{ vars.SCAN_UNIVERSE }}
-          # Owner's cash-account reference, versioned here: $10 planned risk.
-          # Actual settled cash remains known only to the owner and broker.
-          ACCOUNT_EQUITY: '2000'
+          # Owner's cash-account reference, versioned here: $30,000 across two
+          # Fidelity IRAs read as one model account (the owner's word, 4 November
+          # 2026; $2,000 before it), $150 planned risk at 0.5%. Actual settled
+          # cash remains known only to the owner and broker.
+          ACCOUNT_EQUITY: '30000'
           RISK_PCT: '0.5'
           SCAN_SEND_EMAIL: ${{ inputs.skip_email == true && 'false' || 'true' }}
           SCAN_SESSION_DATE: ${{ steps.guard.outputs.session }}

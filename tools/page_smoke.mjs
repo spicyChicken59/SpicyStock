@@ -46,6 +46,7 @@ import { checkDecisionInspection } from './check_decision_inspection.mjs';
 import { checkIndependentReports } from './independent_report_cases.mjs';
 import { checkPrivateBackup } from './private_backup_cases.mjs';
 import { checkJournalReports } from './journal_report_cases.mjs';
+import { checkOwnerTrades } from './owner_trade_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
 import { checkFunnel } from './funnel_cases.mjs';
 import { checkServiceState } from './service_state_cases.mjs';
@@ -4594,6 +4595,7 @@ async function main() {
       if (runs('independentreports')) await checkIndependentReports({ browser, base, open, check, eq, shotsDir });
       if (runs('privatebackup')) await checkPrivateBackup({ browser, base, open, check, eq, shotsDir });
       if (runs('journalreports')) await checkJournalReports({ browser, base, open, check, eq, shotsDir });
+      if (runs('ownertrades')) await checkOwnerTrades({ browser, base, open, check, eq, shotsDir });
       if (runs('reader-transport')) await checkReaderTransport({ browser, base, open, check, eq, shotsDir });
       if (runs('observations')) await checkObservations({ browser, base, open, check, eq, shotsDir });
       if (runs('morning-service-reader')) await checkMorningServiceReader({ browser, base, open, check, eq, shotsDir });

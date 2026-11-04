@@ -4615,8 +4615,27 @@
     controls.appendChild(details); box.appendChild(controls);
     if (copyRefused && copyRefused.ticker === c.ticker)
       box.appendChild(el('p', { 'class': 'ss-action__refused', 'data-copy-refused': '', role: 'alert', text: copyRefused.text }));
+    const own = recordTradeButton(c);
+    if (own) box.appendChild(own);
     box.appendChild(followBlock(c));
     return box;
+  }
+  // A trade the reader made themselves on a listed name: one button that opens
+  // the Morning desk's private section on a blank report bound to this record's
+  // row (SCStock.handoffUI.openOwner). A ticketed name has its own draft and
+  // report instead; a refusal is printed beside the button and nothing is saved.
+  function recordTradeButton(c) {
+    if (c.status === 'ticket' || !SCStock.handoffUI || typeof SCStock.handoffUI.openOwner !== 'function') return null;
+    const wrap = el('div', { 'class': 'ss-action__own' });
+    const btn = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', 'data-owner-trade': c.ticker, 'data-owner-stage': c.stage, text: 'Record a trade I made on this name' });
+    const status = el('p', { 'class': 'sc-hint', 'data-owner-trade-status': '', role: 'status', hidden: '' });
+    btn.addEventListener('click', () => {
+      const facts = SCStock.observations && typeof SCStock.observations.facts === 'function' ? SCStock.observations.facts() : {};
+      const result = SCStock.handoffUI.openOwner({ key: c.stage + ':' + c.ticker, expectedPublication: facts.canonicalHash || null });
+      status.hidden = !!result.ok; status.textContent = result.ok ? '' : result.error;
+    });
+    wrap.appendChild(btn); wrap.appendChild(status);
+    return wrap;
   }
   function actionArea(c) {
     if (c.stage === 'bursts') return burstActionArea(c);
@@ -4654,6 +4673,8 @@
     // for a part fill follow it on a row of their own
     if (c.status === 'ticket' && offered && text(plan.order_line))
       box.appendChild(partFillNote('ss-action__broker'));
+    const own = recordTradeButton(c);
+    if (own) box.appendChild(own);
     box.appendChild(followBlock(c));
     return box;
   }

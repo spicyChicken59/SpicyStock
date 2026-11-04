@@ -155,7 +155,18 @@ def build(canonical_raw, *, objects=None, picks=None, generated_at=None, allow_f
 
     data = _decode(canonical_raw, MAX_PUBLICATION_BYTES)
     data, binding = morning._publication(canonical_raw, allow_fixture=allow_fixture)
-    _require(all(_number(data["account"].get(k), True) and data["account"][k] == v for k, v in ACCOUNT.items()), "unsupported account")
+    # The comparison was registered at the $2,000 account (POLICY["account"]);
+    # inside its period a publication sized at another account is refused, so a
+    # changed account can never be read as the registered experiment. Outside
+    # the period no row is computed and the publication's own archived account
+    # is the one its baseline is reconciled and its reservations stated under:
+    # the owner's account moved to $30,000 from the 4 November 2026 session, and
+    # a receipt saying "outside the period" is still written for each later
+    # publication.
+    registered = START_SESSION <= binding["applicable_session"] <= END_SESSION
+    same_account = all(_number(data["account"].get(k), True) and data["account"][k] == v for k, v in ACCOUNT.items())
+    _require(not registered or same_account, "unsupported account")
+    _require(same_account or all(_number(data["account"].get(k), True) and data["account"][k] > 0 for k in ACCOUNT), "unsupported account")
     _require(data["rules"]["plan"] == {k.partition(".")[2]: v for k, v in plan.RULES.items()}, "unsupported planner rules")
     _require(data["rules"]["plan"]["max_stop_pct"] == BASELINE_STOP_PCT, "unsupported baseline cap")
     _require(data["rules"].get("event_risk", {}).get("coverage") == event_risk.COVERAGE, "missing archived event coverage")
@@ -164,10 +175,11 @@ def build(canonical_raw, *, objects=None, picks=None, generated_at=None, allow_f
     top = data.get("watchlist", {}).get("top", [])
     _require(isinstance(top, list) and len(top) <= MAX_ROWS, "top cohort exceeds bound")
     timing = _timing(data, datetime.now(timezone.utc) if generated_at is None else generated_at)
-    in_period = START_SESSION <= binding["applicable_session"] <= END_SESSION
+    in_period = registered
     status = "recorded" if in_period else "outside_period"
     reason = None if in_period else "The applicable session is outside the registered experiment period."
-    account = plan.Account(**ACCOUNT)
+    account = plan.Account(**(ACCOUNT if same_account else {"equity": data["account"]["equity"], "risk_pct": data["account"]["risk_pct"],
+                                                           "max_position_pct": data["account"]["max_position_pct"], "max_open_positions": int(data["account"]["max_open_positions"])}))
     original_rows = data["bursts"] + top
     baseline_plans = [deepcopy(row["plan"]) for row in original_rows if (row.get("evidence", {}).get("gate") or {}).get("ticket")]
     baseline_keys = {(p["kind"], p["ticker"]) for p in baseline_plans}
@@ -354,7 +366,12 @@ def validate_bundle(receipt_raw, bundle_raw):
         else:
             _require(_number(value), "invalid reservation amount")
     _require(reserves["research_slots"] == bundle["counts"]["allocation_fit"], "research allocation count differs")
-    _require(reserves["equity_usd"] == 2000 and reserves["position_cap_usd"] == 500 and reserves["max_slots"] == 4, "reservation account differs")
+    # inside the period the reservations are the registered account's; outside it
+    # they are the publication's own, a positive account whatever its size
+    if bundle["status"] == "recorded":
+        _require(reserves["equity_usd"] == ACCOUNT["equity"] and reserves["position_cap_usd"] == ACCOUNT["equity"] * ACCOUNT["max_position_pct"] / 100 and reserves["max_slots"] == ACCOUNT["max_open_positions"], "reservation account differs")
+    else:
+        _require(reserves["equity_usd"] > 0 and reserves["position_cap_usd"] > 0 and _integer(reserves["max_slots"], 64) and reserves["max_slots"] > 0, "reservation account differs")
     for key in ("open_model_slots", "baseline_slots", "research_slots", "slots_used"):
         _require(_integer(reserves[key], 64), "invalid reservation slots")
     _require(reserves["baseline_slots"] == len(reserves["baseline_symbols"]) and reserves["open_model_slots"] >= len(reserves["open_symbols"]), "reservation symbols differ")
@@ -362,7 +379,9 @@ def validate_bundle(receipt_raw, bundle_raw):
     fits = [r for r in rows if r["research"]["allocation_fit"]]
     _require(not ({r["ticker"] for r in fits} & set(reserves["open_symbols"] + reserves["baseline_symbols"])), "research repeats reserved symbol")
     _require(_cents(reserves["research_principal_usd"]) == sum(_cents(r["research"]["principal_usd"]) for r in fits) and _cents(reserves["research_risk_usd"]) == sum(_cents(r["research"]["risk_usd"]) for r in fits), "research totals differ")
-    available = max(0, 200000 - _cents(reserves["open_model_principal_usd"]))
+    # the model principal is the receipt's own stated equity: the registered
+    # account's inside the period (pinned above), the publication's outside it
+    available = max(0, _cents(reserves["equity_usd"]) - _cents(reserves["open_model_principal_usd"]))
     baseline = _cents(reserves["baseline_principal_usd"])
     _cents(reserves["baseline_risk_usd"])
     _require(baseline <= available, "baseline exceeds model principal")

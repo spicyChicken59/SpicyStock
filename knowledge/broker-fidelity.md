@@ -187,6 +187,35 @@ item 6 below, on which the sources disagree.
     2027, Fidelity Trader+ replacing it. Whether the web ticket and the mobile
     app both offer a Stop Limit with an OTO secondary is unconfirmed.
 
+## The first actual orders, 4 November 2026 (the owner's words and screen)
+
+Mo placed his first real trades on 4 November 2026 and showed the Fidelity
+activity screen. What it establishes, labelled as this note labels everything:
+
+- **The owner's words** — the trades sit in two Fidelity IRAs (a Rollover IRA
+  and a Roth IRA), read together as one $30,000 model account from that date.
+  The quantities, prices and amounts are Mo's own and are recorded nowhere in
+  this repository: the page's **Record a trade I made on this name** keeps them
+  in his browser alone.
+- **Fidelity's screen** — each position was entered as a separate **Limit**
+  buy (Day) and a separate **Stop Loss** sell (Good 'til Canceled), not as the
+  OTO ticket the plan disclosure prints; one limit buy was cancelled and
+  re-entered at a higher limit before it filled; two plain limit buys filled
+  under their limit price. The orders show as filled, cancelled and open on the
+  same screen with their fill prices.
+- **Inferred** — a separate GTC sell stop on shares bought the same day was
+  accepted on each name, which item 6 of the unconfirmed list below asked to
+  check (it is not yet a confirmation of the OTO form's behaviour).
+- **SpicyStock's advice** — none of the three names carried a SpicyStock
+  ticket (the 3 November publication listed each as mechanical grade A under a
+  YELLOW market that admits A+ alone, unreviewed); recording a trade on a
+  listed name grants no entry permission and changes nothing published, and the
+  model's sell-half level and day-3/day-5 sessions beside it are reference
+  arithmetic from the record's own rules, not a decision that an exit is due.
+
+Still unconfirmed after this: everything in the next section about the OTO
+ticket itself, since no OTO was placed.
+
 ## Unconfirmed, to check in Fidelity's ticket before the first order
 
 - The web ticket and the mobile app each offer Stop Limit with a conditional

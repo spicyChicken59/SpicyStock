@@ -1,10 +1,12 @@
 # SpicyStock — working notes
 
 **Active goal (updated 17 October 2026):** [PRODUCT_GOAL.md](PRODUCT_GOAL.md) is the
-current product direction and milestone contract. Mo uses a $2,000 cash
-account and America/Chicago time; the broker is Fidelity (17 October 2026,
+current product direction and milestone contract. Mo uses two Fidelity IRAs
+read as one $30,000 model account (4 November 2026; a $2,000 cash account before
+it) and America/Chicago time; the broker is Fidelity (17 October 2026,
 `knowledge/broker-fidelity.md`). New production
-workflow sizing is versioned at $2,000 / 0.5%; historical publications and local
+workflow sizing is versioned at $30,000 / 0.5% from the 4 November 2026 session
+($2,000 / 0.5% before it); historical publications and local
 default model assumptions retain their own values. Mo explicitly authorizes an
 ongoing choose/build/test/review/merge/verify loop until manually stopped. Resume
 unfinished work, choose the next useful independent milestone, and record actual

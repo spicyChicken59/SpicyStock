@@ -263,7 +263,7 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
     // item, uses the prior eleven report fields. This is no publication change.
     const legacyRaw = await page.evaluate(() => {
       const item = SCStock.handoff.list()[0]; item.version = 1; delete item.kind;
-      for (const key of ['average_exit_price', 'entry_fees', 'exit_fees']) delete item.report[key];
+      for (const key of ['average_exit_price', 'entry_fees', 'exit_fees', 'account_label', 'stop_price']) delete item.report[key];
       const raw = JSON.stringify({ version: 1, items: [item] }); localStorage.setItem(SCStock.handoff.KEY, raw); return raw;
     });
     await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'));

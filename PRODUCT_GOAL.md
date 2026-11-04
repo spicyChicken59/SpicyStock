@@ -4,9 +4,12 @@ Set 9 October 2026; continuation expanded by Mo on 10 October 2026.
 This is the active product goal and release sequence.
 
 Build a dependable morning workspace for an educated first real-money trade,
-then make that preparation repeatable. Mo uses a **$2,000 cash account**
-and **America/Chicago** time. The broker is **Fidelity** (Mo, 17 October
-2026); `knowledge/broker-fidelity.md` maps a ticket onto its order entry. The desired
+then make that preparation repeatable. Mo uses **two Fidelity IRAs read as one
+$30,000 model account** (Mo, 4 November 2026: "about 30k to play with"; a
+**$2,000 cash account** before that date, which every publication measured
+before it keeps) and **America/Chicago** time. The broker is **Fidelity** (Mo,
+17 October 2026); `knowledge/broker-fidelity.md` maps a ticket onto its order
+entry and records the first actual orders. The desired
 personal outcome is a first profitable trade; product acceptance is based on
 verifiable data, usable decisions and accurately measured outcomes, not a
 promise that a particular trade will win.
@@ -196,10 +199,13 @@ No actual personal trade or profit is established by these rehearsals.
   receives public research and stores optional private notes locally.
 - The product does not place broker orders. Broker quotes, spread, order terms,
   available settled cash and actual fills need explicit confirmation.
-- For the first release, scheduled model sizing uses $2,000 equity, 0.5% base
+- For the first release, scheduled model sizing used $2,000 equity, 0.5% base
   risk ($10 before strategy reductions), a 25% per-name cap ($500), and the
-  existing four-slot ceiling. These are model limits, not observed buying power.
-  A stop price does not cap the loss from a gap or slippage.
+  existing four-slot ceiling. From the 4 November 2026 session it is $30,000
+  equity at the same 0.5% ($150 before reductions) and 25% cap ($7,500), the
+  owner's word; the percentage is a one-line change in `evening.yml` if the
+  owner moves it inside Bonde's 0.25-1% band. These are model limits, not
+  observed buying power. A stop price does not cap the loss from a gap or slippage.
 - Cash-account preparation uses settled cash. Do not infer it from equity or
   immediately recycle expected sale proceeds. Settlement guidance must name
   its basis; the broker remains the source of the actual available amount.
@@ -231,7 +237,9 @@ commitment; cash/slots are never double-spent; known excluded events carry a
 source and reason; delayed schedules cannot publish the next incomplete session
 or overwrite newer evidence; phone and desktop show the same actionable state;
 tests and public asset verification pass. A subsequent real publication must
-demonstrate the new $2,000 sizing before this is accepted on live data.
+demonstrate the new $2,000 sizing before this is accepted on live data (it did,
+on 9 October 2026; the $30,000 sizing of 4 November 2026 awaits its first
+publication the same way).
 
 ### 2. A verified morning check
 
@@ -646,3 +654,19 @@ with version 1 and absent blocks still readable and every published receipt
 replayed; and the four manual preparation checks now belong to one plan,
 proved through a real clock crossing rather than the control that timed out.
 No ticket, quote, broker fact or trade follows from either change.
+
+## First actual trades, 4 November 2026
+
+Mo placed his first real trades on 4 November 2026, in two Fidelity IRAs, on
+three names the 3 November publication listed as mechanical grade A under a
+YELLOW market that admits A+ alone: none carried a SpicyStock ticket, and none
+was reviewed by the chart reader. Each was a separate limit buy and a GTC sell
+stop-loss, not the OTO ticket the plan disclosure prints; one plain limit filled
+under its limit. The quantities, prices and account labels are Mo's own and stay
+off this repository: the page's **Record a trade I made on this name** keeps
+them in his browser alone, bound to the publication's row, with the model's
+sell-half level and day-3/day-5 sessions beside them as reference arithmetic
+that decides nothing (`tools/private_results.py` re-derives the same figures
+from the downloaded backup). This is the first observed owner execution; it is
+not a SpicyStock ticket's fill, not a model outcome, and establishes no result
+until the trades are closed and reported.

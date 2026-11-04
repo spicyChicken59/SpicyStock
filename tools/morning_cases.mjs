@@ -40,7 +40,9 @@ export async function checkMorning({ browser, base, data, open, check, eq, shots
       }));
       eq('account mismatch is prominent', await text(page, 'headline'), 'Account sizing needs an update');
       check('published 10k quantity is explicitly incompatible', (await text(page, 'sizing')).includes('$10,000') && (await text(page, 'sizing')).includes('Do not copy these quantities'));
+      // the fixture measured a September session, read against the $2,000 reference of its day (the $30,000 reference begins with the 4 November 2026 session; tools/owner_trade_cases.mjs drives that branch)
       check('reference is the 2k cash account and bounded baseline', (await page.locator('.ss-morning__reference').textContent()).includes('$2,000 cash-account reference · $10 planned risk (0.5%) · $500 position cap (25%)'));
+      eq('the reference is chosen by the session the publication measured', await page.evaluate(() => [SCStock.morning.profileFor(SCStock.data.run.session).equity, SCStock.morning.profileFor('2026-11-04').equity, SCStock.morning.referenceWords(SCStock.morning.profileFor('2026-11-04'))]), [2000, 30000, '$30,000 cash-account reference · $150 planned risk (0.5%) · $7,500 position cap (25%)']);
       eq('settled cash is unknown initially', await page.locator('#morning-cash').inputValue(), '');
       check('unknown cash is visible while checklist is closed', (await text(page, 'cash')).includes('unknown'));
       await page.locator('.ss-morning__prep summary').focus();

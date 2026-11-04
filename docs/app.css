@@ -804,6 +804,8 @@ p.sc-hint.ss-order__broker { color: var(--sc-text-2); }
 /* a copy the clock refused: said where the reader was looking, not where the
    button was -- catching the page up rebuilds that surface in the same breath */
 .ss-action__refused { margin: 0; font-size: var(--sc-text-sm); font-weight: 500; color: var(--sc-heading); }
+.ss-action__own { flex: 1 1 100%; display: flex; flex-direction: column; gap: 0.25rem; }
+.ss-action__own > p[hidden] { display: none; }
 
 
 /* Continuity: reuse cards/fields; no portfolio or account metrics. */

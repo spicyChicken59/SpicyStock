@@ -13,25 +13,32 @@
     cancelled_quantity: 'Unfilled entry shares cancelled', cancelled_at: 'Remainder cancellation time',
     exited_quantity: 'Cumulative filled shares sold / exited', average_exit_price: 'Average exit fill price ($)', exited_at: 'Latest exit time',
     entry_fees: 'Actual total entry fees ($)', exit_fees: 'Actual total exit fees ($)',
-    protected_quantity: 'Current broker-confirmed protective shares', protection_confirmed_at: 'Protection checked by you at'
+    protected_quantity: 'Current broker-confirmed protective shares', protection_confirmed_at: 'Protection checked by you at',
+    account_label: 'Broker account (your own label, e.g. Rollover IRA)', stop_price: 'Protective stop price at the broker ($)'
   };
   const groups = [
+    ['Your account', ['account_label']],
     ['Entry submission', ['submitted_quantity', 'submitted_at']],
     ['Entry fills', ['filled_quantity', 'average_price', 'filled_at']],
     ['Unfilled entry cancellation', ['cancelled_quantity', 'cancelled_at']],
     ['Exits after entry', ['exited_quantity', 'average_exit_price', 'exited_at']],
     ['Actual transaction costs', ['entry_fees', 'exit_fees']],
-    ['Protective order at the broker', ['protected_quantity', 'protection_confirmed_at']]
+    ['Protective order at the broker', ['stop_price', 'protected_quantity', 'protection_confirmed_at']]
   ];
+  const DECIMAL_FIELDS = ['average_price', 'average_exit_price', 'entry_fees', 'exit_fees', 'stop_price'];
+  const SCAN_WORDS = { burst: '4% scan', dollar: 'dollar scan alone', both: '4% and dollar scans' };
   const money = value => '$' + (BigInt(value) / 100n).toLocaleString('en-US') + '.' + String(BigInt(value) % 100n).padStart(2, '0');
   const clock = value => value ? new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', dateStyle: 'medium', timeStyle: 'long' }).format(new Date(value)) : 'Not reported';
   const amount = value => value === null || value === undefined ? 'Unknown' : String(value);
-  let host = null, selected = null, editing = null, research = null, dirty = false, busy = false, timeHelper = null;
+  let host = null, selected = null, editing = null, research = null, owner = null, dirty = false, busy = false, timeHelper = null;
   let backupPreview = null, backupReading = false, backupGeneration = 0;
   const independent = item => item && item.kind === 'independent_research';
-  const ticker = item => independent(item) ? item.source.ticker : item.plan.ticker;
-  const publication = item => independent(item) ? item.source.publication : item.publication;
-  const session = item => independent(item) ? item.source.publication.measured_session : item.publication.session;
+  const ownerTrade = item => item && item.kind === 'owner_trade';
+  const reportOnly = item => independent(item) || ownerTrade(item);
+  const ticker = item => reportOnly(item) ? item.source.ticker : item.plan.ticker;
+  const publication = item => reportOnly(item) ? item.source.publication : item.publication;
+  const session = item => independent(item) ? item.source.publication.measured_session : reportOnly(item) ? item.source.publication.session : item.publication.session;
+  const kindWords = item => independent(item) ? 'independent execution report' : ownerTrade(item) ? 'your own trade' : 'planned handoff';
   function node(tag, attrs, text) {
     const item = d.createElement(tag);
     Object.entries(attrs || {}).forEach(([key, value]) => item.setAttribute(key, value));
@@ -145,7 +152,7 @@
   }
   function loadEditor(item) {
     closeTimeHelper();
-    editing = item; research = null; dirty = false;
+    editing = item; research = null; owner = null; dirty = false;
     api.handoff.FIELDS.forEach(key => { host.querySelector('[data-handoff-field="' + key + '"]').value = item && item.report[key] !== null ? String(item.report[key]) : ''; });
     host.querySelector('[data-handoff-delete-confirm]').checked = false;
   }
@@ -156,11 +163,11 @@
     selected = id; loadEditor(item); message(''); update();
   }
   async function saveReport() {
-    if (busy || timeHelper || !editing && !research) return;
-    const id = editing && editing.id, revision = editing && editing.revision, pending = research;
+    if (busy || timeHelper || !editing && !research && !owner) return;
+    const id = editing && editing.id, revision = editing && editing.revision, pending = research || owner;
     const fields = Object.fromEntries(api.handoff.FIELDS.map(key => [key, host.querySelector('[data-handoff-field="' + key + '"]').value]));
     busy = true; update();
-    const result = pending ? await api.handoff.reportResearch(pending.request, fields, null) : await api.handoff.report(id, fields, revision);
+    const result = research ? await api.handoff.reportResearch(research.request, fields, null) : owner ? await api.handoff.reportOwner(owner.request, fields, null) : await api.handoff.report(id, fields, revision);
     busy = false;
     if (result.ok) { selected = result.item.id; loadEditor(result.item); message('Your cumulative broker report was saved on this device. No order or protection was placed.'); }
     else {
@@ -198,11 +205,33 @@
     update(); revealEditor(); return { ok: true };
   }
   function cancelResearch() {
-    if (!research || busy) return;
-    const prior = research.previousSelection, item = prior && api.handoff.find(prior);
+    if (!research && !owner || busy) return;
+    const pending = research || owner, prior = pending.previousSelection, item = prior && api.handoff.find(prior);
     selected = item ? item.id : null; loadEditor(item || null);
-    message('Unsaved research report discarded. No private record or broker order was created.'); update();
+    message(research ? 'Unsaved research report discarded. No private record or broker order was created.' : 'Unsaved record of your own trade discarded. No private record or broker order was created.'); update();
     host.querySelector('summary').focus();
+  }
+  // A trade the owner made on a name the current record lists without a ticket:
+  // the listed row is read off the current publication inside the save, the
+  // desk is opened on the blank report, and nothing is saved until the owner
+  // enters a positive fill and saves explicitly.
+  function openOwner(request) {
+    const fail = error => ({ ok: false, error });
+    if (!host || !api.handoff.inspectOwner) return fail('Private trade recording is unavailable in this page.');
+    if (busy) return fail('A private save is in progress. Your current report has been kept; wait before recording another trade.');
+    const checked = api.handoff.inspectOwner(request);
+    if (!checked.ok) return checked;
+    const reveal = () => { if (api.morning && typeof api.morning.open === 'function') api.morning.open(); revealEditor(); };
+    if (owner && JSON.stringify(owner.source) === JSON.stringify(checked.source)) { owner.request = JSON.parse(JSON.stringify(request)); reveal(); return { ok: true }; }
+    if (dirty || busy || timeHelper) return fail('Your current broker report has unsaved entries. Apply or cancel an open time helper, then save or explicitly discard the report before recording another trade; those entries have been kept.');
+    const source = checked.source, id = source.publication.sha256 + ':owner:' + source.stage + ':' + source.ticker;
+    const existing = api.handoff.find(id);
+    if (existing) { choose(id); message('Your trade on this name in this record already has a private record. Correct its broker facts here; nothing was replaced.'); reveal(); return { ok: true }; }
+    const previousSelection = research ? research.previousSelection : owner ? owner.previousSelection : selected;
+    loadEditor(null); selected = null; research = null;
+    owner = { request: JSON.parse(JSON.stringify(request)), source: JSON.parse(JSON.stringify(source)), previousSelection };
+    message('Not saved. Enter the positive fill and quantity actually submitted at your broker, your account label and your protective stop, then save explicitly. All other blank facts remain unknown.');
+    update(); reveal(); return { ok: true };
   }
   async function copyDraft() {
     if (!editing) return;
@@ -239,7 +268,7 @@
     host.querySelector('[data-handoff-backup-confirm]').disabled = busy || backupReading || !backupPreview;
     host.querySelector('[data-handoff-backup-cancel]').disabled = busy;
     host.querySelector('[data-handoff-backup-preview]').hidden = !backupPreview;
-    host.querySelector('[data-handoff-backup-warning]').textContent = backupPreview && (dirty || research || timeHelper)
+    host.querySelector('[data-handoff-backup-warning]').textContent = backupPreview && (dirty || research || owner || timeHelper)
       ? 'Your report has unsaved entries. Save or explicitly discard that report before restoring; selecting this file has kept those entries.' : '';
   }
   function clearBackupPreview() {
@@ -259,10 +288,10 @@
   function renderBackupPreview(summary) {
     facts(host.querySelector('[data-handoff-backup-facts]'), [
       ['Saved records', summary.count], ['Planned handoffs', summary.planned_count],
-      ['Independent execution reports', summary.independent_count], ['Original file version', summary.version]
+      ['Independent execution reports', summary.independent_count], ['Your own trades', summary.owner_count || 0], ['Original file version', summary.version]
     ]);
     host.querySelector('[data-handoff-backup-records]').replaceChildren(...summary.records.map(record =>
-      node('li', {}, record.ticker + ' · ' + (record.kind === 'independent_research' ? 'independent execution report' : 'planned handoff') +
+      node('li', {}, record.ticker + ' · ' + (record.kind === 'independent_research' ? 'independent execution report' : record.kind === 'owner_trade' ? 'your own trade' : 'planned handoff') +
         ' · original scan ' + record.session + ' · published ' + clock(record.published_at) +
         ' · first saved ' + clock(record.created_at) + ' · last saved ' + clock(record.updated_at))));
   }
@@ -358,11 +387,15 @@
     references.append(node('summary', {}, 'Original research references'), node('p', { class: 'sc-hint', 'data-handoff-research-digests': '' }));
     panel.append(node('h3', { id: 'handoff-title', tabindex: '-1' }), node('p', { class: 'sc-hint', 'data-handoff-identity': '' }),
       node('p', { class: 'sc-hint', 'data-handoff-research-source': '' }), references,
+      node('p', { class: 'sc-hint', 'data-handoff-owner-source': '' }),
       node('dl', { class: 'sc-facts', 'data-handoff-summary': '' }), node('p', { class: 'sc-hint', 'data-handoff-protection': '' }),
       node('ul', { class: 'ss-notes', 'data-handoff-warnings': '' }));
     const exitReview = node('section', { 'data-handoff-exit-section': '' });
     exitReview.append(node('h4', {}, 'Whole-share exit check'), node('p', { class: 'sc-hint', 'data-handoff-exit-review': '' }));
     panel.append(exitReview);
+    const reference = node('section', { 'data-handoff-exit-reference': '', hidden: '' });
+    reference.append(node('h4', {}, 'Model exit reference for your own trade'), node('p', { class: 'sc-hint', 'data-handoff-exit-reference-text': '' }));
+    panel.append(reference);
     const completed = node('section', { 'data-handoff-completed': '', 'aria-labelledby': 'handoff-result-title' });
     completed.append(node('h4', { id: 'handoff-result-title' }, 'Reported completed result'),
       node('p', { class: 'sc-hint', 'data-handoff-result-status': '', role: 'status' }),
@@ -388,11 +421,13 @@
       const group = node('fieldset', { class: 'ss-handoff__fields' }); group.append(node('legend', {}, legend));
       if (legend === 'Exits after entry') group.append(node('p', { class: 'sc-hint' }, 'Explicit 0 exits is needed to calculate remaining reported holdings. Leave blank if you have not checked.'));
       if (legend === 'Actual transaction costs') group.append(node('p', { class: 'sc-hint' }, 'Enter actual total fees from your broker for entry and exit separately. Blank is unknown; enter 0 only for confirmed zero fees. The draft fee buffer is an estimate and is never used as an actual cost.'));
-      if (legend === 'Protective order at the broker') group.append(node('p', { class: 'sc-hint' }, 'Check active protective sell quantity against remaining holdings after fills or exits. Draft instructions never confirm a live stop.'));
+      if (legend === 'Your account') group.append(node('p', { class: 'sc-hint' }, 'Your own label for the broker account this trade sits in. It is a note on this device, never an account connection.'));
+      if (legend === 'Protective order at the broker') group.append(node('p', { class: 'sc-hint' }, 'Check active protective sell quantity against remaining holdings after fills or exits. Draft instructions never confirm a live stop. The stop price is the one standing at your broker; a planned handoff’s published stop stays the plan’s.'));
       keys.forEach(key => {
         const time = key.endsWith('_at'), id = 'handoff-' + key;
         const field = node('div', { class: 'ss-handoff__field' });
-        const input = node('input', { id, class: 'sc-input', type: 'text', 'data-handoff-field': key, autocomplete: 'off', spellcheck: 'false', placeholder: time ? 'Unknown; include Z or ±HH:MM' : 'Unknown', ...(time ? {} : { inputmode: ['average_price', 'average_exit_price', 'entry_fees', 'exit_fees'].includes(key) ? 'decimal' : 'numeric' }) });
+        const input = node('input', { id, class: 'sc-input', type: 'text', 'data-handoff-field': key, autocomplete: 'off', spellcheck: 'false', placeholder: time ? 'Unknown; include Z or ±HH:MM' : 'Unknown',
+          ...(time || key === 'account_label' ? {} : { inputmode: DECIMAL_FIELDS.includes(key) ? 'decimal' : 'numeric' }), ...(key === 'account_label' ? { maxlength: String(api.handoff.LABEL_MAX) } : {}) });
         input.addEventListener('input', () => { dirty = true; refreshEditorStatus(); });
         field.append(node('label', { for: id }, labels[key]), input);
         if (time) {
@@ -423,16 +458,33 @@
   function refreshEditorStatus() {
     if (!host) return;
     refreshBackup();
-    const current = api.handoff.find(selected || research && research.existingId), status = api.handoff.status(), conflict = editing && (!current || current.revision !== editing.revision);
+    const pending = research || owner;
+    const current = api.handoff.find(selected || pending && pending.existingId), status = api.handoff.status(), conflict = editing && (!current || current.revision !== editing.revision);
     host.querySelector('[data-handoff-editor-status]').textContent = busy ? 'Saving on this device…' : conflict ? 'The saved handoff changed in another view. Your edits were kept. Load its saved report before making a new correction.' : timeHelper ? 'Apply or cancel the Chicago time entry before saving. The event field and saved report are unchanged until you apply and save explicitly.' : research
       ? 'Unsaved independent trade report. Saving requires a positive actual fill and the corresponding submitted quantity. Blank costs, prices, times and exits remain unknown; research values are never filled in for you.'
+      : owner ? 'Unsaved record of your own trade. Saving requires a positive actual fill and the corresponding submitted quantity. Blank costs, prices, times, exits, account and stop remain unknown; the record’s own numbers are never filled in as your facts.'
       : dirty ? 'Unsaved correction — changes are not yet in your private record.' : 'Blank fields remain unknown. Reports stay editable after the entry window or an event restriction.';
-    host.querySelector('[data-handoff-save]').disabled = busy || !!timeHelper || !editing && !research || !status.available;
+    host.querySelector('[data-handoff-save]').disabled = busy || !!timeHelper || !editing && !research && !owner || !status.available;
     host.querySelector('[data-handoff-reload]').disabled = busy || !current;
     host.querySelector('[data-handoff-delete]').disabled = busy || !!timeHelper || !current || !status.available || !host.querySelector('[data-handoff-delete-confirm]').checked;
-    host.querySelector('[data-handoff-cancel]').hidden = !research;
+    host.querySelector('[data-handoff-cancel]').hidden = !research && !owner;
     host.querySelector('[data-handoff-cancel]').disabled = busy;
     host.querySelectorAll('[data-handoff-field], [data-handoff-now], [data-handoff-chicago]').forEach(input => { input.disabled = busy; });
+  }
+  // The listed row, in the record's own words: where it ranked, what it was
+  // graded, which scan found it, what the admission said and why the run wrote
+  // no ticket. A description of the record, never a permission.
+  function ownerSourceWords(source) {
+    const row = source.row, stage = source.stage === 'bursts' ? 'Bursts' : 'Setting up';
+    const listing = 'The record listed it under ' + stage + (row.rank !== null ? ' at rank ' + row.rank : '') +
+      (row.grade !== null ? ', mechanical grade ' + row.grade + (row.score !== null ? ' (' + row.score + ')' : '') : '') +
+      (row.scan !== null ? ', found by the ' + (SCAN_WORDS[row.scan] || row.scan) : '') + '.';
+    const admission = row.admitted === false ? ' The record’s discovery admission stopped this name.' : row.admitted === true ? ' The record’s discovery admission passed this name.' : '';
+    return 'Your own trade on ' + source.ticker + ', not a SpicyStock ticket or model fill. ' + listing + admission + ' Recorded status: ' + row.status.replace(/_/g, ' ') + (row.reason ? ' — ' + row.reason : '') +
+      '. Recording your trade grants no entry permission and changes nothing published; the record’s listing is kept beside your facts.';
+  }
+  function renderOwnerIdentity(source) {
+    host.querySelector('[data-handoff-owner-source]').textContent = ownerSourceWords(source);
   }
   function renderResearchIdentity(source) {
     host.querySelector('[data-handoff-research-source]').textContent = 'Independent execution report only. Original production baseline: ' +
@@ -445,26 +497,31 @@
     if (!host || !api.handoff) return;
     const items = api.handoff.list(), status = api.handoff.status(), select = host.querySelector('#handoff-select');
     host.querySelector('[data-handoff-storage]').textContent = status.error || 'Saved on this device only; clearing this site’s browser data removes these private records. There is no cloud backup.';
-    host.querySelector('[data-handoff-empty]').textContent = !items.length ? status.error ? 'Saved records could not be read; this is not a claim that you hold no position.' : 'No personal handoff or trade report saved. Use a calculated cash preview for a draft, or a verified research row to record an already executed trade. No submitted order or holdings are inferred.' : '';
-    const signature = JSON.stringify(items.map(item => [item.id, ticker(item), independent(item) ? 'independent' : item.draft.quantity, session(item)]));
+    host.querySelector('[data-handoff-empty]').textContent = !items.length ? status.error ? 'Saved records could not be read; this is not a claim that you hold no position.' : 'No personal handoff or trade report saved. Use a calculated cash preview for a draft, a verified research row to record an already executed trade, or a listed stock’s Record a trade I made on this name for your own trade. No submitted order or holdings are inferred.' : '';
+    const signature = JSON.stringify(items.map(item => [item.id, ticker(item), reportOnly(item) ? item.kind : item.draft.quantity, session(item)]));
     if (select.dataset.choices !== signature) {
-      select.replaceChildren(...items.map(item => node('option', { value: item.id }, ticker(item) + ' · ' + (independent(item) ? 'independent execution report' : item.draft.quantity + ' planned') + ' · scan ' + session(item))));
+      select.replaceChildren(...items.map(item => node('option', { value: item.id }, ticker(item) + ' · ' + (reportOnly(item) ? kindWords(item) : item.draft.quantity + ' planned') + ' · scan ' + session(item))));
       select.dataset.choices = signature;
     }
     host.querySelector('[data-handoff-recovery]').hidden = !status.error && !api.handoff.recovery().proposed;
     refreshBackup();
-    host.querySelector('[data-handoff-selected]').hidden = !editing && !research;
-    host.setAttribute('data-handoff-mode', research ? 'independent-unsaved' : editing && independent(editing) ? 'independent_research' : 'planned_handoff');
-    host.querySelector('[data-handoff-readback]').hidden = !!research || independent(editing);
-    host.querySelector('[data-handoff-remove-section]').hidden = !!research;
+    const pending = research || owner;
+    host.querySelector('[data-handoff-selected]').hidden = !editing && !pending;
+    host.setAttribute('data-handoff-mode', research ? 'independent-unsaved' : owner ? 'owner-unsaved' : editing && reportOnly(editing) ? editing.kind : 'planned_handoff');
+    host.querySelector('[data-handoff-readback]').hidden = !!pending || reportOnly(editing);
+    host.querySelector('[data-handoff-remove-section]').hidden = !!pending;
     host.querySelector('[data-handoff-research-source]').hidden = !research && !independent(editing);
     host.querySelector('[data-handoff-research-references]').hidden = !research && !independent(editing);
-    for (const selector of ['[data-handoff-summary]', '[data-handoff-protection]', '[data-handoff-warnings]', '[data-handoff-exit-section]', '[data-handoff-completed]']) host.querySelector(selector).hidden = !!research;
-    if (research) {
+    host.querySelector('[data-handoff-owner-source]').hidden = !owner && !ownerTrade(editing);
+    host.querySelector('[data-handoff-exit-reference]').hidden = !!pending || !ownerTrade(editing);
+    for (const selector of ['[data-handoff-summary]', '[data-handoff-protection]', '[data-handoff-warnings]', '[data-handoff-exit-section]', '[data-handoff-completed]']) host.querySelector(selector).hidden = !!pending;
+    if (pending) {
       select.value = ''; select.disabled = true;
-      host.querySelector('#handoff-title').textContent = research.source.ticker + ' · unsaved independent trade report';
-      host.querySelector('[data-handoff-identity]').textContent = 'Original scan ' + research.source.publication.measured_session + ' · applicable ' + research.source.publication.applicable_session + ' · published ' + clock(research.source.publication.published_at) + '. No private record has been saved.';
-      renderResearchIdentity(research.source);
+      host.querySelector('#handoff-title').textContent = pending.source.ticker + (research ? ' · unsaved independent trade report' : ' · unsaved record of your own trade');
+      host.querySelector('[data-handoff-identity]').textContent = research
+        ? 'Original scan ' + research.source.publication.measured_session + ' · applicable ' + research.source.publication.applicable_session + ' · published ' + clock(research.source.publication.published_at) + '. No private record has been saved.'
+        : 'Scan ' + owner.source.publication.session + ' · published ' + clock(owner.source.publication.published_at) + ' · rules ' + owner.source.publication.rules_version + '. No private record has been saved.';
+      if (research) renderResearchIdentity(research.source); else renderOwnerIdentity(owner.source);
       host.querySelector('[data-handoff-completed]').setAttribute('data-result-state', 'incomplete');
       host.querySelector('[data-handoff-completed]').setAttribute('data-result-outcome', 'unknown');
       host.querySelector('[data-handoff-copy]').disabled = true;
@@ -480,15 +537,19 @@
     host.querySelector('[data-handoff-selected]').hidden = !editing;
     if (!editing) return;
     const item = current || editing, summary = api.handoff.summary(item);
-    const reportOnly = independent(item), pub = publication(item);
-    host.setAttribute('data-handoff-mode', reportOnly ? 'independent_research' : 'planned_handoff');
-    host.querySelector('[data-handoff-readback]').hidden = reportOnly;
-    host.querySelector('[data-handoff-research-source]').hidden = !reportOnly;
-    host.querySelector('[data-handoff-research-references]').hidden = !reportOnly;
-    host.querySelector('#handoff-title').textContent = ticker(item) + (reportOnly ? ' · independent execution report' : ' · personal broker record');
-    host.querySelector('[data-handoff-identity]').textContent = 'Scan ' + session(item) + ' · published ' + clock(pub.published_at) + ' · rules ' + pub.rules_version + ' · saved revision ' + item.revision + '. ' + (reportOnly ? 'Original research evidence is retained; this is your execution report, not a production ticket or model fill.' : 'Original published terms are kept separately from your broker reports.');
-    if (reportOnly) renderResearchIdentity(item.source);
-    facts(host.querySelector('[data-handoff-summary]'), [...(reportOnly ? [] : [
+    const noDraft = reportOnly(item), pub = publication(item);
+    host.setAttribute('data-handoff-mode', noDraft ? item.kind : 'planned_handoff');
+    host.querySelector('[data-handoff-readback]').hidden = noDraft;
+    host.querySelector('[data-handoff-research-source]').hidden = !independent(item);
+    host.querySelector('[data-handoff-research-references]').hidden = !independent(item);
+    host.querySelector('[data-handoff-owner-source]').hidden = !ownerTrade(item);
+    host.querySelector('[data-handoff-exit-reference]').hidden = !ownerTrade(item);
+    host.querySelector('#handoff-title').textContent = ticker(item) + (independent(item) ? ' · independent execution report' : ownerTrade(item) ? ' · your own trade' : ' · personal broker record');
+    host.querySelector('[data-handoff-identity]').textContent = 'Scan ' + session(item) + ' · published ' + clock(pub.published_at) + ' · rules ' + pub.rules_version + ' · saved revision ' + item.revision + '. ' +
+      (independent(item) ? 'Original research evidence is retained; this is your execution report, not a production ticket or model fill.' : ownerTrade(item) ? 'The record’s listing of this name is retained beside your facts; this is your trade, not a SpicyStock ticket or model fill.' : 'Original published terms are kept separately from your broker reports.');
+    if (independent(item)) renderResearchIdentity(item.source);
+    if (ownerTrade(item)) { renderOwnerIdentity(item.source); host.querySelector('[data-handoff-exit-reference-text]').textContent = summary.reference_exits ? summary.reference_exits.message : ''; }
+    facts(host.querySelector('[data-handoff-summary]'), [...(noDraft ? [] : [
       ['Personal draft / published shares', item.draft.quantity + ' / ' + item.plan.order.quantity],
       ['Draft cash at limit including buffer', money(summary.calculation.commitmentCents)], ['Draft price-to-stop risk', money(summary.calculation.riskCents) + ' before fees, gaps and slippage'],
       ['Draft fee buffer (estimate)', money(item.draft.fee_cents)]]),
@@ -500,6 +561,8 @@
       ['Protective shares reported', amount(item.report.protected_quantity)], ['Protection checked by you', clock(item.report.protection_confirmed_at)],
       ['Submission / latest entry fill', clock(item.report.submitted_at) + ' / ' + clock(item.report.filled_at)],
       ['Cancellation / latest exit', clock(item.report.cancelled_at) + ' / ' + clock(item.report.exited_at)],
+      ['Broker account (your label)', item.report.account_label === null ? 'Unknown' : item.report.account_label],
+      ['Protective stop price reported', item.report.stop_price === null ? 'Unknown' : '$' + item.report.stop_price],
       ['Report saved on this device', clock(item.report_updated_at)]
     ]);
     const result = summary.completed_result, complete = result && result.state === 'complete';
@@ -515,14 +578,14 @@
       ['Reported net result', result.net_display],
       // From averages: how far under the stop the average exit was, and how
       // much less the shares fetched than at the stop -- never which shares.
-      ...(summary.beyond_stop ? [['Average exit below the published stop', summary.beyond_stop.per_share_display + ' a share on average · the ' + summary.beyond_stop.quantity + ' reported ' + (summary.beyond_stop.quantity === 1 ? 'share' : 'shares') + ' exited for ' + summary.beyond_stop.total_display + ' less than at the stop (a gap or slippage)']] : [])
+      ...(summary.beyond_stop ? [[ownerTrade(item) ? 'Average exit below your reported stop' : 'Average exit below the published stop', summary.beyond_stop.per_share_display + ' a share on average · the ' + summary.beyond_stop.quantity + ' reported ' + (summary.beyond_stop.quantity === 1 ? 'share' : 'shares') + ' exited for ' + summary.beyond_stop.total_display + ' less than at the stop (a gap or slippage)']] : [])
     ] : []);
     const protection = { unknown: 'Protection is unknown. Check your remaining holdings and active protective orders at your broker.', matched: 'Reported protective quantity matches reported remaining holdings. SpicyStock does not verify an active stop.', under: 'Reported protective quantity is below remaining reported holdings. Reconcile protection at your broker.', over: 'Reported protective quantity exceeds remaining reported holdings. Reconcile the sell quantity at your broker.' };
     host.querySelector('[data-handoff-protection]').textContent = protection[summary.protection] || 'Protection needs reconciliation at your broker.';
     host.querySelector('[data-handoff-warnings]').replaceChildren(...summary.warnings.map(text => node('li', {}, text)));
     host.querySelector('[data-handoff-exit-review]').textContent = summary.exit_review.message;
     host.querySelector('[data-handoff-text]').textContent = api.handoff.readback(item);
-    host.querySelector('[data-handoff-exits]').replaceChildren(...(reportOnly ? [] : item.plan.exit_schedule.map(row => node('li', {}, row.date + ' · ' + row.instruction))));
+    host.querySelector('[data-handoff-exits]').replaceChildren(...(noDraft ? [] : item.plan.exit_schedule.map(row => node('li', {}, row.date + ' · ' + row.instruction))));
     const available = current ? api.handoff.availability(current) : { ok: false, error: 'This handoff is no longer available in saved storage.' };
     host.querySelector('[data-handoff-copy]').disabled = !available.ok;
     host.querySelector('[data-handoff-copy-status]').textContent = available.ok ? 'Copying only places text on your clipboard. Check cash, live quote, activation and protection at your broker.' : available.error;
@@ -537,7 +600,7 @@
       prepare.addEventListener('click', async () => {
         const input = prepare._intent;
         if (!input || prepare._busy) return;
-        if (dirty || busy || research || timeHelper) {
+        if (dirty || busy || research || owner || timeHelper) {
           section.querySelector('[data-handoff-prepare-status]').textContent = 'Save your current broker report or use Load saved report to discard its edits before preparing a draft.';
           return;
         }
@@ -559,6 +622,7 @@
     const prepare = section.querySelector('[data-handoff-prepare]'), status = api.handoff.status();
     const previous = intent && api.handoff.list().find(item => independent(item)
       ? item.source.publication.data_sha256 === intent.expectedPublication && item.source.evidence.id === intent.referenceId
+      : ownerTrade(item) ? false
       : item.publication.sha256 === intent.expectedPublication && item.plan.reference.id === intent.referenceId);
     const hasReport = previous && previous.report_updated_at !== null;
     prepare._intent = intent ? { key: intent.key, cash: intent.cash, fees: intent.fees, quantity: intent.quantity, expectedPublication: intent.expectedPublication, expectedRevision: previous ? previous.revision : null } : null;
@@ -566,5 +630,5 @@
     prepare.textContent = previous ? hasReport ? 'Broker report already saved' : 'Replace private broker draft' : 'Prepare private broker draft';
     if (hasReport) section.querySelector('[data-handoff-prepare-status]').textContent = 'This exact plan already has a broker report. Open Private broker handoffs to correct it; preparing cannot overwrite it.';
   }
-  api.handoffUI = { mount, update, preview, openResearch };
+  api.handoffUI = { mount, update, preview, openResearch, openOwner };
 })(window);
