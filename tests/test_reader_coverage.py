@@ -280,6 +280,25 @@ def test_a_refused_name_a_veto_already_refuses_cost_no_ticket(vetoes, admissible
     assert (reads["refused_admissible"], reads["verdict"]) == (admissible, verdict), reads
 
 
+def test_a_refused_name_the_admission_stopped_cost_no_ticket_either():
+    """A dollar-only A without a range-expansion, higher-volume day is planned
+    nowhere (src/admission.py), so its refused reading is not an admissible
+    refusal: the same rule the planner reads, one place each side. A row from
+    before the rule carries no block and still counts."""
+    from src import admission
+    stopped = {"ticker": "T0", "grade": "A+", "vetoes": [], "scan": "dollar",
+               "quality": {"checks": [{"letter": "RE", "passed": False}, {"letter": "VOL", "passed": True}]},
+               "claude": {"source": "fallback", "error": "src.ReaderAuthorityError: refused"}}
+    stopped["admission"] = admission.block(stopped)
+    assert stopped["admission"]["admitted"] is False
+    rows = [stopped] + [{"ticker": f"T{i}", "grade": "B", "vetoes": [], "claude": {"source": "claude"}} for i in range(1, 4)]
+    reads = reader_coverage.reads(rows, admitted_grades=tuple(pipeline.TRADE_GRADES), refusal_fraction=0.25, refusal_min=1)
+    assert (reads["refused_names"], reads["refused_admissible"], reads["verdict"]) == (["T0"], [], "tolerated"), reads
+    before = {k: v for k, v in stopped.items() if k != "admission"}
+    reads = reader_coverage.reads([before] + rows[1:], admitted_grades=tuple(pipeline.TRADE_GRADES), refusal_fraction=0.25, refusal_min=1)
+    assert (reads["refused_admissible"], reads["verdict"]) == (["T0"], "partial"), reads
+
+
 @pytest.mark.parametrize("fraction,refused,requested,verdict", [
     (1.0, 4, 4, "unavailable"),   # nothing accepted is never tolerated, whatever the limit
     (1.0, 3, 4, "tolerated"), (0.25, 1, 3, "partial"), (0, 1, 4, "partial"), (0.25, 3, 12, "tolerated"),

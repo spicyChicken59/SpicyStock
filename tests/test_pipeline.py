@@ -724,6 +724,29 @@ def test_a_dollar_only_a_without_expansion_is_research_only_whatever_the_reader_
     assert "// discovery admission" in _mail_text(fake_resend.sent[-1]["html"]) and data["run"]["admission"]["sentence"] in _mail_text(fake_resend.sent[-1]["html"])
 
 
+def test_the_planner_itself_refuses_a_stopped_name_even_without_the_reader():
+    """The admission gate is the planner's own (pipeline._make_plans), so a
+    replay that asks no reader -- tools/historical_backtest.py runs it with
+    require_reader False -- still plans nothing for a stopped name; the block is
+    what it reads, so a forged block admits (which report.validate() refuses
+    elsewhere)."""
+    import copy, json
+    from datetime import date
+    from src import plan, pipeline as pl
+    data = json.loads((Path(__file__).parent / "fixtures" / "page" / "full.json").read_text())
+    rows = {b["ticker"]: copy.deepcopy(b) for b in data["bursts"] if b["ticker"] in ("AAPL", "MSFT")}
+    assert rows["MSFT"]["admission"]["admitted"] is False and rows["AAPL"]["admission"]["admitted"] is True
+    regime, session = data["breadth"]["regime"], date.fromisoformat(data["run"]["session"])
+    bursts = [rows["AAPL"], rows["MSFT"]]
+    trades, _, _ = pl._make_plans(bursts, plan.Account(), regime, 0, session, require_reader=False)
+    assert rows["AAPL"]["plan"] is not None and rows["MSFT"]["plan"] is None and trades == ["AAPL"]
+    assert rows["MSFT"]["evidence"]["gate"]["reason"] == "route_not_admitted"
+    forged = copy.deepcopy(rows["MSFT"])
+    forged["admission"]["admitted"] = True
+    pl._make_plans([forged], plan.Account(), regime, 0, session, require_reader=False)
+    assert forged["plan"] is not None, "the planner reads the block, not the route"
+
+
 def test_a_dollar_only_a_with_expansion_is_admitted_read_and_planned_like_a_burst(fake_alpaca, seed, claude, fake_resend, tmp_path):
     """The same route on a range-expansion, higher-volume day is admitted: the
     reader is asked, an accepted review lets it be planned, and its ticket is

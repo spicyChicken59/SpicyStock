@@ -641,5 +641,11 @@ def test_the_sealed_gate_names_the_discovery_admission_only_under_rules_that_arc
     row = next(b for b in forged["bursts"] if b["ticker"] == "MSFT")
     row["admission"]["admitted"] = True
     assert provenance.gate(forged, row)["reason"] == "reader_coverage"
+    # verify() reports one break per row, at the first check that disagrees: the review
+    # selection replay, which reads the same flag, comes before the sealed gate, so the
+    # forgery is refused there and the receipt replay names it again
     result = provenance.verify(forged, require_sources=False)
-    assert result["status"] == "FAIL" and any("regime gate decision mismatch" in r for r in result["breaks"]), result
+    assert result["status"] == "FAIL", result
+    assert "MSFT: review selection decision differs from replay" in result["breaks"]
+    assert "review selection receipt differs from replay" in result["breaks"]
+    assert sum(1 for r in result["breaks"] if r.startswith("MSFT:")) == 1 and len(result["breaks"]) == 2, result

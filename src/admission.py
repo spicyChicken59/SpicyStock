@@ -181,7 +181,10 @@ def faults(data: dict) -> list[str]:
     module does not know is a fault by name."""
     rules = data.get("rules") if isinstance(data.get("rules"), dict) else {}
     archived = rules.get("admission")
-    bursts = [b for b in (data.get("bursts") or []) if isinstance(b, dict)]
+    # a bursts field that is not a list is named by the validator's own shape check;
+    # this one reads the rows it can and never iterates a shape it did not ask for
+    raw = data.get("bursts")
+    bursts = [b for b in raw if isinstance(b, dict)] if isinstance(raw, list) else []
     run = data.get("run") if isinstance(data.get("run"), dict) else {}
     if not isinstance(archived, dict):
         out = []

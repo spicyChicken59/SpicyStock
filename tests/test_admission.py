@@ -123,6 +123,22 @@ def test_the_summary_counts_every_basis_and_the_band_without_a_veto():
     assert s["sentence"].endswith("it is never a grade, and the chart reader never sees a name it stops.")
 
 
+def test_the_band_is_counted_by_the_mechanical_grade_whatever_the_reader_made_of_it():
+    """The band is the names the grade gate and the veto let through BEFORE the
+    reader: a dollar-expansion A the reader lowered to C still counts, so the
+    summary says how many names the admission reached, not how many the reader
+    kept (a mutant counting by the final grade survived the summary test, whose
+    rows all carry one grade)."""
+    rows = rows_for_summary()
+    lowered = row("dollar", re=True, vol=True, ticker="D5")
+    lowered["grade"] = "C"   # grade_mechanical stays A
+    lowered["admission"] = admission.block(lowered)
+    s = admission.summary(rows + [lowered], ("A+", "A"))
+    assert s["in_band"] == {"total": 5, "burst_route": 2, "dollar_expansion": 2, "dollar_no_expansion": 1}
+    assert s["by_basis"] == {"burst_route": 3, "dollar_expansion": 2, "dollar_no_expansion": 3}
+    assert "Of the 5 mechanical A-band names without a veto, 4 are admitted and 1 is not." in s["sentence"]
+
+
 def test_the_sentence_is_the_counts_alone_in_their_singular_and_plural_forms():
     one = admission.summary([dict(rows_for_summary()[3])], ("A+", "A"))
     assert one["sentence"].startswith("Admission: 1 reaction candidate, 0 admitted to the trade band and the chart reads "
