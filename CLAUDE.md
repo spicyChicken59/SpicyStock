@@ -347,7 +347,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5805 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5923 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -13600,3 +13600,218 @@ weights or the 4% route.
 **Not claimable:** a live night under the rule (the first evening after the
 merge writes the first `bursts[].admission` and `run.admission`); any trading
 edge.
+
+## Checkpoint, 4 Nov 2026 -- PR #211 accepted; the desk fitted to the owner's account and his first trades
+
+**PR #211, accepted.** Merged as `e0b03a42` on `main`, a merge commit over
+`cd08841b`; the final head `5abd3b13` (docs only over `da77d0b0`). `da77d0b0`
+passed all seven checks on Tests run 41874810836 (pytest 17:10-17:40 UTC, page
+17:10-17:30, the gate, the native central case 17:11-17:55 and stress
+17:11-17:38; gitleaks 41874810722 and 41874799524); `5abd3b13` passed pytest,
+page, the gate's docs-only decision and both gitleaks runs on run 41877521089.
+GitHub delivered the merge's push event five minutes late: a dynamic Pages run
+(41882273355) ran first, then at 18:03 the Secret scan 41883168287, publisher
+41883168544 (*Verified: every one of the 48 public files matches committed
+main*) and Tests 41883168519 were created, and Pages 41883322283 deployed after
+the publisher's request. The first live night under the admission rule is the
+4 November session's, the 23:16 UTC primary slot under standard time.
+
+**What the owner did.** Mo placed his first real trades on 4 November 2026, in
+two Fidelity IRAs, on three names the 3 November publication (YELLOW, ratio
+1.09, admitting A+ alone) listed as mechanical grade A at ranks 3, 6 and 19 --
+one of them a dollar-only row whose RE and VOL checks fail, which the merged
+admission rule now stops -- none reviewed by the chart reader, none a
+SpicyStock ticket. Each was a separate Day limit buy and a GTC sell stop-loss,
+not the OTO ticket the plan disclosure prints; one limit buy was cancelled and
+re-entered higher before it filled; two filled under their limit. He said the
+account is "about 30k to play with". The quantities, prices and amounts are his
+and stay off this repository. Two things followed.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` restarted from
+`main` at `e0b03a42`, pushed as **PR #212**. `docs/data.json`,
+`docs/picks.json`, the compact reader, every receipt, the history, the evidence
+objects, the quality ledger and the vendored design system are untouched; no
+rule moved (`rules_version` stands, no page fixture regenerated); no run, mail,
+dispatch, provider call or credential. Two workflows change: `evening.yml`'s
+versioned sizing and `tests.yml`'s model-control step.
+
+**The account.** `evening.yml` sizes production at `ACCOUNT_EQUITY` 30000 and
+`RISK_PCT` 0.5 from tonight's run ($150 planned risk before reductions, a
+$7,500 position cap, four slots; $2,000 / $10 / $500 before it). The Morning
+desk reads each publication against the reference of the session it measured
+(`docs/app-morning.js` `REFERENCES`: `since: '2026-11-04'` at $30,000, `since:
+null` at $2,000; `profileFor(session)`), so every earlier publication still
+matches its own $2,000 sizing and a $2,000 publication measured from 4 November
+is named as not matching the $30,000 reference. `tests/test_workflows.py` holds
+the page's current reference to the workflow's `ACCOUNT_EQUITY` and `RISK_PCT`
+and the oldest reference to `since: null`. The percentage stays Mo's: 1% is a
+one-line change in `evening.yml`, inside Bonde's band.
+
+**The owner's own trade, recorded where he can see the model beside it.** A
+stock the record lists without a ticket offers *Record a trade I made on this
+name* in its action area (`app.js` `recordTradeButton()`; a ticketed name offers
+none, its draft and report being the ticket's). The button opens the Morning
+desk on a blank record (`app-handoff-ui.js` `openOwner()`): every field blank,
+nothing written until an explicit save, a save needing a positive filled
+quantity with its submitted quantity. The private store is version 4
+(`app-handoff.js`: `KINDS` gains `owner_trade`; `OWNER_FIELDS` adds
+`account_label`, at most 40 printable characters, and `stop_price`, the stop
+actually placed; `fieldsFor(version)` reads versions 1 to 3 with the fields they
+lacked unknown and writes nothing until a save). `currentCandidate()` freezes
+the publication (SHA-256, session, publish time, rules digest), the row as the
+page read it (rank, mechanical grade and score, the scan that found it, the
+discovery admission, status, reason), the evidence identity, the archived exit
+rules (`rules.plan.sell_half_pct`, `sell_half_day`, `final_exit_day`,
+`entry_day`) and the day-3 and day-5 sessions `run.calendar` places after the
+applicable session (`sessionsFrom()`, null when it places none); it refuses a
+practice record, an unverified publication, a ticketed name and an unlisted
+one, each by name. The id is the publication, the stage and the ticker, so one
+name in one record has one record and the button chooses it again. Under the
+facts the desk prints a *model exit reference* (`referenceExits()`): the
+sell-half level, the reported average fill times one plus the archived
+percentage, in exact micro-dollars then cents half up (`sellHalfLevel()`); the
+record's day-3 and day-5 sessions counted from the applicable session as day 1;
+the reported stop; and, when the fill's New York date (`exchangeDate()`, Intl
+over America/New_York) is not that session, a sentence saying the dates are the
+record's and not the trade's. It decides nothing, grants no permission, changes
+nothing published and reads no quote. `beyondStop()` measures an owner trade's
+gap against the stop he reported, and is absent while none is.
+
+**The reproducer and the corpus.** `tools/private_results.py` mirrors every
+rule: `item_problem()` refuses an owner trade under a version-3 envelope,
+`_owner_problem()` the shapes `ownerValid()` refuses, `sell_half_level()` and
+`exchange_date()` the page's arithmetic (zoneinfo), `reference_exits()` the
+same fields, and `trace()` compares the frozen row's rank (a burst row's own; a
+setting-up row's position), grade, score, scan, admission (`_admission()`
+mirrors the page's reading of the block), evidence identity, the archived rules
+and the calendar's sessions (`_calendar_schedule()`) against the publication,
+naming each that differs and the two it does not compare (the status word and
+the reason, the page's own reading). The parity corpus
+(`tools/private_results_parity.mjs`, `tests/fixtures/first-trade/parity.json.gz`)
+grows from 109 to 167 cases, 47 accepted: an owner trade built from the
+cash-preview publication's NVDA row (a burst the fixture's allocation left
+without an order) and fifty-two shapes of it, the version-4 envelope cases, and
+each accepted record's `reference_exits` beside its figures, so the page and the
+tool are held to the same level, sessions and fill day. The first-trade
+rehearsal's backup was regenerated under version 4 (81/81).
+
+**The registered research, kept honest.** `src/stop_research.py` registered its
+comparison at the $2,000 account (12 October to 6 November) and refused any
+other, so from tonight every publication would have logged *Stop research
+publication unavailable (ValueError: unsupported account)* for good. Inside the
+period another account is still refused by name (a changed account is not the
+registered experiment: the comparison's last two sessions, 5 and 6 November,
+are refused, its last recorded receipt the 3 November publication's); outside
+it no row is computed, the publication's baseline is reconciled under its own
+archived account and the receipt's reservations state that account, with the
+validator pinning the registered account only on a `recorded` receipt and the
+model-principal bound read off the receipt's own equity. The existing
+outside-period fixture validates as before.
+
+**Measured** (this sandbox, Python 3.12.3 in the suite's venv, Node 22,
+Chromium through Playwright 1.56.1): 5923 tests collected;
+the full suite over every file but the two this sandbox cannot run
+(`tests/test_historical_package.py` and `tests/test_requirements.py` need
+`zstandard`; their 35 failures are the environment's, as on every milestone
+here) 5733 passed and 13 skipped in 29 m 12 s, on the first commit's tree; the
+touched files again on the final tree; `tests/test_private_results.py`
+292 passed (owner traces, eleven named mismatches, seven by-hand levels, five
+New York dates, refusals by name, the text's owner line); `tests/test_stop_research.py`
+42; `tests/test_docs.py`, `test_workflows.py`, `test_morning.py` with them 524;
+13 page fixtures current and every cascaded generator current (morning 21,
+issuer 44, stop-research 22, research-outcomes 40, research-observations 24,
+source-recovery 20, cash-preview 6), the five frozen validation copies, the
+recovery rehearsal, the parity corpus (167 cases, 47 accepted); the owner model
+controls 7/7 (`tools/owner_model_cases.mjs`, run by `tests.yml` beside the 78
+handoff model controls); continuity 137; the chart check 378/378; the
+`ownertrades` suite 91/91 at 390 light and 1280 dark (the control present on a
+withheld burst and absent on both tickets, the blank record, a zero fill
+refused, the frozen source held to the model's own reading of the row, the
+reference sentences, a fill on another session named, the gap against the
+reported stop, the saved record chosen again, the backup's count, no request
+carrying the owner's words, a practice record refused, a version-3 store read
+without a write and upgraded by one explicit save, the desk's reference by
+session); the desk suites after the store change 1970/1975 before their
+version-3 expectations were moved, then `independentreports` 150/150 and
+`handoff` 288/288;
+the full smoke with `--shots` 17891/17892, its one failure the `handoff` suite's own expectation
+that a legacy save writes version 3, moved to 4 and the suite re-run 288/288. Screenshots of the blank and the saved
+owner record at 390 and 1280 were looked at. gitleaks 8.24.3 over the changed
+files with the repository's config: no leaks.
+
+**Mutation passes.** Python, each mutant in a detached worktree at the
+milestone commit judged by the whole test files naming its rule: twenty-seven mutants over the
+owner mirror (the label's bound, trim and control characters; the id without
+the stage; an owner trade under version 3; the sell-half level truncated and
+over the whole percentage; the fill day in UTC; a three-place percentage,
+unordered days and sessions, a rank of zero, a record with no report; the
+trace skipping the admission, the schedule and the rank rule; the gap against
+no stop; the reference dropped and its fill-day comparison inverted; the
+migration adding no owner fields), the research producer (another account
+inside the period, the registered account outside it, the validator's pin and
+the model-principal bound) and the sizing (`evening.yml` back at $2,000; the
+page's current reference drifted and undated). All twenty-seven die, two
+controls (a docstring word, a comment) survive. Two needed a second pass: a
+mutant of mine that changed only a refusal's wording, re-aimed at the
+migration itself; and **the validator's pin SURVIVED** -- its test forged the
+status alone, which the count rule refuses first, the first shape this file
+names -- so the test forges the reservations and re-seals the receipt over
+them, and the mutant dies there.
+Page, through routed copies of `app-handoff.js`, `app-handoff-ui.js`, `app.js`
+and `app-morning.js` judged by the `ownertrades` suite, the owner model
+controls and the parity corpus's `--check`: twenty mutants (the label
+bound, the level truncated, the fill day in UTC, a zero fill saved, a ticketed
+name and a practice record admitted, the id without the stage, the sessions
+off by a day, a version-3 store read with owner fields, the gap against the
+fill, the fill-day warning and the exit reference never printed, the backup
+not counting owner trades, an existing record not chosen, the gap row
+labelled the published stop, the control offered on a ticket, its refusal
+never shown, the reference ignoring the session, the reference words quoting
+the old risk). Nineteen die and the control survives; one is equivalent (`session
+> '2026-11-03'` for `session >= '2026-11-04'` over date strings). One harness defect of
+mine on the way: the model controls joined the routed module's absolute path
+onto the repository root, so their first run under a mutant crashed and two
+mutants were credited as alive with no judge; the controls resolve the path as
+the smoke does now, a crashed judge is an error and not a kill, and the pass
+was run again.
+
+**The review, worked.** One reviewer by execution over `d5636a8d`, four
+lenses (the owner rules' safety, the sizing change, tests that cannot fail, the
+documents), 52 tool calls, every finding reproduced with the command it ran.
+Eight findings, each fixed here. The two that mattered were the tool's: the page
+offers the control on an also-quiet coil (status `watch`, ranked after the whole
+top list), and the tool read `watchlist.top` alone, so such a record traced as
+"no single setting-up row" -- `_setting_up_rows()` reads the also-quiet coils as
+the page lists them now, with the same rank rule; and a setting-up record's
+grade, score, scan and admission were neither compared nor named unchecked,
+though the page writes null for all four -- they are compared against null. The
+tool's `\d` matched every Unicode digit where the page's matches ASCII, so a
+date, clock or price in fullwidth digits read on one side and not the other (43
+of the reviewer's 47 probe shapes already agreed); every pattern is `re.ASCII`
+now and four corpus cases hold it. The standalone research validator accepted
+absurd reservations on an outside-period receipt (an equity of 1e12) and
+hard-coded four slots beside a `max_slots` it had just read: the cap is held at
+or under the equity, the equity under `MAX_OUTSIDE_EQUITY_USD`, the slots read
+off the receipt. Two document sentences still said the workflow sets
+`ACCOUNT_EQUITY=2000`, the goal and the broker note disagreed about how many
+limit buys filled under their limit (two did; one at it), and the owner's
+message read as if the label and the stop were required. Three test shapes:
+the model control's version-3 case read an emptied store (it seeds the
+rehearsal's two planned records now), the privacy check could pass with no
+request after the button (it reads every request since the page opened, the
+quantity among its words), and the unchecked list was compared against its
+own source (a literal now).
+
+**Keep / fix / defer / omit.** Keep: the owner's facts are his browser's and
+the record's row is frozen beside them; the exit reference is arithmetic from
+the record's own rules and decides nothing. Fix if it bites: the reference
+reads the archived day numbers off the record's calendar, so a record whose
+calendar does not reach day 5 says it places no sessions; the owner enters the
+fill time with its offset or through the Chicago helper, and the New York date
+is read off that. Defer: a reading of owner trades across records (one record
+per name per publication is the store's rule). Omit: a quote, a P&L the
+reports do not support, any order SpicyStock places.
+
+**Not claimable:** tonight's publication, the first sized at $30,000 and the
+first under the admission rule; Mo's three trades' outcome, which he reports
+himself; any trading edge.
