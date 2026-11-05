@@ -500,6 +500,156 @@
    },
    "date": "2026-11-02",
    "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "f59de7520876c4ae8a49749ca9ac2430b1c730efbbf98f1e88ae38b1f42b991d",
+    "context_sha256": "0a59de7d0e6e8635740816e3b5aa4c356f32a7d2f1cd806ab0eef4df3587bb0d",
+    "plan_sha256": "f2056f6127ac6ad254a610dd611eb8a6e6f164181a591a13dafb1edf8ee351e6",
+    "pick_sha256": "873b6ed2e998fcb13a38d9b390daa1eab36299ad088be1e1bd297c8f267a639f"
+   },
+   "ticker": "HQY",
+   "kind": "burst",
+   "grade": "A+",
+   "score": 10.0,
+   "entry_ref": 108.84,
+   "entry_low": 106.66,
+   "entry_high": 110.53,
+   "day2_spent_above": 113.19,
+   "limit_basis": "stop_line",
+   "trigger": null,
+   "limit": 110.53,
+   "stop": 106.11,
+   "shares": 8,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 118.72,
+    "high": 131.92,
+    "note": "above $40 he measures the move in dollars: $5-25",
+    "dollar_low": 114.93,
+    "dollar_high": 134.93
+   },
+   "order_json": {
+    "symbol": "HQY",
+    "action": "buy",
+    "quantity": 8,
+    "order_type": "stop_limit",
+    "stop_price": 108.84,
+    "limit_price": 110.53,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 8,
+     "order_type": "stop",
+     "stop_price": 106.11,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-11-04",
+   "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "f4ff57b8648cee2d0ccd3cde47fa20940a3d5308640c9ea746364c918e9a9a6f",
+    "context_sha256": "0a59de7d0e6e8635740816e3b5aa4c356f32a7d2f1cd806ab0eef4df3587bb0d",
+    "plan_sha256": "bca8abd0c312b4ba646aed0ef23d4d88da54e0e5d183f810934c9ea01ea1c807",
+    "pick_sha256": "f7fe9c422dfd3459e28d19a208b42db0974684c9e9402883379da56873a1fd7c"
+   },
+   "ticker": "RCBC",
+   "kind": "burst",
+   "grade": "A+",
+   "score": 10.0,
+   "entry_ref": 60.38,
+   "entry_low": 59.17,
+   "entry_high": 61.38,
+   "day2_spent_above": 62.8,
+   "limit_basis": "stop_line",
+   "trigger": null,
+   "limit": 61.38,
+   "stop": 58.93,
+   "shares": 15,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 65.86,
+    "high": 73.18,
+    "note": "above $40 he measures the move in dollars: $5-25",
+    "dollar_low": 65.98,
+    "dollar_high": 85.98
+   },
+   "order_json": {
+    "symbol": "RCBC",
+    "action": "buy",
+    "quantity": 15,
+    "order_type": "stop_limit",
+    "stop_price": 60.38,
+    "limit_price": 61.38,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 15,
+     "order_type": "stop",
+     "stop_price": 58.93,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-11-04",
+   "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "7d62c99075ad327ad9d663749b49a6b831171305df948a9e93af3787c4bcf83d",
+    "context_sha256": "0a59de7d0e6e8635740816e3b5aa4c356f32a7d2f1cd806ab0eef4df3587bb0d",
+    "plan_sha256": "855a122b937d9bf8b311bff93d67e374f730de5d1b32d9a439f20d182ec92fac",
+    "pick_sha256": "ace069616fb79ffff605693e8c5560d87f88131dbb3ddaa0fe97c3d401bdaa39"
+   },
+   "ticker": "VIK",
+   "kind": "burst",
+   "grade": "A+",
+   "score": 10.0,
+   "entry_ref": 91.17,
+   "entry_low": 89.35,
+   "entry_high": 91.84,
+   "day2_spent_above": 94.82,
+   "limit_basis": "stop_line",
+   "trigger": null,
+   "limit": 91.84,
+   "stop": 88.17,
+   "shares": 10,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 99.19,
+    "high": 110.21,
+    "note": "above $40 he measures the move in dollars: $5-25",
+    "dollar_low": 96.84,
+    "dollar_high": 116.84
+   },
+   "order_json": {
+    "symbol": "VIK",
+    "action": "buy",
+    "quantity": 10,
+    "order_type": "stop_limit",
+    "stop_price": 91.17,
+    "limit_price": 91.84,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 10,
+     "order_type": "stop",
+     "stop_price": 88.17,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-11-04",
+   "regime": "yellow"
   }
  ]
 }
