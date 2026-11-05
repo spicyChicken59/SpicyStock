@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-11-04T14:22:39.993249+00:00",
-  "generated_at": "2026-11-04T14:22:41.608896+00:00",
-  "expires_at": "2026-11-04T14:27:41.608896+00:00",
-  "observation_run_id": "41846802416",
-  "previous_observation_sha256": "d5d8854712be528275ecd765b1fc0e90fcb37dec639b8c5c5da3082613ba215d",
+  "collection_started_at": "2026-11-05T14:22:48.437600+00:00",
+  "generated_at": "2026-11-05T14:22:50.742433+00:00",
+  "expires_at": "2026-11-05T14:27:50.742433+00:00",
+  "observation_run_id": "42044309191",
+  "previous_observation_sha256": "3520dab5f6f6cc60cd2bfc74f36d14034f5d01283ab62ab908427c3634222296",
   "dry_run": false,
   "publication": {
-    "data_sha256": "35d3953f2b4be7eca52541adb0a04f85843f5c9300cb3a65f02efe8687b7b222",
-    "context_sha256": "ba4f163abf108767a6f85d7b214287fff6baf8fe25486aca092567b850d71017",
-    "run_id": "41764401775",
-    "rules_version": "6a4aa1b1394d",
-    "measured_session": "2026-11-03",
-    "applicable_session": "2026-11-04",
-    "published_at": "2026-11-04T03:01:39.081066+00:00",
+    "data_sha256": "3898dec631c48c85a3fcb0249dfd14fa7e2dba99796b11587c25b8055bb25230",
+    "context_sha256": "0a59de7d0e6e8635740816e3b5aa4c356f32a7d2f1cd806ab0eef4df3587bb0d",
+    "run_id": "41962047048",
+    "rules_version": "424e9c0d4e6f",
+    "measured_session": "2026-11-04",
+    "applicable_session": "2026-11-05",
+    "published_at": "2026-11-05T03:31:22.811912+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "a81f8815c1fc6d1df4989f6de4d1d64d37e7535a5bb96aaf488b625a047f604f"
+    "reader_sha256": "a52781432651003db431e3ee8c2343b19cbfac0d6933e1f7d8fc1ccbc958214a"
   },
   "cohort": {
     "receipt_sha256": "08aee64a5a26c5e45c64aa590378bf180fe8ff867b865197f04898ea3e3978e4",
@@ -26,7 +26,7 @@
     "generated_at": "2026-11-04T03:05:16.769638+00:00",
     "status": "recorded",
     "applicable_session": "2026-11-04",
-    "bound": true
+    "bound": false
   },
   "policy": {
     "version": 1,
@@ -43,8 +43,8 @@
     "max_collection_seconds": 180,
     "market_timezone": "America/New_York"
   },
-  "status": "no_research_rows",
-  "reason": null,
+  "status": "inapplicable",
+  "reason": "cohort_not_current",
   "entry_phase": "upcoming",
   "source": {
     "status": "not_requested",
