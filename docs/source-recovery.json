@@ -1,54 +1,54 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-11-04T15:43:47.721934+00:00",
-  "generated_at": "2026-11-04T15:43:48.980492+00:00",
-  "observation_run_id": "41860620505",
-  "previous_observation_sha256": "1e229774b31b13add3025dca3eae08b3f64ba04c62226061c4d1a3bff161b95a",
+  "collection_started_at": "2026-11-05T15:45:57.159861+00:00",
+  "generated_at": "2026-11-05T15:45:59.541892+00:00",
+  "observation_run_id": "42058146145",
+  "previous_observation_sha256": "c3ba3f881a3eaf4803dcf06994156eb546acf43dec0757fc1cc3591e376bb002",
   "dry_run": false,
   "publication": {
-    "data_sha256": "35d3953f2b4be7eca52541adb0a04f85843f5c9300cb3a65f02efe8687b7b222",
-    "context_sha256": "ba4f163abf108767a6f85d7b214287fff6baf8fe25486aca092567b850d71017",
-    "run_id": "41764401775",
-    "rules_version": "6a4aa1b1394d",
-    "measured_session": "2026-11-03",
-    "applicable_session": "2026-11-04",
-    "published_at": "2026-11-04T03:01:39.081066+00:00",
+    "data_sha256": "3898dec631c48c85a3fcb0249dfd14fa7e2dba99796b11587c25b8055bb25230",
+    "context_sha256": "0a59de7d0e6e8635740816e3b5aa4c356f32a7d2f1cd806ab0eef4df3587bb0d",
+    "run_id": "41962047048",
+    "rules_version": "424e9c0d4e6f",
+    "measured_session": "2026-11-04",
+    "applicable_session": "2026-11-05",
+    "published_at": "2026-11-05T03:31:22.811912+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "a81f8815c1fc6d1df4989f6de4d1d64d37e7535a5bb96aaf488b625a047f604f"
+    "reader_sha256": "a52781432651003db431e3ee8c2343b19cbfac0d6933e1f7d8fc1ccbc958214a"
   },
   "frozen": {
-    "session": "2026-11-03",
-    "expected_session": "2026-11-03",
+    "session": "2026-11-04",
+    "expected_session": "2026-11-04",
     "feed": "sip",
     "adjustment": "split",
     "timeframe": "1Day",
     "lookback_days": 260,
     "stale_names_max": 100,
-    "universe_identity": "317505406fbc2904",
-    "universe_snapshot_sha256": "d1cd6818e3d2ab9acdc0dcca15fd62a15ac741a4c4f5df5ccd9ad52c3f71bb3b",
+    "universe_identity": "64234c85340cb6fb",
+    "universe_snapshot_sha256": "bc2ec4f5e18c85f0dfae370411da5fa872af150b1537f4c4adff818996d7d1d7",
     "universe_size": 4768,
-    "intended_identity": "07ff8dff6894161a",
-    "coverage_sha256": "8ad92461fea9d0559b73351a3af7e4542151410efdf447f24b407a1d16a91705",
-    "rules_version": "6a4aa1b1394d"
+    "intended_identity": "ff5aff2b59ba59ec",
+    "coverage_sha256": "5c40c230293c6026366b7694a6cacab95d8c4a426d4ec8969ea40376bce211b0",
+    "rules_version": "424e9c0d4e6f"
   },
   "window": {
-    "next_session": "2026-11-04",
-    "next_open_at": "2026-11-04T09:30:00-05:00",
+    "next_session": "2026-11-05",
+    "next_open_at": "2026-11-05T09:30:00-05:00",
     "before_next_open": false
   },
   "original": {
     "acceptance_status": "degraded",
     "intended_stocks": 4768,
-    "ready_stocks": 4755,
-    "fraction": 0.9972734899328859,
+    "ready_stocks": 4748,
+    "fraction": 0.9958053691275168,
     "complete_intended": false,
     "capacity_excluded": 0,
-    "stale": 13,
-    "stale_stocks": 13,
+    "stale": 20,
+    "stale_stocks": 20,
     "tolerance_verdict": "tolerated",
     "tolerance_reasons": [],
     "gaps": {
-      "stale": 13,
+      "stale": 20,
       "no_bars": 0,
       "dropped": 0,
       "unfetched_budget": 0,
@@ -63,24 +63,31 @@
   "deficits": {
     "categories": {
       "stale": {
-        "count": 13,
-        "identity": "2ab63fe28c332644",
+        "count": 20,
+        "identity": "2395c75729d60784",
         "named": true,
         "source": "record",
         "names": [
-          "ANGH",
-          "APLM",
-          "BEBE",
+          "ACCL",
+          "AIOS",
           "BGM",
-          "BLIV",
-          "GCDT",
+          "BMHL",
+          "CHNR",
+          "CPBI",
+          "FEBO",
           "IOR",
           "KELYB",
-          "MWG",
+          "MFI",
           "NCEW",
+          "PBHC",
           "PFX",
-          "TLIH",
-          "TRSG"
+          "PHOE",
+          "TCBS",
+          "TRAD",
+          "TRSG",
+          "TULP",
+          "WLYB",
+          "XBP"
         ],
         "benchmark_in_population": false
       },
@@ -133,11 +140,11 @@
         "benchmark_in_population": false
       }
     },
-    "named_stocks": 13,
+    "named_stocks": 20,
     "unnamed_frames": 0,
     "ledger": {
-      "path": "quality-ledger/v1/35d3953f2b4be7eca52541adb0a04f85843f5c9300cb3a65f02efe8687b7b222.json.gz",
-      "sha256": "b81b323c83a8c22c85649786ea9dbe968e2fd889c3320868bce77dab249a3376",
+      "path": "quality-ledger/v1/3898dec631c48c85a3fcb0249dfd14fa7e2dba99796b11587c25b8055bb25230.json.gz",
+      "sha256": "818d939a56db4492662bec35213f06d32de947415b8b0331cd7ae0373410f427",
       "used": false
     }
   },
@@ -210,5 +217,5 @@
     "scheduled_dispatch_is_best_effort",
     "prior_session_followup_is_separate"
   ],
-  "sentence": "No source recovery for the 2026-11-03 publication at 10:43 AM ET on Wed 4 Nov: the next session opened before this check ran; nothing was fetched."
+  "sentence": "No source recovery for the 2026-11-04 publication at 10:45 AM ET on Thu 5 Nov: the next session opened before this check ran; nothing was fetched."
 }
