@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-11-05T14:22:41.798574+00:00",
-  "generated_at": "2026-11-05T14:22:44.488605+00:00",
-  "expires_at": "2026-11-05T14:27:44.488605+00:00",
-  "observation_run_id": "42044309191",
-  "previous_observation_sha256": "e9c4cc06ea728063afc69c097e1a2e2109555e2ca94c9a7add74495b84385d16",
+  "collection_started_at": "2026-11-06T14:22:34.219303+00:00",
+  "generated_at": "2026-11-06T14:22:35.440303+00:00",
+  "expires_at": "2026-11-06T14:27:35.440303+00:00",
+  "observation_run_id": "42233232525",
+  "previous_observation_sha256": "b82befb215264200c6f8c2a467f1ec3b82845a914accfc5b35cbe84a26c065da",
   "dry_run": false,
   "publication": {
-    "data_sha256": "3898dec631c48c85a3fcb0249dfd14fa7e2dba99796b11587c25b8055bb25230",
-    "context_sha256": "0a59de7d0e6e8635740816e3b5aa4c356f32a7d2f1cd806ab0eef4df3587bb0d",
-    "run_id": "41962047048",
-    "rules_version": "424e9c0d4e6f",
-    "measured_session": "2026-11-04",
-    "applicable_session": "2026-11-05",
-    "published_at": "2026-11-05T03:31:22.811912+00:00",
+    "data_sha256": "fdba3e95ea5e17bd6408c9b0415247b417931d0e82608c90c74a950066a7b812",
+    "context_sha256": "26d64f36d67ab2f2022e1b49995529f5505ab50dd987972ffec8e2e614c8fdf5",
+    "run_id": "42156635345",
+    "rules_version": "23e1f865134e",
+    "measured_session": "2026-11-05",
+    "applicable_session": "2026-11-06",
+    "published_at": "2026-11-06T03:27:56.446528+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "a52781432651003db431e3ee8c2343b19cbfac0d6933e1f7d8fc1ccbc958214a"
+    "reader_sha256": "38fc7d7d287816908c39f4e7c11c7f41efb1775852bf5a6600c715124323cbe4"
   },
   "policy": {
     "version": 1,
@@ -80,25 +80,25 @@
       ]
     }
   },
-  "status": "partial",
+  "status": "no_tickets",
   "reason": null,
   "entry_phase": "upcoming",
   "sources": {
     "iex": {
-      "status": "ok",
+      "status": "not_requested",
       "feed": "iex",
       "scope": "single_venue",
-      "entitlement": "request_succeeded",
-      "checked_at": "2026-11-05T14:22:44.268154+00:00",
+      "entitlement": "not_requested",
+      "checked_at": null,
       "error_kind": null,
       "minimum_delay_seconds": 0
     },
     "delayed_sip": {
-      "status": "ok",
+      "status": "not_requested",
       "feed": "delayed_sip",
       "scope": "consolidated_delayed",
-      "entitlement": "request_succeeded",
-      "checked_at": "2026-11-05T14:22:44.278923+00:00",
+      "entitlement": "not_requested",
+      "checked_at": null,
       "error_kind": null,
       "minimum_delay_seconds": 900
     }
@@ -108,17 +108,17 @@
       "provider": "Nasdaq Trader current trade halts RSS",
       "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
       "scope": "Nasdaq and other exchange-listed securities reported in this RSS snapshot; absence is not clearance.",
-      "status": "fresh",
-      "checked_at": "2026-11-05T14:22:44.484126Z",
-      "fetched_at": "2026-11-05T14:22:44.484073Z",
-      "source_published_at": "2026-11-05T14:21:51Z",
-      "expires_at": "2026-11-05T14:24:51Z",
-      "source_sha256": "7950fb71ab8cf19739bf0f4200764c0dc53748233b9417b3385299a6feb9d876",
-      "http_date": "Thu, 05 Nov 2026 14:22:44 GMT",
-      "item_count": 14,
-      "source_age_seconds": 53.484126,
-      "receipt_age_seconds": 5.3e-05,
-      "reason": "Snapshot retrieved; unmatched names are not cleared."
+      "status": "not_requested",
+      "checked_at": "2026-11-06T14:22:35.440221Z",
+      "fetched_at": null,
+      "source_published_at": null,
+      "expires_at": null,
+      "source_sha256": null,
+      "http_date": null,
+      "item_count": null,
+      "source_age_seconds": null,
+      "receipt_age_seconds": null,
+      "reason": "No admitted candidates required a halt lookup."
     },
     "issuer_news": {
       "status": "not_checked",
@@ -132,242 +132,7 @@
   "halt_memory": {},
   "corporate_memory": {},
   "corporate_resolutions": [],
-  "rows": [
-    {
-      "ticker": "HQY",
-      "kind": "burst",
-      "evidence_id": "f59de7520876c4ae8a49749ca9ac2430b1c730efbbf98f1e88ae38b1f42b991d",
-      "plan_sha256": "f2056f6127ac6ad254a610dd611eb8a6e6f164181a591a13dafb1edf8ee351e6",
-      "levels": {
-        "trigger": 108.84,
-        "limit": 110.53,
-        "stop": 106.11,
-        "entry_low": 106.66,
-        "day2_spent_above": 113.19
-      },
-      "trade": {
-        "status": "stale",
-        "timestamp": "2026-11-04T20:59:55.331301+00:00",
-        "age_seconds": 62569.157304,
-        "price": 108.81,
-        "exchange": "V",
-        "conditions": [
-          "@"
-        ]
-      },
-      "quote": {
-        "status": "stale",
-        "timestamp": "2026-11-05T14:19:58.227224+00:00",
-        "age_seconds": 166.261381,
-        "bid": 77.4,
-        "ask": 126.56,
-        "bid_size": 100.0,
-        "ask_size": 100.0,
-        "bid_exchange": "V",
-        "ask_exchange": "V",
-        "conditions": [
-          "R"
-        ],
-        "spread_usd": 49.16,
-        "spread_pct": 48.2055305
-      },
-      "price_checks": {
-        "trade": "unknown",
-        "ask": "unknown"
-      },
-      "delayed_volume": {
-        "status": "prior_session",
-        "daily_timestamp": "2026-11-04T05:00:00+00:00",
-        "previous_timestamp": "2026-11-03T05:00:00+00:00",
-        "latest_trade_timestamp": "2026-11-04T21:02:56.250872+00:00",
-        "session": "2026-11-04",
-        "partial_volume": 1573631.0,
-        "previous_volume": 942217.0,
-        "comparison": "unknown",
-        "data_through": null
-      },
-      "events": {
-        "halt": {
-          "status": "not_listed",
-          "blocks_entry": null,
-          "reason": "No matching halt in this snapshot; absence is not trading clearance.",
-          "events": [],
-          "event_count": 0,
-          "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
-          "retained_source": null
-        },
-        "corporate_action": {
-          "version": 1,
-          "coverage": "manual_known_events_only",
-          "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
-          "registry_reviewed_on": "2026-10-20",
-          "session": "2026-11-05",
-          "symbol": "HQY",
-          "blocked": false,
-          "status": "not_in_registry",
-          "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
-          "matches": []
-        },
-        "retained_corporate_actions": []
-      }
-    },
-    {
-      "ticker": "RCBC",
-      "kind": "burst",
-      "evidence_id": "f4ff57b8648cee2d0ccd3cde47fa20940a3d5308640c9ea746364c918e9a9a6f",
-      "plan_sha256": "bca8abd0c312b4ba646aed0ef23d4d88da54e0e5d183f810934c9ea01ea1c807",
-      "levels": {
-        "trigger": 60.38,
-        "limit": 61.38,
-        "stop": 58.93,
-        "entry_low": 59.17,
-        "day2_spent_above": 62.8
-      },
-      "trade": {
-        "status": "stale",
-        "timestamp": "2026-11-04T20:53:40.164701+00:00",
-        "age_seconds": 62944.323904,
-        "price": 59.68,
-        "exchange": "V",
-        "conditions": [
-          "@"
-        ]
-      },
-      "quote": {
-        "status": "stale",
-        "timestamp": "2026-11-04T20:47:21.717308+00:00",
-        "age_seconds": 63322.771297,
-        "bid": 59.16,
-        "ask": 59.87,
-        "bid_size": 100.0,
-        "ask_size": 100.0,
-        "bid_exchange": "V",
-        "ask_exchange": "V",
-        "conditions": [
-          "R"
-        ],
-        "spread_usd": 0.71,
-        "spread_pct": 1.19297656
-      },
-      "price_checks": {
-        "trade": "unknown",
-        "ask": "unknown"
-      },
-      "delayed_volume": {
-        "status": "prior_session",
-        "daily_timestamp": "2026-11-04T05:00:00+00:00",
-        "previous_timestamp": "2026-11-03T05:00:00+00:00",
-        "latest_trade_timestamp": "2026-11-04T21:26:51.912995+00:00",
-        "session": "2026-11-04",
-        "partial_volume": 151412.0,
-        "previous_volume": 73093.0,
-        "comparison": "unknown",
-        "data_through": null
-      },
-      "events": {
-        "halt": {
-          "status": "not_listed",
-          "blocks_entry": null,
-          "reason": "No matching halt in this snapshot; absence is not trading clearance.",
-          "events": [],
-          "event_count": 0,
-          "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
-          "retained_source": null
-        },
-        "corporate_action": {
-          "version": 1,
-          "coverage": "manual_known_events_only",
-          "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
-          "registry_reviewed_on": "2026-10-20",
-          "session": "2026-11-05",
-          "symbol": "RCBC",
-          "blocked": false,
-          "status": "not_in_registry",
-          "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
-          "matches": []
-        },
-        "retained_corporate_actions": []
-      }
-    },
-    {
-      "ticker": "VIK",
-      "kind": "burst",
-      "evidence_id": "7d62c99075ad327ad9d663749b49a6b831171305df948a9e93af3787c4bcf83d",
-      "plan_sha256": "855a122b937d9bf8b311bff93d67e374f730de5d1b32d9a439f20d182ec92fac",
-      "levels": {
-        "trigger": 91.17,
-        "limit": 91.84,
-        "stop": 88.17,
-        "entry_low": 89.35,
-        "day2_spent_above": 94.82
-      },
-      "trade": {
-        "status": "stale",
-        "timestamp": "2026-11-04T20:59:53.296012+00:00",
-        "age_seconds": 62571.192593,
-        "price": 91.24,
-        "exchange": "V",
-        "conditions": [
-          " "
-        ]
-      },
-      "quote": {
-        "status": "stale",
-        "timestamp": "2026-11-05T14:19:58.920348+00:00",
-        "age_seconds": 165.568257,
-        "bid": 86.12,
-        "ask": 95.76,
-        "bid_size": 100.0,
-        "ask_size": 100.0,
-        "bid_exchange": "V",
-        "ask_exchange": "V",
-        "conditions": [
-          "R"
-        ],
-        "spread_usd": 9.64,
-        "spread_pct": 10.60039587
-      },
-      "price_checks": {
-        "trade": "unknown",
-        "ask": "unknown"
-      },
-      "delayed_volume": {
-        "status": "prior_session",
-        "daily_timestamp": "2026-11-04T05:00:00+00:00",
-        "previous_timestamp": "2026-11-03T05:00:00+00:00",
-        "latest_trade_timestamp": "2026-11-05T13:04:47.190514+00:00",
-        "session": "2026-11-04",
-        "partial_volume": 6638397.0,
-        "previous_volume": 3547238.0,
-        "comparison": "unknown",
-        "data_through": null
-      },
-      "events": {
-        "halt": {
-          "status": "not_listed",
-          "blocks_entry": null,
-          "reason": "No matching halt in this snapshot; absence is not trading clearance.",
-          "events": [],
-          "event_count": 0,
-          "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
-          "retained_source": null
-        },
-        "corporate_action": {
-          "version": 1,
-          "coverage": "manual_known_events_only",
-          "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
-          "registry_reviewed_on": "2026-10-20",
-          "session": "2026-11-05",
-          "symbol": "VIK",
-          "blocked": false,
-          "status": "not_in_registry",
-          "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
-          "matches": []
-        },
-        "retained_corporate_actions": []
-      }
-    }
-  ],
+  "rows": [],
   "limits": [
     "dated_best_effort_snapshot",
     "iex_single_venue_not_consolidated",
