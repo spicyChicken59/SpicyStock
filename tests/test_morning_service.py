@@ -41,6 +41,17 @@ def request(app, *, method='GET', path='/morning.json', query='', length='', **m
     return response
 
 
+def no_receipt(raw):
+    """The receipt route's 404 answer for a publication ingested and not yet checked."""
+    return {'publication_sha256': hashlib.sha256(raw).hexdigest(), 'status': service.NO_RECEIPT}
+
+
+def names_no_receipt(response, raw):
+    assert response['status'] == '404 Not Found'
+    assert json.loads(response['body']) == no_receipt(raw)
+    assert 'ETag' not in response['headers']
+
+
 def store_at(tmp_path, *, raw=RAW, policy=None, previous=None):
     store = service.Store(tmp_path / 'morning.sqlite', policy)
     assert store.ingest(raw, now=NOW, previous=previous) == 'ingested'
@@ -92,7 +103,7 @@ def test_expired_lease_cannot_commit_even_before_a_replacement(tmp_path):
     claim, _ = store.reserve(now=NOW)
     later = NOW + timedelta(seconds=10)
     assert store.commit(claim, encode(collect(at=later)), now=later) == 'lease_expired'
-    assert request(service.application(store.path))['status'] == '503 Service Unavailable'
+    names_no_receipt(request(service.application(store.path)), RAW)
 
 
 def test_claim_clocks_cannot_be_forged_to_admit_pre_reservation_receipt(tmp_path):
@@ -154,7 +165,7 @@ def test_same_session_revision_invalidates_lease_and_preserves_prior_bytes(tmp_p
     first, _ = store.reserve(now=first_at)
     updated = RAW + b'\n'
     assert store.ingest(updated, now=first_at) == 'ingested'
-    assert request(service.application(store.path))['status'] == '503 Service Unavailable'
+    names_no_receipt(request(service.application(store.path)), updated)
     assert store.commit(first, encode(collect(previous=previous, at=first_at)), now=first_at) == 'source_record_changed'
     later = NOW + timedelta(seconds=31)
     current, _ = store.reserve(now=later)
@@ -198,7 +209,7 @@ def test_validation_refuses_tampered_levels_rehearsal_and_copy_of_source_hash(tm
     value['publication']['reader_sha256'] = 'a' * 64
     with pytest.raises(ValueError):
         store.commit(claim, encode(value), now=NOW)
-    assert request(service.application(store.path))['status'] == '503 Service Unavailable'
+    names_no_receipt(request(service.application(store.path)), RAW)
 
 
 def test_outage_retains_existing_halt_and_corporate_restrictions(tmp_path):
@@ -365,7 +376,7 @@ def test_bootstrap_previous_publication_keeps_independently_validated_restrictio
     previous = (FIXTURES / 'halted.json').read_bytes()
     changed = RAW + b'\n'
     store = store_at(tmp_path, raw=changed, previous=previous)
-    assert request(service.application(store.path))['status'] == '503 Service Unavailable'
+    names_no_receipt(request(service.application(store.path)), changed)
     later = NOW + timedelta(seconds=31)
     claim, _ = store.reserve(now=later)
     assert claim.previous == previous
@@ -558,3 +569,97 @@ def test_status_route_reads_corrupt_clocks_words_and_blobs_as_unknown_and_never_
         db.execute('UPDATE state SET receipt=?, receipt_sha=? WHERE id=1', (deep, hashlib.sha256(deep).hexdigest()))
     assert _status(app)['status'] == '503 Service Unavailable'
     assert request(app)['status'] == '503 Service Unavailable'
+
+
+def test_receipt_route_names_the_ingested_publication_it_holds_no_check_for(tmp_path):
+    """From ingestion until the window's first cycle, and after a revision, the
+    route answers 404 naming the held publication's digest: a reader can tell
+    "not checked yet" from "another publication" and from a store it cannot read."""
+    empty = service.Store(tmp_path / 'morning.sqlite')
+    origin = 'https://spicychicken59.github.io'
+    app = service.application(empty.path, allowed_origin=origin)
+    # Nothing ingested: nothing to name.
+    assert request(app)['status'] == '503 Service Unavailable'
+    store = store_at(tmp_path)
+    response = request(app, HTTP_ORIGIN=origin)
+    names_no_receipt(response, RAW)
+    assert response['body'] == b'{"publication_sha256":"' + hashlib.sha256(RAW).hexdigest().encode() + b'","status":"no_receipt"}\n'
+    assert response['headers']['Cache-Control'] == 'no-store'
+    assert response['headers']['Content-Type'].startswith('application/json')
+    assert response['headers']['Access-Control-Allow-Origin'] == origin
+    assert 'Access-Control-Allow-Origin' not in request(app, HTTP_ORIGIN='https://wrong.invalid')['headers']
+    assert request(app, path='/status.json')['status'] == '200 OK'
+    # A verified check for the held publication is served with its ETag.
+    claim, _ = store.reserve(now=NOW)
+    receipt = encode(collect())
+    assert store.commit(claim, receipt, now=NOW) == 'committed'
+    served = request(app)
+    assert served['status'] == '200 OK' and served['body'] == receipt and 'ETag' in served['headers']
+    # A revision names the new digest and keeps the earlier receipt's bytes unserved.
+    revised = RAW + b'\n'
+    assert store.ingest(revised, now=NOW + timedelta(seconds=1)) == 'ingested'
+    response = request(app)
+    names_no_receipt(response, revised)
+    assert receipt[:40] not in response['body']
+    document = service.status_document(store.path)
+    assert document['receipt']['serves_current_publication'] is False
+    assert document['service']['publication_sha256'] == hashlib.sha256(revised).hexdigest()
+
+
+def test_receipt_route_never_names_a_publication_from_a_store_it_cannot_read(tmp_path):
+    """Every unreadable shape is the generic 503: a tampered receipt, one bound to
+    no digest, one that is not an object, or a held digest that is not one."""
+    store = store_at(tmp_path)
+    claim, _ = store.reserve(now=NOW)
+    receipt = encode(collect())
+    assert store.commit(claim, receipt, now=NOW) == 'committed'
+    app = service.application(store.path)
+    assert request(app)['status'] == '200 OK'
+    digest = hashlib.sha256(RAW).hexdigest().encode()
+    def rewrite(receipt_bytes=None, publication_sha=None):
+        with sqlite3.connect(store.path) as db:
+            if receipt_bytes is not None:
+                db.execute('UPDATE state SET receipt=?, receipt_sha=?', (receipt_bytes, hashlib.sha256(receipt_bytes).hexdigest()))
+            if publication_sha is not None:
+                db.execute('UPDATE state SET publication_sha=?', (publication_sha,))
+        response = request(app)
+        assert response['status'] == '503 Service Unavailable'
+        assert response['body'] == b'{"status":"unavailable"}\n'
+        assert digest not in response['body'] and 'ETag' not in response['headers']
+    value = json.loads(receipt)
+    value['publication']['data_sha256'] = 'zz'
+    rewrite(receipt_bytes=encode(value))                      # bound to no digest
+    rewrite(receipt_bytes=b'[]\n')                             # not an object
+    # Bound to another digest, with a matching stored hash, it is a receipt for
+    # another publication as far as the route can know: named, never served.
+    other = b'{"publication":{"data_sha256":"' + b'b' * 64 + b'"}}\n'
+    with sqlite3.connect(store.path) as db:
+        db.execute('UPDATE state SET receipt=?, receipt_sha=?', (other, hashlib.sha256(other).hexdigest()))
+    response = request(app)
+    names_no_receipt(response, RAW)
+    assert b'b' * 64 not in response['body']
+    with sqlite3.connect(store.path) as db:                   # tampered: the digest no longer matches
+        db.execute('UPDATE state SET receipt=?, receipt_sha=?', (receipt, 'c' * 64))
+    response = request(app)
+    assert response['status'] == '503 Service Unavailable' and digest not in response['body']
+    with sqlite3.connect(store.path) as db:                   # the held digest is not one
+        db.execute('UPDATE state SET receipt=NULL, receipt_sha=NULL, publication_sha=?', ('X' * 64,))
+    response = request(app)
+    assert response['status'] == '503 Service Unavailable' and b'X' not in response['body']
+    # A receipt bound elsewhere beside a held digest that is not one, or none:
+    # nothing to name, so the generic 503 and never a 404 naming null.
+    for publication_sha in ('X' * 64, None):
+        with sqlite3.connect(store.path) as db:
+            db.execute('UPDATE state SET receipt=?, receipt_sha=?, publication_sha=?', (other, hashlib.sha256(other).hexdigest(), publication_sha))
+        response = request(app)
+        assert response['status'] == '503 Service Unavailable' and response['body'] == b'{"status":"unavailable"}\n'
+    # The held digest spelt in upper case is not the digest the page compares.
+    with sqlite3.connect(store.path) as db:
+        db.execute('UPDATE state SET receipt=?, receipt_sha=?, publication_sha=?', (receipt, hashlib.sha256(receipt).hexdigest(), hashlib.sha256(RAW).hexdigest().upper()))
+    response = request(app)
+    assert response['status'] == '503 Service Unavailable' and digest.upper() not in response['body']
+    # A NULL receipt beside a kept receipt_sha is a tampered store, not a check never made.
+    with sqlite3.connect(store.path) as db:
+        db.execute('UPDATE state SET receipt=NULL, receipt_sha=?, publication_sha=?', ('a' * 64, hashlib.sha256(RAW).hexdigest()))
+    response = request(app)
+    assert response['status'] == '503 Service Unavailable' and digest not in response['body']

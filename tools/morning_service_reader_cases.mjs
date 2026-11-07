@@ -4,6 +4,7 @@ import { readFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { withEndpoint } from './offline_shell.mjs';
+import { derive } from './reader_cases.mjs';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const ENDPOINT = 'https://receipts.example.invalid/morning.json';
 const NOW = '2026-09-11T13:35:00Z';
@@ -25,8 +26,8 @@ export async function checkMorningServiceReader({ browser, base, open, check, eq
   }, value);
   const setup = async (options = {}) => {
     const endpoint = options.endpoint === undefined ? ENDPOINT : options.endpoint;
-    const requests = [], response = { body: JSON.stringify(options.receipt || observed), status: 200, hold: null, headers: {} };
-    const tab = await open(browser, base, '/service-publication.json', options.pinned ? NOW : null, options.width || 1280, {
+    const requests = [], response = { body: options.body !== undefined ? options.body : JSON.stringify(options.receipt || observed), status: options.status || 200, hold: null, headers: {} };
+    const tab = await open(browser, base, options.projected ? null : '/service-publication.json', options.pinned ? NOW : null, options.width || 1280, {
       theme: options.width === 390 ? 'light' : 'dark', hash: '#/explore/bursts/AAPL', reducedMotion: 'reduce',
       beforeLoad: async (page, context) => {
         await page.clock.install({ time: new Date(options.now || NOW) });
@@ -44,6 +45,12 @@ export async function checkMorningServiceReader({ browser, base, open, check, eq
         });
         await page.route('**/docs/index.html', route => route.fulfill({ contentType: 'text/html', body: withEndpoint(html, endpoint) }));
         await page.route('**/service-publication.json', route => route.fulfill({ contentType: 'application/json', body: options.raw || raw }));
+        if (options.projected) {
+          // The production load: the compact reader and its sidecar, never the canonical record.
+          await page.route('**/reader.json*', route => route.fulfill({ contentType: 'application/json', body: options.projected.readerRaw }));
+          await page.route('**/docs/data.json', route => route.fulfill({ status: 500, body: 'Canonical request forbidden in the projected control.' }));
+          await page.route('**/reader-observations/*.json', route => route.fulfill({ contentType: 'application/json', body: options.projected.sidecarRaw }));
+        }
         await page.route('**/morning.json', async route => {
           requests.push({ url: route.request().url(), method: route.request().method(), body: route.request().postData(), headers: await route.request().allHeaders() });
           const reply = { ...response };
@@ -132,17 +139,76 @@ export async function checkMorningServiceReader({ browser, base, open, check, eq
     eq('cutoff removes entry authority', await boundary.page.evaluate(() => SCStock.avail.offered), false);
   } finally { await boundary.context.close(); }
 
+  // The host answers 404 `no_receipt` naming the publication it holds, from the
+  // evening's ingestion until the window's first cycle and after a revision.
+  // The page reads the body before it refuses the status, says which case it
+  // is, keeps polling inside the window, and never falls back to the static
+  // file. A 404 naming no publication says only that no file is published.
+  const publicationSha = createHash('sha256').update(raw).digest('hex');
+  const noReceipt = sha => JSON.stringify({ publication_sha256: sha, status: 'no_receipt' });
+  for (const [name, body, absent, headline, said] of [
+    ['this record', noReceipt(publicationSha), 'none', 'No morning check yet for this record', 'No morning check has run for this publication yet; the morning host holds this record and no receipt for it.'],
+    ['another publication', noReceipt('f'.repeat(64)), 'other', 'No morning check for this record', 'The morning host holds another publication, not this record, so no check for this record has run'],
+    ['unnamed', 'not found', 'missing', 'No morning file published', 'The morning host answered that no file exists, without naming the publication it holds.'],
+    ['unnamed JSON', JSON.stringify({ status: 'not_found' }), 'missing', 'No morning file published', 'without naming the publication it holds'],
+    ['another status naming this record', JSON.stringify({ status: 'not_found', publication_sha256: publicationSha }), 'missing', 'No morning file published', 'without naming the publication it holds'],
+    ['malformed digest', noReceipt('F'.repeat(64)), 'missing', 'No morning file published', 'without naming the publication it holds']
+  ]) {
+    const tab = await setup({ status: 404, body });
+    try {
+      const f = await facts(tab.page);
+      eq('404 ' + name + ': the loaded record is the one the host would name', f.canonicalHash, publicationSha);
+      eq('404 ' + name + ': the absence is read and named', [f.state, f.absent, f.headline, f.generatedAt], ['unavailable', absent, headline, null]);
+      check('404 ' + name + ': the file status says why', (await tab.page.locator('#disc-observations').textContent()).includes(said));
+      eq('404 ' + name + ': the summary carries the unavailable state', await tab.page.locator('#disc-observations').getAttribute('data-observation-state'), 'unavailable');
+      eq('404 ' + name + ': no static fallback', tab.requests.filter(r => r.url !== ENDPOINT), []);
+      eq('404 ' + name + ': no GitHub run is offered where the Actions link cannot publish to this host', await tab.page.locator('[data-observation-handoff]').count(), 0);
+      const before = tab.requests.length;
+      await tab.page.clock.runFor(31000); await wait(tab.page);
+      eq('404 ' + name + ': polling continues inside the window', tab.requests.length > before, true);
+      await tab.reload(observed);
+      eq('404 ' + name + ': the first receipt of the window replaces the absence', [(await facts(tab.page)).state, (await facts(tab.page)).absent], ['loaded', null]);
+    } finally { await tab.context.close(); }
+  }
+  if (shotsDir) {
+    // The phone's desk over the evening's answer, for a reader to look at.
+    const tab = await setup({ status: 404, body: noReceipt(publicationSha), width: 390 });
+    try {
+      await tab.page.locator('#morning-open').click();
+      await tab.page.waitForTimeout(250);
+      await mkdir(shotsDir, { recursive: true });
+      await tab.page.screenshot({ path: path.join(shotsDir, 'morning-service-no-receipt-390.png'), fullPage: false });
+      eq('404 this record at 390: the desk is open over the absence', [(await facts(tab.page)).absent, await tab.page.locator('#disc-observations').isVisible()], ['none', true]);
+    } finally { await tab.context.close(); }
+  }
+  // The production load is the compact reader: recordHash is the reader's
+  // digest and the host names the canonical one, so the comparison is against
+  // the canonical digest, and a 404 naming the reader's is another publication.
+  {
+    const projected = derive(raw);
+    const readerSha = createHash('sha256').update(projected.readerRaw).digest('hex');
+    for (const [name, named, absent] of [['canonical', publicationSha, 'none'], ['reader', readerSha, 'other']]) {
+      const tab = await setup({ status: 404, body: noReceipt(named), projected });
+      try {
+        const f = await facts(tab.page);
+        eq('projected 404 naming the ' + name + ' digest: the page loaded the compact reader', [f.projected, f.canonicalHash === publicationSha, f.recordHash === readerSha, readerSha !== publicationSha], [true, true, true, true]);
+        eq('projected 404 naming the ' + name + ' digest: compared against the canonical digest', [f.state, f.absent], ['unavailable', absent]);
+      } finally { await tab.context.close(); }
+    }
+  }
   const retained = await setup({ receipt: halted });
   try {
     const checked = (await facts(retained.page)).generatedAt;
     for (const [name, body, status] of [
       ['malformed', '{', 200], ['outage', '{}', 503], ['omitted restriction', observed, 200],
-      ['oversized', JSON.stringify({ padding: 'x'.repeat(512 * 1024) }), 200]
+      ['oversized', JSON.stringify({ padding: 'x'.repeat(512 * 1024) }), 200],
+      ['no receipt yet', JSON.stringify({ publication_sha256: publicationSha, status: 'no_receipt' }), 404]
     ]) {
       await retained.reload(body, status);
       eq(name + ': last verified receipt and halt remain', [(await facts(retained.page)).state, (await facts(retained.page)).generatedAt, (await facts(retained.page)).restricted], ['unavailable', checked, ['burst:AAPL']]);
       eq(name + ': no static fallback', retained.requests.filter(r => r.url !== ENDPOINT), []);
     }
+    eq('no receipt yet: the absence is known beside the retained receipt', [(await facts(retained.page)).absent, (await facts(retained.page)).headline], ['none', 'No morning check yet for this record']);
     await retained.page.clock.runFor(361000); await wait(retained.page);
     eq('old retained receipt remains visibly expired', (await facts(retained.page)).fresh, false);
     eq('expired restriction still withholds copying', await retained.page.locator('#detail [data-copy]').count(), 0);

@@ -57,10 +57,12 @@
   const clockCT = ms => new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit' }).format(new Date(ms)) + ' CT';
   let record = null, recordHash = null, epoch = 0, sequence = 0, controller = null, state = 'unbound', receipt = null, issue = '', now = Date.now();
   let reloadTimer = null, automaticRequest = false, lastRequest = -Infinity;
-  // True only when the morning file was read and holds no receipt for this
-  // publication (a 404, or a receipt bound to another publication): the one
-  // unavailable state in which the absence of a check is known, not assumed.
-  let absent = false;
+  // Set only when the morning file was read and holds no receipt for this
+  // publication: the one unavailable state in which the absence of a check is
+  // known, not assumed. It says why: 'none' (the host holds this record and no
+  // check has run for it yet), 'other' (the file or the host is for another
+  // publication) or 'missing' (a 404 naming no publication: no file at all).
+  let absent = null;
   let readerBinding = null;
   let halted = new Map(), corporate = new Map(), onChange = null, storageIssue = '', cachedHalt = false, pinned = false;
   const sourceMemory = { halts: {}, corporate: {} };
@@ -240,7 +242,7 @@
         readerBinding && (p.reader_projection_version !== 1 || p.reader_sha256 !== recordHash) ||
         p.context_sha256 !== (run.evidence || {}).context_sha256 || p.rules_version !== (record.app || {}).rules_version ||
         String(p.run_id) !== String(run.run_id) || p.measured_session !== run.session ||
-        p.applicable_session !== timing.applicable_session || p.published_at !== run.published_at) throw Object.assign(Error('These observations belong to another publication.'), { elsewhere: true });
+        p.applicable_session !== timing.applicable_session || p.published_at !== run.published_at) throw Object.assign(Error('These observations belong to another publication.'), { elsewhere: true, absent: 'other' });
     if (!['observed', 'partial', 'provider_unavailable', 'no_tickets', 'inapplicable', 'invalid_publication'].includes(value.status)) throw Error('Unknown observation status.');
     const started = dateMs(value.collection_started_at), generated = dateMs(value.generated_at), expires = dateMs(value.expires_at);
     if (![started, generated, expires].every(Number.isFinite) || started > generated || generated > now + FUTURE_SKEW * 1000 || expires <= generated || expires - generated > RECEIPT_AGE * 1000) throw Error('Observation timestamps are invalid.');
@@ -340,8 +342,8 @@
     return halt ? 'Morning check: ' + words(halt.status) + ', last reported ' + atCT(halt.at) + '. ' + halt.reason + ' Entry copying is withheld until a sourced resumption is recorded; check your broker.'
       : !receipt && ['unbound', 'loading'].includes(state) ? 'Checking published morning halt evidence; entry copying is briefly paused while this record is matched.' : null;
   }
-  async function readBounded(response) {
-    if (!response.ok) throw Error('The published morning file could not be read.');
+  async function readBounded(response, any = false) {
+    if (!any && !response.ok) throw Error('The published morning file could not be read.');
     const length = Number(response.headers.get('content-length'));
     if (Number.isFinite(length) && length > MAX_BYTES) throw Error('Observation document exceeds the size limit.');
     if (!response.body || !response.body.getReader) throw Error('Bounded observation reading is unavailable.');
@@ -357,6 +359,22 @@
       }
       return text + decoder.decode();
     } finally { reader.releaseLock(); }
+  }
+  // A 404 is read before it is refused. The morning host names the publication
+  // it holds when it has ingested one and holds no check for it
+  // (`{"publication_sha256":…,"status":"no_receipt"}`), so the page can say
+  // whether this record is simply unchecked yet or the host holds another
+  // publication. Any other 404 body says only that no file is published.
+  async function noReceipt(response) {
+    let named = null;
+    try {
+      const body = JSON.parse(await readBounded(response, true));
+      named = body && body.status === 'no_receipt' && HEX.test(body.publication_sha256) ? body.publication_sha256 : null;
+    } catch (e) { named = null; }
+    const canonical = readerBinding ? readerBinding.canonicalSha : recordHash;
+    if (named && named === canonical) return Object.assign(Error('No morning check has run for this publication yet; the morning host holds this record and no receipt for it.'), { elsewhere: true, absent: 'none' });
+    if (named) return Object.assign(Error('The morning host holds another publication, not this record, so no check for this record has run; it may not have received this publication yet.'), { elsewhere: true, absent: 'other' });
+    return Object.assign(Error(endpoint.service ? 'The morning host answered that no file exists, without naming the publication it holds.' : 'No morning file is published beside this record.'), { elsewhere: true, absent: 'missing' });
   }
   function autoEligible() {
     if (!endpoint.url || !recordHash || !record || record.fixture || pinned || d.hidden || !candidates().length || !api.availability) return false;
@@ -393,7 +411,7 @@
       if (!endpoint.service && (url.origin !== w.location.origin || !['http:', 'https:'].includes(url.protocol))) throw Error('Same-origin observations are unavailable.');
       url.hash = ''; url.search = '';
       const response = await w.fetch(url.href, { cache: 'no-store', credentials: 'omit', mode: endpoint.service ? 'cors' : 'same-origin', redirect: 'error', referrerPolicy: 'no-referrer', signal: active.signal });
-      if (response.status === 404) throw Object.assign(Error('The published morning file could not be read.'), { elsewhere: true });
+      if (response.status === 404) throw await noReceipt(response);
       const raw = await readBounded(response);
       if (token !== epoch || request !== sequence) return;
       if (!pinned) now = Date.now();
@@ -403,13 +421,13 @@
       const next = validate(parsed);
       if (receipt && dateMs(next.generated_at) < dateMs(receipt.generated_at)) throw Error('An older observation file was not loaded.');
       require(preservesRestrictions(next), 'A previous event exclusion was omitted without a sourced resolution; it remains withheld.');
-      receipt = next; state = 'loaded'; issue = ''; absent = false;
+      receipt = next; state = 'loaded'; issue = ''; absent = null;
       rememberHalts(next);
       resolveSourceMemory(next); savePublicFacts(next);
       paintAll(); if (onChange) onChange();
     } catch (e) {
       if (token !== epoch || request !== sequence) return;
-      state = 'unavailable'; issue = e && e.message || 'Observation file unavailable.'; absent = !!(e && e.elsewhere); paintAll(); if (onChange) onChange();
+      state = 'unavailable'; issue = e && e.message || 'Observation file unavailable.'; absent = e && e.elsewhere ? e.absent || 'missing' : null; paintAll(); if (onChange) onChange();
     } finally {
       w.clearTimeout(timeout);
       if (controller === active) { controller = null; automaticRequest = false; scheduleReload(); }
@@ -420,7 +438,7 @@
     if (controller) controller.abort();
     controller = null; automaticRequest = false; lastRequest = -Infinity;
     if (reloadTimer !== null) { w.clearTimeout(reloadTimer); reloadTimer = null; }
-    record = data; recordHash = null; readerBinding = null; receipt = null; halted = new Map(); corporate = new Map(); issue = ''; storageIssue = ''; cachedHalt = false; pinned = !!clockPinned; absent = false;
+    record = data; recordHash = null; readerBinding = null; receipt = null; halted = new Map(); corporate = new Map(); issue = ''; storageIssue = ''; cachedHalt = false; pinned = !!clockPinned; absent = null;
     state = data && data.fixture ? 'practice' : 'unbound'; now = at ? new Date(at).getTime() : Date.now();
     if (state !== 'practice') applySourceMemory();
     paintAll();
@@ -457,6 +475,8 @@
     if (state === 'practice') return 'Practice record — no market observations requested';
     if (state === 'unbound') return 'Morning observations not yet verified';
     if (state === 'loading') return 'Reading the published morning file…';
+    if (state === 'unavailable' && absent === 'none') return 'No morning check yet for this record';
+    if (state === 'unavailable' && absent) return absent === 'other' ? 'No morning check for this record' : 'No morning file published';
     if (state === 'unavailable') return 'Morning observations unavailable';
     if (halted.size || corporate.size) return 'Entry copying withheld by a sourced event check';
     if (!receiptFresh()) return 'Morning observations are stale';
@@ -614,7 +634,7 @@
     clock: at => { now = new Date(at).getTime(); paintAll(); scheduleReload(); },
     repaint: () => paintAll(),
     onChange: handler => { onChange = handler; },
-    facts: () => ({ state, recordHash, canonicalHash: readerBinding ? readerBinding.canonicalSha : recordHash, projected: !!readerBinding, headline: headline(), generatedAt: receipt && receipt.generated_at, fresh: receiptFresh(), pending: !receipt && ['unbound', 'loading'].includes(state), restricted: [...new Set([...halted.keys(), ...corporate.keys()])] })
+    facts: () => ({ state, absent, recordHash, canonicalHash: readerBinding ? readerBinding.canonicalSha : recordHash, projected: !!readerBinding, headline: headline(), generatedAt: receipt && receipt.generated_at, fresh: receiptFresh(), pending: !receipt && ['unbound', 'loading'].includes(state), restricted: [...new Set([...halted.keys(), ...corporate.keys()])] })
   };
   d.addEventListener('visibilitychange', scheduleReload);
   w.addEventListener('pageshow', scheduleReload);

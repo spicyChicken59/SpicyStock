@@ -119,7 +119,9 @@ def test_noop_ticks_and_public_reads_add_no_observations(tmp_path):
     store.ingest(RAW, now=NOW)
     for _ in range(10):
         assert store.reserve(now=NOW.replace(hour=14))[1] == 'entry_window_ended'
-        assert request(service.application(store.path))['status'] == '503 Service Unavailable'
+        response = request(service.application(store.path))
+        assert response['status'] == '404 Not Found'  # ingested, never checked: named, not served
+        assert json.loads(response['body']) == {'publication_sha256': hashlib.sha256(RAW).hexdigest(), 'status': service.NO_RECEIPT}
     assert len(events(store)) == 1
 
 
