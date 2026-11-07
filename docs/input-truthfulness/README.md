@@ -50,6 +50,17 @@ recovery at the next open; reader calls stayed within names times attempts, the
 empty balance stopping them after one. `--check` runs it again and holds both
 files. Everything is injected: it is not a live provider, a runner or GitHub.
 
+[7 November 2026: the service through the first morning checks delivered inside their window](2026-11-07-service-health.md)
+is the `service_health_v3` reading run again, pinned to `4ad320c2`, the merge
+of #215: 41 of 41 due sessions published, all 41 before the next open, fresh,
+latency median 300.6 minutes by the landing commit, 34 of 41 after the retry
+slot; eight morning receipts, five of them before the applicable open (23 October
+and 3 to 6 November, the last four consecutive); 19 source-recovery receipts,
+the eight weekday ones since 27 October `inapplicable`, each generated after
+the open; 21 archived cost blocks (60 calls, 411,396 input
+tokens); 304 of 358 requested reads done, 23 of 24 under request v3. The 17
+October reading is kept as written; `--check` holds the 7 November files.
+
 [17 October 2026: the service through the first night under the retired seed](2026-10-17-service-health.md)
 is the `service_health_v3` reading run again, pinned to `426d3c59`, the issuer
 receipt that followed the 16 October publication: 26 of 26 due sessions
