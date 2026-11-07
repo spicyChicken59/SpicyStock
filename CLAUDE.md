@@ -14219,3 +14219,206 @@ file.
 **Not claimable:** the route on the deployed host (Mo redeploys from `main`,
 after #213 and this); a morning check with admitted plans inside the window;
 any trading edge.
+
+## Checkpoint, 7 Nov 2026 -- PR #214 accepted; the confirmatory figure read again after 6 November: the first YELLOW week, the first burst tickets, and a night whose every settled ticket stopped
+
+**PR #214, accepted.** Merged as `959c2445` on `main` with a merge commit over
+`9ea79f20`, its tree the head `c0d4a287`'s byte for byte. That head (CLAUDE.md
+alone over the code head `4b5b8c22`) passed pytest (08:43–09:08 UTC), page
+(08:43–09:02), the gate's docs-only decision and both gitleaks runs on Tests
+run 42356713442 and Secret scans 42356713352 and 42356709837. Publisher
+42358587465 waited for `app-observations.js` and printed *Verified: every one
+of the 48 public files matches committed main*; Pages 42358610680 deployed
+(42358586953 cancelled as superseded, as every merge does); the merge commit's
+own Secret scan 42358587491 and Tests run 42358587464 (09:10–09:34 UTC) passed.
+**The host is still the 31 October image**: at 06:46 and 07:34 UTC
+`/status.json` answered 404 and `/morning.json` served the receipt generated
+14:59 UTC on 4 November, so the route of #214 and the status route of #213 are
+not claimable until Mo redeploys from `main`.
+
+**Revision.** Branch `reread-nov7` from `main` at `959c2445`, pushed as
+`claude/spicystock-market-data-vfd3o2`, **PR #215**: the re-read (`30fbd629b`),
+the review's fixes (`23559f172`) and this checkpoint. The frozen study
+`tools/signal_outcomes.py` is untouched (the guard holds the tree's file to
+blob `39d4f25a`); nothing under `src/` changed and no rule moved
+(`rules_version` stands, no fixture regenerated); `docs/data.json`,
+`docs/picks.json`, the compact reader, every receipt, the history, the
+evidence objects, the quality ledger, the workflows and the vendored design
+system are untouched; no run, mail, dispatch, provider call or credential.
+`.env.example` was read: nothing here is configuration. What moves: the
+dated spec, evidence directory and report under `docs/input-truthfulness/`,
+their guard `tests/test_signal_outcomes_reread_07_november.py`,
+`tools/build_historical_findings.py` (its study and report list),
+`docs/historical-findings.json` (rebuilt), `tests/test_historical_findings.py`,
+`tools/findings_cases.mjs`, README, the input-truthfulness index and this file.
+
+**The re-read** (`docs/input-truthfulness/2026-11-07-signal-outcomes-confirmatory.md`).
+The frozen study over forty-seven publications under a spec that is the frozen
+file with thirty entries appended -- the 24 October extension's twenty and the
+ten published 26 October to 6 November, each the first publication of its
+session (SHA-256 `ccc303bb3f00…`; the byte-level diff retained) -- run under
+Python 3.12.3 and pandas 3.1.0 (exit 0, 20.4 s) and again under 3.13.17 and
+3.0.5 (19.2 s) to the same bytes (uncompressed SHA-256 `eac24c37757f…`), both
+run records retained. **The confirmatory admitted stratum is 575 settled over
+twenty-four nights (2 October to 4 November): 153 wins, 418 losses and 4 even,
+−125.15R in sum, −0.218R a ticket, the mean of night means −0.003R with a 95%
+night-bootstrap interval of −0.232 to +0.220. It includes zero: no sign.** The
+two estimands moved apart since 24 October -- the mean a ticket from −0.081R to
+−0.218R, the mean of night means from −0.051R to −0.003R -- because the 19 to
+23 October nights completed at +25.30R over 45 late settlers (25 wins; the 19
+October night +1.450R over 20, the best in the stratum by mean and sum) while
+**the 4 November night, the first on which the live policy published burst
+tickets (HQY, RCBC and VIK, each A+ under an accepted review), is the one whose every settled ticket stopped into the 5 November alarm** (91 up 4% against 844 down over the scaled alarm of 380.5): 245 admitted rows, 119 settled, 0 wins, −122.41R (four rows still open, 90 uncertain) -- 72 stopped on
+the entry day and 47 after holding through it with the stop raised to the
+entry day's low (43 at the next open), twenty-five past −1R, the deepest
+−3.94R -- and across every stratum 451 settled at 2 wins and 449 losses,
+−451.01R. Without it the other twenty-three nights hold 456 settled at
+−2.74R. Nine of the twenty-six confirmatory nights were YELLOW (8, 9 and 12
+October; 27, 28 and 29 October; 2, 3 and 4 November): their 305 settled sum
+to −129.26R, −122.41R of it that one night's, the other eight nights' 186 at
+−6.85R; the seventeen RED nights' 270 settled sum to +4.11R. The twenty-five
+mechanical A+ that settled are 6 wins and 19 losses, −12.46R. The account
+moved a second time under the spec's own rule -- $2,000 from `e67f8cba`, the
+second of 8 October; $30,000 from `a0d9172e`, the first of 4 November -- so at
+$150 of risk every admitted setup sizes to a whole share and the `no_order`
+rows fell from 24–51 a night to 0; the admission rule of #211 is not in the
+frozen study, so 1,566 of the 2,203 confirmatory rows are dollar-only names,
+99 of the 4 November night's 245. The reader's own A/A+ admissions are thirteen
+rows, 5 settled, all losses, −4.69R, under the twenty minimum. The exploratory
+stratum moved for the first time since the freeze: 303 settled (−0.123R), its
+interval still clear of zero. 453 rows moved between buckets: 393 the 19 to 23
+October nights completing; four set aside by a re-pricing (BUUU ÷10 in the 26
+October publication, SUPN ÷1.18 in the 4 November one, three of them
+previously settled, none admitted); and fifty-six of the two oldest nights
+(21 of 11 September, 35 of 14 September) moved by the newest publications'
+series and observations: fifty-one walked (16 settled, 22 uncertain, 13 not
+filled; forty-three symbols' series begin in May, BLSM's and LYNX's, 56-session
+series for names listed more recently, on 7 and 19 August, each still before
+its signal) and five set aside, as the 24 October report described. 105 rows still move (four open of 4
+November, 101 pending of 6 November, whose entry is Monday 9 November); read
+again after 13 November.
+
+**The findings side.** `tools/build_historical_findings.py` reads the 7
+November study and lists its report; `docs/historical-findings.json` is rebuilt
+(41 nights, 70 sessions, `--check` current), so the Record view's replay carries
+the 26 October to 6 November nights, the 4 November night's three burst tickets
+and the confirmatory split's twenty-six nights. `tests/test_historical_findings.py`
+derived two expectations it had carried as fixed lists -- the setting-up tickets
+by name and "every committed record published no burst ticket", both false once
+a record published three -- from the records: every ticket night is yellow, the
+8 and 9 October setups are MG, SN and ZIM, and the synthetic cases count the
+records' own tickets plus their changes. `tools/findings_cases.mjs` brings the
+stage back on screen before the restart press: the list of nights under it now
+scrolls the stage off the top when its last button is clicked, and an off-screen
+replay refuses to play by design (the IntersectionObserver), so the suite had
+timed out at *restarted playback advances*; the page is unchanged.
+
+**Measured** (this sandbox, Python 3.12.3, Node 22, Chromium through Playwright
+1.63): the full suite on the committed worktree at
+`30fbd629b` 5797 passed, 13 environment-gated skips and one failure in
+27 m 14 s (5974 collected; the two `zstandard`-gated files this venv cannot
+run ignored) -- the failure `tests/test_historical_projection_controls.py`
+`[untouched_base]`, whose control refuses `raw_storage_must_be_outside_git`
+because this worktree sits under the repository root and the control's scratch
+storage under a `.git` parent; the same test passes in a worktree under the
+session scratchpad, so it is the location's and not this change's (the rule
+that follows: put a full-suite worktree outside the repository); after the
+review's fixes the two guards, the findings tests and the docs tests 89 passed; the guard 13 passed under `-W error::pytest.PytestWarning`;
+`tools/evidence_review.py --check`, `build_historical_findings.py --check` and
+`make_fixture.py --check` (13 fixtures) current; the findings browser suite
+1608/1608 with `--shots` at 1280, 390 and 320 in both themes, the screenshots
+looked at (the replay at night 1 of 41, the 3 and 5 November nights on the
+phone, the nights table, the backtest table); continuity 137; `git diff --check`
+clean; gitleaks 8.24.3 (fetched into the session scratchpad; it is not
+installed here) over each commit and over the changed files with the
+repository's config: no leaks.
+
+**Mutation passes.** Sixty mutants and three controls, each in one of two
+detached worktrees held one per mutant, the tree never written, judged by the
+whole test file naming its rule: fifty over the report (a night-table cell, the
+575, the median, an interval bound, each count of the moves, BUUU's and SUPN's
+R, the September counts, the listed-burst range, the walked outcomes, the
+first-settled strata, the exploratory mean, the 5 November breadth, the held
+stops, the deepest loss, the all-strata sum, the late settlers, the 19 and 23
+October figures, the regime words, the 6 November pending count, the YELLOW
+sums, the A+ count and the A+ names, the account's ordinal, the `no_order`
+counts, the dollar-only count, DAC's, CCI's and the reader's sums, the read-again
+date, the reach-twenty nights, both wall times, the output digest, the title's
+count, the horizons, the series' start, the complete-nights count, the rows
+cell, the night-means move, the 4 November horizon, the YELLOW-nights count,
+the even count, the uncertain bound and a cost line), seven over the evidence
+(a byte of `spec-diff.txt`, the summary's newest session, the first record's
+exit code and wall time, the second record's summary digest, an appended
+entry's session, a comment added to the frozen study) and three over the
+findings builder, each regenerating the findings file with the mutated builder
+before the judge (burst tickets counted zero, setting-up tickets counted zero,
+every night red). All sixty die in the test naming their rule -- the report's
+fourteen in the night-table test, nine in the output-and-record test, seven in
+the regimes-and-account test, the builder's in the records'-own-counts test,
+every-night-red in the reading's red-night pooling too; the three controls (an
+unasserted sentence, a reflowed paragraph, a builder comment) survive. The one
+browser mutant, the scroll removed from a worktree copy, dies as the pre-fix
+suite did: `page.waitForFunction: Timeout 30000ms exceeded` at *restarted
+playback advances*. After the review, a second pass at
+`23559f172` over its rules, in the same two worktrees: fourteen report mutants
+(the full-series count, the short series' date, length and names, the old
+mechanism clause and the old sizing clause put back, the closing paragraph's
+five repeats, "a fifth", "through 8 October", the entry session) and two builder
+mutants judged with the file-equality test deselected (every night red, the
+setting-up tickets zero) -- the eight that had survived the reviewer's own pass
+among them -- all die in the test naming their rule, every-night-red in the
+derived ticket test now as well as the records'-own-counts test; a guard mutant
+that drops the clause holding each short series' start before its signal
+survives, an assertion no committed figure depends on over this data, kept as
+the statement of intent; the two controls (the unasserted sentence, a guard
+comment) survive. Seven of the fourteen phrases wrap across a line of the
+report, which the exact-match harness could not place (named `old occurs 0
+times`, never counted a kill) and a whitespace-tolerant third pass did.
+
+**The review, worked.** One reviewer by execution over the pushed tip
+`30fbd629b`, in its own worktree (239 tool calls), re-derived every figure of
+the report, the index entry and README's changed sentences from the rows and
+the records with its own scripts, re-ran the study under both interpreters to
+the same bytes, and ran forty-three single-rule breaks of its own against the
+guard and four against the findings builder. Nine findings, each reproduced
+here before it was touched and each fixed in `23559f172`. The high one was a
+false sentence the guard could not catch: "the series begins between 6 May and
+19 May" is true of forty-three of the forty-five walked September symbols, but
+BLSM's and LYNX's are 56-session series for names listed more recently than
+the archived 120, beginning 7 and 19 August (each still before its September
+signal), and the guard had read each publication's EARLIEST series start rather
+than each walked symbol's own -- the 24 October report's same sentence was
+true, so the hole bit here first. The sentence names the two now, and the
+guard holds every walked symbol's own series to it and to a start before its
+signal. The mediums: "stopped whole" (README, the index, the report's closing
+paragraph; the commit message stands as written) overstated a night with four
+rows still open and ninety uncertain, and says "every settled ticket" now; and
+eight figures the closing paragraphs repeat were read by no assertion -- the
+reviewer's substitutions of −0.218, −0.003, −122.41, 105, 305, "a fifth",
+"through 8 October" and the mechanism clause all survived the whole guard --
+each held now. The lows: the walked rows' earlier reason was the signal's own
+bar missing, not every later bar (said, and held to the 24 October rows); the
+index said the fifty-six moved by the series when five moved on observations
+alone; the pending rows' entry session was held by a vacuous `hasattr` branch
+(it comes off `plan.next_sessions` now); the 24 October report carried no
+pointer to this re-read (it carries the 17 October one's); "every admitted
+setup of the three $30,000 nights sizes to a whole share" reached past the 45
+the stop rule withheld (it says "that the stop rule let through"); and the
+findings test's derived checks never read a night's regime and pinned "one
+night with burst tickets" (a red night is relabelled yellow in the records and
+the file held to it; `>= 1`). Recorded: the 24 October index entry still ends
+"Read again after 30 October", a dated sentence left as written.
+
+**Keep / fix / defer / omit.** Keep: the spec frozen and extended by appended
+publications only; each re-read a dated directory with its own guard and a
+record for every run it cites; the findings builder reading the newest study
+and the page printing what the file writes. Fix if it bites: the frozen
+study's footer and reading rule still say every ticket was refused by the RED
+gate, which the dated reports correct and only a new freeze could change; the
+confirmatory figure now mixes three account populations, which the report
+names and the frozen rule cannot split. Defer: the re-read after 13 November,
+when the 6 November tickets reach their fifth session. Omit: any rule,
+threshold or account change on these numbers; an edge claim.
+
+**Not claimable:** the morning host under #213 and #214 (Mo's redeploy); a
+morning check with admitted plans inside the window; any trading edge.
