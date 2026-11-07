@@ -68,7 +68,11 @@ def test_bootstrap_verifies_immutable_blob_and_migrates_old_bound_restrictions(t
     assert all(COMMIT in url or url == syncer.REF_URL for url, _, _ in source.calls)
     claim, _ = store.reserve(now=NOW)
     assert claim.previous == previous and claim.publication == RAW + b'\n'
-    assert request(service.application(store.path))['status'] == '503 Service Unavailable'
+    # Ingested with only an older publication's receipt: the route names the
+    # ingested publication and serves no receipt.
+    response = request(service.application(store.path))
+    assert response['status'] == '404 Not Found'
+    assert json.loads(response['body']) == {'publication_sha256': service.status_document(store.path)['service']['publication_sha256'], 'status': service.NO_RECEIPT}
 
 
 def test_unchanged_blob_skips_full_download_even_after_code_only_main_commit(tmp_path):

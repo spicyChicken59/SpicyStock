@@ -170,6 +170,17 @@ export async function checkMorningServiceReader({ browser, base, open, check, eq
       eq('404 ' + name + ': the first receipt of the window replaces the absence', [(await facts(tab.page)).state, (await facts(tab.page)).absent], ['loaded', null]);
     } finally { await tab.context.close(); }
   }
+  if (shotsDir) {
+    // The phone's desk over the evening's answer, for a reader to look at.
+    const tab = await setup({ status: 404, body: noReceipt(publicationSha), width: 390 });
+    try {
+      await tab.page.locator('#morning-open').click();
+      await tab.page.waitForTimeout(250);
+      await mkdir(shotsDir, { recursive: true });
+      await tab.page.screenshot({ path: path.join(shotsDir, 'morning-service-no-receipt-390.png'), fullPage: false });
+      eq('404 this record at 390: the desk is open over the absence', [(await facts(tab.page)).absent, await tab.page.locator('#disc-observations').isVisible()], ['none', true]);
+    } finally { await tab.context.close(); }
+  }
   // The production load is the compact reader: recordHash is the reader's
   // digest and the host names the canonical one, so the comparison is against
   // the canonical digest, and a 404 naming the reader's is another publication.
