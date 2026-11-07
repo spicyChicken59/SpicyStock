@@ -176,11 +176,11 @@ the confirmatory admitted stratum is 575 settled over twenty-four nights,
 +0.220 -- readable, and still no sign established. The 19 to 23 October nights
 completed at +25.30R; the first YELLOW week and the first published burst
 tickets entered; and the 4 November night, 245 admitted rows at the $30,000
-account, stopped whole into the 5 November alarm, 119 settled and every one a
-loss, −122.41R, the night with the most settled tickets and the stratum's
-largest loss. Fifty-six rows
-of the two oldest nights moved bucket by the newest publications' series, two of
-them admitted and settling, so the exploratory admitted stratum reads 303
+account, whose every settled ticket stopped into the 5 November alarm: 119
+settled and every one a loss, −122.41R, the night with the most settled tickets
+and the stratum's largest loss. Fifty-six rows of the two oldest nights moved
+bucket by the newest publications' series and observations, two of them
+admitted and settling, so the exploratory admitted stratum reads 303
 settled; three previously settled tickets were set aside when a later publication
 re-priced their symbol; no ticket settled in both runs changed its R. Read again
 after 13 November.

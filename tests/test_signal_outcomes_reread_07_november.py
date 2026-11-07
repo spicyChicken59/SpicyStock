@@ -25,7 +25,7 @@ import subprocess
 
 import pytest
 
-from src import pipeline, record as rec
+from src import pipeline, plan, record as rec
 from tools import signal_outcomes as so
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -390,7 +390,8 @@ def test_the_moves_come_from_the_new_publications_own_bars(published):
 
     def tick(x) -> str:
         return x["ticker"] if isinstance(x, dict) else x
-    tops, bars_rule, lengths, starts, listed_counts = set(), set(), set(), [], []
+    tops, bars_rule, lengths, listed_counts = set(), set(), set(), []
+    first: dict[str, tuple[str, int]] = {}  # each charted symbol's earliest series start, with that series' length
     for p in appended:
         d = p["data"]
         top, bars_n = d["rules"]["pipeline"]["series_top"], d["rules"]["pipeline"]["series_bars"]
@@ -404,10 +405,13 @@ def test_the_moves_come_from_the_new_publications_own_bars(published):
         charted = [b for b in bursts if b.get("series")]
         assert {b["ticker"] for b in charted} == keep, p["commit"][:8]
         lengths |= {len(b["series"]) for b in charted}
-        starts.append(min(b["series"][0]["date"] for b in charted))
+        for b in charted:
+            if b["ticker"] not in first or b["series"][0]["date"] < first[b["ticker"]][0]:
+                first[b["ticker"]] = (b["series"][0]["date"], len(b["series"]))
         listed_counts.append(len(bursts))
     # a chart is the archived number of sessions, or fewer for a name listed more recently than that
-    assert tops == {pipeline.SERIES_TOP} and len(bars_rule) == 1 and max(lengths) == bars_rule.copy().pop() and min(lengths) < max(lengths)
+    rule = bars_rule.pop()
+    assert tops == {pipeline.SERIES_TOP} and not bars_rule and max(lengths) == rule and min(lengths) < rule
     bars_now, _ = so.gather_bars(published)
     bars_then, _ = so.gather_bars([p for p in published if p["commit"] in previous])
     series = {b["ticker"] for p in appended for b in p["data"].get("bursts", []) if b.get("series")}
@@ -441,11 +445,25 @@ def test_the_moves_come_from_the_new_publications_own_bars(published):
     text = report()
     assert f"each of the {word(len(appended))} publications lists {min(listed_counts)} to {max(listed_counts)} bursts but charts only " \
            f"its tickets, its cut names, its closest miss and its top {pipeline.SERIES_TOP} bursts by rank (`pipeline.SERIES_TOP`)" in text
-    assert f"bursts' {bars_rule.pop()}-session series and from the `observations` block and nothing else" in text
+    assert f"bursts' {rule}-session series and from the `observations` block and nothing else" in text
+    # each walked symbol's own series: a full one begins in May, a name listed more recently than the
+    # archived number of sessions carries a shorter one, and every one reaches back past its signal
+    full = {t: first[t][0] for t in walked_symbols if first[t][1] == rule}
+    short = {t: first[t] for t in walked_symbols if first[t][1] < rule}
+    assert full and short and len(full) + len(short) == len(walked_symbols)
+    assert len({n for _, n in short.values()}) == 1
+    short_len = next(iter(short.values()))[1]
+    assert all(first[r["ticker"]][0] < r["session"] for r in walked)
+    # before this run every walked row was set aside for lacking the bar of its own session, not every later bar
+    assert all((before[KEY(r)]["bucket"], before[KEY(r)]["reason"]) ==
+               ("basis_mismatch", "later bars exist but the signal's own session is not among them") for r in walked)
     assert f"{word(len(walked)).capitalize()} of the {word(len(moved))} rows, over {word(len(walked_symbols))} symbols " \
            f"({word(len(both))} of them on both nights), belong to symbols one of the {word(len(appended))} publications charted: " \
-           f"the series begins between {when(min(starts))} and {when(max(starts))}" in text
-    assert f"is walked ({outcomes['settled']} settled, {outcomes['uncertain']} uncertain and {outcomes['not_filled']} not filled)" in text
+           f"the series begins between {when(min(full.values()))} and {when(max(full.values()))} for {word(len(full))} of them and, " \
+           f"for {listed(sorted(short))}, each a {short_len}-session series for a name listed more recently, on " \
+           f"{listed([when(short[t][0]) for t in sorted(short)])}, still before its September signal, so a September signal whose " \
+           f"own-session bar no earlier publication had carried now has it and is walked ({outcomes['settled']} settled, " \
+           f"{outcomes['uncertain']} uncertain and {outcomes['not_filled']} not filled)" in text
     assert f"The other {word(len(aside))} rows, {word(len(aside_symbols))} symbols, gained no series: every one was listed as a " \
            f"burst again between {when(appended[0]['session'])} and {when(appended[-1]['session'])} below the charted ones" in text
     assert {r["ticker"] for r in walked if r["stratum"] == "admitted"} == {"TRV", "IBM", "EPAM", "TBBB", "WSM"}
@@ -505,11 +523,12 @@ def test_the_confirmatory_figure_and_its_night_table_are_the_rows_own():
         named = {r["horizon"] for r in co if r["session"] == s and r.get("horizon")}
         assert len(named) == 1, (s, named)
         hz[s] = named.pop()
-    entry = so.sessions_after(NEWEST, 1)[0] if hasattr(so, "sessions_after") else None
+    # the pending rows' entry session is the exchange calendar's next session after the newest one
+    entry = plan.next_sessions(datetime.strptime(NEWEST, "%Y-%m-%d").date(), 1)[0]
+    assert entry.weekday() == 0, entry
     assert f"The two nights that are not carry {moving} rows still open or pending: the 4 November night's {word(len(opened))} open " \
            f"rows, which reach their horizon on {when(hz[BIG_NIGHT])}, and the {len(pending)} pending rows of the 6 November night, " \
-           "whose entry session is Monday 9 November." in text
-    assert datetime.strptime("2026-11-09", "%Y-%m-%d").weekday() == 0 and entry in (None, "2026-11-09")
+           f"whose entry session is Monday {when(entry.isoformat())}." in text
     floor = rec.SCORECARD_MIN_PLANS
     under = sum(1 for s in sessions if settled([r for r in co if r["session"] == s])[0] < floor)
     assert f"{word(under).capitalize()} of the {word(len(sessions))} nights hold fewer than {word(floor)}" in text
@@ -533,8 +552,19 @@ def test_the_confirmatory_figure_and_its_night_table_are_the_rows_own():
            f"means rose from {signed(then['night_bootstrap']['mean_of_night_means'], 3)}R to " \
            f"{signed(boot['mean_of_night_means'], 3)}R" in text
     assert then["settled"]["mean_r"] > mean and then["night_bootstrap"]["mean_of_night_means"] < boot["mean_of_night_means"]
-    big = settled([r for r in co if r["session"] == BIG_NIGHT])[0]
-    assert round(big / n, 1) == 0.2, "the 4 November night is a fifth of the settled tickets, as the report says"
+    big_n, _, _, _, big_sum, _, _ = settled([r for r in co if r["session"] == BIG_NIGHT])
+    fraction = {0.1: "a tenth", 0.2: "a fifth", 0.3: "three tenths", 0.5: "half"}[round(big_n / n, 1)]
+    assert f"the 4 November night below is {fraction} of the stratum's settled tickets and one of its {word(len(nights))} nights" in text
+    # the closing paragraph repeats the two estimands, what completed, what stopped and what still moves
+    old_co = [r for r in old["rows"] if r["stratum"] == "admitted" and r["phase"] == "confirmatory"]
+    now_of = {KEY(r): r for r in co}
+    late_total = round(sum(now_of[KEY(r)]["r"] for r in old_co if r["bucket"] in ("open", "pending")
+                           and now_of[KEY(r)]["bucket"] == "settled"), 2)
+    assert f"the mean of night means moved from {signed(then['night_bootstrap']['mean_of_night_means'], 3)}R to " \
+           f"{signed(boot['mean_of_night_means'], 3)}R a night as the 19 to 23 October nights completed at {signed(late_total, 2)}R, " \
+           f"while the mean R a ticket moved from {signed(then['settled']['mean_r'], 3)}R to {signed(mean, 3)}R as the 4 November " \
+           f"night's {big_n} settled tickets all stopped, {signed(big_sum, 2)}R, and the interval still spans zero" in text
+    assert f"The two nights not yet complete carry {moving} rows still moving" in text
 
 
 def test_the_4_november_night_is_the_rows_and_the_records_own(published):
@@ -681,6 +711,8 @@ def test_the_regimes_and_the_account_change_are_the_rows_own():
     assert aplus[0] + a[0] == yn
     assert f"Of the YELLOW nights' {yn} settled, {aplus[0]} are mechanical A+ ({aplus[1]} wins, {aplus[2]} losses, " \
            f"{signed(aplus[4], 2)}R) and {a[0]} grade A ({signed(a[4], 2)}R)" in text
+    assert f"A YELLOW figure of its own now has {word(len(ys))} nights and {yn} settled, but one night is {signed(big[4], 2)}R " \
+           f"of its {signed(ytotal, 2)}R" in text
     # every confirmatory A+ that settled, named with its night, in session order, the sentence built from the rows
     groups: dict[str, list[str]] = {}
     for r in sorted((r for r in co if r["grade_mechanical"] == "A+" and r["bucket"] == "settled"), key=lambda r: (r["session"], r["ticker"])):
@@ -757,7 +789,15 @@ def test_the_account_change_is_the_records_own(published):
     assert f"Every publication from `{c1[:8]}`, the {ORDINALS[nth1]} of {when(s1)}, carried ${e1:,.0f} of model equity at 0.5% " \
            f"risk, and every publication from `{c2[:8]}`, the {ORDINALS[nth2]} of {when(s2)}, carries ${e2:,.0f} at 0.5%" in text
     assert f"so the signals ticketed at ${e2:,.0f} are those of {when(s2)} on" in text
-    assert f"At ${e2 * 0.5 / 100:,.0f} of risk a ticket" in text
+    co = confirmatory_admitted(doc)
+    # on the $30,000 nights the stop rule still withholds, and nothing that reached sizing was short of a share
+    assert sum(withheld(r) for r in co if r["session"] >= s2) > 0 and not any(no_order(r) for r in co if r["session"] >= s2)
+    assert f"At ${e2 * 0.5 / 100:,.0f} of risk a ticket, every admitted setup of the three ${e2:,.0f} nights that the stop rule let " \
+           "through sizes to a whole share" in text
+    sessions = sorted({r["session"] for r in co})
+    after1, before2 = min(s for s in sessions if s > s1), max(s for s in sessions if s < s2)
+    assert f"the ${e0:,.0f} nights through {when(s1)}, the ${e1:,.0f} nights from {when(after1)} to {when(before2)}, the setups a " \
+           f"${e1:,.0f} account could buy a share of, and the ${e2:,.0f} nights from {when(s2)}" in text
     assert s2 == BIG_NIGHT
     # the ten appended nights' regimes in the records are the rows' own
     regimes = {p["session"]: p["data"]["breadth"]["regime"]["verdict"] for p in published if p["session"] > PREVIOUS_READ}

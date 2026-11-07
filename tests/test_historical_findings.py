@@ -912,11 +912,16 @@ def test_the_published_tickets_and_the_reads_are_each_nights_own(pubs, study, mo
     real_setups = {p["session"]: sum(1 for r in (p["data"].get("watchlist") or {}).get("top") or []
                                      if (r.get("plan") or {}).get("order_line")) for p in pubs if p["commit"] in firsts}
     assert real_tickets["2026-09-22"] == 0 and real_setups["2026-10-08"] == 2
-    assert sum(1 for v in real_tickets.values() if v) == 1, "one committed night published burst tickets"
+    assert sum(1 for v in real_tickets.values() if v) >= 1, "a committed night published burst tickets"
+    real_verdicts = {v: sum(1 for p in pubs if p["commit"] in firsts and p["data"]["breadth"]["regime"]["verdict"] == v)
+                     for v in ("red", "yellow")}
     changed = copy.deepcopy(pubs)
     target = next(p for p in changed if p["commit"] in firsts and p["session"] == "2026-09-22")
     target["data"]["trades"] = [{"ticker": "TKTA"}, {"ticker": "TKTB"}]
     target["data"]["run"]["reads"] = {"requested": 7, "done": 3}
+    # a night's regime is its record's own: a red night relabelled yellow in the records reads yellow in the file
+    assert target["data"]["breadth"]["regime"]["verdict"] == "red"
+    target["data"]["breadth"]["regime"]["verdict"] = "yellow"
     yellow = next(p for p in changed if p["commit"] in firsts and p["session"] == "2026-10-08")
     top = yellow["data"]["watchlist"]["top"]
     assert [r["ticker"] for r in top if (r.get("plan") or {}).get("order_line")] == ["MG", "SN"]
@@ -925,6 +930,8 @@ def test_the_published_tickets_and_the_reads_are_each_nights_own(pubs, study, mo
     built = bf.build()
     night = next(n for n in built["nights"] if n["session"] == "2026-09-22")
     assert (night["tickets_published"], night["reads"]) == (2, {"requested": 7, "done": 3}), night["reads"]
+    assert night["regime"]["verdict"] == "yellow"
+    assert built["nights_summary"]["verdicts"] == {"red": real_verdicts["red"] - 1, "yellow": real_verdicts["yellow"] + 1}
     assert built["nights_summary"]["tickets_published"] == 2 + sum(real_tickets.values())
     others = [n for n in built["nights"] if n["session"] != "2026-09-22"]
     assert all(n["tickets_published"] == real_tickets[n["session"]] for n in others)

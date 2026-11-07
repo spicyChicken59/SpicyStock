@@ -65,9 +65,12 @@ else, and each of the ten publications lists 133 to 1104 bursts but charts only
 its tickets, its cut names, its closest miss and its top 24 bursts by rank
 (`pipeline.SERIES_TOP`). Fifty-one of the fifty-six rows, over forty-five
 symbols (six of them on both nights), belong to symbols one of the ten
-publications charted: the series begins between 6 May and 19 May, so a
-September signal whose later bars no earlier publication had carried now has
-them and is walked (16 settled, 22 uncertain and 13 not filled). The other five
+publications charted: the series begins between 6 May and 19 May for
+forty-three of them and, for BLSM and LYNX, each a 56-session series for a
+name listed more recently, on 7 August and 19 August, still before its
+September signal, so a September signal whose own-session bar no earlier
+publication had carried now has it and is walked (16 settled, 22 uncertain
+and 13 not filled). The other five
 rows, five symbols, gained no series: every one was listed as a burst again
 between 26 October and 6 November below the charted ones, so its `observations`
 block supplies bars of those sessions and nothing earlier, and a signal that had
@@ -215,7 +218,8 @@ signal with "the publication's own account block". Every publication from
 risk, and every publication from `a0d9172e`, the first of 4 November, carries
 $30,000 at 0.5%; `a0d9172e` is the first publication of its session, so the
 signals ticketed at $30,000 are those of 4 November on. At $150 of risk a
-ticket, every admitted setup of the three $30,000 nights sizes to a whole share:
+ticket, every admitted setup of the three $30,000 nights that the stop rule let
+through sizes to a whole share:
 the admitted rows the study marks `no_order` were 24, 28, 26, 51, 5, 30 and 15
 a night on 26 October to 3 November and are 0, 0 and 0 on 4 to 6 November, and
 across every stratum 120 to 313 a night before against 1, 0 and 0 after. The
@@ -254,8 +258,8 @@ read from them as a rate.
 The confirmatory figure is readable, and it still does not establish a sign:
 the mean of night means moved from −0.051R to −0.003R a night as the 19 to 23
 October nights completed at +25.30R, while the mean R a ticket moved from
-−0.081R to −0.218R as the 4 November night stopped whole at −122.41R, and the
-interval still spans zero. The two nights not yet complete carry 105 rows still
+−0.081R to −0.218R as the 4 November night's 119 settled tickets all stopped, −122.41R, and
+the interval still spans zero. The two nights not yet complete carry 105 rows still
 moving, so the figure will move as they complete, and it should be read again
 after 13 November, when the 6 November tickets reach their fifth session. A
 YELLOW figure of its own now has nine nights and 305 settled, but one night is

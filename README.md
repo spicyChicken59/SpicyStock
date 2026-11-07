@@ -64,8 +64,8 @@ ten nights, three of them YELLOW, with a night-bootstrap interval of −0.431 to
 +0.129; read again on 24 October over fifteen nights it is −0.081R over 316, the
 interval −0.319 to +0.251; read again on 7 November over twenty-four nights,
 nine of them YELLOW, it is −0.218R over 575 (−0.003R a night, the interval
-−0.232 to +0.220), 119 of the losses one night's, 4 November, every ticket of
-which stopped into the 5 November alarm: none establishes a sign --
+−0.232 to +0.220), 119 of the losses one night's, 4 November, every settled ticket
+of which stopped into the 5 November alarm: none establishes a sign --
 and the owner's backtest over 158 archive sessions (100
 yellow, 58 red, no green) wrote 99 half-size A+ tickets, of which 44
 settled, 16 won, 27 lost and 1 was even, +3.72R net, the reader not run. The
