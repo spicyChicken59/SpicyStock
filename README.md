@@ -1122,25 +1122,37 @@ archived, and a record from before the block is asked for none. The run:
   stop-constrained ticket at each multiplier; it changes nothing and a YELLOW or
   GREEN column on a RED night is a counterfactual, never a ticket.
   `tools/evidence_review.py` is the explicit evidence review #109 asks for before
-  any strategy change is promoted: it re-derives the frozen signal-outcome study
-  from its own rows (refusing a file whose summary is not its rows'), splits the
-  admitted stratum by phase, calendar month, halves of its nights and mechanical
-  grade, walks each stratum's cumulative-R path for its deepest drawdown, copies
-  the backtest, funnel, feasibility and registered-research numbers off their
-  files with each file's digest, and evaluates a fixed ledger of the strategy
-  changes this repository has floated against criteria it states and archives
-  (a rate at `record.SCORECARD_MIN_PLANS` settled or more; a sign only from a
-  night-bootstrap interval clear of zero; `supported` only when every direct
-  source is positive and every evaluation period agrees). It writes
-  `docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.{json,md}`
-  and `--check` holds both. Its October 12 research inputs are retained under
-  that directory's `inputs/`, with original commit/path and exact SHA-256
-  provenance, and so is the findings file it read (as `c759a1e6` carried it,
-  over the 6 October study, which the tool names itself); missing or changed
-  bytes refuse before writing. The current rolling cohort, journal and findings
-  file may advance without rewriting this dated review.
-  A later evidence review needs a separately dated output. No change is promoted
-  by the October 12 review, and none earns `supported` in that review.
+  any strategy change is promoted, dated: it writes the 7 November 2026 review
+  (`evidence-review-v2`) into
+  `docs/input-truthfulness/2026-11-07-evidence-review-evidence/review.{json,md}`,
+  and `--check` holds both; the 12 October review it supersedes stays under its
+  own directory, frozen to its git blobs by `tests/test_evidence_review.py` and
+  never re-derived. It re-derives the frozen signal-outcome study from its own
+  rows (refusing a file whose summary is not its rows'), splits the admitted
+  stratum by phase, regime, calendar month, halves of each phase's nights,
+  mechanical grade, the account each publication archived and the discovery
+  admission route, walks each stratum's cumulative-R path for its deepest
+  drawdown, copies the backtest, funnel, feasibility, registered-research and
+  live-scorecard numbers off their files with each file's digest, and evaluates
+  a fixed ledger of the strategy changes this repository has floated -- and the
+  two it promoted on 4 November, read after the fact -- against criteria it
+  states and archives (a rate at `record.SCORECARD_MIN_PLANS` settled or more;
+  a sign only from a night-bootstrap interval clear of zero, which the study
+  draws over two or more nights; `supported` only when every direct source is
+  positive and every evaluation period agrees; a population a change would stop
+  trading shown as `removed` and never counted). Five inputs are retained under
+  that directory's `inputs/` as commit `af21693c` carried them -- the findings
+  file, the research cohort and journal byte for byte, an extract of the live
+  record's own scorecard, and the join of every study row to its publication's
+  discovery admission re-derived off git -- each with original commit/path and
+  exact SHA-256 provenance checked before reading; missing or changed bytes
+  refuse before writing, and `--retain` writes them from git once and refuses
+  to overwrite. The candidate-funnel and whole-share-feasibility readings it
+  reads are dated the same day and pinned to the same commit. The current
+  rolling cohort, journal, findings file and record may advance without
+  rewriting this dated review. A later evidence review needs a separately
+  dated output. No change is promoted by the 7 November review, and none earns
+  `supported` in it.
   `tools/service_health.py` reads the service rather than the signal: it walks
   the commits that put a publication on `main` and the commits that put a
   morning, issuer or research receipt beside it, and prints, per expected XNYS
@@ -2593,7 +2605,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 freeze_validation_cases.py (a copier with --check: the study's case files frozen under docs/historical-validation/ from the archive while it still carries them, or from git at a commit the case names; byte for byte, held to the study's own digests, never a file the study does not name, never a rewrite of the study)
                 candidate_funnel.py (a reading: the funnel of one or many publications, from files, commits or a ref's whole retained history; changes nothing)
                 whole_share_feasibility.py (a reading: every archived reaction candidate sized again at an account under the record's regime, YELLOW and GREEN -- in band, past the stop rule, a whole share -- with the one-share price ceilings; the archived account unless overridden and labelled; changes nothing)
-                evidence_review.py (a reader: the frozen study re-derived from its rows and split by phase, month, halves and grade, each stratum's cumulative-R drawdown, the backtest, funnel, feasibility and retained October 12 research numbers copied off their files with digests and original commit/path provenance, and a ledger of the floated strategy changes under stated criteria; --check holds its two files; nothing is promoted by it)
+                evidence_review.py (a reader, dated: the frozen study re-derived from its rows and split by phase, regime, month, halves, grade, account and discovery route, each stratum's cumulative-R drawdown, the backtest, funnel, feasibility, retained research, live-scorecard and admission-join numbers copied off their files with digests and original commit/path provenance, and a ledger of the floated and the promoted strategy changes under stated criteria; writes the 7 November 2026 review, --check holds its two files, --retain writes its inputs from git once; the 12 October review is frozen to its blobs; nothing is promoted by it)
                 service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots (the ones each record's rules archived, else the current policy's) by the landing commit's time with the record's own clock beside it, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
                 recovery_rehearsal.py (a rehearsal, not a reading: run_evening() through the suite's doubles over one synthetic market, one injected failure a night -- the bars endpoint, every frame stale, the reader's credit, the reader's transport, the mail -- with the evening workflow's own guard executed before and after each night under a frozen clock; the exit codes, what was published, whether the previous publication's bytes survived, how often each boundary was asked and what the guard decided; --check runs it again and holds its two files; calls no provider and changes nothing)
                 schedule_reliability.py (a reading of GitHub's scheduler, not the service: the public Actions listing of scheduled runs, each placed at its cron slot, the minutes from slot to creation per workflow, cron and week, expected slots with no run, the first run more than an hour late, and push runs on main as the contrast; --fetch is its only network path and --check holds its two files to the committed snapshot; changes nothing)

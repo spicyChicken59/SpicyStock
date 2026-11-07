@@ -1,5 +1,21 @@
 # Input truthfulness milestone
 
+[7 November 2026: the evidence review before any strategy change is promoted, read again](2026-11-07-evidence-review.md)
+supersedes the 12 October review, which stays frozen as written: `tools/evidence_review.py`
+now writes `evidence-review-v2` over the 7 November study (47 publications, 32
+RED nights and 9 YELLOW), a candidate-funnel reading and two whole-share
+feasibility readings dated the same day and pinned to commit `af21693c`, and
+five inputs retained under its `inputs/` as that commit carried them (the
+findings file, the research cohort and journal, an extract of the live record's
+scorecard, and every study row joined to its publication's discovery admission,
+re-derived off git). Six changes are read: trading RED nights stays
+not supported (the exploratory nights establish a negative sign at 303 settled;
+the confirmatory RED nights, 270, straddle zero); admitting A under YELLOW, the
+5% anticipation stop (the registered period ended with 0 resolved rows of 70),
+an A+ ticket without an accepted review, the $30,000 account promoted on
+4 November and the dollar-only admission rule promoted the same day are each
+insufficient. No change earns supported; `--check` holds the two files.
+
 [17 October 2026: the stale stocks, read again](2026-10-17-stale-inputs.md)
 joins, with `tools/stale_inputs.py`, the stocks each night's newest publication
 could not measure to every later reading of them: from 7 to 16 October, 103
@@ -107,7 +123,7 @@ strategy changes under stated criteria: trading RED nights is not supported
 and the other four are insufficient. No change is promoted; `--check` holds
 the two files; its findings, cohort and journal inputs are retained as they
 were read on 12 October, so a later study cannot move it. The retained HAE reply of 8 October is frozen under
-`tests/fixtures/grading/reader-hae/` and held rejected for its citation paths.
+`tests/fixtures/grading/reader-hae/` and held rejected for its citation paths. Superseded by the 7 November review above; its three files are frozen to their git blobs.
 
 [11 October 2026: whole-share feasibility over every retained publication](2026-10-11-whole-share-feasibility.md)
 sizes all 11,513 archived reaction candidates again through `plan.burst_plan`
