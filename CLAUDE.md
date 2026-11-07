@@ -14585,6 +14585,18 @@ as `\s+`, which backtracks without end over four-space indents when a phrase
 does not match, and ran for ten minutes before it was killed; the remaining
 edits were placed by line.
 
+**CI found what the full-history sandbox could not.** The pytest job on
+`b842f2cf1` failed the report test alone (5966 passed): the review's new
+set-aside assertion reads each of the 38 set-aside commits' records off git,
+and the `committed` fixture fetched into CI's depth-1 checkout only the
+publication and companion commits the reading names, so `read_at()` answered
+`None` for every set-aside commit. Reproduced in a depth-1 clone of this
+repository: 38 of 38 absent, the same `AttributeError`. The fixture fetches
+the set-asides too now (990 objects, 2.65 MB packed), the assertion names a
+commit the checkout cannot read, and in the same clone the whole guard passes
+40 with all 38 present and the clone still shallow; in the full-history
+worktree the guard and the docs test pass 92.
+
 **Keep / fix / defer / omit.** Keep: the reading reads git and the receipts
 and decides nothing; each reading is a dated directory, the earlier ones
 frozen to their blobs. Fix if it bites: the walk is bounded by `--limit`

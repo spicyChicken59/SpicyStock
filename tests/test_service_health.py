@@ -703,11 +703,13 @@ def frozen_17():
 
 @pytest.fixture(scope="module")
 def committed():
-    """The dated reading, and the commits it names fetched into a shallow
-    checkout -- CI's -- exactly those and once; never skipped."""
+    """The dated reading, and the commits it names -- the publications, the
+    companions and the set-asides, whose records a test reads again -- fetched
+    into a shallow checkout -- CI's -- exactly those and once; never skipped."""
     data = json.loads(sh.OUTPUT_JSON.read_text(encoding="utf-8"))
     source = data["source"]
-    named = [source["through"], *source["publication_commits"], *(c for v in source["companion_commits"].values() for c in v)]
+    named = [source["through"], *source["publication_commits"], *(c for v in source["companion_commits"].values() for c in v),
+             *(entry["commit"] for entry in data["skipped"])]
     sh.fetch_missing(named)
     return data
 
@@ -1225,6 +1227,7 @@ def test_the_report_quotes_the_reading(committed, frozen_17):
     kinds = {"first_build": 0, "fixture": 0}
     for entry in committed["skipped"]:
         data = sh.read_at(entry["commit"], sh.RECORD_PATH)[0]
+        assert data is not None, f"{entry['commit'][:8]} carries no record this checkout can read"
         kinds["fixture" if data.get("schema_version") == 2 and data.get("fixture") else "first_build"] += 1
     assert kinds == {"first_build": 33, "fixture": 5}
     assert f"(the first build's, and {WORDS[kinds['fixture']]} of the second build's fixture from 11 September" in prose
