@@ -14422,3 +14422,177 @@ threshold or account change on these numbers; an edge claim.
 
 **Not claimable:** the morning host under #213 and #214 (Mo's redeploy); a
 morning check with admitted plans inside the window; any trading edge.
+
+## Checkpoint, 7 Nov 2026 -- PR #215 accepted; the service read again through 6 November: the first morning checks delivered inside their window (#111)
+
+**PR #215, accepted.** Merged as `4ad320c2` on `main` with a merge commit over
+`959c2445`, its tree the head `35b35c292`'s byte for byte. The fix commit
+`23559f172` passed all seven checks on Tests run 42381450861 (pytest, page,
+the gate, the native central and stress cases, 14:24–14:52 UTC; both gitleaks
+runs); the final head `35b35c292` (CLAUDE.md alone over it) passed pytest
+(14:33–15:05), page (14:33–14:52), the gate's docs-only decision and both
+gitleaks runs on run 42382163180. Publisher 42384696886 waited for
+`historical-findings.json` and printed *Verified: every one of the 48 public
+files matches committed main* at 15:07:02 UTC; Pages 42384724996 deployed
+(42384696317 cancelled as superseded, as every merge does); the merge commit's
+own Secret scan 42384696902 passed and its Tests run 42384696973 passed (15:05–15:37 UTC).
+The Railway host, read at 15:19 UTC, still answers 404 on `/status.json` and
+serves the receipt generated 14:59 UTC on 4 November: the 31 October image,
+until Mo redeploys from `main`.
+
+**Revision.** The designated branch restarted from `main` at `4ad320c2`,
+pushed as **PR #216**: the reading (`85669085a`), the review's fixes (`b842f2cf1`) and this checkpoint. What
+moves: `docs/input-truthfulness/2026-11-07-service-health-evidence/` (the
+tool's two outputs) and `2026-11-07-service-health.md` (the dated report);
+`tools/service_health.py` (its `OUT_DIR` and the comment above it, nothing
+of its rules); `tests/test_service_health.py`; the 17 October report's
+superseded note; README's two sentences that named the 17 October directory;
+the input-truthfulness index; this file's count line. Nothing under `src/`
+changed and no rule moved (`rules_version` stands, no fixture regenerated);
+`docs/data.json`, `docs/picks.json`, the compact reader, every receipt, the
+history, the evidence objects, the quality ledger, the workflows and the
+vendored design system are untouched; no run, mail, dispatch, provider call or
+credential. `.env.example` was read: nothing here is configuration.
+
+**The reading** (`docs/input-truthfulness/2026-11-07-service-health.md`,
+`service_health_v3` pinned to `4ad320c2`, clock 15:05 UTC on 7 November; the
+17 October reading frozen to its blobs beside the 12 and 13 October ones).
+41 expected sessions, 41 published, 41 of 41 first publications before the
+next open, streak 41 and 41, fresh (`main` carries `f1feb636`, the 6 November
+publication); 34 of 41 after the retry slot, the fifteen since 17 October
+145.3 to 285.5 minutes after the primary slot (the promptest since 22
+September stay 15 and 16 October's 131.0 and 133.4; the clocks changed on 1
+November and the winter cron is the same 6:16 PM ET); latency by the landing
+commit 55.8 / 300.6 / 410.5 minutes. 47 publications, 30 degraded and 17 ok;
+of the sixteen since 17 October, eight degraded -- both of 19 October's, the
+empty reader nights of 21 and 22 October (every call HTTP 400 under the SDK
+that moved its API version, #190), the three `claude_partial` nights of 27 to
+29 October under request v2, and 30 October's `coverage_thin` (NORD, #206) --
+and eight ok. Reader 304 of 358 requested reads done; 21 archived cost blocks
+(60 calls, 52 replies, 411,396 input and 27,998 output tokens), sixteen more
+than the 17 October reading's five; since that reading 9 of 22 reads under
+request v2 (the two empty nights' four calls apiece got no reply) against 23
+of 24 under v3 from the 30 October publication, one refusal tolerated by the
+#182 floor; twenty-four reads over six nights is not a rate. **Morning
+receipts: eight, five of them landed before the applicable open -- 23 October
+and 3, 4, 5 and 6 November, the last four consecutive, each generated at
+14:22 UTC** (the minute after the 8:21 CT routine recorded on 4 November
+fires; what dispatched each is not in the receipts); the 2 November check was
+generated at 14:31 UTC, a minute after the 14:30 open and inside the
+collector's own window, so #111's count of consecutive sessions with a morning
+check stands at four before the open and five with any check. Issuer
+evidence 31 receipts (seven `unavailable`, all before 17 October; 17
+`partial`; seven `no_candidates`, the newest for 9 November); source recovery nineteen --
+six `recovered`, five `partial` and eight `inapplicable` `recovery_window_
+ended`: every weekday receipt since 27 October, each generated after the applicable
+open (landed 13:32 to 14:38 UTC under daylight time, 15:21 to 15:46 under
+standard time; which slot's run each was, and when GitHub created it, is the
+13 October schedule reading's question), while the four Saturday runs (17, 24
+and 31 October, 7 November) recovered or partly recovered for the Friday
+publications, whose applicable session is the Monday. Research observations
+six, two of them `cohort_not_current` on 5 and 6 November because the 4 and 5
+November publications' comparisons were refused inside the registered period
+(the 6 November publication's cohort is the first `outside_period`). The signal, kept apart: 35 RED and 12 YELLOW publications, 3
+reaction tickets (the 4 November publication's HQY, RCBC and VIK), 10
+anticipation tickets. 38 commits set aside, the same 38.
+
+**Measured** (this sandbox, Python 3.12.3): `tests/test_service_health.py` 40
+passed under `-W error::pytest.PytestWarning` (the 7 November report test
+reads every count, date, list and time it prints off the committed reading
+and holds the receipts' facts -- the in-window sessions, the consecutive
+count, the 2 November generation time against its open, the inapplicable
+recovery receipts' weekdays and landing ranges, the Saturday runs -- off the
+rows; the 17 October report's test reads the frozen files; the frozen test
+holds the 17 October reading and its report, with the note, to their blobs)
+and `tests/test_docs.py` 52; `python tools/service_health.py --check` current
+with the history walked again (the committed files are the tool's second
+walk, byte for byte); the full suite on a worktree under the session scratchpad at `85669085a`,
+5797 passed, 13 environment-gated skips and two failures in 27 m 23 s (5975
+collected; the two `zstandard`-gated files ignored) -- the two
+privilege-dropping morning-host tests, which fail under the root-only
+scratchpad as the #214 checkpoint records and pass in the checkout; the
+repository-root worktree of PR #215 failed a different environment test, so
+neither location runs every test, and the checkout does; after the review's
+fixes `tests/test_service_health.py` 40 and `tests/test_docs.py` 52 passed
+again; `git diff --check` clean; gitleaks 8.24.3
+over each commit with the repository's config: no leaks. CI on the reading commit `85669085a` passed all seven checks (Tests run 42386458519: pytest 15:27–15:59 UTC, page 15:27–15:44, the gate, the native stress case to 15:56 and central to 16:12; Secret scans 42386458552 and 42386424148); the fix head's and the final head's are recorded on PR #216.
+
+**Mutation passes.** Before the review, thirty-seven mutants and two controls, each in one of two
+detached worktrees under the session scratchpad held one per mutant, the tree
+never written, judged by the whole `tests/test_service_health.py`:
+thirty-three over the report's numbers and dates (the published count, the
+after-retry count, one of the fifteen, the median latency, the landing range,
+the re-published list, the backfill's latency, the statuses since, the v2 and
+v3 reads and the per-night list, the cost blocks and their calls and replies,
+the anticipation tickets, the `no_tickets` days, the consecutive count and
+#111's count, the 2 November generation time, the issuer and recovery counts
+and lists, the standard-time landing range, the Saturday runs, the archived
+slots' span, the statuses, the 6 November landing and its next open, the
+promptest nights, `main`'s commit, the set-asides, the in-window list, the
+since-27-October sentence) and four over the evidence (a byte appended to the
+17 October reading, its superseded note dropped, `OUT_DIR` set back to 17
+October, the 7 November JSON's after-retry count drifted). All thirty-seven
+die -- the report's in the report test, the three frozen-file mutants in the
+frozen test, the drifted JSON in the `--check` test -- and the two controls
+(two unasserted sentences) survive. After the review, twenty-three mutants over its
+rules in the same worktrees at `b842f2cf1` -- the fourteen of the reviewer's
+breaks that had survived (the refused name, the tickets, the two gapped
+names, the frozen-file count, the clock, the two inapplicable morning reasons
+swapped, the model, the cost-block span, a refusal of three, the fixture
+count, the 17 October pin, the HTTP status) and nine over the fixes' own
+words (the old cohort explanation and "the Monday publications" put back, the
+2 November phase, the any-check count, the 60-second rule, the dispatch
+sentence, the Saturday publications' weekday, the index entry's before-open
+count and its v3 reads, the new blocks' calls). Twenty-two died at once and
+**the HTTP status survived**: the guard read the records' error text and held
+it to 400 without reading the report's own number, and it dies now that the
+status is read off the error text into the phrase. The two controls survive.
+
+**The review, worked.** One reviewer by execution over the pushed tip
+`85669085a`, in its own worktree, re-derived every figure of the report and
+the index entry from the committed reading and the records and receipts at
+the commits it names, re-ran the tool pinned to `4ad320c2` to the same bytes,
+checked the clock change and the crons against the workflow and the calendar,
+and ran thirty-six single-rule breaks of its own. Eight findings, each
+reproduced here before it was touched and each fixed in `b842f2cf1`. The two
+highs were sentences: the research receipts' `cohort_not_current` on 5 and 6
+November was explained as the registered period having ended, when the cohort
+on `main` was still the 3 November publication's because the 4 and 5 November
+comparisons were refused inside the period (the 6 November publication's
+cohort is the first `outside_period`; the guard reads the receipts' cohort
+block, the cohort file's blob at each publication and the 6 November cohort's
+status now); and "all nine files" where the tests pin eight (held to the
+test's own dicts). The mediums: the report, the index and the commit message
+said which cron slot's run a receipt came from, when GitHub created it and
+what dispatched a morning check -- facts a receipt does not carry and the
+report's own limits section disclaims -- and say what the receipts show now
+(the commit message stands as written); "inside its window" was the report's
+own criterion, not the collector's (the 2 November check ran inside the
+collector's window, `entry_phase` `open`, a minute after the open), so the
+sentence names "before the applicable open" and counts the collector's window
+beside it; and fourteen of the thirty-six breaks survived the guard, each a
+figure the report took from the records rather than the JSON (the refused
+name, the tickets, the gapped names, the model, the cost-block span, the
+request version on each side of 30 October, the error text, the clock, the
+pin, the set-asides' composition, the 5 November rows and their stale
+prints), each read now off the records and receipts at the named commits, and
+the index entry's figures held beside the report's. The lows: the Saturday
+runs serve the Friday publications, whose applicable session is the Monday;
+the 50 calls and 42 replies are the sixteen new blocks', not the five's; and
+23 October is one of the new morning checks. One harness defect of mine,
+recorded: the first fix pass matched the test file's phrases with every space
+as `\s+`, which backtracks without end over four-space indents when a phrase
+does not match, and ran for ten minutes before it was killed; the remaining
+edits were placed by line.
+
+**Keep / fix / defer / omit.** Keep: the reading reads git and the receipts
+and decides nothing; each reading is a dated directory, the earlier ones
+frozen to their blobs. Fix if it bites: the walk is bounded by `--limit`
+(128) per path, and the issuer receipts, 31 commits, are the nearest to it.
+Defer: #111's ten consecutive sessions with a morning check, four of them in
+hand; the scheduler's lateness, which is GitHub's and the 13 October reading's
+question. Omit: any change to the crons on these numbers.
+
+**Not claimable:** Monday 9 November's morning check (the fifth consecutive if
+it lands inside its window); the morning host under #213 and #214 (Mo's
+redeploy); any trading edge.

@@ -1089,7 +1089,9 @@ def test_the_report_quotes_the_reading(committed, frozen_17):
         if p["session"] in ("2026-10-21", "2026-10-22"):
             data = sh.read_at(p["commit"], sh.RECORD_PATH)[0]
             errors = [b["claude"].get("error") for b in data["bursts"] if (b.get("claude") or {}).get("error")]
-            assert errors and all("Error code: 400" in e for e in errors), p["session"]
+            codes = {m.group(1) for e in errors for m in [re.search(r"Error code: (\d+)", e)] if m}
+            assert errors and codes == {"400"}, (p["session"], codes)
+            assert f"every call answered HTTP {codes.pop()} under the SDK that had moved its API version" in prose
     gapped = {c[:8]: sh.read_at(c, sh.RECORD_PATH)[0]["run"]["coverage"]["reasons"]["gapped"]["sample"] for c in (backfill["commit"], v3[0]["commit"])}
     assert gapped == {"d179f206": ["LCU"], "e4063d25": ["NORD"]} and "the one that named LCU" in prose and "(`coverage_thin`: NORD" in prose
     four = next(p for p in v3 if p["session"] == "2026-11-04")
