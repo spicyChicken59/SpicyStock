@@ -34,9 +34,9 @@ from tools import signal_outcomes as so
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = "docs/historical-findings.json"
 TRUTH = "docs/input-truthfulness"
-STUDY = f"{TRUTH}/2026-10-24-signal-outcomes-confirmatory-evidence/signal-outcomes.json.gz"
-STUDY_SPEC = f"{TRUTH}/2026-10-24-signal-outcomes-spec-extended.json"
-STUDY_RUN_RECORD = f"{TRUTH}/2026-10-24-signal-outcomes-confirmatory-evidence/run-record.txt"
+STUDY = f"{TRUTH}/2026-11-07-signal-outcomes-confirmatory-evidence/signal-outcomes.json.gz"
+STUDY_SPEC = f"{TRUTH}/2026-11-07-signal-outcomes-spec-extended.json"
+STUDY_RUN_RECORD = f"{TRUTH}/2026-11-07-signal-outcomes-confirmatory-evidence/run-record.txt"
 FIRST_STUDY = f"{TRUTH}/2026-10-02-signal-outcomes-evidence/signal-outcomes.json.gz"
 FIRST_SPEC = f"{TRUTH}/2026-10-02-signal-outcomes-spec.json"
 BACKTESTS = {"lookback_130": f"{TRUTH}/2026-10-06-backtest-results-evidence/lookback-130-summary.txt",
@@ -297,10 +297,16 @@ def test_the_market_and_the_counts_are_the_records_own(committed, pubs, study):
                                   "final": sum(final.get(g, 0) for g in trade)}, (session, n["a_quality"], trade)
     assert any(n["reads"]["done"] == 0 for n in nights.values()) and any(n["reads"]["done"] for n in nights.values()), \
         "the reader's two caption branches, none read and some read, are not both in the records"
-    # the yellow nights' setting-up tickets, by name: the burst tickets are none on every night, so a
-    # sentence that says the gate published nothing on a yellow night is false of these
-    assert setups == {"2026-10-08": ["MG", "SN"], "2026-10-09": ["ZIM"]}, setups
-    assert all(nights[s]["regime"]["verdict"] == "yellow" and nights[s]["tickets_published"] == 0 for s in setups), setups
+    # the setting-up tickets, by name, are the records' own: each is a yellow night (every ticket the
+    # record has published fell on one), and the two sentences the page prints about what the gate
+    # published on a yellow night -- setting-up tickets alone, and burst tickets -- each have a night
+    # in the records, so neither branch is vacuous
+    assert setups and all(nights[s]["regime"]["verdict"] == "yellow" for s in setups), setups
+    assert setups["2026-10-08"] == ["MG", "SN"] and setups["2026-10-09"] == ["ZIM"], setups
+    assert any(nights[s]["tickets_published"] == 0 for s in setups), setups
+    burst_nights = [s for s, n in nights.items() if n["tickets_published"]]
+    assert burst_nights and all(nights[s]["regime"]["verdict"] == "yellow" for s in burst_nights), burst_nights
+    assert "2026-11-04" in burst_nights and nights["2026-11-04"]["tickets_published"] == 3, nights["2026-11-04"]["tickets_published"]
     # the one-line count over every published night is the records' own too
     records = [p["data"] for _, p in sorted(firsts.items())]
     assert committed["nights_summary"] == {
@@ -893,17 +899,29 @@ def test_a_nights_reads_are_its_two_counts_and_nothing_else():
 
 
 def test_the_published_tickets_and_the_reads_are_each_nights_own(pubs, study, monkeypatch):
-    """Every committed record published no burst ticket, so the file cannot
-    tell a constant zero from the record's own count: a publication given a
-    ticket and another reads block must carry them, and a yellow night whose
-    listed setups lose one of their two orders must count one setting-up
-    ticket, not the two the committed record carries."""
+    """The committed records published burst tickets on one night only, so a
+    file carrying a count copied from one record could pass over the rest: a
+    publication given a ticket and another reads block must carry them, and a
+    yellow night whose listed setups lose one of their two orders must count
+    one setting-up ticket, not the two the committed record carries. What the
+    records themselves publish is read off them, so the expectations are the
+    records' own counts plus the synthetic changes and nothing fixed."""
     study_doc, _ = study
     firsts = {p["commit"] for p in study_doc["publications"] if p["first"]}
+    real_tickets = {p["session"]: len(p["data"].get("trades") or []) for p in pubs if p["commit"] in firsts}
+    real_setups = {p["session"]: sum(1 for r in (p["data"].get("watchlist") or {}).get("top") or []
+                                     if (r.get("plan") or {}).get("order_line")) for p in pubs if p["commit"] in firsts}
+    assert real_tickets["2026-09-22"] == 0 and real_setups["2026-10-08"] == 2
+    assert sum(1 for v in real_tickets.values() if v) >= 1, "a committed night published burst tickets"
+    real_verdicts = {v: sum(1 for p in pubs if p["commit"] in firsts and p["data"]["breadth"]["regime"]["verdict"] == v)
+                     for v in ("red", "yellow")}
     changed = copy.deepcopy(pubs)
     target = next(p for p in changed if p["commit"] in firsts and p["session"] == "2026-09-22")
     target["data"]["trades"] = [{"ticker": "TKTA"}, {"ticker": "TKTB"}]
     target["data"]["run"]["reads"] = {"requested": 7, "done": 3}
+    # a night's regime is its record's own: a red night relabelled yellow in the records reads yellow in the file
+    assert target["data"]["breadth"]["regime"]["verdict"] == "red"
+    target["data"]["breadth"]["regime"]["verdict"] = "yellow"
     yellow = next(p for p in changed if p["commit"] in firsts and p["session"] == "2026-10-08")
     top = yellow["data"]["watchlist"]["top"]
     assert [r["ticker"] for r in top if (r.get("plan") or {}).get("order_line")] == ["MG", "SN"]
@@ -912,9 +930,11 @@ def test_the_published_tickets_and_the_reads_are_each_nights_own(pubs, study, mo
     built = bf.build()
     night = next(n for n in built["nights"] if n["session"] == "2026-09-22")
     assert (night["tickets_published"], night["reads"]) == (2, {"requested": 7, "done": 3}), night["reads"]
-    assert built["nights_summary"]["tickets_published"] == 2
+    assert night["regime"]["verdict"] == "yellow"
+    assert built["nights_summary"]["verdicts"] == {"red": real_verdicts["red"] - 1, "yellow": real_verdicts["yellow"] + 1}
+    assert built["nights_summary"]["tickets_published"] == 2 + sum(real_tickets.values())
     others = [n for n in built["nights"] if n["session"] != "2026-09-22"]
-    assert all(n["tickets_published"] == 0 for n in others)
+    assert all(n["tickets_published"] == real_tickets[n["session"]] for n in others)
     setups = {n["session"]: n["setup_tickets_published"] for n in built["nights"] if n["setup_tickets_published"]}
-    assert setups == {"2026-10-08": 1, "2026-10-09": 1}, setups
-    assert built["nights_summary"]["setup_tickets_published"] == 2
+    assert setups == {s: (v - 1 if s == "2026-10-08" else v) for s, v in real_setups.items() if v}, setups
+    assert built["nights_summary"]["setup_tickets_published"] == sum(real_setups.values()) - 1

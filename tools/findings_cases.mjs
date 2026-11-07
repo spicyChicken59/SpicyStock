@@ -530,6 +530,12 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   await p.waitForFunction(() => !window.SCStock.findingsHandle.playing(), null, { timeout: 5000 }).catch(() => {});
   eq('Play stops at the last night and says Play again', [await stepOf(p), await playWord(p), await p.evaluate(() => window.SCStock.findingsHandle.playing())], [N, 'Play', false]);
   await p.locator('#historical-evidence [data-find-night]').last().click(); await settle(p);
+  // The list of nights grows under the stage with every publication, so clicking its last
+  // button can scroll the stage off the top of the screen, where the replay refuses to play
+  // (an off-screen replay is stopped, by design). A reader presses Play looking at the stage,
+  // so the stage is brought back on screen before the press, and the observer given a frame
+  // to see it there; the press itself still fires inside its own task, below.
+  await p.locator('#historical-evidence .ss-find__svg').evaluate((e) => e.scrollIntoView({ block: 'center' })); await settle(p, 150);
   // Read the restart inside the click's own task: a loaded runner can otherwise
   // reach the read after the first 250 ms tick has already stepped to night 2.
   const restarted = await p.locator('#historical-evidence [data-find="play"]').evaluate((play, sel) => {
