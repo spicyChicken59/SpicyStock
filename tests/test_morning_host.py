@@ -79,6 +79,12 @@ def test_launch_drops_supplementary_groups_and_all_inherited_streams(monkeypatch
     assert seen['close_fds'] is True
     assert seen['stdin'] == seen['stdout'] == seen['stderr'] == subprocess.DEVNULL
     assert seen['env'] == job.environment
+    # A scheduled command's stdout is a pipe the host reads its one-line result
+    # from; stdin and stderr stay closed, and nothing is inherited.
+    sync = host.jobs(8080, False, environment())[1]
+    assert host.launch(sync) == 'child'
+    assert seen['stdout'] == subprocess.PIPE
+    assert seen['stdin'] == seen['stderr'] == subprocess.DEVNULL and seen['close_fds'] is True
 
 
 def invoke(app, path='/healthz', **changes):
@@ -258,7 +264,7 @@ def test_deadline_kills_and_reaps_ignoring_parent_and_child(tmp_path, monkeypatc
         assert not Path(f'/proc/{descendant}').exists()
         assert not host._group_exists(process)
         assert time.monotonic() - started < 2
-        assert ('worker', 'deadline', None) in events
+        assert ('worker', 'deadline', None, None) in events
     finally:
         _cleanup(supervisor)
 
@@ -409,3 +415,157 @@ def test_root_volume_refuses_unsafe_entries(tmp_path, kind):
     with pytest.raises((host.HostError, OSError)):
         host.prepare_volume(volume, mountinfo=mount_line(volume))
     assert other.read_bytes() == b'preserve'
+
+
+# --- the scheduled command's own result line, read back into the host's log ---
+
+def _launch_piped(job):
+    """`host.launch` without the uid/gid switch, so the result pipe is tested
+    by a real child: stdout a non-blocking pipe, stdin and stderr closed."""
+    process = subprocess.Popen(job.command, env=job.environment, start_new_session=True,
+                               stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    return host.result_pipe(process)
+
+
+def _finished(name, source, interval=30):
+    events = []
+    supervisor = host.Supervisor([_local_job(name, source, interval)], launcher=_launch_piped,
+                                 reporter=lambda *event: events.append(event))
+    try:
+        supervisor.step()
+        process = supervisor.active[name].process
+        _until(lambda: (supervisor.step(), not supervisor.active)[1])
+    finally:
+        _cleanup(supervisor)
+    return events, process
+
+
+def test_scheduled_command_result_reaches_the_host_log_line():
+    source = ("import json,sys; print(json.dumps({'status': 'source_publication_or_receipt_invalid', 'requests': 3,"
+              " 'commit_sha': None, 'detail': 'publication integrity is not verified'})); sys.exit(1)")
+    events, process = _finished('sync', source, 300)
+    assert events[0] == ('sync', 'started')
+    assert events[1] == ('sync', 'finished', 1, {'status': 'source_publication_or_receipt_invalid', 'requests': 3,
+                                                 'commit_sha': None, 'detail': 'publication integrity is not verified'})
+    assert process.stdout.closed  # the pipe does not outlive the reaped command
+    events, _ = _finished('worker', "import json; print(json.dumps({'mode': 'bounded_private_worker', 'result': 'outside_window'}))")
+    assert events[-1] == ('worker', 'finished', 0, {'mode': 'bounded_private_worker', 'result': 'outside_window'})
+
+
+def test_result_line_is_the_last_line_bounded_and_text_when_not_an_object():
+    # A chatty command: the last 4096 bytes keep the last line whole.
+    events, _ = _finished('sync', "import sys; sys.stdout.write('x' * 20000 + '\\n'); print('{\"status\":\"unchanged\",\"requests\":3,\"commit_sha\":null}')", 300)
+    assert events[-1] == ('sync', 'finished', 0, {'status': 'unchanged', 'requests': 3, 'commit_sha': None})
+    # A long non-object line: printable text, bounded to RESULT_TEXT_CHARS.
+    events, _ = _finished('sync', "print('[1, 2, 3]'); print('refused\\x00\\tbecause' + 'y' * 500)", 300)
+    assert events[-1][3] == 'refusedbecause' + 'y' * (host.RESULT_TEXT_CHARS - len('refusedbecause'))
+    # Silence stays None, as every pre-existing command that printed nothing.
+    events, _ = _finished('sync', "pass", 300)
+    assert events[-1] == ('sync', 'finished', 0, None)
+
+
+def test_result_of_reads_the_last_line_only():
+    assert host.result_of(b'') is None and host.result_of(b' \n\n') is None
+    assert host.result_of(b'noise\n{"a": 1}\n') == {'a': 1}
+    assert host.result_of(b'{"a": 1}\nlater\n') == 'later'
+    assert host.result_of(b'[1]') == '[1]' and host.result_of(b'"text"') == '"text"'
+    assert host.result_of(b'a\x00b\x1fc\xff') == 'abc'  # control bytes and non-ASCII dropped
+    assert host.result_of(b'z' * 1000) == 'z' * host.RESULT_TEXT_CHARS
+
+
+def test_emit_prints_the_result_in_the_log_line(capsys):
+    host.emit('sync', 'finished', 1, {'status': 'source_publication_or_receipt_invalid', 'requests': 3,
+                                      'commit_sha': None, 'detail': 'publication integrity is not verified'})
+    host.emit('http', 'started')
+    lines = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
+    assert lines[0] == {'role': 'sync', 'state': 'finished', 'exit_code': 1,
+                        'result': {'status': 'source_publication_or_receipt_invalid', 'requests': 3,
+                                   'commit_sha': None, 'detail': 'publication integrity is not verified'}}
+    assert lines[1] == {'role': 'http', 'state': 'started', 'exit_code': None, 'result': None}
+
+
+def test_draining_never_blocks_the_supervisor_on_a_command_that_floods():
+    # 2 MiB of output, more than any pipe buffer: the supervisor keeps stepping,
+    # the child finishes, and the retained tail is bounded.
+    source = "import sys; sys.stdout.write('f' * (2 * 1024 * 1024)); sys.stdout.write('\\nend\\n')"
+    events = []
+    supervisor = host.Supervisor([_local_job('sync', source, 300)], launcher=_launch_piped,
+                                 reporter=lambda *event: events.append(event))
+    retained = []
+    try:
+        supervisor.step()
+        process = supervisor.active['sync'].process
+        def stepped():
+            supervisor.step()
+            if supervisor.active:
+                retained.append(len(supervisor.active['sync'].output))
+            return not supervisor.active
+        _until(stepped)
+    finally:
+        _cleanup(supervisor)
+    assert events[-1] == ('sync', 'finished', 0, 'end')
+    assert process.returncode == 0
+    assert retained and max(retained) <= host.RESULT_BYTES  # the tail is bounded at every tick
+
+
+class _ExitsAfterWriting:
+    """A process whose last line lands between the tick's drain and the exit
+    the tick then observes: poll() writes the line and reports the exit. Its
+    pid is a session that has already gone, so the supervisor's group signal
+    and reap find nothing."""
+
+    def __init__(self):
+        gone = subprocess.Popen((sys.executable, '-c', 'pass'), start_new_session=True,
+                                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        gone.wait()
+        self.pid, self.returncode = gone.pid, None
+        read, self._write = os.pipe()
+        self.stdout = os.fdopen(read, 'rb', buffering=0)
+
+    def poll(self):
+        if self._write is not None:
+            os.write(self._write, b'{"status": "ingested", "requests": 3}\n')
+            os.close(self._write)
+            self._write = None
+            self.returncode = 0
+        return self.returncode
+
+
+def test_a_result_written_just_before_the_exit_is_read_after_it():
+    # The tick drains, then polls; a child that writes its last line and exits
+    # between the two would lose it unless the stop reads the pipe again.
+    events = []
+    supervisor = host.Supervisor([host.Job('sync', ('true',), os.getuid(), {}, 300)],
+                                 launcher=lambda job: host.result_pipe(_ExitsAfterWriting()),
+                                 reporter=lambda *event: events.append(event))
+    try:
+        supervisor.step()
+        _until(lambda: (supervisor.step(), not supervisor.active)[1])
+    finally:
+        _cleanup(supervisor)
+    assert events == [('sync', 'started'), ('sync', 'finished', 0, {'status': 'ingested', 'requests': 3})]
+
+
+def test_a_silent_command_never_holds_the_supervisors_tick():
+    # A command that prints nothing for a while (a worker mid-collection) must
+    # not hold the tick: the pipe is non-blocking, so a tick over a silent
+    # child returns at once and the http reader keeps being supervised.
+    source = "import sys,time; time.sleep(1.5); print('late')"
+    events = []
+    supervisor = host.Supervisor([_local_job('worker', source, 300)], launcher=_launch_piped,
+                                 reporter=lambda *event: events.append(event))
+    try:
+        supervisor.step()
+        started = time.monotonic()
+        ticks = []
+        while time.monotonic() - started < 0.6:
+            before = time.monotonic()
+            supervisor.step()
+            ticks.append(time.monotonic() - before)
+            time.sleep(0.05)
+        assert len(ticks) >= 5 and max(ticks) < 0.25, ticks
+        assert supervisor.active['worker'].output == b''
+        _until(lambda: (supervisor.step(), not supervisor.active)[1])
+    finally:
+        _cleanup(supervisor)
+    assert events[-1] == ('worker', 'finished', 0, 'late')

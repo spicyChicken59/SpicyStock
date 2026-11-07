@@ -1476,6 +1476,23 @@ with Gunicorn under a separate operating-system user. `MORNING_WORKER_ENABLED`
 defaults to `false`; enabling it requires both existing Alpaca credentials.
 `PORT` defaults to `8080`. The reader and synchronizer receive neither provider
 credential. `/healthz` measures reader-process availability, not receipt freshness.
+`/status.json` is the host's read-only account of what it did: the synchronizer's
+last outcome and the refusal sentence behind it, the publication it last ingested,
+a summary of the receipt it serves (and whether that receipt is for the current
+publication), and the newest journal events with allowlisted fields; never a
+receipt's or a publication's bytes, never a provider request or response. Each
+scheduled command's one-line result is also printed in the host's own log line,
+so a platform log says what a sync or worker tick did and not only that it exited
+`1`. The image verifies every publication with the verifier it was built with,
+so it must be redeployed after every merge that changes what the image copies
+and the host reads: `src/`, `tools/sync_morning_service.py`,
+`tools/publish_morning.py`, `knowledge/event-risk.json` (the collector's
+corporate-event registry), `requirements.txt`, `requirements-host.txt` or the
+`Dockerfile`. The 31 October 2026 image refused every record published from
+4 November on ("publication integrity is not verified"), and nothing it served
+said so. An image from before the status route still runs against a volume
+this one has touched: the synchronizer's table keeps the seven columns the
+first image wrote, and the refusal detail lives in a table of its own.
 Host spending controls, the volume, the TLS route and the provider bindings were
 configured on Railway on 31 October 2026 ([the Railway runbook](docs/operations/morning-railway.md)
 records them); deploying the image establishes no live delivery until a session's
@@ -2319,7 +2336,11 @@ fetched; missing frames retain dated real observations),
 `app`, and `_contract`, which names every top-level key in a sentence.
 `rules` is every module's constants nested by family, and `app.rules_version`
 is a digest of that block, so two records produced by different numbers can
-never be read as one. `report.validate()` names the malformed shapes it
+never be read as one. The selection's membership identity
+(`universe.identity`, the directory's symbols) is nested among them, so the
+digest moves on any night the live directory's membership moves, which is most
+nights; a record is read under the rules it archived, never by whether its
+digest equals another night's. `report.validate()` names the malformed shapes it
 checks and raises nothing else through its caller: `tests/test_record_shapes.py`
 substitutes a string, a list and an integer for every top-level key, every
 child of a top-level object, every grandchild and great-grandchild under

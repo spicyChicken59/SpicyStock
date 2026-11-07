@@ -385,3 +385,176 @@ def test_unchanged_ingest_advances_clock_without_replacing_lease(tmp_path):
     with pytest.raises(ValueError, match='backwards'):
         store.reserve(now=NOW)
     assert store.commit(claim, encode(collect(at=later)), now=later) == 'committed'
+
+
+# --- /status.json: the service says what it did, without bytes or secrets ---
+
+def _status(app, **more):
+    return request(app, path='/status.json', **more)
+
+
+def test_status_route_reads_identities_and_outcomes_without_bytes_or_secrets(tmp_path):
+    receipt = encode(collect())
+    store = store_at(tmp_path, previous=receipt)
+    before = store.path.read_bytes()
+    app = service.application(store.path)
+    response = _status(app)
+    assert response['status'] == '200 OK'
+    assert response['headers']['Cache-Control'] == 'no-store' and 'ETag' not in response['headers']
+    status = json.loads(response['body'])
+    assert status['schema_version'] == service.STATUS_VERSION
+    assert status['service']['mode'] == 'prepared' and status['service']['generation'] == 1
+    assert status['service']['publication_sha256'] == hashlib.sha256(RAW).hexdigest()
+    assert status['service']['publication_bytes'] == len(RAW)
+    assert status['sync'] is None  # no synchronizer has run against this database
+    assert status['publication']['measured_session'] == json.loads(RAW)['run']['session']
+    assert status['publication']['git_commit'] is None and status['publication']['ingested_at'] == NOW.isoformat()
+    assert status['receipt']['sha256'] == hashlib.sha256(receipt).hexdigest()
+    assert status['receipt']['bytes'] == len(receipt)
+    assert status['receipt']['generated_at'] == json.loads(receipt)['generated_at']
+    assert status['receipt']['status'] == json.loads(receipt)['status']
+    assert status['receipt']['serves_current_publication'] is True
+    assert [e['kind'] for e in status['events']] == ['source_ingested']
+    assert set(status['events'][0]) == {'recorded_at', 'kind', 'generation', 'applicable_session',
+                                        'git_commit', 'measured_session', 'published_at', 'admitted_count'}
+    # No publication or receipt bytes travel: no burst row, no quote, no plan level.
+    body = response['body']
+    assert b'"bursts"' not in body and b'"rows"' not in body and b'"levels"' not in body
+    assert b'"quote"' not in body and b'"trade"' not in body and b'"policy"' not in body
+    assert len(body) < 4096
+    assert store.path.read_bytes() == before
+
+
+def test_status_route_summarizes_collection_and_provider_events_by_allowlist(tmp_path, monkeypatch):
+    store = store_at(tmp_path)
+    outcome = service.collect_once(store, lambda raw, **k: collect(raw, at=k['clock'](), previous=k.get('previous_raw')), clock=lambda: NOW + timedelta(minutes=1))
+    assert outcome == 'committed'
+    status = json.loads(_status(service.application(store.path))['body'])
+    kinds = [e['kind'] for e in status['events']]
+    assert kinds[0] == 'collection_finished' and 'collection_reserved' in kinds and 'source_ingested' in kinds
+    finished = status['events'][0]
+    assert finished['outcome'] == 'committed'
+    assert 'receipt_sha256' not in finished and 'previous_receipt_sha256' not in finished
+    for event in status['events']:
+        assert set(event) <= {'recorded_at', 'kind', 'generation', 'applicable_session', *service.STATUS_EVENT_FIELDS}
+        assert 'backoff_until' not in event and 'quota_day' not in event
+    assert status['receipt']['serves_current_publication'] is True
+    assert status['service']['quota_used'] == 1
+
+
+@pytest.mark.parametrize('arguments,status', [
+    ({'method': 'POST'}, '405'), ({'method': 'HEAD'}, '405'),
+    ({'path': '/status.json/'}, '404'), ({'path': '/status'}, '404'),
+    ({'query': 'verbose=1'}, '400'), ({'length': '2'}, '400'),
+    ({'HTTP_TRANSFER_ENCODING': 'chunked'}, '400')])
+def test_status_route_refuses_parameters_methods_and_lookalike_paths(tmp_path, arguments, status):
+    path = tmp_path / 'absent.sqlite'
+    arguments = {'path': '/status.json', **arguments}
+    response = request(service.application(path), **arguments)
+    assert response['status'].startswith(status)
+    assert not path.exists()
+
+
+def test_status_route_is_generically_unavailable_on_missing_corrupt_or_oversized_state(tmp_path, monkeypatch):
+    path = tmp_path / 'absent.sqlite'
+    response = _status(service.application(path))
+    assert response['status'] == '503 Service Unavailable' and response['body'] == b'{"status":"unavailable"}\n'
+    assert not path.exists()
+    store = store_at(tmp_path, previous=encode(collect()))
+    app = service.application(store.path)
+    monkeypatch.setattr(service, 'MAX_STATUS_BYTES', 64)
+    assert _status(app)['status'] == '503 Service Unavailable'
+    monkeypatch.undo()
+    with sqlite3.connect(store.path) as db:
+        db.execute('UPDATE state SET version=99')
+    response = _status(service.application(store.path))
+    assert response['status'] == '503 Service Unavailable' and len(response['body']) < 100
+
+
+def test_status_route_performs_no_writes_and_shares_the_exact_origin(tmp_path, monkeypatch):
+    store = store_at(tmp_path, previous=encode(collect()))
+    before = store.path.read_bytes()
+    monkeypatch.setattr(morning, 'collect', lambda *a, **k: pytest.fail('status read triggered a collection'))
+    allowed = 'https://spicychicken59.github.io'
+    app = service.application(store.path, allowed_origin=allowed)
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        results = list(executor.map(lambda _: _status(app, HTTP_ORIGIN=allowed), range(50)))
+    assert all(r['status'] == '200 OK' for r in results)
+    assert all(r['headers']['Access-Control-Allow-Origin'] == allowed for r in results)
+    assert 'Access-Control-Allow-Origin' not in _status(app, HTTP_ORIGIN='https://foreign.example')['headers']
+    assert store.path.read_bytes() == before
+    assert list(tmp_path.iterdir()) == [store.path]
+
+
+def test_status_document_names_a_receipt_for_another_publication(tmp_path):
+    receipt = encode(collect())
+    store = store_at(tmp_path, previous=receipt)
+    later = RED
+    assert store.ingest(later, now=NOW + timedelta(days=1)) == 'ingested'
+    status = service.status_document(store.path, clock=lambda: NOW + timedelta(days=1, minutes=5))
+    assert status['read_at'] == (NOW + timedelta(days=1, minutes=5)).isoformat()
+    assert status['service']['publication_sha256'] == hashlib.sha256(later).hexdigest()
+    assert status['receipt']['publication']['data_sha256'] == hashlib.sha256(RAW).hexdigest()
+    assert status['receipt']['serves_current_publication'] is False
+    assert status['publication']['measured_session'] == json.loads(later)['run']['session']
+
+
+def test_status_document_refuses_a_symlinked_database(tmp_path):
+    store = store_at(tmp_path)
+    link = tmp_path / 'link.sqlite'
+    link.symlink_to(store.path)
+    with pytest.raises(ValueError, match='database path changed'):
+        service.status_document(link)
+
+
+def test_status_route_keeps_only_the_newest_events_within_its_bound(tmp_path):
+    """A long-running service journals thousands of events; the status route
+    carries the newest STATUS_EVENTS and no more, so the document stays small
+    and current. The journal itself keeps every row."""
+    store = store_at(tmp_path)
+    for minute in range(1, 6):
+        assert service.collect_once(store, lambda raw, **k: collect(raw, at=k['clock'](), previous=k.get('previous_raw')),
+                                    clock=lambda: NOW + timedelta(minutes=minute)) == 'committed'
+    with sqlite3.connect(store.path) as db:
+        journaled = db.execute('SELECT COUNT(*) FROM morning_journal_events').fetchone()[0]
+        newest = db.execute('SELECT recorded_at FROM morning_journal_events ORDER BY id DESC LIMIT 1').fetchone()[0]
+    assert journaled > service.STATUS_EVENTS
+    status = json.loads(_status(service.application(store.path))['body'])
+    assert len(status['events']) == service.STATUS_EVENTS
+    assert status['events'][0]['recorded_at'] == newest
+    assert 'source_ingested' not in [e['kind'] for e in status['events']]  # the oldest event has aged out
+
+
+def test_status_route_reads_corrupt_clocks_words_and_blobs_as_unknown_and_never_raises(tmp_path):
+    # Shapes the writer never produces, read off a hand-edited database: an
+    # unprintable word, a clock past the platform's range, an infinite one, a
+    # text one; each is unknown, the route answers 200, and nothing raises.
+    store = store_at(tmp_path, previous=encode(collect()))
+    with sqlite3.connect(store.path) as db:
+        db.execute('CREATE TABLE morning_source_sync (id INTEGER PRIMARY KEY CHECK(id=1), fence INTEGER NOT NULL, next_allowed REAL NOT NULL, last_started REAL, last_status TEXT, request_count INTEGER NOT NULL, commit_sha TEXT)')
+        db.execute('CREATE TABLE morning_source_sync_detail (id INTEGER PRIMARY KEY CHECK(id=1), detail TEXT)')
+        db.execute('INSERT INTO morning_source_sync VALUES (1, 1, 0, 1e300, ?, 1, NULL)', ('ingested\x07',))
+        db.execute("INSERT INTO morning_source_sync_detail VALUES (1, 'see\x7f')")
+    app = service.application(store.path)
+    response = _status(app)
+    assert response['status'] == '200 OK'
+    sync = json.loads(response['body'])['sync']
+    assert sync['last_started'] is None and sync['last_status'] is None and sync['last_detail'] is None
+    for clock in (float('inf'), 'x'):
+        with sqlite3.connect(store.path) as db:
+            db.execute('UPDATE morning_source_sync SET last_started=?', (clock,))
+            db.execute('UPDATE state SET clock=? WHERE id=1', (clock,))
+        status = json.loads(_status(app)['body'])
+        assert status['sync']['last_started'] is None and status['service']['clock'] is None
+    # A receipt blob past the observation bound is summarized by digest and size alone.
+    big = b'{"x":"' + b'y' * morning.MAX_OBSERVATION_BYTES + b'"}'
+    with sqlite3.connect(store.path) as db:
+        db.execute('UPDATE state SET receipt=?, receipt_sha=? WHERE id=1', (big, hashlib.sha256(big).hexdigest()))
+    receipt = json.loads(_status(app)['body'])['receipt']
+    assert receipt == {'sha256': hashlib.sha256(big).hexdigest(), 'bytes': len(big)}
+    # A blob past the decoder's depth is a 503 on both routes, never a raise.
+    deep = b'[' * 200000
+    with sqlite3.connect(store.path) as db:
+        db.execute('UPDATE state SET receipt=?, receipt_sha=? WHERE id=1', (deep, hashlib.sha256(deep).hexdigest()))
+    assert _status(app)['status'] == '503 Service Unavailable'
+    assert request(app)['status'] == '503 Service Unavailable'
