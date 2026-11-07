@@ -214,3 +214,54 @@ including honest no-ticket outcomes and failures, remain operating acceptance.
 Broader issuer-news/future-earnings coverage and actual broker cash, orders and
 fills remain separate dependencies. This deployment procedure establishes none
 of those results by itself.
+
+## What the host says, and when to redeploy
+
+`GET /status.json` is the service's own read-only account, beside `/healthz`
+(process liveness) and `/morning.json` (the receipt it serves). It opens the
+database read-only, writes nothing, carries no receipt or publication bytes and
+no provider request or response, and answers 503 `unavailable` on any fault, as
+the receipt route does. Its fields:
+
+| Field | What it is |
+|---|---|
+| `schema_version`, `read_at` | the document's version and the instant it was read |
+| `service` | mode, generation, fence, the writer clock, the lease, the last reservation, the day's quota, the current publication's SHA-256 and size |
+| `sync` | the synchronizer's last start, last status, the refusal sentence behind a `source_publication_or_receipt_invalid` (`last_detail`, cleared while a sync is in flight and by the next outcome), its request count, the commit it read, and when it may next poll; `null` until the first sync |
+| `publication` | the publication the journal last ingested: measured and applicable session, publication time, git commit, admitted count, and when it was ingested |
+| `receipt` | the served receipt's SHA-256, size, generation time, status, reason, phase, run id, the publication it binds and whether that is the current one; a receipt past the observation bound or unreadable is summarized by digest and size alone |
+| `events` | the newest eight journal events, each with its kind, time, generation, applicable session and the allowlisted outcome fields (`outcome`, `feed`, `attempt`, `status_code`, `git_commit`, `measured_session`, `published_at`, `admitted_count`) |
+
+Each scheduled command's one-line result is read back into the host's log line:
+`{"role": "sync", "state": "finished", "exit_code": 1, "result": {"status":
+"source_publication_or_receipt_invalid", "requests": 3, "commit_sha": "...",
+"detail": "publication integrity is not verified"}}`. Before this, the platform
+log carried the exit code alone, and the commands' own output went nowhere.
+
+**Redeploy after every merge that changes what the image copies and the host
+reads: `src/`, `tools/sync_morning_service.py`, `tools/publish_morning.py`,
+`knowledge/event-risk.json`, `requirements.txt`, `requirements-host.txt` or the
+`Dockerfile`.** (The image also copies `data/symbols.txt`, which no host path
+reads, and the whole of `tools/`, of which the host imports those two.) The
+synchronizer accepts a publication only when the verifier in the image replays
+its archived rules to PASS, so an image built before a rules change refuses every
+record published after it, and keeps serving the last receipt it verified; the
+registry is read by the collector at import, so a registry change the image
+does not carry is a corporate-event exclusion the host does not apply. That is
+what happened: the image deployed on 31 October 2026 ingested the 2 and 3
+November records and refused the 4, 5 and 6 November ones (`publication
+integrity is not verified`: the archived `review_selection` policy of those
+records is one its verifier cannot replay; reproduced by running
+`morning.bind_record` over the five records with the 31 October tree and with
+current `main`, which ingests all five). From 14:59 UTC on 4 November the
+service served that day's `no_tickets` receipt for the 3 November publication,
+through the first three-ticket morning of 5 November, and nothing it exposed
+said why. Data-only commits still need no redeploy. A volume-backed redeploy
+restarts the service, so keep it away from the 8:00 to 9:00 AM CT window. A
+rollback to an image from before this route works against the volume: the
+synchronizer's table keeps its seven columns and the detail lives in a table of
+its own, which the older image never reads. With automatic deploys disabled,
+the redeploy is the owner's; Railway's deploy settings can also trigger a build
+only when listed paths change ("watch paths"), which would make this rule
+automatic for the paths above and leave data commits alone. That setting is
+the owner's decision and is not configured.

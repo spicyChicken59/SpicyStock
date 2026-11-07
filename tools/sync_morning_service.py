@@ -33,6 +33,8 @@ MAX_METADATA_BYTES = 16 * 1024
 MAX_DIRECTORY_BYTES = 256 * 1024
 MAX_SUPERVISOR_SECONDS = 35
 MAX_RESULT_BYTES = 4096
+MAX_DETAIL_CHARS = 120
+UNDECODABLE_DETAIL = 'source bytes are not valid UTF-8 text'
 MAX_ERROR_BACKOFF_SECONDS = 3600
 HEX = re.compile(r'[a-f0-9]{40}')
 
@@ -104,10 +106,21 @@ def fetch(url, maximum, deadline):
         raise SyncError('source_transport_unavailable') from None
 
 
+def _detail(exc):
+    """A refusal's own sentence: a validator's fixed phrase, bounded and
+    printable ASCII; undecodable bytes get this module's own fixed phrase,
+    because a codec's message names a byte value and its offset. Never a
+    response body: the validators quote none."""
+    if isinstance(exc, UnicodeError):
+        return UNDECODABLE_DETAIL
+    text = ''.join(c for c in str(exc) if ' ' <= c <= '~')[:MAX_DETAIL_CHARS]
+    return text or None
+
+
 def _json(raw):
     try:
         value = json.loads(raw)
-    except (ValueError, UnicodeError):
+    except (ValueError, UnicodeError, RecursionError):
         raise SyncError('source_metadata_invalid') from None
     if not isinstance(value, dict):
         raise SyncError('source_metadata_invalid')
@@ -157,6 +170,11 @@ def sync(store, *, transport=fetch, clock=None, monotonic=None):
     with store._transaction() as db:
         db.execute('CREATE TABLE IF NOT EXISTS morning_source_sync (id INTEGER PRIMARY KEY CHECK(id=1), fence INTEGER NOT NULL, next_allowed REAL NOT NULL, last_started REAL, last_status TEXT, request_count INTEGER NOT NULL, commit_sha TEXT)')
         db.execute('INSERT OR IGNORE INTO morning_source_sync VALUES (1, 0, 0, NULL, NULL, 0, NULL)')
+        # The refusal detail lives beside the sync row, not in it: the sync
+        # table keeps the seven columns the first image wrote, so an image
+        # from before the detail still runs its own positional insert against
+        # a volume this one has touched (a rollback), and reads no detail.
+        db.execute('CREATE TABLE IF NOT EXISTS morning_source_sync_detail (id INTEGER PRIMARY KEY CHECK(id=1), detail TEXT)')
         state = db.execute('SELECT * FROM state WHERE id=1').fetchone()
         store._clock(state, started)
         if state['mode'] != 'prepared':
@@ -168,11 +186,15 @@ def sync(store, *, transport=fetch, clock=None, monotonic=None):
         generation, existing = state['generation'], state['publication']
         db.execute('UPDATE morning_source_sync SET fence=?,next_allowed=?,last_started=?,last_status=?,request_count=0 WHERE id=1',
                    (fence, started.timestamp() + MIN_POLL_SECONDS, started.timestamp(), 'collecting'))
+        # A sync in flight reads `collecting` beside no detail: the previous
+        # refusal's sentence is not this poll's.
+        db.execute('DELETE FROM morning_source_sync_detail')
         db.execute('UPDATE state SET clock=? WHERE id=1', (started.timestamp(),))
     deadline = monotonic() + MAX_SYNC_SECONDS
     requests = 0
     commit = None
     backoff = MIN_POLL_SECONDS
+    detail = None
 
     def get(url, maximum):
         nonlocal requests
@@ -211,17 +233,27 @@ def sync(store, *, transport=fetch, clock=None, monotonic=None):
         result = store.ingest(raw, now=finished, previous=previous, expected_generation=generation, source_commit=commit)
     except SyncError as exc:
         result, backoff = exc.reason, exc.backoff
-    except (ValueError, KeyError, TypeError, UnicodeError):
-        result = 'source_publication_or_receipt_invalid'
+    except (ValueError, KeyError, TypeError, UnicodeError, RecursionError) as exc:
+        # The publication's or receipt's own refusal sentence (a validator's
+        # fixed phrase, e.g. "publication integrity is not verified", or the
+        # fixed phrase for undecodable bytes), so the status route and the
+        # host's log line name WHY an ingestion was refused; a transport body
+        # never reaches this branch, and a decoder's depth limit is a refusal.
+        result, detail = 'source_publication_or_receipt_invalid', _detail(exc)
     except OSError:
         result = 'source_transport_unavailable'
     finished = _instant(clock())
     with store._transaction() as db:
         # A stale completion cannot alter another poll's backoff/status. Source
         # ingestion separately compares the captured generation atomically.
-        db.execute('UPDATE morning_source_sync SET last_status=?,request_count=?,commit_sha=?,next_allowed=MAX(next_allowed,?) WHERE id=1 AND fence=?',
-                   (result, requests, commit, max(started, finished).timestamp() + (backoff if result not in ('ingested', 'unchanged') else 0), fence))
-    return {'status': result, 'requests': requests, 'commit_sha': commit}
+        changed = db.execute('UPDATE morning_source_sync SET last_status=?,request_count=?,commit_sha=?,next_allowed=MAX(next_allowed,?) WHERE id=1 AND fence=?',
+                             (result, requests, commit, max(started, finished).timestamp() + (backoff if result not in ('ingested', 'unchanged') else 0), fence)).rowcount
+        if changed == 1:
+            db.execute('INSERT OR REPLACE INTO morning_source_sync_detail (id, detail) VALUES (1, ?)', (detail,))
+    report = {'status': result, 'requests': requests, 'commit_sha': commit}
+    if detail is not None:
+        report['detail'] = detail
+    return report
 
 
 def _child(database, output):
@@ -261,7 +293,10 @@ def supervise(database, *, timeout=MAX_SUPERVISOR_SECONDS, context=None, child=N
                 payload = incoming.recv_bytes(MAX_RESULT_BYTES)
                 observed = json.loads(payload)
                 if (not isinstance(observed, dict) or not isinstance(observed.get('status'), str)
-                        or len(observed['status']) > 80 or set(observed) - {'status', 'requests', 'commit_sha'}
+                        or len(observed['status']) > 80 or set(observed) - {'status', 'requests', 'commit_sha', 'detail'}
+                        or ('detail' in observed and (not isinstance(observed['detail'], str) or not observed['detail']
+                                                      or len(observed['detail']) > MAX_DETAIL_CHARS
+                                                      or any(not ' ' <= c <= '~' for c in observed['detail'])))
                         or type(observed.get('requests')) is not int or not 0 <= observed['requests'] <= MAX_REQUESTS
                         or ('commit_sha' in observed and observed['commit_sha'] is not None
                             and (not isinstance(observed['commit_sha'], str) or not HEX.fullmatch(observed['commit_sha'])))):

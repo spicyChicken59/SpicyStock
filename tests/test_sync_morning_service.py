@@ -365,3 +365,178 @@ def test_directory_metadata_has_no_small_file_inline_content_requirement():
     duplicate = json.loads(metadata()) * 2
     with pytest.raises(syncer.SyncError, match='identity'):
         syncer._metadata(encode(duplicate))
+
+
+# --- the refusal's own sentence, and the column that keeps it ---
+
+def _tampered(raw=RAW):
+    """RAW with one sealed burst value moved: the verifier refuses it whole."""
+    data = json.loads(raw)
+    value = data['bursts'][0]['gain_pct']
+    needle = ('"gain_pct": %s' % json.dumps(value)).encode()
+    assert needle in raw
+    return raw.replace(needle, ('"gain_pct": %s' % json.dumps(round(value + 0.01, 2))).encode(), 1)
+
+
+def test_refused_publication_names_its_reason_in_detail_and_the_next_success_clears_it(tmp_path):
+    store = store_at(tmp_path)
+    tampered = _tampered()
+    result = run(store, Source(tampered), at=NOW + timedelta(seconds=300))
+    assert result['status'] == 'source_publication_or_receipt_invalid'
+    assert result['detail'] == 'publication integrity is not verified'
+    assert result['commit_sha'] == COMMIT
+    with sqlite3.connect(store.path) as db:
+        assert db.execute('SELECT last_status FROM morning_source_sync').fetchone() == ('source_publication_or_receipt_invalid',)
+        assert db.execute('SELECT detail FROM morning_source_sync_detail').fetchone() == ('publication integrity is not verified',)
+        assert db.execute('SELECT publication_sha FROM state').fetchone()[0] == hashlib.sha256(RAW).hexdigest()
+    status = service.status_document(store.path)
+    assert status['sync']['last_status'] == 'source_publication_or_receipt_invalid'
+    assert status['sync']['last_detail'] == 'publication integrity is not verified'
+    assert status['sync']['commit_sha'] == COMMIT and status['sync']['request_count'] == 3
+    assert status['service']['publication_sha256'] == hashlib.sha256(RAW).hexdigest()
+    ok = run(service.Store(store.path), Source(), at=NOW + timedelta(seconds=600))
+    assert ok['status'] == 'unchanged' and 'detail' not in ok
+    with sqlite3.connect(store.path) as db:
+        assert db.execute('SELECT last_status FROM morning_source_sync').fetchone() == ('unchanged',)
+        assert db.execute('SELECT detail FROM morning_source_sync_detail').fetchone() == (None,)
+
+
+def test_a_sync_in_flight_reads_collecting_beside_no_stale_detail(tmp_path):
+    # The previous poll's refusal sentence is not this poll's: while a sync
+    # runs, the status route reads `collecting` and no detail.
+    store = store_at(tmp_path)
+    assert run(store, Source(_tampered()), at=NOW + timedelta(seconds=300))['detail'] == 'publication integrity is not verified'
+    source, seen = Source(), []
+    def spying(url, maximum, deadline):
+        seen.append(service.status_document(store.path)['sync'])
+        return source(url, maximum, deadline)
+    assert run(service.Store(store.path), spying, at=NOW + timedelta(seconds=600))['status'] == 'unchanged'
+    assert seen and all((s['last_status'], s['last_detail']) == ('collecting', None) for s in seen)
+    assert service.status_document(store.path)['sync']['last_detail'] is None
+
+
+def test_a_stale_completion_writes_no_detail_over_a_later_polls_outcome(tmp_path):
+    # A poll overtaken by a later one (its fence moved on) cannot alter the
+    # later poll's status, and cannot leave its own refusal sentence beside it.
+    store = store_at(tmp_path)
+    inner = Source()
+    tampered = Source(_tampered())
+    def overtaken(url, maximum, deadline):
+        if not inner.calls:
+            assert run(service.Store(store.path), inner, at=NOW + timedelta(seconds=syncer.MIN_POLL_SECONDS + 1))['status'] == 'unchanged'
+        return tampered(url, maximum, deadline)
+    result = run(store, overtaken)
+    assert result['status'] == 'source_publication_or_receipt_invalid'
+    assert result['detail'] == 'publication integrity is not verified'
+    with sqlite3.connect(store.path) as db:
+        assert db.execute('SELECT last_status FROM morning_source_sync').fetchone() == ('unchanged',)
+        assert db.execute('SELECT detail FROM morning_source_sync_detail').fetchone() == (None,)
+    status = service.status_document(store.path)['sync']
+    assert (status['last_status'], status['last_detail']) == ('unchanged', None)
+
+
+def test_a_malformed_publication_is_refused_by_name_and_never_kills_the_sync(tmp_path):
+    # A `run` block that is not an object was an AttributeError out of
+    # `morning.bind_record()`, past every catch, so the child died and the
+    # sync row stayed at `collecting`; a decoder's depth limit was the same.
+    store = store_at(tmp_path)
+    data = json.loads(RAW)
+    data['run'] = []
+    result = run(store, Source(encode(data)), at=NOW + timedelta(seconds=300))
+    assert result['status'] == 'source_publication_or_receipt_invalid'
+    assert result['detail'] == 'publication run block is not an object'
+    deep = b'[' * 200000
+    result = run(service.Store(store.path), Source(deep), at=NOW + timedelta(seconds=600))
+    assert result['status'] == 'source_publication_or_receipt_invalid'
+    assert result['detail'].startswith('maximum recursion depth exceeded')
+    # The previous receipt is read on a fresh store alone, and a deep one is refused the same way.
+    result = run(service.Store(tmp_path / 'fresh.sqlite'), Source(RAW, previous=deep))
+    assert result['status'] == 'source_publication_or_receipt_invalid'
+    assert result['detail'].startswith('maximum recursion depth exceeded')
+    result = run(service.Store(store.path), Source(b'\xff\xfe' + RAW), at=NOW + timedelta(seconds=1200))
+    assert result['status'] == 'source_publication_or_receipt_invalid'
+    assert result['detail'] == syncer.UNDECODABLE_DETAIL
+    with sqlite3.connect(store.path) as db:
+        assert db.execute('SELECT last_status FROM morning_source_sync').fetchone() == ('source_publication_or_receipt_invalid',)
+        assert db.execute('SELECT publication_sha FROM state').fetchone()[0] == hashlib.sha256(RAW).hexdigest()
+
+
+def test_detail_is_absent_for_transport_and_typed_source_refusals(tmp_path):
+    store = store_at(tmp_path)
+    def unavailable(*args):
+        raise OSError('private proxy response must not escape')
+    result = run(store, unavailable)
+    assert result['status'] == 'source_transport_unavailable' and 'detail' not in result
+    result = run(service.Store(store.path), Source(edited_ref=NEXT), at=NOW + timedelta(seconds=300))
+    assert result['status'] == 'source_main_changed' and 'detail' not in result
+    with sqlite3.connect(store.path) as db:
+        assert db.execute('SELECT detail FROM morning_source_sync_detail').fetchone() == (None,)
+
+
+def test_detail_is_printable_ascii_and_bounded():
+    assert syncer._detail(ValueError('publication integrity is not verified')) == 'publication integrity is not verified'
+    assert syncer._detail(ValueError('tab\there\x00 and é accent\n')) == 'tabhere and  accent'
+    assert syncer._detail(ValueError('x' * 500)) == 'x' * syncer.MAX_DETAIL_CHARS
+    assert syncer._detail(ValueError('')) is None and syncer._detail(ValueError('\x01\x02')) is None
+    # A codec's message names a byte value and its offset, so undecodable bytes
+    # get one fixed phrase of this module's instead.
+    assert syncer._detail(UnicodeDecodeError('utf-8', b'\xff', 0, 1, 'invalid start byte')) == syncer.UNDECODABLE_DETAIL
+
+
+def test_an_older_images_sync_table_keeps_its_seven_columns_and_its_rows(tmp_path):
+    store = store_at(tmp_path)
+    with sqlite3.connect(store.path) as db:
+        # The table as the first image wrote it: seven columns, one row with a
+        # prior outcome that must survive, and no detail table yet.
+        db.execute('CREATE TABLE morning_source_sync (id INTEGER PRIMARY KEY CHECK(id=1), fence INTEGER NOT NULL, next_allowed REAL NOT NULL, last_started REAL, last_status TEXT, request_count INTEGER NOT NULL, commit_sha TEXT)')
+        db.execute('INSERT INTO morning_source_sync VALUES (1, 7, 0, ?, ?, 2, ?)', (NOW.timestamp() - 900, 'ingested', COMMIT))
+    assert service.status_document(store.path)['sync'] == {
+        'last_started': syncer._instant(NOW - timedelta(seconds=900)).isoformat(),
+        'last_status': 'ingested', 'last_detail': None, 'request_count': 2, 'commit_sha': COMMIT,
+        'next_allowed': '1970-01-01T00:00:00+00:00'}
+    assert run(store, Source(_tampered()))['detail'] == 'publication integrity is not verified'
+    with sqlite3.connect(store.path) as db:
+        columns = [row[1] for row in db.execute('PRAGMA table_info(morning_source_sync)')]
+        assert columns == ['id', 'fence', 'next_allowed', 'last_started', 'last_status', 'request_count', 'commit_sha']
+        assert db.execute('SELECT fence, last_status FROM morning_source_sync').fetchone() == (8, 'source_publication_or_receipt_invalid')
+        assert db.execute('SELECT detail FROM morning_source_sync_detail').fetchone() == ('publication integrity is not verified',)
+        # The first image's own positional insert, run against this database:
+        # a rollback to an image from before the detail keeps syncing.
+        db.execute('INSERT OR IGNORE INTO morning_source_sync VALUES (1, 0, 0, NULL, NULL, 0, NULL)')
+        assert db.execute('SELECT fence FROM morning_source_sync').fetchone() == (8,)
+    assert service.status_document(store.path)['sync']['last_detail'] == 'publication integrity is not verified'
+    assert run(service.Store(store.path), Source(), at=NOW + timedelta(seconds=300))['status'] == 'unchanged'
+    assert service.status_document(store.path)['sync']['last_detail'] is None
+
+
+def _detail_child(database, output):
+    output.send_bytes(b'{"status":"source_publication_or_receipt_invalid","requests":3,"commit_sha":null,"detail":"publication integrity is not verified"}')
+    output.close()
+
+
+def _bad_detail_child(database, output):
+    output.send_bytes(b'{"status":"source_publication_or_receipt_invalid","requests":3,"commit_sha":null,"detail":"' + b'x' * 121 + b'"}')
+    output.close()
+
+
+def _unprintable_detail_child(database, output):
+    output.send_bytes(b'{"status":"source_publication_or_receipt_invalid","requests":3,"commit_sha":null,"detail":"line\\nbreak"}')
+    output.close()
+
+
+def _empty_detail_child(database, output):
+    output.send_bytes(b'{"status":"source_publication_or_receipt_invalid","requests":3,"commit_sha":null,"detail":""}')
+    output.close()
+
+
+@pytest.mark.parametrize('child,accepted', [(_detail_child, True), (_bad_detail_child, False),
+                                            (_unprintable_detail_child, False), (_empty_detail_child, False)])
+def test_supervisor_accepts_only_a_bounded_printable_detail(tmp_path, child, accepted):
+    context = RecordingContext()
+    result = syncer.supervise(tmp_path / 'detail.sqlite', timeout=10, context=context, child=child)
+    if accepted:
+        assert result == {'status': 'source_publication_or_receipt_invalid', 'requests': 3, 'commit_sha': None,
+                          'detail': 'publication integrity is not verified'}
+    else:
+        assert result['status'] == 'source_supervisor_result_invalid'
+    assert context.process._closed

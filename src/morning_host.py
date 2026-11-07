@@ -31,6 +31,8 @@ WORKER_SECONDS = 30
 COMMAND_SECONDS = 45
 KILL_GRACE_SECONDS = 5
 POLL_SECONDS = 0.1
+RESULT_BYTES = 4096
+RESULT_TEXT_CHARS = 200
 LOCAL_FILESYSTEMS = frozenset(('ext2', 'ext3', 'ext4', 'xfs', 'btrfs', 'zfs'))
 NETWORK_ENV = (
     'HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY',
@@ -193,12 +195,27 @@ def jobs(port, enabled, environ):
 
 
 def launch(job):
-    return subprocess.Popen(
+    # A scheduled command's one-line JSON result is read back into the host's
+    # own log line, so the platform log says WHAT a sync or worker tick did and
+    # not only that it exited 1. The long-running reader writes nothing.
+    process = subprocess.Popen(
         job.command, cwd=APP_ROOT, env=job.environment,
         user=job.uid, group=READ_GID, extra_groups=[], umask=0o027,
         start_new_session=True, close_fds=True,
-        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        stdout=subprocess.PIPE if job.interval is not None else subprocess.DEVNULL,
     )
+    return result_pipe(process)
+
+
+def result_pipe(process):
+    """A scheduled command's stdout, read by the supervisor's tick without ever
+    waiting on it: a silent child must not hold the tick, so the pipe is
+    non-blocking and `_drain` returns on the first empty read."""
+    stream = getattr(process, 'stdout', None)
+    if stream is not None:
+        os.set_blocking(stream.fileno(), False)
+    return process
 
 
 def enable_subreaper():
@@ -236,8 +253,42 @@ def _reap(process):
             return
 
 
-def emit(role, state, code=None):
-    print(json.dumps({'role': role, 'state': state, 'exit_code': code}), flush=True)
+def emit(role, state, code=None, result=None):
+    print(json.dumps({'role': role, 'state': state, 'exit_code': code, 'result': result}), flush=True)
+
+
+def _drain(active):
+    """Keep up to RESULT_BYTES of a scheduled command's output; never block."""
+    stream = getattr(active.process, 'stdout', None)
+    if stream is None or stream.closed:
+        return
+    while True:
+        try:
+            chunk = os.read(stream.fileno(), 65536)
+        except BlockingIOError:
+            return
+        except (OSError, ValueError):
+            return
+        if not chunk:
+            return
+        active.output = (active.output + chunk)[-RESULT_BYTES:]
+
+
+def result_of(output):
+    """The last non-empty output line: its JSON when it is an object, else
+    bounded printable text, else None. Bytes are the command's own result;
+    nothing here reads a credential, which no command prints."""
+    lines = [line for line in output.decode('utf-8', 'replace').splitlines() if line.strip()]
+    if not lines:
+        return None
+    last = lines[-1].strip()
+    try:
+        value = json.loads(last)
+    except ValueError:
+        value = None
+    if isinstance(value, dict):
+        return value
+    return ''.join(c for c in last if ' ' <= c <= '~')[:RESULT_TEXT_CHARS] or None
 
 
 @dataclass
@@ -246,6 +297,7 @@ class Active:
     started: float
     stopping: float | None = None
     killed: bool = False
+    output: bytes = b''
 
 
 class Supervisor:
@@ -262,11 +314,13 @@ class Supervisor:
         if active.stopping is None:
             active.stopping = now
             _signal_group(active.process, signal.SIGTERM)
-            self.reporter(name, reason, active.process.poll())
+            _drain(active)
+            self.reporter(name, reason, active.process.poll(), result_of(active.output))
 
     def step(self, *, stopping=False, stop=None):
         now = self.clock()
         for name, active in list(self.active.items()):
+            _drain(active)
             code = active.process.poll()
             if (code is not None and self.jobs[name].interval is None
                     and not stopping and active.stopping is None):
@@ -283,6 +337,9 @@ class Supervisor:
                     active.killed = True
                 _reap(active.process)
                 if active.process.poll() is not None and not _group_exists(active.process):
+                    stream = getattr(active.process, 'stdout', None)
+                    if stream is not None and not stream.closed:
+                        stream.close()
                     del self.active[name]
                 elif now - active.stopping >= 2 * KILL_GRACE_SECONDS:
                     raise HostError('child_cleanup_failed')

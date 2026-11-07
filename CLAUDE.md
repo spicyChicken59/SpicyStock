@@ -347,7 +347,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5923 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5957 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -13815,3 +13815,257 @@ reports do not support, any order SpicyStock places.
 **Not claimable:** tonight's publication, the first sized at $30,000 and the
 first under the admission rule; Mo's three trades' outcome, which he reports
 himself; any trading edge.
+
+## Checkpoint, 7 Nov 2026 -- PR #212 accepted; the first burst tickets, read through their first day; the morning host says what it did (#108, #111)
+
+**PR #212, accepted.** Merged as `e52e5049` on `main` with a merge commit over
+`e0b03a42`, its tree the head `98baf9a4`'s byte for byte. The code head
+`0ab3a024` passed page, the gate and both native cases (stress 20:48-21:15 UTC,
+central 20:48-21:33) on Tests run 41909907169, its pytest failing the count line
+alone (5914 passed), which `98baf9a4` moved; that head passed pytest (20:48-21:19),
+page and the gate's docs-only decision on run 41910004045 and both gitleaks runs
+(the pull-request gitleaks on `0ab3a024`, 41909907115, failed on the push race,
+`Invalid revision range 7a6ccc3f^..98baf9a4`, 0 bytes scanned, explained on the
+PR). Publisher 41918530416 waited for `app.css`, `app-handoff.js`,
+`app-handoff-ui.js`, `app-morning.js` and `app.js` and printed *Verified: every
+one of the 48 public files matches committed main* at 21:43:20 UTC on 4
+November; Pages 41918585724 deployed (41918528091 cancelled as superseded); the
+merge commit's own Secret scan 41918530518 and Tests run 41918531046 passed.
+
+**The 4 November session, the first sized at $30,000 and the first under the
+admission rule.** Run 41962047048 (the `16 23` cron, the primary under standard
+time, created 03:30 UTC on the 5th, 255 minutes late), pipeline 03:31-03:37, exit
+0, landed as `a0d9172e`, the mail delivered; publisher *Verified* at 03:38:42,
+59 seconds after the push, and the three tickets below were on the served site
+by 03:39 UTC. `run.status` **ok** beside a degraded acceptance (4,748 of 4,768
+ready; 20 stale stocks every one ending 3 November, tolerated; none on the seed
+alone). `account.equity` 30000, `risk_pct` 0.5, the position cap $7,500, four
+slots. **YELLOW**, the first since 29 October (10-session ratio 1.23, 754 up 4%
+against 362 down). **The first burst tickets the record has ever published**
+(every earlier ticket was anticipation): HQY, RCBC and VIK, each mechanical A+
+10.0 and reader A+ 9.0, each found by the 4% scan (route `both`), each at
+`size_multiplier` 0.25 (YELLOW's half, halved again by the stop-risk rule):
+HQY 8 shares, buy stop $108.84, limit $110.53, stop $106.11; RCBC 15 at $60.38 /
+$61.38 / $58.93; VIK 10 at $91.17 / $91.84 / $88.17; committed $2,723.34, at
+risk $108.81, 4 of 4 slots with MCS's unfinished model plan. **The first
+`run.admission`:** 1,104 candidates, 829 admitted (754 by the burst route, 75 by
+a dollar day with both checks) and 275 dollar-only names without one, research
+only; of the 245 in the band without a veto, 185 admitted and 60 stopped. The
+three dollar-only mechanical A+ (CM, TD and NVS, big-cap movers under +4% with
+no range expansion) were not read and have no plan: funnel stage `route` 3,
+`review_downgraded` 8 (CCI the closest miss, A+ 10.0 lowered to A 8.5), `ticket`
+3. `run.reads` 12 of 12 under request v3; `run.reader_usage` 12 calls, 103,037
+input tokens (54,317 uncached, 4,060 written to the cache, 44,660 read) and
+4,070 output. `run.earnings`: HQY `estimate_outside` (the 3 December 2025
+filing moved forward puts the next report about 2 December, outside the hold;
+the company's own notice, read afterwards, says 1 December after the close);
+RCBC `unknown` / `not_mapped` (SEC's ticker list does not name it); VIK
+`unknown` / `foreign_issuer` (results on forms with no results item; its own
+notice says 17 November, outside the hold). The stop-research hook refused the
+$30,000 account inside its registered period as designed (*unsupported
+account*, two nights), and the registered period ended on 6 November
+(`outside_period` on the 9 November cohort). Storage lines all inside their
+bounds: the canonical record 15.3 MB of 48 MiB (1,104 bursts), the projection
+9.0 MB, the reader observation archive 102.6 MB of 128 MiB (76%), the evidence
+archive 78.4 MB with 361 unnamed objects removed, the catalog 89.0 MB over 16
+sessions, the ledger entry 2.2 MB of 8 MiB.
+
+**The 5 November morning, the first in-window check with admitted plans.** Mo's
+dispatcher fired at 8:22 CT (run 42044309191, `manual_dispatch`), the collector
+read its clock at 14:22:41 UTC, seven minutes before the open, and its receipt
+landed at 14:23:43 (`30963c2d`): status `partial`, three rows, both feeds
+answering. Every print was stale under the 60-second rule, so no price check
+could be made: at 8:22 CT the single-venue IEX feed carried placeholder pre-open
+quotes (HQY $77.40 / $126.56) and the previous close's last trades. A check
+inside 9:30-10:00 ET is what would quote these names; the receipt expired at
+14:27:44. The research observation read `cohort_not_current` (the cohort on
+`main` was the 3 November one), correctly. The in-window count stands at three
+sessions (23 October, 2 and 3 November) plus this one.
+
+**The 5 November evening, the three tickets' first day.** Run 42156635345, RED
+(91 up 4% against 844 down: the alarm fired), *Stand aside.*, no ticket. **All
+three model plans stopped on day 1:** HQY filled at the open $109.92 and stopped
+at $106.11 (-3.47%); RCBC filled at the open $60.94 and stopped at $58.93
+(-3.30%); VIK's daily open was under its trigger, so **the minute bars placed its
+fill, the intraday rule's first live use on a burst ticket**: filled at 09:30 ET
+at $91.17 (the first minute's high $91.465), stopped at $88.17 (-3.29%), one
+object under `docs/intraday/`. The scorecard reads 13 plans, 5 settled (2 wins,
+3 losses), +0.43R in sum, under its 20-settled floor. The 6 November night (run
+42331176108) was RED again, the one listed coil (CART) withheld at the limit;
+the scorecard unchanged. One lead closed: `rules_version` moved on all three
+nights with no merge between them (424e9c0d -> 23e1f865 -> b35c7688) because
+`universe.identity`, the live directory's membership, is nested in the rules by
+design; README says so now. **Mo's own trades are his and stay off this
+repository**: he bought HQY and VIK on 5 November with the record's stops and
+held them through the day's lows.
+
+**The morning host, read from outside.** At 15:41 UTC on 5 November, 41
+minutes after the window closed, Railway's `/morning.json` still served the
+receipt generated 14:59 UTC on 4 November (`service-3-271`, bound to the 3
+November publication), and it served the same at 04:30 on the 6th: two sessions
+with no host receipt, the first the one with three tickets to quote. The
+Railway log, Mo's to read, carried `{"role": "sync", "state": "finished",
+"exit_code": 1}` and nothing else, because the supervisor gave every child
+`stdout=DEVNULL`. **Reproduced here by execution** (`scratchpad/ingest_probe.py`):
+the 31 October code (`422a029a`, the image Mo deployed) refuses the 4, 5 and 6
+November records at `morning.bind_record()` with *publication integrity is not
+verified* -- `provenance.verify()` returns PARTIAL for archived rules its
+verifier cannot replay, and #211's admission family is one -- while current
+`main` ingests all three. The host had ingested the 3 November record, served
+its 4 November receipt for it, and refused everything after. Nothing it exposed
+said so.
+
+**Revision.** Branch `host-status` from `main` at `befb7d2e` (the 6 November
+issuer receipt), pushed as `claude/spicystock-market-data-vfd3o2`, **PR #213**.
+Three source files move (`src/morning_service.py`, `src/morning_host.py`,
+`tools/sync_morning_service.py`), three test files, the docs and this file; no
+rule moves (`rules_version` stands, no fixture regenerated); `docs/data.json`,
+`docs/picks.json`, every receipt, the history, the evidence objects and the
+workflows are untouched; no run, mail, dispatch, provider call or credential.
+
+**What was built.** `GET /status.json` on the host (`morning_service.status_
+document()`, `ROUTES`): the service state (mode, generation, fence, clock,
+lease, quota, the current publication's SHA-256 and size), the synchronizer's
+last outcome with the refusal sentence behind it (`last_detail`), the
+publication the journal last ingested, a summary of the served receipt with
+`serves_current_publication`, and the newest `STATUS_EVENTS` (8) journal events
+with allowlisted fields; read-only (`mode=ro`, a symlinked path refused), bounded
+by `MAX_STATUS_BYTES` (64 KiB), never a receipt's or a publication's bytes, never
+a provider request or response, a generic 503 on any fault, the same CORS and
+`no-store` as the receipt route and no ETag. The synchronizer records a refusal's
+own sentence (`_detail()`: printable ASCII, at most `MAX_DETAIL_CHARS` 120,
+never a transport body; `last_detail`, a column an existing database gains once)
+and returns it to the supervisor, which validates it. The supervisor gives each
+scheduled command a non-blocking result pipe (`result_pipe()`; the long-running
+reader keeps `DEVNULL`), drains it every tick to `RESULT_BYTES` (4096), closes it
+when the role is removed, and `emit()` prints the command's last line as the
+`result` of the host's own log line (`result_of()`: a JSON object as it is, else
+printable text to 200 characters, else null). README, the runbook and
+`.env.example` say what the route carries and state the rule: redeploy after
+every merge that changes `src/`, `tools/sync_morning_service.py`,
+`tools/publish_morning.py`, `requirements-host.txt` or the `Dockerfile`; data
+commits need none. Railway's *watch paths* would make that automatic for those
+paths and is Mo's setting.
+
+**Measured** (this sandbox, Python 3.12.3 in the suite's venv): the full suite
+over every file but the two this venv cannot run (`tests/test_historical_
+package.py` and `tests/test_requirements.py` need `zstandard`) 5774 passed, 13
+skipped and 163 deselected in 20 m 52 s on the first tree, and **5780 passed,
+13 skipped and 163 deselected in 20 m 46 s on the final tree** -- collected
+before the last case below (the stale completion) and the count line were
+added, so that file was run alone after it (48 passed) and the docs test with
+the count line at 5957; the five touched test files 300 passed (`test_morning_
+service` 65, `test_sync_morning_service` 48, `test_morning_host` 50,
+`test_docs` 51, `test_morning` 86); `.env.example` swept; `git diff --check`
+clean; gitleaks 8.24.3 over the changed files with the repository's config: no
+leaks. No page file changed, so the chart check and the smoke are CI's,
+recorded on the PR. One process slip of my own, recorded: two test files and
+this file were edited while the second full run was executing; every test
+module is imported at collection, which had finished, so the run read none of
+the edits, and the edited files were run again on their own.
+
+**Mutation pass**, each mutant in a detached worktree carrying the diff, judged
+by the whole test files naming its rule (no `-k`), the tree never written:
+thirty-seven mutants and two controls. Over the status route: the event
+allowlist dropped, the receipt's body carried, the size bound dropped, a prefix
+path admitted, `serves_current_publication` always true, the symlink unchecked,
+the 503 naming its error, the state version unchecked, the route writing, an
+ETag added, the route dropped from `ROUTES`, the receipt's fields unfiltered;
+over the sync: the detail not written, not cleared on the next success, written
+for a transport failure, unbounded, unprintable, the migration run every time,
+the report's detail dropped, the supervisor's validation dropped and its bound
+loosened by one; over the host: the tick never draining, the first line read for
+the last, the text unbounded, unprintable, the pipe never closed, `emit()`
+dropping the result, `_stop()` reporting none, the reader piped; the README's
+rule and the runbook's `last_detail` dropped. Thirty-three died at once, each in
+the test naming its rule. **Four survived, each a hole:** the events bound
+(no store had more than eight events: a store with eleven holds it now); the
+retained output bound (the flood test read the result alone: it holds the
+retained tail under `RESULT_BYTES` at every tick now); and the non-blocking pipe,
+twice -- the tests' own launcher set the pipe non-blocking itself, so dropping
+it in `launch()` changed nothing under test (the launcher uses the host's own
+`result_pipe()` now), and a `_drain()` that waits on a silent child passed every
+test (a command silent for 1.5 s holds the tick under a quarter second now). All
+four die; both controls (a docstring word, a comment) survive each pass.
+
+**The review, worked.** One reviewer by execution over the first tree, in its own
+worktree (45 tool calls; its probes retained under the scratchpad), returned
+seven findings, each reproduced here before it was touched, and ran sixteen
+single-rule breaks of its own. The medium one was a rollback with no way back:
+the first version added a `last_detail` column to the synchronizer's table, and
+the image deployed on 31 October runs a positional seven-value insert against
+that table on every poll, so a rollback to it against a volume the new image
+had touched once would have failed every sync (reproduced: *table
+morning_source_sync has 8 columns but 7 values were supplied*). The detail
+lives in a table of its own now (`morning_source_sync_detail`), the sync
+table keeps the seven columns the first image wrote, and a test runs that
+image's own insert against a database this code has written. Then: a sync in
+flight read `collecting` beside the previous refusal's sentence (cleared at the
+claim now, written only when the completion is the fence's own); a clock past
+the platform's range (`1e300`) raised `OverflowError` out of the status route
+and a receipt blob of two hundred thousand brackets raised `RecursionError`
+out of both routes, where the documents promise a 503 (`_epoch()` reads such a
+clock as unknown, both routes catch the decoder's depth limit); a publication
+whose `run` block is a list was an `AttributeError` past every catch in the
+synchronizer, so its child died, the supervisor read `source_supervisor_result_
+invalid` and the row stayed at `collecting` (the class this file names most,
+one level in: `morning._publication()` holds the block to an object and refuses
+it by name, and the decoder's depth limit is a refusal with its own sentence);
+the redeploy rule named five paths where the image copies seven the host reads
+(`knowledge/event-risk.json`, the corporate-event registry the collector reads
+at import, and `requirements.txt`, which the host's requirements include, were
+missing; the docs test holds the list to the Dockerfile's own `COPY` lines
+now, the seed the one copy no host path reads); the runbook's field table
+omitted four fields; and the comment calling the detail "a fixed phrase of the
+validators" was false of a codec's message, which names a byte value and its
+offset (undecodable bytes get one fixed phrase of the module's own now). Its
+six surviving breaks were five holes and one equivalent-under-test: an
+unprintable stored word, an infinite or boolean clock, the retained tail's
+bound, the events bound (80 for 8 passed; the runbook's "eight" is held to
+`STATUS_EVENTS` now) and the receipt bound in the status summary each have
+their case; and `_drain()` inside `_stop()` -- the result a child writes
+between the tick's drain and the exit the tick then observes -- has a
+deterministic case through a process double whose `poll()` writes the last
+line and reports the exit. Refuted by its own execution and recorded: twelve
+tampered publication fields yield only the validators' phrases, never a
+marker from the body; a 64 KiB flood, an endless JSON stream, a silent child,
+a closed stdout and an early exit each leave the tick under a millisecond
+with no file descriptor leaked; fifty reads under a held writer transaction
+all answer in a millisecond and the writer lands; and the dated incident
+reproduces from the `090dbd9c` tree over the 2 to 6 November records -- 2 and
+3 November PASS, 4 November FAIL and 5 and 6 November PARTIAL, each refused
+by the archived `review_selection` policy that verifier cannot replay, not by
+the digest -- and all five PASS on this tree.
+
+**The second mutation pass**, over the review's fixes in the same worktree:
+seventeen mutants and two controls -- the detail
+back in the sync table, the in-flight clearing dropped, the detail written on
+a stale completion, the codec's message kept, the depth limit killing the sync,
+the run block unchecked, `_epoch()` raising on an out-of-range clock, a
+non-finite clock admitted, an unprintable word admitted, either route raising
+on a deep blob, the receipt bound dropped from the summary, `_stop()` never
+draining, `STATUS_EVENTS` at eighty, the registry dropped from the README's
+rule. Fifteen died at once, each in the test naming its rule. **One survived
+as a hole**: a stale completion -- a poll whose fence a later poll moved on --
+wrote its detail beside the later poll's status, because no test had one poll
+overtake another (the existing `last_status` guard had none either); a sync
+whose transport runs a second sync to completion holds it now, and the mutant
+dies there. **One is equivalent and kept as the statement of intent**: the
+`isfinite` clause of `_epoch()` sits behind a `try` that reads an infinite or
+NaN clock as unknown anyway. Both controls (a comment, the docstring word)
+survive.
+
+**Keep / fix / defer / omit.** Keep: the host says what it did and decides
+nothing; a refusal's sentence is the validator's own fixed phrase, never a body.
+Fix if it bites: the status route reads the whole journal table's newest eight
+rows and the sync table on every request, unbounded in rate beyond the reader's
+own; the sync still makes three unauthenticated GitHub API calls a cycle.
+Defer: a host that accepts a record whose archived rules its verifier does not
+know (a safeguard change, Mo's call); Railway's watch paths (Mo's setting).
+Omit: a redeploy the repository performs; a status route that writes.
+
+**Not claimable:** the host under this code -- Mo deploys it from `main`, and
+`/status.json` on the service's domain is the first reading, which should show
+`sync.last_status` `ingested` for the newest publication and a receipt that
+`serves_current_publication`; the morning check on a night with admitted plans
+inside the window; any trading edge.

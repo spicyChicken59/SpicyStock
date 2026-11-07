@@ -95,7 +95,9 @@ def _publication(raw, *, allow_fixture=False):
     _require(isinstance(raw, bytes) and len(raw) <= MAX_PUBLICATION_BYTES, "publication bytes exceed bound")
     data = _json(raw)
     _require(isinstance(data, dict), "publication must be an object")
-    _require(allow_fixture or (not data.get("fixture") and data.get("run", {}).get("dry_run") is False),
+    run = data.get("run")
+    _require(isinstance(run, dict), "publication run block is not an object")
+    _require(allow_fixture or (not data.get("fixture") and run.get("dry_run") is False),
              "production observations require a real publication")
     result = provenance.verify(data, require_sources=False)
     _require(result["status"] == "PASS", "publication integrity is not verified")

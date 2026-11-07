@@ -13,6 +13,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 import hashlib
 import json
+import math
 from pathlib import Path
 import sqlite3
 from wsgiref.simple_server import make_server, WSGIRequestHandler
@@ -22,6 +23,9 @@ from src import morning, morning_service_journal as journal
 from tools.publish_morning import publication_check
 
 VERSION = 1
+STATUS_VERSION = 1
+STATUS_EVENTS = 8
+MAX_STATUS_BYTES = 64 * 1024
 MAX_DAILY_RESERVATIONS = 120
 MIN_INTERVAL_SECONDS = 30
 MAX_LEASE_SECONDS = morning.POLICY['max_collection_seconds']
@@ -318,6 +322,121 @@ def collect_once(store, collector, *, clock):
         store.release(claim, now=clock(), outcome=outcome if outcome != 'committed' else 'released_unknown')
 
 
+STATUS_EVENT_FIELDS = ('outcome', 'feed', 'attempt', 'status_code', 'git_commit',
+                       'measured_session', 'published_at', 'admitted_count')
+STATUS_RECEIPT_FIELDS = ('generated_at', 'status', 'reason', 'entry_phase', 'observation_run_id')
+
+
+def _epoch(value):
+    """A stored POSIX timestamp as an offset-aware ISO instant; None when unset."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        return None
+    try:
+        return datetime.fromtimestamp(value, timezone.utc).isoformat()
+    except (OverflowError, OSError, ValueError):
+        return None
+
+
+def _word(value, limit=120):
+    """A stored status or detail: printable ASCII, bounded; anything else is None."""
+    if not isinstance(value, str) or not value or len(value) > limit or not all(' ' <= c <= '~' for c in value):
+        return None
+    return value
+
+
+def _status_sync(db):
+    if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='morning_source_sync'").fetchone():
+        return None
+    row = db.execute('SELECT * FROM morning_source_sync WHERE id=1').fetchone()
+    if row is None:
+        return None
+    detail = None
+    if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='morning_source_sync_detail'").fetchone():
+        held = db.execute('SELECT detail FROM morning_source_sync_detail WHERE id=1').fetchone()
+        detail = _word(held['detail']) if held is not None else None
+    commit = row['commit_sha']
+    return {
+        'last_started': _epoch(row['last_started']),
+        'last_status': _word(row['last_status']),
+        'last_detail': detail,
+        'request_count': row['request_count'] if type(row['request_count']) is int else None,
+        'commit_sha': commit if journal._hex(commit, 40) else None,
+        'next_allowed': _epoch(row['next_allowed']),
+    }
+
+
+def _status_journal(db):
+    if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='morning_journal_events'").fetchone():
+        return None, []
+    events = []
+    for row in db.execute('SELECT recorded_at, kind, generation, applicable_session, payload FROM morning_journal_events ORDER BY id DESC LIMIT ?', (STATUS_EVENTS,)):
+        payload = json.loads(row['payload'])
+        event = {'recorded_at': row['recorded_at'], 'kind': row['kind'], 'generation': row['generation'],
+                 'applicable_session': row['applicable_session']}
+        event.update({key: payload[key] for key in STATUS_EVENT_FIELDS if key in payload})
+        events.append(event)
+    latest = db.execute("SELECT recorded_at, applicable_session, payload FROM morning_journal_events WHERE kind='source_ingested' ORDER BY id DESC LIMIT 1").fetchone()
+    publication = None
+    if latest is not None:
+        payload = json.loads(latest['payload'])
+        publication = {'ingested_at': latest['recorded_at'], 'applicable_session': latest['applicable_session'],
+                       'measured_session': payload.get('measured_session'), 'published_at': payload.get('published_at'),
+                       'git_commit': payload.get('git_commit'), 'admitted_count': payload.get('admitted_count')}
+    return publication, events
+
+
+def status_document(database, *, clock=None):
+    """Operator-readable service state: identities, clocks and outcomes, never bytes.
+
+    Read-only, bounded and credential-free: the sync table's last outcome and
+    its detail, the publication the journal last ingested, a summary of the
+    served receipt, and the newest journal events with allowlisted fields. No
+    receipt or publication bytes, no provider request or response content.
+    """
+    path = Path(database).absolute()
+    if path.is_symlink():
+        raise ValueError('database path changed')
+    db = sqlite3.connect(path.as_uri() + '?mode=ro', uri=True, timeout=1)
+    db.row_factory = sqlite3.Row
+    try:
+        db.execute('BEGIN')
+        state = db.execute('SELECT version, mode, generation, fence, lease_until, clock, last_reserved, quota_day, quota_used, publication_sha, receipt_sha, receipt, length(publication) AS publication_bytes FROM state WHERE id=1').fetchone()
+        if state is None or state['version'] != VERSION:
+            raise ValueError('service state unavailable')
+        sync = _status_sync(db)
+        publication, events = _status_journal(db)
+    finally:
+        db.close()
+    receipt = None
+    if state['receipt_sha'] is not None:
+        receipt = {'sha256': state['receipt_sha'], 'bytes': len(state['receipt']) if isinstance(state['receipt'], bytes) else None}
+        raw = state['receipt']
+        if isinstance(raw, bytes) and 0 < len(raw) <= morning.MAX_OBSERVATION_BYTES and _sha(raw) == state['receipt_sha']:
+            value = json.loads(raw)
+            if isinstance(value, dict):
+                receipt.update({key: value.get(key) for key in STATUS_RECEIPT_FIELDS})
+                bound = value.get('publication') if isinstance(value.get('publication'), dict) else {}
+                receipt['publication'] = {key: bound.get(key) for key in ('data_sha256', 'run_id', 'measured_session', 'applicable_session')}
+                receipt['serves_current_publication'] = bound.get('data_sha256') == state['publication_sha']
+    now = (clock or (lambda: datetime.now(timezone.utc)))()
+    return {
+        'schema_version': STATUS_VERSION,
+        'read_at': _instant(now).isoformat(),
+        'service': {'mode': state['mode'], 'generation': state['generation'], 'fence': state['fence'],
+                    'clock': _epoch(state['clock']), 'lease_until': _epoch(state['lease_until']),
+                    'last_reserved': _epoch(state['last_reserved']), 'quota_day': state['quota_day'],
+                    'quota_used': state['quota_used'], 'publication_sha256': state['publication_sha'],
+                    'publication_bytes': state['publication_bytes']},
+        'sync': sync,
+        'publication': publication,
+        'receipt': receipt,
+        'events': events,
+    }
+
+
+ROUTES = ('/morning.json', '/status.json')
+
+
 def application(database, *, allowed_origin=None):
     """Create a WSGI read route. GET opens SQLite read-only and performs no writes."""
     path = Path(database).absolute()
@@ -334,11 +453,18 @@ def application(database, *, allowed_origin=None):
         status, value, etag = '503 Service Unavailable', b'{"status":"unavailable"}\n', None
         if environ.get('REQUEST_METHOD') != 'GET':
             status, value = '405 Method Not Allowed', b'{"status":"method_not_allowed"}\n'
-        elif environ.get('PATH_INFO') != '/morning.json':
+        elif environ.get('PATH_INFO') not in ROUTES:
             status, value = '404 Not Found', b'{"status":"not_found"}\n'
         elif (environ.get('QUERY_STRING') or environ.get('CONTENT_LENGTH', '') not in ('', '0')
               or environ.get('HTTP_TRANSFER_ENCODING')):
             status, value = '400 Bad Request', b'{"status":"parameters_refused"}\n'
+        elif environ.get('PATH_INFO') == '/status.json':
+            try:
+                encoded = json.dumps(status_document(path), allow_nan=False, sort_keys=True, separators=(',', ':')).encode() + b'\n'
+                if len(encoded) <= MAX_STATUS_BYTES:
+                    status, value = '200 OK', encoded
+            except (sqlite3.Error, OSError, ValueError, TypeError, AttributeError, KeyError, OverflowError, RecursionError):
+                pass
         else:
             try:
                 if path.is_symlink():
@@ -352,7 +478,7 @@ def application(database, *, allowed_origin=None):
                     receipt = json.loads(state[2])
                     if _sha(state[2]) == state[3] and receipt.get('publication', {}).get('data_sha256') == state[1]:
                         status, value, etag = '200 OK', state[2], state[3]
-            except (sqlite3.Error, OSError, ValueError, TypeError, AttributeError):
+            except (sqlite3.Error, OSError, ValueError, TypeError, AttributeError, RecursionError):
                 pass
         headers = [('Content-Type', 'application/json; charset=utf-8'), ('Content-Length', str(len(value))),
                    ('Cache-Control', 'no-store'), ('X-Content-Type-Options', 'nosniff'),

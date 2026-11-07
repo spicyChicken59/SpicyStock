@@ -7,7 +7,9 @@ identity and writer timestamp. Exact source and committed receipt bytes are
 deduplicated by digest so a later report can inspect the observations that were
 available at that point.
 
-This journal measures the private worker and its stored receipts. It does not
+The running service's `GET /status.json` summarizes the same journal's newest
+events and the synchronizer's last outcome without a report run; this document
+is the complete, dated reading. This journal measures the private worker and its stored receipts. It does not
 observe the public HTTPS route, browser arrival, Fidelity orders or actual
 trading results. An HTTP 200 from a provider establishes a transport response;
 the receipt's coverage and quote timestamps still determine what was observed.

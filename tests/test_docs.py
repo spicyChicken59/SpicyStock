@@ -22,6 +22,7 @@ def prose(path: Path) -> str:
 
 
 README_RAW = (ROOT / "README.md").read_text()
+NUMBER_WORDS = {8: "eight"}
 README = prose(ROOT / "README.md")
 ENV = prose(ROOT / ".env.example")
 CLAUDE_MD = prose(ROOT / "CLAUDE.md")
@@ -839,3 +840,30 @@ def test_the_documents_and_the_page_hold_the_admission_rule_to_the_module():
     # the module's own numbers in the documents: the 35 retained sessions to 3 November 2026
     for words in ("1,913 of 2,473", "1,757 of them"):
         assert words in README and words in METHOD, words
+
+
+def test_the_readme_and_the_runbook_name_the_hosts_status_route_and_the_redeploy_rule():
+    """The host's `/status.json` and the rule that an image built before a rules
+    change refuses every later publication: both documents say it, in words a
+    reader can act on, naming the five paths a merge must touch to need a
+    redeploy."""
+    from src import morning_service as service
+    assert "/status.json" in service.ROUTES and "/morning.json" in service.ROUTES
+    runbook = prose(ROOT / "docs" / "operations" / "morning-railway.md")
+    # The paths a merge must touch to need a redeploy are the ones the image
+    # copies and the host reads: every COPY source of the Dockerfile but the
+    # seed, which the host never reads, and the Dockerfile itself.
+    copies = [line.split()[1:-1] for line in (ROOT / "Dockerfile").read_text().splitlines() if line.startswith("COPY ")]
+    sources = {source for line in copies for source in line}
+    assert sources == {"requirements.txt", "requirements-host.txt", "src/*.py", "tools/*.py",
+                       "knowledge/event-risk.json", "data/symbols.txt"}, sources
+    documented = ("`src/`", "`tools/sync_morning_service.py`", "`tools/publish_morning.py`",
+                  "`knowledge/event-risk.json`", "`requirements.txt`", "`requirements-host.txt`", "`Dockerfile`")
+    for text in (README, runbook):
+        assert "/status.json`" in text  # a code span naming the route
+        assert "publication integrity is not verified" in text
+        for path in documented:
+            assert path in text, path
+    assert "last_detail" in runbook and "watch paths" in runbook
+    assert f"newest {NUMBER_WORDS[service.STATUS_EVENTS]} journal events" in runbook
+    assert "redeployed after every merge" in README
