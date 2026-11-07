@@ -13916,7 +13916,7 @@ its 4 November receipt for it, and refused everything after. Nothing it exposed
 said so.
 
 **Revision.** Branch `host-status` from `main` at `befb7d2e` (the 6 November
-issuer receipt), pushed as `claude/spicystock-market-data-vfd3o2`, **PR #NNN**.
+issuer receipt), pushed as `claude/spicystock-market-data-vfd3o2`, **PR #213**.
 Three source files move (`src/morning_service.py`, `src/morning_host.py`,
 `tools/sync_morning_service.py`), three test files, the docs and this file; no
 rule moves (`rules_version` stands, no fixture regenerated); `docs/data.json`,
