@@ -646,3 +646,20 @@ def test_receipt_route_never_names_a_publication_from_a_store_it_cannot_read(tmp
         db.execute('UPDATE state SET receipt=NULL, receipt_sha=NULL, publication_sha=?', ('X' * 64,))
     response = request(app)
     assert response['status'] == '503 Service Unavailable' and b'X' not in response['body']
+    # A receipt bound elsewhere beside a held digest that is not one, or none:
+    # nothing to name, so the generic 503 and never a 404 naming null.
+    for publication_sha in ('X' * 64, None):
+        with sqlite3.connect(store.path) as db:
+            db.execute('UPDATE state SET receipt=?, receipt_sha=?, publication_sha=?', (other, hashlib.sha256(other).hexdigest(), publication_sha))
+        response = request(app)
+        assert response['status'] == '503 Service Unavailable' and response['body'] == b'{"status":"unavailable"}\n'
+    # The held digest spelt in upper case is not the digest the page compares.
+    with sqlite3.connect(store.path) as db:
+        db.execute('UPDATE state SET receipt=?, receipt_sha=?, publication_sha=?', (receipt, hashlib.sha256(receipt).hexdigest(), hashlib.sha256(RAW).hexdigest().upper()))
+    response = request(app)
+    assert response['status'] == '503 Service Unavailable' and digest.upper() not in response['body']
+    # A NULL receipt beside a kept receipt_sha is a tampered store, not a check never made.
+    with sqlite3.connect(store.path) as db:
+        db.execute('UPDATE state SET receipt=NULL, receipt_sha=?, publication_sha=?', ('a' * 64, hashlib.sha256(RAW).hexdigest()))
+    response = request(app)
+    assert response['status'] == '503 Service Unavailable' and digest not in response['body']

@@ -14,8 +14,10 @@ started (it runs until the service stops, so it never logs a finish) and the
 300-second sync and the 30-second worker each starting and finishing with exit
 code 0 on a weekend, where the worker skips provider work. Read from outside on
 31 October: `/healthz` 200 with `no-store`; `/morning.json` 503 `unavailable` (no
-receipt yet: a weekend; that case answers 404 `no_receipt` since the route was
-changed to name the publication it holds), `no-store`, `Vary: Origin`, CORS for the site's origin
+receipt yet: a weekend; a store that has ingested a publication and holds no
+check for it answers 404 `no_receipt` since the route was changed to name the
+publication it holds, and whether that store had ingested one by then is not
+retained here), `no-store`, `Vary: Origin`, CORS for the site's origin
 alone; a query string 400, POST and OPTIONS 405 with `Allow: GET`, any other path
 404, and two reads byte-identical. `node tools/morning_endpoint_live.mjs` loads the
 page from this checkout under the site's own origin and lets only the endpoint
@@ -183,8 +185,9 @@ image keeps no proxy certificate.
    verification enabled. Check HTTPS `GET /healthz` independently of
    `GET /morning.json`. A publication ingested and not yet checked, or checked
    only under an earlier publication, answers 404 `no_receipt` naming the digest
-   it holds; only a store the route cannot read answers 503, while `/healthz`
-   returns 200 for both. No receipt timestamp should be rewritten to
+   it holds; a store the route cannot read or serve (nothing ingested, a replay store, a
+   tampered or unbound receipt) answers 503, while `/healthz` returns 200 for
+   both. No receipt timestamp should be rewritten to
    make the service appear fresh. Railway provides generated domains and automatic
    TLS through [public networking](https://docs.railway.com/networking/public-networking).
 3. Verify `/morning.json` preserves `Cache-Control: no-store`, exact receipt bytes

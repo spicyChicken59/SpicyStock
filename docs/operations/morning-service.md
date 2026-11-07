@@ -56,7 +56,8 @@ A first bootstrap can add `--previous /path/to/matching-morning.json`; that rece
 must pass production validation against the ingested publication when it matches;
 a previous-publication receipt may seed independently validated restrictions only,
 using the existing collector continuity validator. Without a matching receipt,
-GET returns 503. A previous-publication receipt already in the
+GET returns 404 `no_receipt` naming the ingested publication (503 only for a
+store the route cannot read or serve). A previous-publication receipt already in the
 database survives later ingestion for continuity.
 
 ```sh

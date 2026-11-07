@@ -14,7 +14,7 @@ const PRIVATE = 'ZZPRIVATE';
 const sha = raw => createHash('sha256').update(raw).digest('hex');
 const python = process.env.SCSTOCK_PYTHON || 'python';
 
-function derive(raw) {
+export function derive(raw) {
   const encoded = execFileSync(python, ['-c', [
     'import base64,json,sys', 'from src.reader import derive',
     'reader,observations=derive(sys.stdin.buffer.read())',

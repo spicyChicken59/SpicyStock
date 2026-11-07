@@ -4,6 +4,7 @@ import { readFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { withEndpoint } from './offline_shell.mjs';
+import { derive } from './reader_cases.mjs';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const ENDPOINT = 'https://receipts.example.invalid/morning.json';
 const NOW = '2026-09-11T13:35:00Z';
@@ -26,7 +27,7 @@ export async function checkMorningServiceReader({ browser, base, open, check, eq
   const setup = async (options = {}) => {
     const endpoint = options.endpoint === undefined ? ENDPOINT : options.endpoint;
     const requests = [], response = { body: options.body !== undefined ? options.body : JSON.stringify(options.receipt || observed), status: options.status || 200, hold: null, headers: {} };
-    const tab = await open(browser, base, '/service-publication.json', options.pinned ? NOW : null, options.width || 1280, {
+    const tab = await open(browser, base, options.projected ? null : '/service-publication.json', options.pinned ? NOW : null, options.width || 1280, {
       theme: options.width === 390 ? 'light' : 'dark', hash: '#/explore/bursts/AAPL', reducedMotion: 'reduce',
       beforeLoad: async (page, context) => {
         await page.clock.install({ time: new Date(options.now || NOW) });
@@ -44,6 +45,12 @@ export async function checkMorningServiceReader({ browser, base, open, check, eq
         });
         await page.route('**/docs/index.html', route => route.fulfill({ contentType: 'text/html', body: withEndpoint(html, endpoint) }));
         await page.route('**/service-publication.json', route => route.fulfill({ contentType: 'application/json', body: options.raw || raw }));
+        if (options.projected) {
+          // The production load: the compact reader and its sidecar, never the canonical record.
+          await page.route('**/reader.json*', route => route.fulfill({ contentType: 'application/json', body: options.projected.readerRaw }));
+          await page.route('**/docs/data.json', route => route.fulfill({ status: 500, body: 'Canonical request forbidden in the projected control.' }));
+          await page.route('**/reader-observations/*.json', route => route.fulfill({ contentType: 'application/json', body: options.projected.sidecarRaw }));
+        }
         await page.route('**/morning.json', async route => {
           requests.push({ url: route.request().url(), method: route.request().method(), body: route.request().postData(), headers: await route.request().allHeaders() });
           const reply = { ...response };
@@ -144,6 +151,7 @@ export async function checkMorningServiceReader({ browser, base, open, check, eq
     ['another publication', noReceipt('f'.repeat(64)), 'other', 'No morning check for this record', 'The morning host holds another publication, not this record, so no check for this record has run'],
     ['unnamed', 'not found', 'missing', 'No morning file published', 'The morning host answered that no file exists, without naming the publication it holds.'],
     ['unnamed JSON', JSON.stringify({ status: 'not_found' }), 'missing', 'No morning file published', 'without naming the publication it holds'],
+    ['another status naming this record', JSON.stringify({ status: 'not_found', publication_sha256: publicationSha }), 'missing', 'No morning file published', 'without naming the publication it holds'],
     ['malformed digest', noReceipt('F'.repeat(64)), 'missing', 'No morning file published', 'without naming the publication it holds']
   ]) {
     const tab = await setup({ status: 404, body });
@@ -161,6 +169,21 @@ export async function checkMorningServiceReader({ browser, base, open, check, eq
       await tab.reload(observed);
       eq('404 ' + name + ': the first receipt of the window replaces the absence', [(await facts(tab.page)).state, (await facts(tab.page)).absent], ['loaded', null]);
     } finally { await tab.context.close(); }
+  }
+  // The production load is the compact reader: recordHash is the reader's
+  // digest and the host names the canonical one, so the comparison is against
+  // the canonical digest, and a 404 naming the reader's is another publication.
+  {
+    const projected = derive(raw);
+    const readerSha = createHash('sha256').update(projected.readerRaw).digest('hex');
+    for (const [name, named, absent] of [['canonical', publicationSha, 'none'], ['reader', readerSha, 'other']]) {
+      const tab = await setup({ status: 404, body: noReceipt(named), projected });
+      try {
+        const f = await facts(tab.page);
+        eq('projected 404 naming the ' + name + ' digest: the page loaded the compact reader', [f.projected, f.canonicalHash === publicationSha, f.recordHash === readerSha, readerSha !== publicationSha], [true, true, true, true]);
+        eq('projected 404 naming the ' + name + ' digest: compared against the canonical digest', [f.state, f.absent], ['unavailable', absent]);
+      } finally { await tab.context.close(); }
+    }
   }
   const retained = await setup({ receipt: halted });
   try {

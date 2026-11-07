@@ -489,8 +489,10 @@ def application(database, *, allowed_origin=None):
                     db.close()
                 if state and state[0] == VERSION and state[4] == 'prepared':
                     held = state[1] if isinstance(state[1], str) and _SHA256.fullmatch(state[1]) else None
-                    if state[2] is None:
+                    if state[2] is None and state[3] is None:
                         # Ingested and never checked: name the publication held.
+                        # A NULL receipt beside a kept receipt_sha is a tampered
+                        # store, read as every other mismatch: not served, not named.
                         if held:
                             status, value = '404 Not Found', _no_receipt(held)
                     elif isinstance(state[2], bytes) and 0 < len(state[2]) <= morning.MAX_OBSERVATION_BYTES:

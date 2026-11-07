@@ -1514,8 +1514,9 @@ naming that publication, when it has ingested one and holds no verified check
 for it (every evening from ingestion until the window's first cycle, and after a
 same-session revision), which the page reads as *No morning check yet for this
 record* when the digest is the loaded record's and as the host holding another
-publication when it is not; and 503 only for a store the route cannot read,
-which the page says could not be read. A 404 naming no publication (the static
+publication when it is not; and 503 for a store it cannot read or serve
+(nothing ingested, a replay store, a tampered or unbound receipt), which the
+page says could not be read. A 404 naming no publication (the static
 file absent) reads as no file published. Each is the absence of a check, known
 and said, never a quote or a clearance. Browser preferences, local reports, notes and ticker
 selections never configure the destination or enter its request. The configured

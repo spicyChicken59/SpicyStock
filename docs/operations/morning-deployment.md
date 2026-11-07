@@ -108,8 +108,8 @@ remains unavailable; do not silently redirect it to an older static receipt.
    provider bindings. Outside the collection window, an explained skip is
    expected. Do not change the clock or production gates to obtain a receipt.
 3. Start the separate WSGI process and validate the TLS GET route. An older-bound
-   bootstrap receipt correctly returns 503 until a receipt for the ingested
-   publication exists. A served receipt must retain its original timestamps
+   bootstrap receipt answers 404 `no_receipt`, naming the ingested publication,
+   until a receipt for it exists; 503 is a store the route cannot read or serve. A served receipt must retain its original timestamps
    and exact publication identity. Confirm extra GET traffic causes no worker
    invocation or provider request.
 4. Install the chosen scheduler's equivalent of the cadence above. Confirm

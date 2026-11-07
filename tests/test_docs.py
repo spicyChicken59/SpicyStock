@@ -872,9 +872,17 @@ def test_docs_name_the_hosts_no_receipt_answer_in_the_routes_own_word():
     from src import morning_service as service
     assert service.NO_RECEIPT == "no_receipt"
     runbook = prose(ROOT / "docs" / "operations" / "morning-railway.md")
-    for text in (README, runbook):
+    deployment = prose(ROOT / "docs" / "operations" / "morning-deployment.md")
+    overview = prose(ROOT / "docs" / "operations" / "morning-service.md")
+    for text in (README, runbook, deployment, overview):
         assert "`no_receipt`" in text or '"no_receipt"' in text
-        assert "503" in text  # a store the route cannot read stays the generic 503
+        assert "503" in text
+    # The 503 clause, in the sentence that states it, not a 503 elsewhere in the file.
+    assert "503 for a store it cannot read or serve" in README
+    assert "cannot read or serve (nothing ingested, a replay store, a tampered or unbound receipt) answers 503" in runbook
+    assert "503 is a store the route cannot read or serve" in deployment
+    assert "503 only for a store the route cannot read or serve" in overview
+    assert "returns 503" not in deployment and "returns 503" not in overview
     page = (ROOT / "docs" / "app-observations.js").read_text()
     assert "body.status === 'no_receipt'" in page
     assert "No morning check yet for this record" in page and "No morning check yet for this record" in README
