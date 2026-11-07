@@ -14069,3 +14069,153 @@ Omit: a redeploy the repository performs; a status route that writes.
 `sync.last_status` `ingested` for the newest publication and a receipt that
 `serves_current_publication`; the morning check on a night with admitted plans
 inside the window; any trading edge.
+
+## Checkpoint, 7 Nov 2026 -- PR #213 accepted; the host names the publication it holds and no check for (#108, #111)
+
+**PR #213, accepted.** Merged as `9ea79f20` on `main` with a merge commit over
+`befb7d2e`, its tree the head `dc088600e`'s byte for byte. The code head
+`b3f2b16e` passed all seven checks on Tests run 42345249902 (pytest 06:02–06:27
+UTC, page 06:02–06:20, the gate, the native central case 06:03–06:21 and stress
+06:03–06:43; Secret scans 42345249906 and 42345210751); the docs head
+`dc088600e` (CLAUDE.md alone over it) passed pytest, page, the gate's docs-only
+decision and both gitleaks runs on run 42345291427. The diff touched two
+documents under `docs/operations/`, so the publisher fired: 42348324539 printed
+*Verified: every one of the 48 public files matches committed main* at 06:45:02
+UTC; Pages 42348351147 deployed at 06:46 (42348324146 cancelled as superseded,
+as every merge does); the merge commit's own Secret scan 42348324515 and Tests
+run 42348324484 (pytest 06:44–07:07, page 06:44–07:03; the native cases skipped
+by the gate, as a merge's are) passed. The Saturday `16 1` evening cron (run
+42350454215, the winter retry slot, created 07:14 UTC, 358 minutes late) found
+6 November already published and skipped every step, which started the issuer
+run and two publishers that verified the same 48 files again. The
+`skillful-light` Railway project failed its deployment of `9ea79f20` at
+06:45:30 UTC, as it fails every push to `main` until Mo deletes it.
+
+**The host, read from outside before Mo's redeploy** (06:46 and 07:34 UTC):
+`/healthz` alive; `/status.json` 404 (the 31 October image has no such route);
+`/morning.json` 200 with the receipt generated 14:59 UTC on 4 November
+(`service-3-271`), bound to the 3 November publication, which that image has
+served since: the dated incident #213 was built for, still in force. **Not
+claimable until Mo redeploys from `main`:** `/status.json` answering with
+`sync.last_status` `ingested` for the newest publication and a receipt that
+`serves_current_publication`.
+
+**Revision.** Branch `host-no-receipt` from `main` at `9ea79f20`, pushed as
+`claude/spicystock-market-data-vfd3o2`, **PR #214**. `src/morning_service.py`
+(the receipt route), `docs/app-observations.js`, five test files, the two
+browser suites that read the route's answers, README, three operations
+documents and this file move. No rule moves (`rules_version` stands, no fixture
+regenerated); `docs/data.json`, `docs/picks.json`, the compact reader, every
+receipt, the history, the evidence objects, the quality ledger, the workflows
+and the vendored design system are untouched; no run, mail, dispatch, provider
+call or credential. `.env.example` was read: the route's answers are not
+configuration.
+
+**What the host said before** (the 31 October checkpoint's lead, reproduced
+through the real `Store`): the receipt route answered 503 `unavailable` both
+for a store it could not read and for a publication it had ingested and simply
+held no verified check for yet (every evening from ingestion until the
+window's first cycle, and after a same-session revision), and the desk said
+*The published morning file could not be read* for both, so every ordinary
+evening read as an outage.
+
+**The rule.** `/morning.json` answers 200 with the receipt bound to the held
+publication, as before; **404 `{"publication_sha256":…,"status":"no_receipt"}`**
+naming the held publication when one is ingested and no verified receipt
+binds to it (`NO_RECEIPT`, `_no_receipt()`; a verified receipt for another
+publication is such a case and its bytes stay unserved); and 503 for a store
+it cannot read or serve: nothing ingested, a replay store, a tampered receipt
+(its stored hash no longer matches, or a NULL receipt beside a kept hash),
+one bound to no 64-hex digest or not an object, a held digest that is not one.
+No ETag on the 404; CORS, `Vary: Origin` and `no-store` as on every answer;
+`/status.json` unchanged. The page (`noReceipt()`) reads a 404's body,
+bounded, before refusing it: a `no_receipt` naming the loaded record's
+canonical digest (`readerBinding.canonicalSha` on the compact reader, which
+is how production loads) reads *No morning check yet for this record*; naming
+another publication, *No morning check for this record* with the host holding
+another publication; a 404 naming nothing, or carrying a digest under another
+status, *No morning file published* (the static file absent says *No morning
+file is published beside this record*). `absent` carries the kind (`none`,
+`other`, `missing`) and `facts()` exposes it; the state stays `unavailable`
+for every consumer, polling continues inside the window, a retained receipt
+and its halt are never erased, and the first receipt of the window replaces
+the absence. The handoff offer is unchanged: none under a service endpoint,
+and under the static file a 404 read and shown absent still offers the
+hand-started run.
+
+**Measured** (this sandbox, Python 3.12.3, Node 22, Chromium through
+Playwright 1.63): the five Python files the route reaches 248 passed under
+`-W error::pytest.PytestWarning` (`test_morning_service` with two new route
+tests and four moved assertions, `test_morning_host` with the wsgi 404 and
+CORS, `test_docs` holding README, the runbook, the deployment and service
+documents and the page to the module's own word with each 503 clause anchored
+to its own sentence, and the two files CI found pinning the old 503,
+`test_morning_service_journal` and `test_sync_morning_service`); the
+`morning-service-reader` and `observations` suites 397/397 with `--shots`
+(six 404 cases, a no-receipt case beside the retained-receipt loop, two cases
+through the compact reader where a 404 naming the canonical digest reads
+`none` and one naming the reader's reads `other`, the static 404's own words,
+and the phone's desk photographed over the evening's answer and looked at);
+the full suite on the final tree (the two `zstandard`-gated files this venv cannot run deselected) 5785 passed and 13 environment-gated skips in 21 m 28 s, 5961 collected; `git diff --check` clean over the
+branch; gitleaks 8.24.3 over the changed files and the branch's commits: no
+leaks.
+
+**Mutation passes**, each Python mutant in a detached worktree carrying the
+diff and judged by the whole of `test_morning_service`, `test_morning_host`
+and `test_docs`, each page mutant through a routed copy of
+`app-observations.js` judged by the two suites. Eleven Python mutants over the
+route (the held digest unchecked, a NULL receipt or another publication's
+receipt kept at 503, that receipt served, the hash check dropped, the bound
+digest unchecked, an ETag on the 404, the status word respelt, the mode check
+dropped, an empty store named) and nine page mutants (the 404 unread, every
+digest read as this record, the digest's spelling unchecked, the headlines
+dropped, the absence kept on a verified load, polling stopped after a 404,
+the retained receipt erased, another publication read as this one, the static
+words put back): all die in the test naming their rule; one Python mutant,
+the body's keys unsorted, is equivalent (its two keys are already in sorted
+order) and recorded. **Two findings of the harness itself:** a page mutant of
+mine that bumped the epoch in the catch was a no-op for the rule it named,
+replaced by one that stops the scheduler on an absence, which dies; and the
+two privilege-dropping host tests fail in any worktree under this sandbox's
+root-only scratchpad (a uid-10001 child cannot traverse it) while passing in
+the checkout, so the harness deselects them and the controls survive. After
+the review, seven more (a NULL receipt beside a kept hash named, the
+other-publication branch without the held check, the digest regex made
+case-insensitive, the runbook's and README's 503 clause reworded, the page
+comparing the reader's own hash, the body's status word unchecked): all die
+in the test naming their rule; both controls survive.
+
+**The review, worked.** One reviewer by execution over `d254edfce`, in its own
+worktrees, 48 tool calls, every finding reproduced with its command: seven
+findings, each reproduced here before it was touched and each fixed. The two
+mediums: `docs/operations/morning-deployment.md` and `morning-service.md`
+still stated the old 503 rule (the docs sweep had stopped at README and the
+runbook); and the compact-reader path, which is how production loads, was
+held by no suite, so a page comparing `recordHash` instead of the canonical
+digest survived (the suite loads the compact reader now through the reader
+suite's own `derive()`, exported). The lows: a NULL receipt beside a kept
+`receipt_sha` was named as a check never made where it is a tampered store;
+the other-publication branch without the held check, and a case-insensitive
+digest regex, each survived (the cannot-read test holds a receipt bound
+elsewhere beside a held digest that is not one or is NULL, and the held
+digest in upper case); the docs test's `"503" in text` could not fail for its
+own sentence (anchored now); and the words said 503 was "only for a store the
+route cannot read" when an empty store and a replay store are readable and
+answer 503 too (they say "cannot read or serve" and list the cases). Its
+probes over 23 store states and the page's bounded 404 reads found nothing
+else. CI then found what the reviewer's and my focused runs had not: two
+tests outside the three files pinned the old 503 (fixed in `4b5b8c223`).
+Recorded, not fixed: `/status.json` and `/morning.json` disagree on a replay
+store or a garbage `mode` (status 200 with `serves_current_publication`
+true, the route 503), pre-existing.
+
+**Keep / fix / defer / omit.** Keep: a 404 names what the host holds and
+nothing else; every unreadable shape stays the generic 503. Fix if it bites:
+the page's words for the host holding another publication cannot say whether
+it is behind or ahead. Defer: the status route's `serves_current_publication`
+on a replay store. Omit: a page that falls back from the host to the static
+file.
+
+**Not claimable:** the route on the deployed host (Mo redeploys from `main`,
+after #213 and this); a morning check with admitted plans inside the window;
+any trading edge.
