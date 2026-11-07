@@ -548,6 +548,10 @@ def test_the_ledger_verdicts_follow_from_their_sources(committed, built):
     assert "promoted" in ledger["account_or_risk_increase"]["status"] and "promoted" in ledger["dollar_only_admission"]["status"]
     assert {s["scope"] for s in ledger["dollar_only_admission"]["sources"]} == {"direct", "removed"}
     assert all(s["scope"] != "removed" for c in committed["ledger"] if c["id"] != "dollar_only_admission" for s in c["sources"])
+    # the population the rule stops is removed, every time, and never a direct source
+    for change in committed["ledger"] + built["ledger"]:
+        for s in change["sources"]:
+            assert (s["scope"] == "removed") == ("route stopped" in s["population"]), (change["id"], s["population"])
     assert not any(c["verdict"] == "supported" for c in committed["ledger"])
     assert all(c["verdict"] == "insufficient" for c in committed["ledger"] if c["id"] != "trade_red_nights")
 
@@ -583,6 +587,19 @@ def test_the_ledger_populations_are_the_studys_rows(committed, study, spec, join
     }
     big_nights = sorted({r["session"] for r in adm if accounts[r["publication"]] == 30000})
     expected[f"admitted · publications sized at $30,000 ({', '.join(big_nights)})"] = [r for r in adm if accounts[r["publication"]] == 30000]
+    # the YELLOW A note names the night with the lowest mean R among them, its settled count, and the rest's reading
+    yellow_a = [r for r in yellow if r["grade_mechanical"] == "A"]
+    means = so._night_means(yellow_a)
+    worst = min(means, key=lambda s: (means[s], s))
+    others = [r for r in yellow_a if r["session"] != worst]
+    boot = er.night_bootstrap(others, spec)
+    note = next(c for c in committed["ledger"] if c["id"] == "yellow_admits_a")["notes"][0]
+    assert note.startswith(f"the YELLOW A tickets are {len(means)} nights' and the worst night, {worst}, holds "
+                           f"{sum(1 for r in yellow_a if r['session'] == worst and r['bucket'] == 'settled')} of their "
+                           f"{er.settled_block(yellow_a)['n']} settled (mean {means[worst]:+.3f}R a ticket that night); without it the other "
+                           f"{len({r['session'] for r in others if r['bucket'] == 'settled'})} nights' {er.settled_block(others)['n']} settled read "
+                           f"{er.settled_block(others)['mean_r']:+.3f}R a ticket, interval [{boot['ci95'][0]:+.3f}, {boot['ci95'][1]:+.3f}]: "
+                           f"{er.sign_of(er.settled_block(others), boot)}"), note
     seen = set()
     for change in committed["ledger"]:
         for s in change["sources"]:
@@ -715,30 +732,102 @@ def test_no_field_name_reads_as_a_credential(committed, monkeypatch, capsys):
     assert "credential" in capsys.readouterr().out
 
 
+def _phrase(pop: dict) -> str:
+    s, ci = pop["settled"], pop["night_bootstrap"]["ci95"]
+    return f"{s['n']} settled at {s['mean_r']:+.3f}R, interval [{ci[0]:+.3f}, {ci[1]:+.3f}]"
+
+
 def test_the_report_quotes_the_review(committed):
-    """The dated report's headline numbers are the review's own."""
-    text = REPORT.read_text(encoding="utf-8")
+    """The dated report's numbers are the review's own, each anchored to the
+    phrase it sits in, so a figure that also appears elsewhere cannot cover
+    for a drifted one."""
+    text = " ".join(REPORT.read_text(encoding="utf-8").split())   # the report wraps its lines; a phrase may cross one
     p = committed["periods"]
-    for pop in (p["by_phase"]["exploratory"], p["by_phase"]["confirmatory"], p["by_regime"]["confirmatory red"],
-                p["by_regime"]["confirmatory yellow"], p["by_mechanical_grade"]["confirmatory A"],
-                p["by_route"]["all nights route-admitted"], p["by_route"]["all nights route-stopped"]):
-        assert f"{pop['settled']['n']} settled" in text, pop["label"]
-        assert f"{pop['settled']['mean_r']:+.3f}R" in text, pop["label"]
-        ci = pop["night_bootstrap"]["ci95"]
-        assert f"[{ci[0]:+.3f}, {ci[1]:+.3f}]" in text, pop["label"]
-    drawdown = committed["study"]["drawdown"]["admitted"]
-    assert f"{drawdown['max_drawdown_r']:.2f}R" in text
+    e, c = p["by_phase"]["exploratory"], p["by_phase"]["confirmatory"]
+    es, cs = e["settled"], c["settled"]
+    eci, cci = e["night_bootstrap"]["ci95"], c["night_bootstrap"]["ci95"]
+    assert (f"{es['n']} settled, {es['wins']} wins, {es['losses']} losses, {es['breakeven']} even; mean {es['mean_r']:+.3f}R, "
+            f"median {es['median_r']:+.2f}R; the mean of night means {e['night_bootstrap']['mean_of_night_means']:+.3f}R with a 95% "
+            f"night-bootstrap interval of [{eci[0]:+.3f}, {eci[1]:+.3f}]") in text
+    assert (f"{cs['n']} settled over {c['settled_nights']} nights with settled tickets: mean {cs['mean_r']:+.3f}R, the mean of night "
+            f"means {c['night_bootstrap']['mean_of_night_means']:+.3f}R, interval [{cci[0]:+.3f}, {cci[1]:+.3f}]") in text
+    red, yellow = p["by_regime"]["confirmatory red"], p["by_regime"]["confirmatory yellow"]
+    assert f"its {red['nights']} RED nights are {_phrase(red)}" in text
+    assert f"its {yellow['nights']} YELLOW nights {_phrase(yellow)}" in text
+    a, a_plus = p["by_mechanical_grade"]["confirmatory A"], p["by_mechanical_grade"]["confirmatory A+"]
+    assert f"The confirmatory mechanical A are {_phrase(a)}" in text
+    assert f"the confirmatory mechanical A+ {_phrase(a_plus)} over {a_plus['settled_nights']} nights, {a_plus['sign']}" in text
+    for month, words in (("2026-09", "September"), ("2026-10", "October"), ("2026-11", "November")):
+        m = p["by_month"][month]
+        if words == "October":
+            assert f"October ({m['nights']} nights, {m['settled']['n']} settled, {m['settled']['mean_r']:+.3f}R)" in text
+        elif words == "November":
+            assert f"November's three settled nights ({m['settled']['n']} settled, {m['settled']['wins']} wins)" in text and m["settled_nights"] == 3
+        else:
+            assert f"September ({m['nights']} nights) is {m['sign']}" in text
+    d = committed["study"]["drawdown"]["admitted"]
+    assert (f"{d['settled']} settled tickets ends at {d['final_r']:+.2f}R with a deepest fall of {d['max_drawdown_r']:.2f}R" in text
+            and f"falls {d['night_means']['max_drawdown_r']:.2f}R over {d['night_means']['nights']} nights" in text)
+    note = next(ch for ch in committed["ledger"] if ch["id"] == "yellow_admits_a")["notes"][0]
+    held, rest = re.search(r"holds (\d+) of their (\d+) settled \(mean ([-+]\d\.\d{3})R", note).groups(), re.search(
+        r"other (\d+) nights' (\d+) settled read ([-+]\d\.\d{3})R a ticket, interval (\[[^\]]+\])", note).groups()
+    assert f"{held[0]} of the YELLOW A tickets' {held[1]} settled at {held[2]}R a ticket" in text
+    assert f"the other {['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][int(rest[0])]} YELLOW nights' {rest[1]} settled read {rest[2]}R a ticket, interval {rest[3]}" in text
+    bases = committed["study"]["admission_bases"]
+    assert (f"study's {committed['study']['rows']} rows, {bases['burst_route']} came through the 4% route, {bases['dollar_expansion']} through a "
+            f"dollar day with both expansion checks, and {bases['dollar_no_expansion']} through the dollar scan alone") in text
+    kept, stopped = p["by_route"]["all nights route-admitted"], p["by_route"]["all nights route-stopped"]
+    assert (f"kept population is {kept['settled']['n']} settled at {kept['settled']['mean_r']:+.3f}R a ticket, mean of night means "
+            f"{kept['night_bootstrap']['mean_of_night_means']:+.3f}R, interval [{kept['night_bootstrap']['ci95'][0]:+.3f}, "
+            f"{kept['night_bootstrap']['ci95'][1]:+.3f}]; the stopped population {_phrase(stopped)}") in text
+    for regime in ("yellow", "red"):
+        k, s = p["by_route"][f"{regime} nights route-admitted"], p["by_route"][f"{regime} nights route-stopped"]
+        assert f"on {regime.upper()} nights {k['settled']['n']}{' settled' if regime == 'yellow' else ''} at {k['settled']['mean_r']:+.3f}R against {s['settled']['n']} at {s['settled']['mean_r']:+.3f}R" in text
     for change in committed["ledger"]:
         assert re.search(rf"\*\*{change['verdict']}\*\*", text), change["id"]
     live = committed["live_scorecard"]
-    assert f"{live['settled']} settled" in text and f"{live['sum_r']:+.2f}R" in text and f"{live['plans']} model plans" in text
-    research = committed["research"]["journal"]
-    assert f"{research['rows']} rows" in text and f"{research['eligible']} eligible" in text and f"{research['by_status']['resolved']} resolved" in text
-    funnel = committed["funnel"]
-    assert f"{funnel['reaction']['route']} at the discovery route" in text and f"{funnel['reaction']['ticket']} tickets" in text
+    assert (f"{live['plans']} model plans over its window, {live['settled']} settled ({live['wins']} wins, {live['losses']} losses, "
+            f"{live['sum_r']:+.2f}R in sum), {live['not_filled']} not filled, {live['uncertain']} uncertain") in text
+    j = committed["research"]["journal"]
+    assert (f"{j['rows']} rows over {j['cohorts']} cohorts, {j['eligible']} eligible, {j['by_status']['not_filled']} not filled, "
+            f"{j['by_status']['uncertain']} uncertain, {j['by_status']['resolved']} resolved") in text
+    f = committed["funnel"]
+    assert (f"{f['discovered']} reaction candidates over {f['publications']} publications, {f['reaction']['market']} stopped at the market, "
+            f"{f['reaction']['grade']} at the YELLOW band's A+ gate, {f['reaction']['route']} at the discovery route") in text
+    assert (f"{f['reaction']['preview_sizing']} at the preview's sizing, {f['potentially_usable']} potentially usable, "
+            f"{f['reaction']['review_refused']} refused by reader authority, {f['reaction']['review_downgraded']} lowered, "
+            f"{f['reaction']['ticket']} tickets; {f['listed']} anticipation setups listed, {f['anticipation']['ticket']} tickets") in text
     big = committed["feasibility"]["account_30000"]["bands"]["yellow"]
     small = committed["feasibility"]["archived"]["bands"]["yellow"]
-    assert f"{big['whole_share']} of {big['in_band']}" in text and f"{small['whole_share']} of {small['in_band']}" in text
-    bases = committed["study"]["admission_bases"]
-    assert f"{bases['dollar_no_expansion']}" in text and f"{bases['burst_route']}" in text
+    assert f"{small['whole_share']} of {small['in_band']} in-band names size to a whole share at the archived accounts and {big['whole_share']} of {big['in_band']} at $30,000" in text
+    ledger = {ch["id"]: ch for ch in committed["ledger"]}
+    direct = lambda ident, i: ledger[ident]["sources"][i]   # noqa: E731
+    assert f"({direct('yellow_admits_a', 0)['settled']} settled YELLOW A, {direct('yellow_admits_a', 1)['settled']} under the admission rule)" in text
+    assert f"negative sign ({direct('trade_red_nights', 0)['settled']} settled); the confirmatory RED nights ({direct('trade_red_nights', 1)['settled']}) and the two phases pooled ({direct('trade_red_nights', 2)['settled']})" in text
+    assert f"{j['by_status']['resolved']} resolved rows of {j['rows']}" in text
+    assert f"the rows the change would admit are {direct('ticket_without_accepted_review', 0)['settled']} settled, a count" in text
+    bt = committed["backtest"]["gates"]["production"]
+    assert f"production policy ({bt['settled']} settled, {bt['mean_r']:+.3f}R) has no interval" in text
+    assert f"one night carries every settled $30,000 ticket ({direct('account_or_risk_increase', 0)['settled']})" in text
+    k0, s0 = direct("dollar_only_admission", 0), direct("dollar_only_admission", 3)
+    assert f"({k0['mean_r']:+.3f}R over {k0['settled']} against {s0['mean_r']:+.3f}R over {s0['settled']})" in text
     assert "2026-11-07-evidence-review-evidence/review.md" in text and er.ORIGIN_COMMIT in text
+
+
+def test_the_index_entry_quotes_the_review(committed):
+    """The input-truthfulness index names the review once, with its own figures."""
+    index = ROOT / "docs/input-truthfulness/README.md"
+    paragraphs = [" ".join(p.split()) for p in index.read_text(encoding="utf-8").split("\n\n")]
+    entries = [p for p in paragraphs if "(2026-11-07-evidence-review.md)" in p]
+    assert len(entries) == 1
+    entry = entries[0]
+    nights = committed["study"]["nights_by_regime"]
+    assert f"the 7 November study ({committed['study']['publications']} publications, {nights['red']} RED nights and {nights['yellow']} YELLOW)" in entry
+    red = {s["population"]: s for s in next(c for c in committed["ledger"] if c["id"] == "trade_red_nights")["sources"]}
+    assert f"negative sign at {red['admitted · exploratory · every night RED']['settled']} settled" in entry
+    assert f"the confirmatory RED nights, {red['admitted · confirmatory · RED nights']['settled']}, straddle zero" in entry
+    j = committed["research"]["journal"]
+    assert f"{j['by_status']['resolved']} resolved rows of {j['rows']}" in entry
+    assert "No change earns supported" in entry
+    superseded = [p for p in paragraphs if p.startswith("[12 October 2026: the evidence review")]
+    assert len(superseded) == 1 and "Superseded by the 7 November review above" in superseded[0]
