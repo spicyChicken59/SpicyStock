@@ -264,7 +264,8 @@ export async function checkObservations({ browser, base, open, check, eq, shotsD
     page.on('request', request => seen.push(request.url()));
     try {
       await page.locator('#morning-open').click();
-      eq(label + ': a 404 morning file reads as unavailable and absent', (await facts(page)).state, 'unavailable');
+      eq(label + ': a 404 morning file reads as unavailable and absent', [(await facts(page)).state, (await facts(page)).absent, (await facts(page)).headline], ['unavailable', 'missing', 'No morning file published']);
+      check(label + ': the file status says no file is published, not that one could not be read', /No morning file is published beside this record\./.test(await page.locator('[data-observations="summary"]').textContent()) && !/could not be read/.test(await page.locator('[data-observations="summary"]').textContent()));
       eq(label + ': at 7:30 CT the check is offered for later, with no link', [await offered(page), await workflowLink(page).count()], ['before', 0]);
       const early = await offerText(page);
       check(label + ': the early line names the collector\'s own start, 8:00 CT, 30 minutes before the open', /from 8:00 AM CT, 30 minutes before the open/.test(early));
@@ -333,7 +334,7 @@ export async function checkObservations({ browser, base, open, check, eq, shotsD
     const tab = await setup('elsewhere', { now: '2026-09-11T13:36:00Z' }), { page } = tab;
     try {
       await page.locator('#morning-open').click();
-      eq('handoff: a morning file bound to another publication was read and holds none for this one, so one is offered', [(await facts(page)).state, (await facts(page)).headline, await offered(page)], ['unavailable', 'Morning observations unavailable', 'due']);
+      eq('handoff: a morning file bound to another publication was read and holds none for this one, so one is offered', [(await facts(page)).state, (await facts(page)).headline, await offered(page)], ['unavailable', 'No morning check for this record', 'due']);
       check('handoff: the file status names the other publication', /These observations belong to another publication\./.test(await page.locator('[data-observations="summary"]').textContent()));
     } finally { await tab.context.close(); }
   }

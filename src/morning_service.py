@@ -15,6 +15,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import re
 import sqlite3
 from wsgiref.simple_server import make_server, WSGIRequestHandler
 from urllib.parse import urlsplit
@@ -24,6 +25,12 @@ from tools.publish_morning import publication_check
 
 VERSION = 1
 STATUS_VERSION = 1
+# The receipt route's answer when the store holds a publication and no verified
+# receipt bound to it: every evening from ingestion until the window's first
+# cycle, and after a same-session revision. It names the publication the host
+# holds, so a reader can tell "not checked yet" from "another publication".
+NO_RECEIPT = 'no_receipt'
+_SHA256 = re.compile(r'[0-9a-f]{64}')
 STATUS_EVENTS = 8
 MAX_STATUS_BYTES = 64 * 1024
 MAX_DAILY_RESERVATIONS = 120
@@ -36,6 +43,12 @@ def _instant(value):
     if at is None:
         raise ValueError('service_clock_requires_offset')
     return at.astimezone(timezone.utc)
+
+
+def _no_receipt(publication_sha):
+    """The receipt route's 404 body: the held publication's digest and nothing else."""
+    return json.dumps({'publication_sha256': publication_sha, 'status': NO_RECEIPT},
+                      sort_keys=True, separators=(',', ':')).encode() + b'\n'
 
 
 def _sha(raw):
@@ -474,10 +487,22 @@ def application(database, *, allowed_origin=None):
                     state = db.execute('SELECT version, publication_sha, receipt, receipt_sha, mode FROM state WHERE id=1').fetchone()
                 finally:
                     db.close()
-                if state and state[0] == VERSION and state[4] == 'prepared' and isinstance(state[2], bytes) and 0 < len(state[2]) <= morning.MAX_OBSERVATION_BYTES:
-                    receipt = json.loads(state[2])
-                    if _sha(state[2]) == state[3] and receipt.get('publication', {}).get('data_sha256') == state[1]:
-                        status, value, etag = '200 OK', state[2], state[3]
+                if state and state[0] == VERSION and state[4] == 'prepared':
+                    held = state[1] if isinstance(state[1], str) and _SHA256.fullmatch(state[1]) else None
+                    if state[2] is None:
+                        # Ingested and never checked: name the publication held.
+                        if held:
+                            status, value = '404 Not Found', _no_receipt(held)
+                    elif isinstance(state[2], bytes) and 0 < len(state[2]) <= morning.MAX_OBSERVATION_BYTES:
+                        receipt = json.loads(state[2])
+                        bound = receipt.get('publication', {}).get('data_sha256')
+                        if _sha(state[2]) == state[3] and isinstance(bound, str) and _SHA256.fullmatch(bound):
+                            if bound == held:
+                                status, value, etag = '200 OK', state[2], state[3]
+                            elif held:
+                                # A verified receipt for another publication is
+                                # no check for this one; the bytes stay unserved.
+                                status, value = '404 Not Found', _no_receipt(held)
             except (sqlite3.Error, OSError, ValueError, TypeError, AttributeError, RecursionError):
                 pass
         headers = [('Content-Type', 'application/json; charset=utf-8'), ('Content-Length', str(len(value))),

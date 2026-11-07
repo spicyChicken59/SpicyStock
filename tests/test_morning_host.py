@@ -118,7 +118,7 @@ def test_health_refuses_methods_query_and_body(changes, status):
     assert invoke(wsgi.create_app(lambda *_: pytest.fail('reader called')), **changes)['status'].startswith(status)
 
 
-def test_missing_receipt_is_503_while_health_is_200_and_origin_is_fixed(tmp_path):
+def test_missing_store_is_503_while_health_is_200_and_origin_is_fixed(tmp_path):
     from src.morning_service import application
     database = tmp_path / 'absent.sqlite'
     app = wsgi.create_app(application(database, allowed_origin=wsgi.ALLOWED_ORIGIN))
@@ -128,6 +128,22 @@ def test_missing_receipt_is_503_while_health_is_200_and_origin_is_fixed(tmp_path
     assert receipt['headers']['Access-Control-Allow-Origin'] == 'https://spicychicken59.github.io'
     assert 'Access-Control-Allow-Origin' not in invoke(app, '/morning.json', HTTP_ORIGIN='https://wrong.invalid')['headers']
     assert not database.exists()
+
+
+def test_ingested_publication_without_a_check_is_404_no_receipt_through_the_host(tmp_path):
+    from src.morning_service import NO_RECEIPT, Store, application
+    import hashlib
+    from datetime import datetime, timezone
+    raw = (Path(__file__).parent / 'fixtures' / 'morning' / 'full-publication.json').read_bytes()
+    store = Store(tmp_path / 'morning.sqlite')
+    assert store.ingest(raw, now=datetime(2026, 9, 11, 13, 35, tzinfo=timezone.utc)) == 'ingested'
+    app = wsgi.create_app(application(store.path, allowed_origin=wsgi.ALLOWED_ORIGIN))
+    assert invoke(app)['status'] == '200 OK'
+    receipt = invoke(app, '/morning.json', HTTP_ORIGIN='https://spicychicken59.github.io')
+    assert receipt['status'].startswith('404')
+    assert json.loads(receipt['body']) == {'publication_sha256': hashlib.sha256(raw).hexdigest(), 'status': NO_RECEIPT}
+    assert receipt['headers']['Access-Control-Allow-Origin'] == 'https://spicychicken59.github.io'
+    assert receipt['headers']['Cache-Control'] == 'no-store' and 'ETag' not in receipt['headers']
 
 
 def mount_line(path):

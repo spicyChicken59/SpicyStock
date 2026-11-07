@@ -864,6 +864,20 @@ def test_the_readme_and_the_runbook_name_the_hosts_status_route_and_the_redeploy
         assert "publication integrity is not verified" in text
         for path in documented:
             assert path in text, path
+
+
+def test_docs_name_the_hosts_no_receipt_answer_in_the_routes_own_word():
+    """The receipt route names the publication it holds and no check for; README,
+    the runbook and the page's reader all spell that answer the module's way."""
+    from src import morning_service as service
+    assert service.NO_RECEIPT == "no_receipt"
+    runbook = prose(ROOT / "docs" / "operations" / "morning-railway.md")
+    for text in (README, runbook):
+        assert "`no_receipt`" in text or '"no_receipt"' in text
+        assert "503" in text  # a store the route cannot read stays the generic 503
+    page = (ROOT / "docs" / "app-observations.js").read_text()
+    assert "body.status === 'no_receipt'" in page
+    assert "No morning check yet for this record" in page and "No morning check yet for this record" in README
     assert "last_detail" in runbook and "watch paths" in runbook
     assert f"newest {NUMBER_WORDS[service.STATUS_EVENTS]} journal events" in runbook
     assert "redeployed after every merge" in README
