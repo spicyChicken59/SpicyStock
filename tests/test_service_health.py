@@ -25,7 +25,13 @@ from src import sessions
 from tools import service_health as sh
 
 ROOT = Path(__file__).resolve().parent.parent
-REPORT = ROOT / "docs/input-truthfulness/2026-10-17-service-health.md"
+REPORT = ROOT / "docs/input-truthfulness/2026-11-07-service-health.md"
+#: the 17 October reading as it was written (v3 run again, pinned at 426d3c59, the issuer receipt after
+#: the 16 October publication), kept and no longer re-derived: its two files by their git blob identities
+FROZEN_17 = ROOT / "docs/input-truthfulness/2026-10-17-service-health-evidence"
+FROZEN_17_REPORT = ROOT / "docs/input-truthfulness/2026-10-17-service-health.md"
+FROZEN_17_BLOBS = {"service-health.json": "f90fe5a5cfcd72e4c74232be1796f954ae3f4af2",
+                   "service-health.md": "559606ca7aae6756cbd8b1c2f6f180c038d90202"}
 #: the 13 October reading as it was written (v3, pinned at 7e40716e, the merge of #168), kept and no
 #: longer re-derived: its two files by their git blob identities
 FROZEN_V3 = ROOT / "docs/input-truthfulness/2026-10-13-service-health-evidence"
@@ -34,6 +40,9 @@ FROZEN_V3_BLOBS = {"service-health.json": "2cbf147a09e108deef5d38ac524a84a46ca49
                    "service-health.md": "11bde5218ab509e2f6d566107dc3cdefc858c40e"}
 #: a count in words, so a report cannot borrow a digit the prose carries elsewhere
 WORDS = {0: "no", 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"}
+TENS = {**WORDS, 10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen", 16: "sixteen", 17: "seventeen",
+        18: "eighteen", 19: "nineteen", 20: "twenty", 21: "twenty-one", 22: "twenty-two", 23: "twenty-three", 24: "twenty-four",
+        25: "twenty-five", 26: "twenty-six", 27: "twenty-seven", 28: "twenty-eight", 29: "twenty-nine", 30: "thirty"}
 #: the 12 October reading as it was written, kept and no longer re-derived: v2 (the merge of
 #: #166) and, under v1/, v1 as main carried it before (279ec5a3), each by its git blob identity
 FROZEN = ROOT / "docs/input-truthfulness/2026-10-12-service-health-evidence"
@@ -43,7 +52,8 @@ FROZEN_BLOBS = {"service-health.json": "a044ec838d7b2ff681201dc8ffca55eccf0ff978
                 "v1/service-health.json": "d6ef16b1e641131eb67d250ac8e2d9e91b03c392",
                 "v1/service-health.md": "1044e3c85ffbb7c62d3298a2eba3348c4090b417"}
 #: each earlier report as written apart from the note that says it is superseded, by its blob
-FROZEN_REPORT_BLOBS = {FROZEN_REPORT: "3b9cd98cd7efeec27ff6b178fa10f88f319c6816", FROZEN_V3_REPORT: "65628d48b48a5008be4be8e24efbfd6e1415cf7b"}
+FROZEN_REPORT_BLOBS = {FROZEN_REPORT: "3b9cd98cd7efeec27ff6b178fa10f88f319c6816", FROZEN_V3_REPORT: "65628d48b48a5008be4be8e24efbfd6e1415cf7b",
+                       FROZEN_17_REPORT: "13fbb7a40760c459580bf1e96759b13e1d845c46"}
 
 
 def record(session="2026-10-09", published_at="2026-10-10T07:30:00+00:00", *, status="ok", regime="yellow", rules_pipeline=None, **run_extra):
@@ -683,6 +693,15 @@ def test_a_shallow_checkout_rebuilds_from_the_named_commits_alone(repo, monkeypa
 # ------------------------------------------------------ the committed one ----
 
 @pytest.fixture(scope="module")
+def frozen_17():
+    """The 17 October reading as it was written, its named commits fetched as the committed one's are."""
+    data = json.loads((FROZEN_17 / "service-health.json").read_text(encoding="utf-8"))
+    source = data["source"]
+    sh.fetch_missing([source["through"], *source["publication_commits"], *(c for v in source["companion_commits"].values() for c in v)])
+    return data
+
+
+@pytest.fixture(scope="module")
 def committed():
     """The dated reading, and the commits it names fetched into a shallow
     checkout -- CI's -- exactly those and once; never skipped."""
@@ -758,7 +777,9 @@ def frozen_v3():
     return json.loads((FROZEN_V3 / "service-health.json").read_text(encoding="utf-8"))
 
 
-def test_the_earlier_readings_are_kept_as_they_were_written(frozen_v2, frozen_v3):
+def test_the_earlier_readings_are_kept_as_they_were_written(frozen_v2, frozen_v3, frozen_17):
+    for name, blob in FROZEN_17_BLOBS.items():
+        assert blob_id(FROZEN_17 / name) == blob, name
     for name, blob in FROZEN_BLOBS.items():
         assert blob_id(FROZEN / name) == blob, name
     for name, blob in FROZEN_V3_BLOBS.items():
@@ -770,7 +791,11 @@ def test_the_earlier_readings_are_kept_as_they_were_written(frozen_v2, frozen_v3
     # the 13 October reading is this version, pinned to the merge of #168, and no longer re-derived either
     assert (frozen_v3["version"], frozen_v3["policy"]) == (3, "service_health_v3")
     assert frozen_v3["source"]["through"] == "7e40716ee3bc9460854d649be249fde5e5de021f"
-    assert sh.OUT_DIR not in (FROZEN, FROZEN_V3) and (sh.VERSION, sh.POLICY) == (3, "service_health_v3")
+    # the 17 October reading is this version run again, pinned to the issuer receipt after the 16 October
+    # publication, and no longer re-derived either
+    assert (frozen_17["version"], frozen_17["policy"]) == (3, "service_health_v3")
+    assert frozen_17["source"]["through"] == "426d3c59aa6be567c9464f17a6e573a335813e30"
+    assert sh.OUT_DIR not in (FROZEN, FROZEN_V3, FROZEN_17) and (sh.VERSION, sh.POLICY) == (3, "service_health_v3")
     for path, blob in FROZEN_REPORT_BLOBS.items():
         assert blob_id(path) == blob, path.name
     # each earlier report says it is superseded and where the newer reading is, and which files --check holds
@@ -779,7 +804,10 @@ def test_the_earlier_readings_are_kept_as_they_were_written(frozen_v2, frozen_v3
     assert "now holds the newest dated reading (the 17 October files" in v2_report
     assert "**Superseded on 17 October by [the same `service_health_v3` reading run again](2026-10-17-service-health.md)**" in v3_report
     assert "`--check` below now holds the 17 October files" in v3_report
-    assert sh.OUT_DIR.name == "2026-10-17-service-health-evidence"
+    report_17 = " ".join(FROZEN_17_REPORT.read_text(encoding="utf-8").split())
+    assert "**Superseded on 7 November by [the same `service_health_v3` reading run again](2026-11-07-service-health.md)**" in report_17
+    assert "`--check` below now holds the 7 November files" in report_17
+    assert sh.OUT_DIR.name == "2026-11-07-service-health-evidence"
 
 
 def test_the_13_october_report_quotes_its_own_reading(frozen_v3):
@@ -851,11 +879,12 @@ def day_list(sessions) -> str:
 ORDINALS = {1: "first", 2: "second", 3: "third", 4: "fourth", 5: "fifth", 6: "sixth"}
 
 
-def test_the_report_quotes_the_reading(committed, frozen_v3):
-    text = REPORT.read_text(encoding="utf-8")
+def test_the_17_october_report_quotes_its_own_reading(frozen_17, frozen_v3):
+    # the 17 October report and the reading it quotes, both kept as written
+    text = FROZEN_17_REPORT.read_text(encoding="utf-8")
     prose = " ".join(text.split())
-    s = committed["summary"]
-    assert "service_health_v3" in text and committed["source"]["through"][:8] in text
+    s = frozen_17["summary"]
+    assert "service_health_v3" in text and frozen_17["source"]["through"][:8] in text
     # each count in its own phrase, so a number the prose carries elsewhere cannot stand in for it
     for phrase in (f"**{s['expected_sessions']} expected sessions, {s['published_sessions']} published, "
                    f"{s['before_next_open']} of {s['published_sessions']} first publications landed before the next session's open.**",
@@ -870,7 +899,7 @@ def test_the_report_quotes_the_reading(committed, frozen_v3):
                    f"{s['signal']['regimes']['red']} RED and {s['signal']['regimes']['yellow']} YELLOW publications, "
                    f"{s['signal']['reaction_tickets']} reaction tickets, {s['signal']['anticipation_tickets']} anticipation tickets",
                    f"`main` carries `{s['fresh']['main_carries']['commit'][:8]}`",
-                   f"{len(committed['skipped'])} commits set aside"):
+                   f"{len(frozen_17['skipped'])} commits set aside"):
         assert phrase in prose, phrase
     assert s["missing_sessions"] == [] and "None is missing" in prose
     assert ("**Fresh: yes.**" if s["fresh"]["fresh"] else "**Fresh: no.**") in prose
@@ -881,22 +910,22 @@ def test_the_report_quotes_the_reading(committed, frozen_v3):
     for session in s["republished_sessions"]:
         day = date.fromisoformat(session)
         assert f"{day.day} {day.strftime('%B')}" in prose or f"{day.day} and" in prose, session
-    first = {r["publications"][0] for r in committed["sessions"] if r["published"]}
-    generated_after_retry = sum(1 for p in committed["publications"] if p["commit"] in first
+    first = {r["publications"][0] for r in frozen_17["sessions"] if r["published"]}
+    generated_after_retry = sum(1 for p in frozen_17["publications"] if p["commit"] in first
                                 and datetime.fromisoformat(p["published_at"]) >= datetime.fromisoformat(p["timing"]["retry_slot_at"]))
     assert f"as {generated_after_retry} were generated after it" in prose
     # the slot ranges the prose quotes are the file's own minimum and maximum, and every first publication from 22 September is after the retry slot
     def span(lo, hi):
-        values = [r["service"]["after_primary_minutes"] for r in committed["sessions"] if r["published"] and lo <= r["session"] <= hi]
+        values = [r["service"]["after_primary_minutes"] for r in frozen_17["sessions"] if r["published"] and lo <= r["session"] <= hi]
         return f"{min(values)} to {max(values)}"
-    last = max(r["session"] for r in committed["sessions"] if r["published"])
+    last = max(r["session"] for r in frozen_17["sessions"] if r["published"])
     assert f"landed {span('2026-09-14', '2026-09-18')} minutes after the primary slot" in prose
     assert f"retry slot, {span('2026-09-22', last)} minutes after the primary one" in prose
-    assert all(r["service"]["after_retry_slot"] for r in committed["sessions"] if r["published"] and r["session"] >= "2026-09-22")
+    assert all(r["service"]["after_retry_slot"] for r in frozen_17["sessions"] if r["published"] and r["session"] >= "2026-09-22")
     lat, gen = s["latency_minutes"], s["generated_latency_minutes"]
     assert f"min {lat['min']}, median {lat['median']}, max {lat['max']} minutes" in prose
     assert f"{gen['min']}, {gen['median']} and {gen['max']}" in prose
-    landed = [p["timing"]["landed_minutes"] for p in committed["publications"]]
+    landed = [p["timing"]["landed_minutes"] for p in frozen_17["publications"]]
     assert f"{min(landed)} to {max(landed)} minutes" in prose
     # the companions as the file counts them, each count in words so the prose cannot borrow a digit from elsewhere
     c = s["companions"]
@@ -911,13 +940,13 @@ def test_the_report_quotes_the_reading(committed, frozen_v3):
     assert recovery["applicable_sessions"] == ["2026-10-14", "2026-10-15", "2026-10-16"] and "for 14, 15 and 16 October" in prose
     assert c["research_observations"]["receipts"] == 0 and "no research observation" in prose
     # each recovery receipt's landing as the file has it, in the file's order, and all before the open they serve
-    rows = committed["companions"]["source_recovery"]
+    rows = frozen_17["companions"]["source_recovery"]
     assert all(r["before_applicable_open"] for r in rows) and "each landed before its applicable open" in prose
     times = [datetime.fromisoformat(r["landed_at"]).strftime("%H:%M") for r in rows]
     assert f"({', '.join(times[:-1])} and {times[-1]} UTC" in prose
     # what the receipts recovered, read off the receipts at the commits the reading names
     recovered = []
-    for commit in committed["source"]["companion_commits"]["source_recovery"]:
+    for commit in frozen_17["source"]["companion_commits"]["source_recovery"]:
         receipt, _ = sh.read_at(commit, "docs/source-recovery.json")
         recovered += [(r["ticker"], r["volume"], r["ending"], commit) for r in receipt["rows"] if r["outcome"] == "recovered"]
     traded = [(t, v, e) for t, v, e, _ in recovered if v]
@@ -937,14 +966,14 @@ def test_the_report_quotes_the_reading(committed, frozen_v3):
     assert f"{WORDS[usage['publications_with_block']]} cost blocks archived" in prose
     assert f"{usage['calls']} calls, {usage['responses']} replies" in prose
     # the archived slot basis: which sessions, at which slots
-    archived = [p for p in committed["publications"] if p["timing"]["slot_basis"] == "archived"]
+    archived = [p for p in frozen_17["publications"] if p["timing"]["slot_basis"] == "archived"]
     span = sorted(p["session"] for p in archived)
     assert {tuple(sorted(p["timing"]["slots_et"].values())) for p in archived} == {("18:16", "20:16")}
     assert f"({date.fromisoformat(span[0]).day} to {day_list([span[-1]])}, each 6:16 and 8:16 PM ET)" in prose
     # the landings since the 13 October reading, and where they rank from 22 September on
-    since = sorted(r["session"] for r in committed["sessions"] if r["published"]
+    since = sorted(r["session"] for r in frozen_17["sessions"] if r["published"]
                    and r["session"] > max(x["session"] for x in frozen_v3["sessions"] if x["published"]))
-    minutes = {r["session"]: r["service"]["after_primary_minutes"] for r in committed["sessions"] if r["published"]}
+    minutes = {r["session"]: r["service"]["after_primary_minutes"] for r in frozen_17["sessions"] if r["published"]}
     values = [str(minutes[x]) for x in since]
     assert f"The {WORDS[len(since)]} since the 13 October reading landed {', '.join(values[:-1])} and {values[-1]} minutes after it" in prose
     ranked = sorted((v, x) for x, v in minutes.items() if x >= "2026-09-22")
@@ -957,10 +986,176 @@ def test_the_report_quotes_the_reading(committed, frozen_v3):
             f"{day_list([ahead[1][1]])}'s {ahead[0][0]} and {ahead[1][0]})") in prose
     # the refused replies the 13 and 15 October records carry, read off the records themselves
     refused = {}
-    for p in committed["publications"]:
+    for p in frozen_17["publications"]:
         if p["session"] in ("2026-10-13", "2026-10-15"):
             data, _ = sh.read_at(p["commit"], sh.RECORD_PATH)
             refused[p["session"]] = data["run"]["reads"]["causes"]["refused"]
     assert refused == {"2026-10-13": 2, "2026-10-15": 1}
     assert (f"13 October carries {WORDS[refused['2026-10-13']]} refused reader replies beside it, "
             f"15 October {'one' if refused['2026-10-15'] == 1 else WORDS[refused['2026-10-15']]}") in prose
+
+
+def test_the_report_quotes_the_reading(committed, frozen_17):
+    text = REPORT.read_text(encoding="utf-8")
+    prose = " ".join(text.split())
+    s = committed["summary"]
+    hhmm = lambda iso: datetime.fromisoformat(iso).strftime("%H:%M")  # noqa: E731
+    assert "service_health_v3" in text and committed["source"]["through"][:8] in text
+    # each count in its own phrase, so a number the prose carries elsewhere cannot stand in for it
+    for phrase in (f"**{s['expected_sessions']} expected sessions, {s['published_sessions']} published, "
+                   f"{s['before_next_open']} of {s['published_sessions']} first publications landed before the next session's open.**",
+                   f"**{s['after_retry_slot']} of {s['published_sessions']}** first publications landed after the retry slot",
+                   f"**{s['publications']} publications**", f"the current streak reads {s['streak']['current']}; the longest is {s['streak']['longest']}",
+                   f"{s['slot_basis']['archived']} publications read against the slots their own rules archived",
+                   f"{s['slot_basis']['current_policy']} against the current policy's",
+                   f"{s['reads']['done']} of {s['reads']['requested']} requested reads done over {s['reads']['publications_with_block']} publications",
+                   f"{s['reader_usage']['input_tokens']:,} input and {s['reader_usage']['output_tokens']:,} output tokens",
+                   f"Statuses {s['statuses']['degraded']} degraded and {s['statuses']['ok']} ok",
+                   f"{s['signal']['regimes']['red']} RED and {s['signal']['regimes']['yellow']} YELLOW publications, "
+                   f"{s['signal']['reaction_tickets']} reaction tickets, {s['signal']['anticipation_tickets']} anticipation tickets",
+                   f"`main` carries `{s['fresh']['main_carries']['commit'][:8]}`",
+                   f"{len(committed['skipped'])} commits set aside"):
+        assert phrase in prose, phrase
+    assert s["missing_sessions"] == [] and "None is missing" in prose
+    assert s["fresh"]["fresh"] and "**Fresh: yes.**" in prose
+    assert s["pending_sessions"] == [] and "none is pending" in prose
+    rep = s["republished_sessions"]
+    assert f"{WORDS[len(rep)]} sessions published more than once ({day_list(rep)}), none since" in prose
+    first = {r["publications"][0] for r in committed["sessions"] if r["published"]}
+    generated_after_retry = sum(1 for p in committed["publications"] if p["commit"] in first
+                                and datetime.fromisoformat(p["published_at"]) >= datetime.fromisoformat(p["timing"]["retry_slot_at"]))
+    assert f"as {generated_after_retry} were generated after it" in prose
+
+    def span(lo, hi):
+        values = [r["service"]["after_primary_minutes"] for r in committed["sessions"] if r["published"] and lo <= r["session"] <= hi]
+        return f"{min(values)} to {max(values)}"
+    last_session = max(r["session"] for r in committed["sessions"] if r["published"])
+    assert f"landed {span('2026-09-14', '2026-09-18')} minutes after the primary slot" in prose
+    assert f"retry slot, {span('2026-09-22', last_session)} minutes after the primary one" in prose
+    assert all(r["service"]["after_retry_slot"] for r in committed["sessions"] if r["published"] and r["session"] >= "2026-09-22")
+    lat, gen = s["latency_minutes"], s["generated_latency_minutes"]
+    assert f"min {lat['min']}, median {lat['median']}, max {lat['max']} minutes" in prose
+    assert f"{gen['min']}, {gen['median']} and {gen['max']}" in prose
+    landed = [p["timing"]["landed_minutes"] for p in committed["publications"]]
+    assert f"{min(landed)} to {max(landed)} minutes" in prose
+    # the newest session: completed, landed, and its next open, each the file's own instant
+    last = committed["sessions"][-1]
+    assert last["session"] == s["fresh"]["newest_due_session"] == "2026-11-06" and last["published"]
+    assert date.fromisoformat(last["next_open_at"][:10]).weekday() == 0
+    assert (f"the 6 November session completed at {hhmm(last['completion_at'])} UTC" in prose
+            and f"landed at {hhmm(last['service']['landed_at'])} UTC on the 7th, before its next open ({hhmm(last['next_open_at'])} UTC "
+                f"on Monday {date.fromisoformat(last['next_open_at'][:10]).day} November)" in prose)
+    # the fifteen since the 17 October reading, and where the promptest from 22 September on still are
+    old_last = max(x["session"] for x in frozen_17["sessions"] if x["published"])
+    minutes = {r["session"]: r["service"]["after_primary_minutes"] for r in committed["sessions"] if r["published"]}
+    since = sorted(x for x in minutes if x > old_last)
+    values = [str(minutes[x]) for x in since]
+    assert f"The {TENS[len(since)]} since the 17 October reading landed {', '.join(values[:-1])} and {values[-1]} minutes after it" in prose
+    ranked = sorted((v, x) for x, v in minutes.items() if x >= "2026-09-22")
+    assert all(x <= old_last for _, x in ranked[:2]), "none of the fifteen is among the two promptest"
+    assert f"which stay {day_list([x for _, x in ranked[:2]])}'s {ranked[0][0]} and {ranked[1][0]}" in prose
+    # the publications since: their statuses, and each degraded one's recorded problem
+    since_pubs = [p for p in committed["publications"] if p["session"] > old_last]
+    statuses = {st: sum(1 for p in since_pubs if p["status"] == st) for st in ("degraded", "ok")}
+    assert f"Of the {TENS[len(since_pubs)]} publications since the 17 October reading, {WORDS[statuses['degraded']]} are degraded and " \
+           f"{WORDS[statuses['ok']]} ok" in prose
+    problems = {(p["session"], p["commit"][:8]): p["problems"] for p in since_pubs}
+    assert problems[("2026-10-19", "a34a2978")] == ["claude_unavailable"] and problems[("2026-10-19", "d179f206")] == ["coverage_thin"]
+    assert all(v == ["claude_unavailable"] for (x, _), v in problems.items() if x in ("2026-10-21", "2026-10-22"))
+    assert all(v == ["claude_partial"] for (x, _), v in problems.items() if x in ("2026-10-27", "2026-10-28", "2026-10-29"))
+    assert all(v == ["coverage_thin"] for (x, _), v in problems.items() if x == "2026-10-30")
+    assert all(v == [] for (x, _), v in problems.items() if x in ("2026-10-20", "2026-10-23", "2026-10-26") or x >= "2026-11-02")
+    backfill = next(p for p in since_pubs if p["commit"].startswith("d179f206"))
+    assert f"(`d179f206`, landed {hhmm(backfill['landed_at'])} UTC, {backfill['timing']['latency_minutes']:,} minutes after the " \
+           "session's completion)" in prose
+    # the reads since, by request version: v2 through the 29 October publication, v3 from the 30 October one
+    def reads(ps):
+        return sum(p["reader"]["done"] for p in ps), sum(p["reader"]["requested"] for p in ps)
+    pre, v3 = [p for p in since_pubs if p["session"] < "2026-10-30"], [p for p in since_pubs if p["session"] >= "2026-10-30"]
+    assert (len(pre), len({p["session"] for p in pre}), len(v3)) == (10, 9, 6)
+    assert f"the {TENS[len(pre)]} publications of 19 to 29 October ({WORDS[len({p['session'] for p in pre})]} sessions, 19 October's twice) " \
+           f"got {reads(pre)[0]} of {reads(pre)[1]} requested reads" in prose
+    assert all((p["reader"]["usage"]["calls"], p["reader"]["usage"]["responses"]) == (4, 0) for p in pre if p["session"] in ("2026-10-21", "2026-10-22"))
+    assert all(p["reader"]["verdict"] == "tolerated" for p in pre if p["commit"].startswith("d179f206") or p["session"] == "2026-10-20")
+    assert f"from the 30 October publication, {reads(v3)[0]} of {reads(v3)[1]}" in prose and v3[0]["reader"]["verdict"] == "tolerated"
+    per = [f"{p['reader']['done']} of {p['reader']['requested']}" for p in v3[1:]]
+    assert f"then {', '.join(per[:-1])} and {per[-1]})" in prose
+    assert f"{TENS[reads(v3)[1]].capitalize()} reads over {WORDS[len(v3)]} nights is not a rate" in prose
+    # the cost blocks: all of them, those since the 17 October reading, and their calls and replies
+    usage, before = s["reader_usage"], frozen_17["summary"]["reader_usage"]
+    assert f"{usage['publications_with_block']} cost blocks archived" in prose
+    assert f"{usage['calls']} calls, {usage['responses']} replies" in prose
+    since_usage = [p["reader"]["usage"] for p in since_pubs if p["reader"].get("usage")]
+    assert len(since_usage) == usage["publications_with_block"] - before["publications_with_block"]
+    assert f"{TENS[len(since_usage)]} more than the 17 October reading's {WORDS[before['publications_with_block']]} " \
+           f"({sum(u['calls'] for u in since_usage)} calls, {sum(u['responses'] for u in since_usage)} replies)" in prose
+    # the archived slot basis: which sessions, at which slots
+    archived = sorted(p["session"] for p in committed["publications"] if p["timing"]["slot_basis"] == "archived")
+    assert {tuple(sorted(p["timing"]["slots_et"].values())) for p in committed["publications"] if p["timing"]["slot_basis"] == "archived"} == {("18:16", "20:16")}
+    assert f"({day_list([archived[0]])} to {day_list([archived[-1]])}, each 6:16 and 8:16 PM ET)" in prose
+    # the morning receipts, by status and by whether they landed inside their window
+    c = s["companions"]
+    rows = committed["companions"]["morning"]
+    by_status = {st: [r["applicable_session"] for r in rows if r["status"] == st] for st in ("inapplicable", "no_tickets", "partial")}
+    assert c["morning"]["receipts"] == len(rows) == 8 and c["morning"]["statuses"] == {k: len(v) for k, v in by_status.items()}
+    assert f"{WORDS[len(rows)]} receipts: {WORDS[len(by_status['inapplicable'])]} `inapplicable`" in prose
+    assert f"{WORDS[len(by_status['no_tickets'])]} `no_tickets` ({day_list(by_status['no_tickets'])})" in prose
+    partial = [r for r in rows if r["status"] == "partial"]
+    assert f"{WORDS[len(partial)]} `partial` (" + "; ".join(f"{day_list([r['applicable_session']])}, {WORDS[r['rows']]} row{'s' if r['rows'] != 1 else ''}"
+                                                           for r in partial) in prose
+    assert f"{WORDS[c['morning']['before_applicable_open']].capitalize()} of the {WORDS[len(rows)]} were generated and landed before their " \
+           "applicable open" in prose
+    assert c["morning"]["before_applicable_open"] == c["morning"]["generated_before_applicable_open"]
+    in_window = [r["applicable_session"] for r in rows if r["before_applicable_open"] and r["status"] != "inapplicable"]
+    published = [r["session"] for r in committed["sessions"] if r["published"]]
+    consecutive = 0
+    for session in reversed(published):
+        if session not in in_window:
+            break
+        consecutive += 1
+    assert in_window == ["2026-10-23", "2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06"] and consecutive == 4
+    assert f"**{WORDS[len(in_window)].capitalize()} sessions have a morning check that landed inside its window: {day_list(in_window)}, " \
+           f"the last {WORDS[consecutive]} consecutive**" in prose
+    assert f"#111's count of consecutive sessions with a morning check stands at {WORDS[consecutive]}." in prose
+    late = [r for r in rows if not r["before_applicable_open"] and r["status"] != "inapplicable"]
+    assert [r["applicable_session"] for r in late] == ["2026-11-02"]
+    assert f"the 2 November check was generated at {hhmm(late[0]['generated_at'])} UTC, after the {hhmm(late[0]['applicable_open_at'])} open" in prose
+    assert all(hhmm(r["generated_at"]) == "14:22" for r in rows if r["applicable_session"] >= "2026-11-03") and "each generated at 14:22 UTC" in prose
+    # the issuer, research and recovery receipts as the file counts them
+    issuer = c["issuer_evidence"]
+    assert issuer["receipts"] == sum(issuer["statuses"].values()) == 31
+    assert f"{issuer['receipts']} receipts: {WORDS[issuer['statuses']['unavailable']]} `unavailable` (all before 17 October), " \
+           f"{issuer['statuses']['partial']} `partial` and {WORDS[issuer['statuses']['no_candidates']]} `no_candidates`; " \
+           f"{issuer['before_applicable_open']} before their applicable open" in prose
+    assert all(r["landed_at"] < "2026-10-17" for r in committed["companions"]["issuer_evidence"] if r["status"] == "unavailable")
+    newest = committed["companions"]["issuer_evidence"][-1]
+    assert (issuer["applicable_sessions"][-1], newest["status"]) == ("2026-11-09", "no_candidates") and "the newest, for 9 November, `no_candidates`" in prose
+    research = c["research_observations"]
+    r_rows = committed["companions"]["research_observations"]
+    r_by = {st: [r["applicable_session"] for r in r_rows if r["status"] == st] for st in ("no_research_rows", "partial", "inapplicable")}
+    assert research["receipts"] == len(r_rows) == 6 and research["statuses"] == {k: len(v) for k, v in r_by.items()}
+    assert all(r["reason"] == "cohort_not_current" for r in r_rows if r["status"] == "inapplicable")
+    assert f"{WORDS[len(r_rows)]}: {WORDS[len(r_by['no_research_rows'])]} `no_research_rows` ({day_list(r_by['no_research_rows'])}), " \
+           f"{WORDS[len(r_by['partial'])]} `partial` ({day_list(r_by['partial'])}, one row) and {WORDS[len(r_by['inapplicable'])]} " \
+           f"`inapplicable` `cohort_not_current` ({day_list(r_by['inapplicable'])}" in prose
+    recovery = c["source_recovery"]
+    rc_rows = committed["companions"]["source_recovery"]
+    rc_by = {st: [r["applicable_session"] for r in rc_rows if r["status"] == st] for st in ("recovered", "partial", "inapplicable")}
+    assert recovery["receipts"] == len(rc_rows) == 19 and recovery["statuses"] == {k: len(v) for k, v in rc_by.items()}
+    assert f"{recovery['receipts']} receipts: {WORDS[len(rc_by['recovered'])]} `recovered` (for {day_list(rc_by['recovered'])}), " \
+           f"{WORDS[len(rc_by['partial'])]} `partial` (for {day_list(rc_by['partial'])}) and {WORDS[len(rc_by['inapplicable'])]} " \
+           f"`inapplicable` `recovery_window_ended` (for {day_list(rc_by['inapplicable'])})" in prose
+    assert f"{TENS[recovery['before_applicable_open']].capitalize()} of the {recovery['receipts']} landed before their applicable open" in prose
+    assert all(r["before_applicable_open"] for r in rc_rows if r["status"] != "inapplicable")
+    inapplicable = [r for r in rc_rows if r["status"] == "inapplicable"]
+    assert all(not r["before_applicable_open"] and r["reason"] == "recovery_window_ended"
+               and date.fromisoformat(r["landed_at"][:10]).weekday() < 5 for r in inapplicable)
+    dst = sorted(hhmm(r["landed_at"]) for r in inapplicable if r["applicable_session"] < "2026-11-01")
+    est = sorted(hhmm(r["landed_at"]) for r in inapplicable if r["applicable_session"] >= "2026-11-01")
+    assert f"(landed {dst[0]} to {dst[-1]} UTC under daylight time, {est[0]} to {est[-1]} under standard time)" in prose
+    saturdays = [r for r in rc_rows if date.fromisoformat(r["landed_at"][:10]).weekday() == 5]
+    assert [r["landed_at"][:10] for r in saturdays] == ["2026-10-17", "2026-10-24", "2026-10-31", "2026-11-07"]
+    assert all(r["status"] != "inapplicable" and r["before_applicable_open"] for r in saturdays)
+    assert f"the {WORDS[len(saturdays)]} Saturday runs ({day_list([r['landed_at'][:10] for r in saturdays])}) ran for the Monday publications" in prose
+    weekday_since = [r for r in rc_rows if r["applicable_session"] >= "2026-10-27" and date.fromisoformat(r["landed_at"][:10]).weekday() < 5]
+    assert weekday_since and all(r["status"] == "inapplicable" for r in weekday_since) and "Since 27 October no weekday receipt has recovered a bar" in prose

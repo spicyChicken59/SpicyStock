@@ -1,5 +1,11 @@
 # 17 October 2026 — the service through the first night under the retired seed (#111)
 
+**Superseded on 7 November by [the same `service_health_v3` reading run again](2026-11-07-service-health.md)**,
+pinned to `4ad320c2`, fifteen sessions later. The files under `2026-10-17-service-health-evidence/` are
+kept as they were written, and this report as written apart from this note; `tests/test_service_health.py`
+holds all three to their git blob identities. The tool no longer re-derives them, so `--check` below now
+holds the 7 November files.
+
 `tools/service_health.py` is a reading of the service and not of the signal;
 the [12 October report](2026-10-12-service-health.md) says what it walks and
 how, and the [13 October report](2026-10-13-service-health.md) what
