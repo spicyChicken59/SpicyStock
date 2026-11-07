@@ -57,12 +57,15 @@ slot cap and the reader removed (and, outside the admitted stratum, the
 grade's or the veto's own refusal), found every stratum losing on the red
 nights -- the admitted stratum's exploratory rows −0.235R per settled ticket
 over 202 on 2 October, −0.189R over 267 on the 6 October re-read and −0.119R
-over 301 on the 17 and 24 October ones; a night read before its tickets' fifth
-session leans toward losses. Its first readable confirmatory figure, 17 October,
-was −0.157R over 209 settled on ten nights, three of them YELLOW, with a
-night-bootstrap interval of −0.431 to +0.129; read again on 24 October over
-fifteen nights it is −0.081R over 316, the interval −0.319 to +0.251: neither
-establishes a sign --
+over 301 on the 17 and 24 October ones and −0.123R over 303 on the 7 November
+one; a night read before its tickets' fifth session leans toward losses. Its
+first readable confirmatory figure, 17 October, was −0.157R over 209 settled on
+ten nights, three of them YELLOW, with a night-bootstrap interval of −0.431 to
++0.129; read again on 24 October over fifteen nights it is −0.081R over 316, the
+interval −0.319 to +0.251; read again on 7 November over twenty-four nights,
+nine of them YELLOW, it is −0.218R over 575 (−0.003R a night, the interval
+−0.232 to +0.220), 119 of the losses one night's, 4 November, every ticket of
+which stopped into the 5 November alarm: none establishes a sign --
 and the owner's backtest over 158 archive sessions (100
 yellow, 58 red, no green) wrote 99 half-size A+ tickets, of which 44
 settled, 16 won, 27 lost and 1 was even, +3.72R net, the reader not run. The
@@ -2292,9 +2295,11 @@ by appended publication entries only, are
 `docs/input-truthfulness/2026-10-06-signal-outcomes-confirmatory.md` over
 nineteen publications,
 `docs/input-truthfulness/2026-10-17-signal-outcomes-confirmatory.md` over
-thirty-one and
+thirty-one,
 `docs/input-truthfulness/2026-10-24-signal-outcomes-confirmatory.md` over
-thirty-seven.
+thirty-seven and
+`docs/input-truthfulness/2026-11-07-signal-outcomes-confirmatory.md` over
+forty-seven.
 `python tools/build_historical_findings.py --check` holds the committed
 `docs/historical-findings.json`, which the Record view replays, to those
 evidence files and nothing else: the two study outputs, the publication

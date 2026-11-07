@@ -168,6 +168,23 @@ ticket, net +3.72R -- the first readable rate the mechanical policy has had, the
 reader not run, its interval and costs unmeasured without the per-row files.
 Not an edge claim.
 
+[7 November 2026: the confirmatory figure, read again after 6 November](2026-11-07-signal-outcomes-confirmatory.md)
+re-runs the frozen study over forty-seven publications under a
+[spec extended by thirty appended entries only](2026-11-07-signal-outcomes-spec-extended.json):
+the confirmatory admitted stratum is 575 settled over twenty-four nights,
+−0.218R a ticket and −0.003R a night, its night-bootstrap interval −0.232 to
++0.220 -- readable, and still no sign established. The 19 to 23 October nights
+completed at +25.30R; the first YELLOW week and the first published burst
+tickets entered; and the 4 November night, 245 admitted rows at the $30,000
+account, stopped whole into the 5 November alarm, 119 settled and every one a
+loss, −122.41R, the night with the most settled tickets and the stratum's
+largest loss. Fifty-six rows
+of the two oldest nights moved bucket by the newest publications' series, two of
+them admitted and settling, so the exploratory admitted stratum reads 303
+settled; three previously settled tickets were set aside when a later publication
+re-priced their symbol; no ticket settled in both runs changed its R. Read again
+after 13 November.
+
 [24 October 2026: the confirmatory figure, read again after 23 October](2026-10-24-signal-outcomes-confirmatory.md)
 re-runs the frozen study over thirty-seven publications under a
 [spec extended by twenty appended entries only](2026-10-24-signal-outcomes-spec-extended.json):
