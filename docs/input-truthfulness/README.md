@@ -54,10 +54,10 @@ files. Everything is injected: it is not a live provider, a runner or GitHub.
 is the `service_health_v3` reading run again, pinned to `4ad320c2`, the merge
 of #215: 41 of 41 due sessions published, all 41 before the next open, fresh,
 latency median 300.6 minutes by the landing commit, 34 of 41 after the retry
-slot; eight morning receipts, five of them inside their window (23 October and
-3 to 6 November, the last four consecutive); 19 source-recovery receipts, the
-eight weekday ones since 27 October `inapplicable` because the 07:37 UTC slot's
-run came after the open; 21 archived cost blocks (60 calls, 411,396 input
+slot; eight morning receipts, five of them before the applicable open (23 October
+and 3 to 6 November, the last four consecutive); 19 source-recovery receipts,
+the eight weekday ones since 27 October `inapplicable`, each generated after
+the open; 21 archived cost blocks (60 calls, 411,396 input
 tokens); 304 of 358 requested reads done, 23 of 24 under request v3. The 17
 October reading is kept as written; `--check` holds the 7 November files.
 

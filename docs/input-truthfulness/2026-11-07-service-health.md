@@ -9,9 +9,9 @@ version run again fifteen sessions after the
 merge of #215, the 7 November re-read of the signal-outcome study), whose
 committer time, 15:05 UTC on 7 November, is its clock. Nothing in the tool's
 rules changed; the 17 October reading is kept as it was written and no longer
-re-derived. What is new in the history is the morning checks that landed inside
-their window on 3, 4, 5 and 6 November, the source-recovery receipts that could
-no longer recover once the 07:37 UTC slot's run came after the open, the two
+re-derived. What is new in the history is the morning checks that landed before
+their open on 23 October and 3 to 6 November, the weekday source-recovery
+receipts that were generated after the open and could recover nothing, the two
 empty reader nights of 21 and 22 October and the nights under request v3 from
 30 October, and the three reaction tickets the 4 November publication carried.
 A record's own clock, `published_at`, is set when its run starts; this reading
@@ -42,14 +42,16 @@ calls it the generation time.
   300.6, max 410.5 minutes; by the records' own clocks 53.1, 297.2 and 407.2.
   Each commit landed 2.3 to 6.2 minutes after its record's clock.
 - **47 publications**; five sessions published more than once (11 and 21
-  September, 8, 9 and 19 October), none since: 19 October's second is the
-  *Evening backfill* re-run of 20 October (`d179f206`, landed 17:23 UTC,
-  1,268.3 minutes after the session's completion), the one that named LCU.
+  September, 8, 9 and 19 October), none since: 19 October's second is a second
+  publication of that session generated on 20 October (`d179f206`, landed
+  17:23 UTC, 1,268.3 minutes after the session's completion), the one that
+  named LCU.
   Statuses 30 degraded and 17 ok. Of the sixteen publications since the 17
   October reading, eight are degraded and eight ok: both of 19 October's
   (`claude_unavailable` on the first, `coverage_thin` on the backfill), 21 and
   22 October (`claude_unavailable`: the two empty reader nights, every call
-  answered HTTP 400 under the SDK that had moved its API version, #190), 27, 28
+  answered HTTP 400 under the SDK that had moved its API version, #190, the
+  records' own error text), 27, 28
   and 29 October (`claude_partial`: replies refused by reader authority under
   request v2) and 30 October (`coverage_thin`: NORD, a stock new to the
   directory, #206); 20, 23 and 26 October and 2 to 6 November are `ok`.
@@ -59,10 +61,12 @@ calls it the generation time.
 - **Reader:** 304 of 358 requested reads done over 47 publications; 21 cost
   blocks archived, the 12 October to 6 November publications' (60 calls, 52
   replies, 411,396 input and 27,998 output tokens, under `claude-sonnet-4-6`),
-  sixteen more than the 17 October reading's five (50 calls, 42 replies). Since
+  sixteen more than the 17 October reading's five; the sixteen new ones
+  carry 50 calls and 42 replies. Since
   that reading: under request v2, the ten publications of 19 to 29 October (nine
   sessions, 19 October's twice) got 9 of 22 requested reads (the two empty nights' four calls apiece got no reply;
-  the refusal floor of #182 tolerated one refusal of two on the 19 October backfill and on 20 October);
+  the refusal floor of #182 tolerated one refusal of two on 19 October's second
+  publication and on 20 October);
   under request v3, from the 30 October publication, 23 of 24 (one refused on
   30 October, CLMT, tolerated; then 4 of 4, 2 of 2, 12 of 12, 2 of 2 and 2 of
   2). Twenty-four reads over six nights is not a rate.
@@ -70,34 +74,41 @@ calls it the generation time.
   tickets, 10 anticipation tickets; the three reaction tickets are the 4
   November publication's HQY, RCBC and VIK.
 - **Companions, morning:** eight receipts: two `inapplicable` (the 9 October
-  one after its window, the 10 October one on a Saturday), four `no_tickets`
+  one after its window, `entry_window_ended`; the 10 October one on a Saturday,
+  `wrong_session`), four `no_tickets`
   (23 October, 2, 4 and 6 November) and two `partial` (3 November, one row;
   5 November, three rows, the published tickets' pre-open quotes, every print
   stale under the 60-second rule). Six of the eight were generated and landed
   before their applicable open. **Five sessions have a morning check that
-  landed inside its window: 23 October, 3, 4, 5 and 6 November, the last four
-  consecutive**, each generated at 14:22 UTC (8:22 CT), the minute after the
-  owner's 8:21 CT dispatch of `morning.yml` fires; the 2 November check was
-  generated at 14:31 UTC, after the 14:30 open. #111's count of consecutive
-  sessions with a morning check stands at four.
+  landed before the applicable open: 23 October, 3, 4, 5 and 6 November, the
+  last four consecutive**, each generated at 14:22 UTC (8:22 CT); the 2
+  November check was generated at 14:31 UTC, after the 14:30 open and inside
+  the collector's own window (its `entry_phase` reads `open`). #111's count of
+  consecutive sessions with a morning check before the open stands at four;
+  with any check inside the collector's window, at five (2 to 6 November).
+  What dispatched each check is not in the receipts.
 - **Companions, issuer:** 31 receipts: seven `unavailable` (all before 17
   October), 17 `partial` and seven `no_candidates`; 28 before their applicable
   open; the newest, for 9 November, `no_candidates`.
 - **Companions, research observations:** six: three `no_research_rows` (23
-  October, 2 and 4 November), one `partial` (3 November, one row) and two
-  `inapplicable` `cohort_not_current` (5 and 6 November: the registered
-  comparison's period ended, so the cohort on `main` no longer binds).
+  October, 2 and 4 November), one `partial` (3 November, one row) and two `inapplicable` `cohort_not_current` (5 and 6 November: the cohort on
+  `main` was still the 3 November publication's, for 4 November, because the 4
+  and 5 November publications' comparisons were refused inside the registered
+  period; the 6 November publication's cohort reads `outside_period` for 9
+  November).
 - **Companions, source recovery:** 19 receipts: six `recovered` (for 19, 20,
   21, 22 and 23 October, 9 November), five `partial` (for 14, 15, 16 and 26
   October, 2 November) and eight `inapplicable` `recovery_window_ended` (for
   27, 28, 29 and 30 October, 3, 4, 5 and 6 November). Eleven of the 19
   landed before their applicable open: every one that recovered or partly
-  recovered did, and each `inapplicable` one is a weekday on which GitHub
-  created the 07:37 UTC slot's run after the open (landed 13:32 to 14:38 UTC
-  under daylight time, 15:21 to 15:46 under standard time), when the receipt
-  says the window had ended and asks nothing; the four Saturday runs (17, 24 and
-  31 October, 7 November) ran for the Monday publications and recovered or
-  partly recovered. Since 27 October no weekday receipt has recovered a bar.
+  recovered did, and each `inapplicable` one was generated on a weekday after the applicable open
+  (landed 13:32 to 14:38 UTC under daylight time, 15:21 to 15:46 under standard
+  time) and says the window had ended and it asked nothing; the four Saturday
+  runs (17, 24 and 31 October, 7 November) ran for the Friday publications,
+  whose applicable session is the Monday, and recovered or partly recovered.
+  Since 27 October no weekday receipt has recovered a bar; which slot's run
+  each was, and when GitHub created it, is the schedule-reliability reading's
+  question, not this one's.
 - 38 commits set aside, each a record that is not a real schema-2 publication
   (the first build's, and five of the second build's fixture from 11 September
   before its first real night), named with the reason in the reading.
@@ -134,7 +145,7 @@ reading pinned to `426d3c59`. The 13 October reading beside it is the v3
 reading pinned to `7e40716e`, and the 12 October one the v2 reading, with
 `v1/` holding the first version as `main` carried it before the v2 correction
 (`279ec5a3`), both pinned to `c759a1e6`. `tests/test_service_health.py` holds
-all nine files, and the three earlier reports, to their git blob identities.
+all eight files, and the three earlier reports, to their git blob identities.
 
 `python tools/service_health.py --check` holds the two files under
 `2026-11-07-service-health-evidence/`: it re-reads the commits the JSON names,

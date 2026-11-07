@@ -1076,7 +1076,25 @@ def test_the_report_quotes_the_reading(committed, frozen_17):
     assert f"the {TENS[len(pre)]} publications of 19 to 29 October ({WORDS[len({p['session'] for p in pre})]} sessions, 19 October's twice) " \
            f"got {reads(pre)[0]} of {reads(pre)[1]} requested reads" in prose
     assert all((p["reader"]["usage"]["calls"], p["reader"]["usage"]["responses"]) == (4, 0) for p in pre if p["session"] in ("2026-10-21", "2026-10-22"))
-    assert all(p["reader"]["verdict"] == "tolerated" for p in pre if p["commit"].startswith("d179f206") or p["session"] == "2026-10-20")
+    floored = [p for p in pre if p["commit"].startswith("d179f206") or p["session"] == "2026-10-20"]
+    assert len(floored) == 2 and all(p["reader"]["verdict"] == "tolerated" and (p["reader"]["done"], p["reader"]["requested"]) == (1, 2) for p in floored)
+    assert "tolerated one refusal of two on 19 October's second publication and on 20 October" in prose
+    # what the records at the named commits say: the request version on each side, the refused name, the
+    # empty nights' error text, the gapped names, the tickets
+    versions = {p["commit"][:8]: sh.read_at(p["commit"], sh.RECORD_PATH)[0]["rules"]["grading"]["reader_request_version"] for p in since_pubs}
+    assert all(versions[p["commit"][:8]] == 2 for p in pre) and all(versions[p["commit"][:8]] == 3 for p in v3)
+    thirty = sh.read_at(v3[0]["commit"], sh.RECORD_PATH)[0]["run"]
+    assert thirty["reads"]["refused_names"] == ["CLMT"] and "one refused on 30 October, CLMT, tolerated" in prose
+    for p in pre:
+        if p["session"] in ("2026-10-21", "2026-10-22"):
+            data = sh.read_at(p["commit"], sh.RECORD_PATH)[0]
+            errors = [b["claude"].get("error") for b in data["bursts"] if (b.get("claude") or {}).get("error")]
+            assert errors and all("Error code: 400" in e for e in errors), p["session"]
+    gapped = {c[:8]: sh.read_at(c, sh.RECORD_PATH)[0]["run"]["coverage"]["reasons"]["gapped"]["sample"] for c in (backfill["commit"], v3[0]["commit"])}
+    assert gapped == {"d179f206": ["LCU"], "e4063d25": ["NORD"]} and "the one that named LCU" in prose and "(`coverage_thin`: NORD" in prose
+    four = next(p for p in v3 if p["session"] == "2026-11-04")
+    trades = [t["ticker"] if isinstance(t, dict) else t for t in sh.read_at(four["commit"], sh.RECORD_PATH)[0]["trades"]]
+    assert trades == ["HQY", "RCBC", "VIK"] and "the 4 November publication's HQY, RCBC and VIK" in prose
     assert f"from the 30 October publication, {reads(v3)[0]} of {reads(v3)[1]}" in prose and v3[0]["reader"]["verdict"] == "tolerated"
     per = [f"{p['reader']['done']} of {p['reader']['requested']}" for p in v3[1:]]
     assert f"then {', '.join(per[:-1])} and {per[-1]})" in prose
@@ -1087,8 +1105,11 @@ def test_the_report_quotes_the_reading(committed, frozen_17):
     assert f"{usage['calls']} calls, {usage['responses']} replies" in prose
     since_usage = [p["reader"]["usage"] for p in since_pubs if p["reader"].get("usage")]
     assert len(since_usage) == usage["publications_with_block"] - before["publications_with_block"]
-    assert f"{TENS[len(since_usage)]} more than the 17 October reading's {WORDS[before['publications_with_block']]} " \
-           f"({sum(u['calls'] for u in since_usage)} calls, {sum(u['responses'] for u in since_usage)} replies)" in prose
+    assert f"{TENS[len(since_usage)]} more than the 17 October reading's {WORDS[before['publications_with_block']]}; the " \
+           f"{TENS[len(since_usage)]} new ones carry {sum(u['calls'] for u in since_usage)} calls and {sum(u['responses'] for u in since_usage)} replies" in prose
+    blocks = [p for p in committed["publications"] if p["reader"].get("usage")]
+    assert {b["reader"]["usage"]["model"] for b in blocks} == {"claude-sonnet-4-6"} and "under `claude-sonnet-4-6`" in prose
+    assert f"the {day_list([blocks[0]['session']])} to {day_list([blocks[-1]['session']])} publications'" in prose
     # the archived slot basis: which sessions, at which slots
     archived = sorted(p["session"] for p in committed["publications"] if p["timing"]["slot_basis"] == "archived")
     assert {tuple(sorted(p["timing"]["slots_et"].values())) for p in committed["publications"] if p["timing"]["slot_basis"] == "archived"} == {("18:16", "20:16")}
@@ -1098,11 +1119,21 @@ def test_the_report_quotes_the_reading(committed, frozen_17):
     rows = committed["companions"]["morning"]
     by_status = {st: [r["applicable_session"] for r in rows if r["status"] == st] for st in ("inapplicable", "no_tickets", "partial")}
     assert c["morning"]["receipts"] == len(rows) == 8 and c["morning"]["statuses"] == {k: len(v) for k, v in by_status.items()}
-    assert f"{WORDS[len(rows)]} receipts: {WORDS[len(by_status['inapplicable'])]} `inapplicable`" in prose
+    inapplicable_morning = {r["applicable_session"]: r for r in rows if r["status"] == "inapplicable"}
+    assert {k: v["reason"] for k, v in inapplicable_morning.items()} == {"2026-10-09": "entry_window_ended", "2026-10-12": "wrong_session"}
+    assert date.fromisoformat(inapplicable_morning["2026-10-12"]["generated_at"][:10]) == date(2026, 10, 10) and date(2026, 10, 10).weekday() == 5
+    assert f"{WORDS[len(rows)]} receipts: {WORDS[len(by_status['inapplicable'])]} `inapplicable` (the 9 October one after its window, " \
+           "`entry_window_ended`; the 10 October one on a Saturday, `wrong_session`)" in prose
     assert f"{WORDS[len(by_status['no_tickets'])]} `no_tickets` ({day_list(by_status['no_tickets'])})" in prose
     partial = [r for r in rows if r["status"] == "partial"]
     assert f"{WORDS[len(partial)]} `partial` (" + "; ".join(f"{day_list([r['applicable_session']])}, {WORDS[r['rows']]} row{'s' if r['rows'] != 1 else ''}"
                                                            for r in partial) in prose
+    # the 5 November receipt's rows are the published tickets, every print stale
+    five = next(r for r in partial if r["applicable_session"] == "2026-11-05")
+    receipt = sh.read_at(five["commit"], sh.COMPANIONS["morning"])[0]
+    assert [row["ticker"] for row in receipt["rows"]] == ["HQY", "RCBC", "VIK"]
+    assert all(row["trade"]["status"] == "stale" and row["quote"]["status"] == "stale" for row in receipt["rows"])
+    assert "the published tickets' pre-open quotes, every print stale under the 60-second rule" in prose
     assert f"{WORDS[c['morning']['before_applicable_open']].capitalize()} of the {WORDS[len(rows)]} were generated and landed before their " \
            "applicable open" in prose
     assert c["morning"]["before_applicable_open"] == c["morning"]["generated_before_applicable_open"]
@@ -1114,12 +1145,23 @@ def test_the_report_quotes_the_reading(committed, frozen_17):
             break
         consecutive += 1
     assert in_window == ["2026-10-23", "2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06"] and consecutive == 4
-    assert f"**{WORDS[len(in_window)].capitalize()} sessions have a morning check that landed inside its window: {day_list(in_window)}, " \
+    assert f"**{WORDS[len(in_window)].capitalize()} sessions have a morning check that landed before the applicable open: {day_list(in_window)}, " \
            f"the last {WORDS[consecutive]} consecutive**" in prose
-    assert f"#111's count of consecutive sessions with a morning check stands at {WORDS[consecutive]}." in prose
+    # the collector's own window is wider than the open: a check it made after the open still reads a phase
+    any_check = [r["applicable_session"] for r in rows if r["status"] != "inapplicable"]
+    consecutive_any = 0
+    for session in reversed(published):
+        if session not in any_check:
+            break
+        consecutive_any += 1
+    assert consecutive_any == 5
+    assert f"#111's count of consecutive sessions with a morning check before the open stands at {WORDS[consecutive]}; with any check inside " \
+           f"the collector's window, at {WORDS[consecutive_any]} ({day_list([published[-consecutive_any]])[:1]} to {day_list([published[-1]])})." in prose
     late = [r for r in rows if not r["before_applicable_open"] and r["status"] != "inapplicable"]
-    assert [r["applicable_session"] for r in late] == ["2026-11-02"]
-    assert f"the 2 November check was generated at {hhmm(late[0]['generated_at'])} UTC, after the {hhmm(late[0]['applicable_open_at'])} open" in prose
+    assert [r["applicable_session"] for r in late] == ["2026-11-02"] and late[0]["entry_phase"] == "open"
+    assert f"the 2 November check was generated at {hhmm(late[0]['generated_at'])} UTC, after the {hhmm(late[0]['applicable_open_at'])} open and " \
+           "inside the collector's own window (its `entry_phase` reads `open`)" in prose
+    assert "What dispatched each check is not in the receipts." in prose
     assert all(hhmm(r["generated_at"]) == "14:22" for r in rows if r["applicable_session"] >= "2026-11-03") and "each generated at 14:22 UTC" in prose
     # the issuer, research and recovery receipts as the file counts them
     issuer = c["issuer_evidence"]
@@ -1138,6 +1180,19 @@ def test_the_report_quotes_the_reading(committed, frozen_17):
     assert f"{WORDS[len(r_rows)]}: {WORDS[len(r_by['no_research_rows'])]} `no_research_rows` ({day_list(r_by['no_research_rows'])}), " \
            f"{WORDS[len(r_by['partial'])]} `partial` ({day_list(r_by['partial'])}, one row) and {WORDS[len(r_by['inapplicable'])]} " \
            f"`inapplicable` `cohort_not_current` ({day_list(r_by['inapplicable'])}" in prose
+    # why the cohort was not current: the receipts' own cohort block, and the cohort file at the publications
+    for r in r_rows:
+        if r["status"] == "inapplicable":
+            cohort = sh.read_at(r["commit"], sh.COMPANIONS["research_observations"])[0]["cohort"]
+            assert (cohort["applicable_session"], cohort["status"], cohort["bound"]) == ("2026-11-04", "recorded", False), r["applicable_session"]
+    by_session = {p["session"]: p["commit"] for p in committed["publications"] if p["session"] >= "2026-11-03"}
+    blobs = {s_: subprocess.run(["git", "rev-parse", f"{c}:docs/stop-research.json"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+             for s_, c in by_session.items()}
+    assert blobs["2026-11-03"] == blobs["2026-11-04"] == blobs["2026-11-05"] != blobs["2026-11-06"], "the 4 and 5 November publications wrote no cohort"
+    six = sh.read_at(by_session["2026-11-06"], "docs/stop-research.json")[0]
+    assert (six["status"], six["publication"]["applicable_session"]) == ("outside_period", "2026-11-09")
+    assert "the cohort on `main` was still the 3 November publication's, for 4 November, because the 4 and 5 November publications' " \
+           "comparisons were refused inside the registered period; the 6 November publication's cohort reads `outside_period` for 9 November" in prose
     recovery = c["source_recovery"]
     rc_rows = committed["companions"]["source_recovery"]
     rc_by = {st: [r["applicable_session"] for r in rc_rows if r["status"] == st] for st in ("recovered", "partial", "inapplicable")}
@@ -1156,6 +1211,31 @@ def test_the_report_quotes_the_reading(committed, frozen_17):
     saturdays = [r for r in rc_rows if date.fromisoformat(r["landed_at"][:10]).weekday() == 5]
     assert [r["landed_at"][:10] for r in saturdays] == ["2026-10-17", "2026-10-24", "2026-10-31", "2026-11-07"]
     assert all(r["status"] != "inapplicable" and r["before_applicable_open"] for r in saturdays)
-    assert f"the {WORDS[len(saturdays)]} Saturday runs ({day_list([r['landed_at'][:10] for r in saturdays])}) ran for the Monday publications" in prose
+    assert all(date.fromisoformat(r["measured_session"]).weekday() == 4 and date.fromisoformat(r["applicable_session"]).weekday() == 0 for r in saturdays)
+    assert f"the {WORDS[len(saturdays)]} Saturday runs ({day_list([r['landed_at'][:10] for r in saturdays])}) ran for the Friday publications, " \
+           "whose applicable session is the Monday" in prose
+    assert "which slot's run each was, and when GitHub created it, is the schedule-reliability reading's question" in prose
+    # the clock, the pins, the frozen-file count and the set-asides' composition, each the files' own
+    assert f"{hhmm(committed['source']['clock'])} UTC on 7 November, is its clock" in prose
+    assert f"pinned to `{frozen_17['source']['through'][:8]}`" in prose
+    frozen_files = len(FROZEN_BLOBS) + len(FROZEN_V3_BLOBS) + len(FROZEN_17_BLOBS)
+    assert f"holds all {WORDS[frozen_files]} files, and the three earlier reports, to their git blob identities" in prose
+    kinds = {"first_build": 0, "fixture": 0}
+    for entry in committed["skipped"]:
+        data = sh.read_at(entry["commit"], sh.RECORD_PATH)[0]
+        kinds["fixture" if data.get("schema_version") == 2 and data.get("fixture") else "first_build"] += 1
+    assert kinds == {"first_build": 33, "fixture": 5}
+    assert f"(the first build's, and {WORDS[kinds['fixture']]} of the second build's fixture from 11 September" in prose
+    # the index entry carries the reading's own figures
+    index = " ".join((ROOT / "docs/input-truthfulness/README.md").read_text(encoding="utf-8").split())
+    for phrase in (f"{s['published_sessions']} of {s['due_sessions']} due sessions published, all {s['before_next_open']} before the next open, fresh",
+                   f"latency median {lat['median']} minutes by the landing commit, {s['after_retry_slot']} of {s['published_sessions']} after the retry slot",
+                   f"{WORDS[len(rows)]} morning receipts, {WORDS[len(in_window)]} of them before the applicable open ({day_list(in_window[:1])} and "
+                   f"{date.fromisoformat(in_window[1]).day} to {day_list([in_window[-1]])}, the last {WORDS[consecutive]} consecutive)",
+                   f"{recovery['receipts']} source-recovery receipts, the {WORDS[len(inapplicable)]} weekday ones since 27 October `inapplicable`, "
+                   "each generated after the open",
+                   f"{usage['publications_with_block']} archived cost blocks ({usage['calls']} calls, {usage['input_tokens']:,} input tokens)",
+                   f"{s['reads']['done']} of {s['reads']['requested']} requested reads done, {reads(v3)[0]} of {reads(v3)[1]} under request v3"):
+        assert phrase in index, phrase
     weekday_since = [r for r in rc_rows if r["applicable_session"] >= "2026-10-27" and date.fromisoformat(r["landed_at"][:10]).weekday() < 5]
     assert weekday_since and all(r["status"] == "inapplicable" for r in weekday_since) and "Since 27 October no weekday receipt has recovered a bar" in prose
