@@ -656,10 +656,12 @@ INDEX = ROOT / "docs/input-truthfulness/README.md"
 
 
 def test_the_index_entry_quotes_the_reading(committed):
-    entry = " ".join(INDEX.read_text(encoding="utf-8").split("\n\n")[1].split())
+    paragraphs = [" ".join(p.split()) for p in INDEX.read_text(encoding="utf-8").split("\n\n")]
+    entries = [p for p in paragraphs if p.startswith("[17 October 2026: the stale stocks, read again](2026-10-17-stale-inputs.md)")]
+    assert len(entries) == 1, "the index names the reading once, wherever later entries sit"
+    entry = entries[0]
     s, rows = committed["summary"], committed["stock_sessions"]
     c = s["classes"]
-    assert "(2026-10-17-stale-inputs.md)" in entry
     assert f"{s['stock_sessions']} stale stock-sessions ({s['stocks']} stocks) over {s['nights']} nights" in entry
     assert f"{c['scanned_not_listed']} were scanned again by a follow-up on their late bar and would not have been listed" in entry
     assert f"{c['under_price_policy']} fell under the $3 policy" in entry

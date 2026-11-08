@@ -1,0 +1,286 @@
+{
+ "account": {
+  "equity": 30000.0,
+  "max_open_positions": 4,
+  "max_position_pct": 25.0,
+  "notes": [
+   "Risk per trade: $150.00 (0.5% of $30,000.00; his band is 0.25-1%).",
+   "Position cap: $7,500.00 (25% of equity) in any one name.",
+   "Max 4 open positions (100% of equity if all are at the cap).",
+   "Cash reuse: US stock trades generally settle T+1; a sale does not establish immediately spendable cash. Check availability and any cash-account restrictions with your broker.",
+   "Cash-account planning reference: no leverage is assumed. The site does not read your broker's settled cash or buying power; confirm available settled cash before each buy.",
+   "Plan a protective stop-market order as soon as the buy fills; verify your broker supports the intended entry and linked stop orders. Gaps and slippage can make the loss exceed planned risk."
+  ],
+  "risk_pct": 0.5
+ },
+ "open_plans": [
+  {
+   "current_stop": 4.97,
+   "day": 1,
+   "entry_ref": 5.12,
+   "events": [
+    {
+     "date": "2026-11-03",
+     "day": 1,
+     "event": "not_filled",
+     "price": 5.1
+    }
+   ],
+   "evidence_ref": {
+    "context_sha256": "b7e165b5b93ea0689e6634fe0bdefcde1c22ccd24eb9ea1bce56daaf1069daf5",
+    "id": "1527354690441fdd74432855ff9749d789d96c2f02c79f7341e1e4677c7422d9",
+    "pick_sha256": "bc6d916d26f60d8ec159ced8a98916b1dde88d49f235265ad80216c1b5899736",
+    "plan_sha256": "b3b53dc710ecd2521fc787250e889f6835849c4ac4c00a7beaf5f91165b14df5",
+    "version": 1
+   },
+   "exit_price": null,
+   "fill": "never reached the $5.12 trigger (high $5.11): the day order expired",
+   "grade": "watch",
+   "half_sold": false,
+   "instruction": "Day 1 (2026-11-03): never reached the $5.12 trigger (high $5.11): the day order expired. Nothing to hold.",
+   "kind": "anticipation",
+   "last_close": 5.05,
+   "last_date": "2026-11-03",
+   "limit": 5.17,
+   "picked": "2026-11-02",
+   "regime": "red",
+   "remaining": 12,
+   "result_pct": null,
+   "sessions": 4,
+   "shares": 12,
+   "sold": 0,
+   "status": "not_filled",
+   "stop": 4.97,
+   "targets": {
+    "dollar_high": null,
+    "dollar_low": null,
+    "high": 6.14,
+    "high_pct": 20.0,
+    "low": 5.53,
+    "low_pct": 8.0,
+    "note": "under $5 bursts can run 20-40%"
+   },
+   "ticker": "ESRT",
+   "uncertainty": null,
+   "unrealised_pct": null
+  },
+  {
+   "current_stop": 106.11,
+   "day": 1,
+   "entry_ref": 109.92,
+   "events": [
+    {
+     "date": "2026-11-05",
+     "day": 1,
+     "event": "stopped",
+     "price": 106.11,
+     "remaining": 0,
+     "shares": 8
+    }
+   ],
+   "evidence_ref": {
+    "context_sha256": "0a59de7d0e6e8635740816e3b5aa4c356f32a7d2f1cd806ab0eef4df3587bb0d",
+    "id": "f59de7520876c4ae8a49749ca9ac2430b1c730efbbf98f1e88ae38b1f42b991d",
+    "pick_sha256": "873b6ed2e998fcb13a38d9b390daa1eab36299ad088be1e1bd297c8f267a639f",
+    "plan_sha256": "f2056f6127ac6ad254a610dd611eb8a6e6f164181a591a13dafb1edf8ee351e6",
+    "version": 1
+   },
+   "exit_price": 106.11,
+   "fill": "filled at the open, $109.92",
+   "grade": "A+",
+   "half_sold": false,
+   "instruction": "Day 1: 8 HQY stopped at $106.11 (-3.5%).",
+   "kind": "burst",
+   "last_close": 103.46,
+   "last_date": "2026-11-05",
+   "limit": 110.53,
+   "picked": "2026-11-04",
+   "regime": "red",
+   "remaining": 0,
+   "result_pct": -3.47,
+   "sessions": 2,
+   "shares": 8,
+   "sold": 8,
+   "status": "stopped",
+   "stop": 106.11,
+   "targets": {
+    "dollar_high": 134.93,
+    "dollar_low": 114.93,
+    "high": 131.92,
+    "high_pct": 20.0,
+    "low": 118.72,
+    "low_pct": 8.0,
+    "note": "above $40 he measures the move in dollars: $5-25"
+   },
+   "ticker": "HQY",
+   "uncertainty": null,
+   "unrealised_pct": -5.88
+  },
+  {
+   "current_stop": 58.93,
+   "day": 1,
+   "entry_ref": 60.94,
+   "events": [
+    {
+     "date": "2026-11-05",
+     "day": 1,
+     "event": "stopped",
+     "price": 58.93,
+     "remaining": 0,
+     "shares": 15
+    }
+   ],
+   "evidence_ref": {
+    "context_sha256": "0a59de7d0e6e8635740816e3b5aa4c356f32a7d2f1cd806ab0eef4df3587bb0d",
+    "id": "f4ff57b8648cee2d0ccd3cde47fa20940a3d5308640c9ea746364c918e9a9a6f",
+    "pick_sha256": "f7fe9c422dfd3459e28d19a208b42db0974684c9e9402883379da56873a1fd7c",
+    "plan_sha256": "bca8abd0c312b4ba646aed0ef23d4d88da54e0e5d183f810934c9ea01ea1c807",
+    "version": 1
+   },
+   "exit_price": 58.93,
+   "fill": "filled at the open, $60.94",
+   "grade": "A+",
+   "half_sold": false,
+   "instruction": "Day 1: 15 RCBC stopped at $58.93 (-3.3%).",
+   "kind": "burst",
+   "last_close": 58.34,
+   "last_date": "2026-11-05",
+   "limit": 61.38,
+   "picked": "2026-11-04",
+   "regime": "red",
+   "remaining": 0,
+   "result_pct": -3.3,
+   "sessions": 2,
+   "shares": 15,
+   "sold": 15,
+   "status": "stopped",
+   "stop": 58.93,
+   "targets": {
+    "dollar_high": 85.98,
+    "dollar_low": 65.98,
+    "high": 73.18,
+    "high_pct": 20.0,
+    "low": 65.86,
+    "low_pct": 8.0,
+    "note": "above $40 he measures the move in dollars: $5-25"
+   },
+   "ticker": "RCBC",
+   "uncertainty": null,
+   "unrealised_pct": -4.27
+  },
+  {
+   "current_stop": 88.17,
+   "day": 1,
+   "entry_ref": 91.17,
+   "events": [
+    {
+     "date": "2026-11-05",
+     "day": 1,
+     "event": "stopped",
+     "price": 88.17,
+     "remaining": 0,
+     "shares": 10
+    }
+   ],
+   "evidence_ref": {
+    "context_sha256": "0a59de7d0e6e8635740816e3b5aa4c356f32a7d2f1cd806ab0eef4df3587bb0d",
+    "id": "7d62c99075ad327ad9d663749b49a6b831171305df948a9e93af3787c4bcf83d",
+    "pick_sha256": "ace069616fb79ffff605693e8c5560d87f88131dbb3ddaa0fe97c3d401bdaa39",
+    "plan_sha256": "855a122b937d9bf8b311bff93d67e374f730de5d1b32d9a439f20d182ec92fac",
+    "version": 1
+   },
+   "exit_price": 88.17,
+   "fill": "filled at 09:30 ET, inside the first 30 minutes, at the trigger, $91.17 (minute bars)",
+   "grade": "A+",
+   "half_sold": false,
+   "instruction": "Day 1: 10 VIK stopped at $88.17 (-3.3%).",
+   "kind": "burst",
+   "last_close": 86.16,
+   "last_date": "2026-11-05",
+   "limit": 91.84,
+   "minute_evidence": "bb688502b54c1c7027357c7a9ee92a0add0064b51261d323907aaaf6e23de846.json",
+   "picked": "2026-11-04",
+   "regime": "red",
+   "remaining": 0,
+   "result_pct": -3.29,
+   "sessions": 2,
+   "shares": 10,
+   "sold": 10,
+   "status": "stopped",
+   "stop": 88.17,
+   "targets": {
+    "dollar_high": 116.84,
+    "dollar_low": 96.84,
+    "high": 110.21,
+    "high_pct": 20.0,
+    "low": 99.19,
+    "low_pct": 8.0,
+    "note": "above $40 he measures the move in dollars: $5-25"
+   },
+   "ticker": "VIK",
+   "uncertainty": null,
+   "unrealised_pct": -5.5
+  }
+ ],
+ "origin": {
+  "commit": "af21693ce5cd5e0df91fb23ac58972ee542af5ed",
+  "path": "docs/data.json",
+  "record_sha256": "ea082b34e2b5d8ea7b7229f7b74b2cbff8207b89d5a1f7eef26b598b9b555390"
+ },
+ "published_at": "2026-11-07T02:50:52.890478+00:00",
+ "rules_version": "b35c768825b3",
+ "scorecard": {
+  "avg_r": null,
+  "benchmark_pairs": 5,
+  "breakeven": 0,
+  "contract_version": 2,
+  "filled": 5,
+  "input_basis": {
+   "adjustment": "split",
+   "evaluated_session": "2026-11-06",
+   "expected_session": "2026-11-06",
+   "feed": "sip",
+   "provider": "Alpaca",
+   "timeframe": "1Day"
+  },
+  "losses": 3,
+  "median_r": null,
+  "metric_denominator": 5,
+  "min_read": 20,
+  "not_filled": 7,
+  "note": "from bars alone, a model and not a brokerage record: a daily bar books a fill only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open is read again from that session's retained minute bars, which book a fill in the first 30 minutes at the trigger (or the crossing minute's open over it), none after it, and leave a crossing minute that cannot order the fill against the limit or the stop uncertain; without those minutes such a day, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by day 5",
+  "open": 0,
+  "pending": 0,
+  "plans": 13,
+  "population": {
+   "at_capacity": false,
+   "from": "2026-08-13",
+   "includes_current": true,
+   "outside_window": 0,
+   "problem": null,
+   "retained": 13,
+   "through": "2026-11-06"
+  },
+  "readable": false,
+  "replay_rules_version": "b35c768825b3",
+  "sessions": 60,
+  "settled": 5,
+  "spy_avg_pct": null,
+  "sum_r": 0.43,
+  "uncertain": 1,
+  "uncertain_reasons": [
+   {
+    "count": 1,
+    "kind": "open_above_limit",
+    "words": "opened above the limit, which the plan skips, then traded back under it"
+   }
+  ],
+  "unmeasured": 0,
+  "unreadable": 0,
+  "unscored": 0,
+  "win_rate": null,
+  "wins": 2
+ },
+ "session": "2026-11-06",
+ "version": "scorecard-extract-v1"
+}

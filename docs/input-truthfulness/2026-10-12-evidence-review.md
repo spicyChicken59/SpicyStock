@@ -11,6 +11,12 @@ names. It reads; it decides nothing. No threshold, rule, record or account is
 changed by it, and the verdicts below are readings of evidence sufficiency
 under criteria the tool states and archives, never a recommendation to trade.
 
+**Superseded on 7 November 2026** by [the 7 November review](2026-11-07-evidence-review.md),
+which reads the study after its first YELLOW nights and first burst tickets. The
+files this report names are frozen as written: `tools/evidence_review.py` now
+writes the 7 November review, and `tests/test_evidence_review.py` holds these
+to their git blobs rather than re-deriving them.
+
 ## What was read
 
 | source | what it is | through |
