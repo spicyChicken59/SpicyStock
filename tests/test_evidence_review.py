@@ -749,7 +749,7 @@ def test_a_population_with_no_settled_ticket_renders_without_raising(monkeypatch
     assert stopped["settled"]["n"] == 0 and stopped["sign"] == "unreadable" and stopped["night_bootstrap"] is None
 
 
-def test_the_prior_review_is_read_under_its_digest_and_version(monkeypatch):
+def test_the_prior_review_is_read_under_its_digest_and_version(monkeypatch, tmp_path):
     """The 12 October figure the RED note quotes is read off that review's frozen
     file under a pinned digest; a changed byte or another version refuses."""
     raw = (ROOT / er.PRIOR_REVIEW).read_bytes()
@@ -757,6 +757,14 @@ def test_the_prior_review_is_read_under_its_digest_and_version(monkeypatch):
     assert er.load_prior_review()["version"] == er.PRIOR_VERSION == "evidence-review-v1"
     with pytest.raises(er.ReviewError, match="prior review: SHA-256 does not match"):
         er._read_pinned(er.PRIOR_REVIEW, "0" * 64, "prior review")
+    # a changed byte of the frozen file itself is refused by the pinned digest, not re-digested and accepted
+    tampered = tmp_path / "review.json"
+    tampered.write_bytes(raw.replace(b'"negative"', b'"positive"', 1))
+    assert tampered.read_bytes() != raw
+    monkeypatch.setattr(er, "PRIOR_REVIEW", tampered)
+    with pytest.raises(er.ReviewError, match="prior review: SHA-256 does not match"):
+        er.load_prior_review()
+    monkeypatch.undo()
     for mutate in (lambda d: d.update(version=er.VERSION), lambda d: d["periods"]["by_phase"].pop("exploratory")):
         data = json.loads(raw)
         mutate(data)
