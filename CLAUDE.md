@@ -14608,3 +14608,225 @@ question. Omit: any change to the crons on these numbers.
 **Not claimable:** Monday 9 November's morning check (the fifth consecutive if
 it lands inside its window); the morning host under #213 and #214 (Mo's
 redeploy); any trading edge.
+
+## Checkpoint, 7 Nov 2026 -- PR #216 accepted; the evidence review read again over the first YELLOW week, the first burst tickets and the rule promoted without one
+
+**PR #216, accepted.** Merged as `af21693c` on `main` with a merge commit over
+`4ad320c2`, its tree the head `89a6d57dd`'s byte for byte. That head passed all
+seven checks on Tests run 42392677913 (pytest 16:42–17:08 UTC, page
+16:43–17:00, the gate, the native central case 16:43–17:09 and stress
+16:43–17:29) and Secret scans 42392677853 and 42392672723; the run on the
+superseded head `8ee0feead` reported the expected pytest failure (the depth-1
+fetch) and nothing else. Publisher 42396608097 printed *Verified: every one of
+the 48 public files matches committed main* at 17:30:39 UTC; Pages 42396641917
+deployed at 17:31 (42396607412 cancelled as superseded, as every merge does);
+the merge commit's own Secret scan 42396608063 and Tests run 42396608156
+(pytest 17:30–17:56 UTC, page 17:30–17:47; the native cases skipped by the
+gate, as a merge's are) passed. The Railway host still answers 404 on
+`/status.json` and serves the 4 November receipt, until Mo redeploys from
+`main`.
+
+**Revision.** Branch `review-nov7` from `main` at `af21693c`, pushed as the
+designated branch, **PR #217**: the review (`75c970b01`), the holes the
+first mutation pass showed (`cd9fa5b74`), the reviewer's fixes (`ea12efd17`,
+`bf6c10332`), the by-hand holds (`5d6b60ec6`), the attribution (`5a3dd4e89`)
+and the two count-line moves. `tools/evidence_review.py` is rewritten
+(`evidence-review-v2`), `tests/test_evidence_review.py` with it; the 7
+November review, its five retained inputs, the two dated readings and the
+dated report are new; the 12 October report gains a superseded note; README,
+the input-truthfulness index and this file are swept. Nothing under `src/`
+changed and no rule moved (`rules_version` stands, no fixture regenerated);
+`docs/data.json`, `docs/picks.json`, the compact reader, every receipt, the
+history, the evidence objects, the quality ledger, the workflows and the
+vendored design system are untouched; no run, mail, dispatch, provider call or
+credential. `.env.example` was read: nothing here is configuration.
+
+**Why this.** The 12 October review judged five floated changes when every
+study night was RED, no burst ticket had ever been published and the
+registered research had no resolved row; on 4 November the owner promoted two
+changes (the $30,000 account and the dollar-only admission rule) without an
+outcome reading, and the 7 November re-read put nine YELLOW nights, the first
+burst tickets and a closed research period into the study. The tool as it
+stood refused a study with a non-RED night.
+
+**What was built.** `tools/evidence_review.py` writes the 7 November review
+into `docs/input-truthfulness/2026-11-07-evidence-review-evidence/` and
+`--check` holds its two files; the 12 October files are frozen to their git
+blobs by the tests (the report with its superseded note) and never
+re-derived. Five inputs are retained under `inputs/` as `af21693c` carried
+them, each pinned by SHA-256 and refused on a changed byte: the findings file,
+the research cohort and journal byte for byte, an extract of the live record's
+scorecard (`scorecard_extract()`: session, rules, account, the scorecard
+block, the open plans) and `admission_join()`, every burst row of the study's
+47 publications read off git at the spec's blobs and joined to
+`src/admission.py`'s block re-derived from the row (keyed by the study's own
+eight-character commit and ticker; a ticker listed twice in one publication
+is a refusal). `--retain` writes them from git once and refuses to overwrite.
+`build()` holds the join to the spec, every study row to a join entry whose
+scan is the row's own, and every publication to an archived account. The
+admitted stratum is split by phase, by regime, by calendar month, by halves
+of each phase's nights, by mechanical grade, by the account each publication
+archived and by the admission route; the reader-accepted population and every
+stratum by phase beside them; the night count is printed beside every
+interval. `funnel_source()` sums the stages by regime; the live scorecard is a
+source of its own. The criteria are the 12 October ones with one scope added:
+`removed`, the population a change stops trading, shown and never counted.
+The two readings the review copies, `tools/candidate_funnel.py` and
+`tools/whole_share_feasibility.py` over the whole history, were run pinned to
+`af21693c` (the archived accounts, and $30,000 / 0.5% / 25% as a
+counterfactual) into dated directories of their own.
+
+**What it found** (`docs/input-truthfulness/2026-11-07-evidence-review.md`).
+The admitted stratum's exploratory phase, every night RED, is still negative
+(303 settled, −0.123R a ticket, interval [−0.354, −0.022]); its confirmatory
+phase, readable for the first time, is 575 settled over 24 nights at −0.218R
+with the mean of night means −0.003R and interval [−0.232, +0.220]; its 17
+RED nights 270 settled at +0.015R ([−0.103, +0.430]) and its 9 YELLOW nights
+305 at −0.424R ([−0.617, +0.095]), both unresolved. The 4 November night sits
+in every confirmatory figure: 112 of the YELLOW A tickets' 287 settled, at
+−1.029R a ticket; the other eight nights' 175 settled read −0.039R,
+[−0.442, +0.223]. The admission join: 6,458 of the study's 20,676 rows came
+through the 4% route, 991 through a dollar day with both expansion checks and
+13,227 through the dollar scan alone without one; inside the admitted stratum
+the kept population is 268 settled at −0.356R ([−0.335, +0.171]) and the
+stopped 610 at −0.110R ([−0.218, +0.086]), every interval straddling zero and
+the kept population's worse mean the 4 November tickets' (the gap closes most
+without that night, to −0.052R over 186 against −0.053R over 573). The
+live scorecard: 13 plans, 5 settled (+0.43R), under its floor; HQY, RCBC and
+VIK each read stopped. The registered research closed with 70 rows over 20
+cohorts, 7 eligible and 0 resolved. The ledger: trading RED nights stays
+**not_supported** (the exploratory negative sign; the confirmatory RED nights
+straddle zero); admitting A under YELLOW, the 5% anticipation stop, an A+
+ticket without an accepted review, the $30,000 account (promoted in part) and
+the dollar-only admission (promoted 4 November) are each **insufficient**.
+Nothing is promoted; neither promoted change has evidence for it or against
+it under these criteria.
+
+**Measured** (this sandbox, Python 3.12.3, on the final tree `5a3dd4e89`):
+the full suite in a worktree under the session scratchpad, the two
+`zstandard`-gated files this venv cannot run left out: 5811 passed, 13 environment-gated skips and the two morning-host privilege tests failed in 23 m 29 s (5989 collected with those two files, 5826 without), the same two that fail under the root-only scratchpad wherever the worktree sits and pass in the checkout, as the #214 checkpoint records -- a first run of it on the same tree died at 77% with this session's worker restart and is not counted;
+`tests/test_evidence_review.py` (41 tests), `tests/test_docs.py` (52) and
+`tests/test_stale_inputs.py` (40) 133 passed in 92 s, with the count line at
+5989; `python tools/evidence_review.py --check` current (6 changes reviewed,
+0 supported); `--retain` refuses the committed inputs by name; the two dated
+readings carry `af21693c` as their `ref` and the review's copies of their
+totals are held to the committed files by the tests; `git diff --check`
+clean; gitleaks 8.24.3 with the repository's config over the branch's seven
+commits: no leaks. No record, rule or page file moved, so the fixtures, the
+chart check and the smoke are CI's, recorded on the PR. Two earlier full
+runs are recorded rather than counted: on the first commit's tree 5806
+passed, 13 skipped and 4 failed in 32 m 29 s -- `tests/test_stale_inputs.py`
+read the index's second paragraph as its own entry, which the new entry above
+it displaced (it finds its entry by its link now), and the count line, with
+the two morning-host privilege tests that fail under the root-only scratchpad
+wherever the worktree sits (the #214 checkpoint records the same) and pass in
+the checkout -- and on `cd9fa5b74`, before the review's fixes, 5809 passed,
+13 skipped and those two in 27 m 38 s (5987 collected).
+
+**Mutation passes**, each mutant in a detached worktree at the commit it
+judges, the tree never written, judged by the whole
+`tests/test_evidence_review.py` (no `-k`), the committed `review.json` and
+`review.md` regenerated with the mutated tool before the judge so the byte
+comparison cannot be what kills it (the first pass, which judged the
+committed files as they stood, killed 26 of 27 with 17 of them dying in that
+comparison alone, and is not counted). Over `75c970b01`, 27 mutants: 24 died
+in the test naming their rule -- the sign at a zero bound, a removed
+population counted or made direct, the join's scan, missing-row, policy and
+duplicate-ticker checks, the account coverage, the extract's origin,
+`--retain` overwriting, the pinned digests, the route read off the scan and
+the split inverted, the funnel stage indexed, the phase cross-check, nights
+counted as rows, the RED signs swapped, the accepted population without its
+band, the big account widened, the floor at ten, the halves floored, the
+account label, the funnel ref, a byte of the frozen 12 October report and a
+settled count in the retained extract -- and **three SURVIVED, each a hole**:
+the YELLOW note's worst night taken by `max` (no test read which night the
+note names), a removed population made a direct source (no verdict moved, so
+only the byte comparison had caught it) and a drifted figure in the dated
+report (the report test read bare "N settled" phrases that another line also
+carried). Each has its assertion (the note's night held to the minimum of the
+YELLOW A night means, every removed scope held to the population it names on
+both the committed and the built ledger, the report's figures anchored to the
+phrases they sit in over the report's own line wraps) and all three die
+re-judged at `cd9fa5b74`. Over the review's fixes at `bf6c10332`, twelve
+more -- the reviewer's six survivors (the account label counting every open
+plan, the 12 October figure moved by one, the comparison word fixed at
+"worse than", and three report drifts: the A+ split 18/7 to 18/8, 119 to 120,
+the interval clause reworded back) and six over the new rules
+(`settled_by_regime` emptied, the gap night taken by the largest gap, `_r()`
+back to a bare format, the prior review's version and its digest unchecked,
+`compare_means()` calling two missing means equal): all twelve die, each in
+the test naming its rule; the two controls (a comment, a docstring word) pass
+41. **Two of those twelve died only in the report test's hold on the
+committed phrase** -- the ledger test compared the gap night and the regime
+split against the helpers that wrote them, the third shape this file names --
+so both are counted by hand now (the gap night by a plain minimisation over
+the rows and on synthetic rows where the closest and the furthest night
+differ; the regime split on the by-hand periods), and re-judged at
+`5d6b60ec6` each dies in two tests, the control passing 41. The attribution
+sentence's two holds (`5a3dd4e89`) were proved by hand: the report's night
+moved to 5 November fails the report test, and its count moved from 14 to 15
+fails the ledger test.
+
+**The review, worked.** One reviewer by execution over `cd9fa5b74`, in its
+own worktree (the brief: the tool, the tests, the three documents and the
+committed files; every figure re-derived from the study's rows, every input
+digest checked against `af21693c`, its own mutants regenerating the review
+before the judge). Its holds: `--check` current; every figure of
+`review.json`, the report, the index entry and README's paragraph equal to its
+own re-derivation from the rows (`so.bootstrap_nights` at the spec's reps and
+seed), the five retained inputs equal to `git show af21693c:` or to the tool's
+producers run again from git, fourteen join rows equal to an independent
+RE∧VOL re-derivation and to the archived 4 November blocks, the 12 October
+files frozen to their blobs, the worktree clean after every mutant. Seven
+findings, one high and six low, each reproduced here before it was touched
+and each fixed. The high was the count line: 5986 where the suite collected
+5987 (the new test file collects 39, the old 27). The lows were sentences
+and holes. The report called November's three-night interval "the smallest
+the study draws" when the review's own reader-accepted population draws one
+over two nights and the criteria require two (it says "one over the two the
+criteria require" now, and the test holds the smallest to two); "a third of
+their settled tickets" for 119 of 305 (it says the fraction); and four
+things the review printed that no test held, each shown by a mutant of the
+reviewer's that survived: the A+ split of 18 YELLOW and 7 RED, in no
+`review.json` field (`settled_by_regime` on every population now, read by
+the report test and counted by hand on synthetic rows); the RED note's
+"negative at 267 settled on 12 October", a literal (read off the 12 October
+review's frozen `review.json` under its own pinned digest, `load_prior_
+review()`, a changed byte, another version or a file without an exploratory
+population refused); the dollar note's "is worse than", a literal
+(`compare_means()`, and the night that carries the gap found by
+`route_gap_night()` rather than named, each held by hand); and the account
+label's "the $30,000 burst tickets, each stopped" counted every open plan
+(`kind == "burst"` now, three of three). A population with no settled
+ticket gave `f"{None:+.3f}"` a `TypeError` past `main()`'s own catches, after
+every input was read (every mean prints through `_r()`, and a test drives
+the whole build with every route admitted: it renders, says "not comparable
+with" and names no gap night). The module docstring said four inputs where
+five are retained. Two test assertions could not fail (one ended in
+`or True`, one raised without calling the tool); both are deleted. Its
+leads, recorded: the reader-accepted population was a direct source of the
+unreviewed-ticket change on 12 October and is adjacent here (the note says
+so now; no verdict moves, unreadable either way); the YELLOW-A change's
+halves are the confirmatory stratum's, not the YELLOW A population's (no
+effect while no sign is positive); `funnel_source()` copies a fixed subset
+of stages (the rest are zero today); and the dollar note's attribution of
+the gap to "the 4 November burst-route tickets" was exact only as "the 4
+November tickets" -- fourteen of that night's 82 kept settled rows are
+dollar days with both checks, every one a loss, though not every one at -1R
+as the lead said (their R runs from -0.58 to -1.30, read off the rows) -- so
+the report blames the night and no route, and the test derives both counts.
+The brief had said forty tests; the file collects 39 (41 now).
+
+**Keep / fix / defer / omit.** Keep: a review is a dated directory with its
+inputs retained and pinned; the superseded one is frozen, never re-derived;
+a population a change stops trading is shown and never counted. Fix if it
+bites: the interval rule is the study's own and draws over two nights, so a
+short month (November's three settled nights) can read negative on three
+nights; the review prints the night count beside every interval and adds no
+floor of its own. Defer: a review after the 13 November re-read, when the 6
+November tickets settle; the reader's effect on the kept names, which only a
+live YELLOW night can show. Omit: any rule, threshold or account change on
+these numbers; an edge claim.
+
+**Not claimable:** the morning host under #213 and #214 (Mo's redeploy); a
+morning check with admitted plans inside the window; any trading edge.
