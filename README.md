@@ -1700,6 +1700,18 @@ an absent block, including in older bundles, is event clearance; a partial
 index says so beside its list. This metadata warning does not modify
 published tickets, sizing or known-event exclusions.
 
+Each listed filing's SEC item codes are printed under the Form 8-K headings
+the evening's earnings block uses (`earnings_risk.ITEM_TITLES`), the five items
+it warns on (1.01, 1.03, 2.01, 3.01, 5.01) first and marked, and one line
+above the list counts the listed current reports that carry one and names the
+filing each sits in. The string is read as the evening reads it: each `N.NN`
+once, a token SEC wrote in another shape counted and never read as a code, a
+code the heading table lacks printed bare, an empty string said to record
+none, a 6-K said to carry none. An item names a kind of event, never what the
+filing says; the line is not event clearance, it reads the listed reports only
+(never the rows the twelve-report bound left out), and it changes no ticket,
+exclusion or order.
+
 Known unresolved events remain separate, source-backed anchors. The collector
 does not classify new events or clear an existing exclusion. In the 10 October
 2026 source audit, the original ZIM merger report was seventeenth newest among

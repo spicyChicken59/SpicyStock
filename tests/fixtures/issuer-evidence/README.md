@@ -26,8 +26,8 @@ Browser receipts, when present, are generated through the production collector
 from verified fixture publications; they are not hand-authored publication
 records. Fetch success does not mean issuer news or earnings are cleared.
 
-Run `python tests/fixtures/issuer-evidence/generate.py --check` to verify the 44
-producer outputs (21 variants, each a receipt and a bundle, beside the
+Run `python tests/fixtures/issuer-evidence/generate.py --check` to verify the 46
+producer outputs (22 variants, each a receipt and a bundle, beside the
 publication and reader files), or omit `--check` to regenerate them. The generator changes a
 synthetic provider's COIL symbol to ZIM before the real evening pipeline runs.
 That produces an AAPL ticket and a reviewed ZIM exclusion. Following the
@@ -49,15 +49,19 @@ captured files above. Its uncaptured August document returns an explicit
 retrieval failure, so the `collected` variant honestly remains partial. No
 fixture generation makes a live provider request or changes trade authority.
 
-The nine additive `semantic-*` pairs reuse those exact canonical and reader
+The ten additive `semantic-*` pairs reuse those exact canonical and reader
 bytes. Their SEC-shaped mapping, submissions and document responses are entirely
 synthetic, including the ZIM responses; the original captured-source variants
 remain byte-identical. They exercise complete content, an empty full metadata
 window, cached mapping/documents with fresh submissions, an unverified cached
 mapping, late document HTTP 403, invalid metadata, a verified issuer whose only
 in-window metadata row is refused (`rows-invalid`: zero rows read, so the
-acquisition review is unknown rather than none), a short metadata window and a
-deadline before transport. The real collector produces every receipt and bundle
+acquisition review is unknown rather than none), a short metadata window, a
+deadline before transport, and the item strings a current report can carry
+(`items`: AAPL's five 8-K rows hold a material 1.01 beside 2.03 and 9.01, a
+spaced token and one SEC wrote in another shape (`2.020`), a repeated 5.02, an
+empty string and a code the heading table lacks (`9.99`), while ZIM's one row is
+a 6-K, which carries none; the Morning desk's item reading is held to them). The real collector produces every receipt and bundle
 with `dry_run: false` and an explicitly synthetic run ID. Shared mapping response
 identity and identical bodies at different document URLs distinguish network
 attempts/downloads from unique captures. Cached source clocks stay dated; they

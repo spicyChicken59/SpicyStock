@@ -13,6 +13,52 @@
   const ACQUISITION_REVIEW_VERSION = 2;
   const ERRORS = ['rate_limit', 'http_error', 'timeout', 'network_error', 'redirect_refused', 'size_limit', 'request_budget', 'time_budget', 'invalid_response', 'identity_unverified', 'metadata_invalid', 'document_invalid', 'history_incomplete'];
   const SOURCE_PHASES = { mapping: 'SEC ticker mapping', submissions: 'SEC submissions index', history: 'older SEC submissions index', primary: 'primary filing document', exhibit: 'filing exhibit' };
+  // The evening's own reading of a current report's item codes (earnings_risk:
+  // ITEM_CODE, the whitespace its parser strips, MATERIAL_ITEMS, MATERIAL_WORDS,
+  // ITEM_TITLES), held equal to the module by tests/test_docs.py. A heading
+  // names a KIND of event under Form 8-K, never what one filing says; a code
+  // the table lacks prints bare, and a token SEC wrote in another shape is
+  // counted, never read as a code.
+  const ITEM_CODE = /^[0-9]\.[0-9]{2}$/;
+  const ITEM_SPACE = /^[\t\n\v\f\r \x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\t\n\v\f\r \x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/g;
+  const CURRENT_REPORT_FORMS = ["8-K", "8-K/A"];
+  const MATERIAL_ITEMS = ["1.01", "1.03", "2.01", "3.01", "5.01"];
+  const MATERIAL_WORDS = {"1.01": "a material agreement", "1.03": "a bankruptcy", "2.01": "a completed acquisition or disposition", "3.01": "a delisting notice", "5.01": "a change in control"};
+  const ITEM_TITLES = {
+    "1.01": "Entry into a Material Definitive Agreement",
+    "1.02": "Termination of a Material Definitive Agreement",
+    "1.03": "Bankruptcy or Receivership",
+    "1.04": "Mine Safety - Reporting of Shutdowns and Patterns of Violations",
+    "1.05": "Material Cybersecurity Incidents",
+    "2.01": "Completion of Acquisition or Disposition of Assets",
+    "2.02": "Results of Operations and Financial Condition",
+    "2.03": "Creation of a Direct Financial Obligation or an Obligation under an Off-Balance Sheet Arrangement of a Registrant",
+    "2.04": "Triggering Events That Accelerate or Increase a Direct Financial Obligation or an Obligation under an Off-Balance Sheet Arrangement",
+    "2.05": "Costs Associated with Exit or Disposal Activities",
+    "2.06": "Material Impairments",
+    "3.01": "Notice of Delisting or Failure to Satisfy a Continued Listing Rule or Standard; Transfer of Listing",
+    "3.02": "Unregistered Sales of Equity Securities",
+    "3.03": "Material Modification to Rights of Security Holders",
+    "4.01": "Changes in Registrant's Certifying Accountant",
+    "4.02": "Non-Reliance on Previously Issued Financial Statements or a Related Audit Report or Completed Interim Review",
+    "5.01": "Changes in Control of Registrant",
+    "5.02": "Departure of Directors or Certain Officers; Election of Directors; Appointment of Certain Officers; Compensatory Arrangements of Certain Officers",
+    "5.03": "Amendments to Articles of Incorporation or Bylaws; Change in Fiscal Year",
+    "5.04": "Temporary Suspension of Trading Under Registrant's Employee Benefit Plans",
+    "5.05": "Amendment to Registrant's Code of Ethics, or Waiver of a Provision of the Code of Ethics",
+    "5.06": "Change in Shell Company Status",
+    "5.07": "Submission of Matters to a Vote of Security Holders",
+    "5.08": "Shareholder Director Nominations",
+    "6.01": "ABS Informational and Computational Material",
+    "6.02": "Change of Servicer or Trustee",
+    "6.03": "Change in Credit Enhancement or Other External Support",
+    "6.04": "Failure to Make a Required Distribution",
+    "6.05": "Securities Act Updating Disclosure",
+    "6.06": "Static Pool",
+    "7.01": "Regulation FD Disclosure",
+    "8.01": "Other Events",
+    "9.01": "Financial Statements and Exhibits"
+  };
   const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
   const require = (ok, why) => { if (!ok) throw Error(why); };
   const canonical = x => Array.isArray(x) ? x.map(canonical) : object(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, canonical(x[k])])) : x;
@@ -50,6 +96,72 @@
   }
   function paragraph(host, label, value) {
     const p = node('p', { class: 'sc-hint' }); p.append(node('strong', {}, label + ' '), d.createTextNode(value)); host.append(p);
+  }
+  const plural = (n, word) => n + ' ' + word + (n === 1 ? '' : 's');
+  // One current report's item codes as earnings_risk._parse_items reads them:
+  // each N.NN as SEC writes them, once, in the order written; a token SEC wrote
+  // in another shape counted, never a code.
+  function parseItems(value) {
+    const codes = [];
+    let unread = 0;
+    for (const token of String(value).split(',')) {
+      const code = token.replace(ITEM_SPACE, '');
+      if (!code) continue;
+      if (ITEM_CODE.test(code)) { if (!codes.includes(code)) codes.push(code); } else unread += 1;
+    }
+    return { codes, unread };
+  }
+  const isMaterial = code => MATERIAL_ITEMS.includes(code);
+  const currentReport = filing => CURRENT_REPORT_FORMS.includes(filing.form);
+  const itemLabel = code => Object.hasOwn(ITEM_TITLES, code) ? code + ' (' + ITEM_TITLES[code] + ')' : code;
+  const unreadWords = unread => plural(unread, 'item token') + ' SEC wrote in another shape ' + (unread === 1 ? 'was' : 'were') + ' not read';
+  // The items one listed filing carries, under their headings, the material
+  // ones first and marked; a 6-K carries none, and an 8-K with no code says so.
+  function itemsLine(host, filing) {
+    const p = node('p', { class: 'sc-hint', 'data-filing-items': filing.accession });
+    p.append(node('strong', {}, 'Items '));
+    if (!currentReport(filing)) {
+      p.setAttribute('data-material-count', '0');
+      p.append(d.createTextNode('none: a ' + filing.form + ' carries no item codes.'));
+      host.append(p); return;
+    }
+    const { codes, unread } = parseItems(filing.items);
+    const ordered = [...codes.filter(isMaterial), ...codes.filter(code => !isMaterial(code))];
+    p.setAttribute('data-material-count', String(codes.filter(isMaterial).length));
+    if (!codes.length) p.append(d.createTextNode(unread ? 'none read' : 'none recorded'));
+    ordered.forEach((code, i) => {
+      if (i) p.append(d.createTextNode(' · '));
+      p.append(isMaterial(code) ? node('strong', { 'data-material-item': code }, itemLabel(code)) : d.createTextNode(itemLabel(code)));
+    });
+    p.append(d.createTextNode(unread ? (codes.length ? ' · ' : ': ') + unreadWords(unread) + '.' : '.'));
+    host.append(p);
+  }
+  // One line above the listed filings: how many of the listed current reports
+  // carry an item the evening warns on, and in which filing each sits. It reads
+  // the listed reports alone (the twelve-report bound is the collector's) and
+  // adds no clearance: an item names a kind of event, never what the filing says.
+  function itemsSummary(host, index) {
+    const listed = index.listed_filings, read = listed.filter(currentReport).map(filing => ({ filing, ...parseItems(filing.items) }));
+    const material = read.filter(r => r.codes.some(isMaterial)), unread = read.reduce((n, r) => n + r.unread, 0);
+    const state = !listed.length ? 'none' : !read.length ? 'foreign' : material.length ? 'material' : read.some(r => r.codes.length) ? 'listed' : 'unreadable';
+    const p = node('p', { class: 'sc-hint', 'data-issuer-items': '', 'data-issuer-items-state': state, 'data-issuer-items-material': String(material.length) });
+    p.append(node('strong', {}, 'Current-report items: '));
+    const reports = plural(read.length, 'listed current report'), kinds = MATERIAL_ITEMS.map(code => code + ' ' + MATERIAL_WORDS[code]).join(', ');
+    const tail = ' An item names a kind of event, never what the filing says: read the filing before acting on it. This is not event clearance; known event evidence above remains in force, and only the listed reports were read.';
+    if (state === 'none') p.append(d.createTextNode('No current report is listed, so no item was read.'));
+    else if (state === 'foreign') p.append(d.createTextNode('None of the ' + plural(listed.length, 'listed report') + ' is an 8-K: a 6-K carries no item codes, so there is no item to read.'));
+    else if (state === 'unreadable') p.append(d.createTextNode('No item code of the ' + reports + ' could be read (' + unreadWords(unread) + '), so what they name is not established.' + tail));
+    else if (state === 'listed') p.append(d.createTextNode('None of the ' + reports + ' carries an item SpicyStock warns on (' + kinds + ').' + (unread ? ' ' + unreadWords(unread) + '.' : '') + tail));
+    else {
+      p.append(d.createTextNode(material.length + ' of the ' + reports + (material.length === 1 ? ' carries' : ' carry') + ' an item SpicyStock warns on: '));
+      material.forEach((r, i) => {
+        if (i) p.append(d.createTextNode('; '));
+        r.codes.filter(isMaterial).forEach((code, j) => { if (j) p.append(d.createTextNode(' and ')); p.append(node('strong', { 'data-material-item': code }, itemLabel(code))); });
+        p.append(d.createTextNode(' in the ' + r.filing.form + ' filed ' + r.filing.filing_date));
+      });
+      p.append(d.createTextNode('.' + (unread ? ' ' + unreadWords(unread) + '.' : '') + tail));
+    }
+    host.append(p);
   }
   function relevant(data) {
     const rows = (data.bursts || []).map(row => ['burst', row]).concat(((data.watchlist || {}).top || []).map(row => ['anticipation', row]));
@@ -466,8 +578,12 @@
       if (error.source_url) detail.append(d.createTextNode(' · '), link('SEC request URL', error.source_url));
       body.append(detail);
     }
+    itemsSummary(body, index);
     const metadata = node('details', { class: 'sc-disclosure' }); metadata.append(node('summary', {}, 'Listed filing metadata (' + index.listed_filings.length + ')'));
-    for (const item of index.listed_filings) paragraph(metadata, item.form + ' · ' + item.filing_date, 'SEC accepted ' + stamp(item.accepted_at) + ' · report date ' + (item.report_date || 'not supplied') + ' · accession ' + item.accession);
+    for (const item of index.listed_filings) {
+      paragraph(metadata, item.form + ' · ' + item.filing_date, 'SEC accepted ' + stamp(item.accepted_at) + ' · report date ' + (item.report_date || 'not supplied') + ' · accession ' + item.accession);
+      itemsLine(metadata, item);
+    }
     body.append(metadata);
     if (!row.documents.length) paragraph(body, 'No document excerpts retrieved.', 'Missing filings or content do not establish that no event exists.');
     for (const doc of row.documents) {
