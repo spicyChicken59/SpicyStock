@@ -306,7 +306,7 @@ def test_the_route_and_account_splits_are_rederived_from_the_retained_join(commi
     # every study row has its join, and the join carries the row's own scan
     for r in rows:
         entry = join["rows"][f"{r['publication']}:{r['ticker']}"]
-        assert entry["scan"] == r["scan"] and entry["admitted"] == admission.basis_of(entry["route"], {}) is not None or True
+        assert entry["scan"] == r["scan"]
         assert entry["admitted"] == (entry["basis"] in ("burst_route", "dollar_expansion"))
 
 
@@ -587,6 +587,34 @@ def test_the_ledger_populations_are_the_studys_rows(committed, study, spec, join
     }
     big_nights = sorted({r["session"] for r in adm if accounts[r["publication"]] == 30000})
     expected[f"admitted · publications sized at $30,000 ({', '.join(big_nights)})"] = [r for r in adm if accounts[r["publication"]] == 30000]
+    # the dollar note's comparison word and gap night are read off the two route populations, never typed
+    kept = [r for r in adm if r["admission"]["admitted"]]
+    stopped = [r for r in adm if not r["admission"]["admitted"]]
+    kb, sb = er.settled_block(kept), er.settled_block(stopped)
+    dollar_note = next(c for c in committed["ledger"] if c["id"] == "dollar_only_admission")["notes"][0]
+    assert f"({kb['mean_r']:+.3f}R over {kb['n']} settled) is {er.compare_means(kb['mean_r'], sb['mean_r'])} the stopped one's ({sb['mean_r']:+.3f}R over {sb['n']})" in dollar_note
+    gap = er.route_gap_night(kept, stopped)
+    assert gap and f"the gap closes most without {gap['session']}, which leaves {gap['kept']['mean_r']:+.3f}R over {gap['kept']['n']} against {gap['stopped']['mean_r']:+.3f}R over {gap['stopped']['n']}" in dollar_note
+    assert er.compare_means(-1.0, 0.0) == "worse than" and er.compare_means(0.5, 0.0) == "better than" and er.compare_means(0.1, 0.1) == "equal to" and er.compare_means(None, 0.0) == "not comparable with"
+    assert er.route_gap_night([], stopped) is None   # no night leaves both populations with a settled ticket
+    # the RED note quotes the 12 October review's exploratory figure off its frozen file, and this review's own beside it
+    prior = json.loads((ROOT / er.PRIOR_REVIEW).read_text(encoding="utf-8"))["periods"]["by_phase"]["exploratory"]
+    expl_now = committed["periods"]["by_phase"]["exploratory"]
+    red_note = next(c for c in committed["ledger"] if c["id"] == "trade_red_nights")["notes"][0]
+    assert red_note.startswith(f"the exploratory sign as the study grew: {prior['sign']} at {prior['settled']['n']} settled on 12 October (read off "
+                               f"that review's frozen file), {expl_now['sign']} at {expl_now['settled']['n']} now; the confirmatory RED nights, "
+                               f"read for the first time, are {committed['periods']['by_regime']['confirmatory red']['sign']}")
+    assert prior["settled"]["n"] == 267 and prior["sign"] == "negative"   # what the frozen 12 October file says
+    # the account change's live-scorecard label counts the record's burst plans, not every open plan
+    plans = committed["live_scorecard"]["open_plans"]
+    bursts = [pl for pl in plans if pl["kind"] == "burst"]
+    label = next(c for c in committed["ledger"] if c["id"] == "account_or_risk_increase")["sources"][1]["population"]
+    assert label.endswith(f"({sum(1 for pl in bursts if pl['status'] == 'stopped')} of its {len(bursts)} burst plans read stopped)")
+    assert len(bursts) < len(plans)   # the window holds an anticipation plan too, so the filter can be told from no filter
+    ticket_notes = next(c for c in committed["ledger"] if c["id"] == "ticket_without_accepted_review")["notes"]
+    assert f"the scorecard window holds {len(bursts)} burst plans, {sum(1 for pl in bursts if pl['status'] == 'stopped')} of them read stopped" in ticket_notes[1]
+    accepted_rows = [r for r in rows if r["reader_accepted"] and r["final_grade"] in pipeline.TRADE_GRADES]
+    assert f"is adjacent here: it is the rows the change would keep, not the ones it would add; its {er.settled_block(accepted_rows)['n']} settled are under the floor of {er.MIN_SETTLED} either way" in ticket_notes[2]
     # the YELLOW A note names the night with the lowest mean R among them, its settled count, and the rest's reading
     yellow_a = [r for r in yellow if r["grade_mechanical"] == "A"]
     means = so._night_means(yellow_a)
@@ -707,8 +735,35 @@ def test_the_review_refuses_evidence_that_does_not_reconcile(study, spec, join, 
         monkeypatch.undo()
     with pytest.raises(er.ReviewError, match="not a real schema-2 publication"):
         er.scorecard_extract(json.dumps({"schema_version": 2, "fixture": "full", "scorecard": {}}).encode(), "0" * 40)
-    with pytest.raises(er.ReviewError, match="listed twice"):
-        er.admission_join({"_sha256": "x", "publications": []}) if False else (_ for _ in ()).throw(er.ReviewError("listed twice"))
+
+
+def test_a_population_with_no_settled_ticket_renders_without_raising(monkeypatch):
+    """A ledger sentence over an empty population prints the review's dash and
+    omits the gap clause, never a traceback: the first version formatted a
+    None mean with :+.3f, which raised after every input had been read."""
+    monkeypatch.setattr(er, "is_admitted_route", lambda row: True)
+    review = er.build()
+    note = next(c for c in review["ledger"] if c["id"] == "dollar_only_admission")["notes"][0]
+    assert "is not comparable with the stopped one's (\u2014R over 0)" in note and "the gap closes most" not in note
+    stopped = review["periods"]["by_route"]["all nights route-stopped"]
+    assert stopped["settled"]["n"] == 0 and stopped["sign"] == "unreadable" and stopped["night_bootstrap"] is None
+
+
+def test_the_prior_review_is_read_under_its_digest_and_version(monkeypatch):
+    """The 12 October figure the RED note quotes is read off that review's frozen
+    file under a pinned digest; a changed byte or another version refuses."""
+    raw = (ROOT / er.PRIOR_REVIEW).read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == er.PRIOR_REVIEW_SHA256
+    assert er.load_prior_review()["version"] == er.PRIOR_VERSION == "evidence-review-v1"
+    with pytest.raises(er.ReviewError, match="prior review: SHA-256 does not match"):
+        er._read_pinned(er.PRIOR_REVIEW, "0" * 64, "prior review")
+    for mutate in (lambda d: d.update(version=er.VERSION), lambda d: d["periods"]["by_phase"].pop("exploratory")):
+        data = json.loads(raw)
+        mutate(data)
+        monkeypatch.setattr(er, "_read_pinned", lambda path, digest, what, raw=json.dumps(data).encode(): raw)
+        with pytest.raises(er.ReviewError, match="prior review is not evidence-review-v1"):
+            er.load_prior_review()
+        monkeypatch.undo()
 
 
 def test_a_ticker_listed_twice_in_one_publication_refuses_the_join(monkeypatch, spec):
@@ -737,12 +792,16 @@ def _phrase(pop: dict) -> str:
     return f"{s['n']} settled at {s['mean_r']:+.3f}R, interval [{ci[0]:+.3f}, {ci[1]:+.3f}]"
 
 
-def test_the_report_quotes_the_review(committed):
+def test_the_report_quotes_the_review(committed, study):
     """The dated report's numbers are the review's own, each anchored to the
     phrase it sits in, so a figure that also appears elsewhere cannot cover
-    for a drifted one."""
+    for a drifted one; the one figure it quotes from the 12 October review is
+    read off that frozen file, and the one count no population carries (the
+    worst night's share of the YELLOW settled tickets) off the study's rows."""
     text = " ".join(REPORT.read_text(encoding="utf-8").split())   # the report wraps its lines; a phrase may cross one
     p = committed["periods"]
+    prior = json.loads((ROOT / er.PRIOR_REVIEW).read_text(encoding="utf-8"))["periods"]["by_phase"]["exploratory"]
+    assert prior["sign"] == "negative" and f"negative as it was on 12 October at {prior['settled']['n']} settled" in text
     e, c = p["by_phase"]["exploratory"], p["by_phase"]["confirmatory"]
     es, cs = e["settled"], c["settled"]
     eci, cci = e["night_bootstrap"]["ci95"], c["night_bootstrap"]["ci95"]
@@ -757,6 +816,19 @@ def test_the_report_quotes_the_review(committed):
     a, a_plus = p["by_mechanical_grade"]["confirmatory A"], p["by_mechanical_grade"]["confirmatory A+"]
     assert f"The confirmatory mechanical A are {_phrase(a)}" in text
     assert f"the confirmatory mechanical A+ {_phrase(a_plus)} over {a_plus['settled_nights']} nights, {a_plus['sign']}" in text
+    by_regime = a_plus["settled_by_regime"]
+    assert f"{by_regime['yellow']} of them on YELLOW nights and {by_regime['red']} on RED" in text
+    assert sum(by_regime.values()) == a_plus["settled"]["n"]
+    # the fewest settled nights any interval of the review is drawn over, and the sentence that says so
+    fewest = min(pop["settled_nights"] for group in p.values() for pop in group.values() if pop["night_bootstrap"])
+    assert fewest == 2 and "an interval of three nights, one over the two the criteria require" in text
+    # the worst YELLOW night's share of the YELLOW admitted settled tickets, counted off the rows
+    yellow_rows = [r for r in study["rows"] if r["stratum"] == "admitted" and r["phase"] == "confirmatory"
+                   and r["night_regime"] == "yellow" and r["bucket"] == "settled"]
+    worst_yellow = re.search(r"the worst night, (\d{4}-\d{2}-\d{2}), holds", next(ch for ch in committed["ledger"] if ch["id"] == "yellow_admits_a")["notes"][0]).group(1)
+    held_all = sum(1 for r in yellow_rows if r["session"] == worst_yellow)
+    assert held_all and f"with one night holding {held_all} of their {len(yellow_rows)} settled tickets" in text
+    assert len(yellow_rows) == p["by_regime"]["confirmatory yellow"]["settled"]["n"]
     for month, words in (("2026-09", "September"), ("2026-10", "October"), ("2026-11", "November")):
         m = p["by_month"][month]
         if words == "October":
@@ -811,6 +883,10 @@ def test_the_report_quotes_the_review(committed):
     assert f"one night carries every settled $30,000 ticket ({direct('account_or_risk_increase', 0)['settled']})" in text
     k0, s0 = direct("dollar_only_admission", 0), direct("dollar_only_admission", 3)
     assert f"({k0['mean_r']:+.3f}R over {k0['settled']} against {s0['mean_r']:+.3f}R over {s0['settled']})" in text
+    gap = re.search(r"the gap closes most without (\S+), which leaves ([-+]\d\.\d{3})R over (\d+) against ([-+]\d\.\d{3})R over (\d+)",
+                    ledger["dollar_only_admission"]["notes"][0]).groups()
+    assert f"the gap closes most without {gap[0]} ({gap[1]}R over {gap[2]} against {gap[3]}R over {gap[4]})" in text
+    assert f"reads {'worse' if k0['mean_r'] < s0['mean_r'] else 'better'} a ticket than the stopped one" in text
     assert "2026-11-07-evidence-review-evidence/review.md" in text and er.ORIGIN_COMMIT in text
 
 

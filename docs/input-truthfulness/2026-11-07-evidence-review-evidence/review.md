@@ -196,7 +196,7 @@ Period signs: negative, unresolved.
 
 Because: study · admitted · exploratory · every night RED: negative (303 settled); study · admitted · confirmatory · RED nights: unresolved (270 settled); study · admitted · both phases · RED nights: unresolved (573 settled); study · every stratum · both phases · RED nights: unresolved (3856 settled); backtest · no regime gate · RED nights: unresolved (25 settled).
 
-- the exploratory sign held as the study grew (negative at 267 settled on 12 October, at 303 now); the confirmatory RED nights, read for the first time, straddle zero
+- the exploratory sign as the study grew: negative at 267 settled on 12 October (read off that review's frozen file), negative at 303 now; the confirmatory RED nights, read for the first time, are unresolved
 - the backtest's RED-night counterfactual is a positive sum over 25 settled tickets with no interval; its period (Feb-Sep) and universe differ from the study's
 
 ### Widen the anticipation stop cap from 4% to 5% — **insufficient**
@@ -231,7 +231,8 @@ Status: floated, not promoted.
 Because: study · admitted · confirmatory · YELLOW nights · mechanical A+ without an accepted review: unreadable (11 settled); backtest · production policy · YELLOW A+ · reader not run: unresolved (44 settled).
 
 - the backtest's production policy: 44 settled, win rate 0.36, mean 0.085R, median -0.09R, SPY 0.37% over the same windows
-- the live policy wrote its first burst tickets on 4 November (three A+ names with accepted reviews) and every one reads stopped on its first day; the scorecard reads 5 settled of 13 plans, +0.43R in sum
+- the live policy wrote its first burst tickets on 4 November; the scorecard window holds 3 burst plans, 3 of them read stopped, and reads 5 settled of 13 plans, +0.43R in sum
+- the reader-accepted population was a direct source of this change on 12 October and is adjacent here: it is the rows the change would keep, not the ones it would add; its 5 settled are under the floor of 20 either way
 - the retained HAE reply (8 October) is the case this change would admit: a mechanical A+ whose reply cited paths outside the authority contract and was refused; tests/fixtures/grading/reader-hae/ holds it rejected
 
 ### Raise the base risk or the account so more names size to a whole share — **insufficient**
@@ -243,9 +244,9 @@ Status: promoted in part on 4 November: the production account is $30,000 / 0.5%
 | source | scope | population | settled | nights | mean R | 95% night CI | sign |
 |---|---|---|---:|---:|---:|---|---|
 | study | direct | admitted · publications sized at $30,000 (2026-11-04, 2026-11-05, 2026-11-06) | 119 | — | -1.029 | — | unresolved |
-| live_scorecard | direct | the published record's own model plans through 2026-11-06 (3 of its open plans the $30,000 burst tickets, each stopped) | 5 | — | +0.086 | — | unreadable |
+| live_scorecard | direct | the published record's own model plans through 2026-11-06 (3 of its 3 burst plans read stopped) | 5 | — | +0.086 | — | unreadable |
 
-Because: study · admitted · publications sized at $30,000 (2026-11-04, 2026-11-05, 2026-11-06): unresolved (119 settled); live_scorecard · the published record's own model plans through 2026-11-06 (3 of its open plans the $30,000 burst tickets, each stopped): unreadable (5 settled).
+Because: study · admitted · publications sized at $30,000 (2026-11-04, 2026-11-05, 2026-11-06): unresolved (119 settled); live_scorecard · the published record's own model plans through 2026-11-06 (3 of its 3 burst plans read stopped): unreadable (5 settled).
 
 - the feasibility reading: under YELLOW, 92 of 97 in-band names size to a whole share at $30,000 against 54 of 97 at the archived accounts ($10,000 for 22 publications, $2,000 for 22, $30,000 for 3)
 - the price ceiling decides which names can be bought, not whether they win; a larger risk fraction multiplies the R of the same tickets and changes nothing about their sign
@@ -269,7 +270,7 @@ Period signs: unresolved, unresolved.
 
 Because: study · admitted stratum · every night · discovery route admitted: unresolved (268 settled); study · admitted stratum · YELLOW nights · discovery route admitted: unresolved (131 settled); study · admitted stratum · RED nights · discovery route admitted: unresolved (137 settled).
 
-- the rule was promoted without an outcome reading; this one finds no sign either way: the kept population's mean a ticket (-0.356R over 268 settled) is worse than the stopped one's (-0.110R over 610), the 4 November burst-route tickets carrying it, and neither interval is clear of zero
+- the rule was promoted without an outcome reading; this one finds no sign either way: the kept population's mean a ticket (-0.356R over 268 settled) is worse than the stopped one's (-0.110R over 610); the gap closes most without 2026-11-04, which leaves -0.052R over 186 against -0.053R over 573; and neither interval is clear of zero
 - the funnel: 3 in-band names stopped at the discovery route since the rule (every one on 4 November, the only YELLOW night since), none read
 - the study rows are not the rule's own population: it stops a name before its chart is read, and the reader's effect on the kept names is NOT RUN
 

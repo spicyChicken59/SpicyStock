@@ -337,7 +337,7 @@
    ],
    "id": "trade_red_nights",
    "notes": [
-    "the exploratory sign held as the study grew (negative at 267 settled on 12 October, at 303 now); the confirmatory RED nights, read for the first time, straddle zero",
+    "the exploratory sign as the study grew: negative at 267 settled on 12 October (read off that review's frozen file), negative at 303 now; the confirmatory RED nights, read for the first time, are unresolved",
     "the backtest's RED-night counterfactual is a positive sum over 25 settled tickets with no interval; its period (Feb-Sep) and universe differ from the study's"
    ],
    "period_signs": [
@@ -461,7 +461,8 @@
    "id": "ticket_without_accepted_review",
    "notes": [
     "the backtest's production policy: 44 settled, win rate 0.36, mean 0.085R, median -0.09R, SPY 0.37% over the same windows",
-    "the live policy wrote its first burst tickets on 4 November (three A+ names with accepted reviews) and every one reads stopped on its first day; the scorecard reads 5 settled of 13 plans, +0.43R in sum",
+    "the live policy wrote its first burst tickets on 4 November; the scorecard window holds 3 burst plans, 3 of them read stopped, and reads 5 settled of 13 plans, +0.43R in sum",
+    "the reader-accepted population was a direct source of this change on 12 October and is adjacent here: it is the rows the change would keep, not the ones it would add; its 5 settled are under the floor of 20 either way",
     "the retained HAE reply (8 October) is the case this change would admit: a mechanical A+ whose reply cited paths outside the authority contract and was refused; tests/fixtures/grading/reader-hae/ holds it rejected"
    ],
    "period_signs": [],
@@ -529,7 +530,7 @@
   {
    "because": [
     "study · admitted · publications sized at $30,000 (2026-11-04, 2026-11-05, 2026-11-06): unresolved (119 settled)",
-    "live_scorecard · the published record's own model plans through 2026-11-06 (3 of its open plans the $30,000 burst tickets, each stopped): unreadable (5 settled)"
+    "live_scorecard · the published record's own model plans through 2026-11-06 (3 of its 3 burst plans read stopped): unreadable (5 settled)"
    ],
    "id": "account_or_risk_increase",
    "notes": [
@@ -556,7 +557,7 @@
      "ci95": null,
      "mean_r": 0.086,
      "nights": null,
-     "population": "the published record's own model plans through 2026-11-06 (3 of its open plans the $30,000 burst tickets, each stopped)",
+     "population": "the published record's own model plans through 2026-11-06 (3 of its 3 burst plans read stopped)",
      "scope": "direct",
      "settled": 5,
      "sign": "unreadable",
@@ -577,7 +578,7 @@
    ],
    "id": "dollar_only_admission",
    "notes": [
-    "the rule was promoted without an outcome reading; this one finds no sign either way: the kept population's mean a ticket (-0.356R over 268 settled) is worse than the stopped one's (-0.110R over 610), the 4 November burst-route tickets carrying it, and neither interval is clear of zero",
+    "the rule was promoted without an outcome reading; this one finds no sign either way: the kept population's mean a ticket (-0.356R over 268 settled) is worse than the stopped one's (-0.110R over 610); the gap closes most without 2026-11-04, which leaves -0.052R over 186 against -0.053R over 573; and neither interval is clear of zero",
     "the funnel: 3 in-band names stopped at the discovery route since the rule (every one on 4 November, the only YELLOW night since), none read",
     "the study rows are not the rule's own population: it stops a name before its chart is read, and the reader's effect on the kept names is NOT RUN"
    ],
@@ -773,6 +774,10 @@
      "sum_r": -439.38,
      "wins": 955
     },
+    "settled_by_regime": {
+     "red": 1930,
+     "yellow": 1617
+    },
     "settled_nights": 25,
     "sign": "unresolved",
     "through": "2026-11-06"
@@ -800,6 +805,9 @@
      "n": 1926,
      "sum_r": -494.64,
      "wins": 420
+    },
+    "settled_by_regime": {
+     "red": 1926
     },
     "settled_nights": 15,
     "sign": "negative",
@@ -832,6 +840,10 @@
      "sum_r": -44.64,
      "wins": 120
     },
+    "settled_by_regime": {
+     "red": 379,
+     "yellow": 73
+    },
     "settled_nights": 20,
     "sign": "unresolved",
     "through": "2026-10-08"
@@ -861,6 +873,10 @@
      "sum_r": 4.71,
      "wins": 106
     },
+    "settled_by_regime": {
+     "red": 194,
+     "yellow": 113
+    },
     "settled_nights": 18,
     "sign": "unresolved",
     "through": "2026-11-03"
@@ -880,6 +896,9 @@
      "n": 119,
      "sum_r": -122.41,
      "wins": 0
+    },
+    "settled_by_regime": {
+     "yellow": 119
     },
     "settled_nights": 1,
     "sign": "unresolved",
@@ -911,6 +930,10 @@
      "sum_r": -6.37,
      "wins": 103
     },
+    "settled_by_regime": {
+     "red": 215,
+     "yellow": 105
+    },
     "settled_nights": 13,
     "sign": "unresolved",
     "through": "2026-10-20"
@@ -938,6 +961,10 @@
      "n": 255,
      "sum_r": -118.78,
      "wins": 50
+    },
+    "settled_by_regime": {
+     "red": 55,
+     "yellow": 200
     },
     "settled_nights": 11,
     "sign": "unresolved",
@@ -967,6 +994,9 @@
      "sum_r": -17.24,
      "wins": 28
     },
+    "settled_by_regime": {
+     "red": 117
+    },
     "settled_nights": 8,
     "sign": "unresolved",
     "through": "2026-09-22"
@@ -994,6 +1024,9 @@
      "n": 186,
      "sum_r": -19.95,
      "wins": 45
+    },
+    "settled_by_regime": {
+     "red": 186
     },
     "settled_nights": 7,
     "sign": "unresolved",
@@ -1025,6 +1058,10 @@
      "sum_r": -112.69,
      "wins": 147
     },
+    "settled_by_regime": {
+     "red": 263,
+     "yellow": 287
+    },
     "settled_nights": 24,
     "sign": "unresolved",
     "through": "2026-11-06"
@@ -1052,6 +1089,10 @@
      "n": 25,
      "sum_r": -12.46,
      "wins": 6
+    },
+    "settled_by_regime": {
+     "red": 7,
+     "yellow": 18
     },
     "settled_nights": 10,
     "sign": "negative",
@@ -1081,6 +1122,9 @@
      "sum_r": -34.39,
      "wins": 73
     },
+    "settled_by_regime": {
+     "red": 297
+    },
     "settled_nights": 15,
     "sign": "negative",
     "through": "2026-10-01"
@@ -1108,6 +1152,9 @@
      "n": 6,
      "sum_r": -2.8,
      "wins": 0
+    },
+    "settled_by_regime": {
+     "red": 6
     },
     "settled_nights": 6,
     "sign": "unreadable",
@@ -1139,6 +1186,9 @@
      "sum_r": -30.12,
      "wins": 53
     },
+    "settled_by_regime": {
+     "red": 222
+    },
     "settled_nights": 14,
     "sign": "negative",
     "through": "2026-09-30"
@@ -1167,6 +1217,10 @@
      "sum_r": 2.64,
      "wins": 171
     },
+    "settled_by_regime": {
+     "red": 351,
+     "yellow": 162
+    },
     "settled_nights": 22,
     "sign": "unresolved",
     "through": "2026-10-30"
@@ -1194,6 +1248,9 @@
      "n": 143,
      "sum_r": -134.86,
      "wins": 2
+    },
+    "settled_by_regime": {
+     "yellow": 143
     },
     "settled_nights": 3,
     "sign": "negative",
@@ -1225,6 +1282,10 @@
      "sum_r": -125.15,
      "wins": 153
     },
+    "settled_by_regime": {
+     "red": 270,
+     "yellow": 305
+    },
     "settled_nights": 24,
     "sign": "unresolved",
     "through": "2026-11-06"
@@ -1252,6 +1313,9 @@
      "n": 303,
      "sum_r": -37.19,
      "wins": 73
+    },
+    "settled_by_regime": {
+     "red": 303
     },
     "settled_nights": 15,
     "sign": "negative",
@@ -1283,6 +1347,9 @@
      "sum_r": -33.08,
      "wins": 162
     },
+    "settled_by_regime": {
+     "red": 573
+    },
     "settled_nights": 30,
     "sign": "unresolved",
     "through": "2026-11-06"
@@ -1310,6 +1377,9 @@
      "n": 305,
      "sum_r": -129.26,
      "wins": 64
+    },
+    "settled_by_regime": {
+     "yellow": 305
     },
     "settled_nights": 9,
     "sign": "unresolved",
@@ -1339,6 +1409,9 @@
      "sum_r": 4.11,
      "wins": 89
     },
+    "settled_by_regime": {
+     "red": 270
+    },
     "settled_nights": 15,
     "sign": "unresolved",
     "through": "2026-11-06"
@@ -1367,6 +1440,9 @@
      "sum_r": -129.26,
      "wins": 64
     },
+    "settled_by_regime": {
+     "yellow": 305
+    },
     "settled_nights": 9,
     "sign": "unresolved",
     "through": "2026-11-04"
@@ -1394,6 +1470,9 @@
      "n": 303,
      "sum_r": -37.19,
      "wins": 73
+    },
+    "settled_by_regime": {
+     "red": 303
     },
     "settled_nights": 15,
     "sign": "negative",
@@ -1425,6 +1504,10 @@
      "sum_r": -95.28,
      "wins": 58
     },
+    "settled_by_regime": {
+     "red": 137,
+     "yellow": 131
+    },
     "settled_nights": 36,
     "sign": "unresolved",
     "through": "2026-11-06"
@@ -1452,6 +1535,10 @@
      "n": 610,
      "sum_r": -67.06,
      "wins": 168
+    },
+    "settled_by_regime": {
+     "red": 436,
+     "yellow": 174
     },
     "settled_nights": 39,
     "sign": "unresolved",
@@ -1481,6 +1568,9 @@
      "sum_r": -7.89,
      "wins": 41
     },
+    "settled_by_regime": {
+     "red": 137
+    },
     "settled_nights": 27,
     "sign": "unresolved",
     "through": "2026-11-06"
@@ -1508,6 +1598,9 @@
      "n": 436,
      "sum_r": -25.19,
      "wins": 121
+    },
+    "settled_by_regime": {
+     "red": 436
     },
     "settled_nights": 30,
     "sign": "unresolved",
@@ -1537,6 +1630,9 @@
      "sum_r": -87.39,
      "wins": 17
     },
+    "settled_by_regime": {
+     "yellow": 131
+    },
     "settled_nights": 9,
     "sign": "unresolved",
     "through": "2026-11-04"
@@ -1564,6 +1660,9 @@
      "n": 174,
      "sum_r": -41.87,
      "wins": 47
+    },
+    "settled_by_regime": {
+     "yellow": 174
     },
     "settled_nights": 9,
     "sign": "unresolved",
@@ -1594,6 +1693,10 @@
      "n": 5,
      "sum_r": -4.69,
      "wins": 0
+    },
+    "settled_by_regime": {
+     "red": 1,
+     "yellow": 4
     },
     "settled_nights": 2,
     "sign": "unreadable",

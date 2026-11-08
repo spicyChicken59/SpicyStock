@@ -1147,8 +1147,11 @@ archived, and a record from before the block is asked for none. The run:
   discovery admission re-derived off git -- each with original commit/path and
   exact SHA-256 provenance checked before reading; missing or changed bytes
   refuse before writing, and `--retain` writes them from git once and refuses
-  to overwrite. The candidate-funnel and whole-share-feasibility readings it
-  reads are dated the same day and pinned to the same commit. The current
+  to overwrite. The one figure it quotes from the 12 October review (the
+  exploratory sign and settled count then) is read off that review's frozen
+  `review.json` under its own pinned digest, never retyped. The candidate-funnel
+  and whole-share-feasibility readings it reads are dated the same day and
+  pinned to the same commit. The current
   rolling cohort, journal, findings file and record may advance without
   rewriting this dated review. A later evidence review needs a separately
   dated output. No change is promoted by the 7 November review, and none earns

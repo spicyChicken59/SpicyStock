@@ -8,7 +8,7 @@ and is never re-derived. The inputs are the frozen signal-outcome study
 findings file ``build_historical_findings.py`` wrote over that study (which
 holds the owner's pasted backtest summaries under the tool's own grammar), the
 candidate-funnel and whole-share-feasibility history readings dated 7 November,
-and four inputs retained under this review's ``inputs/`` as the commit named
+and five inputs retained under this review's ``inputs/`` as the commit named
 in ``ORIGIN_COMMIT`` carried them: the findings file, the registered research
 cohort and its journal, an extract of the live record's own model scorecard,
 and the join of every study row to its publication's discovery admission
@@ -32,7 +32,7 @@ reading of evidence sufficiency, never a recommendation to trade, and
 
 ``--check`` compares the two files it writes and exits 1 on a difference, the
 way ``make_fixture.py --check`` holds the fixtures. ``--retain`` writes the
-four retained inputs from git once, refusing to overwrite any that exist.
+five retained inputs from git once, refusing to overwrite any that exist.
 """
 from __future__ import annotations
 
@@ -93,6 +93,11 @@ SCORECARD_ORIGIN = {"commit": ORIGIN_COMMIT, "path": "docs/data.json",
 #: every study row joined to its publication's admission block, re-derived from the publication's own rows off git
 ADMISSION_ORIGIN = {"spec": str(STUDY_SPEC), "policy": admission.POLICY, "version": admission.VERSION,
                     "sha256": "9d3b24b531e7b4e112a3bb3131426f5ff1b766e231d14e98f050ab34c5a1c15b"}
+#: the superseded 12 October review's own file, read under its digest and never re-derived: the sign the study
+#: held then is quoted off it rather than retyped here
+PRIOR_REVIEW = TRUTH / "2026-10-12-evidence-review-evidence" / "review.json"
+PRIOR_REVIEW_SHA256 = "1319df6b60d3a878dd3844c20f6fc821571d5d94d18540da63f885f070059e1d"
+PRIOR_VERSION = "evidence-review-v1"
 EXTRACT_VERSION = "scorecard-extract-v1"
 JOIN_VERSION = "admission-join-v1"
 
@@ -169,8 +174,11 @@ def population(label: str, rows: list[dict], spec: dict, **extra) -> dict:
     settled = settled_block(rows)
     bootstrap = night_bootstrap(rows, spec)
     sessions = sorted({r["session"] for r in rows})
+    settled_by_regime = {regime: n for regime in REGIMES
+                         if (n := sum(1 for r in rows if r.get("bucket") == "settled" and r["night_regime"] == regime))}
     return {"label": label, "rows": len(rows), "nights": len(sessions),
             "settled_nights": len({r["session"] for r in rows if r.get("bucket") == "settled"}),
+            "settled_by_regime": settled_by_regime,
             "from": sessions[0] if sessions else None, "through": sessions[-1] if sessions else None,
             "settled": settled, "night_bootstrap": bootstrap, "sign": sign_of(settled, bootstrap), **extra}
 
@@ -313,6 +321,15 @@ def load_findings() -> tuple[dict, dict]:
     raw = _read_pinned(FINDINGS, FINDINGS_ORIGIN["sha256"], "findings")
     return json.loads(raw), {"path": str(FINDINGS), "sha256": FINDINGS_ORIGIN["sha256"], "kind": "retained_builder_output",
                              "origin": {"commit": FINDINGS_ORIGIN["commit"], "path": FINDINGS_ORIGIN["path"]}}
+
+
+def load_prior_review() -> dict:
+    """The 12 October review, read off its frozen file under its digest, for the
+    one figure this review quotes from it (the exploratory sign and count then)."""
+    data = json.loads(_read_pinned(PRIOR_REVIEW, PRIOR_REVIEW_SHA256, "prior review").decode("utf-8"))
+    if data.get("version") != PRIOR_VERSION or "exploratory" not in data.get("periods", {}).get("by_phase", {}):
+        raise ReviewError(f"the prior review is not {PRIOR_VERSION} with an exploratory population")
+    return data
 
 
 def load_scorecard() -> tuple[dict, dict]:
@@ -558,12 +575,36 @@ def verdict_of(sources: list[dict], periods_agree: bool) -> tuple[str, list[str]
     return "insufficient", because or ["no direct source"]
 
 
+def compare_means(a, b) -> str:
+    """One word for how a mean R a ticket stands against another; two means
+    are read, never asserted."""
+    if a is None or b is None:
+        return "not comparable with"
+    return "worse than" if a < b else "better than" if a > b else "equal to"
+
+
+def route_gap_night(kept: list[dict], stopped: list[dict]) -> dict | None:
+    """The night whose removal brings the kept and stopped means closest: the
+    night that carries the gap between them, found rather than named. None when
+    no night leaves both populations with a settled ticket."""
+    best = None
+    for session in sorted({r["session"] for r in kept + stopped}):
+        k = settled_block([r for r in kept if r["session"] != session])
+        s = settled_block([r for r in stopped if r["session"] != session])
+        if k["mean_r"] is None or s["mean_r"] is None:
+            continue
+        gap = abs(k["mean_r"] - s["mean_r"])
+        if best is None or gap < best["gap"]:
+            best = {"session": session, "gap": round(gap, 3), "kept": k, "stopped": s}
+    return best
+
+
 def _settled(rows: list[dict], session: str) -> int:
     return sum(1 for r in rows if r["session"] == session and r["bucket"] == "settled")
 
 
 def ledger(study: dict, spec: dict, split: dict, backtest: dict, funnel: dict, feasibility: dict, research: dict,
-           live: dict, accounts: dict[str, float]) -> list[dict]:
+           live: dict, accounts: dict[str, float], prior: dict) -> list[dict]:
     rows = study["rows"]
     admitted = [r for r in rows if r["stratum"] == ADMITTED]
     expl = [r for r in admitted if r["phase"] == "exploratory"]
@@ -586,6 +627,9 @@ def ledger(study: dict, spec: dict, split: dict, backtest: dict, funnel: dict, f
     red_bt = gate["no_regime_gate"]["by_regime"]["red"]
     a_bt = gate["no_regime_gate"]["by_grade"]["A"]
     production = gate["production"]
+    prior_expl = prior["periods"]["by_phase"]["exploratory"]
+    bursts = [p for p in live["open_plans"] if p.get("kind") == "burst"]
+    bursts_stopped = sum(1 for p in bursts if p.get("status") == "stopped")
     expl_words = "exploratory nights, all RED: tickets the market gate refused, every next close public before the spec froze"
     conf_words = "confirmatory nights, signalled after the freeze: the reader was not consulted for these tickets"
     changes = []
@@ -609,7 +653,7 @@ def ledger(study: dict, spec: dict, split: dict, backtest: dict, funnel: dict, f
                        a_bt["settled"], a_bt["sum_r"], "owner-pasted summary over 158 sessions; grade not split by regime; reader not run; no rows, so no interval")],
            [split["by_half"]["confirmatory first"]["sign"], split["by_half"]["confirmatory second"]["sign"]],
            [f"the YELLOW A tickets are {len(yellow_means)} nights' and the worst night, {worst_night}, holds {_settled(yellow_a, worst_night)} of their "
-            f"{settled_block(yellow_a)['n']} settled (mean {yellow_means[worst_night]:+.3f}R a ticket that night); without it the other "
+            f"{settled_block(yellow_a)['n']} settled (mean {_r(yellow_means.get(worst_night))}R a ticket that night); without it the other "
             f"{others_pop['settled_nights']} nights' {others_pop['settled']['n']} settled read {_r(others_pop['settled']['mean_r'])}R a ticket, "
             f"interval {_ci(others_pop['night_bootstrap'] and others_pop['night_bootstrap']['ci95'])}: {others_pop['sign']}",
             f"the funnel over {funnel['regimes'].get('yellow', 0)} YELLOW publications: {fy.get('grade', 0)} reaction candidates stopped at the "
@@ -627,8 +671,9 @@ def ledger(study: dict, spec: dict, split: dict, backtest: dict, funnel: dict, f
             pasted_row("backtest", "direct", "no regime gate · RED nights", red_bt["settled"], red_bt["sum_r"],
                        "owner-pasted summary; reader not run; no rows, so no interval")],
            [split["by_phase"]["exploratory"]["sign"], split["by_regime"]["confirmatory red"]["sign"]],
-           ["the exploratory sign held as the study grew (negative at 267 settled on 12 October, at 303 now); the confirmatory RED nights, "
-            "read for the first time, straddle zero",
+           [f"the exploratory sign as the study grew: {prior_expl['sign']} at {prior_expl['settled']['n']} settled on 12 October (read off "
+            f"that review's frozen file), {split['by_phase']['exploratory']['sign']} at {settled_block(expl)['n']} now; the confirmatory "
+            f"RED nights, read for the first time, are {split['by_regime']['confirmatory red']['sign']}",
             "the backtest's RED-night counterfactual is a positive sum over 25 settled tickets with no interval; its period (Feb-Sep) and "
             "universe differ from the study's"])
 
@@ -660,8 +705,11 @@ def ledger(study: dict, spec: dict, split: dict, backtest: dict, funnel: dict, f
                        "the record's daily-bar replay of the plans it issued, burst and anticipation together; a count under its own floor")],
            [], [f"the backtest's production policy: {production['settled']} settled, win rate {production['win_rate']}, "
                 f"mean {production['mean_r']}R, median {production['median_r']}R, SPY {production['spy_avg_pct']}% over the same windows",
-                f"the live policy wrote its first burst tickets on 4 November (three A+ names with accepted reviews) and every one reads "
-                f"stopped on its first day; the scorecard reads {live['settled']} settled of {live['plans']} plans, {live['sum_r']:+.2f}R in sum",
+                f"the live policy wrote its first burst tickets on 4 November; the scorecard window holds {len(bursts)} burst plans, "
+                f"{bursts_stopped} of them read stopped, and reads {live['settled']} settled of {live['plans']} plans, {_r(live['sum_r'], 2)}R in sum",
+                f"the reader-accepted population was a direct source of this change on 12 October and is adjacent here: it is the rows "
+                f"the change would keep, not the ones it would add; its {settled_block(accepted)['n']} settled are under the floor of "
+                f"{MIN_SETTLED} either way",
                 "the retained HAE reply (8 October) is the case this change would admit: a mechanical A+ whose reply cited paths "
                 "outside the authority contract and was refused; tests/fixtures/grading/reader-hae/ holds it rejected"])
 
@@ -672,7 +720,7 @@ def ledger(study: dict, spec: dict, split: dict, backtest: dict, funnel: dict, f
                       "the nights published at the new account; a sizing change moves no ticket's sign"),
             pasted_row("live_scorecard", "direct",
                        f"the published record's own model plans through {live['session']} "
-                       f"({sum(1 for p in live['open_plans'] if p['status'] == 'stopped')} of its open plans the $30,000 burst tickets, each stopped)",
+                       f"({bursts_stopped} of its {len(bursts)} burst plans read stopped)",
                        live["settled"], live["sum_r"],
                        "the record's daily-bar replay of the plans it issued at every account it archived; it does not split its R by "
                        "account, and a stopped plan's R is the fill against the planned risk, not a fixed -1R; a count under its own floor")],
@@ -688,6 +736,8 @@ def ledger(study: dict, spec: dict, split: dict, backtest: dict, funnel: dict, f
 
     route_kept = [r for r in admitted if is_admitted_route(r)]
     route_stopped = [r for r in admitted if not is_admitted_route(r)]
+    kept_b, stopped_b = settled_block(route_kept), settled_block(route_stopped)
+    gap_night = route_gap_night(route_kept, route_stopped)
     change("dollar_only_admission", "Admit a dollar-only discovery only on a range-expansion, higher-volume day",
            "src/admission.py, burst_route_or_dollar_expansion_v1: a name the dollar scan alone found is planned and read only "
            "when its burst day passed the checklist's RE and VOL checks",
@@ -704,9 +754,11 @@ def ledger(study: dict, spec: dict, split: dict, backtest: dict, funnel: dict, f
                       [r for r in route_stopped if r["night_regime"] == "yellow"], spec, "the stopped population on YELLOW nights")],
            [split["by_route"]["red nights route-admitted"]["sign"], split["by_route"]["yellow nights route-admitted"]["sign"]],
            [f"the rule was promoted without an outcome reading; this one finds no sign either way: the kept population's mean a ticket "
-            f"({settled_block(route_kept)['mean_r']:+.3f}R over {settled_block(route_kept)['n']} settled) is worse than the stopped one's "
-            f"({settled_block(route_stopped)['mean_r']:+.3f}R over {settled_block(route_stopped)['n']}), the 4 November burst-route tickets carrying it, "
-            "and neither interval is clear of zero",
+            f"({_r(kept_b['mean_r'])}R over {kept_b['n']} settled) is {compare_means(kept_b['mean_r'], stopped_b['mean_r'])} the stopped one's "
+            f"({_r(stopped_b['mean_r'])}R over {stopped_b['n']})"
+            + (f"; the gap closes most without {gap_night['session']}, which leaves {_r(gap_night['kept']['mean_r'])}R over "
+               f"{gap_night['kept']['n']} against {_r(gap_night['stopped']['mean_r'])}R over {gap_night['stopped']['n']}" if gap_night else "")
+            + "; and neither interval is clear of zero",
             f"the funnel: {funnel['reaction']['route']} in-band names stopped at the discovery route since the rule (every one on 4 November, "
             "the only YELLOW night since), none read",
             "the study rows are not the rule's own population: it stops a name before its chart is read, and the reader's effect on the kept names is NOT RUN"])
@@ -736,6 +788,7 @@ def build() -> dict:
         raise ReviewError("the research journal does not follow the registered cohort")
     extract, scorecard_src = load_scorecard()
     join, join_source = load_admission(spec)
+    prior = load_prior_review()
 
     rows = study["rows"]
     accounts: dict[str, float] = {}
@@ -798,7 +851,7 @@ def build() -> dict:
         "feasibility": feasibility,
         "research": research,
         "live_scorecard": live,
-        "ledger": ledger(study, spec, split, backtest, funnel, feasibility, research, live, accounts),
+        "ledger": ledger(study, spec, split, backtest, funnel, feasibility, research, live, accounts, prior),
         "limits": [
             "The study tickets every burst without the reader, the gate or a slot cap and walks it on daily bars; its exploratory "
             "nights were all RED and every next close was public before the spec froze; its confirmatory nights are RED and YELLOW.",

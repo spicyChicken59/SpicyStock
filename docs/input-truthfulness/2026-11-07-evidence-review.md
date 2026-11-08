@@ -68,7 +68,7 @@ interval [-1.378, -0.017] over 10 nights, negative, 18 of them on YELLOW nights
 and 7 on RED. Split by calendar month, September (14 nights) is negative,
 October (22 nights, 513 settled, +0.005R) straddles zero, and November's three
 settled nights (143 settled, 2 wins) read negative on an interval of three
-nights, which is the smallest the study draws. The cumulative-R path of the
+nights, one over the two the criteria require. The cumulative-R path of the
 admitted stratum's 878 settled tickets ends at -162.34R with a deepest fall of
 169.09R from 11 September to 4 November; the night-means path falls 3.74R over
 39 nights. Every stratum lost at every cost assumption the spec names.
@@ -127,7 +127,7 @@ inside it, so the last two sessions carried no cohort.
 | Widen the anticipation stop cap to 5% | floated; period ended | **insufficient** | the registered journal has 0 resolved rows of 70; the experiment ended with no result, and a new registration would be a new experiment |
 | Write an A+ ticket on the checklist alone when the reader refuses | floated | **insufficient** | the rows the change would admit are 11 settled, a count; the backtest's production policy (44 settled, +0.085R) has no interval; the live policy's own admissions are 5 settled, all losses, a count |
 | Raise the base risk or the account | promoted in part (the $30,000 account from 4 November) | **insufficient** | one night carries every settled $30,000 ticket (119), so no interval exists; the scorecard's 5 settled are a count; the ceiling decides which names can be bought, not whether they win |
-| Admit a dollar-only discovery only on a range-expansion, higher-volume day | promoted 4 November | **insufficient** | the kept population straddles zero on every split and reads worse a ticket than the stopped one (-0.356R over 268 against -0.110R over 610), the 4 November burst-route tickets carrying it; the reader's effect on the kept names is NOT RUN |
+| Admit a dollar-only discovery only on a range-expansion, higher-volume day | promoted 4 November | **insufficient** | the kept population straddles zero on every split and reads worse a ticket than the stopped one (-0.356R over 268 against -0.110R over 610); the gap closes most without 2026-11-04 (-0.052R over 186 against -0.053R over 573); the reader's effect on the kept names is NOT RUN |
 
 No change earns **supported** in this 7 November review, and nothing is
 promoted by this file. Two changes were promoted by the owner on 4 November
@@ -139,8 +139,8 @@ supported it under these criteria, and neither has evidence against it.
 The exploratory sign held as the study grew. Three things are new. The
 confirmatory phase is readable (575 settled over 24 nights) and straddles zero
 by a wide margin, its RED nights near +0.015R a ticket and its YELLOW nights,
-the first the study has carried, at -0.424R with one night holding a third of
-their settled tickets. The live policy wrote its first burst tickets, and the
+the first the study has carried, at -0.424R with one night holding 119 of
+their 305 settled tickets. The live policy wrote its first burst tickets, and the
 scorecard, 5 settled, cannot yet read them as a rate. And the registered
 research, the one prospective experiment, closed with no resolved row.
 
