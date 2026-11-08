@@ -1036,6 +1036,8 @@ def a_block_with_items(fake_sec):
     (lambda b: b["rows"][0]["current_report_window"].update(count=True), "are not the recent window's"),
     (lambda b: b["rows"][0]["current_report_window"].update(unretained_material=1), "are not the recent window's"),
     (lambda b: b["rows"][0]["current_report_window"].pop("unretained_material"), "are not the recent window's"),
+    # a key the window block does not carry: the shape is held exactly, not as a superset
+    (lambda b: b["rows"][0]["current_report_window"].update(retained=2), "are not the recent window's"),
     (lambda b: b["rows"][0]["current_reports"].reverse(), "are not the recent window's"),
     # nine reports, one past the bound
     (lambda b: b["rows"][0]["current_reports"].extend(dict(b["rows"][0]["current_reports"][1], accession=f"0000939767-26-{n:06d}", filing_date=f"2026-10-{n:02d}") for n in range(16, 23)), "earnings current reports for EXEL"),
