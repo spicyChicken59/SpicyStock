@@ -147,6 +147,10 @@ def test_the_periods_are_split_by_hand():
     assert out["by_route"]["yellow nights route-admitted"]["settled"]["n"] == 1 and "yellow nights route-stopped" in out["by_route"]
     assert out["reader_accepted"]["all"]["settled"]["n"] == 1
     assert out["all_strata_by_phase"]["confirmatory"]["settled"]["n"] == 3
+    # the settled tickets of each population counted by the regime of their night, by hand
+    assert out["by_phase"]["confirmatory"]["settled_by_regime"] == {"red": 1, "yellow": 1}
+    assert out["by_regime"]["both phases red"]["settled_by_regime"] == {"red": 5}
+    assert out["all_strata_by_phase"]["confirmatory"]["settled_by_regime"] == {"red": 1, "yellow": 2}
     for group in out.values():
         for pop in group.values():
             assert pop["sign"] == er.sign_of(pop["settled"], pop["night_bootstrap"])
@@ -597,6 +601,20 @@ def test_the_ledger_populations_are_the_studys_rows(committed, study, spec, join
     assert gap and f"the gap closes most without {gap['session']}, which leaves {gap['kept']['mean_r']:+.3f}R over {gap['kept']['n']} against {gap['stopped']['mean_r']:+.3f}R over {gap['stopped']['n']}" in dollar_note
     assert er.compare_means(-1.0, 0.0) == "worse than" and er.compare_means(0.5, 0.0) == "better than" and er.compare_means(0.1, 0.1) == "equal to" and er.compare_means(None, 0.0) == "not comparable with"
     assert er.route_gap_night([], stopped) is None   # no night leaves both populations with a settled ticket
+    # the gap night found by hand: the session whose removal leaves the two means closest, the first in session order on a tie
+    by_hand = None
+    for session in sorted({r["session"] for r in kept + stopped}):
+        k = [r["r"] for r in kept if r["session"] != session and r["bucket"] == "settled"]
+        s = [r["r"] for r in stopped if r["session"] != session and r["bucket"] == "settled"]
+        if k and s:
+            d = abs(round(math.fsum(k) / len(k), 3) - round(math.fsum(s) / len(s), 3))
+            if by_hand is None or d < by_hand[1]:
+                by_hand = (session, d)
+    assert gap["session"] == by_hand[0] and gap["gap"] == round(by_hand[1], 3)
+    # and on rows where the closest and the furthest night differ: s1 and s3 close the gap to nothing, s2 opens it to 2R
+    kept_hand = [row("s1", 1.0), row("s2", -3.0), row("s3", 1.0)]
+    stopped_hand = [row("s1", -1.0, admitted=False), row("s2", -1.0, admitted=False), row("s3", -1.0, admitted=False)]
+    assert er.route_gap_night(kept_hand, stopped_hand)["session"] == "s1" and er.route_gap_night(kept_hand, stopped_hand)["gap"] == 0.0
     # the RED note quotes the 12 October review's exploratory figure off its frozen file, and this review's own beside it
     prior = json.loads((ROOT / er.PRIOR_REVIEW).read_text(encoding="utf-8"))["periods"]["by_phase"]["exploratory"]
     expl_now = committed["periods"]["by_phase"]["exploratory"]
