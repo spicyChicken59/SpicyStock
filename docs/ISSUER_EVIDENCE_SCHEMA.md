@@ -122,10 +122,12 @@ A `source` is `{url, raw_sha256, bytes, fetched_at, checked_at, cache_status}`;
 cache status is `network` or `verified_cache`. A `filing` is
 `{accession, form, filing_date, report_date, accepted_at, primary_document, items}`.
 `items` is SEC's own comma-separated item string for the row (`2.02,9.01`),
-stored as text up to 256 characters, empty for a 6-K, and never parsed by the
-collector; the browser reads it as the evening's earnings block does (each
-`N.NN` once, other tokens counted as unread) under the Form 8-K headings and
-marks items 1.01, 1.03, 2.01, 3.01 and 5.01, as a reading and never a clearance.
+stored as text up to 256 characters as SEC wrote it, and never parsed by the
+collector; the browser reads it on an 8-K or 8-K/A only, as the evening's
+earnings block does (each `N.NN` once, other tokens counted as unread), under
+the Form 8-K headings, and marks items 1.01, 1.03, 2.01, 3.01 and 5.01 whatever
+the filing's date, as a reading and never a clearance. A 6-K's string is not
+read.
 SEC lists an XML filing -- Forms 3, 4, 5, 144 and 25-NSE, an EFFECT notice, a
 structured Schedule 13D or 13G -- under the directory of the XSL stylesheet that
 renders it (`xslF345X06/form4.xml`). A row of a form the collector never stores

@@ -669,11 +669,17 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
   } finally { if (race.transport.release) race.transport.release(); await race.context.close(); }
 
   // The desk prints each listed filing's 8-K item codes under the evening's
-  // headings (earnings_risk.ITEM_TITLES) and marks the five items it warns on;
-  // a code the table lacks prints bare, a token SEC wrote in another shape is
-  // counted and never read as a code, a 6-K carries none, and the line above
-  // the list reads the listed reports alone and clears nothing. The producer's
-  // items variant carries every shape; the routed copies below carry the rest.
+  // headings (earnings_risk.ITEM_TITLES) and marks the five material kinds; a
+  // code the table lacks prints bare, a token SEC wrote in another shape is
+  // counted and never read as a code, codes are read on an 8-K or 8-K/A only,
+  // and the line above the list reads the listed reports alone and clears
+  // nothing. The producer's items variant carries every shape; the routed
+  // copies below carry the rest, and the parity corpus holds the page's parser
+  // to the evening's own answers.
+  const KINDS = '1\\.01 a material agreement, 1\\.03 a bankruptcy, 2\\.01 a completed acquisition or disposition, 3\\.01 a delisting notice, 5\\.01 a change in control';
+  const MEANING = 'A material item is one of the five kinds the evening’s earnings warning names when one is filed in the 14 days before a published ticket’s signal session or since \\(' + KINDS + '\\); here every listed filing is marked, whatever its date\\.';
+  const TAIL = 'An item names a kind of event, never what the filing says: read the filing before acting on it\\. This is not event clearance; known event evidence above remains in force, and only the listed reports were read\\.';
+  const CLEARANCE = 'This is not event clearance; known event evidence above remains in force\\.';
   const openDetails = page => page.evaluate(() => { for (const n of document.querySelectorAll('[data-issuer-body] details')) n.open = true; });
   for (const [width, theme] of [[1280, 'dark'], [390, 'light']]) {
     const items = await setup({ variant: semantic.items, width, theme });
@@ -686,19 +692,21 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
       eq(`${width}: one items line above the listed filings`, await summary.count(), 1);
       eq(`${width}: the line names the material state and its count`, await summary.evaluate(n => [n.getAttribute('data-issuer-items-state'), n.getAttribute('data-issuer-items-material')]), ['material', '1']);
       const words = await summary.innerText();
-      check(`${width}: it counts the listed current reports and names the filing`, /1 of the 5 listed current reports carries an item SpicyStock warns on: 1\.01 \(Entry into a Material Definitive Agreement\) in the 8-K filed 2026-10-09\./.test(words));
-      check(`${width}: it counts the token it could not read`, /1 item token SEC wrote in another shape was not read\./.test(words));
-      check(`${width}: it names a kind of event and claims no clearance`, /never what the filing says/.test(words) && /not event clearance/.test(words) && /only the listed reports were read/.test(words));
+      check(`${width}: it counts the listed current reports and names the filing`, /1 of the 5 listed current reports carries a material item: 1\.01 \(Entry into a Material Definitive Agreement\) in the 8-K filed 2026-10-09\./.test(words));
+      check(`${width}: it counts the token it could not read and excludes nothing over it`, /1 item token SEC wrote in another shape was not read, so a material item among them is not excluded\./.test(words));
+      check(`${width}: it says what material means and that the date is not read`, new RegExp(MEANING).test(words));
+      check(`${width}: it names a kind of event and claims no clearance`, new RegExp(TAIL).test(words));
       eq(`${width}: the material code is marked once in the line`, await summary.locator('[data-material-item="1.01"]').count(), 1);
       eq(`${width}: the line precedes the listed filings`, await page.evaluate(() => { const line = document.querySelector('[data-issuer-items]'); return !!line && line.nextElementSibling?.tagName === 'DETAILS' && /Listed filing metadata/.test(line.nextElementSibling.textContent); }), true);
       await openDetails(page);
       const lines = page.locator('[data-filing-items]');
       eq(`${width}: every listed filing has its items line`, await lines.count(), 5);
-      eq(`${width}: material first, then the rest under their headings`, await lines.nth(0).innerText(), 'Items 1.01 (Entry into a Material Definitive Agreement) · 2.03 (Creation of a Direct Financial Obligation or an Obligation under an Off-Balance Sheet Arrangement of a Registrant) · 9.01 (Financial Statements and Exhibits).');
-      eq(`${width}: a spaced token is read and an unshaped one counted`, await lines.nth(1).innerText(), 'Items 2.02 (Results of Operations and Financial Condition) · 9.01 (Financial Statements and Exhibits) · 1 item token SEC wrote in another shape was not read.');
-      eq(`${width}: a repeated code prints once`, await lines.nth(2).innerText(), 'Items 5.02 (Departure of Directors or Certain Officers; Election of Directors; Appointment of Certain Officers; Compensatory Arrangements of Certain Officers).');
-      eq(`${width}: an empty item string says none recorded`, await lines.nth(3).innerText(), 'Items none recorded.');
-      eq(`${width}: a code the table lacks prints bare`, await lines.nth(4).innerText(), 'Items 9.99.');
+      eq(`${width}: material first, then the rest under their headings`, await lines.nth(0).innerText(), 'Items: 1.01 (Entry into a Material Definitive Agreement) · 2.03 (Creation of a Direct Financial Obligation or an Obligation under an Off-Balance Sheet Arrangement of a Registrant) · 9.01 (Financial Statements and Exhibits).');
+      eq(`${width}: the label is not marked like a material code`, await lines.nth(0).evaluate(n => n.firstChild.nodeType === Node.TEXT_NODE && n.firstChild.textContent === 'Items: ' && n.querySelectorAll('strong').length === 1), true);
+      eq(`${width}: a spaced token is read and an unshaped one counted`, await lines.nth(1).innerText(), 'Items: 2.02 (Results of Operations and Financial Condition) · 9.01 (Financial Statements and Exhibits) · 1 item token SEC wrote in another shape was not read.');
+      eq(`${width}: a repeated code prints once`, await lines.nth(2).innerText(), 'Items: 5.02 (Departure of Directors or Certain Officers; Election of Directors; Appointment of Certain Officers; Compensatory Arrangements of Certain Officers).');
+      eq(`${width}: an empty item string says SEC recorded none`, await lines.nth(3).innerText(), 'Items: none recorded by SEC.');
+      eq(`${width}: a code the table lacks prints bare`, await lines.nth(4).innerText(), 'Items: 9.99.');
       eq(`${width}: the material code is marked in its own filing's line`, await lines.nth(0).locator('[data-material-item="1.01"]').count(), 1);
       eq(`${width}: each line counts its material codes`, await lines.evaluateAll(ns => ns.map(n => n.getAttribute('data-material-count'))), ['1', '0', '0', '0', '0']);
       eq(`${width}: each line names its filing`, await lines.evaluateAll(ns => ns.map(n => n.getAttribute('data-filing-items'))), ['0000320193-26-000001', '0000320193-26-000002', '0000320193-26-000003', '0000320193-26-000004', '0000320193-26-000005']);
@@ -711,33 +719,55 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
       }
       await page.locator('[data-issuer-choice]').selectOption('anticipation:ZIM');
       eq(`${width}: a 6-K issuer reads foreign`, await summary.evaluate(n => [n.getAttribute('data-issuer-items-state'), n.getAttribute('data-issuer-items-material')]), ['foreign', '0']);
-      check(`${width}: a 6-K issuer's line says it carries no item codes`, /None of the 1 listed report is an 8-K: a 6-K carries no item codes, so there is no item to read\./.test(await summary.innerText()));
+      check(`${width}: a 6-K issuer's line says codes are read on an 8-K only, with its coverage and no clearance`, new RegExp('None of the 1 listed report is an 8-K or 8-K/A \\(index coverage: observed window\\); item codes are read on those only, so no item was read\\. ' + CLEARANCE).test(await summary.innerText()));
       await openDetails(page);
-      eq(`${width}: its filing line says the same`, await page.locator('[data-filing-items]').first().innerText(), 'Items none: a 6-K carries no item codes.');
+      eq(`${width}: its filing line says it was not read`, await page.locator('[data-filing-items]').first().innerText(), 'Items: not read: item codes are read on an 8-K or 8-K/A only, and this is a 6-K.');
       eq(`${width}: items browser errors`, [...items.errors], []);
     } finally { await items.context.close(); }
   }
+  const parity = JSON.parse(await file('items-parity.json'));
   const shapes = await setup();
   try {
     const { page, transport } = shapes, summary = page.locator('[data-issuer-items]');
     const listedCount = JSON.parse(original.raw).issuers[0].index.listed_filings.length;
     const load = async variant => { transport.current = variant; await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page); };
     await reveal(page);
+    const read = await page.evaluate(cases => cases.map(c => SCStock.issuerEvidence.parseItems(c.items)), parity.cases);
+    const differ = parity.cases.filter((c, i) => JSON.stringify([c.codes, c.unread]) !== JSON.stringify([read[i].codes, read[i].unread])).map(c => c.items);
+    check(`the parity corpus reaches the page (${parity.cases.length} cases)`, parity.cases.length >= 200);
+    eq('the page reads every parity case as the evening does', differ, []);
     await page.locator('[data-issuer-choice]').selectOption('burst:AAPL');
     eq('other items only read as listed', await summary.evaluate(n => [n.getAttribute('data-issuer-items-state'), n.getAttribute('data-issuer-items-material')]), ['listed', '0']);
-    check('the listed sentence names the five kinds it looked for', new RegExp('None of the ' + listedCount + ' listed current reports carries an item SpicyStock warns on \\(1\\.01 a material agreement, 1\\.03 a bankruptcy, 2\\.01 a completed acquisition or disposition, 3\\.01 a delisting notice, 5\\.01 a change in control\\)\\. An item names a kind of event').test(await summary.innerText()));
+    check('the listed sentence says none carries a material item, what material means, and no clearance', new RegExp('None of the ' + listedCount + ' listed current reports carries a material item\\. ' + MEANING + ' ' + TAIL).test(await summary.innerText()));
     await load(changed(null, b => { b.issuers[0].index.listed_filings[1].items = '3.01,8.01'; }));
     eq('a delisting notice in a later filing reads material', await summary.evaluate(n => [n.getAttribute('data-issuer-items-state'), n.getAttribute('data-issuer-items-material')]), ['material', '1']);
-    check('and is named with the filing it sits in', /1 of the \d+ listed current reports carries an item SpicyStock warns on: 3\.01 \(Notice of Delisting or Failure to Satisfy a Continued Listing Rule or Standard; Transfer of Listing\) in the 8-K filed 2026-10-08\./.test(await summary.innerText()));
+    check('and is named with the filing it sits in', /1 of the \d+ listed current reports carries a material item: 3\.01 \(Notice of Delisting or Failure to Satisfy a Continued Listing Rule or Standard; Transfer of Listing\) in the 8-K filed 2026-10-08\./.test(await summary.innerText()));
     await load(changed(null, b => { b.issuers[0].index.listed_filings[0].items = '1.01,5.01'; b.issuers[0].index.listed_filings[2].items = '2.01'; }));
     eq('two filings with material items are both counted', await summary.evaluate(n => n.getAttribute('data-issuer-items-material')), '2');
-    check('two codes in one filing are joined, two filings separated', /2 of the \d+ listed current reports carry an item SpicyStock warns on: 1\.01 \(Entry into a Material Definitive Agreement\) and 5\.01 \(Changes in Control of Registrant\) in the 8-K filed 2026-10-09; 2\.01 \(Completion of Acquisition or Disposition of Assets\) in the 8-K filed 2026-10-07\./.test(await summary.innerText()));
+    check('two codes in one filing are joined, two filings separated', /2 of the \d+ listed current reports carry a material item: 1\.01 \(Entry into a Material Definitive Agreement\) and 5\.01 \(Changes in Control of Registrant\) in the 8-K filed 2026-10-09; 2\.01 \(Completion of Acquisition or Disposition of Assets\) in the 8-K filed 2026-10-07\./.test(await summary.innerText()));
+    await load(changed(null, b => { const f = b.issuers[0].index.listed_filings[0]; f.form = '8-K/A'; f.items = '1.01'; f.report_date = '2026-09-30';
+      for (const doc of b.issuers[0].documents) if (doc.accession === f.accession) { doc.form = f.form; doc.report_date = f.report_date; } }));
+    eq('the 8-K/A copy loads', (await status(page)).state, 'loaded');
+    check('a material 8-K/A is named by its own form and its filing date, not its report date', /1 of the \d+ listed current reports carries a material item: 1\.01 \(Entry into a Material Definitive Agreement\) in the 8-K\/A filed 2026-10-09\./.test(await summary.innerText()));
+    await load(changed(null, b => { const fs = b.issuers[0].index.listed_filings; fs[0].items = '1.01'; fs[fs.length - 1].form = '6-K'; fs[fs.length - 1].items = ''; }));
+    check('the count is over the listed current reports only, not every listed filing', new RegExp('1 of the ' + (listedCount - 1) + ' listed current reports carries a material item').test(await summary.innerText()));
+    await openDetails(page);
+    eq('and the 6-K among them is not read', await page.locator('[data-filing-items]').last().innerText(), 'Items: not read: item codes are read on an 8-K or 8-K/A only, and this is a 6-K.');
+    await load(changed(null, b => { b.issuers[0].index.listed_filings[0].items = '9.01,1.01'; }));
+    await openDetails(page);
+    eq('a material code written last is printed first', await page.locator('[data-filing-items]').first().innerText(), 'Items: 1.01 (Entry into a Material Definitive Agreement) · 9.01 (Financial Statements and Exhibits).');
+    await load(changed(null, b => { b.issuers[0].index.listed_filings[0].items = '8.01,01.01'; }));
+    eq('a token it could not read beside a readable code still reads listed', await summary.evaluate(n => n.getAttribute('data-issuer-items-state')), 'listed');
+    check('and the listed sentence speaks of the codes read and excludes nothing over the token', new RegExp('Of the codes read in the ' + listedCount + ' listed current reports, none is a material item\\. 1 item token SEC wrote in another shape was not read, so a material item among them is not excluded\\. ' + MEANING + ' ' + TAIL).test(await summary.innerText()));
     await load(changed(null, b => { for (const f of b.issuers[0].index.listed_filings) f.items = '2.020,abc'; }));
     eq('every token unshaped reads unreadable', await summary.evaluate(n => n.getAttribute('data-issuer-items-state')), 'unreadable');
-    check('and counts the tokens it could not read', new RegExp('No item code of the ' + listedCount + ' listed current reports could be read \\(' + (2 * listedCount) + ' item tokens SEC wrote in another shape were not read\\), so what they name is not established\\.').test(await summary.innerText()));
+    check('and counts the tokens it could not read, with no clearance', new RegExp('No item code of the ' + listedCount + ' listed current reports could be read \\(' + (2 * listedCount) + ' item tokens SEC wrote in another shape were not read\\), so what they name is not established\\. ' + TAIL).test(await summary.innerText()));
     await openDetails(page);
-    eq('an unreadable filing line says none read and counts', await page.locator('[data-filing-items]').first().innerText(), 'Items none read: 2 item tokens SEC wrote in another shape were not read.');
-    await load(changed(null, b => { b.issuers[0].index.listed_filings[0].items = '1.01 ,　1.01'; }));
+    eq('an unreadable filing line says none read and counts', await page.locator('[data-filing-items]').first().innerText(), 'Items: none read: 2 item tokens SEC wrote in another shape were not read.');
+    await load(changed(null, b => { for (const f of b.issuers[0].index.listed_filings) f.items = ''; }));
+    eq('every item string empty reads unreadable', await summary.evaluate(n => n.getAttribute('data-issuer-items-state')), 'unreadable');
+    check('and says SEC recorded no code, counting no token', new RegExp('SEC recorded no item code for the ' + listedCount + ' listed current reports, so what they name is not established\\. ' + TAIL).test(await summary.innerText()) && !/item token/.test(await summary.innerText()));
+    await load(changed(null, b => { b.issuers[0].index.listed_filings[0].items = '1.01 ,　1.01'; }));
     eq('Unicode whitespace around a code is stripped as the evening strips it', await summary.locator('[data-material-item="1.01"]').count(), 1);
     eq('and leaves no token unread', /item token/.test(await summary.innerText()), false);
     eq('the stripped code reads as one material item', await summary.evaluate(n => [n.getAttribute('data-issuer-items-state'), n.getAttribute('data-issuer-items-material')]), ['material', '1']);
@@ -746,7 +776,10 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
     eq('and no items line is shown over it', await summary.count(), 0);
     await load(semantic['empty-window']);
     eq('no listed current report reads none', await summary.evaluate(n => n.getAttribute('data-issuer-items-state')), 'none');
-    check('and says no item was read', /No current report is listed, so no item was read\./.test(await summary.innerText()));
+    check('and says no item was read, with its coverage and no clearance', new RegExp('No current report is listed \\(index coverage: observed window\\), so no item was read\\. ' + CLEARANCE).test(await summary.innerText()));
+    await load(variants['identity-unverified']);
+    eq('an unverified issuer reads none', await summary.evaluate(n => n.getAttribute('data-issuer-items-state')), 'none');
+    check('and names the unverified identity and the unknown coverage', new RegExp('No current report is listed \\(issuer identity unverified; index coverage: unknown\\), so no item was read\\. ' + CLEARANCE).test(await summary.innerText()));
     await load(original);
     eq('the original reads listed again', await summary.evaluate(n => n.getAttribute('data-issuer-items-state')), 'listed');
     eq('items shape browser errors', [...shapes.errors], []);

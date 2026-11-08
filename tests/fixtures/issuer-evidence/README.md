@@ -58,10 +58,14 @@ mapping, late document HTTP 403, invalid metadata, a verified issuer whose only
 in-window metadata row is refused (`rows-invalid`: zero rows read, so the
 acquisition review is unknown rather than none), a short metadata window, a
 deadline before transport, and the item strings a current report can carry
-(`items`: AAPL's five 8-K rows hold a material 1.01 beside 2.03 and 9.01, a
-spaced token and one SEC wrote in another shape (`2.020`), a repeated 5.02, an
-empty string and a code the heading table lacks (`9.99`), while ZIM's one row is
-a 6-K, which carries none; the Morning desk's item reading is held to them). The real collector produces every receipt and bundle
+(`items`: AAPL's four 8-K rows and one 8-K/A hold a material 1.01 beside 2.03
+and 9.01, a spaced token and one SEC wrote in another shape (`2.020`), a
+repeated 5.02 (the 8-K/A), an empty string and a code the heading table lacks
+(`9.99`), while ZIM's one row is a 6-K, whose string is not read; the Morning
+desk's item reading is held to them). `items-parity.json` is written by
+`items_parity.py`, not by the collector: 231 item strings, each with
+`earnings_risk._parse_items`'s own answer, which the browser suite holds the
+page's parser to. The real collector produces every receipt and bundle
 with `dry_run: false` and an explicitly synthetic run ID. Shared mapping response
 identity and identical bodies at different document URLs distinguish network
 attempts/downloads from unique captures. Cached source clocks stay dated; they

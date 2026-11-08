@@ -14,12 +14,13 @@
   const ERRORS = ['rate_limit', 'http_error', 'timeout', 'network_error', 'redirect_refused', 'size_limit', 'request_budget', 'time_budget', 'invalid_response', 'identity_unverified', 'metadata_invalid', 'document_invalid', 'history_incomplete'];
   const SOURCE_PHASES = { mapping: 'SEC ticker mapping', submissions: 'SEC submissions index', history: 'older SEC submissions index', primary: 'primary filing document', exhibit: 'filing exhibit' };
   // The evening's own reading of a current report's item codes (earnings_risk:
-  // ITEM_CODE, the whitespace its parser strips, MATERIAL_ITEMS, MATERIAL_WORDS,
-  // ITEM_TITLES), held equal to the module by tests/test_docs.py. A heading
+  // ITEM_CODE, RECENT_REPORT_DAYS, the whitespace its parser strips,
+  // MATERIAL_ITEMS, MATERIAL_WORDS, ITEM_TITLES), held equal to the module by tests/test_docs.py. A heading
   // names a KIND of event under Form 8-K, never what one filing says; a code
   // the table lacks prints bare, and a token SEC wrote in another shape is
   // counted, never read as a code.
   const ITEM_CODE = /^[0-9]\.[0-9]{2}$/;
+  const RECENT_REPORT_DAYS = 14;
   const ITEM_SPACE = /^[\t\n\v\f\r \x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\t\n\v\f\r \x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/g;
   const CURRENT_REPORT_FORMS = ["8-K", "8-K/A"];
   const MATERIAL_ITEMS = ["1.01", "1.03", "2.01", "3.01", "5.01"];
@@ -116,19 +117,20 @@
   const itemLabel = code => Object.hasOwn(ITEM_TITLES, code) ? code + ' (' + ITEM_TITLES[code] + ')' : code;
   const unreadWords = unread => plural(unread, 'item token') + ' SEC wrote in another shape ' + (unread === 1 ? 'was' : 'were') + ' not read';
   // The items one listed filing carries, under their headings, the material
-  // ones first and marked; a 6-K carries none, and an 8-K with no code says so.
+  // ones first and marked; item codes are read on an 8-K or 8-K/A only, and an
+  // 8-K with no code says so.
   function itemsLine(host, filing) {
     const p = node('p', { class: 'sc-hint', 'data-filing-items': filing.accession });
-    p.append(node('strong', {}, 'Items '));
+    p.append(d.createTextNode('Items: '));
     if (!currentReport(filing)) {
       p.setAttribute('data-material-count', '0');
-      p.append(d.createTextNode('none: a ' + filing.form + ' carries no item codes.'));
+      p.append(d.createTextNode('not read: item codes are read on an 8-K or 8-K/A only, and this is a ' + filing.form + '.'));
       host.append(p); return;
     }
     const { codes, unread } = parseItems(filing.items);
     const ordered = [...codes.filter(isMaterial), ...codes.filter(code => !isMaterial(code))];
     p.setAttribute('data-material-count', String(codes.filter(isMaterial).length));
-    if (!codes.length) p.append(d.createTextNode(unread ? 'none read' : 'none recorded'));
+    if (!codes.length) p.append(d.createTextNode(unread ? 'none read' : 'none recorded by SEC'));
     ordered.forEach((code, i) => {
       if (i) p.append(d.createTextNode(' · '));
       p.append(isMaterial(code) ? node('strong', { 'data-material-item': code }, itemLabel(code)) : d.createTextNode(itemLabel(code)));
@@ -137,29 +139,41 @@
     host.append(p);
   }
   // One line above the listed filings: how many of the listed current reports
-  // carry an item the evening warns on, and in which filing each sits. It reads
-  // the listed reports alone (the twelve-report bound is the collector's) and
-  // adds no clearance: an item names a kind of event, never what the filing says.
-  function itemsSummary(host, index) {
+  // carry a material item, and in which filing each sits. A material item is one
+  // of the five kinds the evening's earnings warning names when one is filed in
+  // the RECENT_REPORT_DAYS before a published ticket's signal or since; here every listed
+  // filing is marked, whatever its date and whether or not it is a ticket. It
+  // reads the listed reports alone (the twelve-report bound is the collector's)
+  // and adds no clearance: an item names a kind of event, never what the filing
+  // says, and a token it could not read leaves a material item unexcluded.
+  function itemsSummary(host, ident, index) {
     const listed = index.listed_filings, read = listed.filter(currentReport).map(filing => ({ filing, ...parseItems(filing.items) }));
     const material = read.filter(r => r.codes.some(isMaterial)), unread = read.reduce((n, r) => n + r.unread, 0);
     const state = !listed.length ? 'none' : !read.length ? 'foreign' : material.length ? 'material' : read.some(r => r.codes.length) ? 'listed' : 'unreadable';
     const p = node('p', { class: 'sc-hint', 'data-issuer-items': '', 'data-issuer-items-state': state, 'data-issuer-items-material': String(material.length) });
     p.append(node('strong', {}, 'Current-report items: '));
     const reports = plural(read.length, 'listed current report'), kinds = MATERIAL_ITEMS.map(code => code + ' ' + MATERIAL_WORDS[code]).join(', ');
-    const tail = ' An item names a kind of event, never what the filing says: read the filing before acting on it. This is not event clearance; known event evidence above remains in force, and only the listed reports were read.';
-    if (state === 'none') p.append(d.createTextNode('No current report is listed, so no item was read.'));
-    else if (state === 'foreign') p.append(d.createTextNode('None of the ' + plural(listed.length, 'listed report') + ' is an 8-K: a 6-K carries no item codes, so there is no item to read.'));
-    else if (state === 'unreadable') p.append(d.createTextNode('No item code of the ' + reports + ' could be read (' + unreadWords(unread) + '), so what they name is not established.' + tail));
-    else if (state === 'listed') p.append(d.createTextNode('None of the ' + reports + ' carries an item SpicyStock warns on (' + kinds + ').' + (unread ? ' ' + unreadWords(unread) + '.' : '') + tail));
+    const meaning = ' A material item is one of the five kinds the evening’s earnings warning names when one is filed in the ' + RECENT_REPORT_DAYS + ' days before a published ticket’s signal session or since (' + kinds + '); here every listed filing is marked, whatever its date.';
+    const notRead = unread ? ' ' + unreadWords(unread) + ', so a material item among them is not excluded.' : '';
+    const coverage = ' (' + (ident.status === 'verified' ? '' : 'issuer identity unverified; ') + 'index coverage: ' + index.coverage_status.replaceAll('_', ' ') + ')';
+    const clearance = ' This is not event clearance; known event evidence above remains in force.';
+    const tail = ' An item names a kind of event, never what the filing says: read the filing before acting on it.' + clearance.replace(/\.$/, ', and only the listed reports were read.');
+    if (state === 'none') p.append(d.createTextNode('No current report is listed' + coverage + ', so no item was read.' + clearance));
+    else if (state === 'foreign') p.append(d.createTextNode('None of the ' + plural(listed.length, 'listed report') + ' is an 8-K or 8-K/A' + coverage + '; item codes are read on those only, so no item was read.' + clearance));
+    else if (state === 'unreadable') p.append(d.createTextNode((unread
+      ? 'No item code of the ' + reports + ' could be read (' + unreadWords(unread) + '), so what they name is not established.'
+      : 'SEC recorded no item code for the ' + reports + ', so what they name is not established.') + tail));
+    else if (state === 'listed') p.append(d.createTextNode((unread
+      ? 'Of the codes read in the ' + reports + ', none is a material item.'
+      : 'None of the ' + reports + ' carries a material item.') + notRead + meaning + tail));
     else {
-      p.append(d.createTextNode(material.length + ' of the ' + reports + (material.length === 1 ? ' carries' : ' carry') + ' an item SpicyStock warns on: '));
+      p.append(d.createTextNode(material.length + ' of the ' + reports + (material.length === 1 ? ' carries' : ' carry') + ' a material item: '));
       material.forEach((r, i) => {
         if (i) p.append(d.createTextNode('; '));
         r.codes.filter(isMaterial).forEach((code, j) => { if (j) p.append(d.createTextNode(' and ')); p.append(node('strong', { 'data-material-item': code }, itemLabel(code))); });
         p.append(d.createTextNode(' in the ' + r.filing.form + ' filed ' + r.filing.filing_date));
       });
-      p.append(d.createTextNode('.' + (unread ? ' ' + unreadWords(unread) + '.' : '') + tail));
+      p.append(d.createTextNode('.' + notRead + meaning + tail));
     }
     host.append(p);
   }
@@ -578,7 +592,7 @@
       if (error.source_url) detail.append(d.createTextNode(' · '), link('SEC request URL', error.source_url));
       body.append(detail);
     }
-    itemsSummary(body, index);
+    itemsSummary(body, ident, index);
     const metadata = node('details', { class: 'sc-disclosure' }); metadata.append(node('summary', {}, 'Listed filing metadata (' + index.listed_filings.length + ')'));
     for (const item of index.listed_filings) {
       paragraph(metadata, item.form + ' · ' + item.filing_date, 'SEC accepted ' + stamp(item.accepted_at) + ' · report date ' + (item.report_date || 'not supplied') + ' · accession ' + item.accession);
@@ -633,5 +647,5 @@
   w.setInterval(() => { if (mounted && mounted.open && !d.hidden) paintAge(); }, 60000);
   w.addEventListener('focus', paintAge);
   d.addEventListener('visibilitychange', paintAge);
-  api.issuerEvidence = { mount, update, reload: load, status: () => ({ state, issue, publication: receipt && receipt.publication, candidates: choices.length }) };
+  api.issuerEvidence = { mount, update, reload: load, parseItems, status: () => ({ state, issue, publication: receipt && receipt.publication, candidates: choices.length }) };
 })(window);

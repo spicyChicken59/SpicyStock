@@ -1701,16 +1701,22 @@ index says so beside its list. This metadata warning does not modify
 published tickets, sizing or known-event exclusions.
 
 Each listed filing's SEC item codes are printed under the Form 8-K headings
-the evening's earnings block uses (`earnings_risk.ITEM_TITLES`), the five items
-it warns on (1.01, 1.03, 2.01, 3.01, 5.01) first and marked, and one line
+the evening's earnings block uses (`earnings_risk.ITEM_TITLES`), the five
+material kinds (1.01, 1.03, 2.01, 3.01, 5.01) first and marked, and one line
 above the list counts the listed current reports that carry one and names the
-filing each sits in. The string is read as the evening reads it: each `N.NN`
-once, a token SEC wrote in another shape counted and never read as a code, a
-code the heading table lacks printed bare, an empty string said to record
-none, a 6-K said to carry none. An item names a kind of event, never what the
-filing says; the line is not event clearance, it reads the listed reports only
-(never the rows the twelve-report bound left out), and it changes no ticket,
-exclusion or order.
+filing each sits in. The evening's earnings warning names a material item only
+when it is filed in the 14 days before a published ticket's signal session or
+since; the desk marks every listed filing whatever its date, and says so. The
+string is read as the evening reads it: each `N.NN` once, a token SEC wrote in
+another shape counted and never read as a code (and a material item among
+such tokens never excluded), a code the heading table lacks printed bare, an
+empty string said to record none. Codes are read on an 8-K or 8-K/A only; a
+6-K's string is not read. `tests/fixtures/issuer-evidence/items-parity.json`
+carries `earnings_risk._parse_items`'s own answer for 231 item strings, and the
+browser suite holds the page's parser to every one. An item names a kind of
+event, never what the filing says; the line is not event clearance, it reads
+the listed reports only (never the rows the twelve-report bound left out), and
+it changes no ticket, exclusion or order.
 
 Known unresolved events remain separate, source-backed anchors. The collector
 does not classify new events or clear an existing exclusion. In the 10 October

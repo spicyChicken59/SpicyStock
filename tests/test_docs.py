@@ -803,6 +803,8 @@ def test_the_issuer_reader_reads_item_codes_by_the_evening_tables():
     assert json.loads(words) == earnings_risk.MATERIAL_WORDS
     forms = re.search(r"const CURRENT_REPORT_FORMS = (\[[^\]]*\]);", ISSUER_JS).group(1)
     assert json.loads(forms) == list(earnings_risk.CURRENT_REPORT_FORMS)
+    days = re.search(r"const RECENT_REPORT_DAYS = ([0-9]+);", ISSUER_JS).group(1)
+    assert int(days) == earnings_risk.RECENT_REPORT_DAYS
     code = re.search(r"const ITEM_CODE = /\^(.*?)\$/;", ISSUER_JS).group(1)
     assert code + "\\Z" == earnings_risk.ITEM_CODE.pattern, "the page's item-code pattern is not the module's"
     space = re.search(r"const ITEM_SPACE = /\^\[(.*?)\]\+\|\[(.*?)\]\+\$/g;", ISSUER_JS)
@@ -812,9 +814,21 @@ def test_the_issuer_reader_reads_item_codes_by_the_evening_tables():
     states = set(re.findall(r"'(none|foreign|material|listed|unreadable|not_checked)'", re.search(r"const state = (.*?);", ISSUER_JS).group(1)))
     assert states == {"none", "foreign", "material", "listed", "unreadable"} and states < set(earnings_risk.ITEMS_STATUSES)
     # the documents say what the desk prints and what it does not establish
-    assert "item codes" in README and "never what the filing says" in README
+    readme = re.sub(r"\s+", " ", README)
+    for phrase in ("the five material kinds (1.01, 1.03, 2.01, 3.01, 5.01) first and marked",
+                   f"only when it is filed in the {earnings_risk.RECENT_REPORT_DAYS} days before a published ticket's signal session or since",
+                   "the desk marks every listed filing whatever its date",
+                   "a material item among such tokens never excluded",
+                   "Codes are read on an 8-K or 8-K/A only; a 6-K's string is not read.",
+                   "never what the filing says; the line is not event clearance",
+                   "it changes no ticket, exclusion or order"):
+        assert phrase in readme, phrase
+    corpus = json.loads((ROOT / "tests" / "fixtures" / "issuer-evidence" / "items-parity.json").read_text())
+    assert f"`earnings_risk._parse_items`'s own answer for {len(corpus['cases'])} item strings" in readme
     schema = re.sub(r"\s+", " ", (ROOT / "docs" / "ISSUER_EVIDENCE_SCHEMA.md").read_text())
-    assert "never parsed by the collector" in schema and "marks items 1.01, 1.03, 2.01, 3.01 and 5.01" in schema
+    for phrase in ("never parsed by the collector", "reads it on an 8-K or 8-K/A only",
+                   "marks items 1.01, 1.03, 2.01, 3.01 and 5.01 whatever the filing's date", "A 6-K's string is not read."):
+        assert phrase in schema, phrase
 
 
 def test_the_readme_counts_the_fields_the_smoke_drops():
