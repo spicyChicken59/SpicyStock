@@ -439,12 +439,21 @@ def prior_picks(fake: FakeAlpaca, measured: date = SESSION) -> dict:
 FIXTURE_EARNINGS = {"AAPL": (320193, "Apple Inc.", 2, "20:30:00"),
                     "AMD": (2488, "ADVANCED MICRO DEVICES INC", 40, "11:00:00"),
                     "NVDA": (1045810, "NVIDIA CORP", -8, "20:20:00")}
+# the current reports the fixture issuers filed near the session, by days before it
+# (src/earnings_risk.py version 2): AAPL a material definitive agreement two days
+# before, so its ticket carries the material-item warning; NVDA a Regulation FD
+# disclosure the day before, items listed and none material
+FIXTURE_REPORTS = {"AAPL": [(2, "21:05:00", "8-K", "1.01,9.01")],
+                   "NVDA": [(1, "12:30:00", "8-K", "7.01,9.01")]}
 
 
 def fixture_sec(session: date) -> FakeSec:
     sec = FakeSec()
     for ticker, (cik, name, offset, accepted) in FIXTURE_EARNINGS.items():
-        sec.quarterly(ticker, cik, name, session, offset, accepted=accepted)
+        entry = sec.quarterly(ticker, cik, name, session, offset, accepted=accepted)
+        for days_before, accepted_at, form, items in FIXTURE_REPORTS.get(ticker, []):
+            day = (session - timedelta(days=days_before)).isoformat()
+            entry["rows"].append((day, f"{day}T{accepted_at}.000Z", form, items))
     return sec
 
 
@@ -592,6 +601,10 @@ def expected_shape(variant: str, data: dict) -> None:
         # the ticket's earnings warning: estimated inside its hold, and a warning only
         earnings = [(r["ticker"], r["verdict"], r["placement"]) for r in data["run"]["earnings"]["rows"]]
         assert earnings == [("AAPL", "estimate_inside", "held")], earnings
+        # and its recent current reports: the material agreement named, the warning withholding nothing
+        items = data["run"]["earnings"]["rows"][0]["items"]
+        assert items["status"] == "material" and [m["item"] for m in items["material"]] == ["1.01"], items
+        assert data["run"]["earnings"]["version"] == earnings_risk.VERSION == 2
         dollar = [b for b in data["bursts"] if b["scan"] == "dollar"]
         assert dollar and all(isinstance(b["volume_vs_prior"], float) and 0 < b["volume_vs_prior"] < 1 for b in dollar), \
             [(b["ticker"], b.get("volume_vs_prior")) for b in dollar]

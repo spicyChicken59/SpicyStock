@@ -151,7 +151,9 @@ CONTRACT: dict[str, str] = {
            "failures by kind; a plan walked from them names its object in minute_evidence. run.earnings "
            "is each published ticket's earnings warning, estimated from the company's SEC results filings "
            "(8-K item 2.02) a year back and read against the plan's hold window: an estimate and never an "
-           "announced date, a warning and never a refusal, and a ticket SEC did not answer for says unknown.",
+           "announced date, a warning and never a refusal, and a ticket SEC did not answer for says unknown; "
+           "under version 2 each row also keeps the ticket's recent SEC current reports (8-K) and names the "
+           "item codes they carry, a material item (1.01, 1.03, 2.01, 3.01, 5.01) by its heading and filing.",
     "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
     "account": "The configured sizing assumptions every plan below was computed from: equity, risk per "
                "trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
@@ -972,12 +974,18 @@ def _alert_order(row: dict) -> str | None:
 
 def _earnings_line(data: dict, stage: str, ticker: Any) -> str:
     """The ticket's earnings warning, verbatim from run.earnings, or nothing
-    when the record carries none for it."""
+    when the record carries none for it; under it, the row's recent SEC
+    current-report items (version 2), verbatim too, when the row carries them."""
     rows = _get(data, "run", "earnings", "rows")
     for row in rows if isinstance(rows, list) else []:
         if isinstance(row, dict) and row.get("stage") == stage and row.get("ticker") == ticker:
             words = _text(row.get("sentence"))
-            return f'<p style="{_S_MUTED}">{esc(words)}</p>' if words else ""
+            out = f'<p style="{_S_MUTED}">{esc(words)}</p>' if words else ""
+            items = row.get("items") if isinstance(row.get("items"), dict) else {}
+            item_words = _text(items.get("sentence"))
+            if words and item_words:
+                out += f'<p style="{_S_MUTED}">{esc(item_words)}</p>'
+            return out
     return ""
 
 

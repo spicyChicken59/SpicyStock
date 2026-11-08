@@ -191,6 +191,18 @@ the signal (P) no longer reads as overdue, though an issuer with no results
 filing for longer than any gap between its own earlier ones still does. Every estimate says it is one, and a ticket
 SEC did not answer for is unknown, never clear.
 
+Version 2 of the block reads one more thing off the same filing list, at no
+extra request: the ticket's recent SEC current reports (form 8-K and its
+amendments) filed within 14 days (P) before the signal or since it, 8 kept (P),
+those with a material item first and then the newest, with the window's count
+beside them, listed by item code under SEC's own Form 8-K headings. A material
+item -- 1.01, 1.03, 2.01, 3.01 or 5.01 (DERIVED: SpicyStock's list, each the
+first filing a cash acquisition, a delisting or a failure tends to make) -- is
+named with its filing date, its acceptance time and where that fell against the
+hold. An item names a kind of event, never what the filing says, so the
+sentence says to read it before entry; it withholds nothing, and only the
+manual event registry does.
+
 ## What the evidence says (E)
 
 The one pre-registered test of mechanised 2LYNCH gates (n=10,947) found the

@@ -347,7 +347,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5989 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6034 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -14830,3 +14830,145 @@ these numbers; an edge claim.
 
 **Not claimable:** the morning host under #213 and #214 (Mo's redeploy); a
 morning check with admitted plans inside the window; any trading edge.
+
+## Checkpoint, 8 Nov 2026 -- PR #217 accepted; each ticket's recent SEC current reports named beside its earnings warning (earnings block v2)
+
+**PR #217, accepted.** Merged as `4fc73a4d` on `main` with a merge commit over
+`af21693c`, its tree the head `b54153c9e`'s byte for byte. That head passed
+pytest (03:34–04:06 UTC), page (03:34–03:51), the gate's docs-only decision
+and both gitleaks runs on Tests run 42443248456 and Secret scans 42443248545
+and 42443245462; the native cases passed on the code head `5a3dd4e89` (Tests
+run 42436397745). Publisher 42445476609 printed *Verified: every one of the 48
+public files matches committed main* at 04:07:20 UTC; Pages 42445500177
+deployed (42445476069 cancelled as superseded, as every merge does); the merge
+commit's own Secret scan 42445476535 passed. The Railway host still answers
+404 on `/status.json` and serves the 4 November receipt: the 31 October image,
+until Mo redeploys from `main`.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` restarted from
+`main` at `4fc73a4d`, pushed as **PR #218**: the implementation (`d3c04f465`),
+the regenerated fixtures with two cases (`fe3b61f3b`), the reviewer's findings
+fixed (`3d9ccf75c`), the mutation pass's one survivor closed (`85f389083`) and
+this checkpoint. `src/earnings_risk.py` moves to
+version 2 and `src/report.py`'s mail line and `docs/app.js` print what it
+writes; the rules digest moves, so the 13 page fixtures and every cascaded
+generator were regenerated through their own producers and the recovery
+rehearsal's evidence with them. `docs/data.json`, `docs/picks.json`, the
+compact reader, every receipt, the history, the evidence objects, the quality
+ledger, the workflows and the vendored design system are untouched; no run,
+mail, dispatch, provider call or credential. `.env.example` says the reading
+adds no setting.
+
+**What the warning read, and threw away.** The evening's earnings warning
+(#209, 1 November) fetches each published ticket's whole SEC filing list for
+its results 8-Ks (item 2.02) and read nothing else off it. A cash acquisition,
+a delisting or a failure announces itself first in an 8-K whose items name the
+kind of event: MG, PRTH, ARX, BWIN, ACVA, ZIM and CCC each reached
+`knowledge/event-risk.json` by hand, after a reader had found the deal, and the
+morning's issuer collector lists a candidate's current reports with their item
+codes printed raw and interpreted by nobody. The 2 November record's one
+ticket, ESRT, carried a results 8-K accepted after the close and the row said
+so; the same list's item codes it never read.
+
+**The rule** (`earnings_risk.VERSION` 2, archived with
+`current_report_forms`, `recent_report_days`, `max_current_reports` and
+`material_items`, so `rules_version` moves). `_columns()` keeps every 8-K and
+8-K/A row with its item codes (`_parse_items()`: each `N.NN` as SEC writes
+them, once; a token SEC wrote in another shape is counted as `unread`, never
+lost); `_recent_reports()` keeps the ones filed within `RECENT_REPORT_DAYS`
+(14) before the signal session or since it, through the read's own ET date, in
+`_retained_order()` -- those carrying a material item first, then the newest
+-- the first `MAX_CURRENT_REPORTS` (8) retained on the row as
+`current_reports` with the window's count and the material reports the bound
+did not retain beside them (`current_report_window`). `items_of()` is pure
+over those reports and that block: SEC read as it stood at the earlier of the
+retrieval and the hold's last close, as `assess()` reads the results filings,
+a report filed after that counted (`after_hold`) and not read; a report
+carrying an item of `MATERIAL_ITEMS` (1.01 a material definitive agreement,
+1.03 bankruptcy or receivership, 2.01 a completed acquisition or disposition,
+3.01 a delisting notice, 5.01 a change in control) named with its form, its
+filing date, its acceptance in ET and where that fell (`_item_placement()`:
+before the signal session's close, after it and before day 1's open, or during
+the hold; by the filing date when SEC recorded no acceptance, and a report
+dated the signal day itself `signal_date`, since the date says nothing about
+its close); every other code listed under SEC's Form 8-K heading
+(`ITEM_TITLES`, transcribed, a heading naming a kind of event and never what
+one filing says; a code the table lacks printed bare); status `material`,
+`listed`, `unreadable` (reports whose every token was unread), `none`,
+`foreign` (a 6-K carries no items; a foreign issuer that files 8-Ks is read
+like any other) or `not_checked` with the row's own reason. The sentence says
+an item names a kind of event and not what the filing says, to read it before
+entry, and that the warning withholds nothing: only the manual event registry
+does; a listed sentence says "of those read, none is"; every count the words
+could hide -- reports filed after the hold's last close, material reports the
+bound did not retain, tokens not read -- is said. The block's sentence counts
+the tickets by status. `_items_faults()` re-derives each row's items from the
+reports it retains and holds the reports to the window at the read, the
+retained order, the bound, unique accessions and the counts' arithmetic; an
+unread row carries none. `record_faults()` reads the version the record's
+rules archived: a publication made under version 1 (every one from 2 to 6
+November) is held to version 1's shape, refused nothing, and read again on
+every retained publication here; a closed night carrying a version-1 block
+reads SEC again rather than carry a shape its own rules do not write. The
+page's risk item and tickets sheet (`itemsLine()`, `data-current-reports`) and
+the mail print the row's sentence under the earnings sentence; a version-1
+record says the check predates it, and a row the page cannot read is never no
+item. No extra request: `collect()` sends the same mapping and filing-list
+requests.
+
+**Measured** (this sandbox, Python 3.12.3, Node 22, Chromium through Playwright
+1.63): the full suite in a scratchpad worktree at `3d9ccf75c`, the two `zstandard`-gated files this venv cannot run left out, 5855 passed, 13 environment-gated skips and the two morning-host privilege tests that fail under the root-only scratchpad wherever the worktree sits and pass in the checkout (the #214 checkpoint records the same), 24 m 02 s (6033 collected); the final head `85f389083` adds one forge case and the count line over it, and `tests/test_earnings_risk.py` (134) and `tests/test_docs.py` pass on it; at `fe3b61f3b`, before the review's fixes, 5842 passed, 13 skipped and those two, 24 m 14 s; `tests/test_earnings_risk.py` 134 passed under
+`-W error::pytest.PytestWarning` (45 new); `tests/test_docs.py` 52 with the
+count line at 6034; every retained publication on `main` from 23 October to 6
+November validates under the new rule (`report.validate()` PASS and
+`record_faults()` empty for each, the 2–6 November ones under their archived
+version 1); 13 page fixtures and every cascaded generator current, their
+`--check`s run last (morning 21 pinned, issuer-evidence 44, stop-research 22,
+research-outcomes 40, research-observations 24, source-recovery 20,
+cash-preview 6, the first-trade backup 81/81 and its 171-case parity corpus
+with 47 accepted, the recovery rehearsal, the 5 frozen validation copies, the
+evidence review and the findings file); the `earnings` browser suite 114/114
+with `--shots` at 1280 dark, 390 light and 320 dark (68 on `main`), the
+screenshots looked at: the items sentence sits under the earnings sentence in
+the risk item, one column on the phone; `git diff --check` clean; gitleaks
+8.24.3 over the branch's commits with the repository's config: no leaks. The
+full smoke, the chart check and continuity are CI's: CI on `3d9ccf75c` passed all seven checks (Tests run 42452020024: pytest 05:46–06:11 UTC with the fixture step to 06:11 and a clean tree, page 05:46–06:03, the gate, the native central case 05:46–06:03 and stress 05:46–06:05; Secret scans 42452020036 and 42452016095), and on the final head `85f389083` passed all seven checks on Tests run 42454439270 (pytest 06:21–06:54 UTC with the fixture step to 06:54 and a clean tree, page 06:21–06:40, the gate, the native central case 06:22–06:40 and stress 06:22–07:00; Secret scans 42454439254 and 42454435943).
+
+**Mutation passes**, the tree never written. Python, each mutant in a detached
+worktree judged by the whole `tests/test_earnings_risk.py`, `test_report.py`
+and `test_docs.py` (the count line deselected). At the implementation commit,
+twenty-two -- the window's edge made strict, the oldest reports kept, the
+seen-until filter dropped, an acceptance at the close placed after it, a
+material item dropped from the list, the items not re-derived, the order, the
+window and the unread branch each unchecked, the archived version ignored,
+version-2 keys demanded of every version, the block's tail dropped, the counts
+blind to status, any token a code, every form a report, the filing-date
+placement dropped, a foreign issuer never, a closed night carrying a version-1
+block, the mail's paragraph dropped, the count bound dropped, a report's form
+unchecked, the material items not archived. Twenty died at once in the test
+naming their rule; **two survived, each a hole**: an acceptance exactly at the
+signal close placed as after it (no case sat on the close), and the window
+rule dropped (the one forgery outside the window also broke the order and the
+count, which refused it first: the first shape this file names). Each has its
+case (`fe3b61f3b`), and re-judged there both die, the control passing 308.
+Both controls (a heading's wording the tests never print, a docstring word)
+survive. eighteen over the review's rules -- the material-first order dropped, the window unbounded at the read, unread tokens uncounted, `signal_date` dropped, the after-hold note unsaid, an amendment's form printed as 8-K, the unretained count zeroed, the validator's `until` bound unchecked, its unretained bound dropped, `unreadable` folded into `listed`, the none sentence's after-hold words dropped, duplicate items unchecked, the unread count's type unchecked, the retained order unchecked, the block's foreign words reworded, a heading reworded, a material kind reworded, the window's key set loosened to a superset. Seventeen died at once, each in the test naming its rule; **`m40_window_keys_loose` SURVIVED, a hole**: no forgery added a key to the window block, so a validator admitting a superset passed every case. One forgery does now (an extra `retained` key, `85f389083`), and the mutant dies re-judged in its own worktree (1 failed, 321 passed); both controls (a heading's wording the tests never print, a docstring word) pass 321. Page, through routed copies of `app.js` judged by `--only
+earnings`: the version-1 branch dropped (2 checks), the line left out of the
+risk item (13), the sheet's paragraph dropped (7), the version check dropped
+(6), a blank sentence printed (2): all die; the control passes 114/114.
+
+**The review, worked.** One reviewer by execution over `fe3b61f3b`, in its own worktree (73 tool calls; its probes retained under the scratchpad), re-derived every claim the commit messages make, validated every retained publication since 23 October under the new code, ran the fixture checks, and ran 46 single-rule breaks of its own against the Python tests and six against the browser suite. Eight findings, each reproduced here before it was touched, and ten test holes. **Two were defects of meaning (medium).** A report whose only item token SEC wrote in another shape (`2.020`, as the 8 November fixture row has) kept `items: []`, read as `listed`, and the sentence said "items ; none is a material agreement ..." over a code never read, which the validator re-derived and accepted: `_parse_items()` counts the tokens it leaves out now, each report carries `unread`, a report with no readable code is status `unreadable` ("no item code could be read, so what they name is not established") and every status says how many tokens were not read. And the bound dropped the OLDEST reports whatever they carried, so a delisting notice ninth-newest in a fortnight was gone and the sentence said "none is ..." over thirteen: the reports are retained in `_retained_order()` now, those carrying a material item first and then the newest, the window block beside them counts the material reports the bound did not retain (`unretained_material`, only when more than eight material reports fall in a fortnight) and the sentence says so; the listed sentence says "of those read, none is". **The rest, each fixed:** a report SEC recorded no acceptance for, dated the signal session itself, was placed "before the signal session's close" when an 8-K accepted after the close bears that day's date (placement `signal_date` now, in words that say before or after its close is not established); on a backfill read the window counted reports filed after the hold's last close that `items_of()` then excluded, so a later read said "none filed" over one it had, and a report dated after the read validated (`_recent_reports()` is bounded at the read's date, the validator refuses a report past it, `after_hold` counts the excluded reports and every sentence says "N filed after the hold's last close were not read", the none case reading "none read" rather than "none filed"); an 8-K/A printed as "8-K item" (the entry carries its form); the block sentence's foreign words read "1 a foreign issuer whose ..." ("1 foreign (6-K, no items)"); README said every code prints under its heading (where the module's table knows it, bare otherwise), that a foreign issuer's reports say they carry no items (only with no 8-K in the window: one that files 8-Ks is read like any other), and did not say that the first closed night after the merge reads SEC again for the carried tickets (it does now, and the docstring said so); `MAX_CURRENT_REPORTS` and the method's "8 kept" carry their P, and "tends to make" is labelled SpicyStock's reading. Recorded, not changed: the reviewer's lead that SEC's own heading for item 5.05 may read "Amendments to the Registrant's Code of Ethics" where the table says "Amendment to Registrant's" (the table is a transcription, as its comment says, and sec.gov does not resolve from this sandbox); and the re-read on a closed night, kept, since a record made under version 2 cannot carry a version-1 block. **The ten holes, each closed with a case:** a duplicate item code in a retained report, a report dated after the read, a date-only report dated day 1 (held, not before it), nine retained reports, a foreign issuer that files 8-Ks, the block sentence's words for `none`, `foreign`, `listed` and `unreadable`, the item headings (seven spelled in the test from Form 8-K, apart from the module's table) and the material kinds (spelled in the test, where the first version compared them against the module's own words: the third shape this file names). The version gate in `block_sentence()` the reviewer found equivalent (a version-1 block carries no `items_counts`) is left as the statement of intent.
+
+**Keep / fix / defer / omit.** Keep: an item names a kind of event and the
+sentence says so; the warning withholds nothing and the registry alone does;
+every count the words could hide is said. Fix if it bites: more than eight
+material reports in a fortnight leave some unretained, counted and not named;
+the first closed night after the merge reads SEC again for the carried
+tickets. Defer: the issuer reader's listed filings on the Morning desk still
+print item codes bare; reading item 2.02's own filing text for a results date;
+the 5.05 heading's exact wording, which sec.gov would settle. Omit:
+withholding a ticket on an item; a registry entry the code writes.
+
+**Not claimable:** a live night under version 2 (the first evening after the
+merge writes the first `current_reports` and `items`; read its rows); a
+morning or research observation; any trading edge.

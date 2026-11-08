@@ -29,6 +29,17 @@ signal session):
 * ``estimate_outside`` -- the estimate falls outside the window;
 * ``unknown`` with a reason -- never clearance.
 
+Version 2 reads one more thing off the same filing list, at no extra request:
+the ticket's recent current reports (form 8-K and its amendments) filed within
+``RECENT_REPORT_DAYS`` before the signal session or since it, and the item
+codes each carries. An item in ``MATERIAL_ITEMS`` -- a material definitive
+agreement, a completed acquisition or disposition, a delisting notice, a change
+in control, a bankruptcy -- is the kind of event a cash acquisition or a
+delisting announces first, and the row says so with the filing named; every
+other code is listed by its heading. An item names a KIND of event and never
+what the filing says: the words tell the reader to read it, and the warning
+withholds nothing. A record made under version 1 is read under version 1.
+
 Nothing here is Bonde's rule: it is SpicyStock's warning about a gap a stop
 does not protect against.
 """
@@ -43,13 +54,59 @@ import time
 from src import sessions
 from src import issuer_evidence
 
-VERSION = 1
+VERSION = 2
+VERSIONS = (1, 2)            # the versions a record can archive and this module can read
 POLICY = "warn_only"
 SOURCE = "sec_edgar_submissions"
 COVERAGE = "sec_results_filings_derived"
 RESULTS_FORM = "8-K"
 RESULTS_ITEM = "2.02"
 FOREIGN_FORMS = ("6-K", "6-K/A", "20-F", "20-F/A", "40-F", "40-F/A")
+CURRENT_REPORT_FORMS = ("8-K", "8-K/A")
+RECENT_REPORT_DAYS = 14      # P: a current report filed within this many calendar days before the signal, or since it, is recent
+MAX_CURRENT_REPORTS = 8      # P: recent current reports kept per ticket, those with a material item first, then the newest; the window's count beside them
+# DERIVED: the 8-K items SpicyStock warns on -- each the first filing a cash
+# acquisition, a delisting or a failure tends to make -- under SEC's own item
+# headings (Form 8-K; transcribed, not fetched, and a heading names a KIND of
+# event, never what one filing says)
+MATERIAL_ITEMS = ("1.01", "1.03", "2.01", "3.01", "5.01")
+ITEM_TITLES = {
+    "1.01": "Entry into a Material Definitive Agreement",
+    "1.02": "Termination of a Material Definitive Agreement",
+    "1.03": "Bankruptcy or Receivership",
+    "1.04": "Mine Safety - Reporting of Shutdowns and Patterns of Violations",
+    "1.05": "Material Cybersecurity Incidents",
+    "2.01": "Completion of Acquisition or Disposition of Assets",
+    "2.02": "Results of Operations and Financial Condition",
+    "2.03": "Creation of a Direct Financial Obligation or an Obligation under an Off-Balance Sheet Arrangement of a Registrant",
+    "2.04": "Triggering Events That Accelerate or Increase a Direct Financial Obligation or an Obligation under an Off-Balance Sheet Arrangement",
+    "2.05": "Costs Associated with Exit or Disposal Activities",
+    "2.06": "Material Impairments",
+    "3.01": "Notice of Delisting or Failure to Satisfy a Continued Listing Rule or Standard; Transfer of Listing",
+    "3.02": "Unregistered Sales of Equity Securities",
+    "3.03": "Material Modification to Rights of Security Holders",
+    "4.01": "Changes in Registrant's Certifying Accountant",
+    "4.02": "Non-Reliance on Previously Issued Financial Statements or a Related Audit Report or Completed Interim Review",
+    "5.01": "Changes in Control of Registrant",
+    "5.02": "Departure of Directors or Certain Officers; Election of Directors; Appointment of Certain Officers; Compensatory Arrangements of Certain Officers",
+    "5.03": "Amendments to Articles of Incorporation or Bylaws; Change in Fiscal Year",
+    "5.04": "Temporary Suspension of Trading Under Registrant's Employee Benefit Plans",
+    "5.05": "Amendment to Registrant's Code of Ethics, or Waiver of a Provision of the Code of Ethics",
+    "5.06": "Change in Shell Company Status",
+    "5.07": "Submission of Matters to a Vote of Security Holders",
+    "5.08": "Shareholder Director Nominations",
+    "6.01": "ABS Informational and Computational Material",
+    "6.02": "Change of Servicer or Trustee",
+    "6.03": "Change in Credit Enhancement or Other External Support",
+    "6.04": "Failure to Make a Required Distribution",
+    "6.05": "Securities Act Updating Disclosure",
+    "6.06": "Static Pool",
+    "7.01": "Regulation FD Disclosure",
+    "8.01": "Other Events",
+    "9.01": "Financial Statements and Exhibits",
+}
+ITEMS_STATUSES = ("material", "listed", "unreadable", "none", "foreign", "not_checked")
+ITEM_PLACEMENTS = ("before_signal_close", "signal_date", "pre_entry", "held")
 PROJECTION_DAYS = 364        # DERIVED: 52 weeks, the same weekday a year on
 ESTIMATE_SLACK_DAYS = 7      # P: a report a week either side of last year's is the same cycle
 OVERDUE_DAYS = 45            # P: an estimate whose range ended this many days before the signal still reads as overdue
@@ -85,6 +142,10 @@ RULES = {
     "earnings_risk.results_form": RESULTS_FORM,
     "earnings_risk.results_item": RESULTS_ITEM,
     "earnings_risk.foreign_forms": list(FOREIGN_FORMS),
+    "earnings_risk.current_report_forms": list(CURRENT_REPORT_FORMS),
+    "earnings_risk.recent_report_days": RECENT_REPORT_DAYS,
+    "earnings_risk.max_current_reports": MAX_CURRENT_REPORTS,
+    "earnings_risk.material_items": list(MATERIAL_ITEMS),
     "earnings_risk.projection_days": PROJECTION_DAYS,
     "earnings_risk.estimate_slack_days": ESTIMATE_SLACK_DAYS,
     "earnings_risk.overdue_days": OVERDUE_DAYS,
@@ -100,6 +161,7 @@ RULES = {
 }
 
 ACCESSION = re.compile(r"[0-9]{10}-[0-9]{2}-[0-9]{6}\Z")
+ITEM_CODE = re.compile(r"[0-9]\.[0-9]{2}\Z")
 REASON_WORDS = {
     "not_mapped": "SEC's ticker list does not name this symbol",
     "identity_ambiguous": "SEC's ticker list names this symbol for more than one company",
@@ -268,6 +330,178 @@ def assess(filings, session, days, retrieved_at, coverage_start, foreign, histor
     return out
 
 
+# ------------------------------------------------- the current reports ---
+PLACEMENT_WORDS = {"before_signal_close": "before the signal session's close",
+                   "signal_date": "on the signal session's date (SEC recorded no acceptance time, so before or after "
+                                  "its close is not established)",
+                   "pre_entry": "after the signal session's close and before day 1's open",
+                   "held": "during this ticket's hold window"}
+MATERIAL_WORDS = {"1.01": "a material agreement", "1.03": "a bankruptcy", "2.01": "a completed acquisition or disposition",
+                  "3.01": "a delisting notice", "5.01": "a change in control"}
+ITEMS_WORDS = {"material": "with a material item", "listed": "with other items only",
+               "unreadable": "with items that could not be read", "none": "with none",
+               "foreign": "foreign (6-K, no items)", "not_checked": "not checked"}
+
+
+def _parse_items(value: str) -> tuple[list[str], int]:
+    """The item codes of one current report, each ``N.NN`` as SEC writes them,
+    and how many tokens SEC wrote in another shape were left out, so a code a
+    row carries is one the validator can hold and a token it does not carry is
+    counted rather than lost."""
+    codes: list[str] = []
+    unread = 0
+    for token in value.split(","):
+        code = token.strip()
+        if not code:
+            continue
+        if ITEM_CODE.fullmatch(code):
+            if code not in codes:
+                codes.append(code)
+        else:
+            unread += 1
+    return codes, unread
+
+
+def _material(report) -> bool:
+    return any(code in MATERIAL_ITEMS for code in report["items"])
+
+
+def _retained_order(reports) -> list[dict]:
+    """Reports carrying a material item first, then the rest, each group newest
+    first (the filing date, then the accession): the order they are retained in
+    and the order the validator holds."""
+    newest = sorted(reports, key=lambda r: (r["filing_date"], r["accession"]), reverse=True)
+    return sorted(newest, key=lambda r: not _material(r))
+
+
+def _recent_reports(reports, session, retrieved) -> tuple[list[dict], dict]:
+    """The current reports filed within ``RECENT_REPORT_DAYS`` before the signal
+    or since it, through the day of the read: ``MAX_CURRENT_REPORTS`` of them
+    kept in ``_retained_order()``, so a material item is never the one the bound
+    drops, with the window's count and how many material-item reports were not
+    retained beside them."""
+    since = (_day(session) - timedelta(days=RECENT_REPORT_DAYS)).isoformat()
+    until = (retrieved if isinstance(retrieved, datetime) else _instant(retrieved)).astimezone(sessions.MARKET_TZ).date().isoformat()
+    recent = _retained_order(r for r in reports if since <= r["filing_date"] <= until)
+    kept, dropped = recent[:MAX_CURRENT_REPORTS], recent[MAX_CURRENT_REPORTS:]
+    return kept, {"count": len(recent), "unretained_material": sum(1 for r in dropped if _material(r))}
+
+
+def _item_placement(report, signal, close, day1_open) -> str:
+    """Where a filing fell against the hold: by its acceptance when SEC
+    recorded one, else by its filing date, which on the signal session's own
+    date says nothing about its close."""
+    if report.get("accepted_at"):
+        moment = _instant(report["accepted_at"])
+        return "before_signal_close" if moment <= close else "pre_entry" if moment < day1_open else "held"
+    filed = _day(report["filing_date"])
+    if filed < signal:
+        return "before_signal_close"
+    if filed == signal:
+        return "signal_date"
+    return "pre_entry" if filed < day1_open.astimezone(sessions.MARKET_TZ).date() else "held"
+
+
+def items_of(reports, window, session, days, retrieved_at, foreign) -> dict:
+    """One ticket's current-report items from the reports its row retains and
+    the window block beside them (the count, the material-item reports the
+    bound did not retain). Pure, so the validator re-derives it. SEC is read
+    as it stood at the earlier of the retrieval and the hold's last close, as
+    ``assess()`` reads the results filings; a report filed after that is
+    counted and not read."""
+    signal = _day(session)
+    days = [_day(d) for d in days]
+    retrieved = _instant(retrieved_at)
+    close, day1_open, last_close = sessions.hours(signal)[1], sessions.hours(days[0])[0], sessions.hours(days[-1])[1]
+    seen_until = min(retrieved, last_close)
+    seen_day = seen_until.astimezone(sessions.MARKET_TZ).date()
+    reports = list(reports)
+    rows = sorted(reports, key=lambda r: (r["filing_date"], r["accession"]), reverse=True)
+    rows = [r for r in rows if _day(r["filing_date"]) <= seen_day
+            and (r.get("accepted_at") is None or _instant(r["accepted_at"]) <= seen_until)]
+    material = [{"item": code, "title": ITEM_TITLES[code], "form": r["form"], "accession": r["accession"],
+                 "filing_date": r["filing_date"], "accepted_at": r.get("accepted_at"),
+                 "placement": _item_placement(r, signal, close, day1_open)}
+                for r in rows for code in r["items"] if code in MATERIAL_ITEMS]
+    codes = sorted({code for r in rows for code in r["items"]})
+    unread = sum(r.get("unread", 0) for r in rows)
+    window = window or {"count": len(reports), "unretained_material": 0}
+    status = ("material" if material else "listed" if codes else "unreadable" if rows
+              else "foreign" if foreign else "none")
+    out = {"status": status, "material": material, "codes": codes, "seen": len(rows),
+           "after_hold": len(reports) - len(rows), "count": window["count"],
+           "unretained_material": window["unretained_material"], "unread": unread, "reason": None}
+    out["sentence"] = items_sentence(out)
+    return out
+
+
+def _items_unread(reason) -> dict:
+    out = {"status": "not_checked", "material": [], "codes": [], "seen": 0, "after_hold": 0, "count": None,
+           "unretained_material": 0, "unread": 0, "reason": reason}
+    out["sentence"] = items_sentence(out)
+    return out
+
+
+def _code_words(codes) -> str:
+    return ", ".join(f"{c} ({ITEM_TITLES[c]})" if c in ITEM_TITLES else c for c in codes)
+
+
+def _material_kinds() -> str:
+    kinds = [f"{MATERIAL_WORDS[c]} ({c})" for c in MATERIAL_ITEMS]
+    return ", ".join(kinds[:-1]) + " or " + kinds[-1]
+
+
+def _plural(n, noun) -> str:
+    return f"{n} {noun}" if n == 1 else f"{n} {noun}s"
+
+
+def items_sentence(items) -> str:
+    """What the page and the mail print under the earnings sentence, verbatim.
+    Every count the row carries that the words could hide is said: reports
+    filed after the hold's last close and not read, reports the bound did not
+    retain, item tokens that could not be read."""
+    status = items["status"]
+    if status == "not_checked":
+        return f"Recent SEC current reports not checked: {REASON_WORDS[items['reason']]}."
+    tail = " SEC filings are not news coverage."
+    span = f"in the {RECENT_REPORT_DAYS} days before the signal or since"
+    notes = ""
+    if items["after_hold"]:
+        notes += f" {_plural(items['after_hold'], 'report')} filed after the hold's last close {'was' if items['after_hold'] == 1 else 'were'} not read."
+    if items["unretained_material"]:
+        notes += (f" {_plural(items['unretained_material'], 'more report')} with a material item "
+                  f"{'was' if items['unretained_material'] == 1 else 'were'} filed {span} and not retained.")
+    if items["unread"]:
+        notes += (f" {_plural(items['unread'], 'item token')} SEC wrote in another shape "
+                  f"{'was' if items['unread'] == 1 else 'were'} not read.")
+    if status == "foreign":
+        return f"Recent SEC current reports: a foreign issuer's reports (6-K) carry no item codes, so none was read.{notes}{tail}"
+    if status == "none":
+        if items["after_hold"]:
+            return f"Recent SEC current reports: none (8-K) read, filed {span} through the hold's last close.{notes}{tail}"
+        return f"Recent SEC current reports: none (8-K) filed {span}.{notes}{tail}"
+    retained = items["seen"] + items["after_hold"]
+    read = f", {items['seen']} of them retained and read" if items["count"] > retained or items["after_hold"] else ""
+    if status == "unreadable":
+        return (f"Recent SEC current reports: {items['count']} (8-K) filed {span}{read}; no item code could be read, "
+                f"so what they name is not established.{notes}{tail}")
+    if status == "listed":
+        return (f"Recent SEC current reports: {items['count']} (8-K) filed {span}{read}, items {_code_words(items['codes'])}; "
+                f"of those read, none is {_material_kinds()}.{notes}{tail}")
+    found = "; ".join(f"{m['form']} item {m['item']} ({m['title']}) filed {_long(m['filing_date'])}"
+                      + (f", accepted {_et(m['accepted_at'])}" if m["accepted_at"] else "")
+                      + f", {PLACEMENT_WORDS[m['placement']]}" for m in items["material"])
+    others = [c for c in items["codes"] if c not in MATERIAL_ITEMS]
+    return (f"Recent SEC current report: {found}. An item names a kind of event, not what the filing says: read it "
+            "before entry. A warning and not a refusal; only the manual event registry withholds a ticket."
+            + (f" Other items filed {span}: {_code_words(others)}." if others else "") + notes)
+
+
+def _items_counts(rows) -> dict:
+    return {s: n for s in ITEMS_STATUSES
+            if (n := sum(1 for r in rows if isinstance(r.get("items"), dict) and r["items"].get("status") == s))}
+
+
 # ------------------------------------------------------------ the words ---
 def _short(value) -> str:
     d = _day(value)
@@ -348,21 +582,28 @@ def block_sentence(block) -> str:
     lead = f"Earnings, estimated from SEC results filings for {len(rows)} {noun}: " + "; ".join(parts) + "."
     if block["status"] == "unavailable":
         lead += " No SEC filing list was read, so no date is established."
-    return lead + " An estimate warns and never withholds a ticket."
+    lead += " An estimate warns and never withholds a ticket."
+    if block.get("version") == VERSION and isinstance(block.get("items_counts"), dict):
+        parts = [f"{block['items_counts'][k]} {ITEMS_WORDS[k]}" for k in ITEMS_STATUSES if block["items_counts"].get(k)]
+        if parts:
+            lead += (f" SEC current reports (8-K) in the {RECENT_REPORT_DAYS} days before the signal or since: "
+                     + "; ".join(parts) + "; a material item names a kind of event and withholds nothing.")
+    return lead
 
 
 # ------------------------------------------------------------ the source ---
 def _columns(value):
-    """The results filings, the oldest filing date and the forms of one SEC
-    filing list. The five columns it reads are parallel or the list is refused
-    whole; a row it cannot read is left out of all three."""
+    """The results filings, the oldest filing date, the forms and the current
+    reports (with their item codes) of one SEC filing list. The five columns it
+    reads are parallel or the list is refused whole; a row it cannot read is
+    left out of all four."""
     names = ("accessionNumber", "filingDate", "acceptanceDateTime", "form", "items")
     if not isinstance(value, dict) or not all(isinstance(value.get(n), list) for n in names):
         raise SourceError("rows_unreadable")
     count = len(value["accessionNumber"])
     if not all(len(value[n]) == count for n in names):
         raise SourceError("rows_unreadable")
-    results, dates, forms = [], [], set()
+    results, dates, forms, reports = [], [], set(), []
     for i in range(count):
         accession, filed, accepted = value["accessionNumber"][i], value["filingDate"][i], value["acceptanceDateTime"][i]
         form, items = value["form"][i], value["items"][i]
@@ -378,7 +619,11 @@ def _columns(value):
         forms.add(form)
         if form == RESULTS_FORM and RESULTS_ITEM in [x.strip() for x in items.split(",")]:
             results.append({"accession": accession, "filing_date": filed_day.isoformat(), "accepted_at": accepted_iso})
-    return results, (min(dates) if dates else None), forms
+        if form in CURRENT_REPORT_FORMS:
+            codes, unread = _parse_items(items)
+            reports.append({"accession": accession, "filing_date": filed_day.isoformat(), "accepted_at": accepted_iso,
+                            "form": form, "items": codes, "unread": unread})
+    return results, (min(dates) if dates else None), forms, reports
 
 
 def _decode(raw):
@@ -435,7 +680,7 @@ def parse_submissions(raw: bytes, cik: int, ticker: str):
         raise
     except (KeyError, TypeError, AttributeError):
         raise SourceError("rows_unreadable") from None
-    results, start, forms = _columns(recent)
+    results, start, forms, reports = _columns(recent)
     history = []
     for item in files:
         try:
@@ -444,7 +689,7 @@ def parse_submissions(raw: bytes, cik: int, ticker: str):
                 history.append({"name": name, "filing_to": _day(item["filingTo"]).isoformat()})
         except (KeyError, TypeError, ValueError):
             continue
-    return {"results": results, "coverage_start": start, "forms": forms, "history": history}
+    return {"results": results, "coverage_start": start, "forms": forms, "history": history, "reports": reports}
 
 
 def _budget(seconds):
@@ -508,14 +753,19 @@ def _status(rows) -> str:
 
 
 def _row(ticket, session, days, retrieved, result=None, *, reason=None, error=None, cik=None, issuer=None,
-         sources=(), filings=(), coverage_start=None, foreign=False):
+         sources=(), filings=(), coverage_start=None, foreign=False, reports=(), window=None):
     row = {"stage": ticket["stage"], "ticker": ticket["ticker"], "session": session, "window": days,
            "cik": cik, "issuer": issuer, "sources": list(sources), "error": error, "retrieved_at": _iso(retrieved),
-           "results_filings": list(filings), "coverage_start": coverage_start, "foreign": foreign}
+           "results_filings": list(filings), "coverage_start": coverage_start, "foreign": foreign,
+           "current_reports": list(reports), "current_report_window": window}
     if result is None:
         row.update(verdict="unknown", placement=None, projection=None, observed=None, reason=reason)
     else:
         row.update(result)
+    # the current reports are read where the results filings were: a row whose
+    # source was read in full carries its items, an unread one says so
+    row["items"] = (items_of(row["current_reports"], window, session, days, row["retrieved_at"], foreign)
+                    if row["reason"] in ASSESSED_REASONS else _items_unread(row["reason"]))
     row["sentence"] = sentence(row)
     return row
 
@@ -532,7 +782,9 @@ def _kept(results, needed) -> list[dict]:
 def _read(get, cik, ticker, session, clock_now):
     """One issuer's results filings from its SEC list, and the older file when
     the recent one does not reach back far enough. A failed older file leaves
-    the recent rows, read as ``history_not_read``, with its error named."""
+    the recent rows, read as ``history_not_read``, with its error named. The
+    recent current reports come from the recent file alone, which holds a
+    filer's newest thousand filings: the window never reaches past them."""
     url = SUBMISSIONS_URL.format(cik=cik)
     raw = get(url)
     retrieved = clock_now()
@@ -546,7 +798,7 @@ def _read(get, cik, ticker, session, clock_now):
         url = HISTORY_URL.format(name=older[0]["name"])
         try:
             hraw = get(url)
-            more, hstart, hforms = _columns(_decode(hraw))
+            more, hstart, hforms, _ = _columns(_decode(hraw))
         except SourceError as exc:
             error = exc.code
         else:
@@ -556,9 +808,10 @@ def _read(get, cik, ticker, session, clock_now):
             parsed["forms"] |= hforms
             if hstart is not None:
                 start = hstart if start is None else min(start, hstart)
+    reports, window = _recent_reports(parsed["reports"], session, retrieved)
     return {"filings": _kept(results, needed), "coverage_start": start.isoformat() if start else None,
             "foreign": bool(parsed["forms"] & set(FOREIGN_FORMS)), "sources": sources,
-            "retrieved": retrieved, "error": error}
+            "retrieved": retrieved, "error": error, "reports": reports, "window": window}
 
 
 def collect(tickets, session, *, fetch=None, now=None, deadline_seconds=DEADLINE_SECONDS, _state=None) -> dict:
@@ -570,7 +823,7 @@ def collect(tickets, session, *, fetch=None, now=None, deadline_seconds=DEADLINE
     clock_now = (lambda: now) if now is not None else (lambda: datetime.now(timezone.utc))
     tickets = list(tickets)
     block = {"version": VERSION, "policy": POLICY, "source": SOURCE, "session": session,
-             "status": "not_applicable", "mapping": None, "rows": [], "counts": {}, "requests": 0}
+             "status": "not_applicable", "mapping": None, "rows": [], "counts": {}, "items_counts": {}, "requests": 0}
     if _state is not None:
         _state["block"] = block
     if tickets:
@@ -612,7 +865,8 @@ def collect(tickets, session, *, fetch=None, now=None, deadline_seconds=DEADLINE
                                 got["foreign"], got["error"])
                 row = _row(ticket, session, days, got["retrieved"], result, cik=cik, issuer=issuer,
                            sources=got["sources"], error=got["error"], filings=got["filings"],
-                           coverage_start=got["coverage_start"], foreign=got["foreign"])
+                           coverage_start=got["coverage_start"], foreign=got["foreign"],
+                           reports=got["reports"], window=got["window"])
             except SourceError as exc:
                 reason = exc.code if exc.code in ("not_mapped", "rows_unreadable") else "source_unavailable"
                 row = _row(ticket, session, days, clock_now(), reason=reason, cik=cik, issuer=issuer,
@@ -620,6 +874,7 @@ def collect(tickets, session, *, fetch=None, now=None, deadline_seconds=DEADLINE
             block["rows"].append(row)
     block["status"] = _status(block["rows"])
     block["counts"] = _counts(block["rows"])
+    block["items_counts"] = _items_counts(block["rows"])
     block["sentence"] = block_sentence(block)
     return block
 
@@ -643,7 +898,8 @@ def safe_collect(tickets, session, **kwargs) -> dict:
         made = (state.get("block") or {}).get("requests", 0)
         block = {"version": VERSION, "policy": POLICY, "source": SOURCE, "session": session,
                  "status": _status(rows), "mapping": None, "rows": rows, "counts": _counts(rows),
-                 "requests": made if type(made) is int else 0, "internal": type(exc).__name__}
+                 "items_counts": _items_counts(rows), "requests": made if type(made) is int else 0,
+                 "internal": type(exc).__name__}
         block["sentence"] = block_sentence(block)
         return block
 
@@ -651,7 +907,8 @@ def safe_collect(tickets, session, **kwargs) -> dict:
 def carried(previous_block, session, tickets, **kwargs) -> dict:
     """A closed night re-presents the previous session's tickets verbatim, and
     their warnings with them as that publication read them; a previous block
-    that is not those tickets' is read again."""
+    that is not those tickets', or one written under an older version, is read
+    again."""
     tickets = list(tickets)
     if isinstance(previous_block, dict) and not block_faults(previous_block, _day(session).isoformat(), tickets):
         return previous_block
@@ -659,25 +916,66 @@ def carried(previous_block, session, tickets, **kwargs) -> dict:
 
 
 # ------------------------------------------------------------ validation ---
-BLOCK_KEYS = {"version", "policy", "source", "session", "status", "mapping", "rows", "counts", "requests", "sentence"}
-ROW_KEYS = {"stage", "ticker", "session", "window", "cik", "issuer", "sources", "error", "retrieved_at",
-            "results_filings", "coverage_start", "foreign", "verdict", "placement", "projection", "observed",
-            "reason", "sentence"}
+BLOCK_KEYS_V1 = {"version", "policy", "source", "session", "status", "mapping", "rows", "counts", "requests", "sentence"}
+BLOCK_KEYS = BLOCK_KEYS_V1 | {"items_counts"}
+ROW_KEYS_V1 = {"stage", "ticker", "session", "window", "cik", "issuer", "sources", "error", "retrieved_at",
+               "results_filings", "coverage_start", "foreign", "verdict", "placement", "projection", "observed",
+               "reason", "sentence"}
+ROW_KEYS = ROW_KEYS_V1 | {"current_reports", "current_report_window", "items"}
 SOURCE_KEYS = {"url", "sha256", "bytes", "retrieved_at"}
 FILING_KEYS = {"accession", "filing_date", "accepted_at"}
+REPORT_KEYS = {"accession", "filing_date", "accepted_at", "form", "items", "unread"}
+WINDOW_KEYS = {"count", "unretained_material"}
+ITEMS_KEYS = {"status", "material", "codes", "seen", "after_hold", "count", "unretained_material", "unread", "reason", "sentence"}
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 
 
-def block_faults(block, session, tickets=None, published_at=None) -> list[str]:
+def block_faults(block, session, tickets=None, published_at=None, version=VERSION) -> list[str]:
     """The block's shape one level in, and every read row re-derived from the
     inputs it retains; ``tickets`` the record's own, in order; with
     ``published_at``, every SEC read held between the signal session's close
-    and ``RETRIEVAL_WINDOW_SECONDS`` after the record's clock. Names faults;
-    never raises."""
+    and ``RETRIEVAL_WINDOW_SECONDS`` after the record's clock; ``version`` the
+    one the record's rules archived, so a version-1 block is held to version
+    1's shape and nothing else. Names faults; never raises."""
     try:
-        return _faults(block, session, tickets, published_at)
+        return _faults(block, session, tickets, published_at, version)
     except (KeyError, TypeError, ValueError, AttributeError, IndexError, ArithmeticError, RecursionError) as exc:
         return [f"earnings block is malformed ({type(exc).__name__})"]
+
+
+def _report_ok(value) -> bool:
+    return (isinstance(value, dict) and set(value) == REPORT_KEYS and isinstance(value["accession"], str)
+            and ACCESSION.fullmatch(value["accession"]) is not None and bool(_day(value["filing_date"]))
+            and (value["accepted_at"] is None or bool(_instant(value["accepted_at"])))
+            and value["form"] in CURRENT_REPORT_FORMS and isinstance(value["items"], list)
+            and all(isinstance(c, str) and ITEM_CODE.fullmatch(c) for c in value["items"])
+            and len(set(value["items"])) == len(value["items"])
+            and type(value["unread"]) is int and value["unread"] >= 0)
+
+
+def _items_faults(r, session, days, name):
+    """A version-2 row's current reports and items, one level in and re-derived."""
+    reports, window, items = r["current_reports"], r["current_report_window"], r["items"]
+    if not isinstance(reports, list) or len(reports) > MAX_CURRENT_REPORTS or not all(_report_ok(x) for x in reports):
+        return f"earnings current reports for {name}"
+    if not (isinstance(items, dict) and set(items) == ITEMS_KEYS):
+        return f"earnings current-report items for {name}"
+    if r["reason"] in ASSESSED_REASONS:
+        since = (_day(session) - timedelta(days=RECENT_REPORT_DAYS)).isoformat()
+        until = _instant(r["retrieved_at"]).astimezone(sessions.MARKET_TZ).date().isoformat()
+        window_ok = (isinstance(window, dict) and set(window) == WINDOW_KEYS
+                     and all(type(window[k]) is int and window[k] >= 0 for k in WINDOW_KEYS)
+                     and window["count"] >= len(reports)
+                     and window["unretained_material"] <= window["count"] - len(reports))
+        if (not window_ok or reports != _retained_order(reports)
+                or any(not since <= x["filing_date"] <= until for x in reports)
+                or len({x["accession"] for x in reports}) != len(reports)):
+            return f"earnings current reports for {name} are not the recent window's"
+        if items != items_of(reports, window, session, days, r["retrieved_at"], r["foreign"]):
+            return f"earnings current-report items for {name} are not what its reports give"
+    elif reports or window is not None or items != _items_unread(r["reason"]):
+        return f"earnings current reports for {name} beside an unread source"
+    return None
 
 
 def _source_ok(value, url, bounds) -> bool:
@@ -693,11 +991,14 @@ def _within(instant, bounds) -> bool:
     return bounds is None or bounds[0] < moment <= bounds[1]
 
 
-def _faults(block, session, tickets, published_at) -> list[str]:
-    if not isinstance(block, dict) or not BLOCK_KEYS <= set(block) <= BLOCK_KEYS | {"internal"}:
+def _faults(block, session, tickets, published_at, version) -> list[str]:
+    if version not in VERSIONS:
+        return ["earnings rules version"]
+    block_keys, row_keys = (BLOCK_KEYS, ROW_KEYS) if version >= 2 else (BLOCK_KEYS_V1, ROW_KEYS_V1)
+    if not isinstance(block, dict) or not block_keys <= set(block) <= block_keys | {"internal"}:
         return ["earnings block keys"]
     out = []
-    if type(block["version"]) is not int or block["version"] != VERSION:
+    if type(block["version"]) is not int or block["version"] != version:
         return ["earnings block version"]
     if block["policy"] != POLICY or block["source"] != SOURCE:
         out.append("earnings block policy or source")
@@ -719,7 +1020,7 @@ def _faults(block, session, tickets, published_at) -> list[str]:
         out.append("earnings internal failure word")
     days = window(session)
     for r in rows:
-        if set(r) != ROW_KEYS:
+        if set(r) != row_keys:
             out.append(f"earnings row keys for {r.get('ticker')!r}")
             continue
         name = r["ticker"]
@@ -766,6 +1067,10 @@ def _faults(block, session, tickets, published_at) -> list[str]:
         elif (filings or r["sources"] or r["coverage_start"] is not None or r["foreign"]
               or r["projection"] is not None or r["observed"] is not None or r["placement"] is not None):
             out.append(f"earnings row for {name} carries a finding beside an unread source")
+        if version >= 2:
+            fault = _items_faults(r, session, days, name)
+            if fault:
+                out.append(fault)
         if r["sentence"] != sentence(r):
             out.append(f"earnings sentence for {name}")
     if tickets is not None and [(r.get("stage"), r.get("ticker")) for r in rows] != \
@@ -775,6 +1080,8 @@ def _faults(block, session, tickets, published_at) -> list[str]:
         out.append("earnings status is not what its rows give")
     if block["counts"] != _counts(rows):
         out.append("earnings counts")
+    if version >= 2 and block["items_counts"] != _items_counts(rows):
+        out.append("earnings current-report counts")
     if block["sentence"] != block_sentence(block):
         out.append("earnings sentence")
     return out
@@ -785,6 +1092,13 @@ def record_faults(data) -> list[str]:
     rules = data.get("rules") if isinstance(data, dict) else None
     if not isinstance(rules, dict) or "earnings_risk" not in rules:
         return []
+    # the version the record archived decides the shape it is held to: a
+    # publication made under version 1 carries no current reports and is
+    # refused none; one made under version 2 must carry them
+    archived = rules["earnings_risk"]
+    version = archived.get("version") if isinstance(archived, dict) else None
+    if type(version) is not int or version not in VERSIONS:
+        return ["run.earnings rules version is unknown"]
     run = data.get("run") if isinstance(data.get("run"), dict) else {}
     if "earnings" not in run:
         return ["run.earnings is missing under rules that write it"]
@@ -795,4 +1109,4 @@ def record_faults(data) -> list[str]:
         _instant(published)
     except ValueError:
         return ["run.earnings cannot be read against the record's clock (run.published_at)"]
-    return [f"run.{f}" for f in block_faults(run["earnings"], run.get("session"), tickets, published)]
+    return [f"run.{f}" for f in block_faults(run["earnings"], run.get("session"), tickets, published, version)]
