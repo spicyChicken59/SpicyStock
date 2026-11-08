@@ -781,6 +781,9 @@ def test_a_material_item_is_named_with_its_filing_and_where_it_fell():
     # accepted after the signal session's close: before day 1's open
     got = items([current_report(S, "21:30:00", items=("2.01",))])
     assert got["material"][0]["placement"] == "pre_entry" and "before day 1's open" in got["sentence"]
+    # at the close (20:00Z in October) it is before it; a second later it is after
+    assert items([current_report(S, "20:00:00", items=("2.01",))])["material"][0]["placement"] == "before_signal_close"
+    assert items([current_report(S, "20:00:01", items=("2.01",))])["material"][0]["placement"] == "pre_entry"
     assert "Other items" not in got["sentence"]
     # accepted during the hold, seen by a read after it
     got = items([current_report("2026-11-03", "21:00:00", items=("5.01",))], retrieved="2026-11-06T23:00:00Z")
@@ -916,6 +919,8 @@ def a_block_with_items(fake_sec):
     (lambda b: b["rows"][0]["current_reports"].append(dict(b["rows"][0]["current_reports"][1], accession="0000939767-26-999999", filing_date="2026-10-01")),
      "are not the recent window's"),
     (lambda b: b["rows"][0]["current_reports"].append(dict(b["rows"][0]["current_reports"][1])), "are not the recent window's"),
+    # the oldest report redated before the window, its order, count and items untouched: the window rule alone refuses it
+    (lambda b: b["rows"][0]["current_reports"][1].update(filing_date="2026-10-01"), "are not the recent window's"),
     (lambda b: b["rows"][0]["current_reports"][0].update(items=["1.1"]), "earnings current reports for EXEL"),
     (lambda b: b["rows"][0]["current_reports"][0].update(form="10-K"), "earnings current reports for EXEL"),
     (lambda b: b["rows"][0]["current_reports"][0].pop("form"), "earnings current reports for EXEL"),
