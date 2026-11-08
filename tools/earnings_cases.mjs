@@ -98,7 +98,7 @@ export async function checkEarnings({ browser, base, open, check, eq, shotsDir }
     const rows = next.run.earnings.rows.filter((r) => r.stage === 'burst');
     const [nvda, coil] = ['NVDA', 'COIL'].map((t) => rows.find((r) => r.ticker === t));
     check('the next fixture carries two burst tickets with different warnings', !!nvda && !!coil && nvda.sentence !== coil.sentence && next.trades.includes('NVDA') && next.trades.includes('COIL'));
-    check('NVDA\'s recent reports are listed and none is material', nvda.items.status === 'listed' && /none is a material agreement \(1\.01\)/.test(nvda.items.sentence) && /7\.01 \(Regulation FD Disclosure\)/.test(nvda.items.sentence), nvda.items.sentence);
+    check('NVDA\'s recent reports are listed and none is material', nvda.items.status === 'listed' && /of those read, none is a material agreement \(1\.01\)/.test(nvda.items.sentence) && /7\.01 \(Regulation FD Disclosure\)/.test(nvda.items.sentence), nvda.items.sentence);
     const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/next.json', '2026-09-11T22:31:00Z', 1280,
       { reducedMotion: 'reduce', lens: 'all', hash: '#/explore/bursts/COIL' });
     try {

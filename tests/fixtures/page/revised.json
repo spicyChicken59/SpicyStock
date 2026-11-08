@@ -1026,7 +1026,8 @@
        "items": [
         "7.01",
         "9.01"
-       ]
+       ],
+       "unread": 0
       },
       {
        "accession": "0001045810-26-000002",
@@ -1036,10 +1037,14 @@
        "items": [
         "2.02",
         "9.01"
-       ]
+       ],
+       "unread": 0
       }
      ],
-     "current_report_count": 2,
+     "current_report_window": {
+      "count": 2,
+      "unretained_material": 0
+     },
      "verdict": "already_reported",
      "placement": null,
      "projection": {
@@ -1066,9 +1071,12 @@
        "9.01"
       ],
       "seen": 2,
+      "after_hold": 0,
       "count": 2,
+      "unretained_material": 0,
+      "unread": 0,
       "reason": null,
-      "sentence": "Recent SEC current reports: 2 (8-K) filed in the 14 days before the signal or since, items 2.02 (Results of Operations and Financial Condition), 7.01 (Regulation FD Disclosure), 9.01 (Financial Statements and Exhibits); none is a material agreement (1.01), a bankruptcy (1.03), a completed acquisition or disposition (2.01), a delisting notice (3.01) or a change in control (5.01). SEC filings are not news coverage."
+      "sentence": "Recent SEC current reports: 2 (8-K) filed in the 14 days before the signal or since, items 2.02 (Results of Operations and Financial Condition), 7.01 (Regulation FD Disclosure), 9.01 (Financial Statements and Exhibits); of those read, none is a material agreement (1.01), a bankruptcy (1.03), a completed acquisition or disposition (2.01), a delisting notice (3.01) or a change in control (5.01). SEC filings are not news coverage."
      },
      "sentence": "This quarter's results were filed 3 Sep 2026; the next earnings report is not estimated inside this ticket's hold window Mon 14 Sep–Fri 18 Sep (an inference from filing history, not clearance)."
     },
@@ -1092,7 +1100,7 @@
      "coverage_start": null,
      "foreign": false,
      "current_reports": [],
-     "current_report_count": null,
+     "current_report_window": null,
      "verdict": "unknown",
      "placement": null,
      "projection": null,
@@ -1103,7 +1111,10 @@
       "material": [],
       "codes": [],
       "seen": 0,
+      "after_hold": 0,
       "count": null,
+      "unretained_material": 0,
+      "unread": 0,
       "reason": "not_mapped",
       "sentence": "Recent SEC current reports not checked: SEC's ticker list does not name this symbol."
      },

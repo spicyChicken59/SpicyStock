@@ -992,10 +992,14 @@
               "items": [
                 "1.01",
                 "9.01"
-              ]
+              ],
+              "unread": 0
             }
           ],
-          "current_report_count": 1,
+          "current_report_window": {
+            "count": 1,
+            "unretained_material": 0
+          },
           "verdict": "estimate_inside",
           "placement": "held",
           "projection": {
@@ -1015,6 +1019,7 @@
               {
                 "item": "1.01",
                 "title": "Entry into a Material Definitive Agreement",
+                "form": "8-K",
                 "accession": "0000320193-26-000001",
                 "filing_date": "2026-09-08",
                 "accepted_at": "2026-09-08T21:05:00Z",
@@ -1026,7 +1031,10 @@
               "9.01"
             ],
             "seen": 1,
+            "after_hold": 0,
             "count": 1,
+            "unretained_material": 0,
+            "unread": 0,
             "reason": null,
             "sentence": "Recent SEC current report: 8-K item 1.01 (Entry into a Material Definitive Agreement) filed 8 Sep 2026, accepted Tue 8 Sep 5:05 PM ET, before the signal session's close. An item names a kind of event, not what the filing says: read it before entry. A warning and not a refusal; only the manual event registry withholds a ticket. Other items filed in the 14 days before the signal or since: 9.01 (Financial Statements and Exhibits)."
           },
@@ -1052,7 +1060,7 @@
           "coverage_start": null,
           "foreign": false,
           "current_reports": [],
-          "current_report_count": null,
+          "current_report_window": null,
           "verdict": "unknown",
           "placement": null,
           "projection": null,
@@ -1063,7 +1071,10 @@
             "material": [],
             "codes": [],
             "seen": 0,
+            "after_hold": 0,
             "count": null,
+            "unretained_material": 0,
+            "unread": 0,
             "reason": "not_mapped",
             "sentence": "Recent SEC current reports not checked: SEC's ticker list does not name this symbol."
           },

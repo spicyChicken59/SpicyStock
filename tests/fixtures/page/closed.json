@@ -1029,10 +1029,14 @@
        "items": [
         "1.01",
         "9.01"
-       ]
+       ],
+       "unread": 0
       }
      ],
-     "current_report_count": 1,
+     "current_report_window": {
+      "count": 1,
+      "unretained_material": 0
+     },
      "verdict": "estimate_inside",
      "placement": "pre_entry",
      "projection": {
@@ -1052,6 +1056,7 @@
        {
         "item": "1.01",
         "title": "Entry into a Material Definitive Agreement",
+        "form": "8-K",
         "accession": "0000320193-26-000001",
         "filing_date": "2026-09-02",
         "accepted_at": "2026-09-02T21:05:00Z",
@@ -1063,7 +1068,10 @@
        "9.01"
       ],
       "seen": 1,
+      "after_hold": 0,
       "count": 1,
+      "unretained_material": 0,
+      "unread": 0,
       "reason": null,
       "sentence": "Recent SEC current report: 8-K item 1.01 (Entry into a Material Definitive Agreement) filed 2 Sep 2026, accepted Wed 2 Sep 5:05 PM ET, before the signal session's close. An item names a kind of event, not what the filing says: read it before entry. A warning and not a refusal; only the manual event registry withholds a ticket. Other items filed in the 14 days before the signal or since: 9.01 (Financial Statements and Exhibits)."
      },

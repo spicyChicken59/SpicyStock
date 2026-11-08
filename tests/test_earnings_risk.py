@@ -761,13 +761,18 @@ NOW = datetime(2026, 10, 29, 23, tzinfo=timezone.utc)
 TICKET = [{"stage": "burst", "ticker": "EXEL"}]
 
 
-def current_report(day: str, accepted: str | None = "20:05:00", form: str = "8-K", items=("8.01", "9.01")) -> dict:
+def current_report(day: str, accepted: str | None = "20:05:00", form: str = "8-K", items=("8.01", "9.01"),
+                   unread: int = 0) -> dict:
     return {"accession": f"0000939767-{int(day[2:4]):02d}-{next(ACC):06d}", "filing_date": day,
-            "accepted_at": f"{day}T{accepted}Z" if accepted else None, "form": form, "items": list(items)}
+            "accepted_at": f"{day}T{accepted}Z" if accepted else None, "form": form, "items": list(items), "unread": unread}
 
 
-def items(reports, *, count=None, session=S, retrieved=NIGHT, foreign=False):
-    return E.items_of(reports, count, session, E.window(session), retrieved, foreign)
+def items(reports, *, window=None, session=S, retrieved=NIGHT, foreign=False):
+    return E.items_of(reports, window, session, E.window(session), retrieved, foreign)
+
+
+NONE_MATERIAL = ("of those read, none is a material agreement (1.01), a bankruptcy (1.03), a completed acquisition or "
+                 "disposition (2.01), a delisting notice (3.01) or a change in control (5.01)")
 
 
 def test_a_material_item_is_named_with_its_filing_and_where_it_fell():
@@ -799,8 +804,16 @@ def test_a_report_without_an_acceptance_time_is_placed_by_its_filing_date():
     friday = "2026-10-30"
     got = items([current_report("2026-10-31", None, items=("1.03",))], session=friday, retrieved="2026-11-06T23:00:00Z")
     assert got["material"][0]["placement"] == "pre_entry" and ", accepted" not in got["sentence"]
+    # dated the signal session itself, it could have been accepted after the close: the words say so
     got = items([current_report(friday, None, items=("1.03",))], session=friday, retrieved="2026-10-30T23:00:00Z")
+    assert got["material"][0]["placement"] == "signal_date"
+    assert "on the signal session's date (SEC recorded no acceptance time, so before or after its close is not established)" in got["sentence"]
+    assert "before the signal session's close" not in got["sentence"]
+    # dated before it: before its close; dated day 1 or later: during the hold
+    got = items([current_report("2026-10-29", None, items=("1.03",))], session=friday)
     assert got["material"][0]["placement"] == "before_signal_close"
+    got = items([current_report("2026-11-02", None, items=("1.03",))], session=friday, retrieved="2026-11-06T23:00:00Z")
+    assert got["material"][0]["placement"] == "held"
     got = items([current_report("2026-11-03", None, items=("1.03",))], session=friday, retrieved="2026-11-06T23:00:00Z")
     assert got["material"][0]["placement"] == "held"
 
@@ -809,9 +822,9 @@ def test_other_items_are_listed_by_heading_and_none_or_a_foreign_issuer_say_so()
     got = items([current_report("2026-10-20", items=("7.01", "9.01")), current_report("2026-10-16", form="8-K/A", items=("2.03",))])
     assert got["status"] == "listed" and got["codes"] == ["2.03", "7.01", "9.01"] and got["material"] == []
     assert got["sentence"].startswith("Recent SEC current reports: 2 (8-K) filed in the 14 days before the signal or since, items 2.03 (")
-    assert "7.01 (Regulation FD Disclosure), 9.01 (Financial Statements and Exhibits); none is " in got["sentence"]
-    # the kinds it rules out are every material item, by the module's own words
-    assert all(f"{E.MATERIAL_WORDS[c]} ({c})" in got["sentence"] for c in E.MATERIAL_ITEMS)
+    assert "7.01 (Regulation FD Disclosure), 9.01 (Financial Statements and Exhibits); of those read, none is " in got["sentence"]
+    # the kinds it rules out are every material item, in words this test spells for itself
+    assert NONE_MATERIAL in got["sentence"]
     assert got["sentence"].endswith(" SEC filings are not news coverage.")
     none = items([])
     assert none["status"] == "none" and none["sentence"] == ("Recent SEC current reports: none (8-K) filed in the 14 days "
@@ -830,10 +843,11 @@ def test_the_window_is_fourteen_days_before_the_signal_through_the_read(fake_sec
                       ("2026-10-29", "2026-10-29T22:00:00.000Z", "8-K", "7.01")]      # after the close, before the read
     block = E.collect(TICKET, S, now=NOW)
     row = block["rows"][0]
-    assert [(r["filing_date"], r["items"]) for r in row["current_reports"]] == [("2026-10-29", ["7.01"]), ("2026-10-15", ["1.01"])]
-    assert row["current_report_count"] == 2 and row["items"]["status"] == "material"
+    # the material report is retained first, then the newest
+    assert [(r["filing_date"], r["items"]) for r in row["current_reports"]] == [("2026-10-15", ["1.01"]), ("2026-10-29", ["7.01"])]
+    assert row["current_report_window"] == {"count": 2, "unretained_material": 0} and row["items"]["status"] == "material"
     assert [m["item"] for m in row["items"]["material"]] == ["1.01"] and row["items"]["codes"] == ["1.01", "7.01"]
-    assert row["items"]["count"] == 2 and row["items"]["seen"] == 2
+    assert row["items"]["count"] == 2 and row["items"]["seen"] == 2 and row["items"]["after_hold"] == 0
     assert block["items_counts"] == {"material": 1}
     assert block["sentence"].endswith("SEC current reports (8-K) in the 14 days before the signal or since: 1 with a "
                                       "material item; a material item names a kind of event and withholds nothing.")
@@ -849,10 +863,115 @@ def test_the_newest_reports_are_kept_and_the_count_says_how_many_the_window_held
     entry["rows"] += [(d, f"{d}T20:05:00.000Z", "8-K", "8.01") for d in days]
     block = E.collect(TICKET, S, now=NOW)
     row = block["rows"][0]
-    assert len(row["current_reports"]) == E.MAX_CURRENT_REPORTS == 8 and row["current_report_count"] == 13
+    assert len(row["current_reports"]) == E.MAX_CURRENT_REPORTS == 8 and row["current_report_window"] == {"count": 13, "unretained_material": 0}
     assert [r["filing_date"] for r in row["current_reports"]] == days[::-1][:8]
     assert "13 (8-K) filed in the 14 days before the signal or since, 8 of them retained and read, items 8.01" in row["items"]["sentence"]
     assert E.block_faults(block, S, TICKET) == []
+
+
+def test_a_material_report_is_retained_before_the_newest_and_the_bound_says_what_it_dropped(fake_sec):
+    # thirteen reports: the OLDEST carries a delisting notice, the rest 8.01 -- the bound keeps it first
+    entry = register_exel(fake_sec)
+    days = [f"2026-10-{d:02d}" for d in range(16, 29)]
+    entry["rows"] += [(d, f"{d}T20:05:00.000Z", "8-K", "3.01" if d == days[0] else "8.01") for d in days]
+    block = E.collect(TICKET, S, now=NOW)
+    row = block["rows"][0]
+    assert row["current_reports"][0]["filing_date"] == days[0] and row["current_reports"][0]["items"] == ["3.01"]
+    assert [r["filing_date"] for r in row["current_reports"][1:]] == days[::-1][:7]
+    assert row["items"]["status"] == "material" and row["current_report_window"] == {"count": 13, "unretained_material": 0}
+    assert "8-K item 3.01 (Notice of Delisting" in row["items"]["sentence"] and "not retained" not in row["items"]["sentence"]
+    assert E.block_faults(block, S, TICKET) == []
+    # nine material reports: the bound drops one, and the row and the sentence say so
+    entry["rows"] = [r for r in entry["rows"] if r[0] not in days]
+    entry["rows"] += [(d, f"{d}T20:05:00.000Z", "8-K", "1.01") for d in days[:9]]
+    block = E.collect(TICKET, S, now=NOW)
+    row = block["rows"][0]
+    assert row["current_report_window"] == {"count": 9, "unretained_material": 1} and len(row["current_reports"]) == 8
+    assert [r["filing_date"] for r in row["current_reports"]] == days[:9][::-1][:8]
+    assert "1 more report with a material item was filed in the 14 days before the signal or since and not retained." in row["items"]["sentence"]
+    assert E.block_faults(block, S, TICKET) == []
+
+
+def test_a_report_filed_after_the_hold_is_counted_and_said_not_read_on_a_later_read(fake_sec):
+    entry = register_exel(fake_sec)
+    entry["rows"] += [("2026-11-06", "2026-11-06T20:05:00.000Z", "8-K", "3.01"),     # the session after the hold's last
+                      ("2026-10-27", "2026-10-27T20:05:00.000Z", "8-K", "7.01")]
+    block = E.collect(TICKET, S, now=datetime(2026, 11, 10, 23, tzinfo=timezone.utc))
+    row = block["rows"][0]
+    assert row["current_report_window"] == {"count": 2, "unretained_material": 0} and len(row["current_reports"]) == 2
+    assert row["items"]["status"] == "listed" and row["items"]["seen"] == 1 and row["items"]["after_hold"] == 1
+    assert "2 (8-K) filed in the 14 days before the signal or since, 1 of them retained and read, items 7.01" in row["items"]["sentence"]
+    assert "1 report filed after the hold's last close was not read." in row["items"]["sentence"]
+    assert E.block_faults(block, S, TICKET) == []
+    # with nothing read at all the words say none was read, not none was filed
+    entry["rows"] = [r for r in entry["rows"] if r[0] != "2026-10-27"]
+    row = E.collect(TICKET, S, now=datetime(2026, 11, 10, 23, tzinfo=timezone.utc))["rows"][0]
+    assert row["items"]["status"] == "none" and row["items"]["sentence"].startswith(
+        "Recent SEC current reports: none (8-K) read, filed in the 14 days before the signal or since through the hold's last close. 1 report filed after")
+    # a report dated after the read is not the window's: the row never carries it, and a forged one is refused
+    entry["rows"] += [("2026-11-20", "2026-11-20T20:05:00.000Z", "8-K", "1.01")]
+    block = E.collect(TICKET, S, now=datetime(2026, 11, 10, 23, tzinfo=timezone.utc))
+    assert block["rows"][0]["current_report_window"]["count"] == 1
+    forged = json.loads(json.dumps(block))
+    forged["rows"][0]["current_reports"].insert(0, current_report("2026-11-20", items=("1.01",)))
+    forged["rows"][0]["current_report_window"]["count"] = 2
+    assert any("are not the recent window's" in f for f in E.block_faults(forged, S, TICKET))
+
+
+def test_an_item_token_sec_wrote_in_another_shape_is_counted_not_read(fake_sec):
+    entry = register_exel(fake_sec)
+    entry["rows"] += [("2026-10-27", "2026-10-27T21:05:00.000Z", "8-K", "2.020")]
+    row = E.collect(TICKET, S, now=NOW)["rows"][0]
+    assert row["current_reports"][0]["items"] == [] and row["current_reports"][0]["unread"] == 1
+    assert row["items"]["status"] == "unreadable" and row["items"]["unread"] == 1
+    assert row["items"]["sentence"] == ("Recent SEC current reports: 1 (8-K) filed in the 14 days before the signal or since; "
+                                        "no item code could be read, so what they name is not established. 1 item token SEC "
+                                        "wrote in another shape was not read. SEC filings are not news coverage.")
+    # beside readable codes the token is counted and the readable ones are read
+    entry["rows"].append(("2026-10-26", "2026-10-26T21:05:00.000Z", "8-K", "7.01, bogus"))
+    block = E.collect(TICKET, S, now=NOW)
+    row = block["rows"][0]
+    assert row["items"]["status"] == "listed" and row["items"]["unread"] == 2 and row["items"]["codes"] == ["7.01"]
+    assert "2 item tokens SEC wrote in another shape were not read." in row["items"]["sentence"]
+    assert block["items_counts"] == {"listed": 1} and "1 with other items only" in block["sentence"]
+    assert E.block_faults(block, S, TICKET) == []
+
+
+def test_an_amendment_prints_its_own_form():
+    got = items([current_report("2026-10-27", form="8-K/A", items=("2.01",))])
+    assert got["material"][0]["form"] == "8-K/A" and "8-K/A item 2.01 (Completion of Acquisition" in got["sentence"]
+
+
+def test_a_foreign_issuer_that_files_current_reports_is_read_like_any_other(fake_sec):
+    fake_sec.issuer("SAP", 1000184, "SAP SE", [("2026-10-20", "2026-10-20T11:00:00.000Z", "6-K", ""),
+                                               ("2026-10-21", "2026-10-21T11:00:00.000Z", "8-K", "7.01")],
+                    start="2024-01-10", foreign=True)
+    block = E.collect([{"stage": "burst", "ticker": "SAP"}], S, now=NOW)
+    row = block["rows"][0]
+    assert row["foreign"] and row["items"]["status"] == "listed" and row["items"]["codes"] == ["7.01"]
+    assert E.block_faults(block, S, [{"stage": "burst", "ticker": "SAP"}]) == []
+
+
+def test_the_block_sentence_counts_every_status_in_its_own_words(fake_sec):
+    register_exel(fake_sec)                                                        # none
+    fake_sec.issuer("SAP", 1000184, "SAP SE", [], start="2024-01-10", foreign=True)   # foreign
+    tickets = [{"stage": "burst", "ticker": "EXEL"}, {"stage": "burst", "ticker": "SAP"}, {"stage": "anticipation", "ticker": "NOPE"}]
+    block = E.collect(tickets, S, now=NOW)
+    assert block["items_counts"] == {"none": 1, "foreign": 1, "not_checked": 1}
+    assert block["sentence"].endswith("SEC current reports (8-K) in the 14 days before the signal or since: 1 with none; "
+                                      "1 foreign (6-K, no items); 1 not checked; a material item names a kind of event and withholds nothing.")
+
+
+def test_the_item_headings_are_secs_own():
+    # a few headings spelled here from Form 8-K, apart from the module's table
+    assert E.ITEM_TITLES["1.01"] == "Entry into a Material Definitive Agreement"
+    assert E.ITEM_TITLES["2.02"] == "Results of Operations and Financial Condition"
+    assert E.ITEM_TITLES["7.01"] == "Regulation FD Disclosure"
+    assert E.ITEM_TITLES["8.01"] == "Other Events"
+    assert E.ITEM_TITLES["9.01"] == "Financial Statements and Exhibits"
+    assert E.ITEM_TITLES["2.03"].startswith("Creation of a Direct Financial Obligation")
+    assert E.ITEM_TITLES["3.01"].startswith("Notice of Delisting")
+    assert len(E.ITEM_TITLES) == 33 and all(E.ITEM_CODE.fullmatch(c) for c in E.ITEM_TITLES)
 
 
 def test_a_report_accepted_after_the_hold_is_not_seen_by_a_later_read():
@@ -880,7 +999,7 @@ def test_an_unread_row_carries_no_current_reports_and_says_so(fake_sec):
     fake_sec.fail["sec.gov"] = "network_error"
     block = E.collect(TICKET, S, now=NOW)
     row = block["rows"][0]
-    assert row["current_reports"] == [] and row["current_report_count"] is None
+    assert row["current_reports"] == [] and row["current_report_window"] is None
     assert row["items"] == E._items_unread("source_unavailable")
     assert row["items"]["sentence"] == "Recent SEC current reports not checked: SEC did not answer."
     assert block["items_counts"] == {"not_checked": 1} and "1 not checked" in block["sentence"]
@@ -913,9 +1032,16 @@ def a_block_with_items(fake_sec):
     (lambda b: b["rows"][0]["current_reports"].pop(0), "are not what its reports give"),
     (lambda b: b["rows"][0]["items"].update(sentence="No events."), "are not what its reports give"),
     (lambda b: b["rows"][0]["items"].update(count=5), "are not what its reports give"),
-    (lambda b: b["rows"][0].update(current_report_count=1), "are not the recent window's"),
-    (lambda b: b["rows"][0].update(current_report_count=True), "are not the recent window's"),
+    (lambda b: b["rows"][0]["current_report_window"].update(count=1), "are not the recent window's"),
+    (lambda b: b["rows"][0]["current_report_window"].update(count=True), "are not the recent window's"),
+    (lambda b: b["rows"][0]["current_report_window"].update(unretained_material=1), "are not the recent window's"),
+    (lambda b: b["rows"][0]["current_report_window"].pop("unretained_material"), "are not the recent window's"),
     (lambda b: b["rows"][0]["current_reports"].reverse(), "are not the recent window's"),
+    # nine reports, one past the bound
+    (lambda b: b["rows"][0]["current_reports"].extend(dict(b["rows"][0]["current_reports"][1], accession=f"0000939767-26-{n:06d}", filing_date=f"2026-10-{n:02d}") for n in range(16, 23)), "earnings current reports for EXEL"),
+    (lambda b: b["rows"][0]["current_reports"][1].update(items=["7.01", "7.01"]), "earnings current reports for EXEL"),
+    (lambda b: b["rows"][0]["current_reports"][1].update(unread=-1), "earnings current reports for EXEL"),
+    (lambda b: b["rows"][0]["current_reports"][1].pop("unread"), "earnings current reports for EXEL"),
     (lambda b: b["rows"][0]["current_reports"].append(dict(b["rows"][0]["current_reports"][1], accession="0000939767-26-999999", filing_date="2026-10-01")),
      "are not the recent window's"),
     (lambda b: b["rows"][0]["current_reports"].append(dict(b["rows"][0]["current_reports"][1])), "are not the recent window's"),
@@ -950,14 +1076,14 @@ def test_an_unread_row_given_a_report_or_items_is_refused(fake_sec):
     forged["rows"][0]["items"] = items([])
     assert any("beside an unread source" in f for f in E.block_faults(forged, S, tickets))
     forged = json.loads(json.dumps(block))
-    forged["rows"][0]["current_report_count"] = 0
+    forged["rows"][0]["current_report_window"] = {"count": 0, "unretained_material": 0}
     assert any("beside an unread source" in f for f in E.block_faults(forged, S, tickets))
 
 
 def version_one(block) -> dict:
     v1 = {k: v for k, v in block.items() if k != "items_counts"}
     v1["version"] = 1
-    v1["rows"] = [{k: v for k, v in r.items() if k not in ("current_reports", "current_report_count", "items")}
+    v1["rows"] = [{k: v for k, v in r.items() if k not in ("current_reports", "current_report_window", "items")}
                   for r in v1["rows"]]
     v1["sentence"] = E.block_sentence(v1)
     return v1

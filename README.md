@@ -1430,24 +1430,37 @@ SpicyStock's, not Bonde's (`knowledge/method.md`).
 Version 2 of the block reads one more thing off the same filing list, at no
 extra request: each row also keeps the ticket's recent SEC current reports
 (form 8-K and its amendments) filed within 14 days before the signal session
-or since it, the newest 8 retained with the window's count beside them, and
-names the item codes they carry, each under SEC's own Form 8-K heading. A
-report carrying item 1.01 (a material definitive agreement), 1.03 (bankruptcy
-or receivership), 2.01 (a completed acquisition or disposition), 3.01 (a
-delisting notice) or 5.01 (a change in control) is named with its filing date,
-its acceptance time and where that fell against the hold, because such a
-filing is the first a cash acquisition, a delisting or a failure tends to
-make; every other code is listed by heading. An item names a kind of event and
-never what the filing says, so the sentence says to read the filing before
-entry; it withholds nothing (only the manual event registry does), a foreign
-issuer's 6-K reports carry no items and say so, an unread row says the reports
-were not checked, and SEC filings are not news coverage. The sentence is
+or since it, through the day of the read, 8 retained -- those carrying a
+material item first, then the newest -- with the window's count and the
+material-item reports the bound did not retain beside them, and names the item
+codes they carry, each under SEC's Form 8-K heading where the module's table
+knows it and bare otherwise. A report carrying item 1.01 (a material
+definitive agreement), 1.03 (bankruptcy or receivership), 2.01 (a completed
+acquisition or disposition), 3.01 (a delisting notice) or 5.01 (a change in
+control) is named with its form, its filing date, its acceptance time and
+where that fell against the hold (a report SEC recorded no acceptance for is
+placed by its filing date, and one dated the signal session itself says that
+before or after its close is not established), because such a filing is the
+first a cash acquisition, a delisting or a failure tends to make (SpicyStock's
+reading of what the items are for, not a rule of SEC's); every other code is
+listed by heading. An item names a kind of event and never what the filing
+says, so the sentence says to read the filing before entry; it withholds
+nothing (only the manual event registry does). What the words could hide is
+said: a report filed after the hold's last close is counted and not read, a
+material-item report past the bound is counted, an item token SEC wrote in
+another shape is counted and not read, and a report whose every token was
+such says that what it names is not established. A foreign issuer with no
+8-K in the window says its 6-K reports carry no items; an unread row says the
+reports were not checked; SEC filings are not news coverage. The sentence is
 printed under the earnings sentence on the page, in the tickets sheet and in
 the mail, and the block's own sentence counts the tickets by what their
 reports carry. `report.validate()` re-derives every row's items from the
 reports it retains and holds a record to the version its rules archived: a
 record made under version 1 carries no current reports, is refused none, and
-the page says the check predates it.
+the page says the check predates it. A closed night carries the previous
+publication's block only when it validates under the current rules, so the
+first closed night after a version change reads SEC again for the carried
+tickets rather than carry a shape its own rules do not write.
 
 ### Morning observations
 

@@ -6,7 +6,7 @@
   "previous_observation_sha256": null,
   "dry_run": true,
   "publication": {
-    "data_sha256": "325579de64211ef781b5a8c5edd4216e97f14fff384d879aac2ad1c5f648f28b",
+    "data_sha256": "2d76f77d26161dcc21d0f3d86accdda2d3aacc251315c0071d99c52b599aaf30",
     "context_sha256": "b9bf8741ab0d82daac498eefff44d50b109a657572009be8feba79e9c16bc6b7",
     "run_id": null,
     "rules_version": "537feffd3f96",
@@ -14,7 +14,7 @@
     "applicable_session": "2026-09-11",
     "published_at": "2026-09-10T22:30:00+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "92d94eeca3b9efcffd8939aca178f809e0fbfd51a7d63ea352970cb7dcc7996d"
+    "reader_sha256": "49c4413f940f5838a8efb750f11c470b438fcce90ad0eff15876d8246d4d46f2"
   },
   "frozen": {
     "session": "2026-09-10",

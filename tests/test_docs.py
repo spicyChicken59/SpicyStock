@@ -787,14 +787,15 @@ def test_the_readme_and_the_method_quote_the_earnings_rules_from_the_module():
     assert E.RETRIEVAL_WINDOW_SECONDS == 2 * 3600 and "two hours after the record's own clock" in section
     # version 2's current reports: the window, the bound and every material item, by code, in README
     # and the method; the environment template says no setting was added
-    for words in (f"within {E.RECENT_REPORT_DAYS} days before the signal session", f"the newest {E.MAX_CURRENT_REPORTS} retained",
+    for words in (f"within {E.RECENT_REPORT_DAYS} days before the signal session", f"{E.MAX_CURRENT_REPORTS} retained -- those carrying a material item first",
                   "never what the filing says", "withholds nothing", "at no extra request",
-                  f"the version its rules archived", "version 1 carries no current reports"):
+                  f"the version its rules archived", "version 1 carries no current reports",
+                  "filed after the hold's last close is counted and not read", "reads SEC again for the carried"):
         assert words in section, words
     for code in E.MATERIAL_ITEMS:
         assert f"{code} (" in section, code
     assert f"within {E.RECENT_REPORT_DAYS} days (P) before the signal" in METHOD
-    assert f"the newest {E.MAX_CURRENT_REPORTS} kept" in METHOD
+    assert f"{E.MAX_CURRENT_REPORTS} kept (P)" in METHOD
     assert ", ".join(E.MATERIAL_ITEMS[:-1]) + " or " + E.MATERIAL_ITEMS[-1] in METHOD
     assert "recent current reports (8-K items) off the same filing list" in ENV and "no new setting" in ENV
     assert E.VERSION == 2 and set(E.MATERIAL_ITEMS) <= set(E.ITEM_TITLES)
