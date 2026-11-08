@@ -89,9 +89,12 @@ means -0.088R, interval [-0.335, +0.171]; the stopped population 610 settled at
 -0.110R, interval [-0.218, +0.086]; on YELLOW nights 131 settled at -0.667R
 against 174 at -0.241R; on RED nights 137 at -0.058R against 436 at -0.058R.
 Every interval straddles zero. The kept population's worse mean a ticket is
-the 4 November burst-route tickets' doing; the rule stops a name before its
-chart is read, so the reader's effect on the kept names is NOT RUN and these
-rows are not the rule's own population.
+the 4 November tickets' doing: the gap closes most without that night, to
+-0.052R over 186 against -0.053R over 573 (14 of its 82 kept settled rows are
+dollar days with both checks, every one a loss, so the night and not a route
+carries it); the rule stops a name before its chart is read, so the
+reader's effect on the kept names is NOT RUN and these rows are not the rule's
+own population.
 
 **The live policy's own scorecard**, the first the record has had with real
 burst plans: the 6 November publication's 13 model plans over its window,

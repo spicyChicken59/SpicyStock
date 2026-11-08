@@ -12,6 +12,7 @@ review this one supersedes is held to its git blobs, never re-derived."""
 from __future__ import annotations
 
 from copy import deepcopy
+import datetime
 import gzip
 import hashlib
 import itertools
@@ -611,6 +612,12 @@ def test_the_ledger_populations_are_the_studys_rows(committed, study, spec, join
             if by_hand is None or d < by_hand[1]:
                 by_hand = (session, d)
     assert gap["session"] == by_hand[0] and gap["gap"] == round(by_hand[1], 3)
+    # the report's aside on that night: how many of its kept settled rows came through a dollar day with both checks, and that each lost
+    night_kept = [r for r in kept if r["session"] == gap["session"] and r["bucket"] == "settled"]
+    expansion = [r for r in night_kept if r["admission"]["basis"] == "dollar_expansion"]
+    assert expansion and all(r["r"] < 0 for r in expansion)
+    report = " ".join(REPORT.read_text(encoding="utf-8").split())
+    assert f"({len(expansion)} of its {len(night_kept)} kept settled rows are dollar days with both checks, every one a loss" in report
     # and on rows where the closest and the furthest night differ: s1 and s3 close the gap to nothing, s2 opens it to 2R
     kept_hand = [row("s1", 1.0), row("s2", -3.0), row("s3", 1.0)]
     stopped_hand = [row("s1", -1.0, admitted=False), row("s2", -1.0, admitted=False), row("s3", -1.0, admitted=False)]
@@ -848,6 +855,13 @@ def test_the_report_quotes_the_review(committed, study):
     # the fewest settled nights any interval of the review is drawn over, and the sentence that says so
     fewest = min(pop["settled_nights"] for group in p.values() for pop in group.values() if pop["night_bootstrap"])
     assert fewest == 2 and "an interval of three nights, one over the two the criteria require" in text
+    # the night the prose blames for the kept route's worse mean is the one the ledger note found, in words, with its figures
+    note = next(c for c in committed["ledger"] if c["id"] == "dollar_only_admission")["notes"][0]
+    m = re.search(r"the gap closes most without (\d{4}-\d{2}-\d{2}), which leaves ([-+]\d\.\d{3})R over (\d+) against ([-+]\d\.\d{3})R over (\d+)", note)
+    assert m, note
+    night = datetime.date.fromisoformat(m.group(1))
+    assert (f"is the {night.day} {night.strftime('%B')} tickets' doing: the gap closes most without that night, to "
+            f"{m.group(2)}R over {m.group(3)} against {m.group(4)}R over {m.group(5)}") in text
     # the worst YELLOW night's share of the YELLOW admitted settled tickets, counted off the rows
     yellow_rows = [r for r in study["rows"] if r["stratum"] == "admitted" and r["phase"] == "confirmatory"
                    and r["night_regime"] == "yellow" and r["bucket"] == "settled"]
