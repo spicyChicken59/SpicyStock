@@ -4465,9 +4465,22 @@
     if (!e.present) return 'Earnings date not checked: this record predates the earnings warning. Check the company’s announcement before entry.';
     return e.row ? e.row.sentence : 'Earnings date not established: this record carries no readable earnings row for this ticket. Check the company’s announcement before entry.';
   }
+  // The ticket's recent SEC current-report items, as run.earnings wrote them under
+  // version 2 (src/earnings_risk.py items_of): printed verbatim under the earnings
+  // sentence. A record from before the check says so; a row the page cannot read is
+  // never read as no item. The page names no item of its own.
+  function itemsLine(c) {
+    if (c.status !== 'ticket') return '';
+    const e = earningsOf(c);
+    if (!e.present) return '';
+    const block = ((current || {}).run || {}).earnings;
+    if (e.row && e.row.items && typeof e.row.items === 'object' && text(e.row.items.sentence)) return e.row.items.sentence;
+    if (block && typeof block === 'object' && block.version === 1) return 'Recent SEC current reports not checked: this record predates the check.';
+    return 'Recent SEC current reports not established: this record carries no readable current-report row for this ticket.';
+  }
   function riskSummary(c) {
     const plan = c.plan || {};
-    return [stockRisk(c), earningsLine(c),
+    return [stockRisk(c), earningsLine(c), itemsLine(c),
       !(c.stage === 'bursts' && readerRisk(c.row.claude)) && !firstText(plan.stop_risk_reason, plan.hazards, plan.notes)
         ? 'This does not mean no risk; inspect non-passing criteria and entry restrictions. Model prices omit slippage.' : '',
       c.series.length ? '' : (c.stage === 'bursts' && SCStock.sourceReference(c.row, current) ? 'Browser chart not loaded. Use Load recorded chart to inspect the retained source evidence.' : 'No bars are archived for this name, so there is no chart to read.')];
@@ -4996,7 +5009,13 @@
     table.appendChild(el('tfoot', null, el('tr', null, el('td', { colspan: '10', text: plural(rows.length, 'order') + ' · ' + usd(committed, 0) + ' would be committed at the limits · ' + usd(risk, 0) + ' planned price-to-stop risk · ' + (isNum(acct.equity) && acct.equity ? (100 * committed / acct.equity).toFixed(1) : '—') + '% of the configured equity' }))));
     sheet.appendChild(table);
     if (rows.length) sheet.appendChild(partFillNote());
-    rows.forEach(b => { const words = earningsLine(model.byId['bursts:' + b.ticker] || { status: '' }); if (words) sheet.appendChild(el('p', { 'class': 'sc-hint', 'data-earnings': b.ticker, text: b.ticker + ': ' + words })); });
+    rows.forEach(b => {
+      const c = model.byId['bursts:' + b.ticker] || { status: '' };
+      const words = earningsLine(c);
+      if (words) sheet.appendChild(el('p', { 'class': 'sc-hint', 'data-earnings': b.ticker, text: b.ticker + ': ' + words }));
+      const items = itemsLine(c);
+      if (items) sheet.appendChild(el('p', { 'class': 'sc-hint', 'data-current-reports': b.ticker, text: b.ticker + ': ' + items }));
+    });
     const notes = acct.notes || [];
     if (notes.length) sheet.appendChild(el('details', { 'class': 'sc-details' }, [el('summary', { text: 'the configured sizing assumptions this sheet follows' }), el('ul', { 'class': 'ss-notes' }, notes.map((n) => el('li', { text: n })))]));
   }

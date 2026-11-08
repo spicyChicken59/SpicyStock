@@ -1427,6 +1427,28 @@ and two hours after the record's own clock and to SEC's own addresses, and
 refuses a block whose rows are not the record's tickets. The check is
 SpicyStock's, not Bonde's (`knowledge/method.md`).
 
+Version 2 of the block reads one more thing off the same filing list, at no
+extra request: each row also keeps the ticket's recent SEC current reports
+(form 8-K and its amendments) filed within 14 days before the signal session
+or since it, the newest 8 retained with the window's count beside them, and
+names the item codes they carry, each under SEC's own Form 8-K heading. A
+report carrying item 1.01 (a material definitive agreement), 1.03 (bankruptcy
+or receivership), 2.01 (a completed acquisition or disposition), 3.01 (a
+delisting notice) or 5.01 (a change in control) is named with its filing date,
+its acceptance time and where that fell against the hold, because such a
+filing is the first a cash acquisition, a delisting or a failure tends to
+make; every other code is listed by heading. An item names a kind of event and
+never what the filing says, so the sentence says to read the filing before
+entry; it withholds nothing (only the manual event registry does), a foreign
+issuer's 6-K reports carry no items and say so, an unread row says the reports
+were not checked, and SEC filings are not news coverage. The sentence is
+printed under the earnings sentence on the page, in the tickets sheet and in
+the mail, and the block's own sentence counts the tickets by what their
+reports carry. `report.validate()` re-derives every row's items from the
+reports it retains and holds a record to the version its rules archived: a
+record made under version 1 carries no current reports, is refused none, and
+the page says the check predates it.
+
 ### Morning observations
 
 `morning.yml` collects a small, read-only `docs/morning.json` beside the
