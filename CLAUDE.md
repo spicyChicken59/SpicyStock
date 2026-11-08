@@ -347,7 +347,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6034 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6040 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -14972,3 +14972,126 @@ withholding a ticket on an item; a registry entry the code writes.
 **Not claimable:** a live night under version 2 (the first evening after the
 merge writes the first `current_reports` and `items`; read its rows); a
 morning or research observation; any trading edge.
+
+## Checkpoint, 8 Nov 2026 -- PR #218 accepted; the Morning desk names each listed filing's 8-K items (#219)
+
+**PR #218, accepted.** Merged as `b17a8325` on `main` with a merge commit over
+`4fc73a4d`, its tree the head `7d05bb06`'s byte for byte. The code head
+`85f38908` passed all seven checks on Tests run 42454439270. Publisher
+42488219678 waited for `app.js` and printed *Verified: every one of the 48
+public files matches committed main* at 14:08:34 UTC; Pages 42488249946
+deployed (42488218412 cancelled as superseded, as every merge does); the merge
+commit's own Secret scan 42488219690 and Tests run 42488219675 (pytest
+14:07–14:32 UTC, page 14:07–14:26; the native cases skipped by the gate, as a
+merge's are) passed. The first night under earnings block version 2 is Monday
+9 November's.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` from `main` at
+`b17a8325`, pushed as **PR #219**: the implementation (`0726817c`), the
+reviewer's findings fixed (`3e168d5d`) and this checkpoint. Nothing under
+`src/` changed and no rule moved (`rules_version` stands, no page fixture
+regenerated); `docs/data.json`, `docs/picks.json`, the compact reader, every
+receipt, the history, the evidence objects, the quality ledger, the workflows
+and the vendored design system are untouched; no run, mail, dispatch, provider
+call or credential. `.env.example` was read: the reader adds no setting.
+
+**What it did before.** The Morning desk's issuer reader listed each
+candidate's current reports with SEC's `items` string printed raw, and no one
+read the codes, while the evening's earnings warning (#218) already reads them
+by named tables.
+
+**What was built.** `docs/app-issuer-evidence.js` reads each listed filing's
+string by the evening's own rule (`parseItems()`: split on commas, strip as
+Python strips, keep `N.NN` once, count every other token as unread) and only
+on an 8-K or 8-K/A; a 6-K's string is not read and says so. Each filing's line
+prints its codes under SEC's Form 8-K headings (`ITEM_TITLES`, the evening's
+table; a code it lacks printed bare), the five material items first and marked
+(`MATERIAL_ITEMS`, `MATERIAL_WORDS`). One summary line above the list says the
+issuer's state (`none`, `foreign`, `listed`, `unreadable`, `material`) with
+its coverage. It says that the desk marks every listed filing whatever its
+date, where the evening reads 14 days. It says that an item names a kind of
+event, never what the filing says, and that this is not event clearance. Every
+token it could not read is counted, and a material item among them is never
+excluded. `tests/fixtures/issuer-evidence/items_parity.py` writes
+`items-parity.json`: `earnings_risk._parse_items`'s own answers for 231 item
+strings, among them every code point Python strips, U+FEFF, the other
+separators and digit shapes. `tests/test_issuer_items_parity.py` holds the
+file to the generator and to the module, and the browser suite holds the
+page's parser to every case. A semantic `items` producer variant brings the
+issuer outputs to 46, the other 44 byte-identical. `tests/test_docs.py` holds
+the page's tables, pattern, space class and window to the module's.
+
+**The review, worked.** One reviewer by execution over `0726817c`, in its own
+worktree, returned ten findings. Each was reproduced here before it was
+touched, and each is fixed in `3e168d5d`. The meaning findings:
+- The material sentence said "an item SpicyStock warns on". The evening warns
+  only inside its 14-day window, so the words say that and that the desk does
+  not read the date. The first commit message's "names the same items" is
+  corrected in the PR body.
+- The listed sentence said no filing carried a material item while tokens went
+  unread. It now says "of the codes read", and the unread count beside it
+  excludes nothing.
+- Empty strings read as unreadable tokens. They read "SEC recorded no item
+  code".
+- The `none` and `foreign` states carried no coverage and no disclaimer.
+- A 6-K's string was asserted empty, where it is not read.
+- The bold label ran into the bold material code.
+
+The test holes: a `trim()` for the strip and a split on semicolons survived,
+because no test held parity, which the corpus now does. Material-first ordering
+was untested. Seven sentence rules had no check. The document findings: "five
+8-K rows" where AAPL has four and one 8-K/A, the empty-window note, and README
+and schema assertions too weak to fail. A material 8-K/A routed case first
+timed out: the validator holds each document to its listed filing's form and
+dates, so the case syncs both now and checks the copy loads.
+
+**Measured** (this sandbox, Python 3.12.3, Node 22, Chromium through
+Playwright 1.63):
+- the full suite at `0726817c`, the two `zstandard`-gated files left out:
+  5860 passed and 13 environment-gated skips in 23 m 31 s;
+- at `3e168d5d` the touched Python files 240 passed, with 6040 collected;
+- the issuer generator `--check` 46 current, the parity `--check` current;
+- the `issuer` browser suite 725/725 with `--shots` (708 at the first head),
+  the line and the list at 390 and 1280 looked at;
+- `git diff --check` clean; gitleaks 8.24.3 over the changed files: no leaks.
+
+CI passed all seven checks on both heads: Tests run 42493825713 and Secret
+scans 42493825861 and 42493784422 on `0726817c`; on `3e168d5d`, Tests run
+42497825547 (pytest 16:02–16:35 UTC, page 16:02–16:19, the gate, the native
+central case to 16:20 and stress to 16:49) and Secret scans 42497825544 and
+42497820322.
+
+**Mutation passes**, the tree never written: page mutants through routed
+copies of `app-issuer-evidence.js` judged by `--only issuer`, Python mutants
+in a detached worktree judged by the whole test files naming their rule.
+- The first page pass ran seventeen mutants: the code pattern loosened, no
+  strip, an ASCII-only strip, a duplicate kept, 6-K/A read as a current
+  report, foreign read as none, material read as listed, 1.01 dropped from the
+  material set, the count off, the mark dropped in the line and in the summary,
+  unread tokens never counted, the none words swapped, a code the table lacks
+  titled, the summary placed after the list, the listed-only clause dropped,
+  and the line's count unset. All seventeen died; the control passed 708/708.
+- The second page pass ran nineteen over the review's rules: `trim()` for the
+  strip, a split on semicolons, the order as written, the two unread notes, the
+  listed sentence on any unread token, the listed and unreadable tails, the
+  count over every listed filing, the form fixed to 8-K, the report date for
+  the filing date, empty strings counted unread, the none coverage, the
+  identity clause, the foreign clearance, the material meaning, the bold label,
+  the old 6-K words, and a 21-day window. All nineteen died, each in its named
+  check; the control passed 725/725.
+- The Python pass ran nine: the page window drifted, two README sentences and
+  the corpus count, two schema clauses, a corpus answer drifted, a corpus case
+  dropped, and U+FEFF dropped from the generator. All nine died in the test
+  naming their rule; the control survived.
+
+**Keep / fix / defer / omit.**
+- Keep: the page reads the codes by the evening's tables and its parser is held
+  to the evening's answers; an item is a kind of event, never clearance.
+- Fix if it bites: the desk marks a material item filed months ago the same as
+  yesterday's, and says so; the date window is the evening's job.
+- Defer: reading an item's filing text.
+- Omit: a withheld order or a registry entry from an item code.
+
+**Not claimable:** a live candidate whose listed 8-K carries a material item;
+the first night under earnings block v2 (Monday 9 November); the morning host
+under #213 and #214 (Mo's redeploy); any trading edge.

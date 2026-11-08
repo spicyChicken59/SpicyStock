@@ -42,6 +42,7 @@ def set_aggregate(receipt, bundle):
     ("short-index", "partial", "partial", 5),
     ("prefetch-budget", "unavailable", "unknown", 0),
     ("rows-invalid", "partial", "partial", 3),
+    ("items", "partial", "observed_window", 7),
 ])
 def test_genuine_producer_states_reconcile(name, status, coverage, requests):
     receipt, bundle = packet("semantic-" + name)
@@ -85,7 +86,7 @@ def test_generator_reproduces_additive_controls_without_rewriting_originals():
     generator = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(generator)
     outputs = generator.build()
-    assert len(outputs) == 44
+    assert len(outputs) == 46
     assert all((FIXTURES / name).read_bytes() == raw for name, raw in outputs.items())
 
 

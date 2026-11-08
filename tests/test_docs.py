@@ -275,6 +275,7 @@ def test_the_declining_ticket_closes_under_the_stop_its_plan_named():
 # a record that stopped carrying the dates the anchor is resolved against --
 # the shape-one-level-in class this repository keeps producing.
 PAGE_JS = (ROOT / "docs" / "app.js").read_text()
+ISSUER_JS = (ROOT / "docs" / "app-issuer-evidence.js").read_text()
 FULL_FIXTURE = json.loads((ROOT / "tests" / "fixtures" / "page" / "full.json").read_text())
 
 
@@ -756,6 +757,78 @@ def test_the_page_counts_the_reads_causes_the_module_writes_by_version():
     assert "`request`" in README and "not asked again" in README
     assert "review_request" in README, "the funnel's stage list in README lacks the new stage"
     assert "refused as invalid" in (ROOT / "knowledge" / "method.md").read_text()
+
+
+def _js_class_codepoints(cls: str) -> set[int]:
+    """The code points a JavaScript character class names, read off its text:
+    the single-letter escapes, \\xNN, \\uNNNN, a literal character, and A-B
+    ranges over any of them."""
+    escapes = {"t": 9, "n": 10, "v": 11, "f": 12, "r": 13}
+    atoms, i = [], 0
+    while i < len(cls):
+        if cls[i] == "\\":
+            if cls[i + 1] in escapes:
+                atoms.append(escapes[cls[i + 1]]); i += 2
+            elif cls[i + 1] == "x":
+                atoms.append(int(cls[i + 2:i + 4], 16)); i += 4
+            elif cls[i + 1] == "u":
+                atoms.append(int(cls[i + 2:i + 6], 16)); i += 6
+            else:
+                raise AssertionError(f"unknown escape in class: {cls[i:i + 2]}")
+        elif cls[i] == "-" and atoms and i + 1 < len(cls):
+            atoms.append("-"); i += 1
+        else:
+            atoms.append(ord(cls[i])); i += 1
+    out, k = set(), 0
+    while k < len(atoms):
+        if k + 2 < len(atoms) and atoms[k + 1] == "-":
+            out.update(range(atoms[k], atoms[k + 2] + 1)); k += 3
+        else:
+            out.add(atoms[k]); k += 1
+    return out
+
+
+def test_the_issuer_reader_reads_item_codes_by_the_evening_tables():
+    """The Morning desk's issuer reader prints each listed filing's 8-K item
+    codes under the headings the evening's earnings block uses and marks the
+    same material items, parsing SEC's item string as earnings_risk does, so
+    its tables, its code pattern and the whitespace its parser strips are held
+    to the module's, and the states it names are the module's own words."""
+    from src import earnings_risk
+    titles = re.search(r"const ITEM_TITLES = (\{.*?\});", ISSUER_JS, re.S).group(1)
+    assert json.loads(titles) == earnings_risk.ITEM_TITLES
+    material = re.search(r"const MATERIAL_ITEMS = (\[[^\]]*\]);", ISSUER_JS).group(1)
+    assert json.loads(material) == list(earnings_risk.MATERIAL_ITEMS)
+    words = re.search(r"const MATERIAL_WORDS = (\{[^}]*\});", ISSUER_JS).group(1)
+    assert json.loads(words) == earnings_risk.MATERIAL_WORDS
+    forms = re.search(r"const CURRENT_REPORT_FORMS = (\[[^\]]*\]);", ISSUER_JS).group(1)
+    assert json.loads(forms) == list(earnings_risk.CURRENT_REPORT_FORMS)
+    days = re.search(r"const RECENT_REPORT_DAYS = ([0-9]+);", ISSUER_JS).group(1)
+    assert int(days) == earnings_risk.RECENT_REPORT_DAYS
+    code = re.search(r"const ITEM_CODE = /\^(.*?)\$/;", ISSUER_JS).group(1)
+    assert code + "\\Z" == earnings_risk.ITEM_CODE.pattern, "the page's item-code pattern is not the module's"
+    space = re.search(r"const ITEM_SPACE = /\^\[(.*?)\]\+\|\[(.*?)\]\+\$/g;", ISSUER_JS)
+    assert space and space.group(1) == space.group(2), "the leading and trailing classes differ"
+    stripped = {c for c in range(0x110000) if chr(c).isspace()}
+    assert _js_class_codepoints(space.group(1)) == stripped, "the page strips other whitespace than str.strip()"
+    states = set(re.findall(r"'(none|foreign|material|listed|unreadable|not_checked)'", re.search(r"const state = (.*?);", ISSUER_JS).group(1)))
+    assert states == {"none", "foreign", "material", "listed", "unreadable"} and states < set(earnings_risk.ITEMS_STATUSES)
+    # the documents say what the desk prints and what it does not establish
+    readme = re.sub(r"\s+", " ", README)
+    for phrase in ("the five material kinds (1.01, 1.03, 2.01, 3.01, 5.01) first and marked",
+                   f"only when it is filed in the {earnings_risk.RECENT_REPORT_DAYS} days before a published ticket's signal session or since",
+                   "the desk marks every listed filing whatever its date",
+                   "a material item among such tokens never excluded",
+                   "Codes are read on an 8-K or 8-K/A only; a 6-K's string is not read.",
+                   "never what the filing says; the line is not event clearance",
+                   "it changes no ticket, exclusion or order"):
+        assert phrase in readme, phrase
+    corpus = json.loads((ROOT / "tests" / "fixtures" / "issuer-evidence" / "items-parity.json").read_text())
+    assert f"`earnings_risk._parse_items`'s own answer for {len(corpus['cases'])} item strings" in readme
+    schema = re.sub(r"\s+", " ", (ROOT / "docs" / "ISSUER_EVIDENCE_SCHEMA.md").read_text())
+    for phrase in ("never parsed by the collector", "reads it on an 8-K or 8-K/A only",
+                   "marks items 1.01, 1.03, 2.01, 3.01 and 5.01 whatever the filing's date", "A 6-K's string is not read."):
+        assert phrase in schema, phrase
 
 
 def test_the_readme_counts_the_fields_the_smoke_drops():

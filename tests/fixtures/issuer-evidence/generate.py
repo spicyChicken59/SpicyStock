@@ -25,7 +25,7 @@ HERE = Path(__file__).resolve().parent
 NOW = datetime(2026, 10, 10, 6, 20, tzinfo=timezone.utc)
 VARIANTS = ("collected", "metadata-only", "identity-unverified", "outage", "inapplicable", "http-denied")
 SEMANTIC_VARIANTS = ("complete", "empty-window", "cached", "cache-unverified", "document-denied",
-                     "metadata-invalid", "short-index", "prefetch-budget", "rows-invalid")
+                     "metadata-invalid", "short-index", "prefetch-budget", "rows-invalid", "items")
 ACQUISITION_VARIANTS = ("observed", "none", "partial", "unavailable", "history", "capped")
 MAPPING_URL = "https://www.sec.gov/files/company_tickers_exchange.json"
 AAPL_SUBMISSIONS = "https://data.sec.gov/submissions/CIK0000320193.json"
@@ -147,7 +147,11 @@ def collect_semantic(raw, variant, *, dry_run=False):
     additional controls leave all original captured-source outputs unchanged.
     ``rows-invalid`` is a verified issuer whose only in-window row is refused:
     the collector observes zero metadata rows under partial coverage, the
-    shape the page must call unknown rather than a zero result.
+    shape the page must call unknown rather than a zero result. ``items`` is
+    a complete window whose AAPL current reports carry every shape of SEC's
+    item string the Morning desk reads (a material item, a spaced token and
+    one SEC wrote in another shape, a repeated code, an empty string, a code
+    the heading table lacks) and whose ZIM report is a 6-K, which carries none.
     """
     assert variant in SEMANTIC_VARIANTS
     mapping = {"fields": ["cik", "name", "ticker", "exchange"], "data": [
@@ -159,7 +163,17 @@ def collect_semantic(raw, variant, *, dry_run=False):
         filings = [{"accessionNumber": f"{cik:010d}-25-000001", "filingDate": "2025-10-01",
                     "reportDate": "2025-10-01", "acceptanceDateTime": "2025-10-01T16:00:00Z",
                     "form": "10-K", "items": "", "primaryDocument": "old.htm"}]
-        if variant not in ("empty-window", "rows-invalid"):
+        if variant == "items":
+            items = ([("8-K", "1.01,2.03,9.01"), ("8-K", "2.02, 9.01,2.020"), ("8-K/A", "5.02,5.02"),
+                      ("8-K", ""), ("8-K", "9.99")] if ticker == "AAPL" else [("6-K", "")])
+            for number, (form, text) in enumerate(items, start=1):
+                day = 10 - number
+                filings.append({"accessionNumber": f"{cik:010d}-26-{number:06d}", "filingDate": f"2026-10-{day:02d}",
+                                "reportDate": f"2026-10-{day:02d}", "acceptanceDateTime": f"2026-10-{day:02d}T16:00:00Z",
+                                "form": form, "items": text, "primaryDocument": f"current-{number}.htm"})
+                bodies[f"https://www.sec.gov/Archives/edgar/data/{cik}/{cik:010d}26{number:06d}/current-{number}.htm"] = (
+                    b"<html><body>Synthetic current report. No event or trade clearance.</body></html>")
+        elif variant not in ("empty-window", "rows-invalid"):
             filings.append({"accessionNumber": f"{cik:010d}-26-000001", "filingDate": "2026-10-09",
                             "reportDate": "2026-10-09", "acceptanceDateTime": "2026-10-09T16:00:00Z",
                             "form": "8-K", "items": "8.01", "primaryDocument": "current.htm"})
