@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-11-09T14:25:58.529705+00:00",
-  "generated_at": "2026-11-09T14:26:00.206141+00:00",
-  "expires_at": "2026-11-09T14:31:00.206141+00:00",
-  "observation_run_id": "42634509021",
-  "previous_observation_sha256": "284f7a8aaa6e8e6cef84a9291a02ae1f6ebd0379ada3a6b0f5e873615a562bec",
+  "collection_started_at": "2026-11-10T14:25:22.157579+00:00",
+  "generated_at": "2026-11-10T14:25:24.567323+00:00",
+  "expires_at": "2026-11-10T14:30:24.567323+00:00",
+  "observation_run_id": "42833816360",
+  "previous_observation_sha256": "4b2ac74781490ce3afe8ad9841f1b284388974022e1291aa3968b288ffb5f5f7",
   "dry_run": false,
   "publication": {
-    "data_sha256": "ea082b34e2b5d8ea7b7229f7b74b2cbff8207b89d5a1f7eef26b598b9b555390",
-    "context_sha256": "db6bd442b05f39a489993367f5af75cfb2aee8fc650034bbf8b44252703b5ab6",
-    "run_id": "42331176108",
-    "rules_version": "b35c768825b3",
-    "measured_session": "2026-11-06",
-    "applicable_session": "2026-11-09",
-    "published_at": "2026-11-07T02:50:52.890478+00:00",
+    "data_sha256": "57d67a37a312f4ef337a76939b02059a615e666a7b02aa96e9b321fb340dc764",
+    "context_sha256": "47d32156da80daca0e561a205fd35da26384ce233f1a9401af41734542b97034",
+    "run_id": "42757109139",
+    "rules_version": "7a0519e6dd93",
+    "measured_session": "2026-11-09",
+    "applicable_session": "2026-11-10",
+    "published_at": "2026-11-10T04:38:49.926533+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "c5e5d442fd026c8e1c3ffcb02d90ff63a0e7ff23d25d54fdd1689268aebb0c86"
+    "reader_sha256": "9b4026095a35bc0b6af325fe2f79b69c0c773b1748df0b7dbde63a5a6a8a0e46"
   },
   "policy": {
     "version": 1,
@@ -80,25 +80,25 @@
       ]
     }
   },
-  "status": "no_tickets",
+  "status": "partial",
   "reason": null,
   "entry_phase": "upcoming",
   "sources": {
     "iex": {
-      "status": "not_requested",
+      "status": "ok",
       "feed": "iex",
       "scope": "single_venue",
-      "entitlement": "not_requested",
-      "checked_at": null,
+      "entitlement": "request_succeeded",
+      "checked_at": "2026-11-10T14:25:24.280568+00:00",
       "error_kind": null,
       "minimum_delay_seconds": 0
     },
     "delayed_sip": {
-      "status": "not_requested",
+      "status": "ok",
       "feed": "delayed_sip",
       "scope": "consolidated_delayed",
-      "entitlement": "not_requested",
-      "checked_at": null,
+      "entitlement": "request_succeeded",
+      "checked_at": "2026-11-10T14:25:24.346587+00:00",
       "error_kind": null,
       "minimum_delay_seconds": 900
     }
@@ -108,17 +108,17 @@
       "provider": "Nasdaq Trader current trade halts RSS",
       "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
       "scope": "Nasdaq and other exchange-listed securities reported in this RSS snapshot; absence is not clearance.",
-      "status": "not_requested",
-      "checked_at": "2026-11-09T14:26:00.206082Z",
-      "fetched_at": null,
-      "source_published_at": null,
-      "expires_at": null,
-      "source_sha256": null,
-      "http_date": null,
-      "item_count": null,
-      "source_age_seconds": null,
-      "receipt_age_seconds": null,
-      "reason": "No admitted candidates required a halt lookup."
+      "status": "fresh",
+      "checked_at": "2026-11-10T14:25:24.563595Z",
+      "fetched_at": "2026-11-10T14:25:24.563565Z",
+      "source_published_at": "2026-11-10T14:25:06Z",
+      "expires_at": "2026-11-10T14:28:06Z",
+      "source_sha256": "d735a67545357b115fb350dcf2803702a4a7b03d640e9072a4d5290aba4af88c",
+      "http_date": "Tue, 10 Nov 2026 14:25:23 GMT",
+      "item_count": 14,
+      "source_age_seconds": 18.563595,
+      "receipt_age_seconds": 3e-05,
+      "reason": "Snapshot retrieved; unmatched names are not cleared."
     },
     "issuer_news": {
       "status": "not_checked",
@@ -132,7 +132,86 @@
   "halt_memory": {},
   "corporate_memory": {},
   "corporate_resolutions": [],
-  "rows": [],
+  "rows": [
+    {
+      "ticker": "MFIC",
+      "kind": "anticipation",
+      "evidence_id": "34a56e323bc5916712f7ba51a6d083937d25119f714a59486da8ea55bb24eb54",
+      "plan_sha256": "cd00434148f431a5bf2d31fcb72f067ca31d2f29d5a728a6072f79391dee1143",
+      "levels": {
+        "trigger": 10.44,
+        "limit": 10.54,
+        "stop": 10.18,
+        "entry_low": 10.44,
+        "day2_spent_above": null
+      },
+      "trade": {
+        "status": "stale",
+        "timestamp": "2026-11-09T20:59:57.093651+00:00",
+        "age_seconds": 62727.473672,
+        "price": 10.275,
+        "exchange": "V",
+        "conditions": [
+          "@"
+        ]
+      },
+      "quote": {
+        "status": "stale",
+        "timestamp": "2026-11-10T14:19:26.933318+00:00",
+        "age_seconds": 357.634005,
+        "bid": 8.78,
+        "ask": 11.77,
+        "bid_size": 100.0,
+        "ask_size": 100.0,
+        "bid_exchange": "V",
+        "ask_exchange": "V",
+        "conditions": [
+          "R"
+        ],
+        "spread_usd": 2.99,
+        "spread_pct": 29.09975669
+      },
+      "price_checks": {
+        "trade": "unknown",
+        "ask": "unknown"
+      },
+      "delayed_volume": {
+        "status": "prior_session",
+        "daily_timestamp": "2026-11-09T05:00:00+00:00",
+        "previous_timestamp": "2026-11-06T05:00:00+00:00",
+        "latest_trade_timestamp": "2026-11-09T21:00:08.874292+00:00",
+        "session": "2026-11-09",
+        "partial_volume": 927901.0,
+        "previous_volume": 755657.0,
+        "comparison": "unknown",
+        "data_through": null
+      },
+      "events": {
+        "halt": {
+          "status": "not_listed",
+          "blocks_entry": null,
+          "reason": "No matching halt in this snapshot; absence is not trading clearance.",
+          "events": [],
+          "event_count": 0,
+          "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+          "retained_source": null
+        },
+        "corporate_action": {
+          "version": 1,
+          "coverage": "manual_known_events_only",
+          "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
+          "registry_reviewed_on": "2026-10-20",
+          "session": "2026-11-10",
+          "symbol": "MFIC",
+          "blocked": false,
+          "status": "not_in_registry",
+          "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+          "matches": []
+        },
+        "retained_corporate_actions": []
+      }
+    }
+  ],
   "limits": [
     "dated_best_effort_snapshot",
     "iex_single_venue_not_consolidated",
