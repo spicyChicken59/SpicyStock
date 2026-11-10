@@ -650,6 +650,56 @@
    },
    "date": "2026-11-04",
    "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "34a56e323bc5916712f7ba51a6d083937d25119f714a59486da8ea55bb24eb54",
+    "context_sha256": "47d32156da80daca0e561a205fd35da26384ce233f1a9401af41734542b97034",
+    "plan_sha256": "cd00434148f431a5bf2d31fcb72f067ca31d2f29d5a728a6072f79391dee1143",
+    "pick_sha256": "8ab51c03f1bb0d0f471706d064256688829bcfa54110de00ff81fb08e0cb549d"
+   },
+   "ticker": "MFIC",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": 1.1122,
+   "entry_ref": 10.44,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 10.44,
+   "limit": 10.54,
+   "stop": 10.18,
+   "shares": 104,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 11.28,
+    "high": 12.53,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "order_json": {
+    "symbol": "MFIC",
+    "action": "buy",
+    "quantity": 104,
+    "order_type": "stop_limit",
+    "stop_price": 10.44,
+    "limit_price": 10.54,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 104,
+     "order_type": "stop",
+     "stop_price": 10.18,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-11-09",
+   "regime": "yellow"
   }
  ]
 }
