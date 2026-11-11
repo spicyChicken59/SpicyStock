@@ -700,6 +700,106 @@
    },
    "date": "2026-11-09",
    "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "10a2c2a40bb2628fdcabb935cb36a3df761dc2430c59cf70fcc45ea7e80a8845",
+    "context_sha256": "a2aaa5851ec5f14cfc398ec5d52f6bb9a92ce0afc2fb98216de78dd7ba68f9a6",
+    "plan_sha256": "9563f90aa0e1d181818573d8bac5dd016d4d90cf355bcd51da8894994a3f13ed",
+    "pick_sha256": "dd569cb36c409937a4994631cf7620be132b4830a0638545bace37528f8e91d4"
+   },
+   "ticker": "MFIC",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": 1.1109,
+   "entry_ref": 10.44,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 10.44,
+   "limit": 10.54,
+   "stop": 10.2,
+   "shares": 110,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 11.28,
+    "high": 12.53,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "order_json": {
+    "symbol": "MFIC",
+    "action": "buy",
+    "quantity": 110,
+    "order_type": "stop_limit",
+    "stop_price": 10.44,
+    "limit_price": 10.54,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 110,
+     "order_type": "stop",
+     "stop_price": 10.2,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-11-10",
+   "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "8192cb2a97506a7097e44078d259201f6ac3777f33339cb728f6663b7331bb3b",
+    "context_sha256": "a2aaa5851ec5f14cfc398ec5d52f6bb9a92ce0afc2fb98216de78dd7ba68f9a6",
+    "plan_sha256": "192554bfaadb0622670c387d733800df2245df79b2f7e19f741659e723073c4a",
+    "pick_sha256": "7b7d83da86c0f4586c10f56412831156444bc23f00b9eb48b5c40325d82bd053"
+   },
+   "ticker": "UTZ",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": null,
+   "entry_ref": 14.29,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 14.29,
+   "limit": 14.43,
+   "stop": 14.23,
+   "shares": 375,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 15.43,
+    "high": 17.15,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "order_json": {
+    "symbol": "UTZ",
+    "action": "buy",
+    "quantity": 375,
+    "order_type": "stop_limit",
+    "stop_price": 14.29,
+    "limit_price": 14.43,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 375,
+     "order_type": "stop",
+     "stop_price": 14.23,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-11-10",
+   "regime": "yellow"
   }
  ]
 }
