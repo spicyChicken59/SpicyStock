@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-11-11T14:22:52.793123+00:00",
-  "generated_at": "2026-11-11T14:22:54.977142+00:00",
-  "expires_at": "2026-11-11T14:27:54.977142+00:00",
-  "observation_run_id": "43037800038",
-  "previous_observation_sha256": "0d5c346892fba5e226f01ac23612b4e82b93d01924652309198ab794032c0d4e",
+  "collection_started_at": "2026-11-12T14:22:46.057140+00:00",
+  "generated_at": "2026-11-12T14:22:48.654053+00:00",
+  "expires_at": "2026-11-12T14:27:48.654053+00:00",
+  "observation_run_id": "43236433911",
+  "previous_observation_sha256": "d9ba9cd94b23daa5a41e3338ec3ca5ff2d338339f626877035aaa2293492f728",
   "dry_run": false,
   "publication": {
-    "data_sha256": "802a94fec4336cb74d0ad32db65468526be553c8d8d1c0b0136bd96229eee461",
-    "context_sha256": "a2aaa5851ec5f14cfc398ec5d52f6bb9a92ce0afc2fb98216de78dd7ba68f9a6",
-    "run_id": "42948661782",
-    "rules_version": "3f6414d6e60b",
-    "measured_session": "2026-11-10",
-    "applicable_session": "2026-11-11",
-    "published_at": "2026-11-11T02:50:27.305428+00:00",
+    "data_sha256": "9870a3ccf04eaf20106cda295650f9fc7441534736463e5716b4cf0bbbafd111",
+    "context_sha256": "be355016afb76432c9318c2e08c613435c17405f33ed126c1a96e737034ccf7e",
+    "run_id": "43150752509",
+    "rules_version": "07be729dc55d",
+    "measured_session": "2026-11-11",
+    "applicable_session": "2026-11-12",
+    "published_at": "2026-11-12T03:50:17.995505+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "1c7a47fda8caa27abc65acd4822d4c908f5131fcb831f196f38a315ed07e49bf"
+    "reader_sha256": "d093476704a8cdf10f1f7210c0313ddd2040d5cdfa4f3f1cd527d1a90c5c445b"
   },
   "policy": {
     "version": 1,
@@ -89,7 +89,7 @@
       "feed": "iex",
       "scope": "single_venue",
       "entitlement": "request_succeeded",
-      "checked_at": "2026-11-11T14:22:54.820422+00:00",
+      "checked_at": "2026-11-12T14:22:48.495753+00:00",
       "error_kind": null,
       "minimum_delay_seconds": 0
     },
@@ -98,7 +98,7 @@
       "feed": "delayed_sip",
       "scope": "consolidated_delayed",
       "entitlement": "request_succeeded",
-      "checked_at": "2026-11-11T14:22:54.856837+00:00",
+      "checked_at": "2026-11-12T14:22:48.535206+00:00",
       "error_kind": null,
       "minimum_delay_seconds": 900
     }
@@ -109,15 +109,15 @@
       "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
       "scope": "Nasdaq and other exchange-listed securities reported in this RSS snapshot; absence is not clearance.",
       "status": "fresh",
-      "checked_at": "2026-11-11T14:22:54.950754Z",
-      "fetched_at": "2026-11-11T14:22:54.950712Z",
-      "source_published_at": "2026-11-11T14:22:14Z",
-      "expires_at": "2026-11-11T14:25:14Z",
-      "source_sha256": "91cededabae593175dab8cc4e6920696393bddee4006d930f83e1f6c8963677f",
-      "http_date": "Wed, 11 Nov 2026 14:22:54 GMT",
-      "item_count": 17,
-      "source_age_seconds": 40.950754,
-      "receipt_age_seconds": 4.2e-05,
+      "checked_at": "2026-11-12T14:22:48.648115Z",
+      "fetched_at": "2026-11-12T14:22:48.648056Z",
+      "source_published_at": "2026-11-12T14:22:48Z",
+      "expires_at": "2026-11-12T14:25:48Z",
+      "source_sha256": "8d087c47a453438b32bfc222b6534cf6f532b54c8cb50cf1a1e698c494d63181",
+      "http_date": "Thu, 12 Nov 2026 14:22:48 GMT",
+      "item_count": 16,
+      "source_age_seconds": 0.648115,
+      "receipt_age_seconds": 5.9e-05,
       "reason": "Snapshot retrieved; unmatched names are not cleared."
     },
     "issuer_news": {
@@ -136,20 +136,20 @@
     {
       "ticker": "MFIC",
       "kind": "anticipation",
-      "evidence_id": "10a2c2a40bb2628fdcabb935cb36a3df761dc2430c59cf70fcc45ea7e80a8845",
-      "plan_sha256": "9563f90aa0e1d181818573d8bac5dd016d4d90cf355bcd51da8894994a3f13ed",
+      "evidence_id": "32b51ba87a69ca1223600e4e61e30cf70ff550691e388ab8cf7dcc3b4ce0703e",
+      "plan_sha256": "c3ba10283aec9b9f70e07f9eee3c082165c1db8ea7a9d6007204c26c8b5dea95",
       "levels": {
         "trigger": 10.44,
         "limit": 10.54,
-        "stop": 10.2,
+        "stop": 10.22,
         "entry_low": 10.44,
         "day2_spent_above": null
       },
       "trade": {
         "status": "stale",
-        "timestamp": "2026-11-10T20:59:56.502633+00:00",
-        "age_seconds": 62578.474509,
-        "price": 10.37,
+        "timestamp": "2026-11-11T20:59:59.726040+00:00",
+        "age_seconds": 62568.928013,
+        "price": 10.285,
         "exchange": "V",
         "conditions": [
           "@"
@@ -157,10 +157,10 @@
       },
       "quote": {
         "status": "stale",
-        "timestamp": "2026-11-11T14:19:58.620659+00:00",
-        "age_seconds": 176.356483,
-        "bid": 8.83,
-        "ask": 11.93,
+        "timestamp": "2026-11-12T14:19:58.740324+00:00",
+        "age_seconds": 169.913729,
+        "bid": 8.82,
+        "ask": 11.92,
         "bid_size": 100.0,
         "ask_size": 100.0,
         "bid_exchange": "V",
@@ -169,7 +169,7 @@
           "R"
         ],
         "spread_usd": 3.1,
-        "spread_pct": 29.86512524
+        "spread_pct": 29.89392478
       },
       "price_checks": {
         "trade": "unknown",
@@ -177,12 +177,12 @@
       },
       "delayed_volume": {
         "status": "prior_session",
-        "daily_timestamp": "2026-11-10T05:00:00+00:00",
-        "previous_timestamp": "2026-11-09T05:00:00+00:00",
-        "latest_trade_timestamp": "2026-11-10T21:00:01.090510+00:00",
-        "session": "2026-11-10",
-        "partial_volume": 908046.0,
-        "previous_volume": 927901.0,
+        "daily_timestamp": "2026-11-11T05:00:00+00:00",
+        "previous_timestamp": "2026-11-10T05:00:00+00:00",
+        "latest_trade_timestamp": "2026-11-11T22:59:00.016632+00:00",
+        "session": "2026-11-11",
+        "partial_volume": 1082403.0,
+        "previous_volume": 908046.0,
         "comparison": "unknown",
         "data_through": null
       },
@@ -201,7 +201,7 @@
           "coverage": "manual_known_events_only",
           "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
           "registry_reviewed_on": "2026-10-20",
-          "session": "2026-11-11",
+          "session": "2026-11-12",
           "symbol": "MFIC",
           "blocked": false,
           "status": "not_in_registry",
@@ -214,8 +214,8 @@
     {
       "ticker": "UTZ",
       "kind": "anticipation",
-      "evidence_id": "8192cb2a97506a7097e44078d259201f6ac3777f33339cb728f6663b7331bb3b",
-      "plan_sha256": "192554bfaadb0622670c387d733800df2245df79b2f7e19f741659e723073c4a",
+      "evidence_id": "04b38f21f70036bf68c597eb5c79e5bfdcef87800c02da529af6b06527db547a",
+      "plan_sha256": "9517e371e08102b5306cb2fa698fb7acc4abc80c7a754ed767cda0b9ee322b90",
       "levels": {
         "trigger": 14.29,
         "limit": 14.43,
@@ -225,8 +225,8 @@
       },
       "trade": {
         "status": "stale",
-        "timestamp": "2026-11-10T20:59:39.054559+00:00",
-        "age_seconds": 62595.922583,
+        "timestamp": "2026-11-11T20:59:44.912311+00:00",
+        "age_seconds": 62583.741742,
         "price": 14.255,
         "exchange": "V",
         "conditions": [
@@ -235,8 +235,8 @@
       },
       "quote": {
         "status": "stale",
-        "timestamp": "2026-11-11T14:19:58.671632+00:00",
-        "age_seconds": 176.30551,
+        "timestamp": "2026-11-12T14:19:58.813899+00:00",
+        "age_seconds": 169.840154,
         "bid": 12.24,
         "ask": 16.26,
         "bid_size": 100.0,
@@ -255,12 +255,12 @@
       },
       "delayed_volume": {
         "status": "prior_session",
-        "daily_timestamp": "2026-11-10T05:00:00+00:00",
-        "previous_timestamp": "2026-11-09T05:00:00+00:00",
-        "latest_trade_timestamp": "2026-11-11T00:00:00.002404+00:00",
-        "session": "2026-11-10",
-        "partial_volume": 989768.0,
-        "previous_volume": 1932857.0,
+        "daily_timestamp": "2026-11-11T05:00:00+00:00",
+        "previous_timestamp": "2026-11-10T05:00:00+00:00",
+        "latest_trade_timestamp": "2026-11-12T00:00:00.002368+00:00",
+        "session": "2026-11-11",
+        "partial_volume": 1845727.0,
+        "previous_volume": 989768.0,
         "comparison": "unknown",
         "data_through": null
       },
@@ -279,7 +279,7 @@
           "coverage": "manual_known_events_only",
           "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
           "registry_reviewed_on": "2026-10-20",
-          "session": "2026-11-11",
+          "session": "2026-11-12",
           "symbol": "UTZ",
           "blocked": false,
           "status": "not_in_registry",
