@@ -900,6 +900,206 @@
    },
    "date": "2026-11-11",
    "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "44aff557695e3fa446051c6da328f0b72f3cf079e0821b1d41fed079aaf0b3c8",
+    "context_sha256": "184474cde2ce0617c8a936446ed2c3e0fa2d463edbc35c158f12f9fc8e98bf7f",
+    "plan_sha256": "0e8a1a44df5902b7750c0458e838a0daac9d8fea5b740ef7bba76d86ff58679a",
+    "pick_sha256": "4f43aff45a1fb95cf777c6815aa5a2af4b47a39a1fb0f4c995adbdd0c73a22e1"
+   },
+   "ticker": "CART",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": 1.1563,
+   "entry_ref": 59.82,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 59.82,
+   "limit": 60.42,
+   "stop": 58.2,
+   "shares": 16,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 64.61,
+    "high": 71.78,
+    "note": "above $40 he measures the move in dollars: $5-25",
+    "dollar_low": 64.82,
+    "dollar_high": 84.82
+   },
+   "order_json": {
+    "symbol": "CART",
+    "action": "buy",
+    "quantity": 16,
+    "order_type": "stop_limit",
+    "stop_price": 59.82,
+    "limit_price": 60.42,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 16,
+     "order_type": "stop",
+     "stop_price": 58.2,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-11-13",
+   "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "f68dc23870cb7f53775dbe616250fa60b5fcc48d022ff54aac244a9ea08947d7",
+    "context_sha256": "184474cde2ce0617c8a936446ed2c3e0fa2d463edbc35c158f12f9fc8e98bf7f",
+    "plan_sha256": "4665bca3356cf9627f5c173ac68690f0ac44fd083aad5f845be33c2ca9c24679",
+    "pick_sha256": "ff9ecd85f7b1e96c3ab55f5ace5f34df3fc176bbf14833ee6338ff3c9f975caf"
+   },
+   "ticker": "CBC",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": 1.1418,
+   "entry_ref": 38.81,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 38.81,
+   "limit": 39.2,
+   "stop": 37.81,
+   "shares": 26,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 41.91,
+    "high": 46.57,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "order_json": {
+    "symbol": "CBC",
+    "action": "buy",
+    "quantity": 26,
+    "order_type": "stop_limit",
+    "stop_price": 38.81,
+    "limit_price": 39.2,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 26,
+     "order_type": "stop",
+     "stop_price": 37.81,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-11-13",
+   "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "3adef5aad8928c9eb7c6c58d22ac8cf491d071f386e66d5001eca0b504995551",
+    "context_sha256": "184474cde2ce0617c8a936446ed2c3e0fa2d463edbc35c158f12f9fc8e98bf7f",
+    "plan_sha256": "afe7c79b59b58edcd8c8c393524b7e4f2d760f48649b71169444f4dcec9aa136",
+    "pick_sha256": "08e054065f77ab91d71fe8421387fa11d89562ce886b8136af2cebf3227d64d7"
+   },
+   "ticker": "HZO",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": null,
+   "entry_ref": 52.94,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 52.94,
+   "limit": 53.47,
+   "stop": 52.76,
+   "shares": 105,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 57.18,
+    "high": 63.53,
+    "note": "above $40 he measures the move in dollars: $5-25",
+    "dollar_low": 57.94,
+    "dollar_high": 77.94
+   },
+   "order_json": {
+    "symbol": "HZO",
+    "action": "buy",
+    "quantity": 105,
+    "order_type": "stop_limit",
+    "stop_price": 52.94,
+    "limit_price": 53.47,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 105,
+     "order_type": "stop",
+     "stop_price": 52.76,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-11-13",
+   "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "f884d72c41a5c999b5d7ff91877a2ca6bada8bb09ec6011c17f912dbb3a7dd8e",
+    "context_sha256": "184474cde2ce0617c8a936446ed2c3e0fa2d463edbc35c158f12f9fc8e98bf7f",
+    "plan_sha256": "415c7a329e02e197df95555fddbe9515e4ec6ea1e880f808cc4fffde3662af8d",
+    "pick_sha256": "3b5abf3c89e05f91515078be11d723dbe2356cf51962e5f173bddf9a98bd8683"
+   },
+   "ticker": "MFIC",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": 1.1042,
+   "entry_ref": 10.42,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 10.42,
+   "limit": 10.52,
+   "stop": 10.13,
+   "shares": 96,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 11.25,
+    "high": 12.5,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "order_json": {
+    "symbol": "MFIC",
+    "action": "buy",
+    "quantity": 96,
+    "order_type": "stop_limit",
+    "stop_price": 10.42,
+    "limit_price": 10.52,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 96,
+     "order_type": "stop",
+     "stop_price": 10.13,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-11-13",
+   "regime": "yellow"
   }
  ]
 }
