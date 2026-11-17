@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-11-16T14:22:16.020518+00:00",
-  "generated_at": "2026-11-16T14:22:17.856850+00:00",
-  "expires_at": "2026-11-16T14:27:17.856850+00:00",
-  "observation_run_id": "43884882730",
-  "previous_observation_sha256": "a234b26f9ab8d674a6d9b2eece563c82f5f9908483eb63a5c9cde77121dfdeda",
+  "collection_started_at": "2026-11-17T14:22:23.785626+00:00",
+  "generated_at": "2026-11-17T14:22:24.515501+00:00",
+  "expires_at": "2026-11-17T14:27:24.515501+00:00",
+  "observation_run_id": "44102267452",
+  "previous_observation_sha256": "d41127a8cfb4d8bf0758c700098c51a5989524be2da2488e76d56a56e512e916",
   "dry_run": false,
   "publication": {
-    "data_sha256": "af57403755c21d23098f1a8294496c2a8fc60119c9fc9023b99f885c288b2c06",
-    "context_sha256": "184474cde2ce0617c8a936446ed2c3e0fa2d463edbc35c158f12f9fc8e98bf7f",
-    "run_id": "43551047056",
-    "rules_version": "ae449b87dcdf",
-    "measured_session": "2026-11-13",
-    "applicable_session": "2026-11-16",
-    "published_at": "2026-11-14T03:20:12.962051+00:00",
+    "data_sha256": "1e6866119c7668f3dc4f80608271af1ea0ad6c4b732a4b02627f0b4ce1e985e6",
+    "context_sha256": "56c4a3c50ca017b7d670e513113f16418760ad62fe1fc2c3c0ccff6af75f802f",
+    "run_id": "44021586171",
+    "rules_version": "84c29585c6d0",
+    "measured_session": "2026-11-16",
+    "applicable_session": "2026-11-17",
+    "published_at": "2026-11-17T05:05:56.600234+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "019bf288dcebe5f970cdb05aa154f179398fd39d73f5713ec8f3f87b82927746"
+    "reader_sha256": "3d251e5644162884b99b21ba65c4b2c83cfca55bc3a1c41eeb117c9b8956cab1"
   },
   "policy": {
     "version": 1,
@@ -80,25 +80,25 @@
       ]
     }
   },
-  "status": "partial",
+  "status": "no_tickets",
   "reason": null,
   "entry_phase": "upcoming",
   "sources": {
     "iex": {
-      "status": "ok",
+      "status": "not_requested",
       "feed": "iex",
       "scope": "single_venue",
-      "entitlement": "request_succeeded",
-      "checked_at": "2026-11-16T14:22:17.395163+00:00",
+      "entitlement": "not_requested",
+      "checked_at": null,
       "error_kind": null,
       "minimum_delay_seconds": 0
     },
     "delayed_sip": {
-      "status": "ok",
+      "status": "not_requested",
       "feed": "delayed_sip",
       "scope": "consolidated_delayed",
-      "entitlement": "request_succeeded",
-      "checked_at": "2026-11-16T14:22:17.456303+00:00",
+      "entitlement": "not_requested",
+      "checked_at": null,
       "error_kind": null,
       "minimum_delay_seconds": 900
     }
@@ -108,17 +108,17 @@
       "provider": "Nasdaq Trader current trade halts RSS",
       "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
       "scope": "Nasdaq and other exchange-listed securities reported in this RSS snapshot; absence is not clearance.",
-      "status": "fresh",
-      "checked_at": "2026-11-16T14:22:17.852002Z",
-      "fetched_at": "2026-11-16T14:22:17.851930Z",
-      "source_published_at": "2026-11-16T14:21:20Z",
-      "expires_at": "2026-11-16T14:24:20Z",
-      "source_sha256": "6b046a4c3dfd40548c2332f3e90538f87d774ad7ce94596f5b9cf34d0c2fbc0b",
-      "http_date": "Mon, 16 Nov 2026 14:22:16 GMT",
-      "item_count": 26,
-      "source_age_seconds": 57.852002,
-      "receipt_age_seconds": 7.2e-05,
-      "reason": "Snapshot retrieved; unmatched names are not cleared."
+      "status": "not_requested",
+      "checked_at": "2026-11-17T14:22:24.515442Z",
+      "fetched_at": null,
+      "source_published_at": null,
+      "expires_at": null,
+      "source_sha256": null,
+      "http_date": null,
+      "item_count": null,
+      "source_age_seconds": null,
+      "receipt_age_seconds": null,
+      "reason": "No admitted candidates required a halt lookup."
     },
     "issuer_news": {
       "status": "not_checked",
@@ -132,320 +132,7 @@
   "halt_memory": {},
   "corporate_memory": {},
   "corporate_resolutions": [],
-  "rows": [
-    {
-      "ticker": "CART",
-      "kind": "anticipation",
-      "evidence_id": "44aff557695e3fa446051c6da328f0b72f3cf079e0821b1d41fed079aaf0b3c8",
-      "plan_sha256": "0e8a1a44df5902b7750c0458e838a0daac9d8fea5b740ef7bba76d86ff58679a",
-      "levels": {
-        "trigger": 59.82,
-        "limit": 60.42,
-        "stop": 58.2,
-        "entry_low": 59.82,
-        "day2_spent_above": null
-      },
-      "trade": {
-        "status": "stale",
-        "timestamp": "2026-11-13T20:59:59.345102+00:00",
-        "age_seconds": 235338.511748,
-        "price": 58.89,
-        "exchange": "V",
-        "conditions": [
-          "@"
-        ]
-      },
-      "quote": {
-        "status": "stale",
-        "timestamp": "2026-11-16T14:19:58.989427+00:00",
-        "age_seconds": 138.867423,
-        "bid": 55.25,
-        "ask": 61.94,
-        "bid_size": 100.0,
-        "ask_size": 100.0,
-        "bid_exchange": "V",
-        "ask_exchange": "V",
-        "conditions": [
-          "R"
-        ],
-        "spread_usd": 6.69,
-        "spread_pct": 11.41735643
-      },
-      "price_checks": {
-        "trade": "unknown",
-        "ask": "unknown"
-      },
-      "delayed_volume": {
-        "status": "prior_session",
-        "daily_timestamp": "2026-11-13T05:00:00+00:00",
-        "previous_timestamp": "2026-11-12T05:00:00+00:00",
-        "latest_trade_timestamp": "2026-11-16T13:32:38.624319+00:00",
-        "session": "2026-11-13",
-        "partial_volume": 2552991.0,
-        "previous_volume": 1511345.0,
-        "comparison": "unknown",
-        "data_through": null
-      },
-      "events": {
-        "halt": {
-          "status": "not_listed",
-          "blocks_entry": null,
-          "reason": "No matching halt in this snapshot; absence is not trading clearance.",
-          "events": [],
-          "event_count": 0,
-          "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
-          "retained_source": null
-        },
-        "corporate_action": {
-          "version": 1,
-          "coverage": "manual_known_events_only",
-          "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
-          "registry_reviewed_on": "2026-10-20",
-          "session": "2026-11-16",
-          "symbol": "CART",
-          "blocked": false,
-          "status": "not_in_registry",
-          "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
-          "matches": []
-        },
-        "retained_corporate_actions": []
-      }
-    },
-    {
-      "ticker": "CBC",
-      "kind": "anticipation",
-      "evidence_id": "f68dc23870cb7f53775dbe616250fa60b5fcc48d022ff54aac244a9ea08947d7",
-      "plan_sha256": "4665bca3356cf9627f5c173ac68690f0ac44fd083aad5f845be33c2ca9c24679",
-      "levels": {
-        "trigger": 38.81,
-        "limit": 39.2,
-        "stop": 37.81,
-        "entry_low": 38.81,
-        "day2_spent_above": null
-      },
-      "trade": {
-        "status": "stale",
-        "timestamp": "2026-11-13T20:59:52.514176+00:00",
-        "age_seconds": 235345.342674,
-        "price": 38.13,
-        "exchange": "V",
-        "conditions": [
-          "@"
-        ]
-      },
-      "quote": {
-        "status": "stale",
-        "timestamp": "2026-11-16T14:19:58.499255+00:00",
-        "age_seconds": 139.357595,
-        "bid": 33.44,
-        "ask": 64.1,
-        "bid_size": 100.0,
-        "ask_size": 100.0,
-        "bid_exchange": "V",
-        "ask_exchange": "V",
-        "conditions": [
-          "R"
-        ],
-        "spread_usd": 30.66,
-        "spread_pct": 62.8665163
-      },
-      "price_checks": {
-        "trade": "unknown",
-        "ask": "unknown"
-      },
-      "delayed_volume": {
-        "status": "prior_session",
-        "daily_timestamp": "2026-11-13T05:00:00+00:00",
-        "previous_timestamp": "2026-11-12T05:00:00+00:00",
-        "latest_trade_timestamp": "2026-11-16T13:22:32.887486+00:00",
-        "session": "2026-11-13",
-        "partial_volume": 623766.0,
-        "previous_volume": 947689.0,
-        "comparison": "unknown",
-        "data_through": null
-      },
-      "events": {
-        "halt": {
-          "status": "not_listed",
-          "blocks_entry": null,
-          "reason": "No matching halt in this snapshot; absence is not trading clearance.",
-          "events": [],
-          "event_count": 0,
-          "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
-          "retained_source": null
-        },
-        "corporate_action": {
-          "version": 1,
-          "coverage": "manual_known_events_only",
-          "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
-          "registry_reviewed_on": "2026-10-20",
-          "session": "2026-11-16",
-          "symbol": "CBC",
-          "blocked": false,
-          "status": "not_in_registry",
-          "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
-          "matches": []
-        },
-        "retained_corporate_actions": []
-      }
-    },
-    {
-      "ticker": "HZO",
-      "kind": "anticipation",
-      "evidence_id": "3adef5aad8928c9eb7c6c58d22ac8cf491d071f386e66d5001eca0b504995551",
-      "plan_sha256": "afe7c79b59b58edcd8c8c393524b7e4f2d760f48649b71169444f4dcec9aa136",
-      "levels": {
-        "trigger": 52.94,
-        "limit": 53.47,
-        "stop": 52.76,
-        "entry_low": 52.94,
-        "day2_spent_above": null
-      },
-      "trade": {
-        "status": "stale",
-        "timestamp": "2026-11-13T20:59:50.940491+00:00",
-        "age_seconds": 235346.916359,
-        "price": 52.8,
-        "exchange": "V",
-        "conditions": [
-          " "
-        ]
-      },
-      "quote": {
-        "status": "stale",
-        "timestamp": "2026-11-16T14:19:58.104396+00:00",
-        "age_seconds": 139.752454,
-        "bid": 45.39,
-        "ask": 60.31,
-        "bid_size": 100.0,
-        "ask_size": 100.0,
-        "bid_exchange": "V",
-        "ask_exchange": "V",
-        "conditions": [
-          "R"
-        ],
-        "spread_usd": 14.92,
-        "spread_pct": 28.23084201
-      },
-      "price_checks": {
-        "trade": "unknown",
-        "ask": "unknown"
-      },
-      "delayed_volume": {
-        "status": "prior_session",
-        "daily_timestamp": "2026-11-13T05:00:00+00:00",
-        "previous_timestamp": "2026-11-12T05:00:00+00:00",
-        "latest_trade_timestamp": "2026-11-14T00:00:00.002533+00:00",
-        "session": "2026-11-13",
-        "partial_volume": 477348.0,
-        "previous_volume": 763154.0,
-        "comparison": "unknown",
-        "data_through": null
-      },
-      "events": {
-        "halt": {
-          "status": "not_listed",
-          "blocks_entry": null,
-          "reason": "No matching halt in this snapshot; absence is not trading clearance.",
-          "events": [],
-          "event_count": 0,
-          "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
-          "retained_source": null
-        },
-        "corporate_action": {
-          "version": 1,
-          "coverage": "manual_known_events_only",
-          "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
-          "registry_reviewed_on": "2026-10-20",
-          "session": "2026-11-16",
-          "symbol": "HZO",
-          "blocked": false,
-          "status": "not_in_registry",
-          "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
-          "matches": []
-        },
-        "retained_corporate_actions": []
-      }
-    },
-    {
-      "ticker": "MFIC",
-      "kind": "anticipation",
-      "evidence_id": "f884d72c41a5c999b5d7ff91877a2ca6bada8bb09ec6011c17f912dbb3a7dd8e",
-      "plan_sha256": "415c7a329e02e197df95555fddbe9515e4ec6ea1e880f808cc4fffde3662af8d",
-      "levels": {
-        "trigger": 10.42,
-        "limit": 10.52,
-        "stop": 10.13,
-        "entry_low": 10.42,
-        "day2_spent_above": null
-      },
-      "trade": {
-        "status": "stale",
-        "timestamp": "2026-11-13T20:59:48.461661+00:00",
-        "age_seconds": 235349.395189,
-        "price": 10.2,
-        "exchange": "V",
-        "conditions": [
-          "@"
-        ]
-      },
-      "quote": {
-        "status": "stale",
-        "timestamp": "2026-11-16T14:19:58.539440+00:00",
-        "age_seconds": 139.31741,
-        "bid": 8.71,
-        "ask": 11.67,
-        "bid_size": 100.0,
-        "ask_size": 100.0,
-        "bid_exchange": "V",
-        "ask_exchange": "V",
-        "conditions": [
-          "R"
-        ],
-        "spread_usd": 2.96,
-        "spread_pct": 29.04808636
-      },
-      "price_checks": {
-        "trade": "unknown",
-        "ask": "unknown"
-      },
-      "delayed_volume": {
-        "status": "prior_session",
-        "daily_timestamp": "2026-11-13T05:00:00+00:00",
-        "previous_timestamp": "2026-11-12T05:00:00+00:00",
-        "latest_trade_timestamp": "2026-11-16T13:37:32.857566+00:00",
-        "session": "2026-11-13",
-        "partial_volume": 476893.0,
-        "previous_volume": 476489.0,
-        "comparison": "unknown",
-        "data_through": null
-      },
-      "events": {
-        "halt": {
-          "status": "not_listed",
-          "blocks_entry": null,
-          "reason": "No matching halt in this snapshot; absence is not trading clearance.",
-          "events": [],
-          "event_count": 0,
-          "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
-          "retained_source": null
-        },
-        "corporate_action": {
-          "version": 1,
-          "coverage": "manual_known_events_only",
-          "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
-          "registry_reviewed_on": "2026-10-20",
-          "session": "2026-11-16",
-          "symbol": "MFIC",
-          "blocked": false,
-          "status": "not_in_registry",
-          "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
-          "matches": []
-        },
-        "retained_corporate_actions": []
-      }
-    }
-  ],
+  "rows": [],
   "limits": [
     "dated_best_effort_snapshot",
     "iex_single_venue_not_consolidated",
