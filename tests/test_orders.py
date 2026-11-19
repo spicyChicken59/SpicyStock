@@ -141,6 +141,7 @@ def test_the_tickets_are_the_rows_the_morning_receipt_quotes_and_the_plans_own_o
         assert t["evidence"] == {"evidence_id": a["evidence_id"], "plan_sha256": a["plan_sha256"]}
         assert t["risk"]["r_per_share"] == plan._money(t["entry"]["limit_price"] - t["protective_stop"]["stop_price"])
         assert t["risk"]["risk_usd"] == plan._money(t["shares"] * t["risk"]["r_per_share"])
+        assert t["risk"]["position_usd"] == plan._money(t["shares"] * t["entry"]["limit_price"])
         if a["kind"] == "burst":
             assert t["entry"]["trigger_rule"] == p.get("trigger_rule", plan.LEGACY_BURST_TRIGGER_RULE)
     assert doc["summary"]["tickets"] == len(admitted)
@@ -206,14 +207,15 @@ def test_the_light_the_status_and_the_publication_time_each_give_their_reason():
     assert (degraded["data"]["status"], degraded["data"]["reason"]) == ("fail", "data_degraded")
     late = copy.deepcopy(full)
     late["run"]["delivery"]["before_next_open"] = False
-    assert night(late)["publication_time"]["reason"] == "late_publish"
+    assert (night(late)["publication_time"]["status"], night(late)["publication_time"]["reason"]) == \
+        ("fail", "late_publish")
     unknown = copy.deepcopy(full)
     del unknown["run"]["delivery"]
     assert (night(unknown)["publication_time"]["status"], night(unknown)["publication_time"]["reason"]) == \
         ("not_evaluated", "publication_time_unknown")
     unlit = copy.deepcopy(full)
     unlit["breadth"]["regime"]["verdict"] = None
-    assert night(unlit)["light"]["reason"] == "light_unknown"
+    assert (night(unlit)["light"]["status"], night(unlit)["light"]["reason"]) == ("not_evaluated", "light_unknown")
 
 
 def test_the_account_check_reads_the_records_slots_and_commitments():
@@ -268,6 +270,11 @@ def test_each_ticket_check_gives_its_reason_and_its_status():
     assert (blocked["status"], blocked["reasons"]) == ("blocked", ["event_blocked"])
     capped = ticket_after(lambda row, d: d["account"].update(max_position_pct=0.01))
     assert capped["status"] == "blocked" and "position_cap" in capped["reasons"]
+    # a cap between the shares at the stop and the shares at the limit: the position is priced at the limit
+    shares, levels = ticket_after(lambda row, d: None)["shares"], admitted["levels"]
+    between = shares * (levels["stop"] + levels["limit"]) / 2 / data["account"]["equity"] * 100
+    tight = ticket_after(lambda row, d: d["account"].update(max_position_pct=between))
+    assert "position_cap" in tight["reasons"]
     risky = ticket_after(lambda row, d: d["account"].update(risk_pct=0.0001))
     assert risky["status"] == "blocked" and "risk_budget" in risky["reasons"]
 
