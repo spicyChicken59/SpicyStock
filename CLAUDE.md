@@ -251,7 +251,13 @@ refuses every order under *With ticket*. A route that NAMES a stock the
 lens hides widens it for that stock, says so, and does not store it. It computes one thing of the market — the status chip
 from the record's session and the ET clock (`status()`) — and prints
 everything else verbatim, including the six cover sentences and the plan
-instructions. `buildModel()` is the one adapter, and every status it gives a
+instructions. Two readings are re-read from fields the record archived,
+each held to its module and neither a decision: the five regime rules as the
+record's own inputs and thresholds give them (`regimeRules()`, withheld when
+they do not give the record's verdict), and whether a row the run built no plan
+for is in the record's archived event registry (`registryMatch()`,
+`event_risk.classify()`'s interval rule, held by
+`tests/fixtures/event-registry/classify-parity.json`). `buildModel()` is the one adapter, and every status it gives a
 stock is read off a field the run wrote (`trades[]`,
 `cash_budget.cut[].kind`, `plan.eligible`, `plan.action`, `quality.vetoes`,
 the grade against `rules.pipeline.trade_grades`); nothing in the browser
@@ -342,9 +348,13 @@ revisions) -- and never substitutes tonight's setup for it: a current
 signal for the same symbol is a separate, named link, and a symbol on no
 list tonight says so. `recoverEvidence()` gives a v1 follow its chart back
 only from a record that IS its signal, never from a newer same-ticker one.
-`modelUpdateOf()` attaches the record's open model plan only on the same
-session, the same family and the same rules identity; anything else is
-named as another signal's. An optional reference size is labelled the
+`modelUpdateOf()` attaches the record's open model plan on the same
+ticker, signal session and kind, and then on the plan's evidence reference;
+tonight's rules digest is never compared, since it moves with the directory's
+membership every night (19 November 2026: comparing it had hidden every saved
+setup's plan from the night after it). A plan carrying a different evidence
+reference is named as another signal's, and a legacy plan with no reference is
+attached and labelled a legacy association. An optional reference size is labelled the
 reader's, and nothing of any of it reaches the record, the mail, the
 scorecard or the URL. A page over a fixture
 says so: `data-ss-demo`, a chip, a notice and a marked simulated
@@ -365,7 +375,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6421 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6444 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
