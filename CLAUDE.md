@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6799 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6841 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15702,3 +15702,51 @@ a ticket whose bars are gone). Each has its case now and dies.
 
 **Not claimable:** a real-against-model reading, which needs the owner's
 filled positions file; any trading edge.
+
+## Checkpoint, 19 Nov 2026 -- PR 4 accepted; event and data safety: SEC filing flags, an IEX cross-check, and a registry review CI holds (PR 5)
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` from `main` after
+PR 4. `sec_flags` and `cross_check` are archived, so `rules_version` moves
+and every cascaded generator was regenerated; `orders.json` is version 2.
+The published record, picks, receipts, history, evidence and ledger are
+untouched.
+
+**SEC flags** (`src/sec_flags.py`, `run.sec_flags`): for every ticketed and
+listed name, at most `sec_flags.MAX_NAMES`, SEC's filing list is read for
+`sec_flags.FORMS` (SC TO-T, SC 14D9, DEFM14A, PREM14A and their amendments)
+and for 8-Ks carrying `sec_flags.ITEMS` (1.01, 2.01, 3.01, 5.01) filed in the
+last `sec_flags.WINDOW_DAYS`. A name is `flagged`, `clear` or `unknown`
+(never clear when it could not be read). Flag only: a flagged or unknown
+ticket is `human_review` in `orders.json`, never withheld from the record.
+
+**The cross-check** (`src/cross_check.py`, `run.cross_check`): one request to
+Alpaca's IEX feed for the ticketed names, at most `cross_check.MAX_NAMES`;
+a signal-day price more than `cross_check.PRICE_PCT` off the SIP bar blocks
+the ticket in `orders.json`. **A deliberate deviation from the brief:** IEX
+is one venue, so its absolute volume is a fraction of the consolidated
+tape's and a raw volume comparison would block every ticket. Under
+`cross_check.VOLUME_BASIS` `ratio_to_prior_session` each feed's volume is
+compared with its own prior session, and a ratio more than
+`cross_check.VOLUME_PCT` apart blocks the ticket; `absolute` is the brief's
+literal reading and is kept as a named option. The run counts the IEX
+request apart from the bars fetch.
+
+**The registry.** ACVA was reviewed again: Copart's 16 October release
+(an SEC exhibit read as a search excerpt, bytes not captured) says the
+acquisition completed, and the retained directory snapshots drop ACVA from
+20 October. A resolution needs captured bytes, so the entry stays listed
+and blocked, with a `review_note` saying so. `event_risk` admits a
+`review_note` dated after the entry's due date, and
+`tools/check_event_reviews.py` (a CI step) fails the build the day after any
+unresolved entry's review falls due without a new review or a note: it
+reads New York's date on purpose. MG's review falls due 25 November.
+
+**The full suite found what the focused runs had not:** the extra IEX
+request broke the request-count tests and the recovery rehearsal; it is
+counted apart now.
+
+**Mutation pass**, each mutant in a detached worktree judged by the test
+files naming its rule: 19 mutants, all dead; the control survives.
+
+**Not claimable:** a live SEC read or IEX comparison on a ticket night (the
+first such evening after the merge); any trading edge.
