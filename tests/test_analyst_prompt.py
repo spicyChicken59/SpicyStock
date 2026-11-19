@@ -1479,7 +1479,7 @@ def state_table_problems(heading: str, kind: str, text: str = PROMPT_RAW) -> lis
     named = {state for states, _ in rows for state in states}
     if named != given:
         problems.append(f"{heading}: the table names {sorted(named)}; these tickets' prices are in {sorted(given)}")
-    return problems[:6]
+    return problems
 
 
 def burst_state_problems(text: str = PROMPT_RAW) -> list[str]:
@@ -1527,13 +1527,13 @@ def state_sentence_problems(text: str = PROMPT_RAW) -> list[str]:
 
 
 def test_the_burst_state_table_is_what_price_state_gives():
-    assert not burst_state_problems(), burst_state_problems()
+    assert not burst_state_problems(), burst_state_problems()[:4]
     assert {state for states, _ in state_table("### 10.4 ", PROMPT_RAW) for state in states} == \
         set(morning.PRICE_STATES) - {"unknown"}
 
 
 def test_the_anticipation_state_table_is_what_price_state_gives():
-    assert not anticipation_state_problems(), anticipation_state_problems()
+    assert not anticipation_state_problems(), anticipation_state_problems()[:4]
     # the state a burst ticket has under its trigger is one an anticipation ticket never has
     assert "below_trigger" not in {state for states, _ in state_table("### 10.6 ", PROMPT_RAW) for state in states}
 
@@ -1549,7 +1549,7 @@ HOLDS = (ladder_problems, half_problems, gate_problems, fill_problems, admission
 
 def replaced(old: str, new: str):
     def edit(text: str) -> str:
-        assert text.count(old) == 1, old
+        assert text.count(old) == 1, f"the prompt no longer carries the sentence this edit changes: {old}"
         return text.replace(old, new)
     return edit
 
@@ -1565,6 +1565,13 @@ def exchanged(heading: str, pattern: str, first: int, second: int):
         assert swapped != section
         return text.replace(section, swapped)
     return edit
+
+
+@functools.lru_cache(maxsize=None)
+def found_as_committed() -> dict:
+    """What each hold reports of the prompt as it stands: nothing, unless the
+    prompt is itself wrong, and then the edits below are judged against it."""
+    return {hold: tuple(hold(PROMPT_RAW)) for hold in HOLDS}
 
 
 TABLE_ROW, LIST_ITEM = r"^\| (\d+) \| (.+) \|$", r"^(\d+)\. (.+(?:\n   .+)*)$"
@@ -1634,14 +1641,14 @@ EDITS = {
 @pytest.mark.parametrize("edit", list(EDITS))
 def test_an_edit_that_once_passed_is_named_by_the_hold_of_its_rule(edit):
     change, hold = EDITS[edit]
-    edited = change(PROMPT_RAW)
-    assert edited != PROMPT_RAW and not hold(PROMPT_RAW)
-    assert hold(edited), edit
-    # and by that hold alone: no other hold fires on an edit that is not its rule's
-    assert not [other.__name__ for other in HOLDS if other is not hold and other(edited)]
+    edited, before = change(PROMPT_RAW), found_as_committed()
+    assert edited != PROMPT_RAW
+    assert [problem for problem in hold(edited) if problem not in before[hold]], edit
+    # and by that hold alone: no other hold says anything new of an edit that is not its rule's
+    assert not [other.__name__ for other in HOLDS if other is not hold and tuple(other(edited)) != before[other]]
 
 
 def test_an_edit_no_hold_names_passes_every_hold():
     """The control: a sentence none of the holds reads, reworded."""
     edited = replaced("Read the four prices this way:", "Read the four prices like this:")(PROMPT_RAW)
-    assert not [hold.__name__ for hold in HOLDS if hold(edited)]
+    assert not [hold.__name__ for hold in HOLDS if tuple(hold(edited)) != found_as_committed()[hold]]
