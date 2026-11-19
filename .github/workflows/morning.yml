@@ -148,6 +148,11 @@ jobs:
           path: ${{ runner.temp }}/morning-observation
       - name: Publish only against the unchanged source record
         run: python -m tools.publish_morning publish --snapshot "$RUNNER_TEMP/morning-observation/morning.json"
+      # The execution handoff's go/cancel file (src/orders.py): derived on the
+      # spot from main's own orders.json, the receipt this run published and the
+      # record, then a one-file commit of docs/orders-morning.json.
+      - name: Publish the morning go/cancel for the execution handoff
+        run: python -m tools.publish_morning orders
       # The research observation is a second one-file commit, revalidated
       # against main's record AND the cohort receipt committed beside it.
       - name: Download only this run's research observation

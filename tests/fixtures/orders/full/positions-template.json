@@ -1,0 +1,37 @@
+{
+ "applicable_session": "2026-09-11",
+ "content_sha256": "d6db61b20f48900bdb0f7b6ba114cd08d3649c1b7c86aba2a4caf09a2d1b3ade",
+ "kind": "positions",
+ "mode": "paper",
+ "orders_sha256": "fb3e769a366f0225a7abd83c5cec7c33f8594c66094f70d8726a259d99946b02",
+ "positions": [
+  {
+   "broker": {
+    "account_label": null,
+    "entry_order_id": null,
+    "stop_order_id": null
+   },
+   "cancelled_shares": null,
+   "exits": [],
+   "fees_usd": null,
+   "fills": [],
+   "notes": null,
+   "planned": {
+    "limit_price": 126.47,
+    "protective_stop": 121.42,
+    "shares": 4,
+    "stop_price": 124.33
+   },
+   "status": "not_submitted",
+   "submitted_at": null,
+   "submitted_shares": null,
+   "symbol": "AAPL",
+   "ticket_id": "2026-09-10:burst:AAPL",
+   "ticket_sha256": "9404868bec6d9df0d38fcbd1b5c8d136fc667010fab5c1fac79095533b45c576"
+  }
+ ],
+ "privacy": "a filled copy holds the owner's real orders and fills: keep it private and never commit it to the public repository",
+ "schema": "docs/operations/orders-schema.json#/$defs/positions",
+ "session": "2026-09-10",
+ "version": 1
+}

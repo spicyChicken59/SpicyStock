@@ -52,6 +52,11 @@ FROZEN_STUDY = "docs/historical-validation.json"
 FROZEN_CASE_DIR = "docs/historical-validation/"
 FROZEN_RULE_IDENTIFIERS = ("down25_quarter", "pct_above_40ma")
 VERIFIED_VERSIONS = ("8.24.3", "8.30.1")
+#: the execution handoff's golden files and the one exit key the detector reads in them
+HANDOFF_FILES = ("tests/fixtures/orders/full/orders.json", "tests/fixtures/orders/morning/orders.json")
+HANDOFF_IDENTIFIERS = ("abnormal_10pct",)
+#: the other digit-bearing exit keys, which the detector does not read as keys
+HANDOFF_UNREAD = ("day3_no_progress", "day3_sell_half", "day5_exit", "gap_20pct", "sell_half_8pct", "trail_after_day3")
 
 
 def frozen_context_files():
@@ -315,6 +320,22 @@ def run_controls(binary: Path, workspace: Path, *, expected_version="8.24.3"):
             (label + "_ticker_too_long", config, directory + "/burst-ABCDEFGHIJKLMNOPQ.json", raw, 2, detected),
             (label + "_default_detector", config, path, default_detector, 2, ["github-pat"]),
         ])
+    for index, path in enumerate(HANDOFF_FILES):
+        raw = (ROOT / path).read_bytes()
+        occurrences = public_rule_occurrences(raw, HANDOFF_IDENTIFIERS)
+        detected = ["generic-api-key"] * sum(occurrences.values())
+        label = f"handoff_{index}"
+        cases.extend([
+            (label + "_defaults", baseline, path, raw, 2, detected),
+            (label + "_exact", config, path, raw, 0, []),
+            (label + "_unrelated", config, path, other_value, 2, ["generic-api-key"]),
+            (label + "_sibling", config, path.rsplit('/', 1)[0] + "/another.json", raw, 2, detected),
+            (label + "_prefix", config, "copied/" + path, raw, 2, detected),
+            (label + "_suffix", config, path + ".backup", raw, 2, detected),
+            (label + "_default_detector", config, path, default_detector, 2, ["github-pat"]),
+        ])
+    for value in HANDOFF_UNREAD:
+        cases.append((f"handoff_unread_{value}", baseline, "docs/orders.json", encode({"key": value}), 0, []))
     results = []
     for index, (name, selected_config, path, raw, code, rules) in enumerate(cases):
         # Keep scratch prefixes short for the existing deeply nested evidence

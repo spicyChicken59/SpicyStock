@@ -1129,6 +1129,7 @@ def finish_publication(rep: RunReport, docs: Path, data: dict, rec: dict, frames
     publish_stop_research(docs, rec)
     publish_research_outcomes(docs, rec)
     publish_brief(docs, data, rec, frames, minutes)
+    publish_orders(docs)
     if failure is not None:
         rep.fail(failure)
     if restamped is not None:
@@ -1186,6 +1187,28 @@ def publish_research_outcomes(docs: Path, rec: dict) -> None:
     except Exception as exc:  # noqa: BLE001 — optional derived research only
         log.warning("Research outcomes publication unavailable (%s); evening record retained.",
                     type(exc).__name__)
+
+
+def publish_orders(docs: Path) -> None:
+    """The execution handoff (``src/orders.py``): ``orders.json`` and its
+    positions template, derived from the final installed record after the
+    brief. It never fails the run: a derivation that fails is one warning, and
+    an ``orders.json`` bound to an earlier record is removed with it, so an
+    execution agent finds no tickets rather than an earlier night's."""
+    try:
+        from src import orders
+        result = orders.write_publication(docs)
+        log.info("Execution handoff: %s ticket(s); trade allowed %s; reasons %s.", result["tickets"],
+                 str(result["trade_allowed"]).lower(), ", ".join(result["reasons"]) or "none")
+    except Exception as exc:  # noqa: BLE001 -- optional derived companion only
+        log.warning("Execution handoff unavailable (%s); evening record retained.", type(exc).__name__)
+        try:
+            from src import orders
+            removed = orders.discard_unbound(docs)
+            if removed:
+                log.warning("Execution handoff: removed %s, bound to an earlier publication.", " and ".join(removed))
+        except Exception as inner:  # noqa: BLE001 -- never fails the night
+            log.warning("Execution handoff: the earlier files could not be removed (%s).", type(inner).__name__)
 
 
 def publish_brief(docs: Path, data: dict, rec: dict, frames: dict, minutes) -> None:
