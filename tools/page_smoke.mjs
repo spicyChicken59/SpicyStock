@@ -2665,7 +2665,10 @@ async function checkTicketPrices(browser, base, data) {
       [await factValue(page, 'buy'), await page.locator('#disc-plan .sc-facts > div dd').evaluateAll((dds, lo) => dds.filter((dd) => { const k = dd.cloneNode(true); k.querySelectorAll('small').forEach((n) => n.remove()); return k.textContent.trim().startsWith(lo + ' – '); }).length, usd(p.entry_low))], [null, 0]);
     // a row that is not there reads as no words, so the checks below fail by name rather than wait for it
     const fillRow = await page.locator('#disc-plan .sc-facts > div').filter({ has: page.locator('dt', { hasText: /^ticket fills$/ }) }).evaluateAll((rows) => (rows[0] ? rows[0].innerText : ''));
-    check(`${b.ticker}: the fill row names the buy stop as the burst close`, fillRow.includes(p.eligible ? 'a buy stop at ' + usd(p.entry_ref) + ' (the burst close), limit ' + usd(p.limit) : 'the buy stop would be ' + usd(p.entry_ref) + ' (the burst close)') && Math.abs(p.entry_ref - b.close) <= 0.005 + 1e-9, fillRow);
+    // the fixture is made under the production trigger rule: the buy stop is the
+    // burst close plus the cushion the plan carries (src/plan.py burst_trigger())
+    const named = ' (the burst close plus ' + usd(p.trigger_cushion) + ')';
+    check(`${b.ticker}: the fill row names the buy stop as the burst close plus its cushion`, fillRow.includes(p.eligible ? 'a buy stop at ' + usd(p.entry_ref) + named + ', limit ' + usd(p.limit) : 'the buy stop would be ' + usd(p.entry_ref) + named) && p.trigger_cushion > 0 && Math.abs(p.entry_ref - p.trigger_cushion - b.close) <= 0.005 + 1e-9, fillRow);
     eq(`${b.ticker}: and says the order buys nothing under it, only where a ticket could fill`, fillRow.includes('under the buy stop the order waits and buys nothing'), !!p.eligible);
     eq(`${b.ticker}: the skip-above row's value is the day-2 line, not the limit`, await factValue(page, 'skip if it opens above'), usd(p.day2_spent_above));
     eq(`${b.ticker}: the skip-below row's value is the failing line`, await factValue(page, 'skip if it opens below'), usd(p.skip_if_open_below));
