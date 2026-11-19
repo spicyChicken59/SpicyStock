@@ -252,6 +252,140 @@
   "content_sha256": {
    "type": "string",
    "pattern": "^[0-9a-f]{64}$"
+  },
+  "scorecard": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "status",
+    "plans",
+    "settled",
+    "tickets",
+    "distinct_setups",
+    "eras",
+    "stops_sum_r",
+    "breadth_revisions",
+    "real_vs_model",
+    "sentences"
+   ],
+   "properties": {
+    "status": {
+     "enum": [
+      "computed",
+      "not_computed",
+      "unreconciled",
+      "not_recorded"
+     ]
+    },
+    "plans": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "settled": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "tickets": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "distinct_setups": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "eras": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "label",
+       "tickets",
+       "settled",
+       "sum_r"
+      ],
+      "properties": {
+       "label": {
+        "type": [
+         "string",
+         "null"
+        ]
+       },
+       "tickets": {
+        "type": [
+         "integer",
+         "null"
+        ]
+       },
+       "settled": {
+        "type": [
+         "integer",
+         "null"
+        ]
+       },
+       "sum_r": {
+        "type": [
+         "number",
+         "null"
+        ]
+       }
+      }
+     }
+    },
+    "stops_sum_r": {
+     "type": [
+      "object",
+      "null"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "booked": {
+       "type": [
+        "number",
+        "null"
+       ]
+      },
+      "at_close": {
+       "type": [
+        "number",
+        "null"
+       ]
+      },
+      "at_low": {
+       "type": [
+        "number",
+        "null"
+       ]
+      }
+     }
+    },
+    "breadth_revisions": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "real_vs_model": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "sentences": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
   }
  },
  "required": [
@@ -264,6 +398,7 @@
   "night_checks",
   "reasons",
   "schema",
+  "scorecard",
   "source",
   "summary",
   "tickets",

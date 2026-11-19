@@ -518,6 +518,10 @@ async function recordView({ browser, base, open, check, eq, full, shotsDir }) {
       // the page asks nothing of the files, so each link says when it can be absent
       const titles = await page.locator('#foot-line a[data-brief]').evaluateAll((nodes) => nodes.map((a) => a.getAttribute('title') || ''));
       check(`${where}: each brief link says it can be absent and answer 404`, titles.length === 2 && titles.every((t) => t.includes('could not be written') && t.includes('404') && t.includes('first evening run')), titles);
+      // the scorecard read honestly: the record's own sentences, verbatim, in order
+      const reading = await page.locator('#record-card [data-scorecard-reading-sentence]').allTextContents();
+      eq(`${where}: the scorecard reading prints the record's own sentences`, reading, full.scorecard_reading.sentences);
+      eq(`${where}: and carries the block's status`, await page.locator('#record-card [data-scorecard-reading]').getAttribute('data-scorecard-reading'), full.scorecard_reading.status);
       check(`${where}: nothing scrolls sideways`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
       if (shotsDir) {
         await mkdir(shotsDir, { recursive: true });
@@ -535,6 +539,20 @@ async function recordView({ browser, base, open, check, eq, full, shotsDir }) {
     try {
       await toView(page, 'record');
       check(`record ${name}: the minute window is the record's own`, (await first(page, '#record-card [data-scorecard-prices]')).includes(want + full.rules.record.intraday_fill + ')'), await first(page, '#record-card [data-scorecard-prices]'));
+    } finally { await context.close(); }
+  }
+  // a record from before the reading says so, and one whose reading cannot be read says that
+  for (const [name, mutate, state, words] of [
+    ['reading-absent', (d) => { delete d.scorecard_reading; }, 'absent', 'This record is from before the scorecard reading'],
+    ['reading-unreadable', (d) => { d.scorecard_reading.sentences = 'not a list'; }, 'unreadable', 'This record’s scorecard reading could not be read.']]) {
+    const d = clone(full); mutate(d);
+    const rr = routed('record-' + name, d);
+    const { page, context } = await open(browser, base, rr.url, NOW, 1280, { beforeLoad: rr.beforeLoad, reducedMotion: 'reduce' });
+    try {
+      await toView(page, 'record');
+      eq(`record ${name}: the reading's state`, await page.locator('#record-card [data-scorecard-reading]').getAttribute('data-scorecard-reading'), state);
+      check(`record ${name}: says so in its own words`, (await first(page, '#record-card [data-scorecard-reading] .sc-note')).startsWith(words), await first(page, '#record-card [data-scorecard-reading] .sc-note'));
+      eq(`record ${name}: and prints no sentence of a reading`, await page.locator('#record-card [data-scorecard-reading-sentence]').count(), 0);
     } finally { await context.close(); }
   }
   // a record from before the minute-bar rule names no minute bars

@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "583191ddb160"
+  "rules_version": "7d29c2846abd"
  },
  "cover": {
   "h1": "Trade small. 1 A+ burst.",
@@ -953,7 +953,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb"
+   "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad"
   },
   "earnings": {
    "version": 2,
@@ -1734,6 +1734,7 @@
    "reader_refusal_min": 1,
    "reads_version": 2,
    "reader_usage_version": 1,
+   "scorecard_reading_version": 1,
    "delivery_version": 1,
    "delivery_primary_et": "18:16",
    "delivery_retry_et": "20:16",
@@ -2620,8 +2621,8 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "34d5966dd595445ddeed635c906295f20aa2e4ee9d7645f72cf27983ac394f80",
-     "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb",
+     "id": "6940d3eb58f288cd5d038d3d4c755a3f102a19dfabe5f27f1a5cc6950788952c",
+     "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad",
      "plan_sha256": "842e1811fce82d575bcf9e7ac1a5e19dadf956c4d808bf1603463284002f852d",
      "pick_sha256": "93fb0d45109eef81aaed3e721ef2b190b87d0f88fe88f4b592a1fb77fd0878e5"
     }
@@ -2754,8 +2755,8 @@
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "yellow",
@@ -2767,7 +2768,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "34d5966dd595445ddeed635c906295f20aa2e4ee9d7645f72cf27983ac394f80"
+    "id": "6940d3eb58f288cd5d038d3d4c755a3f102a19dfabe5f27f1a5cc6950788952c"
    },
    "series": [
     {
@@ -4210,8 +4211,8 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "6325d06e032b9bdf2afb8e478a81add2ec3e3e02bedce1a8a65eea8fb3f58877",
-     "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb",
+     "id": "87a866d0cf60a452696ff5c82dc62779ba837adc11bd8b72813b7cf4e5a86c4f",
+     "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad",
      "plan_sha256": "451fa84a671d3bc742ea844b8e2df83a5e1a3ad228c661caa66bf2f525bae67d",
      "pick_sha256": "ae1b4fc296a188da3755e200762a4de90e3ffb3845e833968f9754a6b91c73ea"
     }
@@ -4344,8 +4345,8 @@
     "kind": "burst",
     "ticker": "AMD",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "yellow",
@@ -4357,7 +4358,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out"
     },
-    "id": "6325d06e032b9bdf2afb8e478a81add2ec3e3e02bedce1a8a65eea8fb3f58877"
+    "id": "87a866d0cf60a452696ff5c82dc62779ba837adc11bd8b72813b7cf4e5a86c4f"
    },
    "series": [
     {
@@ -5769,8 +5770,8 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "c8b59620527c4731aa3ebb3bc274693e51936e826aecc8f8258561473e5f77e0",
-     "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb",
+     "id": "21d7751d33eae3238fa9104d16ca91577f9bb63718dbef53e14a2ac9cb4d4d62",
+     "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad",
      "plan_sha256": "055745eade380ace254a4b3e85bf2be2d884b0e218a8700529ecbb519fb7c73a",
      "pick_sha256": "4f262c23de7e8ee3ffa324b6ca9252049cc87d18e6946e49670ebdac86a1e20c"
     }
@@ -5903,8 +5904,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "yellow",
@@ -5916,7 +5917,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out"
     },
-    "id": "c8b59620527c4731aa3ebb3bc274693e51936e826aecc8f8258561473e5f77e0"
+    "id": "21d7751d33eae3238fa9104d16ca91577f9bb63718dbef53e14a2ac9cb4d4d62"
    },
    "series": [
     {
@@ -7368,8 +7369,8 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "2246770bf729aa4ddaa5df7ab5b39e255accc83f3f5926edc03d9eb2ef7e3564",
-     "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb",
+     "id": "a384cf519c8944e5a6f293aba5be9444bc1ec8989b81e9ab6c48bb416b931c68",
+     "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad",
      "plan_sha256": "1be1c10a1d7868ff9026e77dae35e650e5afdc96835d7d2e3fb2c1d04050f5af",
      "pick_sha256": "34d125a055b248c0a033f0b7dca54ca8e0f181ee195b0d44cc693aba116c8219"
     }
@@ -7506,8 +7507,8 @@
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "yellow",
@@ -7519,7 +7520,7 @@
      "reason": "withheld",
      "detail": "ticket withheld: no limit above the $124.33 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
     },
-    "id": "2246770bf729aa4ddaa5df7ab5b39e255accc83f3f5926edc03d9eb2ef7e3564"
+    "id": "a384cf519c8944e5a6f293aba5be9444bc1ec8989b81e9ab6c48bb416b931c68"
    },
    "series": [
     {
@@ -8766,8 +8767,8 @@
     "kind": "burst",
     "ticker": "MSFT",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "yellow",
@@ -8779,7 +8780,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "0b5e119bf71b44928310fe4e3bc5fbf4a47d0c47c19fb1406ae382129bc0b76e"
+    "id": "39885639ee26d2d2c8f74f29c2d90e3aa959aa7c90eecc8b493295150c09684c"
    },
    "series": [
     {
@@ -10025,8 +10026,8 @@
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "yellow",
@@ -10038,7 +10039,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "66f2d0d84be21ea7726bef51d0c41ce355b92b647f9987c1754ee7030d92f001"
+    "id": "5077bf3757c8f0f230ecc5628de53563b18dca56299e7aef25bcb7101ab6e277"
    },
    "series": [
     {
@@ -11286,8 +11287,8 @@
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "yellow",
@@ -11299,7 +11300,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "8f89f3bf96f713f71d8a626975173b674d10efa43feb0b35c4d07711256ceda9"
+    "id": "9b64c9917681dcf51111c97f134a623f83b0f844d5e7121fdd6dd7db61ab99d6"
    },
    "series": [
     {
@@ -12617,8 +12618,8 @@
      },
      "evidence_ref": {
       "version": 1,
-      "id": "c34701f812b4e4f2f76cb928d1cd475c4600cf0e835cd7dc31564563c9e3cf50",
-      "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb",
+      "id": "5e400e8c7921fd908d1fd269ab4472d7f71f3f51695a9dde0657555369217915",
+      "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad",
       "plan_sha256": "9edd8847f9262adf65aefb17a40e7e1334056321c60b0098ffed2bdde6331d13",
       "pick_sha256": "992faea8848ee15965510567067003652e3efceb022bf870a3b38a36598bdd34"
      }
@@ -13626,8 +13627,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2026-09-10",
-     "rules_version": "583191ddb160",
-     "context_sha256": "bbc4906bcc564e416614e89a169b639c0035168828cc17bb26c7a716852195bb",
+     "rules_version": "7d29c2846abd",
+     "context_sha256": "75a96e72dbbd936ed9b3ccafc3c0e7be210c217fdbfd0d69b1268d480f8aa2ad",
      "gate": {
       "regime": "yellow",
       "final_grade": "watch",
@@ -13636,7 +13637,7 @@
       "reason": "no_order",
       "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take COIL only if a plan above is not held or stops out"
      },
-     "id": "c34701f812b4e4f2f76cb928d1cd475c4600cf0e835cd7dc31564563c9e3cf50"
+     "id": "5e400e8c7921fd908d1fd269ab4472d7f71f3f51695a9dde0657555369217915"
     }
    }
   ],
@@ -13889,7 +13890,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "583191ddb160"
+  "replay_rules_version": "7d29c2846abd"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -14128,60 +14129,60 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:583191ddb160": {
+   "burst:AAPL:2026-09-10:7d29c2846abd": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:583191ddb160": {
+   "burst:AMD:2026-09-10:7d29c2846abd": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:583191ddb160": {
+   "burst:NVDA:2026-09-10:7d29c2846abd": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:583191ddb160": {
+   "burst:TSLA:2026-09-10:7d29c2846abd": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "burst:MSFT:2026-09-10:583191ddb160": {
+   "burst:MSFT:2026-09-10:7d29c2846abd": {
     "ticker": "MSFT",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:583191ddb160": {
+   "burst:PLUG:2026-09-10:7d29c2846abd": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:583191ddb160": {
+   "burst:DLLR:2026-09-10:7d29c2846abd": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:583191ddb160": {
+   "anticipation:COIL:2026-09-10:7d29c2846abd": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    }
   },
@@ -14370,6 +14371,110 @@
   },
   "sentence": "Candidate funnel under a YELLOW market: 7 reaction candidates discovered, 4 potentially usable (mechanical grade in the admitted band, no veto, discovery admitted), 1 reaction ticket. Reaction candidates stopped at: 3 mechanical grade below the regime's admitted band, 1 ticket withheld: stop rule at the limit, 2 slot cap. Anticipation: 10 momentum names, 4 quiet, 1 passing the coil checks, 1 listed, 0 tickets. Listed setups stopped at: 1 slot cap. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
  },
+ "scorecard_reading": {
+  "version": 1,
+  "status": "computed",
+  "model_record": {
+   "status": "computed",
+   "reason": null,
+   "tickets": 48,
+   "distinct_setups": 48,
+   "reissued_tickets": 0,
+   "buckets": {
+    "settled": 20,
+    "open": 2,
+    "pending": 1,
+    "uncertain": 12,
+    "not_filled": 13,
+    "unmeasured": 0,
+    "unreadable": 0,
+    "unscored": 0
+   },
+   "buckets_by_setup": {
+    "settled": 20,
+    "open": 2,
+    "pending": 1,
+    "uncertain": 12,
+    "not_filled": 13,
+    "unmeasured": 0,
+    "unreadable": 0,
+    "unscored": 0
+   },
+   "sum_r": -1.75,
+   "eras": [
+    {
+     "label": "$10,000 at 0.5% risk",
+     "issued_equity": 10000.0,
+     "risk_pct": 0.5,
+     "from": "2026-09-10",
+     "through": "2026-09-10",
+     "tickets": 1,
+     "setups": 1,
+     "settled": 0,
+     "wins": 0,
+     "losses": 0,
+     "breakeven": 0,
+     "sum_r": null
+    },
+    {
+     "label": "account not recorded",
+     "issued_equity": null,
+     "risk_pct": null,
+     "from": "2026-07-01",
+     "through": "2026-09-08",
+     "tickets": 47,
+     "setups": 47,
+     "settled": 20,
+     "wins": 5,
+     "losses": 15,
+     "breakeven": 0,
+     "sum_r": -1.75
+    }
+   ],
+   "stops": {
+    "count": 18,
+    "unexamined": 0,
+    "sum_r": {
+     "booked": -2.13,
+     "at_close": -1.74,
+     "at_low": -4.67
+    },
+    "settled_sum_r": {
+     "booked": -1.75,
+     "at_close": -1.36,
+     "at_low": -4.29
+    }
+   },
+   "sentences": [
+    "The model record counts 48 tickets issued from 2026-07-01 through 2026-09-10: 48 distinct setups, and 0 tickets that issued a setup again on a later night.",
+    "By ticket: 20 settled, 2 open, 1 awaiting first session, 12 uncertain, 13 not filled. By setup: 20 settled, 2 open, 1 awaiting first session, 12 uncertain, 13 not filled.",
+    "The 20 settled tickets sum to -1.75R (5 wins, 15 losses, 0 breakeven).",
+    "The tickets were sized against 1 model account: $10,000 at 0.5% risk (1 ticket, none settled). No account is recorded for 47 more tickets.",
+    "A sum of R is not a sum of dollars: R counts each ticket as one unit whatever its size. The settled tickets sum to -1.75R and to -$59.16 in model dollars.",
+    "18 settled tickets ended on a stop. As the model books them, a stop first reached inside a session at exactly the stop price, the sum is -2.13R (-$68.70). With the same exits at the stop day's close it is -1.74R (-$54.97): what holding to the close would have been, not a fill estimate. At the stop day's low, a worst-case bound, it is -4.67R (-$139.56).",
+    "Under those readings the settled sum is -1.75R as booked, -1.36R at the closes and -4.29R at the lows.",
+    "12 tickets are uncertain: the bars cannot say whether each filled, and they are in no sum. UBER 2026-07-01 reads -0.70R if filled at its $29.28 limit and -0.42R if filled at its $28.24 trigger; QTWO 2026-07-08 reads -0.61R if filled at its $26.43 limit and -0.25R if filled at its $25.52 trigger; LITE 2026-07-15 reads -0.43R if filled at its $22.48 limit and +0.06R if filled at its $21.68 trigger; HOOD 2026-07-21 reads -0.87R if filled at its $26.12 limit and -0.76R if filled at its $25.34 trigger; FIX 2026-07-23 reads -0.67R if filled at its $27.93 limit and -0.38R if filled at its $26.98 trigger; ANET 2026-07-29 reads -0.26R if filled at its $30.07 limit and +0.28R if filled at its $29.14 trigger; UBER 2026-08-05 reads -1.00R if filled at its $29.35 limit and -1.00R if filled at its $28.35 trigger; PLTR 2026-08-12 reads -0.88R if filled at its $25.58 limit and -0.77R if filled at its $24.69 trigger; MU 2026-08-17 reads -0.39R if filled at its $27.95 limit and -0.12R if filled at its $27.03 trigger; IONQ 2026-08-21 reads -0.32R if filled at its $26.19 limit and +0.55R if filled at its $25.38 trigger; CRDO 2026-08-31 reads -0.33R if filled at its $31.17 limit and +0.00R if filled at its $30.29 trigger; SMCI 2026-09-04 reads -0.35R if filled at its $25.32 limit. These are bounds, not results."
+   ]
+  },
+  "breadth_revisions": {
+   "previous_session": null,
+   "compared": 0,
+   "differ_count": 0,
+   "differ": [],
+   "sentence": "There is no earlier publication's breadth history to compare."
+  },
+  "real_vs_model": {
+   "status": "private",
+   "sentence": "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
+  },
+  "sentences": [
+   "48 tickets in the scorecard's window are 48 distinct setups.",
+   "By model account: $10,000 at 0.5% risk, 1 ticket from 2026-09-10 through 2026-09-10, 0 settled, no R yet. No model account is recorded for 47 more tickets.",
+   "The 18 stopped tickets booked at the stop sum to -2.13R; read at that session's close, -1.74R; at its low, -4.67R.",
+   "There is no earlier publication's breadth history to compare.",
+   "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
+  ]
+ },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
@@ -14388,6 +14493,7 @@
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
   "scorecard": "All retained published plans in the stated window, including pending and missing evidence. Disjoint outcome counts reconcile to plans; rates use resolved plans alone, with an explicit denominator and minimum sample. Public model results, independent of personal selections.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
+  "scorecard_reading": "The scorecard read honestly, beside its own numbers, which do not move: the model record's distinct setups, the model account each ticket was sized against, the stopped tickets at the session's close and low beside the stop they were booked at, the breadth figures this record computes differently from the publication before it, and where real trades are compared with the model (privately). Its sentences are printed verbatim.",
   "funnel": "Where every discovered reaction candidate and every listed anticipation setup stopped: one terminal stage each, in the order the run applies its gates, so the stage counts sum to the discovered count. Derived from the fields above and re-derived by the validator; the labels the page and the mail print travel with it. A stage is the record's own accounting of its gates, never a judgement of the setup and never an entry.",
   "observations": "Public coverage of every published saveable signal, independent of local saves. Each signal keeps its own identity and 21-calendar-day window. Symbols carry the latest real bar plus up to 20 dated observations from already-fetched frames; missing bars stay missing, and missing frames retain earlier actual observations. This is research coverage, never a quote feed or personal trading history.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."

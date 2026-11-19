@@ -427,7 +427,29 @@ def build(canonical_raw: bytes, picks_raw: bytes | None = None) -> dict:
         "summary": {"tickets": len(tickets), "go": sum(t["status"] == GO for t in tickets),
                     "human_review": sum(t["status"] == HUMAN_REVIEW for t in tickets),
                     "blocked": sum(t["status"] == BLOCKED for t in tickets)},
+        "scorecard": scorecard(data),
     })
+
+
+def scorecard(data: dict) -> dict:
+    """The record's scorecard beside its honest reading (``scorecard_reading``),
+    copied, never recomputed: the scorecard's own counts and the reading's
+    distinct setups, model accounts, stop readings and breadth revisions."""
+    sc = _dict(data.get("scorecard"))
+    reading = _dict(data.get("scorecard_reading"))
+    model = _dict(reading.get("model_record"))
+    revisions = _dict(reading.get("breadth_revisions"))
+    return {
+        "status": reading.get("status") if reading else "not_recorded",
+        "plans": sc.get("plans"), "settled": sc.get("settled"),
+        "tickets": model.get("tickets"), "distinct_setups": model.get("distinct_setups"),
+        "eras": [{k: e.get(k) for k in ("label", "tickets", "settled", "sum_r")}
+                 for e in _list(model.get("eras")) if isinstance(e, dict)],
+        "stops_sum_r": _dict(_dict(model.get("stops")).get("sum_r")) or None,
+        "breadth_revisions": revisions.get("differ_count"),
+        "real_vs_model": _dict(reading.get("real_vs_model")).get("status"),
+        "sentences": [s for s in _list(reading.get("sentences")) if isinstance(s, str)],
+    }
 
 
 def positions_template(orders: dict, orders_raw: bytes) -> dict:

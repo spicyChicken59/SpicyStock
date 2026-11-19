@@ -183,6 +183,11 @@ CONTRACT: dict[str, str] = {
                  "denominator and minimum sample. Public model results, independent of personal selections.",
     "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows "
                     "it when trades is empty. Null when every burst is a trade or there were none.",
+    "scorecard_reading": "The scorecard read honestly, beside its own numbers, which do not move: the model "
+                         "record's distinct setups, the model account each ticket was sized against, the stopped "
+                         "tickets at the session's close and low beside the stop they were booked at, the breadth "
+                         "figures this record computes differently from the publication before it, and where real "
+                         "trades are compared with the model (privately). Its sentences are printed verbatim.",
     "funnel": "Where every discovered reaction candidate and every listed anticipation setup stopped: one "
               "terminal stage each, in the order the run applies its gates, so the stage counts sum to the "
               "discovered count. Derived from the fields above and re-derived by the validator; the labels "
@@ -725,6 +730,8 @@ def validate(data: dict) -> None:
     faults.extend(funnel.faults(data))
     faults.extend(intraday.record_faults(data))
     faults.extend(earnings_risk.record_faults(data))
+    from src import scorecard_reading
+    faults.extend(scorecard_reading.faults(data))
     verdict = _get(data, "breadth", "regime", "verdict")
     if verdict is not None and verdict not in REGIMES:
         faults.append(f"breadth.regime.verdict {verdict!r} is not one of {REGIMES}")
@@ -845,7 +852,13 @@ def build(run: dict, account: dict, rules: dict, breadth: dict, bursts: list[dic
     if isinstance(rules.get("admission"), dict):
         data["run"]["admission"] = admission.summary(body["bursts"], (rules.get("pipeline") or {}).get("trade_grades") or [])
     data["funnel"] = funnel.build(data)
-    data["_contract"] = dict(CONTRACT)
+    from src import scorecard_reading   # lazy, as funnel above
+    if (rules.get("pipeline") or {}).get("scorecard_reading_version") is not None:
+        # the pipeline replaces this with the block it computes from the night's bars
+        # (pipeline.read_scorecard()); a record built without them says it was not computed
+        data["scorecard_reading"] = scorecard_reading.build(None, None, data)
+    data["_contract"] = dict(CONTRACT) if "scorecard_reading" in data else \
+        {k: v for k, v in CONTRACT.items() if k != "scorecard_reading"}
     validate(data)
     return data
 
@@ -1238,6 +1251,19 @@ def _funnel_block(data: dict) -> str:
     return f'<div><p style="{_S_MUTED}">// where the candidates stopped</p><p style="{_S_MUTED}">{esc(sentence)}</p></div>'
 
 
+def _scorecard_reading_block(data: dict) -> str:
+    """The scorecard read honestly, in the record's own sentences: the same
+    words the page prints beside the scorecard, whose numbers do not move."""
+    sentences = _get(data, "scorecard_reading", "sentences")
+    if not isinstance(sentences, list):
+        return ""
+    lines = [s for s in (_text(x) for x in sentences) if s]
+    if not lines:
+        return ""
+    return (f'<div><p style="{_S_MUTED}">// the scorecard, read honestly</p>'
+            + "".join(f'<p style="{_S_MUTED}">{esc(s)}</p>' for s in lines) + '</div>')
+
+
 def _breadth_line(breadth: Any) -> str:
     verdict = _get(breadth, "regime", "verdict")
     if verdict not in REGIMES:
@@ -1342,6 +1368,7 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
     out.append(_admission_block(run))
     out.append(_delivery_block(run))
     out.append(_funnel_block(data))
+    out.append(_scorecard_reading_block(data))
     out.append(f'<p style="margin:16px 0 0">Full plan, charts and the order sheet: '
                f'<a href="{esc(PAGE_URL)}" style="{_S_LINK}">{esc(PAGE_URL)}</a></p>')
     foot = [f"model {model}" if (model := _text(run.get("model"))) else None,
