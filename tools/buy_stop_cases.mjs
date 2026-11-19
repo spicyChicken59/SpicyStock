@@ -86,6 +86,10 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
     burst && [burst.ticker, burst.close, burst.plan.entry_ref, burst.plan.entry_low, burst.plan.limit]);
   if (!burst) return;
   const p = burst.plan;
+  // a section that throws (a locator that never appears, an evaluate over a
+  // node that is not there) is a failure by name, and the suite goes on to
+  // its other sections and its total
+  const threw = (section, e) => check(`${section}: the section ran to its end`, false, String((e && e.message) || e).split('\n')[0].slice(0, 300));
   if (shotsDir) await mkdir(shotsDir, { recursive: true });
 
   // ---- a burst ticket's page, as it opens and as the reader opens it
@@ -105,13 +109,14 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
       check(`${tag}: no note's words are drawn on the first view`, !(await page.locator('#detail').innerText()).includes('must be entered at a stop price above the current market price'), 'the buy-stop note is drawn');
       // the first screen the disclosure exists for
       const geom = await page.evaluate(() => {
-        const box = (sel) => { const r = document.querySelector(sel).getBoundingClientRect(); return { top: Math.round(r.top + scrollY), bottom: Math.round(r.bottom + scrollY), height: Math.round(r.height) }; };
+        const box = (sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { top: Math.round(r.top + scrollY), bottom: Math.round(r.bottom + scrollY), height: Math.round(r.height) }; };
         return { card: box('#detail .ss-action'), copy: box('#detail .ss-action [data-copy]'), fold: box('#detail .ss-action details[data-broker-notes]'), screen: innerHeight, sideways: document.documentElement.scrollWidth > innerWidth };
       });
-      console.log(`  ${tag} card ${geom.card.height}px, Copy order ends ${geom.copy.bottom - geom.card.top}px under the card's top, the closed disclosure ${geom.fold.height}px, screen ${geom.screen}px`);
-      check(`${tag}: with the card at the top of the screen its Copy order is on that screen`, geom.copy.bottom - geom.card.top <= geom.screen, JSON.stringify(geom));
+      const measured = !!(geom.card && geom.copy && geom.fold);
+      if (measured) console.log(`  ${tag} card ${geom.card.height}px, Copy order ends ${geom.copy.bottom - geom.card.top}px under the card's top, the closed disclosure ${geom.fold.height}px, screen ${geom.screen}px`);
+      check(`${tag}: with the card at the top of the screen its Copy order is on that screen`, measured && geom.copy.bottom - geom.card.top <= geom.screen, JSON.stringify(geom));
       // its label wraps to three lines at 320 px; the two notes open are 429 px at 390 and 566 px at 320
-      check(`${tag}: the closed disclosure is its label alone, not two notes`, geom.fold.height <= 120 && !geom.sideways, JSON.stringify(geom));
+      check(`${tag}: the closed disclosure is its label alone, not two notes`, measured && geom.fold.height <= 120 && !geom.sideways, JSON.stringify(geom));
       if (shotsDir) await page.locator('#detail .ss-action').screenshot({ path: path.join(shotsDir, `buystop-card-closed-${width}-${theme}.png`) });
 
       // the card's Copy order hands over the ticket and neither note
@@ -131,6 +136,7 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
       eq(`${tag}: the opened notes sit between the card's terms and its controls`, await page.evaluate(() => {
         const f = document.querySelector('#detail .ss-action details[data-broker-notes]'), terms = document.querySelector('#detail .ss-action .ss-action__terms'), ctl = document.querySelector('#detail .ss-action .ss-action__controls');
         const notes = [...f.querySelectorAll('[data-broker-part-fill], [data-broker-buy-stop]')].map((n) => n.getBoundingClientRect());
+        if (notes.length !== 2) return ['the disclosure holds ' + notes.length + ' notes'];
         return [f.parentElement === ctl.parentElement, terms.getBoundingClientRect().bottom <= notes[0].top, notes[0].bottom <= notes[1].top, notes[1].bottom <= ctl.getBoundingClientRect().top, document.documentElement.scrollWidth > innerWidth];
       }), [true, true, true, true, false]);
       const ink = await page.evaluate(() => [...document.querySelectorAll('#detail .ss-action [data-broker-part-fill], #detail .ss-action [data-broker-buy-stop], #detail .ss-action .ss-action__sizing')].map((e) => getComputedStyle(e).color));
@@ -195,7 +201,7 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
       const writes = await writesOf(page);
       eq(`${tag}: every text the page wrote to the clipboard was the ticket, and none carried a broker note`, [writes.length, writes.filter((t) => t !== pre).length, writes.filter((t) => NOTE_WORDS.test(t)).length], [2, 0, 0]);
       eq(`${tag}: page errors`, errors.slice(), []);
-    } finally { await context.close(); }
+    } catch (e) { threw(`${tag}: the burst ticket's page`, e); } finally { await context.close(); }
   }
 
   // ---- a disclosure the reader opened stays open when the clock repaints it:
@@ -220,7 +226,7 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
           await page.locator('#detail details[data-broker-notes]').evaluateAll((els) => els.map((e) => [e.parentElement.getAttribute('data-item'), e.open, e.hasAttribute('data-was')]))],
         ['blocked', 0, [['need', true, false]]]);
       eq('left open: page errors', errors.slice(), []);
-    } finally { await context.close(); }
+    } catch (e) { threw('left open', e); } finally { await context.close(); }
   }
 
   // ---- a setting-up ticket: its trigger sits above its last close, so no
@@ -253,7 +259,7 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
         eq(`${tag}: the levels table names the entry zone from the trigger to the limit, and adds no trigger-up sentence`,
           zone.map((r) => [r[0], r[1], / trigger up/.test(r[2])]), [['entry zone (to the limit)', usd(coil.plan.trigger) + ' – ' + usd(coil.plan.limit), false]]);
         eq(`${tag}: page errors`, errors.slice(), []);
-      } finally { await context.close(); }
+      } catch (e) { threw(`${tag}: the setting-up ticket's page`, e); } finally { await context.close(); }
     }
   }
 
@@ -292,7 +298,7 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
         await page.locator('#saved [data-archived-order]').evaluate((box) => [...box.querySelectorAll('[data-broker-part-fill], [data-broker-buy-stop]')].map((e) => e.hasAttribute('data-broker-buy-stop') ? 'buy-stop' : 'part-fill')), ['part-fill']);
       await page.click('#saved-close'); await page.waitForTimeout(250);
       eq('setting-up doors: page errors', errors.slice(), []);
-    } finally { await context.close(); }
+    } catch (e) { threw('setting-up doors', e); } finally { await context.close(); }
 
     // an archived original that was a setting-up ticket, from a synthetic
     // archive of the degraded night served under the digests the page checks
@@ -322,7 +328,7 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
         await old.page.locator('#history-results [data-broker-part-fill], #history-results [data-broker-buy-stop]').evaluateAll((els) => els.map((e) => [e.hasAttribute('data-broker-buy-stop') ? 'buy-stop' : 'part-fill', !!(e.previousElementSibling && e.previousElementSibling.matches('[data-original-status]'))])),
         [['part-fill', true]]);
       eq('archived setting-up ticket: page errors', old.errors.slice(), []);
-    } finally { await old.context.close(); }
+    } catch (e) { threw('archived setting-up ticket', e); } finally { await old.context.close(); }
   }
 
   // ---- "the burst close" is said only of a buy stop that is the row's own
@@ -333,14 +339,14 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
     const odd = multiple.bursts.find((b) => (multiple.trades || []).includes(b.ticker) && b.plan && b.plan.order_json);
     check('the cash fixture\'s burst ticket closes a fraction of a cent off its buy stop, so the wording below can fail',
       !!odd && odd.close !== odd.plan.entry_ref && Math.abs(odd.close - odd.plan.entry_ref) <= 0.005 + 1e-9, odd && [odd.close, odd.plan.entry_ref]);
-    const fillRow = async (page) => { await page.evaluate(() => { document.getElementById('disc-plan').open = true; }); return page.locator('#disc-plan .sc-facts > div').filter({ has: page.locator('dt', { hasText: /^ticket fills$/ }) }).first().innerText(); };
+    const fillRow = async (page) => { await page.evaluate(() => { document.getElementById('disc-plan').open = true; }); return page.locator('#disc-plan .sc-facts > div').filter({ has: page.locator('dt', { hasText: /^ticket fills$/ }) }).evaluateAll((rows) => (rows[0] ? rows[0].innerText : '')); };
     if (odd) {
       const a = await open(browser, base, `/${CASH}/publication-multiple.json`, '2026-09-11T13:35:00Z', 1280, { lens: 'all', hash: `#/explore/bursts/${odd.ticker}`,
         beforeLoad: (page) => page.route('**/morning.json', (route) => route.fulfill({ status: 404, body: 'not found' })) });
       try {
         const got = await fillRow(a.page);
         check('a buy stop that is the close to the cent is called the burst close', got.includes('a buy stop at ' + usd(odd.plan.entry_ref) + ' (the burst close), limit ' + usd(odd.plan.limit)), got);
-      } finally { await a.context.close(); }
+      } catch (e) { threw('the burst close, to the cent', e); } finally { await a.context.close(); }
     }
     const moved = structuredClone(full); moved.bursts.find((b) => b.ticker === burst.ticker).close = +(burst.close + 1).toFixed(2);
     const b = await open(browser, base, `/${PAGE}/full.json`, FRESH, 1280, { lens: 'all', hash: `#/explore/bursts/${burst.ticker}`,
@@ -349,7 +355,7 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
       const got = await fillRow(b.page);
       check('a buy stop that is not the row\'s recorded close is not called the burst close, and the row still names it and the limit',
         !got.includes('the burst close') && got.includes('a buy stop at ' + usd(p.entry_ref) + ', limit ' + usd(p.limit) + ' · under the buy stop the order waits and buys nothing'), got);
-    } finally { await b.context.close(); }
+    } catch (e) { threw('the burst close, another price', e); } finally { await b.context.close(); }
   }
 
   // ---- the private handoff: a bursts-stage draft's readback shows the note
@@ -410,7 +416,7 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
         const writes = await writesOf(page);
         eq(`${tag}: every text the page wrote to the clipboard was a readback, and none carried a broker note`, [writes.length, writes.filter((t) => NOTE_WORDS.test(t)).length], [1, 0]);
         eq(`${tag}: page errors`, [...errors], []);
-      } finally { await context.close(); }
+      } catch (e) { threw(tag, e); } finally { await context.close(); }
     }
   }
 }

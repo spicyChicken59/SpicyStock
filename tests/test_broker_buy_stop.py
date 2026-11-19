@@ -243,6 +243,11 @@ def test_the_mail_prints_the_buy_stop_rule_only_beside_a_burst_order_it_printed(
     mixed = _night(bursts=[_burst("XYZ"), _burst("DEF", plan={**_plan(), "order_line": None})], trades=["XYZ", "DEF"], watchlist=QUIET)
     text = _rendered(digest_html(build(**mixed)))
     assert text.count(report.BROKER_BUY_STOP) == 1 and text.index("DEF") < text.index(report.BROKER_BUY_STOP), text
+    # two trades, each with an order: still one sentence, after the second card's order, never one a card
+    both = _night(bursts=[_burst("XYZ"), _burst("DEF")], trades=["XYZ", "DEF"], watchlist=QUIET)
+    text = _rendered(digest_html(build(**both)))
+    assert text.count(ORDER_LINE) == 2 and text.count(report.BROKER_BUY_STOP) == 1 and text.count(report.BROKER_PART_FILL) == 1, text
+    assert text.rindex(ORDER_LINE) < text.index(report.BROKER_PART_FILL) < text.index(report.BROKER_BUY_STOP), text
     # a closed night carries the standing burst tickets verbatim, and the rule with them
     closed = _night(run=_run(session_state="closed", status="closed"), watchlist=QUIET)
     text = _rendered(digest_html(build(**closed)))

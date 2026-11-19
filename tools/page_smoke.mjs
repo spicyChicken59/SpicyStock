@@ -2662,7 +2662,8 @@ async function checkTicketPrices(browser, base, data) {
     eq(`${b.ticker}: the fill row's value is the buy stop up to the ticket limit, or no ticket for a withheld setup`, await factValue(page, 'ticket fills'), p.eligible ? usd(p.entry_ref) + ' – ' + usd(p.limit) : 'no ticket');
     eq(`${b.ticker}: no row is labelled buy, and no row's value starts the band at the skip line`,
       [await factValue(page, 'buy'), await page.locator('#disc-plan .sc-facts > div dd').evaluateAll((dds, lo) => dds.filter((dd) => { const k = dd.cloneNode(true); k.querySelectorAll('small').forEach((n) => n.remove()); return k.textContent.trim().startsWith(lo + ' – '); }).length, usd(p.entry_low))], [null, 0]);
-    const fillRow = await page.locator('#disc-plan .sc-facts > div').filter({ has: page.locator('dt', { hasText: /^ticket fills$/ }) }).first().innerText();
+    // a row that is not there reads as no words, so the checks below fail by name rather than wait for it
+    const fillRow = await page.locator('#disc-plan .sc-facts > div').filter({ has: page.locator('dt', { hasText: /^ticket fills$/ }) }).evaluateAll((rows) => (rows[0] ? rows[0].innerText : ''));
     check(`${b.ticker}: the fill row names the buy stop as the burst close`, fillRow.includes(p.eligible ? 'a buy stop at ' + usd(p.entry_ref) + ' (the burst close), limit ' + usd(p.limit) : 'the buy stop would be ' + usd(p.entry_ref) + ' (the burst close)') && Math.abs(p.entry_ref - b.close) <= 0.005 + 1e-9, fillRow);
     eq(`${b.ticker}: and says the order buys nothing under it, only where a ticket could fill`, fillRow.includes('under the buy stop the order waits and buys nothing'), !!p.eligible);
     eq(`${b.ticker}: the skip-above row's value is the day-2 line, not the limit`, await factValue(page, 'skip if it opens above'), usd(p.day2_spent_above));
