@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "bde327cb5640"
+  "rules_version": "ffc1bef74ba9"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -953,7 +953,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "084eb087be90b1a67f2f36a9f8f0704721476dfa3bb6d342bf9287028c15e0dd"
+   "context_sha256": "13e0e641bc43659fbba160105c520fcee229b2751e7b77176d7f38aa791f8224"
   },
   "earnings": {
    "version": 2,
@@ -978,9 +978,7 @@
     "SC 14D9",
     "SC 14D9/A",
     "DEFM14A",
-    "DEFM14A/A",
-    "PREM14A",
-    "PREM14A/A"
+    "PREM14A"
    ],
    "items": [
     "1.01",
@@ -1004,6 +1002,55 @@
    "rows": [],
    "status": "not_applicable",
    "sentence": "No ticket to cross-check."
+  },
+  "trigger": {
+   "event": null,
+   "only_if_unpublished": null
+  },
+  "go_live": {
+   "version": 1,
+   "ready": false,
+   "criteria": [
+    {
+     "key": "fidelity_protocol",
+     "met": false,
+     "have": null,
+     "need": null,
+     "detail": "not recorded as passed by the owner"
+    },
+    {
+     "key": "on_time_sessions",
+     "met": false,
+     "have": 0,
+     "need": 10,
+     "detail": "0 consecutive of 10"
+    },
+    {
+     "key": "settled_forward_plans",
+     "met": false,
+     "have": 0,
+     "need": 20,
+     "detail": "0 settled since 2026-09-10 of 20"
+    },
+    {
+     "key": "ablation_report",
+     "met": true,
+     "have": null,
+     "need": null,
+     "detail": "docs/input-truthfulness/2026-11-19-ablation/ablation.json"
+    }
+   ],
+   "reasons": [
+    "fidelity_protocol",
+    "on_time_sessions",
+    "settled_forward_plans"
+   ],
+   "strategy": {
+    "digest": "12ffb41c39bd27dd33759333c079158ed1629c2f4e55a2e6c2c80cd5b64ac922",
+    "since": "2026-09-10"
+   },
+   "ledger": [],
+   "sentence": "Paper only: fidelity protocol not met (not recorded as passed by the owner); on time sessions not met (0 consecutive of 10); settled forward plans not met (0 settled since 2026-09-10 of 20)."
   },
   "sanitised": {
    "replaced": 0,
@@ -1641,9 +1688,7 @@
     "SC 14D9",
     "SC 14D9/A",
     "DEFM14A",
-    "DEFM14A/A",
-    "PREM14A",
-    "PREM14A/A"
+    "PREM14A"
    ],
    "items": [
     "1.01",
@@ -1661,6 +1706,13 @@
    "volume_pct": 10.0,
    "volume_basis": "ratio_to_prior_session",
    "max_names": 20
+  },
+  "go_live": {
+   "version": 1,
+   "on_time_sessions": 10,
+   "publish_by_et": "19:00",
+   "morning_due_ct": "08:45",
+   "min_settled_forward": 20
   },
   "pipeline": {
    "max_reads": 12,
@@ -2255,7 +2307,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "bde327cb5640"
+  "replay_rules_version": "ffc1bef74ba9"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -2504,17 +2556,9 @@
   "breadth_revisions": {
    "previous_session": null,
    "compared": 0,
-   "not_retained": 29,
    "differ_count": 0,
    "differ": [],
-   "published": {
-    "2026-09-10": {
-     "up4": 0,
-     "down4": 0,
-     "ratio_10d": null
-    }
-   },
-   "sentence": "There is no earlier publication's breadth to compare."
+   "sentence": "There is no earlier publication's breadth history to compare."
   },
   "real_vs_model": {
    "status": "private",
@@ -2524,7 +2568,7 @@
    "47 tickets in the scorecard's window are 47 distinct setups.",
    "No model account is recorded for the 47 tickets.",
    "The 13 stopped tickets booked at the stop sum to -2.28R; read at that session's close, -0.70R; at its low, -3.50R.",
-   "There is no earlier publication's breadth to compare.",
+   "There is no earlier publication's breadth history to compare.",
    "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
   ]
  },

@@ -29,7 +29,13 @@
     "reasons": {
      "type": "array",
      "items": {
-      "type": "string"
+      "enum": [
+       "fidelity_protocol",
+       "on_time_sessions",
+       "settled_forward_plans",
+       "ablation_report",
+       "go_live_gate_not_evaluated"
+      ]
      }
     }
    },

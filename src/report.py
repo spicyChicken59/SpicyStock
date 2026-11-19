@@ -734,10 +734,11 @@ def validate(data: dict) -> None:
     faults.extend(funnel.faults(data))
     faults.extend(intraday.record_faults(data))
     faults.extend(earnings_risk.record_faults(data))
-    from src import scorecard_reading, sec_flags, cross_check
+    from src import scorecard_reading, sec_flags, cross_check, go_live
     faults.extend(scorecard_reading.faults(data))
     faults.extend(sec_flags.faults(data))
     faults.extend(cross_check.faults(data))
+    faults.extend(go_live.faults(data))
     verdict = _get(data, "breadth", "regime", "verdict")
     if verdict is not None and verdict not in REGIMES:
         faults.append(f"breadth.regime.verdict {verdict!r} is not one of {REGIMES}")

@@ -523,6 +523,12 @@ async function recordView({ browser, base, open, check, eq, full, shotsDir }) {
       const reading = await page.locator('#record-card [data-scorecard-reading-sentence]').allTextContents();
       eq(`${where}: the scorecard reading prints the record's own sentences`, reading, full.scorecard_reading.sentences);
       eq(`${where}: and carries the block's status`, await page.evaluate(() => { const n = document.querySelector('#record-card [data-scorecard-reading]'); return n ? n.getAttribute('data-scorecard-reading') : null; }), full.scorecard_reading.status);
+      // the go-live gate: the record's own sentence, and each criterion met or not
+      const gate = full.run.go_live;
+      eq(`${where}: the go-live gate names the record's state`, await page.evaluate(() => { const n = document.querySelector('#record-card [data-go-live]'); return n ? n.getAttribute('data-go-live') : null; }), gate.ready ? 'live' : 'paper');
+      eq(`${where}: and prints its sentence`, await first(page, '#record-card [data-go-live-sentence]'), gate.sentence);
+      const crit = await page.locator('#record-card [data-go-live-criterion]').evaluateAll((nodes) => nodes.map((n) => [n.getAttribute('data-go-live-criterion'), n.textContent]));
+      eq(`${where}: and each criterion, met or not, with its detail`, crit, gate.criteria.map((c) => [c.key, c.key.replace(/_/g, ' ') + ': ' + (c.met ? 'met' : 'not met') + ' (' + c.detail + ')']));
       check(`${where}: nothing scrolls sideways`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
       if (shotsDir) {
         await mkdir(shotsDir, { recursive: true });
@@ -554,6 +560,20 @@ async function recordView({ browser, base, open, check, eq, full, shotsDir }) {
       eq(`record ${name}: the reading's state`, await page.evaluate(() => { const n = document.querySelector('#record-card [data-scorecard-reading]'); return n ? n.getAttribute('data-scorecard-reading') : null; }), state);
       check(`record ${name}: says so in its own words`, ((await page.locator('#record-card [data-scorecard-reading] .sc-note').allTextContents())[0] || '').startsWith(words), await page.locator('#record-card [data-scorecard-reading] .sc-note').allTextContents());
       eq(`record ${name}: and prints no sentence of a reading`, await page.locator('#record-card [data-scorecard-reading-sentence]').count(), 0);
+    } finally { await context.close(); }
+  }
+  // a record from before the gate is paper only, and one whose gate cannot be read says that
+  for (const [name, mutate, state, words] of [
+    ['gate-absent', (d) => { delete d.run.go_live; }, 'absent', 'This record is from before the go-live gate'],
+    ['gate-unreadable', (d) => { d.run.go_live.criteria = 'not a list'; }, 'unreadable', 'This record’s go-live gate could not be read']]) {
+    const d = clone(full); mutate(d);
+    const rg = routed('record-' + name, d);
+    const { page, context } = await open(browser, base, rg.url, NOW, 1280, { beforeLoad: rg.beforeLoad, reducedMotion: 'reduce' });
+    try {
+      await toView(page, 'record');
+      eq(`record ${name}: the gate's state`, await page.evaluate(() => { const n = document.querySelector('#record-card [data-go-live]'); return n ? n.getAttribute('data-go-live') : null; }), state);
+      check(`record ${name}: says so in its own words`, ((await page.locator('#record-card [data-go-live] .sc-note').allTextContents())[0] || '').startsWith(words), await page.locator('#record-card [data-go-live] .sc-note').allTextContents());
+      eq(`record ${name}: and names no criterion`, await page.locator('#record-card [data-go-live-criterion]').count(), 0);
     } finally { await context.close(); }
   }
   // a record from before the minute-bar rule names no minute bars

@@ -8,7 +8,7 @@
   "risk_pct": 0.5,
   "slots_used": 4
  },
- "content_sha256": "3eb147f8d90f4dc930a06693122ca21f9ee2e88d79abd552ff6672929aeffa18",
+ "content_sha256": "31e95b4b6346708136a9d00fbe10dd64cf641ebcca0e9cfa3978aeb6a183a11d",
  "entry_window": {
   "cutoff_at": "2026-09-11T10:00:00-04:00",
   "opens_at": "2026-09-11T09:30:00-04:00",
@@ -18,7 +18,9 @@
  "kind": "orders",
  "live_ready": {
   "reasons": [
-   "go_live_gate_not_evaluated"
+   "fidelity_protocol",
+   "on_time_sessions",
+   "settled_forward_plans"
   ],
   "value": false
  },
@@ -85,7 +87,7 @@
    "48 tickets in the scorecard's window are 48 distinct setups.",
    "By model account: $10,000 at 0.5% risk, 1 ticket from 2026-09-10 through 2026-09-10, 0 settled, no R yet. No model account is recorded for 47 more tickets.",
    "The 18 stopped tickets booked at the stop sum to -2.13R; read at that session's close, -1.74R; at its low, -4.67R.",
-   "There is no earlier publication's breadth to compare.",
+   "There is no earlier publication's breadth history to compare.",
    "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
   ],
   "settled": 20,
@@ -99,13 +101,13 @@
  },
  "source": {
   "applicable_session": "2026-09-11",
-  "context_sha256": "33d632df2f38a534d5271017e39c873204f981b6848b2c8144fe92d51b1a0f03",
-  "data_sha256": "4bb317736955e4b4449cd51cc721c1d2659f6742f6bbc499e21521624b8bd969",
+  "context_sha256": "a90a2df7f7401cbc284375676bbfd2b284dec389d8db7d4110a3626445bef238",
+  "data_sha256": "0b1532c494ab762e02c93efb2b8e025505bd23978ea818e75cb25da0f530bdc5",
   "dry_run": false,
   "fixture": true,
-  "picks_sha256": "6b4f64fc76dd8350d8e6b72f02bf572606200080109af89bebfd6b26f5cb953c",
+  "picks_sha256": "6fa8879192bf5751143f4d77780109a5265528431e19976f3f9f8675787e2b39",
   "published_at": "2026-09-10T22:30:00+00:00",
-  "rules_version": "bde327cb5640",
+  "rules_version": "ffc1bef74ba9",
   "run_id": null,
   "session": "2026-09-10"
  },
@@ -150,7 +152,7 @@
      "status": "pass"
     }
    ],
-   "content_sha256": "5cf4374cf6384fc7295ae8868564a081c9789c194331d70af5ba97d50926fd81",
+   "content_sha256": "c530713156f0de13a952539eb5fe97f74a472c2c0c98eae2ab730dc7c9c14e34",
    "entry": {
     "cancel_if_unfilled_at": "2026-09-11T10:00:00-04:00",
     "limit_price": 126.47,
@@ -165,7 +167,7 @@
     "valid_until": "2026-09-11T10:00:00-04:00"
    },
    "evidence": {
-    "evidence_id": "ed867605207c0688a9711fd13a1886c09178fd242127c1d9868cf617ada16eb0",
+    "evidence_id": "e1c86db58410cb0a5a18bf5d0963dfbca0eb05cf35e7c351da0f81e414dcf4c5",
     "plan_sha256": "08a8f474c99587f085faadc5c6120ec7b9d6f176c5fc208ac7a26946df22b96c"
    },
    "exit_plan": {
@@ -466,7 +468,7 @@
     "risk_budget_usd": 25.0,
     "risk_usd": 20.2
    },
-   "rules_version": "bde327cb5640",
+   "rules_version": "ffc1bef74ba9",
    "session": "2026-09-10",
    "setup_type": "burst",
    "shares": 4,

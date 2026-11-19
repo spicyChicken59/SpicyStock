@@ -72,6 +72,8 @@ MAX_SOURCE_BYTES = 48 * 1024 * 1024
 
 #: until the go-live gate says otherwise, every file here is paper only
 MODE = "paper"
+LIVE = "live"
+#: a record from before the gate (``run.go_live``) never makes the file live
 LIVE_READY_REASON = "go_live_gate_not_evaluated"
 ENTRY_TYPE = "buy_stop_limit"
 STOP_TYPE = "sell_stop"
@@ -443,10 +445,11 @@ def build(canonical_raw: bytes, picks_raw: bytes | None = None) -> dict:
         reasons.append({"scope": "night", "code": "no_tickets"})
     reasons += [{"scope": t["symbol"], "code": code} for t in tickets for code in t["reasons"]]
     allowed = all(c["status"] == PASS for c in night) and any(t["status"] == GO for t in tickets)
+    live = live_ready(data)
     budget, account = _dict(data.get("cash_budget")), _dict(data.get("account"))
     return sealed({
         "schema": "docs/operations/orders-schema.json", "version": VERSION, "kind": "orders",
-        "mode": MODE, "live_ready": {"value": False, "reasons": [LIVE_READY_REASON]},
+        "mode": LIVE if live["value"] else MODE, "live_ready": live,
         "source": {"data_sha256": hashlib.sha256(canonical_raw).hexdigest(),
                    "picks_sha256": hashlib.sha256(picks_raw).hexdigest() if picks_raw is not None else None,
                    "rules_version": binding["rules_version"], "context_sha256": binding["context_sha256"],
@@ -470,6 +473,20 @@ def build(canonical_raw: bytes, picks_raw: bytes | None = None) -> dict:
                     "blocked": sum(t["status"] == BLOCKED for t in tickets)},
         "scorecard": scorecard(data),
     })
+
+
+def live_ready(data: dict) -> dict:
+    """``run.go_live`` as the file states it: live only when the record's own
+    gate says every condition holds (``src/go_live.py``); a record without the
+    gate, or with one this file cannot read, is paper only."""
+    from src import go_live
+    block = _dict(_dict(data.get("run")).get("go_live"))
+    reasons = block.get("reasons")
+    if block.get("version") != go_live.VERSION or not isinstance(reasons, list) \
+            or not set(reasons) <= set(go_live.CRITERIA):
+        return {"value": False, "reasons": [LIVE_READY_REASON]}
+    ready = block.get("ready") is True and not reasons
+    return {"value": ready, "reasons": [] if ready else (list(reasons) or [LIVE_READY_REASON])}
 
 
 def scorecard(data: dict) -> dict:
