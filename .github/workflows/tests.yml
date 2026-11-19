@@ -162,6 +162,7 @@ jobs:
           python tests/fixtures/brief/generate.py --check
           python tests/fixtures/orders/generate.py --check
           python tools/freeze_validation_cases.py --check
+          python tools/build_strategy_page.py --check
       - name: No event-registry review has lapsed without a note
         # the one check whose answer moves with the calendar, on purpose:
         # the day after an entry's review_due, this is red until the entry is

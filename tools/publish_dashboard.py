@@ -190,6 +190,17 @@ def brief_files(root: Path) -> tuple[str, ...]:
     return (brief.JSON_FILE, brief.MD_FILE)
 
 
+def strategy_files(root: Path) -> tuple[str, ...]:
+    """``strategy.html``, served as committed. The evening writes it from the
+    record and CI's ``tools/build_strategy_page.py --check`` holds it to the
+    code; here it is only refused as a link and otherwise verified like every
+    other public file, so the gate needs nothing but the standard library."""
+    path = root / 'docs' / 'strategy.html'
+    if path.is_symlink():
+        raise RuntimeError('The strategy page is a symlink.')
+    return ('strategy.html',) if path.exists() else ()
+
+
 def orders_files(root: Path) -> tuple[str, ...]:
     """The execution handoff, held to the committed record and its schema.
 
@@ -293,6 +304,7 @@ def public_files(root: Path) -> tuple[str, ...]:
     names.extend(name for name in research_outcomes_files(root) if name not in names)
     names.extend(name for name in brief_files(root) if name not in names)
     names.extend(name for name in orders_files(root) if name not in names)
+    names.extend(name for name in strategy_files(root) if name not in names)
     names.extend(name for name in study_case_files(root) if name not in names)
     return tuple(names)
 

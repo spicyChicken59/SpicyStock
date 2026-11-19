@@ -2579,6 +2579,22 @@ The agent's guide is `docs/operations/orders.md`.
 `tests/fixtures/orders/` holds golden files over the page and morning
 fixtures; `generate.py --check` runs in CI.
 
+### The strategy page
+
+`docs/strategy.html` is the strategy as the code and the installed record
+state it (`src/strategy_page.py`, written by `pipeline.publish_strategy()`
+after the handoff each night): the market light's five rules with the
+night's scaled thresholds and values, the two discovery scans and the
+admission gate, the checklist's weights, bands, gate letters and vetoes,
+the ticket's buy stop, limit, stop and sizing, every rule of
+`plan.EXIT_RULES` with its source mark (the one third-party rule attributed
+to the backtest its own text names), and the night's candidate funnel.
+The module types no number of its own: every figure is a constant or a
+record field, and a test reads its source to say so. CI runs
+`tools/build_strategy_page.py --check`, so a change to a constant the page
+prints cannot land without the page; the publication gate serves it as
+committed. A night that cannot write it removes it.
+
 ### The scorecard, read honestly
 
 `record.scorecard()` counts tickets and sums R, and its numbers do not move.
@@ -3160,6 +3176,7 @@ src/            history.py (public recovery and coverage)
                 delivery.py (where a publication fell against the evening workflow's own slots and the next open; the record archives it, the page and the service-health reading read it)
                 freshness.py (what a record says about the next publication: the next session, its completion, the two slots and the recovery limit; state() answers newest, not_due, pending, late or missing for a reader's own clock; standard library only)
                 scorecard_reading.py (the scorecard read honestly: distinct setups, model accounts, the stopped tickets at the stop, the close and the low, breadth revisions; copied from the model record, never moving the scorecard's numbers)
+                strategy_page.py (strategy.html: the strategy as the code and the installed record state it; every figure a constant or a record field)
                 orders.py (the execution handoff: orders.json and its positions template each night, and the morning's go/cancel file, from committed bytes and no clock) · schema_check.py (the JSON Schema subset the handoff's schema uses; any other keyword is refused)
                 sec_flags.py (each ticket's and listed setup's recent tender-offer, merger-proxy and deal 8-K filings, named by form and item; a flag that holds a ticket for review in orders.json, never a refusal or a clearance)
                 cross_check.py (each ticket's signal-day bar read again from the iex feed; prices within 0.5% and the two feeds' volume ratios within 10%, or the ticket is blocked in orders.json)
@@ -3187,6 +3204,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)
                 historical_backtest.py (offline: the run's own stages replayed over a recovered archive; reader not run; `--burst-trigger-rule` names the burst buy stop's rule)
                 burst_trigger_comparison.py (offline: the signal-outcome study's own walk over the retained publications, every burst ticket built under each burst trigger rule)
+                build_strategy_page.py (writes docs/strategy.html from the code and docs/data.json; --check in CI)
                 ablation.py (offline: the pre-registered ablation, six rule changes each read against the production mechanics with the signal-outcome study's walk; --check holds ablation.json and its report, and tests/test_ablation.py runs it in CI over the population the file records)
                 backtest_timeline.py (offline: the owner's private backtest record read into one row per night per gate -- the night's breadth and its tickets' outcomes by scorecard bucket, uncertainty kind and settled R -- every field copied by type from a fixed list; a private key, or a ticker the record names as a whole word in any case in a key or string that is not one of the tool's own words, is a refusal, as are a night or gate whose counts do not reconcile, a malformed file and an --output over the private file)
                 signal_outcomes.py (offline: every archived signal ticketed and walked over the records' own bars; a counterfactual)
