@@ -9,7 +9,7 @@
     "reviewed_on": "2026-11-19",
     "sha256": "86c3b65b8386f98a6c2a98f1188aa8d5fd9143b0e3d8f3c474d6e84d013a0207"
   },
-  "how_read": "This review ran in a sandbox that reaches neither sec.gov nor issuer sites. One entry (MG) rests on response bytes the issuer-evidence collector itself captured and this repository retains. Every other finding is a web-search result excerpt, named as such below; no page bytes were captured for it and no source was added to the registry for it.",
+  "how_read": "This review ran in a sandbox that reaches neither sec.gov nor issuer sites. One entry (MG) rests on a capture the issuer-evidence collector itself made on 5 November 2026: the response's SHA-256 and byte count, and the collector's normalized text of the document, which is copied byte for byte beside this manifest. The response bytes themselves were not retained, so the digest names that capture and cannot be checked again against them. Every other finding is a web-search result excerpt, named as such below; no page bytes were captured for it and no source was added to the registry for it.",
   "changes": [
     "registry reviewed_on 2026-10-20 -> 2026-11-19",
     "MG: evidence_as_of 2026-09-18 -> 2026-10-28, one source added, reviewed_on 2026-11-19, review_due 2026-11-25 (the day after its 24 November special meeting)",
@@ -21,15 +21,22 @@
     {
       "symbol": "MG",
       "status_found": "pending",
-      "basis": "captured bytes retained by this repository",
+      "basis": "captured bytes: the collector's own capture, its normalized text retained beside this manifest",
       "source": {
         "url": "https://www.sec.gov/Archives/edgar/data/1436126/000114036126041054/ef20084511_ex99-1.htm",
         "published_on": "2026-10-28",
         "bytes": 21096,
         "sha256": "f86be38443d8bbc4096febea7c30918dfa7bb0d7385785b4f2a4febd0a992386",
         "fetched_at": "2026-11-05T14:24:56.955723+00:00",
-        "retained_in": "docs/issuer-evidence/fd363841f54f3465841d1db6a808ff0124000968ab6b73206839f9071e16aa29.json",
-        "quote": "No alternative acquisition proposals were received from any third party prior to the expiration."
+        "retained_in": "release-evidence/2026-11-19-event-review/issuer-evidence-fd363841f54f3465841d1db6a808ff0124000968ab6b73206839f9071e16aa29.json",
+        "quote": "No alternative acquisition proposals were received from any third party prior to the expiration.",
+        "retained_document": {
+          "issuer": "MG",
+          "accession": "0001140361-26-041054",
+          "role": "exhibit",
+          "what": "the issuer-evidence bundle as the collector published it (its file name is its SHA-256); this document's source block carries the response's raw_sha256 and bytes, and its excerpt the normalized text (not truncated) with that text's own SHA-256",
+          "first_published_at": "docs/issuer-evidence/fd363841f54f3465841d1db6a808ff0124000968ab6b73206839f9071e16aa29.json, a rolling archive that keeps a superseded bundle for 21 days"
+        }
       },
       "also_in_that_capture": [
         "The transaction is expected to close in late 2026 or early 2027, subject to customary closing conditions, including approval by the Company’s stockholders and the receipt of all required regulatory approvals.",

@@ -1415,7 +1415,10 @@ archived, and a record from before the block is asked for none. The run:
   each stayed blocked. MISTRAS's 28 October release (the go-shop ended with no
   competing proposal; a stockholder vote on 24 November) was added as a source
   for MG from the day it was published, from bytes the issuer-evidence collector
-  had itself captured. Six review dates were moved (MG to 25 November, ZIM to
+  had itself captured (the collector's text of them and the response's digest
+  are kept beside the manifest, since the archive they were published in drops
+  a superseded bundle after 21 days; the response bytes were not kept). Six
+  review dates were moved (MG to 25 November, ZIM to
   2 December, PRTH, ARX, BWIN and CCC to 17 December). Five of those six
   findings were read as web-search excerpts in a sandbox that reaches neither
   sec.gov nor issuer sites, and say so in the

@@ -214,6 +214,43 @@ def test_the_review_manifest_says_how_each_entry_was_read():
     assert entries["ACVA"]["registry_action"] == "none"
 
 
+def test_the_captured_source_behind_the_review_is_retained_outside_the_rolling_archive():
+    """MG's added source rests on a capture the issuer-evidence collector made. The bundle that
+    carries it was published under docs/issuer-evidence/, which removes a superseded bundle after
+    21 days, so a byte-for-byte copy is kept beside the manifest and must be what the manifest says."""
+    folder = ROOT / "release-evidence" / "2026-11-19-event-review"
+    manifest = json.loads((folder / "manifest.json").read_text())
+    entry = next(entry for entry in manifest["entries"] if entry["symbol"] == "MG")
+    source = entry["source"]
+    retained = ROOT / source["retained_in"]
+    assert retained.parent == folder and not retained.is_symlink()
+    raw = retained.read_bytes()
+    # the copy is the published bundle: its name is its digest, as the collector names it
+    assert retained.name == f"issuer-evidence-{hashlib.sha256(raw).hexdigest()}.json"
+    assert source["retained_document"]["first_published_at"].startswith(
+        f"docs/issuer-evidence/{hashlib.sha256(raw).hexdigest()}.json")
+    bundle = json.loads(raw)
+    issuer = next(issuer for issuer in bundle["issuers"] if issuer["ticker"] == source["retained_document"]["issuer"])
+    pointer = source["retained_document"]
+    document = next(document for document in issuer["documents"]
+                    if document["accession"] == pointer["accession"] and document["role"] == pointer["role"])
+    # the digest the registry carries is the collector's digest of that response, and its size
+    assert document["source"]["url"] == source["url"]
+    assert document["source"]["raw_sha256"] == source["sha256"]
+    assert document["source"]["bytes"] == source["bytes"]
+    assert document["source"]["fetched_at"] == source["fetched_at"]
+    # the text is whole and is what its own digest says; every quoted sentence is in it
+    excerpt = document["excerpt"]
+    assert excerpt["truncated"] is False and excerpt["characters"] == len(excerpt["text"])
+    assert excerpt["sha256"] == hashlib.sha256(excerpt["text"].encode("utf-8")).hexdigest()
+    for sentence in [source["quote"], *entry["also_in_that_capture"]]:
+        assert sentence in excerpt["text"], sentence
+    registry_source = next(event for event in event_risk.REGISTRY["events"] if event["symbol"] == "MG")["sources"][-1]
+    assert registry_source["quote"] in excerpt["text"] and registry_source["sha256"] == document["source"]["raw_sha256"]
+    # the manifest does not claim the response bytes themselves are kept
+    assert "were not retained" in manifest["how_read"]
+
+
 def test_future_updates_are_not_claimed_as_earlier_session_evidence():
     before = event_risk.classify("ACVA", "2026-10-07")["matches"][0]
     after = event_risk.classify("ACVA", "2026-10-08")["matches"][0]
