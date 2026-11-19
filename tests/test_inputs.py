@@ -1242,6 +1242,8 @@ def test_the_tolerance_moves_the_status_and_no_decision(wide, claude, fake_resen
         for b in data['bursts']:
             b.pop('reader_usage', None)
         data['cover'].pop('dek')
+        # the go-live gate's strategy digest is a digest of the rules, popped above
+        data['run']['go_live']['strategy'].pop('digest')
         # observations are keyed by signal identity, which carries the rules digest
         data['observations']['signals'] = sorted(data['observations']['signals'].values(), key=json.dumps)
         return data
