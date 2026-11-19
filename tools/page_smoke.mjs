@@ -242,6 +242,7 @@ async function serve() {
         : url.pathname === '/docs/app-reader.js' ? process.env.SCSTOCK_READER
         : url.pathname === '/docs/app-observations.js' ? process.env.SCSTOCK_OBSERVATIONS
         : url.pathname === '/docs/app-findings.js' ? process.env.SCSTOCK_FINDINGS
+        : url.pathname === '/docs/app-chart.js' ? process.env.SCSTOCK_CHART
         : url.pathname === '/docs/index.html' ? process.env.SCSTOCK_INDEX : null;
       let body = await readFile(override || file);
       // the shell names the deployed morning endpoint; an offline check never reads it

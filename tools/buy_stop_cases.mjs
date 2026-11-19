@@ -257,6 +257,101 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
     }
   }
 
+  // ---- the other doors to a setting-up ticket's order: a comparison of two
+  // setting-up candidates, a saved setup and an archived original each print
+  // the part-fill note beside the order line and no buy-stop note. The
+  // degraded night carries one setting-up stock, so the comparison's second
+  // is a labelled in-memory copy of it, served at the fixture's own URL.
+  {
+    const deg = JSON.parse(await readFile(path.join(ROOT, PAGE, 'degraded.json'), 'utf8'));
+    const coil = deg.watchlist.top.find((r) => r.plan && r.plan.order_json);
+    const twin = { ...structuredClone(coil), ticker: 'TWIN', name: 'Offline copy of ' + coil.ticker + ' for a two-ticket comparison', rank: 9 };
+    twin.plan.ticker = 'TWIN'; twin.plan.order_json.symbol = 'TWIN'; twin.plan.order_json.then.symbol = 'TWIN';
+    twin.plan.order_line = twin.plan.order_line.replaceAll(coil.ticker, 'TWIN');
+    const two = structuredClone(deg); two.watchlist.top.push(twin);
+    const { context, page, errors } = await open(browser, base, `/${PAGE}/degraded.json`, FRESH, 1280, { lens: 'all', hash: `#/explore/setting-up/${coil.ticker}`,
+      beforeLoad: (page) => page.route(`**/${PAGE}/degraded.json`, (route) => route.fulfill({ json: two })) });
+    try {
+      await page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${coil.ticker}"]) .ss-pin`);
+      await page.click('#pick-list .ss-pick-item:has(.ss-pick[data-ticker="TWIN"]) .ss-pin'); await page.waitForTimeout(200);
+      await page.click('#compare-open'); await page.waitForTimeout(500);
+      const ticketRow = await page.locator('#compare-table tr[data-fact="ticket"]').innerText();
+      check('comparison of two setting-up tickets: the ticket row prints an order line, so the notes below can fail', ticketRow.includes('OTO') && ticketRow.includes(coil.ticker), ticketRow);
+      eq('comparison of two setting-up tickets: the part-fill note under the facts and no buy-stop note',
+        await page.locator('#compare [data-broker-part-fill], #compare [data-broker-buy-stop]').evaluateAll((els) => els.map((e) => [e.hasAttribute('data-broker-buy-stop') ? 'buy-stop' : 'part-fill', !!(e.previousElementSibling && e.previousElementSibling.matches('.ss-compare__facts'))])),
+        [['part-fill', true]]);
+      await page.click('#compare-close'); await page.waitForTimeout(200);
+
+      // a saved setting-up ticket: its archived order with the part-fill note alone
+      await page.click('#detail .ss-follow button[data-follow-action="add"]');
+      await page.waitForFunction(() => document.querySelector('#detail .ss-follow').getAttribute('data-follow') === 'following');
+      await page.evaluate(() => { location.hash = '#/setups'; });
+      await page.locator(`#following .ss-followed[data-ticker="${coil.ticker}"] [data-open-saved]`).click();
+      await page.locator('#saved [data-archived-order]').waitFor();
+      eq('saved setting-up ticket: its archived order carries the part-fill note after the instruction and no buy-stop note',
+        await page.locator('#saved [data-archived-order]').evaluate((box) => [...box.querySelectorAll('[data-broker-part-fill], [data-broker-buy-stop]')].map((e) => e.hasAttribute('data-broker-buy-stop') ? 'buy-stop' : 'part-fill')), ['part-fill']);
+      await page.click('#saved-close'); await page.waitForTimeout(250);
+      eq('setting-up doors: page errors', errors.slice(), []);
+    } finally { await context.close(); }
+
+    // an archived original that was a setting-up ticket, from a synthetic
+    // archive of the degraded night served under the digests the page checks
+    const { createHash } = await import('node:crypto');
+    const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+    const src = 'c01c01'.padEnd(40, '0');
+    const file = `anticipation-${coil.ticker}.json`;
+    const files = { 'record.json': Buffer.from(JSON.stringify({ ...deg, bursts: [] })), [file]: Buffer.from(JSON.stringify({ kind: 'anticipation', quiet: false, row: coil, source: src })) };
+    const archive = { version: 1, as_of: deg.run.session, days: 21, dates: [deg.run.session],
+      records: { [src]: { session: deg.run.session, published_at: deg.run.published_at, context_sha256: sha(files['record.json']), rules_version: deg.app.rules_version } },
+      entries: [{ ticker: coil.ticker, kind: 'anticipation', grade: null, scan: null, source: src, path: `${src}/${file}`, sha256: sha(files[file]), chart: true }] };
+    const old = await open(browser, base, `/${PAGE}/full.json`, '2026-09-15T22:31:00Z', 1280, { hash: '#/setups' });
+    try {
+      await old.page.route('**/history/index.json', (route) => route.fulfill({ json: archive }));
+      await old.page.route(`**/history/${src}/*.json`, async (route) => {
+        const name = new URL(route.request().url()).pathname.split('/').at(-1);
+        await route.fulfill(files[name] ? { contentType: 'application/json', body: files[name] } : { status: 404 });
+      });
+      await old.page.locator('#earlier-setups summary').click();
+      await old.page.locator('#history-ticker').fill(coil.ticker);
+      await old.page.locator('#history-search button').click();
+      await old.page.locator(`[data-history-inspect="${src}"]`).click();
+      await old.page.locator('[data-history-save]').waitFor();
+      const line = await old.page.locator('#history-results [data-original-status]').innerText();
+      check('archived setting-up ticket: its status sentence prints its order line, so the notes below can fail', line.includes(coil.plan.order_line), line);
+      eq('archived setting-up ticket: the part-fill note follows its status sentence and no buy-stop note does',
+        await old.page.locator('#history-results [data-broker-part-fill], #history-results [data-broker-buy-stop]').evaluateAll((els) => els.map((e) => [e.hasAttribute('data-broker-buy-stop') ? 'buy-stop' : 'part-fill', !!(e.previousElementSibling && e.previousElementSibling.matches('[data-original-status]'))])),
+        [['part-fill', true]]);
+      eq('archived setting-up ticket: page errors', old.errors.slice(), []);
+    } finally { await old.context.close(); }
+  }
+
+  // ---- "the burst close" is said only of a buy stop that is the row's own
+  // close to the cent: a close a fraction of a cent off it is the close, and
+  // a row whose recorded close is another price is not called one
+  {
+    const multiple = JSON.parse(await readFile(path.join(ROOT, CASH, 'publication-multiple.json'), 'utf8'));
+    const odd = multiple.bursts.find((b) => (multiple.trades || []).includes(b.ticker) && b.plan && b.plan.order_json);
+    check('the cash fixture\'s burst ticket closes a fraction of a cent off its buy stop, so the wording below can fail',
+      !!odd && odd.close !== odd.plan.entry_ref && Math.abs(odd.close - odd.plan.entry_ref) <= 0.005 + 1e-9, odd && [odd.close, odd.plan.entry_ref]);
+    const fillRow = async (page) => { await page.evaluate(() => { document.getElementById('disc-plan').open = true; }); return page.locator('#disc-plan .sc-facts > div').filter({ has: page.locator('dt', { hasText: /^ticket fills$/ }) }).first().innerText(); };
+    if (odd) {
+      const a = await open(browser, base, `/${CASH}/publication-multiple.json`, '2026-09-11T13:35:00Z', 1280, { lens: 'all', hash: `#/explore/bursts/${odd.ticker}`,
+        beforeLoad: (page) => page.route('**/morning.json', (route) => route.fulfill({ status: 404, body: 'not found' })) });
+      try {
+        const got = await fillRow(a.page);
+        check('a buy stop that is the close to the cent is called the burst close', got.includes('a buy stop at ' + usd(odd.plan.entry_ref) + ' (the burst close), limit ' + usd(odd.plan.limit)), got);
+      } finally { await a.context.close(); }
+    }
+    const moved = structuredClone(full); moved.bursts.find((b) => b.ticker === burst.ticker).close = +(burst.close + 1).toFixed(2);
+    const b = await open(browser, base, `/${PAGE}/full.json`, FRESH, 1280, { lens: 'all', hash: `#/explore/bursts/${burst.ticker}`,
+      beforeLoad: (page) => page.route(`**/${PAGE}/full.json`, (route) => route.fulfill({ json: moved })) });
+    try {
+      const got = await fillRow(b.page);
+      check('a buy stop that is not the row\'s recorded close is not called the burst close, and the row still names it and the limit',
+        !got.includes('the burst close') && got.includes('a buy stop at ' + usd(p.entry_ref) + ', limit ' + usd(p.limit) + ' · under the buy stop the order waits and buys nothing'), got);
+    } finally { await b.context.close(); }
+  }
+
   // ---- the private handoff: a bursts-stage draft's readback shows the note
   // after the part-fill note; a setting-up draft's hides it; the copied
   // readback carries neither
