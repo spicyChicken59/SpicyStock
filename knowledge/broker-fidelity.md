@@ -142,14 +142,20 @@ entry note are research notes beside the ticket; they are not the ticket.
    [4]: buy stop loss and buy stop limit orders must be entered at a price
    above the current market price. An anticipation ticket's trigger is a few
    cents over the top of its box (the larger of $0.02 and 0.1% of the close,
-   `plan.TRIGGER_CENTS` and `plan.TRIGGER_FRACTION`), above its last close. A
-   burst ticket's trigger IS the burst session's close: its buy stop is never
-   above the last close.
+   `plan.TRIGGER_CENTS` and `plan.TRIGGER_FRACTION`), above its last close. A burst ticket's trigger depends on the rule its record archived
+   (`plan.burst_trigger_rule`, the owner's decision of 19 November 2026).
+   Under `close`, the rule of every record made before it, a burst ticket's
+   trigger IS the burst session's close: its buy stop is never above the last
+   close. Under `close_plus_cushion`, the production rule, it is the close plus
+   the same cushion (`plan.trigger_cushion()`), so before the open its buy stop
+   sits above the last close, as an anticipation ticket's does.
 
    *Before the open* (revised 19 November 2026). Unconfirmed: which price
    Fidelity compares the stop with before the open, the last close or a
-   pre-market quote. If it is the close, Fidelity refuses every burst ticket
-   as written. SpicyStock has not been able to say where a burst name trades
+   pre-market quote. If it is the close, Fidelity refuses every burst ticket made under `close`
+   as written; one made under `close_plus_cushion` sits its cushion over the
+   close and is refused only where the price compared is at or over its buy
+   stop. SpicyStock has not been able to say where a burst name trades
    before the open either: on 5 November 2026, the only morning with burst
    tickets so far, the morning check ran about seven minutes before the open
    (`docs/morning.json` at commit `30963c2d`) and read every price check of all
@@ -157,10 +163,10 @@ entry note are research notes beside the ticket; they are not the ticket.
    were stale.
 
    *After the open* (revised 19 November 2026). Inferred from Fidelity's words
-   [4], and not in doubt: once the stock trades at or over the last close, the
-   buy stop is no longer above the market, and the ticket cannot be entered as
-   written. How often that happens was measured on 19 November 2026 from the
-   records' own published bars. The population: every burst row in the first
+   [4], and not in doubt: once the stock trades at or over the buy stop, the buy stop is no longer
+   above the market, and the ticket cannot be entered as written. How often
+   that happens was measured on 19 November 2026 from the records' own
+   published bars, with the buy stop at the close (the `close` rule). The population: every burst row in the first
    publication of each session, among the 47 publications of the 7 November
    2026 study spec, for which `plan.burst_plan()` writes a ticket of at least
    one share at the record's archived account and full size, with the market
@@ -209,6 +215,16 @@ entry note are research notes beside the ticket; they are not the ticket.
    minute. The figures are opens on daily bars: of the 5,264 that opened under
    the buy stop, 4,017 reached it later that day, and how many did so inside
    the first 30 minutes the daily bars cannot say.
+
+   *Both rules, read again* (19 November 2026). `tools/burst_trigger_comparison.py`
+   runs the same study's own walk twice over its 7 November population and
+   every later publication through 18 November, every ticket built under each
+   rule (`docs/input-truthfulness/2026-11-19-burst-trigger-comparison/`; the
+   report there carries its figures, each held to its file by
+   `tests/test_burst_trigger_comparison.py`). The cushion moves an open just
+   over the close from over the buy stop to under it, so more tickets can be
+   entered before the open as written, and, on daily bars, more first days
+   are uncertain on the trigger's timing.
 
    SpicyStock's ticket has no plain-limit fallback, and no other order type is
    placed on its authority (`plan.fidelity_orders()`). What the owner does in
@@ -449,10 +465,11 @@ below in one sitting; the step that checks an item is named in brackets.
 - An OTO accepts a Day primary with a Good 'til Canceled secondary (the
   sources read here disagree; item 6 says what to do if it does not). [U4]
 - The price Fidelity compares a buy stop against before the open. A burst
-  ticket's buy stop equals its last close, so if Fidelity compares against the
-  close it refuses every burst ticket as written, and the ticket is not placed.
-  After the open there is nothing to confirm: at or over the last close the buy
-  stop is not above the market (item 2). [U5]
+  ticket made under `close` has its buy stop at its last close, so if Fidelity
+  compares against the close it refuses every such ticket as written, and the
+  ticket is not placed; one made under `close_plus_cushion` sits its cushion
+  over the close. After the open there is nothing to confirm: at or over the
+  buy stop the buy stop is not above the market (item 2). [U5]
 - A 10:00 AM ET expiration can be chosen on an OTO's primary order. [U6]
 - A day stop limit entered before the open is live from 9:30 AM ET. [U7]
 - A triggered buy stop limit that cannot fill at its limit rests for the rest

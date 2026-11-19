@@ -104,7 +104,9 @@ def test_a_pair_the_gate_cannot_hold_to_the_record_fails_publication(publication
         (docs / "brief.md").symlink_to(kept)
     elif fault == "one_byte":
         raw = (docs / "brief.json").read_bytes()
-        (docs / "brief.json").write_bytes(raw.replace(b'"trigger":124.21', b'"trigger":124.22', 1))
+        changed = raw.replace(b'"trigger":124.33', b'"trigger":124.34', 1)
+        assert changed != raw
+        (docs / "brief.json").write_bytes(changed)
     elif fault == "markdown_of_another":
         other = brief.compose((PAGE / "yellow.json").read_bytes(), None)[1]
         (docs / "brief.md").write_bytes(other)

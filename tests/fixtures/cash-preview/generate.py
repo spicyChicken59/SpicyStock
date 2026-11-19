@@ -90,7 +90,7 @@ def publication(*, multiple=False):
     if multiple:
         planned = next(row["plan"] for row in data["bursts"] if row["ticker"] == "AAPL")
         assert (planned["shares"], planned["entry_ref"], planned["limit"], planned["stop"],
-                planned["position_usd"], planned["risk_usd"]) == (1, 62.10, 63.22, 60.70, 63.22, 2.52)
+                planned["position_usd"], planned["risk_usd"]) == (1, 62.16, 63.22, 60.70, 63.22, 2.52)
         assert data["cash_budget"]["committed_usd"] == 510.10
     return encoded(data)
 

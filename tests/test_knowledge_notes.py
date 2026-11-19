@@ -84,10 +84,14 @@ def test_the_broker_note_keeps_the_items_other_texts_cite_by_number():
                     "9. **Settled cash.**"):
         assert heading in BROKER, heading
     assert "buy stop loss and buy stop limit orders must be entered at a price above the current market price" in BROKER
-    assert "A burst ticket's trigger IS the burst session's close" in BROKER
+    assert "a burst ticket's trigger IS the burst session's close" in BROKER
+    assert "Under `close_plus_cushion`, the production rule, it is the close plus the same cushion" in BROKER
     assert "- The price Fidelity compares a buy stop against before the open." in BROKER
-    # the sentence the note leans on: a burst's trigger is its close, an anticipation trigger sits above the close
+    # the sentences the note leans on: under `close` a burst's trigger is its close, under the
+    # production rule it sits the anticipation ticket's cushion over the close
     assert plan.burst_limit(100.0, 97.0, 100.5)["trigger"] == 100.0
+    assert plan.BURST_TRIGGER_RULE == "close_plus_cushion" and plan.LEGACY_BURST_TRIGGER_RULE == "close"
+    assert plan.burst_limit(100.0, 97.0, 100.5, plan.BURST_TRIGGER_RULE)["trigger"] == 100.0 + plan.trigger_cushion(100.0)
     made = plan.anticipation_plan(ticker="XMPL", close=50.0, box_high=50.4, box_low=49.0, lows_last3=[49.3, 49.5, 49.6],
                                   account=ACCOUNT)
     assert made["trigger"] > made["close"] and made["action"] == "place_buy_stop"

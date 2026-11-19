@@ -1886,14 +1886,15 @@
   const partFillNote = (extra) => el('p', { 'class': 'sc-hint ss-order__broker' + (extra ? ' ' + extra : ''), 'data-broker-part-fill': '', text: BROKER_PART_FILL });
   // Fidelity's stated rule for a buy stop -- entered above the current market
   // price -- and what it means for a BURST ticket, whose buy stop is the burst
-  // session's close (src/plan.py burst_plan(): entry_ref is the close), each
+  // session's close, or the close plus a cushion under the trigger rule the
+  // record archived (src/plan.py burst_trigger()), each
   // labelled (knowledge/broker-fidelity.md, item 2). Printed through
   // buyStopNote() directly after partFillNote() wherever that prints for a
   // burst ticket, and never for a setting-up ticket, whose trigger sits above
   // its last close; never inside a ticket's terms or a copied order.
   // report.BROKER_BUY_STOP and the handoff's copy are held equal to it by
   // tests/test_broker_buy_stop.py.
-  const BROKER_BUY_STOP = 'Fidelity’s rule: a buy stop or buy stop-limit order must be entered at a stop price above the current market price. SpicyStock’s advice: a burst ticket’s buy stop is the burst day’s close, so it can be entered as written only while the stock trades under that price; which price Fidelity compares it with before the open (the close or a pre-market quote) is unconfirmed. Once the stock trades at or over the buy stop the ticket cannot be entered as written, and SpicyStock offers no other order; the model’s ‘filled at the open’ assumes the order was already resting before the open.';
+  const BROKER_BUY_STOP = 'Fidelity’s rule: a buy stop or buy stop-limit order must be entered at a stop price above the current market price. SpicyStock’s advice: a burst ticket’s buy stop is the burst day’s close or a cushion over it (the trigger rule its record archived says which), so it can be entered as written only while the stock trades under the buy stop; which price Fidelity compares it with before the open (the close or a pre-market quote) is unconfirmed. Once the stock trades at or over the buy stop the ticket cannot be entered as written, and SpicyStock offers no other order; the model’s ‘filled at the open’ assumes the order was already resting before the open.';
   const buyStopNote = () => el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-buy-stop': '', text: BROKER_BUY_STOP });
   // Where a burst ticket's two notes sit on a screen the reader has opened
   // nothing on -- the Burst's action card and the decision summary's entry --
@@ -5084,8 +5085,11 @@
       // own row below. A setup the stop rule withheld (plan.eligible false)
       // has no limit a ticket could carry, and the row says so. The buy stop
       // is called the burst close only where it is the row's own close to the
-      // cent (src/plan.py rounds the close once on the way in).
-      const atClose = isNum(c.row.close) && isNum(plan.entry_ref) && Math.abs(plan.entry_ref - c.row.close) <= 0.005 + 1e-9 ? ' (the burst close)' : '';
+      // cent (src/plan.py rounds the close once on the way in), and the close
+      // plus its cushion where the plan carries the cushion it was set with
+      // (the close_plus_cushion trigger rule: plan.burst_trigger()).
+      const atClose = isNum(plan.trigger_cushion) && isNum(c.row.close) && isNum(plan.entry_ref) && Math.abs(plan.entry_ref - plan.trigger_cushion - c.row.close) <= 0.005 + 1e-9 ? ' (the burst close plus ' + usd(plan.trigger_cushion) + ')'
+        : isNum(c.row.close) && isNum(plan.entry_ref) && Math.abs(plan.entry_ref - c.row.close) <= 0.005 + 1e-9 ? ' (the burst close)' : '';
       const limitNote = text(plan.limit_note) ? ' · ' + plan.limit_note : '';
       kids.push(factList([
         plan.eligible === false
@@ -5607,7 +5611,10 @@
     // Fidelity's stated rule, and whether Fidelity's ticket accepts this OTO --
     // or, when a burst ticket is among them, a buy stop at the last close --
     // is unconfirmed (knowledge/broker-fidelity.md).
-    const unconfirmed = 'Fidelity releases an OTO stop only when the buy fills in full, and whether Fidelity’s ticket accepts this OTO' + (model.tickets.bursts ? ', or a burst ticket’s buy stop at its last close,' : '') + ' is unconfirmed.';
+    // a burst ticket whose buy stop is its own close: every one made before
+    // plan.burst_trigger_rule; one made under close_plus_cushion sits above it
+    const atClose = (data.bursts || []).some(b => (model.byId['bursts:' + b.ticker] || {}).status === 'ticket' && b.plan && b.plan.burst && isNum(b.plan.entry_ref) && b.plan.entry_ref <= b.plan.burst.close);
+    const unconfirmed = 'Fidelity releases an OTO stop only when the buy fills in full, and whether Fidelity’s ticket accepts this OTO' + (atClose ? ', or a burst ticket’s buy stop at its last close,' : '') + ' is unconfirmed.';
     // Inside the window which price Fidelity compares a buy stop with is no
     // longer the question: once the stock trades at or over a burst ticket's
     // buy stop the order cannot be entered as written (broker-fidelity.md, U5).

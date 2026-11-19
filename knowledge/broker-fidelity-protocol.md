@@ -93,8 +93,14 @@ placed. Record it in the ledger as two positions with their order rows.
 | U5 | The price a buy stop is compared with before the open. Five one-share Buy Stop Limit orders, each with its limit 1% over its stop, on two stocks chosen that morning from Fidelity's own pre-market quotes: stock X is quoted above its last close C by more than a cent, stock Y below its last close. **A1** on X, stop exactly C. **A2** on X, stop C plus one cent. **A3** on X, stop five cents over the pre-market ask. **B1** on Y, stop exactly C. **B2** on Y, stop between the pre-market ask and C. | Read the five answers against the table below. |
 | U13 | Note, for each test above, whether the refusal came at Preview or only at Place. | Preview refuses: later checks need no order. Only Place refuses: a check needs a one-share order, cancelled at once. |
 
-How to read U5. A burst ticket's buy stop is its last close, so it is test A1
-when the stock is quoted above its close and test B1 when it is quoted below.
+How to read U5. A burst ticket made under `close` has its buy stop at its
+last close, so it is test A1 when the stock is quoted above its close and test
+B1 when it is quoted below; the last column reads that case. A burst ticket
+made under `close_plus_cushion` (the production rule, `plan.burst_trigger()`)
+sits its cushion over the close, at least a cent over it, so it is test A2's
+case: where Fidelity compares the stop with the last close, it can be entered
+before the open as written, and where it compares with the pre-market quote,
+only while the stock is quoted under its buy stop.
 
 | A1 | A2 | A3 | B1 | B2 | what Fidelity compares the stop with | what it means for a burst ticket before the open |
 |---|---|---|---|---|---|---|

@@ -12,7 +12,7 @@
   // docs/app.js carry (tests/test_broker_buy_stop.py holds the three equal).
   // Shown in the readback of a bursts-stage draft only, after the part-fill
   // text; a setting-up draft's trigger sits above its last close.
-  const BROKER_BUY_STOP = 'Fidelity’s rule: a buy stop or buy stop-limit order must be entered at a stop price above the current market price. SpicyStock’s advice: a burst ticket’s buy stop is the burst day’s close, so it can be entered as written only while the stock trades under that price; which price Fidelity compares it with before the open (the close or a pre-market quote) is unconfirmed. Once the stock trades at or over the buy stop the ticket cannot be entered as written, and SpicyStock offers no other order; the model’s ‘filled at the open’ assumes the order was already resting before the open.';
+  const BROKER_BUY_STOP = 'Fidelity’s rule: a buy stop or buy stop-limit order must be entered at a stop price above the current market price. SpicyStock’s advice: a burst ticket’s buy stop is the burst day’s close or a cushion over it (the trigger rule its record archived says which), so it can be entered as written only while the stock trades under the buy stop; which price Fidelity compares it with before the open (the close or a pre-market quote) is unconfirmed. Once the stock trades at or over the buy stop the ticket cannot be entered as written, and SpicyStock offers no other order; the model’s ‘filled at the open’ assumes the order was already resting before the open.';
   const labels = {
     submitted_quantity: 'Total shares submitted', submitted_at: 'Submission time',
     filled_quantity: 'Cumulative entry shares filled', average_price: 'Average entry fill price ($)', filled_at: 'Latest entry fill time',

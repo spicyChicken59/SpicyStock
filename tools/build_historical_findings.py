@@ -365,6 +365,8 @@ BT = {
     "evaluated": re.compile(r"^evaluated: (\d+) sessions (\S+) \.\. (\S+) in (\d+(?:\.\d+)?) s; lookback (\d+) of the run's (\d+); rules (\w+)$"),
     "equivalence": re.compile(r"^lookback equivalence: (.+) \((\d+) sessions compared, (\d+) differences\)$"),
     "account": re.compile(r"^account \(configured, not a balance\): (\{.*\})$"),
+    # printed by a backtest from 20 November 2026 on; a summary pasted before it has none
+    "trigger_rule": re.compile(r"^burst trigger rule: (close|close_plus_cushion)$"),
     "reader": re.compile(r"^reader: (.+)$"),
     "regimes": re.compile(r"^regimes: (\{.*\}); 10-session ratio min/median/max " + _NUM + "/" + _NUM + "/" + _NUM + r" over (\d+) defined$"),
     "candidates": re.compile(r"^candidates: (\d+) bursts over (\d+) sessions; mechanical grades (\{.*\})$"),
@@ -474,6 +476,9 @@ def parse_backtest_summary(text: str) -> dict:
         elif m := BT["account"].match(line):
             once("account")
             out["account"] = _literal(m.group(1))
+        elif m := BT["trigger_rule"].match(line):
+            once("trigger_rule")
+            out["burst_trigger_rule"] = m.group(1)
         elif m := BT["reader"].match(line):
             once("reader")
             out["reader"] = m.group(1)

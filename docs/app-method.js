@@ -40,6 +40,7 @@
     "plan.default_max_position_pct": 25, "plan.default_max_open_positions": 4,
     "plan.max_stop_pct": 4.0, "plan.ideal_stop_pct": 2.0, "plan.stop_risk_multiplier": 0.5,
     "plan.entry_below_pct": 2.0, "plan.entry_above_pct": 4.0, "plan.entry_window_minutes": 30,
+    "plan.trigger_cents": 0.02, "plan.trigger_fraction": 0.001, "plan.burst_trigger_rule": "close_plus_cushion",
     "plan.sell_half_pct": 8.0, "plan.abnormal_day_pct": 10.0, "plan.gap_exit_pct": 20.0,
     "plan.trail_cents": 0.25, "plan.trail_cents_max": 0.50,
     "plan.entry_day": 1, "plan.sell_half_day": 3, "plan.no_progress_day": 3, "plan.trail_from_day": 3,
@@ -87,7 +88,7 @@
     "breakdowns": 0, "bursts_in_base": 0, "giveback": 0.13, "tightness": 0.54, "base_volume_vs_leg": 0.45,
     "up_run": 0, "up_closes": 0, "prior_day_pct": -0.55, "prior_range_pct": 1.7,
     "close_pos": 0.83, "vs_prior_5": 1.41, "volume_rank_60": 1,
-    "trigger": 19.28, "limit": 19.57, "limit_basis": "stop_line", "day2_spent_above": 20.05, "skip_below": 18.89,
+    "close": 19.28, "trigger": 19.30, "limit": 19.57, "limit_basis": "stop_line", "day2_spent_above": 20.05, "skip_below": 18.89,
     "stop": 18.79, "stop_basis": "burst_low", "stop_pct": 3.99,
     "budget_usd": 25.0, "shares": 32, "position_usd": 626.24, "risk_usd": 24.96,
     "fill": 19.35, "day1_high": 21.00, "sell_half_price": 20.90, "sell_half_shares": 16, "stop_after_day1": 20.75,
@@ -216,7 +217,9 @@
         + num(N('breadth.down4_alarm')) + ' on a single day, the two red ratio rules, the sizes and A+ only on yellow P' },
     { id: 'plan', label: 'the plan', module: 'plan', reveal: BURST + 1, marks: ['plan'], days: 0,
       title: 'The plan · written before the open',
-      text: 'A buy stop-limit for the next session: the buy stop at the burst close, ' + usd(X.trigger) + ', and its limit the lower of '
+      text: 'A buy stop-limit for the next session: the buy stop ' + usd(X.trigger) + ', the ' + usd(X.close) + ' burst close plus the larger of '
+        + usd(N('plan.trigger_cents')) + ' and ' + g(N('plan.trigger_fraction') * 100) + '% of the close, so it sits above the last trade '
+        + 'before the open; its limit the lower of '
         + 'the close +' + g(N('plan.entry_above_pct')) + '% and the highest price at which the stop is still inside his '
         + g(N('plan.max_stop_pct')) + '% line — here ' + usd(X.limit) + '. The stop is the burst day’s low, else the bar’s '
         + 'midpoint: a stand-in for his entry-day low, which replaces it at the close of day ' + N('plan.entry_day')

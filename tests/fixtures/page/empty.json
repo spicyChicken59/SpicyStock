@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "1e6167eba764"
+  "rules_version": "583191ddb160"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -936,7 +936,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "e4fb6885023d8d89019a9d104ee0e5e519d9fb133d66681c9387c0e7108cdecd"
+   "context_sha256": "c004bb53d701de39f37672f0258c341e796ec2f7d3b42fd63da3182ed42f1806"
   },
   "earnings": {
    "version": 2,
@@ -1178,6 +1178,7 @@
    "gap_ok_pct": 2.0,
    "stop_lookback_sessions": 3,
    "open_entry_top_n": 2,
+   "burst_trigger_rule": "close_plus_cushion",
    "pdt_equity_usd": 25000.0,
    "pdt_max_day_trades": 3,
    "pdt_window_days": 5,
@@ -2187,7 +2188,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "1e6167eba764"
+  "replay_rules_version": "583191ddb160"
  },
  "observations": {
   "as_of": "2026-09-10",

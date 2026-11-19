@@ -10,10 +10,10 @@
 ## 1. Identity and binding
 
 - Measured session: 2026-09-10 (open); plans are for **2026-09-11**, entry window 2026-09-11T09:30:00-04:00 to 2026-09-11T10:00:00-04:00 (America/New_York), full session closes 2026-09-11T16:00:00-04:00.
-- Published 2026-09-10T22:30:00+00:00 (evening, FIXTURE full); rules version `1e6167eba764`.
-- Canonical record `data.json`: 334,832 bytes, SHA-256 `910e44ae6702319168ce70c6e4728bd5547431c823f7ce970ca63aa78ec1d12c`.
-- `picks.json`: 43,332 bytes, SHA-256 `f082413c2b817d5cfb1a9c381778babaf4b7c20220d27d3d3bea7fe786fb807f`.
-- This file renders `brief.json` (72,656 bytes, SHA-256 `5b87349be581badf0ea556c78338659d87c9d3af2911d6d9b64721add16ee7c5`).
+- Published 2026-09-10T22:30:00+00:00 (evening, FIXTURE full); rules version `583191ddb160`.
+- Canonical record `data.json`: 335,815 bytes, SHA-256 `c277356b79c77e6256d7249f78fc443d780c1fc617691110c75f629de71c7b6c`.
+- `picks.json`: 43,332 bytes, SHA-256 `367048d4d41725bfcf61f70ea79701fb55a68a2552e7b20dbae46eaf208ea9b2`.
+- This file renders `brief.json` (72,494 bytes, SHA-256 `65338b8685de892c67c3f1291c5616a87b143761310dc78e60c43a88e0075601`).
 - Page https://spicychicken59.github.io/SpicyStock/ · record https://spicychicken59.github.io/SpicyStock/data.json · brief https://spicychicken59.github.io/SpicyStock/brief.json and https://spicychicken59.github.io/SpicyStock/brief.md.
 
 ## 2. Service state
@@ -72,7 +72,7 @@ Breadth history (the newest 10 sessions of the record's own breadth history, eac
 
 - Model account (the model's configured sizing assumptions; not a brokerage balance): equity $10,000.00, risk 0.50% a trade, position cap 25.00%, 4 slots.
 - Model allocation: next-session tickets would commit $505.88 of the configured $10,000.00; 4 of 4 slots (3 open model plans); $1,762.98 reserved for unfinished model plans.
-- Cut: TSLA (burst, withheld): ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not
+- Cut: TSLA (burst, withheld): ticket withheld: no limit above the $124.33 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not
 - Cut: AMD (burst, slot_cap): the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out
 - Cut: NVDA (burst, slot_cap): the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out
 - Cut: COIL (anticipation, slot_cap): the 4-slot model cap: 3 open model plans and AAPL take the rest; take COIL only if a plan above is not held or stops out
@@ -83,10 +83,10 @@ Every ticket here is a MODEL ticket sized for the model account in section 4; Sp
 
 ### AAPL · burst · A+ 10.00 · TICKET
 
-- Order as the record wrote it: `Buy 4 AAPL stop-limit: stop $124.21 limit $126.47, day · OTO sell 4 AAPL stop-loss $121.42 GTC`
-- levels (record): trigger $124.21; limit $126.47; stop $121.42 (half_range, 3.99% under the limit); day-2 line $129.18; skip if it opens under $121.73; sell-half $135.49; risk a share at the limit $5.05; model size 4 shares, $505.88 cost, $20.20 risk (multiplier 0.50); at the YELLOW size 2 shares, $252.94.
-- Order entry: kind `buy_stop_limit_oto`; 4 shares; last close $124.21; the buy stop is `equal` the last close; extended above $134.15; record action word `buy_at_open` (legacy).
-- Price states: `below_stop` at or under $121.42; `below_entry_floor` over $121.42 to under $121.73; `below_trigger` from $121.73 to under $124.21; `within_published_band` from $124.21 through $126.47; `above_limit` over $126.47 through $129.18; `above_day2_extension` over $129.18.
+- Order as the record wrote it: `Buy 4 AAPL stop-limit: stop $124.33 limit $126.47, day · OTO sell 4 AAPL stop-loss $121.42 GTC`
+- levels (record): trigger $124.33; limit $126.47; stop $121.42 (half_range, 3.99% under the limit); day-2 line $129.18; skip if it opens under $121.73; sell-half $135.49; risk a share at the limit $5.05; model size 4 shares, $505.88 cost, $20.20 risk (multiplier 0.50); at the YELLOW size 2 shares, $252.94.
+- Order entry: kind `buy_stop_limit_oto`; 4 shares; last close $124.21; the buy stop is `above` the last close; extended above $134.15; record action word `buy_at_open` (legacy).
+- Price states: `below_stop` at or under $121.42; `below_entry_floor` over $121.42 to under $121.73; `below_trigger` from $121.73 to under $124.33; `within_published_band` from $124.33 through $126.47; `above_limit` over $126.47 through $129.18; `above_day2_extension` over $129.18.
 - Reader's entry note (not the ticket): Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.
 - Limit: the ticket's limit is $126.47: the $129.18 day-2 ceiling (the close +4%) narrowed to the highest price at which the bar's midpoint $121.42 is still inside his 4% line
 - Pre-open check: before the open: if the pre-market print is under $121.73 the burst is failing, over $129.18 (+4%) day 2 is spent, and over $134.15 (+8%) he would be selling; do not place the order in any of the three. The ticket's own limit is $126.47, under that day-2 line: an open above it does not fill at the open, though a resting order stays live
@@ -94,7 +94,7 @@ Every ticket here is a MODEL ticket sized for the model account in section 4; Sp
 - Resize: if your fill differs, shares = $25.00 / (fill - $121.42), and no more than $2,500.00 of stock
 - Term: A day order rests until the close unless you cancel it. The plan's entry is the first 30 minutes: if it has not filled by then, cancel it yourself; SpicyStock places and cancels nothing.
 - Term: An open above the $126.47 limit does not fill at the open, but the resting order stays live and can fill on a pullback under $126.47 later in the day: cancel it rather than let it.
-- Term: An open under $121.73 is the burst failing: do not place the order, or cancel it; the buy stop at $124.21 would still trigger if the price recovered.
+- Term: An open under $121.73 is the burst failing: do not place the order, or cancel it; the buy stop at $124.33 would still trigger if the price recovered.
 - Term: The sell stop at $121.42 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill.
 - Day 1 (2026-09-11): buy in the first 30 minutes inside $121.73–$126.47; the sell stop at $121.42 is live from the fill. Skip it if it opens above $129.18 or under $121.73; cancel the day order yourself if it has not filled by the end of the first 30 minutes.
 - Day 1 (2026-09-11): if same or next day, the price reaches $135.49 (+8% from $125.45): sell half and move the stop to 25-50 cents under that day's high.
@@ -139,7 +139,7 @@ Page for any ticker here: https://spicychicken59.github.io/SpicyStock/#/explore/
   - Reader's main risk (commentary): A gap over the ceiling at the open leaves no stop the bar supports.
   - Reader's entry note (not the ticket): Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.
 - Later gates: GREEN band pass, YELLOW band pass, veto pass, admission pass, reader `accepted`; all of them under GREEN yes, under YELLOW yes.
-- research levels (record; no order is offered at them): trigger $123.27; limit $128.20; stop $123.10 (burst_low, 3.98% under the limit); day-2 line $128.20; skip if it opens under $120.80; sell-half $134.46; risk a share at the limit $5.10; model size 4 shares, $512.80 cost, $20.40 risk (multiplier 0.50); at the YELLOW size 2 shares, $256.40.
+- research levels (record; no order is offered at them): trigger $123.39; limit $128.20; stop $123.10 (burst_low, 3.98% under the limit); day-2 line $128.20; skip if it opens under $120.80; sell-half $134.46; risk a share at the limit $5.10; model size 4 shares, $512.80 cost, $20.40 risk (multiplier 0.50); at the YELLOW size 2 shares, $256.40.
 - No ticket: slot cap (stage `allocation_slot`).
 
 ### NVDA · rank 3 · A+ 10.00 · reviewed · RESEARCH ONLY: no SpicyStock ticket
@@ -151,7 +151,7 @@ Page for any ticker here: https://spicychicken59.github.io/SpicyStock/#/explore/
   - Reader's main risk (commentary): A gap over the ceiling at the open leaves no stop the bar supports.
   - Reader's entry note (not the ticket): Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.
 - Later gates: GREEN band pass, YELLOW band pass, veto pass, admission pass, reader `accepted`; all of them under GREEN yes, under YELLOW yes.
-- research levels (record; no order is offered at them): trigger $126.88; limit $128.12; stop $123.00 (burst_low, 4.00% under the limit); day-2 line $131.96; skip if it opens under $124.34; sell-half $138.37; risk a share at the limit $5.12; model size 4 shares, $512.48 cost, $20.48 risk (multiplier 0.50); at the YELLOW size 2 shares, $256.24.
+- research levels (record; no order is offered at them): trigger $127.01; limit $128.12; stop $123.00 (burst_low, 4.00% under the limit); day-2 line $131.96; skip if it opens under $124.34; sell-half $138.37; risk a share at the limit $5.12; model size 4 shares, $512.48 cost, $20.48 risk (multiplier 0.50); at the YELLOW size 2 shares, $256.24.
 - No ticket: slot cap (stage `allocation_slot`).
 
 ### TSLA · rank 4 · A+ 10.00 · reviewed · RESEARCH ONLY: no SpicyStock ticket
@@ -163,8 +163,8 @@ Page for any ticker here: https://spicychicken59.github.io/SpicyStock/#/explore/
   - Reader's main risk (commentary): A gap over the ceiling at the open leaves no stop the bar supports.
   - Reader's entry note (not the ticket): Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.
 - Later gates: GREEN band pass, YELLOW band pass, veto pass, admission pass, reader `accepted`; all of them under GREEN yes, under YELLOW yes.
-- research levels (record; no order is offered at them): trigger $124.21; ticket withheld (no_room_above_the_trigger): no limit above the trigger keeps a structural stop inside the stop line; day-2 line $129.18; skip if it opens under $121.73.
-- Plan rule refusal: ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not
+- research levels (record; no order is offered at them): trigger $124.33; ticket withheld (no_room_above_the_trigger): no limit above the trigger keeps a structural stop inside the stop line; day-2 line $129.18; skip if it opens under $121.73.
+- Plan rule refusal: ticket withheld: no limit above the $124.33 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not
 - No ticket: ticket withheld: stop rule at the limit (stage `geometry`).
 
 ### 6b. Compact rows (0 shown; 0 left out of this file; brief.json carries every one)
@@ -208,7 +208,7 @@ Open MODEL plans walked on daily (and retained minute) bars; not holdings.
 
 | picked | ticker | kind | regime | shares | trigger | limit | stop |
 |---|---|---|---|---|---|---|---|
-| 2026-09-10 | AAPL | burst | green | 4 | 124.21 | 126.47 | 121.42 |
+| 2026-09-10 | AAPL | burst | green | 4 | 124.33 | 126.47 | 121.42 |
 | 2026-09-08 | NBIS | burst | green | 23 | 25.45 | 26.25 | 24.43 |
 | 2026-09-04 | SMCI | burst | green | 24 | 24.56 | 25.32 | 23.58 |
 | 2026-09-03 | VRT | burst | green | 3 | 180.00 | 183.85 | 172.80 |
@@ -261,7 +261,7 @@ Open MODEL plans walked on daily (and retained minute) bars; not holdings.
 
 ## 12. Rules
 
-- Rules digest `1e6167eba764`; without the universe membership identity `82a3bf5306f3` (membership identity `1b97e33400ee217a`): the record's digest nests the universe membership identity, so it moves on any night the selection's membership moves; `digest_without_membership` is the same digest with that identity removed, and moves only when an archived rule changes.
+- Rules digest `583191ddb160`; without the universe membership identity `6f80540f06ea` (membership identity `1b97e33400ee217a`): the record's digest nests the universe membership identity, so it moves on any night the selection's membership moves; `digest_without_membership` is the same digest with that identity removed, and moves only when an archived rule changes.
 - pipeline: trade_grades ["A+", "A"], yellow_grades ["A+"], max_reads 12, reader_policy "accepted_required_v1", reader_refusal_fraction 0.25, reader_refusal_min 1, stale_tolerance_fraction 0.01, stale_sessions_max 5, min_coverage_fraction 0.5
 - plan: entry_below_pct 2.0, entry_above_pct 4.0, skip_gap_pct 8.0, entry_window_minutes 30, assumed_slippage_pct 1.0, limit_rule "stop_constrained", sizing_basis "order_limit", max_stop_pct 4.0, ideal_stop_pct 2.0, stop_risk_multiplier 0.5, gain_ceiling_pct 15.0, extension_hazard_pct 20.0, hazard_multiplier 0.5, sell_half_pct 8.0, abnormal_day_pct 10.0, gap_exit_pct 20.0, sell_half_day 3, no_progress_day 3, trail_from_day 3, final_exit_day 5, allocation_policy "combined_stages_reserved_principal_v1"
 - admission: version 1, policy "burst_route_or_dollar_expansion_v1"

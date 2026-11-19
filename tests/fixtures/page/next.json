@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "1e6167eba764"
+  "rules_version": "583191ddb160"
  },
  "cover": {
   "h1": "Trade next session. 2 A-quality bursts.",
@@ -945,7 +945,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "0b07720c7b25d240a8913a5ad90d95c8cf44c64f1756e5df7a0f8c5d8391ecea"
+   "context_sha256": "c2e050985a095b82a0d260e9fb2bc8c86e1f50349a3c36873b0ae68c26317888"
   },
   "earnings": {
    "version": 2,
@@ -1364,6 +1364,7 @@
    "gap_ok_pct": 2.0,
    "stop_lookback_sessions": 3,
    "open_entry_top_n": 2,
+   "burst_trigger_rule": "close_plus_cushion",
    "pdt_equity_usd": 25000.0,
    "pdt_max_day_trades": 3,
    "pdt_window_days": 5,
@@ -2408,10 +2409,13 @@
     "action": "buy_at_open",
     "eligible": true,
     "reason": null,
-    "entry_ref": 133.99,
+    "entry_ref": 134.12,
     "entry_low": 131.31,
     "entry_high": 136.85,
     "limit": 136.85,
+    "trigger_rule": "close_plus_cushion",
+    "trigger_cushion": 0.13,
+    "trigger_note": "the buy stop $134.12 is the $133.99 close plus $0.13, the larger of $0.02 and 0.1% of the close",
     "limit_basis": "stop_line",
     "limit_narrowed": true,
     "limit_note": "the ticket's limit is $136.85: the $139.35 day-2 ceiling (the close +4%) narrowed to the highest price at which the bar's midpoint $131.38 is still inside his 4% line",
@@ -2564,13 +2568,13 @@
       "price": null
      }
     ],
-    "order_line": "Buy 4 NVDA stop-limit: stop $133.99 limit $136.85, day · OTO sell 4 NVDA stop-loss $131.38 GTC",
+    "order_line": "Buy 4 NVDA stop-limit: stop $134.12 limit $136.85, day · OTO sell 4 NVDA stop-loss $131.38 GTC",
     "order_json": {
      "symbol": "NVDA",
      "action": "buy",
      "quantity": 4,
      "order_type": "stop_limit",
-     "stop_price": 133.99,
+     "stop_price": 134.12,
      "limit_price": 136.85,
      "time_in_force": "day",
      "conditional": "one_triggers_the_other",
@@ -2582,11 +2586,11 @@
       "time_in_force": "gtc"
      }
     },
-    "order_readback": "Buy 4 NVDA stop limit 133.99 / 136.85 day, one-triggers-the-other sell 4 NVDA stop loss 131.38 GTC",
+    "order_readback": "Buy 4 NVDA stop limit 134.12 / 136.85 day, one-triggers-the-other sell 4 NVDA stop loss 131.38 GTC",
     "order_terms": [
      "A day order rests until the close unless you cancel it. The plan's entry is the first 30 minutes: if it has not filled by then, cancel it yourself; SpicyStock places and cancels nothing.",
      "An open above the $136.85 limit does not fill at the open, but the resting order stays live and can fill on a pullback under $136.85 later in the day: cancel it rather than let it.",
-     "An open under $131.31 is the burst failing: do not place the order, or cancel it; the buy stop at $133.99 would still trigger if the price recovered.",
+     "An open under $131.31 is the burst failing: do not place the order, or cancel it; the buy stop at $134.12 would still trigger if the price recovered.",
      "The sell stop at $131.38 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill."
     ],
     "burst": {
@@ -2670,10 +2674,10 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "cfc1274a41357677883c501c34c5df6d05a964e0b3126ec95814cc5cc7c2f05f",
-     "context_sha256": "0b07720c7b25d240a8913a5ad90d95c8cf44c64f1756e5df7a0f8c5d8391ecea",
-     "plan_sha256": "674e16d35bf5319d065dcef54a851bd334133441fb401154fb8b66f9f36de20c",
-     "pick_sha256": "60f4999a826dafe140bcd6d80a1a5c4ea23e905b2a2a9923f7a42d18f9c31485"
+     "id": "0085db64d39ae87d718fd5b6600f5eb2f67ff11873919aa9e56a0d788409c07d",
+     "context_sha256": "c2e050985a095b82a0d260e9fb2bc8c86e1f50349a3c36873b0ae68c26317888",
+     "plan_sha256": "d32d78df4508b72a6e62de2ccb5e110c4001892300b987a46ae35fc7149e2e8e",
+     "pick_sha256": "ac99e3cc725c2f225d5b9a458e526ade8fd1a822562f3930a1c9b72fb4c4d0f3"
     }
    },
    "review_selection": {
@@ -2772,13 +2776,14 @@
       },
       "size_multiplier": 1.0,
       "scan": "4pct",
-      "extension_pct": 12.0
+      "extension_pct": 12.0,
+      "trigger_rule": "close_plus_cushion"
      },
      "regime_sha256": "230dd18557aab52477f733659567a590601fcd4c1ce6ec48a9b7e74989193906",
      "session": "2026-09-11",
-     "output_sha256": "674e16d35bf5319d065dcef54a851bd334133441fb401154fb8b66f9f36de20c",
+     "output_sha256": "d32d78df4508b72a6e62de2ccb5e110c4001892300b987a46ae35fc7149e2e8e",
      "error": null,
-     "pick_sha256": "60f4999a826dafe140bcd6d80a1a5c4ea23e905b2a2a9923f7a42d18f9c31485"
+     "pick_sha256": "ac99e3cc725c2f225d5b9a458e526ade8fd1a822562f3930a1c9b72fb4c4d0f3"
     },
     "reader_input": {
      "metrics_sha256": "08504fd41421496d9fbd9d1c72844f71b9f235e7867c1ddaf406c63848f21c47",
@@ -2803,8 +2808,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-11",
-    "rules_version": "1e6167eba764",
-    "context_sha256": "0b07720c7b25d240a8913a5ad90d95c8cf44c64f1756e5df7a0f8c5d8391ecea",
+    "rules_version": "583191ddb160",
+    "context_sha256": "c2e050985a095b82a0d260e9fb2bc8c86e1f50349a3c36873b0ae68c26317888",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -2817,7 +2822,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "cfc1274a41357677883c501c34c5df6d05a964e0b3126ec95814cc5cc7c2f05f"
+    "id": "0085db64d39ae87d718fd5b6600f5eb2f67ff11873919aa9e56a0d788409c07d"
    },
    "series": [
     {
@@ -4034,10 +4039,13 @@
     "action": "buy_at_open",
     "eligible": true,
     "reason": null,
-    "entry_ref": 115.5,
+    "entry_ref": 115.62,
     "entry_low": 113.19,
     "entry_high": 115.72,
     "limit": 115.72,
+    "trigger_rule": "close_plus_cushion",
+    "trigger_cushion": 0.12,
+    "trigger_note": "the buy stop $115.62 is the $115.50 close plus $0.12, the larger of $0.02 and 0.1% of the close",
     "limit_basis": "stop_line",
     "limit_narrowed": true,
     "limit_note": "the ticket's limit is $115.72: the $120.12 day-2 ceiling (the close +4%) narrowed to the highest price at which the burst day's low $111.10 is still inside his 4% line",
@@ -4190,13 +4198,13 @@
       "price": null
      }
     ],
-    "order_line": "Buy 5 COIL stop-limit: stop $115.50 limit $115.72, day · OTO sell 5 COIL stop-loss $111.10 GTC",
+    "order_line": "Buy 5 COIL stop-limit: stop $115.62 limit $115.72, day · OTO sell 5 COIL stop-loss $111.10 GTC",
     "order_json": {
      "symbol": "COIL",
      "action": "buy",
      "quantity": 5,
      "order_type": "stop_limit",
-     "stop_price": 115.5,
+     "stop_price": 115.62,
      "limit_price": 115.72,
      "time_in_force": "day",
      "conditional": "one_triggers_the_other",
@@ -4208,11 +4216,11 @@
       "time_in_force": "gtc"
      }
     },
-    "order_readback": "Buy 5 COIL stop limit 115.50 / 115.72 day, one-triggers-the-other sell 5 COIL stop loss 111.10 GTC",
+    "order_readback": "Buy 5 COIL stop limit 115.62 / 115.72 day, one-triggers-the-other sell 5 COIL stop loss 111.10 GTC",
     "order_terms": [
      "A day order rests until the close unless you cancel it. The plan's entry is the first 30 minutes: if it has not filled by then, cancel it yourself; SpicyStock places and cancels nothing.",
      "An open above the $115.72 limit does not fill at the open, but the resting order stays live and can fill on a pullback under $115.72 later in the day: cancel it rather than let it.",
-     "An open under $113.19 is the burst failing: do not place the order, or cancel it; the buy stop at $115.50 would still trigger if the price recovered.",
+     "An open under $113.19 is the burst failing: do not place the order, or cancel it; the buy stop at $115.62 would still trigger if the price recovered.",
      "The sell stop at $111.10 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill."
     ],
     "burst": {
@@ -4296,10 +4304,10 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "4a5dff6d159f8907f4fb9a713f5288757df5080841c9b266ee13dbe10b7a5ad4",
-     "context_sha256": "0b07720c7b25d240a8913a5ad90d95c8cf44c64f1756e5df7a0f8c5d8391ecea",
-     "plan_sha256": "ced8e37f9e86dff1552a3c92bfba5f40b422f24514f15ff6224c8f3c1fa03cbd",
-     "pick_sha256": "c7182ae8b763598bbf333e0823e9638fc4a711148fae0b2757ec663c49eb930f"
+     "id": "714aa0ef8c43e25e979d9259d323ac2622cd18e76857171f65183c2b6bfd639d",
+     "context_sha256": "c2e050985a095b82a0d260e9fb2bc8c86e1f50349a3c36873b0ae68c26317888",
+     "plan_sha256": "f9ccbac6e1ee13377109db3414152651a631f01fb0c90643b5c56e9df009684d",
+     "pick_sha256": "9fdb24beebd58088eabaa9d1b32428e95984b77ddc18cae3d144100b84865f81"
     }
    },
    "review_selection": {
@@ -4398,13 +4406,14 @@
       },
       "size_multiplier": 1.0,
       "scan": "4pct",
-      "extension_pct": 7.1
+      "extension_pct": 7.1,
+      "trigger_rule": "close_plus_cushion"
      },
      "regime_sha256": "230dd18557aab52477f733659567a590601fcd4c1ce6ec48a9b7e74989193906",
      "session": "2026-09-11",
-     "output_sha256": "ced8e37f9e86dff1552a3c92bfba5f40b422f24514f15ff6224c8f3c1fa03cbd",
+     "output_sha256": "f9ccbac6e1ee13377109db3414152651a631f01fb0c90643b5c56e9df009684d",
      "error": null,
-     "pick_sha256": "c7182ae8b763598bbf333e0823e9638fc4a711148fae0b2757ec663c49eb930f"
+     "pick_sha256": "9fdb24beebd58088eabaa9d1b32428e95984b77ddc18cae3d144100b84865f81"
     },
     "reader_input": {
      "metrics_sha256": "1db803ad3cfeb5fb955cd85d29dcef5674f89124d9c7c4a2ebad6987d11f97f6",
@@ -4429,8 +4438,8 @@
     "kind": "burst",
     "ticker": "COIL",
     "session": "2026-09-11",
-    "rules_version": "1e6167eba764",
-    "context_sha256": "0b07720c7b25d240a8913a5ad90d95c8cf44c64f1756e5df7a0f8c5d8391ecea",
+    "rules_version": "583191ddb160",
+    "context_sha256": "c2e050985a095b82a0d260e9fb2bc8c86e1f50349a3c36873b0ae68c26317888",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -4443,7 +4452,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "4a5dff6d159f8907f4fb9a713f5288757df5080841c9b266ee13dbe10b7a5ad4"
+    "id": "714aa0ef8c43e25e979d9259d323ac2622cd18e76857171f65183c2b6bfd639d"
    },
    "series": [
     {
@@ -5723,7 +5732,7 @@
    "day": 1,
    "sessions": 1,
    "status": "stopped",
-   "instruction": "Day 1: 4 AAPL stopped at $121.42 (-2.2%).",
+   "instruction": "Day 1: 4 AAPL stopped at $121.42 (-2.4%).",
    "events": [
     {
      "day": 1,
@@ -5735,14 +5744,14 @@
     }
    ],
    "regime": "green",
-   "entry_ref": 124.21,
+   "entry_ref": 124.34,
    "shares": 4,
    "current_stop": 121.42,
    "last_close": 117.38,
    "last_date": "2026-09-11",
-   "unrealised_pct": -5.5,
+   "unrealised_pct": -5.6,
    "exit_price": 121.42,
-   "result_pct": -2.25,
+   "result_pct": -2.35,
    "half_sold": false,
    "sold": 4,
    "remaining": 0,
@@ -5757,15 +5766,15 @@
     "dollar_low": 130.45,
     "dollar_high": 150.45
    },
-   "fill": "filled at the open, $124.21",
+   "fill": "filled at the open, $124.34",
    "uncertainty": null,
    "limit": 126.47,
    "evidence_ref": {
     "version": 1,
-    "id": "17aa0f45b0fdd9e781ac96aebe1a7c9e6b064fb509a21c666751396fda143f51",
-    "context_sha256": "792bf46fc6dd87127a4bddffd6df793f77341241664430ea5713b20c9b8b4b38",
-    "plan_sha256": "353a4909b79e4a6c293f0b42ea86ecf9974606bfb9dac63176fd5767c7f073de",
-    "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
+    "id": "0d6e682b1223b8ad88c34b1ca1927f8bd1668e1f424e9a441176bb507d0bd179",
+    "context_sha256": "5df70b515889325bbef26e451483be934e339d69d24319358a1f611646e4e56c",
+    "plan_sha256": "77d898e143644c9f12c0cfce19d88eed35d0ef48bee750dcb49e7df830133464",
+    "pick_sha256": "d61b9dc9c4f9b326d6040cc11ede22947c65e15fe7434f1f82c6bec390bf6ae5"
    }
   }
  ],
@@ -5824,7 +5833,7 @@
    "expected_session": "2026-09-11",
    "evaluated_session": "2026-09-11"
   },
-  "replay_rules_version": "1e6167eba764"
+  "replay_rules_version": "583191ddb160"
  },
  "observations": {
   "as_of": "2026-09-11",
@@ -5832,8 +5841,8 @@
   "symbols": {
    "AAPL": {
     "date": "2026-09-11",
-    "o": 124.21,
-    "h": 124.56,
+    "o": 124.34,
+    "h": 124.69,
     "l": 117.03,
     "c": 117.38,
     "v": 1050000.0,
@@ -5851,8 +5860,8 @@
      },
      {
       "date": "2026-09-11",
-      "o": 124.21,
-      "h": 124.56,
+      "o": 124.34,
+      "h": 124.69,
       "l": 117.03,
       "c": 117.38,
       "v": 1050000.0,
@@ -6163,81 +6172,81 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:1e6167eba764": {
+   "burst:AAPL:2026-09-10:583191ddb160": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:1e6167eba764": {
+   "burst:AMD:2026-09-10:583191ddb160": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:1e6167eba764": {
+   "burst:NVDA:2026-09-10:583191ddb160": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:1e6167eba764": {
+   "burst:TSLA:2026-09-10:583191ddb160": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:MSFT:2026-09-10:1e6167eba764": {
+   "burst:MSFT:2026-09-10:583191ddb160": {
     "ticker": "MSFT",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:1e6167eba764": {
+   "burst:PLUG:2026-09-10:583191ddb160": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:1e6167eba764": {
+   "burst:DLLR:2026-09-10:583191ddb160": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:1e6167eba764": {
+   "anticipation:COIL:2026-09-10:583191ddb160": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-11:1e6167eba764": {
+   "burst:NVDA:2026-09-11:583191ddb160": {
     "ticker": "NVDA",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:COIL:2026-09-11:1e6167eba764": {
+   "burst:COIL:2026-09-11:583191ddb160": {
     "ticker": "COIL",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "anticipation:VRT:2026-09-11:1e6167eba764": {
+   "anticipation:VRT:2026-09-11:583191ddb160": {
     "ticker": "VRT",
     "session": "2026-09-11",
     "kind": "anticipation",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    }
   },

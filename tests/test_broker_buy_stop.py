@@ -50,8 +50,9 @@ def test_the_buy_stop_text_keeps_its_two_labels_and_says_no_number():
     rule, advice = report.BROKER_BUY_STOP.split(" SpicyStock’s advice: ")
     assert rule == ("Fidelity’s rule: a buy stop or buy stop-limit order must be entered at a stop price "
                     "above the current market price."), rule
-    for claim in ("a burst ticket’s buy stop is the burst day’s close",
-                  "entered as written only while the stock trades under that price",
+    for claim in ("a burst ticket’s buy stop is the burst day’s close or a cushion over it "
+                  "(the trigger rule its record archived says which)",
+                  "entered as written only while the stock trades under the buy stop",
                   "which price Fidelity compares it with before the open (the close or a pre-market quote) is unconfirmed",
                   "Once the stock trades at or over the buy stop the ticket cannot be entered as written",
                   "SpicyStock offers no other order",

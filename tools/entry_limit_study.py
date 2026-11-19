@@ -102,15 +102,18 @@ def structural_candidates(low: float, high: float) -> list[tuple[str, float]]:
     return [(basis, prices[basis]) for basis in STRUCTURAL_BASES]
 
 
-def constrained_ceiling(close: float, low: float, high: float) -> dict[str, Any] | None:
+def constrained_ceiling(close: float, low: float, high: float,
+                        trigger_rule: str = plan.LEGACY_BURST_TRIGGER_RULE) -> dict[str, Any] | None:
     """THE ORACLE: the constrained ticket for one burst bar, re-derived from
-    the spec, or a refusal when no structural stop supports one. ``close`` is
-    the buy stop (the trigger) as ``burst_plan`` sets it, and the bar is
+    the spec, or a refusal when no structural stop supports one. The buy stop
+    (the trigger) is set from ``close`` by ``trigger_rule`` as ``burst_plan``
+    sets it (the record's archived rule: ``plan.archived_burst_trigger_rule``),
+    and the bar is
     cent-rounded once, as ``burst_plan`` rounds it. The band must be strictly
     open -- ``stop < trigger < limit`` -- because a limit AT the buy stop is a
     ticket with no room to fill in, which production withholds."""
     close = plan._price(close, "close")
-    trigger = close
+    trigger = plan.burst_trigger(close, trigger_rule)
     fixed = plan._at_pct(close, plan.ENTRY_ABOVE_PCT)
     tried: list[dict[str, Any]] = []
     for basis, stop in structural_candidates(low, high):
@@ -129,13 +132,14 @@ def constrained_ceiling(close: float, low: float, high: float) -> dict[str, Any]
     return {"basis": None, "tried": tried, "fixed_limit": fixed, "trigger": trigger} if tried else None
 
 
-def production_matches(oracle: Mapping[str, Any], row: Mapping[str, Any], now: Mapping[str, Any]) -> str | None:
+def production_matches(oracle: Mapping[str, Any], row: Mapping[str, Any], now: Mapping[str, Any],
+                       trigger_rule: str = plan.LEGACY_BURST_TRIGGER_RULE) -> str | None:
     """Why production and the oracle disagree about this bar, or None. The
     oracle's limit, stop and basis must be what ``plan.burst_limit()`` names
     AND what ``plan.burst_plan()`` wrote, and the cascade run at that limit
     must reach the same stop inside his line. A disagreement means the
     adopted rule is not the rule it was adopted as, and the study raises."""
-    got = plan.burst_limit(row["close"], row["low"], row["high"])
+    got = plan.burst_limit(row["close"], row["low"], row["high"], trigger_rule)
     admitted = oracle["basis"] is not None
     if bool(got["admitted"]) != admitted:
         return f"oracle admits {admitted}, plan.burst_limit admits {got['admitted']}"
@@ -195,16 +199,18 @@ def usable_bar(row: dict) -> str | None:
     return None
 
 
-def current_plan(row: dict, multiplier: float, account: plan.Account | None = None) -> dict:
+def current_plan(row: dict, multiplier: float, account: plan.Account | None = None,
+                 trigger_rule: str = plan.LEGACY_BURST_TRIGGER_RULE) -> dict:
     """Production entry geometry and sizing before event/allocation gates.
-    The recorded account and regime reproduce the run's share arithmetic.
+    The recorded account, regime and burst trigger rule reproduce the run's
+    share arithmetic.
     """
     return plan.burst_plan(
         ticker=row["ticker"], close=row["close"], low=row["low"], high=row["high"],
         open_=row["open"], prev_close=row["prev_close"], gain_pct=row.get("gain_pct") or 0.0,
         account=account or plan.Account(), size_multiplier=multiplier,
         scan="dollar" if row.get("scan") == "dollar" else "4pct",
-        extension_pct=row.get("extension_pct"),
+        extension_pct=row.get("extension_pct"), trigger_rule=trigger_rule,
     )
 
 
@@ -227,6 +233,7 @@ def study(record: dict) -> dict[str, Any]:
     event_blocked = {b["ticker"] for b in bursts if ((b.get("plan") or {}).get("event_risk") or {}).get("blocked")}
     account = account_of(record)
     multiplier = float(regime.get("size_multiplier") or 0.0) if "size_multiplier" in regime else 1.0
+    rule = plan.archived_burst_trigger_rule(record.get("rules"))
 
     rows: list[dict[str, Any]] = []
     missing: list[dict[str, str]] = []
@@ -236,16 +243,16 @@ def study(record: dict) -> dict[str, Any]:
             missing.append({"ticker": row.get("ticker"), "why": why})
             continue
         try:
-            now = current_plan(row, multiplier, account)
+            now = current_plan(row, multiplier, account, rule)
             # and the same ticket at full size, so the two columns can be
             # compared on a night whose regime sized everything at zero
-            now_full = current_plan(row, 1.0, account)
+            now_full = current_plan(row, 1.0, account, rule)
             fixed = fixed_ceiling_plan(row, multiplier, account)
         except (ValueError, KeyError) as exc:   # the pipeline logs and skips; so does this
             missing.append({"ticker": row.get("ticker"), "why": str(exc)[:80]})
             continue
-        oracle = constrained_ceiling(row["close"], row["low"], row["high"])
-        disagreement = production_matches(oracle, row, now)
+        oracle = constrained_ceiling(row["close"], row["low"], row["high"], rule)
+        disagreement = production_matches(oracle, row, now, rule)
         if disagreement:
             raise AssertionError(f"{row['ticker']}: {disagreement}; the adopted rule is not the rule "
                                  f"this study re-derives from the spec")
@@ -490,7 +497,8 @@ def verify(record: dict) -> list[str]:
         recorded = row.get("plan")
         if not recorded or usable_bar(row):
             continue
-        now = current_plan(row, regime_multiplier(record), account_of(record))
+        now = current_plan(row, regime_multiplier(record), account_of(record),
+                           plan.archived_burst_trigger_rule(record.get("rules")))
         rules = record.get("rules") or {}
         if "event_risk" in rules:
             now = event_risk.apply(now, row["ticker"], record["run"]["session"], registry=rules["event_risk"]["registry"])

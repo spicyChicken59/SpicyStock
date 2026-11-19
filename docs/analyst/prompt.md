@@ -141,11 +141,15 @@ The first two matter most. Read them twice.
   sells, on names that had no ticket. He has also bought names that
   carried a ticket, and how those orders were entered is not recorded. Ask
   him: it is the first evidence there is.
-- A burst ticket's buy stop is the last close. Fidelity's stated rule is
-  that a buy stop must be entered above the current price. So the ticket
-  can be entered as written only while the stock trades under its last
-  close. Over 13,599 counterfactual burst tickets on 40 nights
-  (11 September to 5 November 2026) the first day opened at or over the buy
+- A burst ticket's buy stop is the last close plus a cushion, the larger
+  of $0.02 and 0.1% of the close (the `close_plus_cushion` rule; the brief's
+  `tickets[].order_entry.buy_stop_vs_last_close` reads `above`). A ticket
+  from a record made before that rule has its buy stop at the last close
+  itself, and reads `equal`. Fidelity's stated rule is that
+  a buy stop must be entered above the current price. So the ticket can be
+  entered as written only while the stock trades under its buy stop. Over
+  13,599 counterfactual burst tickets on 40 nights (11 September to 5
+  November 2026), with the buy stop at the close, the first day opened at or over the buy
   stop 54.8% of the time, and in 40.4% it opened at or over the buy stop
   and at or under the limit, which is the case the model books as "filled
   at the open". Only an order already resting before the open could take that
@@ -220,7 +224,7 @@ The first two matter most. Read them twice.
 ### 2.6 Much of the method is the project's own provisional choice
 
 - Pradeep Bonde's momentum burst is the idea. Entering the next session
-  through a buy stop at the burst close, the stand-in stop, the limit set
+  through a buy stop a cushion over the burst close, the stand-in stop, the limit set
   from the stop, the checklist's weights and grade bands, the admission
   gate, the AI chart reader, the scaling of the market thresholds and the
   RED ratio rules are all this project's own choices, none of them tested
@@ -715,7 +719,7 @@ Written from the burst day's close, low and high.
 
 | Price | Rule | Mark |
 |---|---|---|
-| **Trigger** | A buy stop at the burst day's close. | P |
+| **Trigger** | A buy stop at the burst day's close plus the larger of $0.02 and 0.1% of the close, the setting-up ticket's own cushion (`close_plus_cushion`). A record that archives no `plan.burst_trigger_rule` has the buy stop at the close itself. | P |
 | **Stop** | The burst day's low. If that leaves no room, the midpoint of the day's high and low. | P (a stand-in for his entry-day low) |
 | **Limit** | The lower of two prices: the close plus 4%, and the highest price that keeps the stop within 4% of the limit. If neither stop leaves a limit above the trigger, the ticket is withheld and the setup is kept as research. | B for the 4% stop line, P for the rule |
 | **Day-2 line** | The close plus 4%. An open above it is not taken: "day 2 is spent". It is a rule of its own, not the limit; the two prices are the same only when the close plus 4% is the lower of the limit's two prices (the ticket's `limit_basis` is `outer_ceiling`). | P |
@@ -1367,7 +1371,7 @@ meaning.
 | A separate day limit buy is accepted and can fill under its limit. | Seen on the owner's screen, 4 November 2026. |
 | Fidelity offers an OTO with a Stop Limit buy as the primary, on the web and on the phone. | NOT CONFIRMED. |
 | The buy can be Day while its sell stop is Good 'til Canceled. | NOT CONFIRMED. Fidelity's own pages disagree. |
-| Before the open, which price Fidelity compares a buy stop with: the last close or a pre-market quote. | NOT CONFIRMED. If it is the close, every burst ticket is refused before the open. |
+| Before the open, which price Fidelity compares a buy stop with: the last close or a pre-market quote. | NOT CONFIRMED. If it is the close, a burst ticket with its buy stop at the close is refused before the open; one with the cushion sits above the close. |
 | An expiry time (9:00 AM CT) can be set on the buy. | NOT CONFIRMED. |
 | A sell limit for half a position can rest beside a full-size sell stop. | NOT CONFIRMED. |
 | Whether either IRA has limited margin. | NOT CONFIRMED. |
@@ -1384,7 +1388,8 @@ an instruction. The state `unknown` means no recent price was read: ask the
 owner for his own quote before anything else.
 
 For a burst ticket the lines usually run, low to high: stop, skip-below
-line, trigger (the last close), limit, day-2 line. On about a third of
+line, last close, trigger, limit, day-2 line. Its trigger is the last close
+plus the larger of $0.02 and 0.1% of the close. On about a third of
 burst setups the stop sits at or above the skip-below line. Then no price
 is `below_entry_floor`: a price at or under the stop is `below_stop`, and
 `below_trigger` starts just over the stop. The brief's
@@ -1396,7 +1401,9 @@ when a state cannot occur. Use those boundaries, not the usual order.
 The entry window is 8:30 to 9:00 AM CT (9:30 to 10:00 AM ET). The last
 column is how often the first day opened in that state over 13,599
 counterfactual burst tickets on 40 nights (11 September to 5 November
-2026). Those were not published tickets.
+2026). Those were not published tickets, and their buy stop was the close:
+the cushion moves an open just over the close from
+`within_published_band` to `below_trigger`.
 
 | State | Where the price is | Before the open | In the window | Opens |
 |---|---|---|---|---|
@@ -1406,7 +1413,7 @@ counterfactual burst tickets on 40 nights (11 September to 5 November
 | `above_limit` | over the limit, up to the day-2 line | Do not place it. | Skip. If an order was resting it has triggered and is now a live limit order: cancel it. | 12.7% |
 | `above_day2_extension` | over the day-2 line | Do not place it. | Skip. Cancel a resting order. | 1.7% |
 
-In short: once a burst stock trades at or over its last close, the ticket
+In short: once a burst stock trades at or over its buy stop, the ticket
 as written is on the wrong side of the market. That happened at the first
 day's open 54.8% of the time in that count.
 
@@ -1517,6 +1524,12 @@ How to read U5:
 | no | ok | ok | no | no | the last close, strictly above | Cannot be entered before the open. Only after it, while the stock trades under its last close. |
 | no | no | ok | ok | ok | the pre-market quote | Can be entered before the open only while the stock is quoted under its last close. |
 | anything else | | | | | not established | Record the five answers. Change nothing on one morning's evidence. |
+
+The last column reads a ticket whose buy stop is the last close (test A1
+or B1). A ticket with the cushion is test A2's case: where Fidelity
+compares with the last close it can be entered before the open as written,
+and where it compares with the pre-market quote, only while the stock is
+quoted under its buy stop.
 
 Cancel every test order before 8:25 AM CT except one kept for the open.
 

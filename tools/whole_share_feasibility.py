@@ -106,7 +106,8 @@ def one_share_ceilings(account: plan.Account, multiplier: float) -> dict[str, fl
             "ideal_stop": study.floor_to_cents(budget / (plan.IDEAL_STOP_PCT / 100))}
 
 
-def _sized(row: dict, account: plan.Account, multipliers: set[float]) -> dict[float, dict] | str:
+def _sized(row: dict, account: plan.Account, multipliers: set[float],
+           trigger_rule: str = plan.LEGACY_BURST_TRIGGER_RULE) -> dict[float, dict] | str:
     """The production ticket at each multiplier, or why the row cannot be sized."""
     why = study.usable_bar(row)
     if why:
@@ -114,7 +115,7 @@ def _sized(row: dict, account: plan.Account, multipliers: set[float]) -> dict[fl
     out = {}
     for m in multipliers:
         try:
-            p = study.current_plan(row, m, account)
+            p = study.current_plan(row, m, account, trigger_rule)
         except (ValueError, KeyError) as exc:   # the pipeline logs and skips; so does this
             return str(exc)[:80]
         out[m] = {"eligible": bool(p["eligible"]), "shares": int(p["shares"]), "limit": p["limit"],
@@ -148,7 +149,7 @@ def reading(data: dict, *, source: str, identity: str, overrides: dict[str, Any]
         if not isinstance(row, dict):
             missing.append({"ticker": None, "why": "row is not an object"})
             continue
-        sized = _sized(row, account, multipliers)
+        sized = _sized(row, account, multipliers, plan.archived_burst_trigger_rule(record.get("rules")))
         if isinstance(sized, str):
             missing.append({"ticker": row.get("ticker"), "why": sized})
             continue

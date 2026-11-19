@@ -23,7 +23,9 @@ method is Pradeep Bonde's (Stockbee) momentum burst: reaction candidates
 discovered by either the 4% or Dollar route, admitted to the trade band when
 the 4% scan found them or the dollar scan found them on a range-expansion,
 higher-volume day (`src/admission.py`), then judged for expansion out of
-a quiet base, bought the next session through a buy stop at the burst close,
+a quiet base, bought the next session through a buy stop a cushion over the burst close
+(`plan.trigger_cushion()`; at the close itself in a record made before
+`plan.burst_trigger_rule`),
 up to a limit set from the stop, with the stop at the burst bar's low or its
 midpoint and every such ticket at half risk, sold into strength over three to
 five days, and only when breadth allows it. `knowledge/method.md` says whose
@@ -616,16 +618,19 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    the sell stop is written as part of the order (OTO), that Fidelity
    releases an OTO stop only when the buy fills in full, and that whether
    Fidelity's ticket accepts this OTO is unconfirmed; on a night with a burst
-   ticket it adds, before the window, that whether Fidelity accepts a burst
-   ticket's buy stop at its last close is unconfirmed, and inside it, that a
+   ticket whose buy stop is its own close (one made before
+   `plan.burst_trigger_rule`) it adds, before the window, that whether
+   Fidelity accepts a burst ticket's buy stop at its last close is
+   unconfirmed, and inside it, that a
    burst ticket cannot be entered as written while the stock trades at or
    over its buy stop. Beside a burst ticket's order, directly after that text, a second
    labelled note: Fidelity's rule, that a buy stop or buy stop-limit order
    must be entered at a stop price above the current market price
    (`knowledge/broker-fidelity.md`, item 2, read off a search excerpt), and
    SpicyStock's advice, that a burst ticket's buy stop is the burst day's
-   close, so it can be entered as written only while the stock trades under
-   that price; that which price Fidelity compares it with before the open is
+   close or a cushion over it (the trigger rule its record archived says
+   which), so it can be entered as written only while the stock trades under
+   the buy stop; that which price Fidelity compares it with before the open is
    unconfirmed; that once the stock trades at or over the buy stop
    SpicyStock offers no other order; and that the model's *filled at the
    open* assumes an order already resting before the open
@@ -647,11 +652,15 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    as the owner's words, Fidelity's screen with its date, or the owner's
    practice, which is never a SpicyStock ticket. Every Fidelity fact in it is
    a search excerpt; nothing was read on Fidelity's own pages. A burst
-   ticket's buy stop is its last close: before the open it is unconfirmed
-   which price Fidelity compares it with, and once the stock trades at or
-   over that close the order cannot be entered as written. Over 13,599
-   counterfactual burst tickets on 40 nights (signal sessions 11 September to
-   5 November 2026), day 1 opened at or over the buy stop on 54.8%.
+   ticket made before `plan.burst_trigger_rule` has its buy stop at its last
+   close: before the open it is unconfirmed which price Fidelity compares it
+   with, and once the stock trades at or over that close the order cannot be
+   entered as written. Over 13,599 counterfactual burst tickets on 40 nights
+   (signal sessions 11 September to 5 November 2026), with the buy stop at
+   the close, day 1 opened at or over the buy stop on 54.8%. A ticket made
+   under `close_plus_cushion` sits a cushion over the close, as a setting-up
+   ticket does; `tools/burst_trigger_comparison.py` reads the retained
+   publications under both rules.
    `knowledge/broker-fidelity-protocol.md` is the one-sitting check of every
    unconfirmed point, with order entry by price state and the cash-account
    working rules; `knowledge/trade-ledger.md` is the ledger of real orders
@@ -1407,7 +1416,12 @@ archived, and a record from before the block is asked for none. The run:
   ticket status. An admitted burst gets a plan sized from the configured
   account (default $10,000, 0.5% risk, 25% cap, four slots). Four prices it
   keeps apart, because they are four rules: the **trigger**, a buy stop at
-  the burst close; the ticket's **limit** (`plan.burst_limit`), the day-2
+  the burst close plus `plan.trigger_cushion()`, the larger of
+  `plan.TRIGGER_CENTS` and `plan.TRIGGER_FRACTION` of the close, the same
+  cushion a setting-up ticket sits over its box (`plan.burst_trigger()`:
+  the `close_plus_cushion` rule the record archives as
+  `plan.burst_trigger_rule`; a record made before it, which archived none,
+  was made and is replayed under `close`, the buy stop AT the burst close); the ticket's **limit** (`plan.burst_limit`), the day-2
   ceiling narrowed to the highest price at which the structural stop is
   still inside his 4% line,
   `min(close +4%, floor_to_cents(stop / (1 - plan.MAX_STOP_PCT/100)))` over
@@ -3024,7 +3038,8 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 probe_sec_access.py (a dispatch-only diagnostic: SEC requests for AAPL and ZIM, or up to four named tickers, through the issuer collector's transport, and the index rows its row rules refuse, printed to the log; never published)
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)
                 entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)
-                historical_backtest.py (offline: the run's own stages replayed over a recovered archive; reader not run)
+                historical_backtest.py (offline: the run's own stages replayed over a recovered archive; reader not run; `--burst-trigger-rule` names the burst buy stop's rule)
+                burst_trigger_comparison.py (offline: the signal-outcome study's own walk over the retained publications, every burst ticket built under each burst trigger rule)
                 backtest_timeline.py (offline: the owner's private backtest record read into one row per night per gate -- the night's breadth and its tickets' outcomes by scorecard bucket, uncertainty kind and settled R -- every field copied by type from a fixed list; a private key, or a ticker the record names as a whole word in any case in a key or string that is not one of the tool's own words, is a refusal, as are a night or gate whose counts do not reconcile, a malformed file and an --output over the private file)
                 signal_outcomes.py (offline: every archived signal ticketed and walked over the records' own bars; a counterfactual)
                 build_historical_findings.py (a reader: docs/historical-findings.json from the committed evidence, every number bound to its source digest; --check holds it)

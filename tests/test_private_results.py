@@ -347,7 +347,9 @@ def test_the_model_outcome_is_read_off_a_later_publication_and_never_added():
     model = row["model"]
     assert model["status"] == "observed" and model["session"] == "2026-09-11" and model["publication"].endswith("next.json")
     plan = model["plan"]
-    assert (plan["status"], plan["fill"], plan["exit_price"], plan["result_pct"], plan["shares"]) == ("stopped", "filled at the open, $124.21", 121.42, -2.25, 4)
+    # the model's own walk, as the later publication carries it: the day opened a cent over the ticket's
+    # $124.33 buy stop and fell through its stop
+    assert (plan["status"], plan["fill"], plan["exit_price"], plan["result_pct"], plan["shares"]) == ("stopped", "filled at the open, $124.34", 121.42, -2.35, 4)
     # The owner's figure is the owner's: 1 share, $124.30 in, $121.40 out.
     assert row["reported"]["net"] == "-2.910000" and reading["reported_totals"]["net"] == "-2.910000"
     assert "Model" not in json.dumps(row["reported"]) and model["basis"].startswith("daily-bar model replay")

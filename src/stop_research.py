@@ -171,7 +171,10 @@ def build(canonical_raw, *, objects=None, picks=None, generated_at=None, allow_f
     same_account = all(_number(data["account"].get(k), True) and data["account"][k] == v for k, v in ACCOUNT.items())
     _require(not registered or same_account, "unsupported account")
     _require(same_account or all(_number(data["account"].get(k), True) and data["account"][k] > 0 for k in ACCOUNT), "unsupported account")
-    _require(data["rules"]["plan"] == {k.partition(".")[2]: v for k, v in plan.RULES.items()}, "unsupported planner rules")
+    # the planner's rules as this code carries them; a record from before the
+    # burst trigger rule (plan.archived_rules_differ) is the same planner here,
+    # since the comparison builds anticipation tickets only
+    _require(not plan.archived_rules_differ(data["rules"]["plan"]), "unsupported planner rules")
     _require(data["rules"]["plan"]["max_stop_pct"] == BASELINE_STOP_PCT, "unsupported baseline cap")
     _require(data["rules"].get("event_risk", {}).get("coverage") == event_risk.COVERAGE, "missing archived event coverage")
     checked = provenance.verify(data, picks, objects, require_sources=require_sources, require_picks=picks is not None)
