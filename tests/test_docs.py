@@ -1009,7 +1009,10 @@ def test_the_readme_quotes_the_service_watch_from_the_tool_and_its_workflow():
     from tools import service_watch as sw
     assert f"still absent {sw.ALERT_WITHIN_HOURS} hours before its recovery limit" in README
     assert f"or, for {sw.MISSING_ALERT_HOURS} hours, once it is past it" in README
-    assert f"Flagged, for {sw.MORNING_ALERT_HOURS} hours, only when the record published a ticket" in README
+    assert f"Flagged, for {sw.MORNING_ALERT_HOURS} hours after it was due, on every session, ticket or not" in README
+    assert sw.MORNING_DUE_CT == "08:45" and "From 8:45 AM CT on the applicable session (`MORNING_DUE_CT`)" in README
+    assert f"start within {sw.LATE_START_MINUTES} minutes of its primary slot" in README
+    assert f"Flagged for {sw.LATE_START_ALERT_HOURS} hours after the run started" in README
     assert (sw.EXIT_OK, sw.EXIT_ALERT, sw.EXIT_UNKNOWN) == (0, 1, 2)
     assert "exits 0 with nothing to flag, 1 on an alert and 2 when the record cannot answer" in README
     wf = yaml.safe_load((ROOT / ".github" / "workflows" / "service-watch.yml").read_text())
@@ -1017,6 +1020,15 @@ def test_the_readme_quotes_the_service_watch_from_the_tool_and_its_workflow():
     assert crons == ["7 5 * * *", "7 9 * * *", "7 16 * * 1-5"]
     assert "at 05:07 and 09:07 UTC daily and 16:07 UTC on weekdays" in README
     assert "only_if_unpublished" in sw.DISPATCH_HINT and "**only_if_unpublished**" in README_RAW
+
+
+def test_the_readme_quotes_the_dispatchers_slots_from_the_tool():
+    from tools import dispatch_schedule as ds
+    for workflow, _, zone, times in ds.SLOTS:
+        when = ", ".join(times[:-1]) + (" and " if len(times) > 1 else "") + times[-1]
+        assert f"`{workflow}` at {when} {zone.key}" in README, workflow
+    assert f"A slot is due for {ds.DUE_MINUTES} minutes from its instant" in README
+    assert ds.TOKEN_ENV == "GITHUB_TOKEN" and "GITHUB_TOKEN" in ENV and "Actions read and write" in ENV
 
 
 def test_the_readme_dates_the_registry_review_as_the_registry_does():

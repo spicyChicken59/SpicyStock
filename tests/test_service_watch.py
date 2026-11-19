@@ -27,6 +27,7 @@ RETRY = datetime(2026, 9, 12, 0, 16, tzinfo=UTC)
 LIMIT = datetime(2026, 9, 14, 13, 30, tzinfo=UTC)
 COLLECT = datetime(2026, 9, 11, 13, 0, tzinfo=UTC)
 CUTOFF = datetime(2026, 9, 11, 14, 0, tzinfo=UTC)
+DUE = datetime(2026, 9, 11, 13, 45, tzinfo=UTC)               # 8:45 AM CDT, sw.MORNING_DUE_CT
 SECOND = timedelta(seconds=1)
 
 
@@ -181,10 +182,15 @@ def test_a_record_that_cannot_say_answers_unknown_and_flags_nothing(record):
 
 
 # ---------------------------------------------------------------- morning ---
-def test_the_morning_check_is_not_judged_before_its_window_closes(record):
+def test_the_morning_check_is_not_judged_before_its_due_time(record):
     raw = encode(record)
-    out = sw.morning(record, raw, None, "morning.json is not a regular file", CUTOFF - SECOND)
+    assert sw.morning_due("2026-09-11") == DUE and sw.MORNING_DUE_CT == "08:45"
+    assert sw.morning_due("2026-12-15").astimezone(UTC).hour == 14            # 8:45 AM CST
+    out = sw.morning(record, raw, None, "morning.json is not a regular file", DUE - SECOND)
     assert (out["judgement"], out["alert"], out["receipt"]) == (sw.NOT_DUE, False, None)
+    at = sw.morning(record, raw, None, "morning.json is not a regular file", DUE)
+    assert (at["judgement"], at["alert"]) == (sw.NOT_LANDED, True) and at["due_at"] == "2026-09-11T08:45:00-05:00"
+    assert "landed by 2026-09-11T08:45:00-05:00" in at["sentence"]
 
 
 @pytest.mark.parametrize("generated", [COLLECT, COLLECT + timedelta(minutes=22), CUTOFF])
@@ -268,8 +274,8 @@ def test_an_absent_morning_file_has_not_landed_and_says_why(record):
 
 
 @pytest.mark.parametrize("now,alert", [
-    (CUTOFF + timedelta(hours=sw.MORNING_ALERT_HOURS) - SECOND, True),
-    (CUTOFF + timedelta(hours=sw.MORNING_ALERT_HOURS), False),
+    (DUE + timedelta(hours=sw.MORNING_ALERT_HOURS) - SECOND, True),
+    (DUE + timedelta(hours=sw.MORNING_ALERT_HOURS), False),
 ])
 def test_a_check_that_did_not_land_is_flagged_for_a_bounded_time(record, now, alert):
     raw = encode(record)
@@ -281,14 +287,15 @@ def test_a_check_that_did_not_land_is_flagged_for_a_bounded_time(record, now, al
     ({"reaction": 0, "anticipation": 0}, 0, "the record published 0 tickets."),
     ({"reaction": 2, "anticipation": 1}, 3, "the record published 3 tickets."),
 ])
-def test_a_record_with_no_ticket_is_reported_and_never_flagged(record, stages, count, words):
+def test_a_missing_check_is_flagged_with_or_without_a_ticket(record, stages, count, words):
     changed = copy.deepcopy(record)
     for family, value in stages.items():
         changed["funnel"][family]["stages"]["ticket"] = value
     raw = encode(changed)
     out = sw.morning(changed, raw, None, "morning.json is not a regular file", CUTOFF)
     assert out["tickets"] == count and out["judgement"] == sw.NOT_LANDED and words in out["sentence"]
-    assert out["alert"] is (count > 0)
+    # every session's morning check is the service's: a record with no ticket still needs one
+    assert out["alert"] is True
 
 
 @pytest.mark.parametrize("break_it", [
@@ -298,12 +305,12 @@ def test_a_record_with_no_ticket_is_reported_and_never_flagged(record, stages, c
     lambda r: r["funnel"]["reaction"]["stages"].__setitem__("ticket", -1),
     lambda r: r["funnel"]["reaction"]["stages"].pop("ticket"),
 ])
-def test_a_record_that_does_not_count_its_tickets_is_never_flagged(record, break_it):
+def test_a_record_that_does_not_count_its_tickets_is_flagged_and_says_so(record, break_it):
     changed = copy.deepcopy(record)
     break_it(changed)
     assert sw.ticket_count(changed) is None
     out = sw.morning(changed, encode(changed), None, "morning.json is not a regular file", CUTOFF)
-    assert out["judgement"] == sw.NOT_LANDED and out["alert"] is False
+    assert out["judgement"] == sw.NOT_LANDED and out["alert"] is True
     assert "does not say how many tickets it published" in out["sentence"]
 
 
@@ -335,7 +342,7 @@ def test_the_watch_reads_the_two_files_and_combines_the_answers(record, tmp_path
 def test_an_unknown_evening_is_its_own_exit_code(record, tmp_path):
     bare = copy.deepcopy(record)
     del bare["run"]["calendar"]
-    out = sw.watch(docs_with(tmp_path, bare), CUTOFF - SECOND)
+    out = sw.watch(docs_with(tmp_path, bare), DUE - SECOND)
     assert out["evening"]["judgement"] == sw.UNKNOWN and out["alert"] is False and out["exit_code"] == sw.EXIT_UNKNOWN
 
 
@@ -377,7 +384,7 @@ def test_an_absent_linked_or_oversize_record_is_refused(record, tmp_path, monkey
     with pytest.raises(sw.Unreadable, match="over the"):
         sw.watch(docs, CUTOFF)
     monkeypatch.setattr(sw, "MAX_RECORD_BYTES", len(encode(record)))
-    assert sw.watch(docs, CUTOFF - SECOND)["exit_code"] == sw.EXIT_OK
+    assert sw.watch(docs, DUE - SECOND)["exit_code"] == sw.EXIT_OK
 
 
 def test_an_oversize_morning_file_is_a_check_that_did_not_land(record, tmp_path, monkeypatch):
@@ -420,7 +427,7 @@ def test_mail_goes_once_per_alert_through_the_evenings_transport_and_only_when_a
     assert sw.main(["--docs", str(docs), "--now", (CUTOFF + timedelta(hours=1)).isoformat(), "--mail"]) == sw.EXIT_ALERT
     assert [subject for subject, _ in sent] == ["SpicyStock watch: no morning check landed for 2026-09-11"]
     sent.clear()
-    assert sw.main(["--docs", str(docs), "--now", (CUTOFF - SECOND).isoformat(), "--mail"]) == sw.EXIT_OK
+    assert sw.main(["--docs", str(docs), "--now", (DUE - SECOND).isoformat(), "--mail"]) == sw.EXIT_OK
     assert sent == []                                   # nothing to flag: nothing mailed
     capsys.readouterr()
 
@@ -458,3 +465,54 @@ def test_the_log_lines_carry_each_action_under_its_answer(record, tmp_path):
     printed = sw.lines(sw.watch(docs, LIMIT - timedelta(hours=2)))
     assert printed[1].startswith("Evening: late_near_limit (late).") and printed[2] == f"  {sw.DISPATCH_HINT}"
     assert printed[3].startswith("Morning: not_landed.") and printed[-1] == "Alert."
+
+
+# ------------------------------------------------------------------ start ---
+#: the record's own primary slot: the 10 September evening that wrote it
+STARTED_SLOT = datetime(2026, 9, 10, 22, 16, tzinfo=UTC)
+
+
+def late(record, minutes):
+    changed = copy.deepcopy(record)
+    changed["run"]["delivery"]["after_primary_minutes"] = minutes
+    return changed
+
+
+def test_an_evening_that_started_near_its_slot_is_on_time(record):
+    assert sw._instant(record["run"]["delivery"]["primary_slot_at"]) == STARTED_SLOT
+    out = sw.start(record, STARTED_SLOT + timedelta(hours=1))
+    assert record["run"]["delivery"]["after_primary_minutes"] <= sw.LATE_START_MINUTES
+    assert (out["judgement"], out["alert"], out["session"]) == (sw.ON_TIME, False, "2026-09-10")
+    assert out["sentence"].startswith("The 2026-09-10 evening run started 14 minutes after its primary slot")
+
+
+@pytest.mark.parametrize("minutes, judgement", [(sw.LATE_START_MINUTES, sw.ON_TIME), (sw.LATE_START_MINUTES + 0.1, sw.LATE_START),
+                                                (298.3, sw.LATE_START)])
+def test_an_evening_that_started_more_than_an_hour_late_is_flagged(record, minutes, judgement):
+    out = sw.start(late(record, minutes), STARTED_SLOT + timedelta(minutes=minutes, hours=1))
+    assert out["judgement"] == judgement and out["alert"] is (judgement == sw.LATE_START)
+    if judgement == sw.LATE_START:
+        assert f"more than {sw.LATE_START_MINUTES} minutes late" in out["sentence"] and out["action"] == sw.START_HINT
+
+
+@pytest.mark.parametrize("hours, alert", [(sw.LATE_START_ALERT_HOURS, False), (sw.LATE_START_ALERT_HOURS - 0.01, True)])
+def test_a_late_start_is_flagged_for_a_bounded_time(record, hours, alert):
+    started = STARTED_SLOT + timedelta(minutes=200)
+    out = sw.start(late(record, 200), started + timedelta(hours=hours))
+    assert (out["judgement"], out["alert"]) == (sw.LATE_START, alert)
+
+
+@pytest.mark.parametrize("value", [None, True, "298"])
+def test_a_record_without_a_readable_start_says_so_and_flags_nothing(record, value):
+    out = sw.start(late(record, value), STARTED_SLOT)
+    assert (out["judgement"], out["alert"]) == (sw.UNKNOWN, False)
+
+
+def test_a_late_start_reaches_the_watchs_exit_code_and_its_mail(record, tmp_path):
+    raw = encode(late(record, 298.3))
+    changed = json.loads(raw)
+    docs = docs_with(tmp_path, changed, receipt(raw, COLLECT + timedelta(minutes=22)))
+    out = sw.watch(docs, STARTED_SLOT + timedelta(hours=6))
+    assert out["start"]["alert"] is True and out["exit_code"] == sw.EXIT_ALERT
+    assert any(subject == "SpicyStock watch: the 2026-09-10 evening run started late" for subject, _ in sw.messages(out))
+    assert any(line.startswith("Start: late_start. ") for line in sw.lines(out))

@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6612 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6666 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15509,3 +15509,53 @@ owner's sitting shows. Omit: any change to the anticipation cushion.
 
 **Not claimable:** the first night under the rule; the private backtest; any
 trading edge.
+
+## Checkpoint, 19 Nov 2026 -- PR #221 accepted; on-time starts from outside GitHub's scheduler, and a watch that flags a late one (PR 2)
+
+**PR #221, accepted.** Merged as `595ed02a` on `main`, all seven checks green
+on `5845b237` (pytest 34 minutes, page, the gate, the central and stress
+native cases, both gitleaks runs).
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` restarted from
+`main` at `595ed02a`. Nothing under `src/` moves and no rule moves; the
+published record, picks, receipts, history, evidence and ledger are
+untouched; nothing is deployed, dispatched or mailed.
+
+**The dispatcher** (`tools/dispatch_schedule.py`). One `workflow_dispatch` at
+each slot on XNYS sessions (`src/sessions.py`): `evening.yml` at 18:20, 19:20,
+20:20 and 21:20 America/New_York with `only_if_unpublished` ticked, so the four
+publish the newest session once; `morning.yml` at 08:20 America/Chicago;
+`service-watch.yml` at 06:00, 08:45 and 11:00 America/Chicago. A slot is due for
+`DUE_MINUTES` (30) from its instant. Before it asks, it reads the workflow's
+runs created since the slot by a dispatch, so a repeat tick, a restart or a
+second copy starts nothing twice; an optional `--state` ledger answers without
+asking GitHub again. One credential, `GITHUB_TOKEN` (fine-grained, Actions
+read and write on this repository alone); it logs the workflow, the slot, the
+run id and an HTTP status, never a token or a body. Its Railway service is
+`deploy/scheduler/` (its own Dockerfile from the host's pinned base,
+`exchange_calendars` alone under the constraints, two files copied, an
+unprivileged user; `railway.json` one replica, restarted always), and
+deploying it is the owner's step (`docs/operations/external-scheduler.md`).
+GitHub's crons stay as the backup.
+
+**The watch.** `tools/service_watch.py` gains `start`: an evening run more than
+`LATE_START_MINUTES` (60) after its 6:16 PM ET primary slot, read off the
+record's own `run.delivery.after_primary_minutes`, flagged for 14 hours; and
+judges the morning check from `MORNING_DUE_CT` (08:45) on the applicable
+session, on every session, ticket or not. `actions/checkout` and
+`actions/setup-python` move to their pinned Node 24 releases in every workflow
+but `secret-scan.yml`, whose exact bytes the native-5 disposition holds to its
+retained public blob (`tests/secret_scan_controls.py`); the first full suite
+caught the bump there, and it stays on `actions/checkout@v4` until a dated
+disposition moves it.
+
+**Mutation pass**, each mutant in a detached worktree judged by the whole test
+files naming its rule: 19 mutants and a control. 16 died first; **three
+survived, each a hole**: the ledger ignored (the repeat-tick test passed
+because GitHub's own listing also answered), the listing's event filter
+dropped (the double ignored the query), and the previous day left out of the
+due window (no real slot is near midnight; a test now drives one in Chicago).
+All three die re-judged; the control lives.
+
+**Not claimable:** that Railway builds or runs the dispatcher; any on-time
+start.
