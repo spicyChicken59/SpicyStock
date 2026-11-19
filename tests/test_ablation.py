@@ -182,3 +182,25 @@ def test_the_index_and_the_readme_name_the_ablation_with_the_files_figures():
     assert "and every one of their night intervals includes zero" in index
     readme = (ROOT / "README.md").read_text()
     assert "ablation.py (" in readme
+
+
+def test_a_partial_letter_earns_half_its_weight():
+    # every letter passed but L and C, each partial: 1.5 * 4 + 2.0 / 2 * 2 = 8.0,
+    # an A by the checklist's bands; full weight on a partial would make it 10.0
+    row = burst()
+    for c in row["quality"]["checks"]:
+        if c["letter"] in ("L", "C"):
+            c["passed"], c["partial"] = False, True
+    assert ab.quality_grade(row["quality"]["checks"], 8, [], quality.WEIGHTS) == "A"
+    assert quality.grade_of(8.0, 8, False) == "A" and quality.grade_of(10.0, 8, False) == "A+"
+
+
+@pytest.mark.parametrize("settled, readable", [(19, False), (20, True), (21, True)])
+def test_a_variant_reads_a_rate_from_the_scorecards_own_floor(settled, readable):
+    from src import record
+    assert record.SCORECARD_MIN_PLANS == 20
+    spec = {"cost_bps_per_side": [0, 5, 20], "bootstrap": {"reps": 200, "seed": 7}}
+    rows = [{"bucket": "settled", "r": 1.0 if i % 2 else -1.0, "session": f"2026-11-{1 + i % 9:02d}",
+             "ticker": f"T{i}", "ticket": {}, "filled": True, "uncertainty": None,
+             "cost_r": {"0": 1.0, "5": 0.9, "20": 0.8}} for i in range(settled)]
+    assert ab.summary_of(rows, spec)["readable"] is readable
