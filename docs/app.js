@@ -1892,6 +1892,19 @@
   // tests/test_broker_buy_stop.py.
   const BROKER_BUY_STOP = 'Fidelity’s rule: a buy stop or buy stop-limit order must be entered at a stop price above the current market price. SpicyStock’s advice: a burst ticket’s buy stop is the burst day’s close, so it can be entered as written only while the stock trades under that price; which price Fidelity compares it with before the open (the close or a pre-market quote) is unconfirmed. Once the stock trades at or over the buy stop the ticket cannot be entered as written, and SpicyStock offers no other order; the model’s ‘filled at the open’ assumes the order was already resting before the open.';
   const buyStopNote = () => el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-buy-stop': '', text: BROKER_BUY_STOP });
+  // Where a burst ticket's two notes sit on a screen the reader has opened
+  // nothing on -- the Burst's action card and the decision summary's entry --
+  // they ride under one native disclosure, closed, both in the DOM with their
+  // attributes. Printed open, the second note pushed the card's Copy order off
+  // the phone screen the card starts on: on the full fixture's ticket at
+  // 390 px the control's top went from 602 px to 852 px under the card's own
+  // top, and a phone screen is 844 px tall. Every other site is under
+  // something the reader opened themselves and prints the notes open. A
+  // setting-up ticket has the one note and keeps it open, as before.
+  const brokerNotesFold = () => el('details', { 'class': 'sc-disclosure ss-broker-notes', 'data-broker-notes': '' }, [
+    el('summary', null, el('span', null, [d.createTextNode('Broker notes'), el('span', { 'class': 'sc-muted', text: ' · Fidelity’s part-fill and buy-stop rules' })])),
+    el('div', { 'class': 'sc-disclosure__body' }, [partFillNote(), buyStopNote()])
+  ]);
   // Saying there is no ticket, once. STATUS_WORDS already answers "no ticket"
   // for below_grade, not_admitted and no_plan and CUT_WORDS answers "ticket
   // withheld", so a sentence that leads with those words must not close with
@@ -4789,10 +4802,8 @@
     // The bar's offer moves with the clock, so reclockDetail() repaints both.
     const need = c.plan || {};
     const barCarries = c.stage !== 'bursts' && !!(candidateAvailability(c) || {}).offered && !!text(need.order_line);
-    if (c.status === 'ticket' && !barCarries && (entryInstruction(c.plan) || text(need.order_line))) {
-      section.querySelector('[data-item="need"]').appendChild(partFillNote());
-      if (c.stage === 'bursts') section.querySelector('[data-item="need"]').appendChild(buyStopNote());
-    }
+    if (c.status === 'ticket' && !barCarries && (entryInstruction(c.plan) || text(need.order_line)))
+      section.querySelector('[data-item="need"]').appendChild(c.stage === 'bursts' ? brokerNotesFold() : partFillNote());
     if (c.status !== 'ticket') {
       const reasons = independentWaitReasons(c, current);
       section.querySelector('[data-item="wait"]').appendChild(el('ul', { 'data-all-blockers': '' }, reasons.map(p => el('li', { text: p }))));
@@ -4854,10 +4865,10 @@
       if (isNum(plan.hazard_multiplier) && plan.hazard_multiplier < 1) sizing.push(...(plan.hazards || []).map(sentence));
       if (isNum((plan.multipliers || {}).regime) && plan.multipliers.regime < 1) sizing.push('Breadth size multiplier: ' + plain(plan.multipliers.regime) + '.');
       if (sizing.length) box.appendChild(el('p', { 'class': 'sc-hint ss-action__sizing', 'data-sizing-note': '', text: sizing.join(' ') }));
-      // the card's Copy order hands the ticket over, so Fidelity's rules are
-      // read just above it and are never inside the copied lines
-      box.appendChild(partFillNote());
-      box.appendChild(buyStopNote());
+      // the card's Copy order hands the ticket over, so Fidelity's rules sit
+      // just above it, under one disclosure, and are never inside the copied
+      // lines
+      box.appendChild(brokerNotesFold());
     } else {
       box.appendChild(el('p', { 'data-no-entry-reason': '', text: c.status === 'ticket' ? available.reason : cap(sentence(noTicketWhy(c) || 'The run did not publish a ticket.')) }));
     }
@@ -5874,9 +5885,13 @@
     const held = node.contains(d.activeElement);
     const key = held ? focusKey(d.activeElement) : null;
     const wasOpen = node.tagName === 'DETAILS' ? node.open : null;
+    // the broker notes' disclosure inside the subtree: one the reader opened
+    // stays open in the replacement, read in document order
+    const folds = Array.prototype.map.call(node.querySelectorAll('details[data-broker-notes]'), (x) => x.open);
     const next = build();
     node.parentNode.replaceChild(next, node);
     if (wasOpen !== null && 'open' in next) next.open = wasOpen;
+    Array.prototype.forEach.call(next.querySelectorAll('details[data-broker-notes]'), (x, i) => { if (folds[i]) x.open = true; });
     if (!held) return next;
     // The control the reader was on may be the very one the clock withdrew --
     // a copy button on a window that closed is exactly that. Focus falls back
