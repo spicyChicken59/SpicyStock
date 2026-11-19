@@ -811,7 +811,9 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    SpicyStock is a view and a daily output that places no order, and links
    the rule sheet (`knowledge/rules.md`). The footer links the analyst brief
    (`brief.md`, `brief.json`) at run time; `docs/index.html` names neither
-   file. Nearby help opens on hover, keyboard focus or deliberate
+   file. The page does not ask whether they exist, so each link's title says
+   it answers 404 until the first evening run that writes the pair, and on a
+   night the pair could not be written. Nearby help opens on hover, keyboard focus or deliberate
    tap; its interactive disclosure supports Close/Escape and viewport placement,
    including Compare and enlarged text. `#/method/<topic>` routes open the
    relevant definition; **Back to what I was reading** restores selection,

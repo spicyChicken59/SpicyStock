@@ -259,7 +259,8 @@ The first two matter most. Read them twice.
 - SpicyStock reads no company news. Its earnings warning is an estimate
   from SEC filings, it runs only for published tickets, and it never
   refuses one. On a night with no ticket, which is most nights, no stock
-  gets any event check.
+  gets an earnings, 8-K or halt check; the registry still blocks the stocks
+  it lists, and the issuer check reads only the plans it blocked.
 - **What this means for you:** the event check of section 8.2 is yours, for
   every candidate, every time. "Not in the registry" is not "clear".
 - **Live value:** the brief's section "Event registry and coverage"
@@ -716,7 +717,7 @@ Written from the burst day's close, low and high.
 | **Trigger** | A buy stop at the burst day's close. | P |
 | **Stop** | The burst day's low. If that leaves no room, the midpoint of the day's high and low. | P (a stand-in for his entry-day low) |
 | **Limit** | The lower of two prices: the close plus 4%, and the highest price that keeps the stop within 4% of the limit. If neither stop leaves a limit above the trigger, the ticket is withheld and the setup is kept as research. | B for the 4% stop line, P for the rule |
-| **Day-2 line** | The close plus 4%. An open above it is not taken: "day 2 is spent". It is never the limit. | P |
+| **Day-2 line** | The close plus 4%. An open above it is not taken: "day 2 is spent". It is a rule of its own, not the limit; the two prices are the same only when the close plus 4% is the lower of the limit's two prices (the ticket's `limit_basis` is `outer_ceiling`). | P |
 
 Two more lines are printed beside them. The **skip-below line** is the
 close minus 2%: an open under it means the burst is failing, and the order

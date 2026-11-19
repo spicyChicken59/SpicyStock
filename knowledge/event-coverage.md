@@ -59,8 +59,8 @@ earnings calendar. So nothing reads:
 checks read tickets only, and the issuer check reads tickets and
 registry-blocked plans. Of the 48 sessions published from 11 September to 17
 November 2026 (54 publications), 11 carried a ticket and 15 carried a plan the
-registry blocked. On 26 sessions there was neither, and those four checks had
-no stock to read. The earnings block exists from the 2 November session: in
+registry blocked (4 sessions carried both). On 26 sessions there was neither,
+and those four checks had no stock to read. The earnings block exists from the 2 November session: in
 the 12 publications that carry it, 6 say `not_applicable` and the other 6 hold
 13 ticket rows between them, against 6,600 listed burst rows.
 

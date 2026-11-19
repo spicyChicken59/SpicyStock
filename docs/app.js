@@ -172,8 +172,11 @@
   // The analyst's daily brief (src/brief.py), written beside the record by the
   // evening. Linked from the footer at run time only: docs/index.html names
   // neither file, because the publication gate reads every href off that page
-  // and a night without the pair would fail it.
+  // and a night without the pair would fail it. The page does not ask whether
+  // the files exist (no request is added to a page load), so each link says in
+  // its title when it can be absent.
   const BRIEF_FILES = [['brief.md', 'analyst brief'], ['brief.json', 'brief.json']];
+  const BRIEF_TITLE = 'Written by the evening run beside the record. Absent until the first evening run that writes it, and on a night it could not be written; then this link answers 404. Its identity block names the record it was derived from.';
 
   // One fixed sentence per problem kind, the same seven src/report.py mails
   // (tests/test_docs.py holds the two lists equal); the message the run
@@ -5573,7 +5576,7 @@
     foot.appendChild(el('a', { href: RUNS_URL, target: '_blank', rel: 'noopener', text: 'dispatch' }));
     foot.appendChild(d.createTextNode(' · generated ' + (run.published_at ? timeET(run.published_at) : '—') + ' · paper prices, published daily bars, no slippage · not investment advice'));
     // the analyst's daily brief, when the evening wrote one beside the record
-    BRIEF_FILES.forEach((f) => { foot.appendChild(d.createTextNode(' · ')); foot.appendChild(el('a', { href: f[0], 'data-brief': f[0], text: f[1] })); });
+    BRIEF_FILES.forEach((f) => { foot.appendChild(d.createTextNode(' · ')); foot.appendChild(el('a', { href: f[0], 'data-brief': f[0], title: BRIEF_TITLE, text: f[1] })); });
   }
 
   // ---------------------------------------------------------------- live run log (optional; silent on failure)

@@ -228,7 +228,7 @@ Written by `burst_plan()` from the signal bar's close, low and high.
 | Stop: the signal bar's low, else the midpoint of its high and low (`stop_candidates()`). The first of the two that is under the trigger and leaves a limit above the trigger is used. | B* for the line it is held to; DERIVED for the two stand-ins |
 | Limit: the lower of two prices (`burst_limit()`, `LIMIT_RULE` = "stop_constrained"). One is the close plus `ENTRY_ABOVE_PCT` = 4.0 percent. The other is the highest price at which the stop is still within `MAX_STOP_PCT` = 4.0 percent of it, rounded down to the cent. When neither stand-in leaves a limit above the trigger, the ticket is withheld and the setup is kept. | B* for the stop line; DERIVED for the rule (12 Sep 2026) |
 | The order can fill only from the trigger up to the limit. Under the trigger it waits and buys nothing. | P |
-| Skip line above: an open more than `ENTRY_ABOVE_PCT` = 4.0 percent over the close is not taken. This line is never the limit. | P |
+| Skip line above: an open more than `ENTRY_ABOVE_PCT` = 4.0 percent over the close is not taken (`day2_spent_above`). It is a rule of its own, not the limit: the two prices are the same only when the close plus `ENTRY_ABOVE_PCT` is the lower of the limit's two prices (`limit_basis` = "outer_ceiling"). | P |
 | Skip line below: an open more than `ENTRY_BELOW_PCT` = 2.0 percent under the close is the burst failing and is not taken. | P |
 | A third printed line, the close plus `SKIP_GAP_PCT` = 8.0 percent, is the level at which he would be selling. | B* |
 | Indicative entry: the close plus `ASSUMED_SLIPPAGE_PCT` = 1.0 percent, capped at the limit. Only the targets and the exit levels on the ticket are quoted from it. It is not a fill and not the sizing price. | P |

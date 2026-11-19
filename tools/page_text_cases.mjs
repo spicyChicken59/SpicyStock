@@ -515,6 +515,9 @@ async function recordView({ browser, base, open, check, eq, full, shotsDir }) {
       // the footer: the brief's two files, linked by the script
       const links = await page.locator('#foot-line a[data-brief]').evaluateAll((nodes) => nodes.map((a) => [a.getAttribute('href'), a.textContent]));
       eq(`${where}: the footer links the analyst brief and its JSON`, links, [['brief.md', 'analyst brief'], ['brief.json', 'brief.json']]);
+      // the page asks nothing of the files, so each link says when it can be absent
+      const titles = await page.locator('#foot-line a[data-brief]').evaluateAll((nodes) => nodes.map((a) => a.getAttribute('title') || ''));
+      check(`${where}: each brief link says it can be absent and answer 404`, titles.length === 2 && titles.every((t) => t.includes('could not be written') && t.includes('404') && t.includes('first evening run')), titles);
       check(`${where}: nothing scrolls sideways`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
       if (shotsDir) {
         await mkdir(shotsDir, { recursive: true });
