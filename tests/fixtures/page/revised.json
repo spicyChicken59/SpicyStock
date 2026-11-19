@@ -7,7 +7,7 @@
   "rules_version": "583191ddb160"
  },
  "cover": {
-  "h1": "Trade next session. 1 A-quality burst.",
+  "h1": "Trade next session. 2 A-quality bursts.",
   "dek": "Breadth is green: 2 up 4% vs 0 down, 10-day ratio 4. Full size.",
   "action_label": "Next-session orders",
   "action_target": "#orders",
@@ -898,19 +898,15 @@
     "timeframe": "1Min"
    },
    "status": "gathered",
-   "wanted": 13,
+   "wanted": 12,
    "set_aside": 0,
    "asked": 8,
    "fetched": 0,
    "stored": 0,
    "retained": 0,
    "waiting": 0,
-   "beyond_cap": 5,
+   "beyond_cap": 4,
    "failures": [
-    {
-     "key": "burst:AAPL:2026-09-10",
-     "kind": "no_minutes"
-    },
     {
      "key": "burst:CRDO:2026-08-31",
      "kind": "no_minutes"
@@ -928,6 +924,10 @@
      "kind": "no_minutes"
     },
     {
+     "key": "burst:MU:2026-08-17",
+     "kind": "no_minutes"
+    },
+    {
      "key": "burst:QTWO:2026-07-08",
      "kind": "no_minutes"
     },
@@ -941,11 +941,11 @@
     }
    ],
    "problems": [],
-   "sentence": "13 plans had a first day the daily bar could not place without minute bars; 8 asked for, 0 fetched, 0 stored; 5 past the run's 8; 8 not fetched (no_minutes); minute bars are retained for 0 plans' first days."
+   "sentence": "12 plans had a first day the daily bar could not place without minute bars; 8 asked for, 0 fetched, 0 stored; 4 past the run's 8; 8 not fetched (no_minutes); minute bars are retained for 0 plans' first days."
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "b7aa669c808e2e59f882d1e360ca128dea27e85f2d581bfa8e5b0bf1c4e14e1a"
+   "context_sha256": "c2e050985a095b82a0d260e9fb2bc8c86e1f50349a3c36873b0ae68c26317888"
   },
   "earnings": {
    "version": 2,
@@ -1079,16 +1079,58 @@
       "sentence": "Recent SEC current reports: 2 (8-K) filed in the 14 days before the signal or since, items 2.02 (Results of Operations and Financial Condition), 7.01 (Regulation FD Disclosure), 9.01 (Financial Statements and Exhibits); of those read, none is a material agreement (1.01), a bankruptcy (1.03), a completed acquisition or disposition (2.01), a delisting notice (3.01) or a change in control (5.01). SEC filings are not news coverage."
      },
      "sentence": "This quarter's results were filed 3 Sep 2026; the next earnings report is not estimated inside this ticket's hold window Mon 14 Sep–Fri 18 Sep (an inference from filing history, not clearance)."
+    },
+    {
+     "stage": "burst",
+     "ticker": "COIL",
+     "session": "2026-09-11",
+     "window": [
+      "2026-09-14",
+      "2026-09-15",
+      "2026-09-16",
+      "2026-09-17",
+      "2026-09-18"
+     ],
+     "cik": null,
+     "issuer": null,
+     "sources": [],
+     "error": null,
+     "retrieved_at": "2026-09-11T22:30:00Z",
+     "results_filings": [],
+     "coverage_start": null,
+     "foreign": false,
+     "current_reports": [],
+     "current_report_window": null,
+     "verdict": "unknown",
+     "placement": null,
+     "projection": null,
+     "observed": null,
+     "reason": "not_mapped",
+     "items": {
+      "status": "not_checked",
+      "material": [],
+      "codes": [],
+      "seen": 0,
+      "after_hold": 0,
+      "count": null,
+      "unretained_material": 0,
+      "unread": 0,
+      "reason": "not_mapped",
+      "sentence": "Recent SEC current reports not checked: SEC's ticker list does not name this symbol."
+     },
+     "sentence": "Earnings date not established: SEC's ticker list does not name this symbol. Check the company's announcement before entry."
     }
    ],
    "counts": {
-    "already_reported": 1
+    "already_reported": 1,
+    "unknown": 1
    },
    "items_counts": {
-    "listed": 1
+    "listed": 1,
+    "not_checked": 1
    },
    "requests": 2,
-   "sentence": "Earnings, estimated from SEC results filings for 1 ticket: 1 already reported this quarter. An estimate warns and never withholds a ticket. SEC current reports (8-K) in the 14 days before the signal or since: 1 with other items only; a material item names a kind of event and withholds nothing."
+   "sentence": "Earnings, estimated from SEC results filings for 2 tickets: 1 already reported this quarter; 1 not established. An estimate warns and never withholds a ticket. SEC current reports (8-K) in the 14 days before the signal or since: 1 with other items only; 1 not checked; a material item names a kind of event and withholds nothing."
   },
   "sanitised": {
    "replaced": 0,
@@ -2632,8 +2674,8 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "2bd537a7436d61d137b08086f7ddcd9f4113dcbc493123b298132a0a6489466e",
-     "context_sha256": "b7aa669c808e2e59f882d1e360ca128dea27e85f2d581bfa8e5b0bf1c4e14e1a",
+     "id": "0085db64d39ae87d718fd5b6600f5eb2f67ff11873919aa9e56a0d788409c07d",
+     "context_sha256": "c2e050985a095b82a0d260e9fb2bc8c86e1f50349a3c36873b0ae68c26317888",
      "plan_sha256": "d32d78df4508b72a6e62de2ccb5e110c4001892300b987a46ae35fc7149e2e8e",
      "pick_sha256": "ac99e3cc725c2f225d5b9a458e526ade8fd1a822562f3930a1c9b72fb4c4d0f3"
     }
@@ -2767,7 +2809,7 @@
     "ticker": "NVDA",
     "session": "2026-09-11",
     "rules_version": "583191ddb160",
-    "context_sha256": "b7aa669c808e2e59f882d1e360ca128dea27e85f2d581bfa8e5b0bf1c4e14e1a",
+    "context_sha256": "c2e050985a095b82a0d260e9fb2bc8c86e1f50349a3c36873b0ae68c26317888",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -2780,7 +2822,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "2bd537a7436d61d137b08086f7ddcd9f4113dcbc493123b298132a0a6489466e"
+    "id": "0085db64d39ae87d718fd5b6600f5eb2f67ff11873919aa9e56a0d788409c07d"
    },
    "series": [
     {
@@ -3994,9 +4036,9 @@
     "ticker": "COIL",
     "kind": "burst",
     "scan": "4pct",
-    "action": "refused",
+    "action": "buy_at_open",
     "eligible": true,
-    "reason": "the 4-slot model cap: 3 open model plans and NVDA take the rest; take COIL only if a plan above is not held or stops out",
+    "reason": null,
     "entry_ref": 115.62,
     "entry_low": 113.19,
     "entry_high": 115.72,
@@ -4156,10 +4198,31 @@
       "price": null
      }
     ],
-    "order_line": null,
-    "order_json": null,
-    "order_readback": null,
-    "order_terms": null,
+    "order_line": "Buy 5 COIL stop-limit: stop $115.62 limit $115.72, day · OTO sell 5 COIL stop-loss $111.10 GTC",
+    "order_json": {
+     "symbol": "COIL",
+     "action": "buy",
+     "quantity": 5,
+     "order_type": "stop_limit",
+     "stop_price": 115.62,
+     "limit_price": 115.72,
+     "time_in_force": "day",
+     "conditional": "one_triggers_the_other",
+     "then": {
+      "action": "sell",
+      "quantity": 5,
+      "order_type": "stop",
+      "stop_price": 111.1,
+      "time_in_force": "gtc"
+     }
+    },
+    "order_readback": "Buy 5 COIL stop limit 115.62 / 115.72 day, one-triggers-the-other sell 5 COIL stop loss 111.10 GTC",
+    "order_terms": [
+     "A day order rests until the close unless you cancel it. The plan's entry is the first 30 minutes: if it has not filled by then, cancel it yourself; SpicyStock places and cancels nothing.",
+     "An open above the $115.72 limit does not fill at the open, but the resting order stays live and can fill on a pullback under $115.72 later in the day: cancel it rather than let it.",
+     "An open under $113.19 is the burst failing: do not place the order, or cancel it; the buy stop at $115.62 would still trigger if the price recovered.",
+     "The sell stop at $111.10 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill."
+    ],
     "burst": {
      "close": 115.5,
      "low": 111.1,
@@ -4236,15 +4299,15 @@
     },
     "allocation": {
      "policy": "combined_stages_reserved_principal_v1",
-     "admitted": false,
-     "reason": "slot_cap"
+     "admitted": true,
+     "reason": null
     },
     "evidence_ref": {
      "version": 1,
-     "id": "9ac467d01925e743de69b631ad2c386cd84ea43e117796764a2414ff25112712",
-     "context_sha256": "b7aa669c808e2e59f882d1e360ca128dea27e85f2d581bfa8e5b0bf1c4e14e1a",
-     "plan_sha256": "c3dc05fa89ca8a1c8ffac29b6cf606ac39c97643ecb9d0b29361de427f497c2f",
-     "pick_sha256": "3b7b20d03f2274db6caa1078acf466664fec5992a94a7cab37ed2a4a537af696"
+     "id": "714aa0ef8c43e25e979d9259d323ac2622cd18e76857171f65183c2b6bfd639d",
+     "context_sha256": "c2e050985a095b82a0d260e9fb2bc8c86e1f50349a3c36873b0ae68c26317888",
+     "plan_sha256": "f9ccbac6e1ee13377109db3414152651a631f01fb0c90643b5c56e9df009684d",
+     "pick_sha256": "9fdb24beebd58088eabaa9d1b32428e95984b77ddc18cae3d144100b84865f81"
     }
    },
    "review_selection": {
@@ -4348,9 +4411,9 @@
      },
      "regime_sha256": "230dd18557aab52477f733659567a590601fcd4c1ce6ec48a9b7e74989193906",
      "session": "2026-09-11",
-     "output_sha256": "c3dc05fa89ca8a1c8ffac29b6cf606ac39c97643ecb9d0b29361de427f497c2f",
+     "output_sha256": "f9ccbac6e1ee13377109db3414152651a631f01fb0c90643b5c56e9df009684d",
      "error": null,
-     "pick_sha256": "3b7b20d03f2274db6caa1078acf466664fec5992a94a7cab37ed2a4a537af696"
+     "pick_sha256": "9fdb24beebd58088eabaa9d1b32428e95984b77ddc18cae3d144100b84865f81"
     },
     "reader_input": {
      "metrics_sha256": "1db803ad3cfeb5fb955cd85d29dcef5674f89124d9c7c4a2ebad6987d11f97f6",
@@ -4376,7 +4439,7 @@
     "ticker": "COIL",
     "session": "2026-09-11",
     "rules_version": "583191ddb160",
-    "context_sha256": "b7aa669c808e2e59f882d1e360ca128dea27e85f2d581bfa8e5b0bf1c4e14e1a",
+    "context_sha256": "c2e050985a095b82a0d260e9fb2bc8c86e1f50349a3c36873b0ae68c26317888",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -4385,11 +4448,11 @@
       "A+",
       "A"
      ],
-     "ticket": false,
-     "reason": "slot_cap",
-     "detail": "the 4-slot model cap: 3 open model plans and NVDA take the rest; take COIL only if a plan above is not held or stops out"
+     "ticket": true,
+     "reason": null,
+     "detail": null
     },
-    "id": "9ac467d01925e743de69b631ad2c386cd84ea43e117796764a2414ff25112712"
+    "id": "714aa0ef8c43e25e979d9259d323ac2622cd18e76857171f65183c2b6bfd639d"
    },
    "series": [
     {
@@ -5357,53 +5420,41 @@
   }
  ],
  "trades": [
-  "NVDA"
- ],
- "beyond_cap": [
+  "NVDA",
   "COIL"
  ],
+ "beyond_cap": [],
  "cash_budget": {
-  "committed_usd": 547.4,
-  "at_risk_usd": 21.88,
+  "committed_usd": 1126.0,
+  "at_risk_usd": 44.98,
   "equity": 10000.0,
-  "reserved_usd": 1717.31,
-  "available_usd": 8282.69,
+  "reserved_usd": 1211.43,
+  "available_usd": 8788.57,
   "open_symbols": [
-   "AAPL",
    "NBIS",
    "SMCI"
   ],
   "slots_used": 4,
   "slots_max": 4,
-  "open_positions": 3,
+  "open_positions": 2,
   "within": [
-   "NVDA"
+   "NVDA",
+   "COIL"
   ],
   "admitted": [
    {
     "ticker": "NVDA",
     "setup_kind": "burst"
-   }
-  ],
-  "beyond": [
+   },
    {
     "ticker": "COIL",
-    "setup_kind": "burst",
-    "rank": 2,
-    "reason": "slot_cap",
-    "position_usd": 578.6
+    "setup_kind": "burst"
    }
   ],
-  "cut": [
-   {
-    "ticker": "COIL",
-    "setup_kind": "burst",
-    "kind": "slot_cap",
-    "reason": "the 4-slot model cap: 3 open model plans and NVDA take the rest; take COIL only if a plan above is not held or stops out"
-   }
-  ],
+  "beyond": [],
+  "cut": [],
   "skipped": [],
-  "sentence": "Model allocation: next-session tickets would commit $547.40 of the configured $10,000.00; 4 of 4 slots (3 open model plans); $1,717.31 reserved for unfinished model plans"
+  "sentence": "Model allocation: next-session tickets would commit $1,126.00 of the configured $10,000.00; 4 of 4 slots (2 open model plans); $1,211.43 reserved for unfinished model plans"
  },
  "watchlist": {
   "top": [],
@@ -5678,6 +5729,32 @@
    "ticker": "AAPL",
    "kind": "burst",
    "picked": "2026-09-10",
+   "day": 1,
+   "sessions": 1,
+   "status": "stopped",
+   "instruction": "Day 1: 4 AAPL stopped at $121.42 (-2.4%).",
+   "events": [
+    {
+     "day": 1,
+     "date": "2026-09-11",
+     "event": "stopped",
+     "price": 121.42,
+     "shares": 4,
+     "remaining": 0
+    }
+   ],
+   "regime": "green",
+   "entry_ref": 124.34,
+   "shares": 4,
+   "current_stop": 121.42,
+   "last_close": 117.75,
+   "last_date": "2026-09-11",
+   "unrealised_pct": -5.3,
+   "exit_price": 121.42,
+   "result_pct": -2.35,
+   "half_sold": false,
+   "sold": 4,
+   "remaining": 0,
    "grade": "A+",
    "stop": 121.42,
    "targets": {
@@ -5689,9 +5766,8 @@
     "dollar_low": 130.45,
     "dollar_high": 150.45
    },
-   "fill": "opened at $124.21, under the $124.33 trigger; the day reached it (high $124.56) and its low $117.03 sat at or under the $121.42 stop: the bar cannot say whether the fill came inside the first 30 minutes, nor whether the low came before or after it",
-   "uncertainty": "stop_sequence",
-   "sessions": 1,
+   "fill": "filled at the open, $124.34",
+   "uncertainty": null,
    "limit": 126.47,
    "evidence_ref": {
     "version": 1,
@@ -5699,43 +5775,20 @@
     "context_sha256": "5df70b515889325bbef26e451483be934e339d69d24319358a1f611646e4e56c",
     "plan_sha256": "77d898e143644c9f12c0cfce19d88eed35d0ef48bee750dcb49e7df830133464",
     "pick_sha256": "d61b9dc9c4f9b326d6040cc11ede22947c65e15fe7434f1f82c6bec390bf6ae5"
-   },
-   "day": 1,
-   "status": "uncertain",
-   "instruction": "Day 1 (2026-09-11): opened at $124.21, under the $124.33 trigger; the day reached it (high $124.56) and its low $117.03 sat at or under the $121.42 stop: the bar cannot say whether the fill came inside the first 30 minutes, nor whether the low came before or after it. The model books no fill. If you took this plan: the sell stop is $121.42; sell at least half by day 3's close and be out by day 5's close.",
-   "events": [
-    {
-     "day": 1,
-     "date": "2026-09-11",
-     "event": "uncertain",
-     "price": null
-    }
-   ],
-   "regime": "green",
-   "entry_ref": 124.33,
-   "shares": 4,
-   "current_stop": 121.42,
-   "last_close": 117.75,
-   "last_date": "2026-09-11",
-   "unrealised_pct": null,
-   "exit_price": null,
-   "result_pct": null,
-   "half_sold": false,
-   "sold": 0,
-   "remaining": 4
+   }
   }
  ],
  "scorecard": {
-  "settled": 21,
+  "settled": 22,
   "open": 1,
-  "pending": 1,
-  "uncertain": 13,
+  "pending": 2,
+  "uncertain": 12,
   "not_filled": 13,
   "unmeasured": 0,
   "unreadable": 0,
   "unscored": 0,
-  "plans": 49,
-  "filled": 22,
+  "plans": 50,
+  "filled": 23,
   "uncertain_reasons": [
    {
     "kind": "trigger_timing",
@@ -5744,20 +5797,20 @@
    },
    {
     "kind": "stop_sequence",
-    "count": 2,
+    "count": 1,
     "words": "reached the trigger with the day's low under the stop: fill and stop in unknown order"
    }
   ],
   "wins": 6,
-  "losses": 15,
+  "losses": 16,
   "breakeven": 0,
-  "metric_denominator": 21,
-  "win_rate": 0.286,
-  "avg_r": 0.02,
-  "median_r": -0.14,
-  "sum_r": 0.42,
-  "spy_avg_pct": 0.22,
-  "benchmark_pairs": 21,
+  "metric_denominator": 22,
+  "win_rate": 0.273,
+  "avg_r": -0.03,
+  "median_r": -0.15,
+  "sum_r": -0.58,
+  "spy_avg_pct": 0.19,
+  "benchmark_pairs": 22,
   "min_read": 20,
   "readable": true,
   "contract_version": 2,
@@ -5767,7 +5820,7 @@
    "from": "2026-06-16",
    "through": "2026-09-11",
    "includes_current": true,
-   "retained": 49,
+   "retained": 50,
    "outside_window": 0,
    "at_capacity": false,
    "problem": null
@@ -5788,8 +5841,8 @@
   "symbols": {
    "AAPL": {
     "date": "2026-09-11",
-    "o": 124.21,
-    "h": 124.56,
+    "o": 124.34,
+    "h": 124.69,
     "l": 117.03,
     "c": 117.75,
     "v": 1050000.0,
@@ -5807,8 +5860,8 @@
      },
      {
       "date": "2026-09-11",
-      "o": 124.21,
-      "h": 124.56,
+      "o": 124.34,
+      "h": 124.69,
       "l": 117.03,
       "c": 117.75,
       "v": 1050000.0,
@@ -6243,11 +6296,11 @@
     "event": 0,
     "geometry": 0,
     "sizing": 0,
-    "allocation_slot": 1,
+    "allocation_slot": 0,
     "allocation_cash": 0,
     "allocation_occupied": 0,
     "allocation_unknown": 0,
-    "ticket": 1,
+    "ticket": 2,
     "unknown": 0
    },
    "rows": [
@@ -6257,7 +6310,7 @@
     },
     {
      "ticker": "COIL",
-     "stage": "allocation_slot"
+     "stage": "ticket"
     }
    ]
   },
@@ -6350,7 +6403,7 @@
    "ticket": "ticket",
    "unknown": "not readable from this record"
   },
-  "sentence": "Candidate funnel under a GREEN market: 2 reaction candidates discovered, 2 potentially usable (mechanical grade in the admitted band, no veto, discovery admitted), 1 reaction ticket. Reaction candidates stopped at: 1 slot cap. Anticipation: 10 momentum names, 7 quiet, 0 passing the coil checks, 0 listed, 0 tickets. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
+  "sentence": "Candidate funnel under a GREEN market: 2 reaction candidates discovered, 2 potentially usable (mechanical grade in the admitted band, no veto, discovery admitted), 2 reaction tickets. Anticipation: 10 momentum names, 7 quiet, 0 passing the coil checks, 0 listed, 0 tickets. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
  },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",

@@ -316,7 +316,13 @@ def sequel_frames(revised: bool) -> dict[str, pd.DataFrame]:
         tails[name] = quiet_tail(frames[name])
     for name in BASE_NAMES:
         tails[name] = quiet_tail(frames[name])
-    tails["AAPL"] = quiet_tail(frames["AAPL"], ratio=AAPL_DECLINE)
+    # it opens a cent over the ticket's buy stop (the close plus its cushion,
+    # plan.burst_trigger()), so the model fills at the open and the day's low
+    # under the stop settles the plan there -- the same reading under the legacy
+    # rule, whose buy stop was the close itself
+    prev, vol = float(frames["AAPL"]["Close"].iloc[-1]), float(frames["AAPL"]["Volume"].iloc[-1])
+    opened = round(plan.burst_trigger(round(prev, 2), plan.BURST_TRIGGER_RULE) + 0.01, 2)
+    tails["AAPL"] = quiet_bar(round(prev * AAPL_DECLINE, 2), opened, round(vol * 0.35), 0.6)
     # the two newer signals: one in the stage it was already in, one that has
     # moved stages since the night a reader followed it
     tails["NVDA"] = burst_bar(float(frames["NVDA"]["Close"].iloc[-1]), 5.6, 0.9,
