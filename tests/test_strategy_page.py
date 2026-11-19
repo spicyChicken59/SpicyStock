@@ -162,3 +162,29 @@ def test_the_gate_serves_the_page_and_refuses_a_link(tmp_path):
 def test_ci_checks_the_page():
     workflow = (ROOT / ".github" / "workflows" / "tests.yml").read_text()
     assert "          python tools/build_strategy_page.py --check\n" in workflow
+
+
+@pytest.mark.parametrize("field, threshold, at, fired", [
+    ("down4", "down4_alarm", 0, "fired"),            # at or over the alarm fires
+    ("down4", "down4_alarm", -1, "clear"),
+    ("ratio_10d", "ratio_10d_red", 0, "clear"),      # under the ratio fires, at it does not
+    ("ratio_10d", "ratio_10d_red", -0.01, "fired"),
+    ("up50_month", "up50_month_hot", 0, "clear"),    # over the hot mark fires, at it does not
+    ("up50_month", "up50_month_hot", 1, "fired"),
+])
+def test_each_rule_reads_fired_or_clear_at_its_own_boundary(field, threshold, at, fired):
+    data = json.loads(RAW)
+    regime = data["breadth"]["regime"]
+    regime["thresholds"]["down4_alarm"] = 400.0
+    regime["thresholds"]["up50_month_hot"] = 20.0
+    regime["thresholds"]["ratio_10d_red"] = 1.0
+    regime["thresholds"]["ratio_10d_yellow"] = 0.5
+    regime["inputs"].update({"down4": 10, "up4": 50, "ratio_10d": 3.0, "ratio_5d": 3.0, "up50_month": 1})
+    regime["inputs"][field] = regime["thresholds"][threshold] + at
+    if field in ("down4", "up50_month"):
+        regime["inputs"][field] = int(regime["inputs"][field])
+    page = sp.build(json.dumps(data).encode())
+    rows = re.findall(r"<tr>(.*?)</tr>", page, re.S)
+    words = {"down4": "today at or over", "ratio_10d": "-session up/down ratio under", "up50_month": "in a month over"}
+    row = next(text_of(r) for r in rows if words[field] in text_of(r))
+    assert row.rstrip().endswith(fired), row
