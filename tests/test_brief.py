@@ -14,7 +14,7 @@ import json
 import re
 import subprocess
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
@@ -50,6 +50,14 @@ def changed(change, picks_raw=PICKS_RAW, model_record=None) -> tuple:
     change(data)
     raw = encoded(data)
     json_raw, md_raw, why = brief.compose(raw, picks_raw, model_record)
+    return data, json.loads(json_raw), md_raw.decode("utf-8"), why
+
+
+def changed_in(variant: str, change) -> tuple:
+    """(record, brief, markdown, why) for any page fixture after ``change(record)``, without a pick ledger."""
+    data = json.loads((PAGE / f"{variant}.json").read_bytes())
+    change(data)
+    json_raw, md_raw, why = brief.compose(encoded(data), None)
     return data, json.loads(json_raw), md_raw.decode("utf-8"), why
 
 
@@ -218,6 +226,82 @@ def test_a_withheld_burst_prints_its_refusal_and_no_stop_limit_or_share_count():
     assert levels["trigger"] == 124.21                 # the setup stands: its trigger is still the record's
     block = md_raw.decode().split("### TSLA ")[1].split("\n### ")[0]
     assert "ticket withheld: no limit above" in block and "model size" not in block and "shares" not in block
+
+
+def sized_by_hand(account: dict, limit: float, stop: float, *multipliers: float) -> dict:
+    """``plan.size()``'s arithmetic written out for one research size: the risk budget (equity, the risk percent
+    and every multiplier) over the risk a share at the limit, in whole cents, floored to a whole share and never
+    more than the position cap buys."""
+    total = 1.0
+    for multiplier in multipliers:
+        total *= multiplier
+    budget_cents = round(account["equity"] * account["risk_pct"] / 100 * total * 100)
+    risk_cents, limit_cents = round((limit - stop) * 100), round(limit * 100)
+    cap_cents = round(account["equity"] * account["max_position_pct"] / 100 * 100)
+    shares = min(budget_cents // risk_cents, cap_cents // limit_cents)
+    return {"shares": shares, "cost": round(shares * limit_cents / 100, 2), "risk": round(shares * risk_cents / 100, 2),
+            "multiplier": total}
+
+
+def own_multipliers(levels: dict) -> list:
+    """The multipliers a plan carries whatever the regime, read off its own flags: the stop-risk halving (every
+    stop between the ideal and the maximum under the limit) and one hazard halving."""
+    hazards = {h["kind"] for h in plan.hazards(plan.GAIN_CEILING_PCT, plan.EXTENSION_HAZARD_PCT + 1)}
+    flags = set(levels["flags"])
+    assert ("risk_halved" in flags) == (plan.IDEAL_STOP_PCT < levels["stop_pct_at_limit"] <= plan.MAX_STOP_PCT)
+    return ([plan.STOP_RISK_MULTIPLIER] if "risk_halved" in flags else []) + \
+        ([plan.HAZARD_MULTIPLIER] if flags & hazards else [])
+
+
+@pytest.mark.parametrize("variant, labels", [("full", {"at_yellow_size"}), ("yellow", {"at_full_size"}),
+                                             ("red", {"at_full_size", "at_yellow_size"})])
+def test_a_size_at_another_regime_keeps_the_plans_own_stop_risk_multiplier(variant, labels):
+    """`at_full_size` and `at_yellow_size` are the SAME plan at another light's multiplier: the stop-risk halving
+    every burst ticket carries stays. Each is worked by hand from the record's account and the row's own limit and
+    stop: a $50 budget halved to $25 buys 4 AAPL at $5.05 a share of risk, and 2 at the YELLOW half of that."""
+    raw, _, json_raw, _ = derived(variant)
+    data, out = json.loads(raw), json.loads(json_raw)
+    factor = {"at_full_size": 1.0, "at_yellow_size": data["breadth"]["rules"]["size_multiplier"]["yellow"]}
+    assert factor["at_yellow_size"] == breadth.SIZE_MULTIPLIER["yellow"] and data["account"]["risk_pct"] == 0.5
+    sized = {}
+    for row in out["candidates"]["detailed"]:
+        levels = row.get("levels") or row["research_levels"]
+        if levels["plan_rule_eligible"] is not True:
+            assert not set(factor) & set(levels)            # a refused plan states no size at any light
+            continue
+        own = own_multipliers(levels)
+        assert own == [plan.STOP_RISK_MULTIPLIER] and set(factor) & set(levels) == labels, row["ticker"]
+        for label in labels:
+            assert levels[label] == sized_by_hand(data["account"], levels["limit"], levels["stop"], *own, factor[label])
+            # and it is not the size the bare light would give: the plan's own halving is in it
+            assert levels[label]["shares"] < sized_by_hand(data["account"], levels["limit"], levels["stop"],
+                                                           factor[label])["shares"]
+            sized[row["ticker"], label] = levels[label]["shares"]
+    assert {ticker for ticker, _ in sized} == {"AAPL", "AMD", "NVDA"}
+    if "at_full_size" in labels:
+        assert sized["AAPL", "at_full_size"] == 4            # 2500 cents over 505 cents a share
+    if "at_yellow_size" in labels:
+        assert sized["AAPL", "at_yellow_size"] == 2          # 1250 cents over 505
+
+
+def test_a_size_at_another_regime_keeps_the_plans_own_hazard_multiplier():
+    """A burst day of +16% is a hazard: the plan's budget is halved once more, at every light. AMD on the RED
+    fixture night (a derived plan: $5.10 a share of risk at its limit) reads 2 shares at full size ($50 x 0.5 x 0.5 =
+    $12.50) and 1 at the YELLOW size ($6.25), where the same bar without the hazard reads 4 and 2."""
+    def hazard(data):
+        burst(data, "AMD")["gain_pct"] = plan.GAIN_CEILING_PCT + 1.0
+    plain = detailed(json.loads(derived("red")[2]), "AMD")["research_levels"]
+    data, out, _, why = changed_in("red", hazard)
+    assert why is None
+    levels = detailed(out, "AMD")["research_levels"]
+    assert levels["source"] == "derived" and "gain_over_15" in levels["flags"] and "gain_over_15" not in plain["flags"]
+    assert own_multipliers(levels) == [plan.STOP_RISK_MULTIPLIER, plan.HAZARD_MULTIPLIER]
+    assert (levels["limit"], levels["stop"], levels["risk_per_share_at_limit"]) == (128.2, 123.1, 5.1)
+    for label, light in (("at_full_size", 1.0), ("at_yellow_size", breadth.SIZE_MULTIPLIER["yellow"])):
+        assert levels[label] == sized_by_hand(data["account"], 128.2, 123.1, 0.5, 0.5, light)
+    assert (levels["at_full_size"]["shares"], levels["at_yellow_size"]["shares"]) == (2, 1)
+    assert (plain["at_full_size"]["shares"], plain["at_yellow_size"]["shares"]) == (4, 2)
+    assert (levels["at_full_size"]["multiplier"], levels["at_yellow_size"]["multiplier"]) == (0.25, 0.125)
 
 
 def synthetic_event(symbol: str, announced: str = "2026-09-01", reviewed: str = "2026-09-08",
@@ -626,6 +710,38 @@ def test_a_listed_name_the_registry_matches_is_named_even_when_its_row_was_not_f
     assert amd["status"] == expected["status"] and expected["blocked"] is True
 
 
+def test_an_also_quiet_name_the_registry_matches_is_named():
+    """An also-quiet coil has no plan, so its row carries no event block at all: this is the only place a reader
+    learns it is a known deal. (In the real record: ZIM, also quiet and in the registry, on 2 November 2026.)
+    The `next` fixture night lists one also-quiet row, VRT, which is in no other list."""
+    def deal(data):
+        synthetic_registry(data, [synthetic_event("VRT"), synthetic_event("ZZZZ")])
+    data, out, md, why = changed_in("next", deal)
+    assert why is None
+    assert [(r["ticker"], bool(r.get("plan"))) for r in data["watchlist"]["also_quiet"]] == [("VRT", False)]
+    assert "VRT" not in {r["ticker"] for r in data["bursts"] + data["watchlist"]["top"]}
+    events = out["events"]
+    assert events["listed"]["also_quiet"] == 1
+    assert [(m["stage"], m["ticker"]) for m in events["listed_matches"]] == [("also_quiet", "VRT")]   # ZZZZ is listed nowhere
+    match = events["listed_matches"][0]
+    assert (match["status"], match["has_plan"], match["flagged_in_the_record"]) == ("known_event", False, False)
+    assert "SYNTHETIC: a pending cash acquisition" in match["reason"]
+    total = sum(events["listed"].values())
+    assert (f"1 of the {total} listed rows ({events['listed']['bursts']} bursts, {events['listed']['setting_up']} "
+            "setting up, 1 also quiet) are in the registry: VRT (also quiet, known_event, not flagged on its row in "
+            "the record).") in events["sentence"]
+    assert "**VRT**" in section(md, 11)
+    quiet = next(r for r in out["setting_up"]["also_quiet"] if r["ticker"] == "VRT")
+    assert "event" not in quiet                                # the row itself says nothing: the events block does
+    expected = event_risk.classify("VRT", date.fromisoformat(data["run"]["session"]),
+                                   registry=data["rules"]["event_risk"]["registry"])
+    assert expected["blocked"] is True and match["status"] == expected["status"]
+    # the control: the same night with the registry naming no listed stock matches nothing
+    _, clean, _, why = changed_in("next", lambda d: synthetic_registry(d, [synthetic_event("ZZZZ")]))
+    assert why is None and clean["events"]["listed_matches"] == []
+    assert f"None of the {total} listed rows" in clean["events"]["sentence"]
+
+
 def test_coverage_is_counted_and_no_name_is_ever_called_clear():
     raw, _, json_raw, md_raw = derived("full")
     out, md = json.loads(json_raw), md_raw.decode()
@@ -726,6 +842,34 @@ def test_a_setting_up_tickets_buy_stop_is_above_the_last_close_and_its_open_entr
     assert "above_day2_extension" not in [s["state"] for s in entry["price_states"] if s["applies"]]
     assert entry["not_the_ticket"]["open_entry"] == row["plan"]["open_entry"]
     assert "Open-entry note (not the ticket)" in section(md_raw.decode(), 5)
+
+
+def test_the_buy_stop_note_is_a_burst_tickets_and_never_on_a_buy_stop_over_the_close():
+    """The note says a broker takes a buy stop only above the current price. It belongs to a ticket whose buy stop
+    IS its last close (every burst ticket). An anticipation ticket's buy stop is above its last close, the right
+    side of the market, and carries no note."""
+    for variant in ("full", "yellow", "next"):
+        bursts = [t for t in json.loads(derived(variant)[2])["tickets"] if t["stage"] == "burst"]
+        assert bursts
+        for ticket in bursts:
+            entry = ticket["order_entry"]
+            assert entry["buy_stop_vs_last_close"] == "equal" and entry["buy_stop_note"] == brief.BUY_STOP_NOTE
+    for variant in ("notrade", "degraded"):
+        raw, _, json_raw, _ = derived(variant)
+        data, out = json.loads(raw), json.loads(json_raw)
+        coils = [t for t in out["tickets"] if t["stage"] == "anticipation"]
+        assert coils and len(coils) == len(out["tickets"])
+        for ticket in coils:
+            entry = ticket["order_entry"]
+            assert entry["buy_stop_vs_last_close"] == "above" and entry["lines"]["trigger"] > entry["last_close"]
+            assert "buy_stop_note" not in entry, "an anticipation ticket's buy stop is over its close: no note"
+    # the block alone, the same ticket with its last close moved: the note is the `equal` case's and no other's
+    row = next(r for r in data["watchlist"]["top"] if r["ticker"] == coils[0]["ticker"])
+    trigger = row["plan"]["trigger"]
+    for close, word in ((trigger, "equal"), (round(trigger - 0.5, 2), "above"), (round(trigger + 0.5, 2), "below")):
+        entry = brief.order_entry("anticipation", row, {**row["plan"], "close": close}, data)
+        assert entry["buy_stop_vs_last_close"] == word
+        assert entry.get("buy_stop_note") == (brief.BUY_STOP_NOTE if word == "equal" else None)
 
 
 # `next` is the one fixture whose burst ticket has its stop OVER its skip-under line (131.38 against 131.31), the
@@ -863,6 +1007,34 @@ def test_a_red_night_does_not_hide_which_names_would_pass_the_later_gates():
     assert "TICKET (order and schedule in section 5)" not in md_raw.decode()
 
 
+@pytest.mark.parametrize("variant", VARIANTS)
+def test_the_hold_days_start_on_the_applicable_session_and_never_on_the_measured_one(variant):
+    """Day 1 is the entry day: the session after the measured one, which is the applicable session the record's
+    timing names and the day 1 every ticket's own schedule is dated. The measured session is in no hold day."""
+    raw, _, json_raw, md_raw = derived(variant)
+    data, out = json.loads(raw), json.loads(json_raw)
+    measured, days = data["run"]["session"], out["candidates"]["schedule_days"]
+    dates = [day["date"] for day in days]
+    assert [day["day"] for day in days] == list(range(plan.ENTRY_DAY, plan.FINAL_EXIT_DAY + 1))
+    assert dates[0] == out["identity"]["applicable_session"] == data["run"]["timing"]["applicable_session"]
+    assert measured not in dates and dates == sorted(dates) and dates[0] > measured
+    # the exchange's own sessions after the measured one, as plan.dated_schedule() dates a ticket
+    assert dates == [str(day) for day in plan.next_sessions(date.fromisoformat(measured), plan.FINAL_EXIT_DAY)]
+    assert f"Hold days for a plan entered on the applicable session: day 1 = {dates[0]}, day 2 = {dates[1]}" in md_raw.decode()
+    for ticket in out["tickets"]:
+        dated = {step["day"]: step["date"] for step in ticket["schedule"]}
+        assert all(dates[day - 1] == when for day, when in dated.items()), ticket["ticker"]
+
+
+def test_the_hold_days_are_the_calendars_sessions_strictly_after_the_measured_one():
+    sessions = [{"session": day} for day in ("2026-09-09", "2026-09-10", "2026-09-11", "2026-09-14", "2026-09-15")]
+    data = {"run": {"session": "2026-09-10", "calendar": {"schedule": {"sessions": sessions}}}}
+    assert brief.schedule_days(data, 5) == [{"day": 1, "date": "2026-09-11"}, {"day": 2, "date": "2026-09-14"},
+                                            {"day": 3, "date": "2026-09-15"}]
+    assert brief.schedule_days(data, 2) == [{"day": 1, "date": "2026-09-11"}, {"day": 2, "date": "2026-09-14"}]
+    assert brief.schedule_days({"run": {"session": "2026-09-10"}}, 5) == []          # no calendar: no day is guessed
+
+
 def test_the_later_gates_are_the_planners_own_readings():
     trade, yellow = ["A+", "A"], ["A+"]
     base = {"grade": "A", "vetoes": [], "admission": {"admitted": True}, "reader_coverage": "accepted"}
@@ -892,6 +1064,39 @@ def test_a_setting_up_row_without_a_ticket_is_research_only_with_labelled_levels
 
 
 # ------------------------------------------------------------------ (g) the carried model record
+def test_the_pick_ledger_reconciles_only_when_its_window_holds_what_the_scorecard_counted():
+    """`reconciles` is a comparison: the picks dated inside the scorecard's own window against the plans the
+    scorecard counted. It is true on the fixture night (48 and 48) and false three ways."""
+    raw, picks_raw, json_raw, _ = derived("full")
+    data, picks = json.loads(raw), json.loads(picks_raw)
+    window, ledger = data["scorecard"]["population"], json.loads(json_raw)["pick_ledger"]
+    assert (ledger["retained"], ledger["in_scorecard_window"], ledger["scorecard_plans"], ledger["reconciles"]) == \
+        (len(picks["picks"]), 48, data["scorecard"]["plans"], True)
+
+    def with_picks(rows) -> dict:
+        json_out, _, why = brief.compose(raw, encoded({**picks, "picks": rows}))
+        assert why is None
+        return json.loads(json_out)["pick_ledger"]
+    # a pick the scorecard counted is gone from the file
+    fewer = with_picks(picks["picks"][1:])
+    assert (fewer["retained"], fewer["in_scorecard_window"], fewer["scorecard_plans"], fewer["reconciles"]) == (47, 47, 48, False)
+    # every pick is retained, and one is dated the day before the window opens
+    before = (date.fromisoformat(window["from"]) - timedelta(days=1)).isoformat()
+    moved = with_picks([{**picks["picks"][0], "date": before}, *picks["picks"][1:]])
+    assert (moved["retained"], moved["in_scorecard_window"], moved["scorecard_plans"], moved["reconciles"]) == (48, 47, 48, False)
+    # the file is whole and the scorecard says it counted one more
+    _, out, _, why = changed(lambda d: d["scorecard"].update(plans=d["scorecard"]["plans"] + 1))
+    assert why is None
+    more = out["pick_ledger"]
+    assert (more["in_scorecard_window"], more["scorecard_plans"], more["reconciles"]) == (48, 49, False)
+    # the function alone: a window that holds two picks against a scorecard that counted two, then three
+    two = {"picks": [{"ticker": "AAA", "date": "2026-09-01"}, {"ticker": "BBB", "date": "2026-09-02"},
+                     {"ticker": "CCC", "date": "2026-08-01"}]}
+    card = {"plans": 2, "population": {"from": "2026-09-01", "through": "2026-09-10"}}
+    assert brief.ledger(two, card)["reconciles"] is True and brief.ledger(two, {**card, "plans": 3})["reconciles"] is False
+    assert brief.ledger(two, {"plans": 0})["reconciles"] is True and brief.ledger(two, {"plans": 3})["reconciles"] is False
+
+
 def test_no_block_supplied_says_it_is_computed_only_inside_an_evening_run():
     _, _, json_raw, md_raw = derived("full")
     assert json.loads(json_raw)["model_record"] == {

@@ -580,6 +580,37 @@ def test_the_eras_split_the_counts_the_r_and_the_dollars_by_account(tmp_path):
                for s in block["sentences"])
 
 
+def test_a_setup_issued_again_under_another_account_is_counted_once_in_the_era_of_its_first_ticket(tmp_path):
+    """AAA is offered on S[3] under the $5,000 account the previous brief
+    recorded and never fills. It is offered again on S[8], the last session
+    the first ticket's window reaches, by tonight's publication at $30,000.
+    Two tickets in two eras are ONE setup: the era of its first ticket counts
+    it and the other counts none, so the eras' setups sum to the block's. BBB
+    beside it is one ticket and one setup of tonight's era."""
+    previous_brief(tmp_path, [{"evidence_id": "b" * 64, "issued_equity": 5000.0, "risk_pct": 0.5,
+                               "account_basis": "record"}])
+    picks = [coil("AAA", S[3], shares=1, evidence="b" * 64, context="1" * 64),
+             coil("AAA", S[8], shares=1, evidence="a" * 64, context=OWN_CONTEXT),
+             coil("BBB", S[8], shares=1, evidence="d" * 64, context=OWN_CONTEXT)]
+    frames = {t: frame(*[quiet(d) for d in S[4:9]]) for t in ("AAA", "BBB")}
+    block = block_of(picks, frames, S[8], docs=tmp_path)
+    assert block["status"] == model_record.COMPUTED, block["reason"]
+    assert (block["tickets"], block["distinct_setups"], block["reissued_tickets"]) == (3, 2, 1)
+    assert [(p["ticker"], p["picked"], p["setup"], p["issue_no"], p["issued_equity"], p["bucket"])
+            for p in block["plans"]] == [
+        ("AAA", S[3], f"anticipation:AAA:{S[3]}", 1, 5000.0, "not_filled"),
+        ("AAA", S[8], f"anticipation:AAA:{S[3]}", 2, 30000.0, "pending"),
+        ("BBB", S[8], f"anticipation:BBB:{S[8]}", 1, 30000.0, "pending")]
+    assert [(e["label"], e["tickets"], e["setups"]) for e in block["eras"]] == [
+        ("$5,000 at 0.5% risk", 1, 1), ("$30,000 at 0.5% risk", 2, 1)]
+    # every setup is in exactly one era, and every ticket is
+    assert sum(e["setups"] for e in block["eras"]) == block["distinct_setups"] == len(block["setups"])
+    assert sum(e["tickets"] for e in block["eras"]) == block["tickets"]
+    # the stated rule, on the frozen record too: 17 setups over its three accounts
+    frozen_eras = frozen_block(tmp_path / "frozen")["eras"]
+    assert sum(e["setups"] for e in frozen_eras) == 17
+
+
 # --------------------------------------------------------- the withdrawn -----
 
 def withdrawn_case(tmp_path, entries, picks=None):
