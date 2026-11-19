@@ -556,12 +556,15 @@ def test_the_page_the_handoff_and_the_mail_print_fidelitys_rule_and_the_advice_a
     words put the stop at the fill (the ticket's terms, the plan's entry
     instruction, its dated schedule) they assume a full fill. The mail, the
     page and the private handoff's readback print it, defined once in each
-    file: the page through one helper, partFillNote(), called at each of its
-    ten places (the order block, the recorded ticket, the comparison, the
-    Burst card, the setting-up action bar, the tickets sheet, the decision
-    summary's need, the model exits, the saved setup's archived order and an
-    archived original's status), the handoff at its readback. The plan's own
-    words, which provenance replays, stay broker-neutral."""
+    file: the page through one helper, partFillNote(), called ten times --
+    once under the Broker notes disclosure a burst ticket's card and entry
+    share with the buy-stop note (brokerNotesFold();
+    tests/test_broker_buy_stop.py holds that text and its places), and at the
+    order block, the recorded ticket, the comparison, the setting-up action
+    bar, the tickets sheet, a setting-up ticket's entry in the decision
+    summary, the model exits, the saved setup's archived order and an archived
+    original's status -- the handoff at its readback. The plan's own words,
+    which provenance replays, stay broker-neutral."""
     rule, advice = report.BROKER_PART_FILL.split(" SpicyStock’s advice: ")
     assert rule.startswith("Fidelity’s rule: ") and "in full" in rule, rule
     assert "attached at or live from the fill, that assumes a full fill" in advice, advice
