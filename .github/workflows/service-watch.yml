@@ -1,15 +1,17 @@
 name: Service watch
 # Is the evening publication late near its limit or missing, and did the
 # morning check land (tools/service_watch.py)? It reads the two files on main
-# and a clock, calls no provider, and writes nothing. An alert mails once
-# through the evening's own transport and turns this run red.
+# and a clock, calls no provider, and writes nothing. Each run mails each alert
+# it finds through the evening's own transport and turns red; the watch keeps
+# no memory, so one late night can mail from two runs.
 #
 # Three daily slots, because Actions starts scheduled runs hours late and this
 # watch is no exception: 05:07 and 09:07 UTC are meant to land inside the six
-# hours before the next session's open (13:30 UTC, 14:30 in winter) whether
-# the scheduler is prompt or seven hours behind, and 16:07 UTC on weekdays
-# lands after the entry window has closed, when the morning check can be
-# judged. A slot that lands outside those windows flags nothing.
+# hours before the next session's open (13:30 UTC, 14:30 in winter) while the
+# scheduler is up to 8.3 hours late in daylight time and 9.3 in standard time,
+# and 16:07 UTC on weekdays lands after the entry window has closed, when the
+# morning check can be judged. A slot that lands outside those windows flags
+# nothing.
 run-name: >-
   ${{ github.event_name == 'workflow_dispatch' && 'Service watch (manual)'
       || format('Service watch cron {0}', github.event.schedule) }}

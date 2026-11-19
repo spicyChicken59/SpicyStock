@@ -12,20 +12,27 @@ on disk and a clock, and answers each in one word and one sentence:
     status chip walks, read off the record's calendar and delivery policy --
     and the watch adds one judgement to it: a publication that is still
     absent ``ALERT_WITHIN_HOURS`` before its recovery limit (the next
-    session's open), or absent after it, is worth a person's attention. Late
-    alone is not: every first publication from 22 September to 6 November
-    2026 landed after both slots (the 7 November service reading).
+    session's open), or absent after it, is worth a person's attention, and
+    so is a record more than one completed session behind. Late alone is
+    not: every first publication from 22 September to 6 November 2026
+    landed after both slots (the 7 November service reading).
 
 ``morning``
     Once the entry window the record names has closed: did a morning check
     for THIS record land inside its collection window? Read off
-    ``docs/morning.json``: its binding to the record's bytes and its own
-    generation instant. A record that published no ticket has nothing to
-    quote, so its missing check is reported and never alerted.
+    ``docs/morning.json``: its binding to the record's bytes, its own
+    generation instant and status, and how many of its ticket rows carried
+    a recent price. A check that landed before the entry window opened and
+    quoted nothing is said in those words and is not an alert: it is what a
+    dispatch at 8:21 AM CT gives every morning. A record that published no
+    ticket has nothing to quote, so its missing check is reported and never
+    alerted.
 
 It reads two files and decides nothing about them. It calls no provider, and
 it mails only with ``--mail``, through the evening's own transport
-(``report.deliver``), only when a judgement above says alert. A watch that
+(``report.deliver``), only when a judgement above says alert or the record
+cannot be read at all. It keeps no memory, so every run that finds an alert
+mails it: a late night can mail twice. A watch that
 runs on GitHub's scheduler is itself late by hours, so the same two answers
 are printed for anything else with a clock to run it: ``python
 tools/service_watch.py --docs docs``.
@@ -76,8 +83,17 @@ EXIT_OK, EXIT_ALERT, EXIT_UNKNOWN = 0, 1, 2
 
 DISPATCH_HINT = ("Start it by hand: GitHub, Actions, Evening scan, Run workflow, branch main, with only_if_unpublished "
                  "ticked. It publishes the session if it is still unpublished and does nothing otherwise.")
-MISSING_HINT = ("Nothing can publish that session now. Read the evening workflow's runs for that evening, and treat "
-                "every ticket in the record on the site as expired.")
+MISSING_HINT = ("The scheduled slots and a dispatch with only_if_unpublished ticked will not publish that session now. "
+                "A plain dispatch of the Evening scan with the session box filled still can, and the tickets it writes "
+                "would be for an entry window that may have ended. Read the evening workflow's runs for that evening, "
+                "and treat every ticket in the record on the site as expired.")
+BEHIND_HINT = ("More than one session has completed since the record on main. Read the Evening scan's runs: this is "
+               "an outage, not a late night.")
+UNREADABLE_SUBJECT = "SpicyStock watch: the record on main could not be read"
+#: What a morning receipt's status must be for the check to count as one that ran for the record's tickets.
+#: ``provider_unavailable`` and ``inapplicable`` (``src/morning.STATUSES``) quoted nothing and say so themselves.
+RAN_STATUSES = ("observed", "partial", "no_tickets")
+RECENT = "recent"
 MORNING_HINT = ("The morning check is started from outside GitHub's scheduler (the owner's own dispatch of morning.yml). "
                 "Look at that trigger's last run.")
 LATE_ITSELF = ("This watch runs on GitHub's scheduler, which starts scheduled runs hours late, so it may itself have "
@@ -143,6 +159,36 @@ def ticket_count(record: dict) -> int | None:
     return total
 
 
+def sessions_behind(record: dict, covers_through, now: datetime) -> dict | None:
+    """The sessions after the one the record covers that have completed by ``now``, read off the record's own
+    calendar (``run.calendar.schedule.sessions``, each with its ``completion_at``): how many, the newest of them,
+    and that one's own recovery limit (the open of the session after it). None when the record does not carry a
+    schedule this can be read from."""
+    run = record.get("run") if isinstance(record.get("run"), dict) else {}
+    calendar = run.get("calendar") if isinstance(run.get("calendar"), dict) else {}
+    schedule = calendar.get("schedule") if isinstance(calendar.get("schedule"), dict) else {}
+    rows = schedule.get("sessions")
+    if not isinstance(rows, list) or not isinstance(covers_through, str):
+        return None
+    later = []
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get("session"), str):
+            return None
+        done, opens = _instant(row.get("completion_at")), _instant(row.get("opens_at"))
+        if done is None or opens is None:
+            return None
+        if row["session"] > covers_through:
+            later.append((row["session"], done, opens))
+    later.sort()
+    completed = [index for index, (_, done, _) in enumerate(later) if done <= now]
+    if not completed:
+        return {"count": 0, "newest": None, "newest_limit": None}
+    newest = completed[-1]
+    limit = later[newest + 1][2] if newest + 1 < len(later) else None
+    return {"count": len(completed), "newest": later[newest][0],
+            "newest_limit": limit.isoformat() if limit is not None else None}
+
+
 def evening(record: dict, now: datetime) -> dict:
     """The freshness answer for the session after the one the record covers,
     and whether its absence is worth an alert."""
@@ -151,9 +197,11 @@ def evening(record: dict, now: datetime) -> dict:
     session = expected.get("next_session")
     limit = _instant(expected.get("recovery_until"))
     hours = _hours(limit - now) if limit is not None else None
+    behind = sessions_behind(record, expected.get("covers_through"), now)
     out = {"covers_through": expected.get("covers_through"), "next_session": session,
            "state": answer["state"], "state_sentence": answer["sentence"],
            "recovery_until": expected.get("recovery_until"), "hours_to_limit": hours,
+           "sessions_behind": behind,
            "judgement": OK, "sentence": answer["sentence"], "alert": False, "action": None}
     if answer["state"] == freshness.UNKNOWN:
         out["judgement"] = UNKNOWN
@@ -165,14 +213,34 @@ def evening(record: dict, now: datetime) -> dict:
         # the limit is known here: state() answers missing only past it
         out["alert"] = limit is not None and now - limit < timedelta(hours=MISSING_ALERT_HOURS)
         out["action"] = MISSING_HINT
-    elif answer["state"] == freshness.LATE and limit is not None and limit - now <= timedelta(hours=ALERT_WITHIN_HOURS):
+        if behind is not None and behind["count"] > 1:
+            # A second night in a row never gets its own "missing": the record still names the first one. The
+            # newest completed session is judged by the first night's own rule: near its limit, or just past it.
+            out["sentence"] += (f" {behind['count']} sessions have completed since {out['covers_through']} and none "
+                                f"of them is published; the newest is {behind['newest']}.")
+            newest_limit = _instant(behind["newest_limit"])
+            if newest_limit is not None and newest_limit - now <= timedelta(hours=ALERT_WITHIN_HOURS) \
+                    and now - newest_limit < timedelta(hours=MISSING_ALERT_HOURS):
+                out["alert"] = True
+            out["action"] = f"{BEHIND_HINT} {MISSING_HINT}"
+    elif (answer["state"] in (freshness.PENDING, freshness.LATE) and limit is not None
+          and limit - now <= timedelta(hours=ALERT_WITHIN_HOURS)):
+        # the limit decides, not the state word: a record with no readable delivery policy stays `pending` until
+        # its limit, and is as unpublished as a late one
         out["judgement"] = LATE_NEAR_LIMIT
-        out["sentence"] = (f"The {session} session is not published yet. Both scheduled slots have passed and the "
+        slots = ("Both scheduled slots have passed" if answer["state"] == freshness.LATE
+                 else "It completed and its publication is still pending")
+        out["sentence"] = (f"The {session} session is not published yet. {slots} and the "
                            f"session after it opens at {expected.get('recovery_until')}, {hours:g} hours after this "
-                           "watch's clock; after that the service will not publish it.")
+                           "watch's clock; after that the scheduled service will not publish it.")
         out["alert"] = True
         out["action"] = DISPATCH_HINT
     return out
+
+
+def _measured(record: dict):
+    run = record.get("run") if isinstance(record.get("run"), dict) else {}
+    return run.get("session")
 
 
 def morning(record: dict, record_raw: bytes, receipt: dict | None, receipt_problem: str | None, now: datetime) -> dict:
@@ -200,9 +268,28 @@ def morning(record: dict, record_raw: bytes, receipt: dict | None, receipt_probl
         publication = receipt.get("publication")
         bound = publication.get("data_sha256") if isinstance(publication, dict) else None
         generated = _instant(receipt.get("generated_at"))
+        status = receipt.get("status") if isinstance(receipt.get("status"), str) else None
+        rows = [r for r in receipt.get("rows", []) if isinstance(r, dict)] if isinstance(receipt.get("rows"), list) else []
+        recent = sum(1 for r in rows if any(isinstance(r.get(side), dict) and r[side].get("status") == RECENT
+                                            for side in ("trade", "quote")))
+        opens = _instant(window.get("window_opens_at"))
+        same_session = (isinstance(publication, dict)
+                        and publication.get("measured_session") == _measured(record)
+                        and publication.get("applicable_session") == session)
         out["receipt"] = {"generated_at": receipt.get("generated_at") if generated else None,
-                          "status": receipt.get("status") if isinstance(receipt.get("status"), str) else None,
-                          "bound_to_this_record": bound == wanted}
+                          "status": status, "bound_to_this_record": bound == wanted,
+                          "same_session_other_publication": bound != wanted and bool(same_session),
+                          "before_window_opened": bool(generated and opens and generated < opens),
+                          "ticket_rows": len(rows), "rows_with_recent_price": recent}
+        if bound != wanted and same_session and generated is not None and start <= generated <= cutoff \
+                and receipt.get("dry_run") is False and status in RAN_STATUSES:
+            # the session was published again after the morning: the check that landed was for the earlier
+            # publication of the same session, and saying none landed would be false
+            out["judgement"] = LANDED
+            out["sentence"] = (f"A morning check for {session} landed inside its collection window, generated "
+                               f"{receipt['generated_at']} (status {status}), for an earlier publication of this "
+                               "session: the record on main was published again after it.")
+            return out
         if bound != wanted:
             problem = "the morning file on disk is bound to another publication"
         elif generated is None:
@@ -213,10 +300,18 @@ def morning(record: dict, record_raw: bytes, receipt: dict | None, receipt_probl
             problem = f"the morning file was generated at {receipt['generated_at']}, after the entry window closed"
         elif receipt.get("dry_run") is not False:
             problem = "the morning file is a rehearsal"
+        elif status not in RAN_STATUSES:
+            problem = f"the morning file says status {status!r}: it quoted nothing"
     if problem is None:
+        seen = out["receipt"]
         out["judgement"] = LANDED
         out["sentence"] = (f"A morning check for {session} landed inside its collection window, generated "
-                           f"{receipt['generated_at']} (status {out['receipt']['status']}).")
+                           f"{receipt['generated_at']} (status {seen['status']})")
+        if tickets:
+            out["sentence"] += (f"; it was generated {'before' if seen['before_window_opened'] else 'after'} the entry "
+                                f"window opened, and {seen['rows_with_recent_price']} of its {seen['ticket_rows']} ticket "
+                                f"row{'' if seen['ticket_rows'] == 1 else 's'} carried a recent price")
+        out["sentence"] += "."
         return out
     out["judgement"] = NOT_LANDED
     counted = ("the record does not say how many tickets it published" if tickets is None
@@ -302,6 +397,14 @@ def main(argv: list[str] | None = None) -> int:
         result = watch(args.docs, now)
     except Unreadable as exc:
         print(f"Service watch: {exc}.", file=sys.stderr)
+        if args.mail:
+            # the state in which the site itself can show no record: a person should hear of it
+            from src import report
+            report.deliver(UNREADABLE_SUBJECT,
+                           "".join(f"<p>{html.escape(text)}</p>" for text in (
+                               f"The record on main could not be read: {exc}.",
+                               f"Watch clock: {now.astimezone(timezone.utc).isoformat()}. {LATE_ITSELF}")))
+            print("Mailed 1 alert.", file=sys.stderr)
         return EXIT_UNKNOWN
     print(json.dumps(result, indent=1, sort_keys=True) if args.json else "\n".join(lines(result)))
     if args.mail and result["alert"]:

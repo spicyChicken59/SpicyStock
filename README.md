@@ -2468,24 +2468,44 @@ until 19 November 2026 nothing said so when a night had not arrived.
 - **Evening.** Has the session after the one `data.json` covers been published?
   The answer is `src/freshness.py`'s. It is flagged only when the publication is
   still absent 6 hours before its recovery limit (the next session's open),
-  or, for 12 hours, once it is past it. Late alone is never flagged: read off
-  the landing commits, the 23 first publications from 19 October to 18 November
-  2026 landed 9.36 hours or more before the next open.
+  or, for 12 hours, once it is past it. The limit decides, not the state word: a
+  record with no readable delivery policy reads `pending` until its limit and
+  is flagged the same way. Late alone is never flagged: read off the landing
+  commits, the 23 first publications from 19 October to 18 November 2026 landed
+  9.36 hours or more before the next open. A second missed night in a row has
+  no `missing` of its own, because the record still names the first, so the
+  watch also counts the sessions that have completed since the record
+  (`sessions_behind`) and judges the newest of them by the same two bounds.
 - **Morning.** Once the entry window has closed: did a morning check bound to
   this record's bytes land inside its collection window? Flagged, for 12
   hours, only when the record published a ticket; a night with nothing to quote
-  is reported and never flagged.
+  is reported and never flagged. A receipt whose status says it quoted nothing
+  (`provider_unavailable`, `inapplicable`) has not landed. A check that landed
+  is said with when it ran and what it priced: every real ticket morning from
+  3 to 16 November 2026 reads "generated before the entry window opened, and 0
+  of its N ticket rows carried a recent price", which is what a dispatch before
+  the 8:30 AM CT open gives, and is reported, not flagged. A receipt bound to
+  an earlier publication of the same session (the session was published again
+  after the morning) is a check that landed.
 
-It calls no provider and writes nothing. With `--mail` it sends each alert once
-through the evening's own transport, and it exits 0 with nothing to flag, 1 on
-an alert and 2 when the record cannot answer. `service-watch.yml` runs it on
+It calls no provider and writes nothing. With `--mail` each run mails each
+alert it finds through the evening's own transport; it keeps no memory, so one
+late night can mail from two runs and a missed one from two or three. It exits
+0 with nothing to flag, 1 on an alert and 2 when the record cannot answer, and
+with `--mail` a record on `main` that cannot be read at all is mailed too.
+`service-watch.yml` runs it on
 `main` at 05:07 and 09:07 UTC daily and 16:07 UTC on weekdays, read-only, with
 the three mail secrets and no other; an alert turns that run red. The watch is
 itself a scheduled run and so itself hours late on most days: the two morning
-slots are placed so that one of them lands inside the alert window before either
-open across zero to eight hours of delay, and nothing here can make GitHub's
-scheduler punctual. The same two answers are printed for anything else with a
-clock: `python tools/service_watch.py --docs docs`.
+slots are placed so that one of them lands inside the alert window before the
+open while the scheduler is up to 8.3 hours late in daylight time and 9.3 in
+standard time (the longest delay the 13 October schedule reading recorded was
+8.4 hours), and nothing here can make GitHub's scheduler punctual. A missing
+night's alert says what can still publish it: the scheduled slots and a
+dispatch with **only_if_unpublished** ticked cannot, and a plain dispatch with
+the session box filled can, for an entry window that may have ended. The same
+two answers are printed for anything else with a clock:
+`python tools/service_watch.py --docs docs`.
 
 ## One-time setup
 
