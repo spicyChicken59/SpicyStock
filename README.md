@@ -23,10 +23,15 @@ method is Pradeep Bonde's (Stockbee) momentum burst: reaction candidates
 discovered by either the 4% or Dollar route, admitted to the trade band when
 the 4% scan found them or the dollar scan found them on a range-expansion,
 higher-volume day (`src/admission.py`), then judged for expansion out of
-a quiet base, bought the next morning inside a narrow zone with
-the stop under the burst bar, sold into strength over three to five days,
-and only when breadth allows it. `knowledge/method.md` says whose number
-every rule is; this file says what the software does with them. The dated
+a quiet base, bought the next session through a buy stop at the burst close,
+up to a limit set from the stop, with the stop at the burst bar's low or its
+midpoint and every such ticket at half risk, sold into strength over three to
+five days, and only when breadth allows it. `knowledge/method.md` says whose
+number every rule is; `knowledge/rules.md` states every rule the evening run
+applies, in pipeline order, each with its constant and its provenance class,
+and says what is Bonde's and what is this project's (`tests/test_rule_sheet.py`
+holds its numbers to the modules); this file says what the software does with
+them. The dated
 [reaction discovery source contract](knowledge/reaction-discovery.md) pins
 the primary 2015 4% and 2017 Dollar formulas, their differing volume
 boundaries, and the repository's separate precision/universe choices.
@@ -69,6 +74,13 @@ of which stopped into the 5 November alarm: none establishes a sign --
 and the owner's backtest over 158 archive sessions (100
 yellow, 58 red, no green) wrote 99 half-size A+ tickets, of which 44
 settled, 16 won, 27 lost and 1 was even, +3.72R net, the reader not run. The
+same replay with every night treated as green (grades A and A+ at full size; a
+counterfactual, not a policy) summed +17.40R over 69 settled; +1.14R of that
+came from the red nights (25 settled, 7 won, 18 lost) and +16.26R from the
+yellow nights, where it also admits grade A, so the gap to +3.72R is mostly the
+yellow band and not the red refusal, and neither figure has an interval. No
+published night has been green: 35 red and 13 yellow over the 48 sessions from
+11 September to 17 November 2026. The
 Record view replays those nights one at a time from
 `docs/historical-findings.json`, which `tools/build_historical_findings.py`
 builds from the committed evidence files and binds to their digests; the
@@ -726,6 +738,14 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    40-day average, the 10-day ratio over the last thirty sessions with his
    line drawn on it, and the regime verdict with every rule that fired.
    Thresholds are scaled to the measured universe against his ~6,500.
+   The stocks counted are those with a usable bar that night and a close of $3
+   or more that night (3,513 of 4,756 intended on 17 November 2026). The thirty
+   sessions are read again each night over that night's stocks, so an earlier
+   session's counts differ from what its own night published: all 47 sessions
+   from 11 September to 16 November 2026 moved (a median of 9 names; at most
+   0.06 in the ratio). A published verdict is never recomputed, and only one of
+   1,048 later readings (5 October, 1.00 against the published 0.97) would have
+   changed one.
 6. **Method: How to read SpicyStock.** The view opens on **The method, one burst at a time**
    (`docs/app-method.js`): an animated walkthrough of Bonde’s burst over one
    synthetic series, eleven steps from the thesis to the record — the
@@ -735,7 +755,11 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    is named for the constant it quotes and held to `src/` by
    `tests/test_walkthrough.py`, which also re-derives the example ticket and its
    five-session replay through `plan.burst_plan()` and `record.replay()`, so the
-   walkthrough prints what the code writes. It reads no record and stands on
+   walkthrough prints what the code writes. Its captions also say what the model
+   does where a ticket's words say more, the admission rule, the five regime rules
+   with the scaled counts and what a fill at the open assumes;
+   `tests/test_strategy_texts.py` holds those sentences, the method note and the
+   help terms. It reads no record and stands on
    the no-record page; `#/method/walkthrough` deep-links to it; the bars have a
    table twin. Then the reading journey and concise definitions
    precede the original scan summary, full publication details and configured
@@ -964,9 +988,14 @@ archived, and a record from before the block is asked for none. The run:
   pins retained evidence and separates the missing-bar symptom from unresolved causes.
   Method shows the ledger concisely, and incomplete empty results are qualified
   beside the verdict and empty-state text.
-- **breadth** — the Market Monitor columns and the regime: green (full
-  size), yellow (half size, A+ only), red (no new longs; the open plans get
-  a tighten-and-sell clause).
+- **breadth** — the Market Monitor columns over the stocks measured that
+  night and the regime, five rules: red (no new longs; an open plan's
+  instruction gains a sell-into-strength clause and no stop is moved) on names
+  down 4% at or over 700 scaled, a 10-day ratio under 1, or a 5-day ratio under
+  0.5 with more down than up; yellow (half size, A+ only) on a 10-day ratio
+  under 2 or more than 20 scaled names up 50% in a month; green (full size)
+  otherwise. The two counts are scaled by measured stocks / 6,500 (378.3 and
+  10.8 on 17 November 2026); the ratios are not.
 - **scan** — the repository's recorded formulas: `c/c1 >= 1.04 and v > v1 and v >= 100000`
   and the dollar breakout `c - o >= 0.90 and v > 100000`, then the
   checklist over every hit: **2** not up two days in a row, **L** a linear
@@ -1505,6 +1534,18 @@ label measurement age, not permission to trade. Price comparisons use the retain
 trigger, limit and stop and do not authorize an order. Check current prices,
 spread and order terms at the broker.
 
+For a burst ticket's row the *Against published levels* line also says what the
+dated price means for its buy stop. A last trade or ask at or over the trigger
+(within the published band, above the limit or above the day-2 line) reads "At
+or over the trigger (…): Fidelity’s words say a buy stop must be entered above
+the current market price, so this ticket’s stop-limit cannot be entered as
+written while the stock trades there." One between the entry floor and the
+trigger reads "Under the trigger (…): the stop-limit as written is on the right
+side of the market while the stock trades there." The words are built from the
+receipt's two recorded comparisons, add no field, and the line still ends "These
+dated comparisons are not an entry or cancellation instruction." A setting-up
+row carries neither.
+
 Nasdaq's public halt RSS supplies named halt observations. A quote-resumption
 time alone does not establish trade resumption; older unresolved halts remain
 relevant. A missing symbol or unavailable feed is not a clearance. Issuer news
@@ -1579,9 +1620,11 @@ endpoint from the committed `spicystock-morning-endpoint` meta tag in
 `https://spicystock-production.up.railway.app/morning.json` (deployed and read
 from outside on 31 October 2026; [the Railway runbook](docs/operations/morning-railway.md)
 records what was read); empty, the site reads the same-origin static file and
-does not poll. Every offline check serves a copy of the shell with the tag blanked
+does not poll; set, it reads the host and that static file and polls both. Every offline check serves a copy of the shell with the tag blanked
 (`tools/offline_shell.mjs`), and `tools/morning_endpoint_live.mjs` reads the live
-endpoint from the site's own origin, outside every gate. Only a reviewed deployment may set
+endpoint from the site's own origin, outside every gate; its output names which
+file the shown receipt came from (`page.source`), since the page also reads the
+checkout's static `docs/morning.json`. Only a reviewed deployment may set
 that exact URL; query strings, fragments, credentials, other paths and malformed
 configuration are refused. The host answers 200 with the receipt bound to the
 publication it holds; 404 `{"publication_sha256":…,"status":"no_receipt"}`,
@@ -1605,8 +1648,16 @@ Hidden tabs, practice/replay records, missing timing, stale publications and
 zero-ticket publications do not poll. The manual reload remains available.
 An automatic read never overlaps another read; publication changes cancel old
 work and recheck the exact source binding. An outage, malformed response or older
-receipt preserves the last verified receipt and known event exclusions. There
-is no automatic static-file fallback. Reads cannot trigger provider work.
+receipt preserves the last verified receipt and known event exclusions.
+Beside the configured host the page reads the same-origin static `morning.json` the morning workflow commits, on every read;
+each file is held to the loaded publication by the same validation,
+the newest verified receipt is shown (the host's on a tie) and the summary
+names which file it came from (*Receipt source:*); positive halt and event
+facts are kept from both files, a receipt bound to another publication is never
+shown, and when the newest verified file omits a restriction the other carries
+the read is refused and the restriction stays. One 15-second limit covers both
+reads, so a host that never answers holds a bound static receipt back until
+that limit. Reads cannot trigger provider work.
 This disabled-by-default adapter establishes no hosting, scheduler, source
 coverage or live-session delivery reliability; those remain deployment and
 operating acceptance requirements.
@@ -1653,7 +1704,11 @@ runs were created); only after the morning file was read and shown to hold no
 current check for this publication (a 404, a receipt bound to another
 publication, an inapplicable one, or one past its five-minute life), never
 while it is unread or unverifiable; and only when the publication admits a
-plan or the opened research comparison names allocation-fit rows. A no-ticket
+plan or the opened research comparison names allocation-fit rows. Under a
+configured morning host the offer is made only when that host's answer shows it does not hold the loaded publication
+(it served a receipt for another publication, or a 404 naming another
+publication or none); a host that holds the record checks it itself, and a host
+whose answer could not be read leaves that unknown, so nothing is offered. A no-ticket
 receipt stays final, and a publication with nothing to quote says so instead.
 Earlier that day it names when the window opens. The link goes to `morning.yml`
 on GitHub with the steps (main, **dry_run** unticked) and says what a run does:
@@ -1668,7 +1723,8 @@ publisher 38039664633 verified the served file 130 seconds after the run was
 created. Neither asked a market-data provider anything (one on a Saturday, one
 after the cutoff); the 10 October run's SEC collection made one request. So
 the offer says to press **Reload published observations** a minute or two
-after the run finishes. That button re-reads the morning file and, once the
+after the run finishes. That button re-reads the morning host's receipt and
+the static morning file and, once the
 research comparison has been opened, its dated research observation; the
 comparison's own reload re-reads that observation even when its cohort is
 unchanged. A press keeps what was verified until a newer file validates, and
@@ -2769,7 +2825,7 @@ docs/           index.html · app.js · app.css · app-reading.js · app-method.
                 history/ (recovery) · evidence/ (deduplicated source objects)
                 intraday/ (minute bars of plans' first days, one content-addressed object per plan, written once)
                 quality-ledger/ (versioned publication facts; created by future real publications)
-knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
+knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose) · rules.md (every rule the run applies, in pipeline order, each with its constant and class; held by tests/test_rule_sheet.py)
                 broker-fidelity.md (the ticket on Fidelity's order entry; each fact labelled Fidelity's words, a regulator's words, inferred, unconfirmed or SpicyStock's advice)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/ · fixtures/brief/ (the brief's golden pair from the page fixture full; generate.py --check holds it) · fixtures/model-record/ (the 17 November 2026 record with its bars, frozen from git by its build.py; --check holds it)
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py · publish_morning.py · probe_morning_sources.py · sync_morning_service.py
