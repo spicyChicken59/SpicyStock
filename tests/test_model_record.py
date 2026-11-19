@@ -606,9 +606,15 @@ def test_a_setup_issued_again_under_another_account_is_counted_once_in_the_era_o
     # every setup is in exactly one era, and every ticket is
     assert sum(e["setups"] for e in block["eras"]) == block["distinct_setups"] == len(block["setups"])
     assert sum(e["tickets"] for e in block["eras"]) == block["tickets"]
-    # the stated rule, on the frozen record too: 17 setups over its three accounts
-    frozen_eras = frozen_block(tmp_path / "frozen")["eras"]
-    assert sum(e["setups"] for e in frozen_eras) == 17
+    # the stated rule, on the frozen record too: 17 setups over its three accounts. No frozen setup has
+    # tickets under two accounts, so the frozen record cannot tell the rule from counting a setup in every
+    # era it touches: the case above is the one that can.
+    frozen = frozen_block(tmp_path / "frozen")
+    assert sum(e["setups"] for e in frozen["eras"]) == frozen["distinct_setups"] == len(frozen["setups"]) == 17
+    accounts = {}
+    for p in frozen["plans"]:
+        accounts.setdefault(p["setup"], set()).add((p["issued_equity"], p["risk_pct"]))
+    assert all(len(found) == 1 for found in accounts.values())
 
 
 # --------------------------------------------------------- the withdrawn -----

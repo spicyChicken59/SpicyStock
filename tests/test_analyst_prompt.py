@@ -37,6 +37,7 @@ from pathlib import Path
 from unittest import mock
 from zoneinfo import ZoneInfo
 
+import numpy as np
 import pytest
 
 from src import (admission, breadth, delivery, event_risk, funnel, grader, intraday, morning, pipeline, plan, quality,
@@ -1348,13 +1349,28 @@ def test_the_chart_reader_can_lower_a_grade_and_never_raise_one():
 SHARES_OF_A_RANGE = {2: "half", 3: "third", 4: "quarter", 5: "fifth", 10: "tenth"}
 
 
+def h_passes(o: float, c: float) -> bool:
+    """The checklist's own H check (quality._check_h) on one burst day that
+    ranges a dollar, from 100 to 101: a cent of close is a hundredth of the
+    range, so the check's two-place close position is exact."""
+    values = {name: np.array([value]) for name, value in zip(quality.COLUMNS, (o, 101.0, 100.0, c, 1e6))}
+    return quality._check_h(quality._Bars(values, 0), None).passed is True
+
+
 def letter_h_problems(text: str = PROMPT_RAW) -> list[str]:
-    """The H row of the checklist table, from quality.MIN_CLOSE_POS (the
-    phrase also stands in the owner's own rubric, which is his and not held)."""
-    parts = 1 / (1 - quality.MIN_CLOSE_POS)
-    assert abs(parts - round(parts)) < 1e-9 and round(parts) in SHARES_OF_A_RANGE, quality.MIN_CLOSE_POS
-    row = (f"| H | {g(quality.WEIGHTS['H'])} | the burst closed near its high: above its open and in the top "
-           f"{SHARES_OF_A_RANGE[round(parts)]} of the day's range |")
+    """The H row of the checklist table, from the H check itself: how far down
+    the day's range a close may sit and still pass, and that a close at the
+    high does not pass when the day opened there (the phrase also stands in
+    the owner's own rubric, which is his and not held)."""
+    passing = [c for c in cents(100.01, 101.0) if h_passes(100.0, c)]       # opened at the low
+    assert passing and passing == cents(passing[0], 101.0), "H passes from one close up to the high"
+    share = round(101.0 - passing[0], 2)                                    # of a one-dollar range
+    parts = 1 / share
+    assert abs(parts - round(parts)) < 1e-9 and round(parts) in SHARES_OF_A_RANGE, share
+    assert abs(quality.MIN_CLOSE_POS - (1 - share)) < 1e-9, "the H check reads quality.MIN_CLOSE_POS"
+    above = not h_passes(101.0, 101.0) and h_passes(100.99, 101.0)          # a close at the high, opened at it or a cent under
+    row = (f"| H | {g(quality.WEIGHTS['H'])} | the burst closed near its high: "
+           f"{'above its open and ' if above else ''}in the top {SHARES_OF_A_RANGE[round(parts)]} of the day's range |")
     return lacking(between("### 5.6 ", "\n### ", text), row)
 
 
