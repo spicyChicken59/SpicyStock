@@ -14,7 +14,8 @@ run-name: >-
   ${{ github.event_name == 'workflow_dispatch'
       && (inputs.dry_run == true && 'Evening rehearsal'
           || (inputs.session != '' && format('Evening backfill {0}', inputs.session)
-              || 'Evening dispatch'))
+              || (inputs.only_if_unpublished == true && 'Evening dispatch (only if unpublished)'
+                  || 'Evening dispatch')))
       || format('Evening cron {0}', github.event.schedule) }}
 on:
   schedule:
@@ -35,6 +36,11 @@ on:
         default: false
       skip_email:
         description: "Publish a real record without sending email."
+        type: boolean
+        required: false
+        default: false
+      only_if_unpublished:
+        description: "Start as a scheduled slot would: publish the newest completed session only if it is still unpublished and its next session has not opened; otherwise do nothing. Takes no session."
         type: boolean
         required: false
         default: false
@@ -67,6 +73,7 @@ jobs:
           SCAN_EVENT_NAME: ${{ github.event_name }}
           SCAN_EVENT_SCHEDULE: ${{ github.event.schedule }}
           SCAN_REQUESTED_SESSION: ${{ inputs.session }}
+          SCAN_ONLY_IF_UNPUBLISHED: ${{ inputs.only_if_unpublished == true && 'true' || 'false' }}
         run: |
           python - <<'PY'
           import json
@@ -76,9 +83,45 @@ jobs:
 
           from src import sessions
 
+          def unpublished(target, now):
+              """Whether `target` may still be published at `now`, and why not."""
+              next_open = sessions.hours(sessions.next_sessions(target, 1)[0])[0]
+              if now >= next_open:
+                  return False, f'{target} recovery expired at the next session open'
+              try:
+                  previous = json.loads(Path('docs/data.json').read_text())
+                  run = previous.get('run', {}) if isinstance(previous, dict) else {}
+                  if not isinstance(run, dict):
+                      run = {}
+              except (OSError, ValueError):
+                  previous, run = {}, {}
+              measured = run.get('session')
+              try:
+                  measured = date.fromisoformat(measured) if isinstance(measured, str) else None
+              except ValueError:
+                  measured = None
+              if measured and measured > target:
+                  return False, f'A newer session than {target} is already published'
+              if (measured == target and run.get('status') in ('ok', 'degraded')
+                      and run.get('dry_run') is False and not previous.get('fixture')):
+                  return False, f'{target} is already published'
+              return True, ''
+
           def decide():
               if os.environ['SCAN_EVENT_NAME'] == 'workflow_dispatch':
-                  return True, os.environ.get('SCAN_REQUESTED_SESSION', ''), 'Manual dispatch'
+                  requested = os.environ.get('SCAN_REQUESTED_SESSION', '')
+                  if os.environ.get('SCAN_ONLY_IF_UNPUBLISHED', '') != 'true':
+                      return True, requested, 'Manual dispatch'
+                  # An outside trigger that starts the evening on time: the same
+                  # rules as a scheduled slot, so a second start is a no-op.
+                  if requested:
+                      return False, '', 'only_if_unpublished takes no session: it reads the newest completed session'
+                  now = datetime.now(timezone.utc)
+                  target = sessions.completed_session(now)
+                  go, reason = unpublished(target, now)
+                  if not go:
+                      return False, '', reason
+                  return True, str(target), f'Dispatch for {target}, still unpublished'
               slots = {
                   '16 22 * * 1-5': (22, '-0400', range(0, 5)),
                   '16 23 * * 1-5': (23, '-0500', range(0, 5)),
@@ -99,26 +142,9 @@ jobs:
                   return False, '', 'Not the active UTC slot'
               if not sessions.is_session(target):
                   return False, '', f'{target} is not an exchange session'
-              next_open = sessions.hours(sessions.next_sessions(target, 1)[0])[0]
-              if now >= next_open:
-                  return False, '', f'{target} recovery expired at the next session open'
-              try:
-                  previous = json.loads(Path('docs/data.json').read_text())
-                  run = previous.get('run', {}) if isinstance(previous, dict) else {}
-                  if not isinstance(run, dict):
-                      run = {}
-              except (OSError, ValueError):
-                  run = {}
-              measured = run.get('session')
-              try:
-                  measured = date.fromisoformat(measured) if isinstance(measured, str) else None
-              except ValueError:
-                  measured = None
-              if measured and measured > target:
-                  return False, '', f'A newer session than {target} is already published'
-              if (measured == target and run.get('status') in ('ok', 'degraded')
-                      and run.get('dry_run') is False and not previous.get('fixture')):
-                  return False, '', f'{target} is already published'
+              go, reason = unpublished(target, now)
+              if not go:
+                  return False, '', reason
               return True, str(target), f'Scheduled session {target}; nominal slot {nominal.isoformat()}'
 
           go, session, reason = decide()

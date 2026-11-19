@@ -993,7 +993,7 @@
  "source": {
   "attempts": 2,
   "doubles": "tests/fakes.py",
-  "guard_sha256": "608e5c0a7569e0a0cd87311af81d0651aa4b23a6ca4ea7c6dcb7dd66fb839efa",
+  "guard_sha256": "85123fea07339e48ee84d378901fde48156009d6f748fe4df912e4fdc65f6974",
   "market": {
    "benchmark": "SPY",
    "names": [
