@@ -219,10 +219,14 @@ def test_a_rename_that_fails_on_a_first_night_leaves_no_half_pair(tmp_path, monk
     assert not (docs / brief.JSON_FILE).exists() and not (docs / brief.MD_FILE).exists()
 
 
-def test_the_evening_survives_a_rename_failure_with_the_previous_pair_in_place(tmp_path, monkeypatch, caplog):
+def test_a_failed_install_leaves_no_earlier_nights_brief_reading_as_current(tmp_path, monkeypatch, caplog):
+    """The install fails on night two. The pair on disk is night one's, bound to a record that is no longer the
+    one beside it: it is removed, so a reader finds no brief and the publication gate still serves the record
+    (a stale pair would make ``brief_files()`` refuse the whole site)."""
+    from tools import publish_dashboard
     docs, first_raw, picks_raw = _fixture_docs(tmp_path, "full")
     brief.write_publication(first_raw, picks_raw, docs)
-    previous = ((docs / brief.JSON_FILE).read_bytes(), (docs / brief.MD_FILE).read_bytes())
+    assert len(publish_dashboard.brief_files(docs.parent)) == 2
     (docs / brief.DATA_FILE).write_bytes((PAGE / "yellow.json").read_bytes())
     real, calls = os.replace, []
 
@@ -235,8 +239,46 @@ def test_the_evening_survives_a_rename_failure_with_the_previous_pair_in_place(t
     install_model_record(monkeypatch, None)
     with caplog.at_level(logging.WARNING, logger=pipeline.log.name):
         pipeline.publish_brief(docs, {}, {}, {}, {})          # never raises
+    messages = [r.getMessage() for r in caplog.records]
+    assert "Analyst brief unavailable (OSError); evening record retained." in messages
+    assert not (docs / brief.JSON_FILE).exists() and not (docs / brief.MD_FILE).exists()
+    assert any(m.startswith("Analyst brief: removed ") and "bound to an earlier publication" in m for m in messages)
+    monkeypatch.setattr(os, "replace", real)
+    assert publish_dashboard.brief_files(docs.parent) == ()    # no brief: the gate serves the record as before
+
+
+def test_a_failed_install_keeps_a_pair_that_is_this_records(tmp_path, monkeypatch, caplog):
+    """The same failure on a re-run over the SAME bytes: the pair on disk is bound to the record beside it, so it
+    stays. Removing it would cost a reader a brief that is true."""
+    docs, first_raw, picks_raw = _fixture_docs(tmp_path, "full")
+    brief.write_publication(first_raw, picks_raw, docs)
+    previous = ((docs / brief.JSON_FILE).read_bytes(), (docs / brief.MD_FILE).read_bytes())
+    real, calls = os.replace, []
+
+    def failing(source, target):
+        calls.append(1)
+        if len(calls) == 2:
+            raise OSError("rename refused")
+        return real(source, target)
+    monkeypatch.setattr(os, "replace", failing)
+    install_model_record(monkeypatch, None)
+    with caplog.at_level(logging.WARNING, logger=pipeline.log.name):
+        pipeline.publish_brief(docs, {}, {}, {}, {})
     assert ((docs / brief.JSON_FILE).read_bytes(), (docs / brief.MD_FILE).read_bytes()) == previous
-    assert "Analyst brief unavailable (OSError); evening record retained." in [r.getMessage() for r in caplog.records]
+    assert not any(r.getMessage().startswith("Analyst brief: removed ") for r in caplog.records)
+
+
+def test_discard_unbound_removes_a_half_pair_and_never_follows_a_link(tmp_path):
+    docs, first_raw, picks_raw = _fixture_docs(tmp_path, "full")
+    assert brief.discard_unbound(docs) == []                  # nothing there: nothing to do
+    brief.write_publication(first_raw, picks_raw, docs)
+    assert brief.discard_unbound(docs) == []                  # bound: left alone
+    (docs / brief.MD_FILE).unlink()
+    assert brief.discard_unbound(docs) == [brief.JSON_FILE]   # half a pair is not a brief
+    outside = tmp_path / "outside.md"
+    outside.write_text("kept")
+    (docs / brief.MD_FILE).symlink_to(outside)
+    assert brief.discard_unbound(docs) == [brief.MD_FILE] and outside.read_text() == "kept"
 
 
 def test_the_brief_is_derived_after_the_research_companions_and_before_retention():

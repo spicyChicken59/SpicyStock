@@ -1190,10 +1190,12 @@ def publish_brief(docs: Path, data: dict, rec: dict, frames: dict, minutes) -> N
     copies. The model-record block is computed here, from this run's fetched
     bars, and carried in; a run that cannot compute it says so in the brief.
 
-    Like the two optional producers above it, this one can never fail the
-    night: it sets no stage and adds no problem word, a derivation that
+    Like the two optional producers above it, this one never fails the
+    run: it sets no stage and adds no problem word, a derivation that
     fails installs the pair that says the brief is unavailable for these
-    bytes, and anything else is one warning with the evening record retained."""
+    bytes, and anything else is one warning with the evening record retained
+    and an earlier publication's pair removed, so a reader finds no brief
+    rather than a stale one and the publication gate still serves the record."""
     try:
         from src import brief
         try:
@@ -1211,6 +1213,15 @@ def publish_brief(docs: Path, data: dict, rec: dict, frames: dict, minutes) -> N
                 "Analyst brief: %s.", result["sentence"])
     except Exception as exc:  # noqa: BLE001 -- optional derived companion only
         log.warning("Analyst brief unavailable (%s); evening record retained.", type(exc).__name__)
+        # The pair still on disk is then an earlier publication's. Left there it would read as current to an
+        # outside reader, and the publication gate would refuse the whole site over it: no brief is the honest state.
+        try:
+            from src import brief
+            removed = brief.discard_unbound(docs)
+            if removed:
+                log.warning("Analyst brief: removed %s, bound to an earlier publication.", " and ".join(removed))
+        except Exception as inner:  # noqa: BLE001 -- never fails the night
+            log.warning("Analyst brief: the earlier pair could not be removed (%s).", type(inner).__name__)
 
 
 def restamp(data: dict, rep: RunReport, closed: bool) -> None:

@@ -9,7 +9,9 @@ guard will not publish it at all. An outside reader compares those instants
 with its own clock and gets one of five answers, the same five steps the
 page's ``status()`` walks:
 
-1. before the next session's completion: this is the newest record that can exist;
+1. before the next session's completion: no record of a later session can exist
+   (the same session can still be published again, and a later run can withdraw
+   a ticket, so the reader compares the binding before acting);
 2. before the primary slot: the next session has completed, its run is not yet due;
 3. before the retry slot: pending;
 4. before the recovery limit (the open of the session after the next): late, it can still publish;
@@ -51,7 +53,9 @@ EXPECTED_FIELDS = ("next_session", "completion_at", "primary_slot_at", "retry_sl
 RULE = (
     "Freshness is the reader's own computation: this file carries no clock. Compare your own clock, as an instant "
     "with its UTC offset, with the instants in `service.expected`, in this order, and stop at the first that holds.",
-    "1. Before `completion_at`: `newest`. The next session has not completed, so no newer record can exist yet.",
+    "1. Before `completion_at`: `newest`. The next session has not completed, so no record of a later session can "
+    "exist yet. The same session can still be published again, and a later run can withdraw a ticket: before acting "
+    "on a ticket, fetch the file again and compare `identity.canonical.sha256` with the copy the plan was built on.",
     "2. Before `primary_slot_at`: `not_due`. The next session has completed and its evening run is not yet due.",
     "3. Before `retry_slot_at`: `pending`. The first scheduled slot has passed and the retry slot has not.",
     "4. Before `recovery_until`: `late`. Both scheduled slots have passed; a delayed run can still publish the next "
@@ -62,6 +66,8 @@ RULE = (
     "From step 2 on, fetch the file again before relying on it: a newer one may exist. A field that is null has its "
     "reason in `service.expected.unknown`; without the instant a step needs, freshness is unknown and the file is "
     "research only.",
+    "Freshness is not permission. A ticket applies only from `identity.entry_window.opens_at` to its `cutoff_at`; "
+    "after the cutoff it is over, whatever state this rule gives.",
 )
 
 
@@ -232,8 +238,9 @@ def state(expected_block, now: datetime) -> dict:
         return cannot("completion_at")
     if now < completion:
         return {"state": NEWEST,
-                "sentence": f"This is the newest record that can exist: the next session ({session}) does not "
-                            f"complete until {block['completion_at']}."}
+                "sentence": f"No record of a later session can exist yet: the next session ({session}) does not "
+                            f"complete until {block['completion_at']}. The same session can still be published "
+                            "again, so compare the binding before acting on a ticket."}
     if primary is None or retry is None:
         # a record from before the service archived its schedule: the page names no slot either
         if recovery is None:

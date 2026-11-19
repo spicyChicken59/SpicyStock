@@ -2368,11 +2368,18 @@ committed pair to its derivation.
   own computation (`src/freshness.py`): `service.expected` gives the next
   session's completion, the two slot instants and the recovery limit, and
   `service.freshness_rule` says how to compare them with the reader's clock to
-  get `newest`, `not_due`, `pending`, `late` or `missing`.
+  get `newest`, `not_due`, `pending`, `late` or `missing`. `newest` means no
+  record of a later session can exist yet; the same session can still be
+  published again, and a later run can withdraw a ticket, so the rule tells
+  the reader to fetch again and compare the binding before acting. Freshness
+  is not permission: a ticket applies only inside `identity.entry_window`.
 - Only the rows under `tickets` are published model tickets. Every other row is
-  marked `RESEARCH ONLY`: its levels are the record's plan rule over the row's
-  own bar at the archived model account, no order is printed for it, and a plan
-  the rule or the event registry refuses prints its refusal and no share count.
+  marked `RESEARCH ONLY`: a burst's levels are the record's plan rule over the
+  row's own bar at the archived model account, a setting-up row's are the
+  record's own plan, no order is printed for either, and a plan the rule or the
+  event registry refuses prints its refusal and no share count (a refused
+  setting-up plan still prints the record's trigger, limit and stop, marked
+  `plan_rule_eligible` false).
 - Tickets and names with a selected chart review are always in detail. The rest
   are detailed while the file fits, then written as compact rows, then named in
   the research tail; `bounds` states every count and what was left out.
@@ -2386,7 +2393,11 @@ committed pair to its derivation.
   registry has not been cleared.
 - Each ticket carries an order-entry block: the order as written, the buy stop
   against the last close, the six price states the morning check also uses, and
-  the note that a broker takes a buy stop only above the current price.
+  the note that a broker takes a buy stop only above the current price. A burst
+  ticket whose stop is at or over its skip-under line has no price in
+  `below_entry_floor`, and the block says so; an anticipation ticket carries
+  the record's own gap rule (an open over the gap line is gapped: catalyst
+  check before buying).
 
 The model-record block (`src/model_record.py`) is a second reading of the
 scorecard's own tickets. It walks every retained ticket as the scorecard does
@@ -2400,17 +2411,30 @@ whatever its size, and the model account has changed inside the window. The
 brief carries the block verbatim when its ticket count, bucket counts and sum
 of R are the scorecard's, its encoding is within 60,000 bytes, the brief
 still fits with it and it uses no property name the secret scan reads as a
-credential; otherwise the brief carries one fixed reason. `python -m
+credential. A block over that bound is carried reduced: each plan row keeps its
+identity, its result and the account it was sized against, which is what the
+next night's model record reads back, and the setups table is left out. If
+that does not fit either, or the block disagrees, the brief carries one fixed
+reason. A ticket's account is read from the record on the night it is issued
+and from the previous brief afterwards, so a night with no carried block leaves
+later tickets' accounts unknown, said so and never guessed. `python -m
 src.model_record --docs docs` prints it from the record's own observations
 block without market data; a ticket whose bars the record no longer carries
 takes its bucket and R from the publication's quality-ledger row and is marked.
 
-The brief can never fail a night: a derivation that fails installs a pair that
-says the brief is unavailable for these bytes, a failed rename restores the
-previous pair, and anything else is one warning in the run log. The
-publication gate holds a committed pair to the committed record by its hashes
-(`brief_files()` in `tools/publish_dashboard.py`) and fetches both files from
-the served site. No pair is committed with this change: the first evening run
+The brief never fails a run: a derivation that fails installs a pair that says
+the brief is unavailable for these bytes, and anything else is one warning in
+the run log. When tonight's pair cannot be installed at all, the pair left on
+disk is an earlier publication's: `publish_brief()` removes it
+(`brief.discard_unbound()`), so a reader finds no brief rather than a stale one
+that reads as current, and the publication gate serves the record as it did
+before the brief existed. The gate holds a committed pair to the committed
+record by its hashes (`brief_files()` in `tools/publish_dashboard.py`) and
+fetches both files from the served site; a pair bound to another publication is
+refused. The gate checks the binding and not the content: a hand-edited
+brief.md that keeps its binding line passes it, and only
+`python -m src.brief --docs docs --check`, which re-derives the pair, would
+name it. No pair is committed with this change: the first evening run
 after it writes the first one. After the page fixtures are regenerated,
 regenerate the brief's golden pair last (`python tests/fixtures/brief/generate.py`;
 CI runs it with `--check`).

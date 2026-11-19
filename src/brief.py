@@ -120,7 +120,8 @@ SECTIONS = ("Identity and binding", "Service state", "Market regime", "Model acc
 #: The first thing either file says. Fixed text.
 READ_FIRST = (
     "This is SpicyStock's daily brief: one evening publication's model output, derived from that publication's "
-    "record and its pick ledger and from nothing else, for an outside analyst to read in place of the full record.",
+    "record and its pick ledger, with the model-record block the same evening run computed from its own bars "
+    "carried in (section 10), and from nothing else, for an outside analyst to read in place of the full record.",
     "Check that it is current before using it: `status` must be `derived`, and the freshness rule in section 2 "
     "(`service.freshness_rule`) is applied with your own clock.",
     "Only the rows in section 5 (`tickets`) are published model tickets. Every other row is research only: its "
@@ -133,7 +134,8 @@ READ_FIRST = (
 LIMITS = (
     "This is a model's output from one provider's daily bars. This brief places and observes no order, and "
     "SpicyStock reads no brokerage account, balance, position or fill.",
-    "Every price is the measured session's bar as published; nothing here is a live quote. Check the current "
+    "No price here is a live quote. A candidate's prices are the measured session's bar as published; an open "
+    "plan's, the pick ledger's and the model record's are the earlier sessions' the rows name. Check the current "
     "price, spread and halt state before acting.",
     "A grade is a checklist score over daily bars and, where a review is recorded, one chart reader's judgement. "
     "It is not a forecast.",
@@ -143,8 +145,9 @@ LIMITS = (
     "Whether the broker accepts that order for a burst ticket, whose buy stop is the last close, is unconfirmed.",
     "A stop reached inside a session is booked at exactly the stop price. A real stop order fills at the next "
     "available price, which can be worse, and a gap through the stop loses more.",
-    "Research levels are what the record's own plan rule gives for the recorded bar at the archived model "
-    "account. The record published no plan for those names; they are not tickets, and no chart review accepted "
+    "Research levels are never tickets. For a burst they are what the record's own plan rule gives for the "
+    "recorded bar at the archived model account; for a setting-up row they are the record's own plan, which the "
+    "plan rule may have refused (`plan_rule_eligible` false) or left without shares. No chart review accepted "
     "them unless the row's reader state says so.",
     "A model ticket is sized for the archived model account (`account`), not for the reader's account. Shares, "
     "cost and risk are planned price-to-stop arithmetic at the limit, not a maximum loss.",
@@ -317,13 +320,15 @@ def identity(data: dict, canonical_raw: bytes, picks_raw: bytes | None) -> dict:
 
 
 def input_unknowns(data: dict) -> list:
-    """What the record's inputs do not establish. Fixed sentences; the one figure is the record's own fetch time."""
-    fetched = _dict(_dict(data.get("run")).get("universe")).get("fetched_at")
+    """What the record's inputs do not establish. Fixed sentences; the one figure is the instant the run began
+    (``run.published_at``), which the bars were read after. The universe directory's own capture time is another
+    instant and is printed with the universe."""
+    fetched = _dict(data.get("run")).get("published_at")
     return [
         "Why a stale stock had no session bar is not established; its session inputs are unknown, not a measured "
         "non-match, until a later run reads the session again.",
-        "These bars are the provider's as of the run's fetch"
-        + (f" at {fetched}" if isinstance(fetched, str) else "")
+        "These bars are the provider's as read by the run"
+        + (f" that began at {fetched}" if isinstance(fetched, str) else "")
         + "; a session's volume can be revised afterwards, and this file does not measure by how much.",
         "One price source: nothing cross-checks a close, a volume or a split. Bars are adjusted as "
         "`service.inputs.basis.adjustment` says and for nothing else.",
@@ -370,7 +375,7 @@ def service(data: dict, canonical_sha: str) -> dict:
         "inputs": {
             "basis": run.get("input_basis"),
             "lookback_days": _dict(_dict(data.get("rules")).get("pipeline")).get("lookback_days"),
-            "fetched_at": uni.get("fetched_at"), "price_sources": PRICE_SOURCES,
+            "run_started_at": run.get("published_at"), "price_sources": PRICE_SOURCES,
             "intended_stocks": acc.get("intended_stocks"), "ready_stocks": acc.get("ready_stocks"),
             "fraction": acc.get("fraction"), "acceptance": acc.get("status"),
             "complete_evaluation": acc.get("complete_evaluation"),
@@ -394,8 +399,9 @@ def service(data: dict, canonical_sha: str) -> dict:
             "intraday": _text(_dict(run.get("intraday")).get("sentence")),
             "unknown": input_unknowns(data),
         },
-        "universe": ({**_pick(uni, ("label", "size", "source", "source_kind", "fetched_at", "identity",
+        "universe": ({**_pick(uni, ("label", "size", "source", "source_kind", "identity",
                                     "snapshot_relation", "point_in_time_membership", "membership_limit")),
+                      "directory_captured_at": uni.get("fetched_at"),
                       "counts": uni.get("counts")} if uni else None),
         "reader": {
             "model": run.get("model"),
@@ -896,6 +902,10 @@ def is_ticket_plan(p) -> bool:
         and _dict(p.get("allocation")).get("admitted", True) is True
 
 
+STOP_OVER_FLOOR_NOTE = ("this ticket's stop is at or over its skip-under line, so no price is in this state: "
+                        "a price at or under the stop is `below_stop`")
+
+
 def price_states(stop, floor, trigger, limit, day2) -> list:
     """The six words of ``morning.price_state()`` with this ticket's own
     boundaries, in price order, so the brief, the morning receipt's
@@ -905,11 +915,17 @@ def price_states(stop, floor, trigger, limit, day2) -> list:
         return {"state": state, "from": low, "from_inclusive": low_in, "to": high, "to_inclusive": high_in,
                 "applies": note is None, **({"note": note} if note else {})}
 
+    # ``morning.price_state()`` asks the stop first, so a stop at or over the
+    # entry floor (the skip-under line) leaves no price between the two, and
+    # the state under the trigger starts just over the stop.
+    stop_over_floor = _num(stop) and _num(floor) and stop >= floor
+    under_trigger = (stop, False) if stop_over_floor else (floor, True)
     return [
         band("below_stop", None, False, stop, True),
-        band("below_entry_floor", stop, False, floor, False),
-        band("below_trigger", floor, True, trigger, False,
-             None if _num(floor) and _num(trigger) and floor < trigger
+        band("below_entry_floor", stop, False, floor, False,
+             STOP_OVER_FLOOR_NOTE if stop_over_floor else None),
+        band("below_trigger", under_trigger[0], under_trigger[1], trigger, False,
+             None if _num(under_trigger[0]) and _num(trigger) and under_trigger[0] < trigger
              else "this ticket's entry floor is its trigger, so no price is in this state"),
         band("within_published_band", trigger, True, limit, True),
         band("above_limit", limit, False, day2, True if day2 is not None else False),
@@ -949,7 +965,8 @@ def order_entry(stage: str, row: dict, p: dict, data: dict) -> dict:
         "lines": {name: value for name, value in (
             ("stop", stop), ("skip_below", p.get("skip_if_open_below") if burst else None), ("trigger", trigger),
             ("limit", limit), ("day2_line", day2), ("extended_above", p.get("extended_above") if burst else None),
-            ("gap_ok_above", None if burst else p.get("gap_ok_above"))) if value is not None},
+            ("gap_check_above", None if burst else p.get("gap_ok_above"))) if value is not None},
+        "gap_rule": None if burst else _text(p.get("gap_rule")),
         "buy_stop_vs_last_close": versus,
         "buy_stop_note": BUY_STOP_NOTE if versus == "equal" else None,
         "order_as_written": p.get("order_json"),
@@ -1072,8 +1089,29 @@ def model_record_faults(block, record) -> list:
     return faults
 
 
+#: What a plan row keeps when the whole block is over its bound: its identity, its result and the account it was
+#: sized against. The account is what the NEXT night's model record reads back from this file
+#: (``model_record.carried_accounts()``), so a block that outgrows its bound does not cost every ticket its account.
+MODEL_REDUCED_PLAN_FIELDS = ("ticker", "kind", "picked", "evidence_id", "bucket", "r", "shares", "model_usd",
+                             "issued_equity", "risk_pct", "account_basis", "setup", "withdrawn")
+MODEL_REDUCED_REASON = ("the whole block was over its bound: each plan row keeps its identity, its result and its "
+                        "account, and the setups table and each plan's levels and walk are left out")
+
+
+def reduce_model_record(block: dict) -> dict:
+    """The same block with its two per-ticket tables cut down: plan rows to ``MODEL_REDUCED_PLAN_FIELDS``, the
+    setups table left out and counted. Every count, sentence and other table is kept as computed."""
+    out = {k: v for k, v in block.items() if k != "setups"}
+    out["plans"] = [{k: row[k] for k in MODEL_REDUCED_PLAN_FIELDS if k in row}
+                    for row in _list(block.get("plans")) if isinstance(row, dict)]
+    out["reduced"] = {"reason": MODEL_REDUCED_REASON, "plan_fields": list(MODEL_REDUCED_PLAN_FIELDS),
+                      "setups_left_out": len(_list(block.get("setups")))}
+    return out
+
+
 def model_block(model_record, data: dict) -> dict:
-    """The block the brief carries: the evening run's block verbatim, or the reason there is none. A block that
+    """The block the brief carries: the evening run's block verbatim, the same block reduced when it is over its
+    bound (``reduce_model_record``), or the reason there is none. A block that
     says of itself that it does not reconcile with the scorecard is carried as it is, with that status and its
     reason; one that calls itself computed and disagrees with the scorecard is not carried. Total over its input,
     so a block that cannot be carried never costs the night its brief, and the file says why it is absent."""
@@ -1095,7 +1133,9 @@ def model_block(model_record, data: dict) -> dict:
     if scanner_names(block):
         return not_computed(NOT_CARRIED_NAMES)
     if len(raw) > MODEL_RECORD_MAX_BYTES:
-        return not_computed(NOT_CARRIED_SIZE)
+        block = reduce_model_record(block)
+        if len(_encode(block)) > MODEL_RECORD_MAX_BYTES:
+            return not_computed(NOT_CARRIED_SIZE)
     if model_record_faults(block, data):
         return not_computed(NOT_CARRIED_DISAGREES)
     return block
@@ -1419,9 +1459,9 @@ def shape(full: dict, detail, compact_n) -> dict:
     n_compact = len(remainder) if compact_n is None else min(compact_n, len(remainder))
     compact_rows, dropped = remainder[:n_compact], remainder[n_compact:]
     groups: dict = {}
-    for r in dropped:
-        tail.append(("in the trade band and admitted; its row was left out for size", r["ticker"],
-                     r.get("grade_mechanical"), r.get("grade")))
+    # The rows moved out for size outrank the tail, so they are named first and the cap cuts the lowest ranks.
+    tail = [("in the trade band and admitted; its row was left out for size", r["ticker"],
+             r.get("grade_mechanical"), r.get("grade")) for r in dropped] + tail
     kept_tail, cut_tail = tail[:TAIL_MAX], tail[TAIL_MAX:]
     for why, ticker, mech, final in kept_tail:
         group = groups.setdefault(why, {"reason": why, "count": 0, "tickers": []})
@@ -1454,17 +1494,25 @@ def shape(full: dict, detail, compact_n) -> dict:
                            f"are compact rows cut, to the largest multiple of {COMPACT_STEP} that fits, the rest "
                            "moving to the research tail",
         "research_tail_named": len(kept_tail), "research_tail_left_out": len(cut_tail),
-        "research_tail_rule": f"the first {TAIL_MAX} by the record's rank order",
+        "research_tail_rule": f"the first {TAIL_MAX}: the admitted trade-band names moved out for size, then the "
+                              "rest by the record's rank order",
         "open_plans_left_out": out["open_plans"]["rows_left_out"],
         "open_plans_rule": f"the first {OPEN_PLANS_MAX} in the record's own order",
         "pick_ledger_left_out": _dict(out.get("pick_ledger")).get("rows_left_out"),
         "stale_names_left_out": _dict(_dict(_dict(out["service"]).get("inputs")).get("tolerance")).get("names_left_out"),
+        "stale_names_rule": f"the first {STALE_NAMES_MAX} in the record's own order",
         "also_quiet_left_out": out["setting_up"]["also_quiet_left_out"],
+        "also_quiet_rule": f"the first {ALSO_QUIET_MAX} in the record's own order",
+        "breadth_history_sessions": len(_list(_dict(out.get("market")).get("history"))),
+        "breadth_history_rule": f"the newest {HISTORY_DAYS} sessions of the record's own breadth history",
         "model_record_carried": model.get("status") in MODEL_CARRIED,
+        "model_record_reduced": bool(model.get("reduced")),
         "model_record_rule": f"The evening run's model-record block is carried whole when its canonical encoding is "
-                             f"within {MODEL_RECORD_MAX_BYTES} bytes and the brief still fits with it, and not at "
-                             f"all otherwise; brief.md prints its sentences and, while they fit, the first "
-                             f"{MODEL_MD_ROWS} rows and {MODEL_MD_COLUMNS} columns of each of its tables",
+                             f"within {MODEL_RECORD_MAX_BYTES} bytes and the brief still fits with it; past that "
+                             "bound it is carried reduced (each plan row keeps its identity, result and account; "
+                             "the setups table is left out), and not at all if that does not fit either; brief.md "
+                             f"prints its sentences and, while they fit, the first {MODEL_MD_ROWS} rows and "
+                             f"{MODEL_MD_COLUMNS} columns of each of its tables",
         "text_rule": f"A copied sentence over {TEXT_MAX} characters is cut and ends with an ellipsis",
     }
     return out
@@ -1772,6 +1820,10 @@ def _model_md(block: dict, tables: bool = True) -> list:
                + f"; sum of R {_short(block.get('sum_r'))}. Computed by the evening run from that run's fetched bars; "
                  "its ticket count, bucket counts and sum of R are held to the record's scorecard, the rest is "
                  "carried as computed.")
+    reduced = _dict(block.get("reduced"))
+    if reduced:
+        out.append(f"- Model-record block: carried reduced ({reduced.get('reason')}); "
+                   f"{_n(reduced.get('setups_left_out'))} setup rows left out.")
     for name, value in block.items():
         if name != "sentences" and isinstance(value, list) and value and all(isinstance(v, str) for v in value):
             out.extend(f"- Model record, {name}: {_model_cell(v, TEXT_MAX)}" for v in value)
@@ -1860,7 +1912,8 @@ def render_markdown(brief: dict, json_raw: bytes, md_detail=None, md_compact=Non
     inputs = _dict(svc.get("inputs"))
     basis = _dict(inputs.get("basis"))
     add(f"- Inputs: {basis.get('provider')} `{basis.get('feed')}`, {basis.get('adjustment')}-adjusted {basis.get('timeframe')} bars, "
-        + (f"fetched {inputs.get('fetched_at')}; " if inputs.get("fetched_at") else "the fetch time is not recorded; ")
+        + (f"read by the run that began {inputs.get('run_started_at')}; " if inputs.get("run_started_at")
+           else "the run's start is not recorded; ")
         + f"{_n(inputs.get('ready_stocks'))} of {_n(inputs.get('intended_stocks'))} intended stocks ready "
         f"(acceptance `{inputs.get('acceptance')}`); {_n(_dict(inputs.get('counts')).get('measured'))} measured, "
         f"{_n(_dict(inputs.get('counts')).get('stale'))} stale.")
@@ -1982,9 +2035,12 @@ def render_markdown(brief: dict, json_raw: bytes, md_detail=None, md_compact=Non
         lines = _dict(oe.get("lines"))
         add(f"- Order entry: kind `{oe.get('order_kind')}`; {_n(oe.get('shares'))} shares; last close "
             f"{_usd(oe.get('last_close'))}; the buy stop is `{oe.get('buy_stop_vs_last_close')}` the last close"
-            + "".join(f"; {name.replace('_', ' ')} {_usd(lines.get(name))}" for name in ("extended_above", "gap_ok_above")
-                      if lines.get(name) is not None)
+            + (f"; extended above {_usd(lines.get('extended_above'))}" if lines.get("extended_above") is not None else "")
+            + (f"; an open over {_usd(lines.get('gap_check_above'))} is gapped and the plan asks for a catalyst check "
+               "before buying" if lines.get("gap_check_above") is not None else "")
             + f"; record action word `{oe.get('record_action_word')}` (legacy).")
+        if oe.get("gap_rule"):
+            add(f"- The record's gap rule: \"{oe.get('gap_rule')}\"")
         add("- Price states: " + "; ".join(f"`{s.get('state')}` {_state_range(s)}" for s in _list(oe.get("price_states"))
                                              if s.get("applies")) + ".")
         note = _dict(oe.get("not_the_ticket"))
@@ -2126,7 +2182,9 @@ def render_markdown(brief: dict, json_raw: bytes, md_detail=None, md_compact=Non
             + (f", uncertainty `{o.get('uncertainty')}`" if o.get("uncertainty") else "")
             + f", day {_n(o.get('day'))}; trigger {_usd(o.get('entry_ref'))}, limit {_usd(o.get('limit'))}, stop {_usd(o.get('current_stop'))}; "
             f"{_n(o.get('shares'))} shares ({_n(o.get('remaining'))} remaining); last close {_usd(o.get('last_close'))} on {o.get('last_date')}"
-            + (f"; result {_n(o.get('result_pct'))}%" if o.get("result_pct") is not None else "") + f". {o.get('instruction') or ''}")
+            + (f"; result {_n(o.get('result_pct'))}%" if o.get("result_pct") is not None else "") + "."
+            + (f" The record's own sentence for its model plan, not an instruction to the reader: \"{o.get('instruction')}\""
+               if o.get("instruction") else ""))
     if plans.get("rows_left_out"):
         add(f"- Left out: {plans['rows_left_out']} more open model plans.")
     add("")
@@ -2349,10 +2407,12 @@ def _regular(path, maximum: int) -> bytes:
 def write_publication(canonical_raw: bytes, picks_raw: bytes | None, docs, model_record=None) -> dict:
     """Derive both files from the final installed bytes and install them together.
 
-    A derivation that fails for any reason installs the `unavailable` pair bound to the same bytes, so the public
-    brief is never a stale one that reads as current. Both files are staged beside docs/, read back and validated
-    before either is installed; an ordinary rename failure restores the previous pair. Process death between the
-    two renames is the same multi-file limitation the reader companions have. Returns what the run log says."""
+    A derivation that fails for any reason installs the `unavailable` pair bound to the same bytes. Both files are
+    staged beside docs/, read back and validated before either is installed; an ordinary rename failure restores
+    the previous pair and raises, and the caller (``pipeline.publish_brief()``) then removes a pair that is not this
+    record's (``discard_unbound``), so the public brief is never an earlier night's that reads as current. Process
+    death between the two renames is the same multi-file limitation the reader companions have. Returns what the
+    run log says."""
     import os
     import tempfile
     from pathlib import Path
@@ -2398,6 +2458,26 @@ def write_publication(canonical_raw: bytes, picks_raw: bytes | None, docs, model
                          + (f" ({model.get('reason')})" if model.get("reason") else "")
                          if failure is None else
                          f"unavailable ({failure}); {sizes}; the pair says so and is bound to this record")}
+
+
+def discard_unbound(docs) -> list:
+    """Remove a pair on disk that is not bound to the record and pick ledger installed beside it, and name what
+    went. For the one case ``write_publication`` cannot cover: it failed before or while installing tonight's pair,
+    so the files on disk are an EARLIER publication's and would read as current. With no brief the publication gate
+    serves the record as it did before the brief existed; with a stale one it would refuse the whole site. A pair
+    that is bound is left alone, and a file that is not a regular file is never followed."""
+    from pathlib import Path
+    docs = Path(docs)
+    present = [name for name in (JSON_FILE, MD_FILE) if (docs / name).is_symlink() or (docs / name).exists()]
+    if not present:
+        return []
+    try:
+        check_assets(docs, rederive=False)
+        return []
+    except Exception:  # noqa: BLE001 -- any reason the pair is not this record's: unreadable, half, or another night's
+        for name in present:
+            (docs / name).unlink()
+        return present
 
 
 def check_assets(docs, *, rederive: bool = True) -> dict:

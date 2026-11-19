@@ -728,7 +728,9 @@ def test_a_setting_up_tickets_buy_stop_is_above_the_last_close_and_its_open_entr
     assert "Open-entry note (not the ticket)" in section(md_raw.decode(), 5)
 
 
-@pytest.mark.parametrize("variant, stage", [("full", "burst"), ("notrade", "anticipation")])
+# `next` is the one fixture whose burst ticket has its stop OVER its skip-under line (131.38 against 131.31), the
+# shape a third of counterfactual burst tickets have: there no price is `below_entry_floor`.
+@pytest.mark.parametrize("variant, stage", [("full", "burst"), ("notrade", "anticipation"), ("next", "burst")])
 def test_the_price_states_are_the_morning_receipts_words_at_every_boundary(variant, stage):
     raw, _, json_raw, _ = derived(variant)
     data, out = json.loads(raw), json.loads(json_raw)
@@ -754,6 +756,95 @@ def test_the_price_states_are_the_morning_receipts_words_at_every_boundary(varia
     prices = sorted({round(edge + step, 2) for edge in edges for step in (-0.01, 0.0, 0.01)} | {0.01, edges[-1] * 3})
     assert [word(p) for p in prices] == [morning.price_state(p, levels, "recent") for p in prices]
     assert len({word(p) for p in prices}) == len(states)      # every applicable word was reached
+
+
+def test_a_stop_over_the_skip_line_leaves_no_entry_floor_state_and_says_so():
+    states = {s["state"]: s for s in brief.price_states(131.38, 131.31, 133.99, 136.85, 139.35)}
+    assert states["below_entry_floor"]["applies"] is False
+    assert states["below_entry_floor"]["note"] == brief.STOP_OVER_FLOOR_NOTE
+    assert (states["below_trigger"]["from"], states["below_trigger"]["from_inclusive"]) == (131.38, False)
+    assert states["below_stop"]["to"] == 131.38 and states["below_stop"]["to_inclusive"] is True
+    # the usual shape, and a stop exactly on the line (no price lies strictly between them either)
+    usual = {s["state"]: s for s in brief.price_states(120.0, 122.0, 125.0, 127.0, 130.0)}
+    assert usual["below_entry_floor"]["applies"] is True
+    assert (usual["below_trigger"]["from"], usual["below_trigger"]["from_inclusive"]) == (122.0, True)
+    on_line = {s["state"]: s for s in brief.price_states(122.0, 122.0, 125.0, 127.0, 130.0)}
+    assert on_line["below_entry_floor"]["applies"] is False and on_line["below_trigger"]["from_inclusive"] is False
+    _, _, json_raw, md_raw = derived("next")
+    over = [t for t in json.loads(json_raw)["tickets"]
+            if t["stage"] == "burst" and t["levels"]["stop"] >= t["order_entry"]["lines"]["skip_below"]]
+    assert over, "the `next` fixture carries a burst ticket whose stop is over its skip-under line"
+    line = next(l for l in section(md_raw.decode(), 5).split("### " + over[0]["ticker"])[1].splitlines()
+                if l.startswith("- Price states:"))
+    assert "`below_entry_floor`" not in line and "`below_trigger` over $" in line   # an inapplicable state is not a range
+
+
+def test_an_anticipation_tickets_gap_line_says_what_the_record_says():
+    """The plan's field is named ``gap_ok_above``; the record's rule is that an open OVER that price is gapped and
+    needs a catalyst check. The brief prints the rule, never the humanised field name."""
+    raw, _, json_raw, md_raw = derived("notrade")
+    data, out = json.loads(raw), json.loads(json_raw)
+    ticket = next(t for t in out["tickets"] if t["stage"] == "anticipation")
+    recorded = next(r for r in data["watchlist"]["top"] if r["ticker"] == ticket["ticker"])["plan"]
+    entry = ticket["order_entry"]
+    assert entry["gap_rule"] == recorded["gap_rule"] and "catalyst check" in entry["gap_rule"]
+    assert entry["lines"]["gap_check_above"] == recorded["gap_ok_above"] and "gap_ok_above" not in entry["lines"]
+    md = section(md_raw.decode(), 5)
+    assert "gap ok above" not in md_raw.decode()
+    assert f"an open over ${recorded['gap_ok_above']:,.2f} is gapped and the plan asks for a catalyst check" in md
+    assert f"The record's gap rule: \"{recorded['gap_rule']}\"" in md
+    burst = next(t for t in json.loads(derived("full")[2])["tickets"] if t["stage"] == "burst")
+    assert "gap_rule" not in burst["order_entry"] and "gap_check_above" not in burst["order_entry"]["lines"]
+
+
+def test_the_bars_instant_is_the_runs_start_and_the_directorys_capture_is_named_as_its_own():
+    """``run.universe.fetched_at`` is when the stock directory was captured, which on a cached-directory night is
+    days before the session. The bars were read by the run, whose start is ``run.published_at``."""
+    data = json.loads(FULL_RAW)
+    data["run"]["universe"]["fetched_at"] = "2026-01-01T00:00:00+00:00"     # SYNTHETIC: an old directory snapshot
+    raw = (json.dumps(data, indent=1) + "\n").encode()
+    json_raw, md_raw, why = brief.compose(raw, PICKS_RAW)
+    assert why is None
+    out = json.loads(json_raw)
+    started = data["run"]["published_at"]
+    assert out["service"]["inputs"]["run_started_at"] == started and "fetched_at" not in out["service"]["inputs"]
+    assert out["service"]["universe"]["directory_captured_at"] == "2026-01-01T00:00:00+00:00"
+    md = md_raw.decode()
+    assert f"read by the run that began {started}" in md
+    assert any(f"as read by the run that began at {started}" in s for s in out["service"]["inputs"]["unknown"])
+    inputs_line = next(l for l in md.splitlines() if l.startswith("- Inputs:"))
+    assert "2026-01-01T00:00:00" not in inputs_line and "read by the run that began" in inputs_line
+
+
+def test_the_fixed_sentences_say_what_the_file_does():
+    assert "model-record block" in brief.READ_FIRST[0] and "from nothing else" in brief.READ_FIRST[0]
+    limits = " ".join(brief.LIMITS)
+    assert "No price here is a live quote" in limits and "Every price is the measured session's bar" not in limits
+    assert "Research levels are never tickets" in limits and "`plan_rule_eligible` false" in limits
+    assert "can still be published again" in freshness.RULE[1] and "`identity.canonical.sha256`" in freshness.RULE[1]
+    assert "`identity.entry_window.opens_at`" in freshness.RULE[-1] and "`cutoff_at`" in freshness.RULE[-1]
+    out = json.loads(derived("full")[2])
+    assert out["identity"]["entry_window"]["opens_at"] and out["identity"]["entry_window"]["cutoff_at"]
+    bounds = out["bounds"]
+    assert bounds["breadth_history_sessions"] == len(out["market"]["history"]) <= brief.HISTORY_DAYS
+    assert all(bounds[name] for name in ("stale_names_rule", "also_quiet_rule", "breadth_history_rule"))
+    md = derived("full")[3].decode()
+    assert "not an instruction to the reader" in section(md, 9)
+
+
+def test_the_tail_names_the_rows_moved_out_for_size_first_so_the_cap_cuts_the_lowest_ranks():
+    moved_reason = "in the trade band and admitted; its row was left out for size"
+    probe = {"candidates": {"_rows": [{"class": "candidate", "ticker": f"MOV{i}", "grade_mechanical": "A", "grade": "A"}
+                                      for i in range(3)]},
+             "_tail": [("a grade below the band", f"LOW{i}", "B", "B") for i in range(brief.TAIL_MAX)],
+             "open_plans": {"rows_left_out": 0}, "pick_ledger": {}, "service": {"inputs": {}},
+             "setting_up": {"also_quiet_left_out": 0}, "market": {"history": []}, "model_record": {}}
+    shaped = brief.shape(probe, 0, 0)
+    groups = shaped["research_tail"]["groups"]
+    assert groups[0]["reason"] == moved_reason and groups[0]["tickers"] == ["MOV0", "MOV1", "MOV2"]
+    assert shaped["research_tail"]["left_out"] == 3
+    assert shaped["research_tail"]["left_out_by_reason"] == {"a grade below the band": 3}
+    assert groups[1]["tickers"][-1] == f"LOW{brief.TAIL_MAX - 4}"      # the three lowest ranks are the ones cut
 
 
 # ------------------------------------------------------------------ (f) model status and the later gates
@@ -872,7 +963,8 @@ def test_a_block_that_cannot_be_carried_is_replaced_by_its_fixed_reason_and_the_
     data = json.loads(FULL_RAW)
     good = agreeing_block(data)
     block = {"NAMES": {**good, "plans": [{"api_key": "abc123"}]},
-             "SIZE": {**good, "plans": [{"note": "x" * brief.MODEL_RECORD_MAX_BYTES}]},
+             # the bulk sits where the reduction keeps it, so the reduced block is over the bound too
+             "SIZE": {**good, "limits": ["x" * brief.MODEL_RECORD_MAX_BYTES]},
              "DISAGREES": {**good, "tickets": 1},
              "NAN": {**good, "sum_r": float("nan")}}.get(block, block) if isinstance(block, str) else block
     json_raw, md_raw, why = brief.compose(FULL_RAW, PICKS_RAW, block)
@@ -895,16 +987,50 @@ def test_a_forged_pair_carrying_a_block_that_disagrees_does_not_survive_re_deriv
         brief.validate(FULL_RAW, PICKS_RAW, forged_json, forged_md)
 
 
-def test_a_block_exactly_at_its_bound_is_carried_and_one_byte_over_is_not():
+def test_a_block_exactly_at_its_bound_is_carried_whole_and_one_byte_over_is_carried_reduced():
     data = json.loads(FULL_RAW)
+    row = {"ticker": "SYNA", "kind": "burst", "picked": "2026-01-05", "evidence_id": "e" * 64, "bucket": "settled",
+           "r": 1.5, "shares": 3, "model_usd": 4.5, "issued_equity": 30000.0, "risk_pct": 0.5,
+           "account_basis": "record", "setup": "burst:SYNA:2026-01-05", "withdrawn": False}
 
     def sized(extra):
-        block = agreeing_block(data, plans=[{"note": ""}])
+        block = agreeing_block(data, plans=[{**row, "note": ""}], setups=[{"setup": row["setup"]}])
         block["plans"][0]["note"] = "x" * (brief.MODEL_RECORD_MAX_BYTES - len(brief._encode(block)) + extra)
         return block
     assert len(brief._encode(sized(0))) == brief.MODEL_RECORD_MAX_BYTES
-    assert brief.model_block(sized(0), data)["status"] == "computed"
-    assert brief.model_block(sized(1), data) == {"status": "not_computed", "reason": brief.NOT_CARRIED_SIZE}
+    whole = brief.model_block(sized(0), data)
+    assert whole["status"] == "computed" and "reduced" not in whole and "note" in whole["plans"][0]
+    reduced = brief.model_block(sized(1), data)
+    assert reduced["status"] == "computed" and reduced["plans"] == [row] and "setups" not in reduced
+    assert reduced["reduced"] == {"reason": brief.MODEL_REDUCED_REASON, "setups_left_out": 1,
+                                  "plan_fields": list(brief.MODEL_REDUCED_PLAN_FIELDS)}
+    assert reduced["tickets"] == sized(1)["tickets"] and reduced["sentences"] == sized(1)["sentences"]
+    assert brief.model_block(reduced, data) == reduced        # re-derivation carries the reduced block as it is
+    # a block that is over its bound even reduced is not carried, and the file says why
+    fat = {**sized(1), "limits": ["x" * brief.MODEL_RECORD_MAX_BYTES]}
+    assert brief.model_block(fat, data) == {"status": "not_computed", "reason": brief.NOT_CARRIED_SIZE}
+
+
+def test_a_reduced_block_still_gives_the_next_night_every_tickets_account(tmp_path):
+    """What the reduction exists for: ``model_record.carried_accounts()`` reads a ticket's account from the
+    previous brief's plan rows, so the rows a reduced block keeps must be the ones it reads."""
+    from src import model_record
+    data = json.loads(FULL_RAW)
+    rows = [{"ticker": f"SYN{i}", "kind": "burst", "picked": "2026-01-05", "evidence_id": f"{i:064x}",
+             "bucket": "settled", "r": 0.0, "shares": 1, "issued_equity": 2000.0 + i, "risk_pct": 0.5,
+             "account_basis": "record", "trigger": 10.0, "limit": 10.4, "stop": 9.99,
+             "sales": [{"note": "x" * 2000}]} for i in range(1, 41)]
+    block = agreeing_block(data, plans=rows)
+    assert len(brief._encode(block)) > brief.MODEL_RECORD_MAX_BYTES
+    json_raw, md_raw, why = brief.compose(FULL_RAW, PICKS_RAW, block)
+    assert why is None
+    out = brief.validate(FULL_RAW, PICKS_RAW, json_raw, md_raw)
+    assert out["bounds"]["model_record_carried"] is True and out["bounds"]["model_record_reduced"] is True
+    assert "carried reduced" in section(md_raw.decode(), 10)
+    (tmp_path / model_record.BRIEF_FILE).write_bytes(json_raw)
+    carried, why_not = model_record.carried_accounts(tmp_path)
+    assert why_not is None and len(carried) == 40
+    assert carried[f"{7:064x}"] == (2007.0, 0.5, model_record.CARRIED)
 
 
 def test_a_block_that_says_it_does_not_reconcile_is_carried_as_it_is_and_no_figure_of_it_is_printed():
