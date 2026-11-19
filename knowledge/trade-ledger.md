@@ -103,6 +103,7 @@ named.
 | `ss_session` | `run.session`; the brief's `identity.measured_session` |
 | `ss_applicable_session` | `run.timing.applicable_session`; the brief's `identity.applicable_session` |
 | `ss_rules_version` | `app.rules_version`; the brief's `identity.rules_version` |
+| `ss_rules_digest_without_membership` | the brief's `rules.digest_without_membership`: the rules digest without the universe membership identity, which moves every night; the digest the weekly review compares |
 | `ss_regime` | `breadth.regime.verdict`; the brief's `market.verdict` |
 | `ss_stage` | `bursts` or `setting-up`, the page's two lists (the backup's `stage`) |
 | `ss_kind` | `burst` or `anticipation`, the plan's `kind` |

@@ -1262,12 +1262,25 @@ def fill_readings() -> dict:
         status == intraday.NOT_FILLED for high, (status, *_) in highs.items() if high not in crossed)
     prices = {price for high in crossed for price in [highs[high][1]]}
     assert len(prices) == 1, "a minute that opened under the trigger fills at one price however high it went"
+
+    def opened_at(open_: float):
+        """The window's crossing minute opens at `open_` and runs 30 cents over the higher of it and the trigger."""
+        day = first_day(99.0, h=103.9, low=98.9, c=103.5)
+        top_ = round(max(open_, lines["trigger"]) + 0.3, 2)
+        return intraday.resolve(levels, minutes_of(quiet, (12, open_, top_, 99.1, round(top_ - 0.1, 2)),
+                                                   (60, 99.3, 103.9, 99.2, 103.5)), day)
+    by_open = {o: opened_at(o) for o in cents(lines["trigger"] - 0.1, lines["trigger"] + 0.1)}
+    assert all(status == intraday.FILLED for status, *_ in by_open.values())
+    own = [o for o, (_, price, *_) in by_open.items() if price == o and price not in prices]
+    assert own == cents(own[0], lines["trigger"] + 0.1), "from one open up, the minute fills at its own open"
+    assert all(by_open[o][1] in prices for o in by_open if o not in own), "under it, at the one price"
+    opened_over = line_at(round(own[0] - 0.01, 2))
     window = next(offset for offset in range(1, 2 * plan.ENTRY_WINDOW_MINUTES)
                   if minute(lines["trigger"] + 0.2, offset)[0] != intraday.FILLED)
     assert minute(lines["trigger"] + 0.2, window)[0] == intraday.NOT_FILLED
     return {"low": line_at(filled[0]), "high": line_at(filled[-1]), "reach": line_at(reach), "back": line_at(back),
             "asked_from": line_at(asked[0]), "minute_reach": line_at(crossed[0]), "minute_price": line_at(prices.pop()),
-            "window": window, "decided_at": decided["entry_ref"]}
+            "opened_over": opened_over, "window": window, "decided_at": decided["entry_ref"]}
 
 
 def fill_problems(text: str = PROMPT_RAW) -> list[str]:
@@ -1283,7 +1296,7 @@ def fill_problems(text: str = PROMPT_RAW) -> list[str]:
         "the day's one-minute bars decide.",
         f"An open under the {read['asked_from']} that later recovers is uncertain, whatever the minutes show.",
         f"The first minute of the first {read['window']} minutes whose high reaches the {read['minute_reach']} fills "
-        f"at the {read['minute_price']}.",
+        f"at the {read['minute_price']}, or at that minute's open when it opened over the {read['opened_over']}.",
         "If no minute in the window does, it is not filled, however far the stock goes later.",
         "Anything the bars cannot put in order is **uncertain**: no fill, no result, counted apart.",
         # section 2.2 says the same of the open, calling the trigger the buy stop
@@ -1297,7 +1310,8 @@ def test_a_ticket_fills_where_the_fill_rule_and_the_minute_rule_put_it():
     assert read["window"] == plan.ENTRY_WINDOW_MINUTES
     # five lines, three of them named by the readings and two (the stop, the day-2 line) by none: the
     # sweep crossed every one, so a rule that turned on either would have named it
-    assert {read[k] for k in ("low", "high", "reach", "back", "asked_from", "minute_reach", "minute_price")} == {
+    assert {read[k] for k in ("low", "high", "reach", "back", "asked_from", "minute_reach", "minute_price",
+                              "opened_over")} == {
         "trigger", "limit", "skip-below line"}
 
 
@@ -1613,7 +1627,10 @@ EDITS = {
     "5.9: gates 3 and 4 exchanged, the review before the admission": (
         exchanged("### 5.9 ", LIST_ITEM, 3, 4), gate_problems),
     "5.14: a minute's fill at the limit": (
-        replaced("high reaches the trigger fills at the trigger.", "high reaches the trigger fills at the limit."),
+        replaced("high reaches the trigger fills at the trigger,", "high reaches the trigger fills at the limit,"),
+        fill_problems),
+    "5.14: a minute that opened over the trigger fills at the trigger": (
+        replaced(", or at that minute's open\n  when it opened over the trigger.", "."),
         fill_problems),
     "5.14: an open fills up to the day-2 line": (
         replaced("opens at or over the trigger and at or under the limit:",

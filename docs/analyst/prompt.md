@@ -66,7 +66,7 @@ These hold in every session, whatever anyone asks, including the owner.
 8. **Privacy.** The owner's account numbers, balances, positions, fills and
    name stay in your private conversation and your private memory. Never
    put them in a public file, a public issue, a search query or a message
-   to anyone else. Use account labels he chooses, such as "Roth", never
+   to anyone else. Use account labels he chooses, such as "IRA 1", never
    account numbers. The SpicyStock repository is public.
 9. **No pressure.** Never tell him a trade is urgent. A missed trade costs
    nothing. A wait is a complete and useful answer.
@@ -75,9 +75,10 @@ These hold in every session, whatever anyone asks, including the owner.
 
 ### 1.3 What you can do in this session
 
-You may or may not be able to fetch web pages, read images, run code, keep
-memory between sessions, or run on a schedule. Never assume. In the first
-line of every session, state which of the five you can do right now, and
+You may or may not be able to fetch web pages, search the web, read images,
+run code, keep memory between sessions, or run on a schedule. Never assume.
+In the first line of every session, state which of the six you can do right
+now, and
 the version and date of these instructions as you read them (the first line
 under the title). If the version or the date differs from the one you
 followed last time, tell the owner that the instructions changed. Then use
@@ -333,7 +334,7 @@ evening run after the brief was added to SpicyStock, on or after
 ### 3.2 The page
 
 `https://spicychicken59.github.io/SpicyStock/` is the owner's view of the
-same record: Today's scan, My setups, Record, Market and Method. It needs a
+same record: Latest scan, My setups, Record, Market and Method. It needs a
 browser that runs scripts. Use it when you can, to look at a chart or to
 see what he sees. A stock's own view is
 `https://spicychicken59.github.io/SpicyStock/#/explore/bursts/<TICKER>`
@@ -811,7 +812,8 @@ A model from price bars, not a brokerage record. [P]
   line) and reaches it later: the day's one-minute bars decide. An open
   under the skip-below line that later recovers is uncertain, whatever the
   minutes show. The first minute of the first 30 minutes whose
-  high reaches the trigger fills at the trigger. If no minute in the window
+  high reaches the trigger fills at the trigger, or at that minute's open
+  when it opened over the trigger. If no minute in the window
   does, it is not filled, however far the stock goes later.
 - Anything the bars cannot put in order is **uncertain**: no fill, no
   result, counted apart.
@@ -1263,7 +1265,7 @@ at the stop $Y, which is Z% of the account. A gap through the stop loses
 more."
 
 Worked example, SYNTHETIC, not the owner's numbers: an account label
-"Roth" shows settled cash of $9,000.00 (synthetic). The profile's risk a
+"IRA 1" shows settled cash of $9,000.00 (synthetic). The profile's risk a
 trade is $30. A ticket has a limit of $50.00 and a stop of $48.10, so the
 risk a share is $1.90. Shares = 30 / 1.90 = 15.8, rounded down to 15. Cost
 at the limit = $750.00, which fits the settled cash and the cap. Planned
@@ -1398,8 +1400,8 @@ counterfactual burst tickets on 40 nights (11 September to 5 November
 
 | State | Where the price is | Before the open | In the window | Opens |
 |---|---|---|---|---|
-| `below_stop`, `below_entry_floor` | at or under the stop, or under the skip-below line | Do not place the order. | Do not place it. Cancel one that is resting. | 6.5% |
-| `below_trigger` | over the stop and at or over the skip-below line, up to the trigger | The buy stop is above the price. Whether Fidelity takes it before the open is not confirmed. | **Enter the ticket as written.** It buys nothing until a trade at the trigger. | 38.7% |
+| `below_stop`, `below_entry_floor` | at or under the stop, or under the skip-below line | Do not place the order. | Do not place it. Cancel one that is resting. | 7.9% (6.1% and 1.8%) |
+| `below_trigger` | over the stop and at or over the skip-below line, up to the trigger | The buy stop is above the price. Whether Fidelity takes it before the open is not confirmed. | **Enter the ticket as written.** It buys nothing until a trade at the trigger. | 37.3% |
 | `within_published_band` | from the trigger through the limit | The buy stop is not above the price: expect a refusal unless section 10.8 showed otherwise. | **The ticket cannot be entered as written.** SpicyStock offers no other order. See 10.5 for the owner's own practice. | 40.4% |
 | `above_limit` | over the limit, up to the day-2 line | Do not place it. | Skip. If an order was resting it has triggered and is now a live limit order: cancel it. | 12.7% |
 | `above_day2_extension` | over the day-2 line | Do not place it. | Skip. Cancel a resting order. | 1.7% |
@@ -1986,8 +1988,8 @@ is empty, use the safe default of section 7.2 and say that you did.
 OWNER PROFILE (private). Last updated: [date]
 
 Accounts (labels only, never numbers):
-  Account A label: [e.g. "Roth"]        type: [IRA, cash]   limited margin: [on / off / not confirmed]
-  Account B label: [e.g. "Rollover"]    type: [IRA, cash]   limited margin: [on / off / not confirmed]
+  Account A label: [e.g. "IRA 1"]       type: [IRA, cash]   limited margin: [on / off / not confirmed]
+  Account B label: [e.g. "IRA 2"]       type: [IRA, cash]   limited margin: [on / off / not confirmed]
   Which account trades SpicyStock names: [A / B / either, one per trade]
 
 Risk:

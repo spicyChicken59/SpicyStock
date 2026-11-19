@@ -36,7 +36,7 @@ say which it can do at the start of each session, and what to ask you for
 when it cannot.
 
 When this file changes, give the bot the new version. The prompt carries
-its own version and date in its first line.
+its own version and date in the first line under its title.
 
 ## What to fill in privately
 
@@ -44,7 +44,7 @@ Section 16 of `prompt.md` is a profile with blanks. Fill it in **in your
 private chat with the bot or in its private memory**, never in this
 repository:
 
-- a label for each account ("Roth", "Rollover"), never an account number;
+- a label for each account ("IRA 1", "IRA 2"), never an account number;
 - which account trades;
 - the dollars you risk on one trade, your cap on one position and your cap
   on open positions;

@@ -131,7 +131,12 @@ entry note are research notes beside the ticket; they are not the ticket.
    not offer the order), the model
    exits, a saved setup's archived order and an archived original's status.
    The private handoff prints it in its readback, and the mail after each block
-   of orders.
+   of orders. Beside a burst ticket's order (never a setting-up ticket's) the
+   same places print a second labelled note from item 2 below, Fidelity's
+   buy-stop rule with SpicyStock's advice (`report.BROKER_BUY_STOP`); the mail
+   prints it once, after the burst orders. On a Burst's action card and in the
+   decision summary's entry the two notes sit under one closed **Broker notes**
+   disclosure, so neither shows until the reader opens it.
 
 2. **A buy stop must be priced above the current market.** Fidelity's words
    [4]: buy stop loss and buy stop limit orders must be entered at a price
@@ -175,6 +180,22 @@ entry note are research notes beside the ticket; they are not the ticket.
    | over the buy stop, at or under the limit | 5,030 | 37.0% |
    | over the limit, at or under the day-2 line (4% over the close) | 1,725 | 12.7% |
    | over the day-2 line | 230 | 1.7% |
+
+   Those are price ranges, and the ranges are not the price states the morning
+   check prints (`morning.price_state()`): on 4,567 of the tickets the stop
+   sits at or over the skip line, so an open at or over the skip line and at
+   or under the stop is `below_stop` (193 of the tickets), and an open under
+   the skip line is `below_stop` when it is at or under the stop (635) and
+   `below_entry_floor` only over it. By state:
+
+   | price state | tickets | share |
+   |---|---|---|
+   | `below_stop` | 828 | 6.1% |
+   | `below_entry_floor` | 250 | 1.8% |
+   | `below_trigger` | 5,071 | 37.3% |
+   | `within_published_band` | 5,495 | 40.4% |
+   | `above_limit` | 1,725 | 12.7% |
+   | `above_day2_extension` | 230 | 1.7% |
 
    So day 1 opened at or over the buy stop on 7,450 of the 13,599, 54.8% (among
    the mechanical A+ and A rows without a veto, 1,154 of 2,090, 55.2%). On the
@@ -328,8 +349,8 @@ entry note are research notes beside the ticket; they are not the ticket.
 Mo placed his first real trades on 4 November 2026 and showed the Fidelity
 activity screen. What it establishes, labelled as this note labels everything:
 
-- **The owner's words** — the trades sit in two Fidelity IRAs (a Rollover IRA
-  and a Roth IRA), read together as one $30,000 model account from that date.
+- **The owner's words** — the trades sit in two Fidelity IRAs, read together
+  as one $30,000 model account from that date.
   The quantities, prices and amounts are Mo's own and are recorded nowhere in
   this repository: the page's **Record a trade I made on this name** keeps them
   in his browser alone.

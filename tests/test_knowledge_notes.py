@@ -131,8 +131,13 @@ def test_the_first_day_open_table_adds_up():
     burst = table_rows(ROOT / "knowledge" / "broker-fidelity-protocol.md", "price state")
     share = {row[0]: row[-1] for row in burst}
     pct = lambda count: f"{100 * count / total:.1f}%"
-    assert share["`below_stop`, `below_entry_floor`"] == f"{pct(counts[0])} opened under the skip line"
-    assert share["`below_trigger`"] == pct(counts[1])
+    # under the trigger a stop at or over the skip line moves tickets between ranges and states, so these
+    # two rows quote the note's state table (tests/test_analyst_agreement.py holds it to this table)
+    states = {row[0]: row[2] for row in table_rows(ROOT / "knowledge" / "broker-fidelity.md", "price state")}
+    under = f"{float(states['`below_stop`'][:-1]) + float(states['`below_entry_floor`'][:-1]):.1f}%"
+    assert share["`below_stop`, `below_entry_floor`"] == (f"{under} ({states['`below_stop`']} `below_stop`, "
+                                                          f"{states['`below_entry_floor`']} `below_entry_floor`)")
+    assert share["`below_trigger`"] == states["`below_trigger`"] != pct(counts[1])
     assert share["`within_published_band`"] == (f"{pct(booked)} ({pct(counts[at_stop])} exactly at the trigger, "
                                                 f"{pct(counts[in_band])} over it)")
     assert share["`above_limit`"] == pct(counts[4]) and share["`above_day2_extension`"] == pct(counts[5])

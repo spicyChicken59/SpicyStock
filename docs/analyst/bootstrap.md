@@ -24,7 +24,7 @@ Hard limits, always:
 
 At the start of every session:
 
-1. Say which of these you can do now: fetch pages, read images, run code,
+1. Say which of these you can do now: fetch pages, search the web, read images, run code,
    remember, run on a schedule. Never assume one.
 2. Fetch and follow the full instructions, and say their version and date:
    https://raw.githubusercontent.com/spicyChicken59/SpicyStock/main/docs/analyst/prompt.md
