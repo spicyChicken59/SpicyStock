@@ -9,7 +9,7 @@
    "const": "docs/operations/orders-schema.json"
   },
   "version": {
-   "const": 1
+   "const": 2
   },
   "kind": {
    "const": "orders"
@@ -1021,7 +1021,7 @@
      "const": "docs/operations/orders-schema.json#/$defs/orders_morning"
     },
     "version": {
-     "const": 1
+     "const": 2
     },
     "kind": {
      "const": "orders_morning"
@@ -1257,7 +1257,7 @@
      "const": "docs/operations/orders-schema.json#/$defs/positions"
     },
     "version": {
-     "const": 1
+     "const": 2
     },
     "kind": {
      "const": "positions"

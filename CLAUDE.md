@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6789 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6799 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15654,6 +15654,17 @@ program's "once positions exist, real vs model R on the page, the email and
 orders.json": the owner's trades never enter this public repository. A model
 record that cannot be computed is said so and never fails the night. The
 publication ceiling counts the block once a night (`NIGHTLY`).
+
+**`orders.json` is version 2:** its `scorecard` is a new required field, so
+the first `orders.json` an evening writes under #223 (version 1) is not this
+schema's. A merge that moves `orders.VERSION` leaves the files on `main` as
+the earlier code wrote them until the next evening rewrites them: the gate
+and the committed-handoff test hold such a file to its binding alone
+(`orders.earlier_version()`), the morning step derives no go/cancel file
+from it (`orders_written_under_an_earlier_version`), and the agent's guide
+says nothing is entered from it. Found by the stack's review, which built a
+version-1 file beside the later code and watched the gate, three
+publication-gate tests and the morning step fail.
 
 **The full suite found what the focused runs had not:** the block spread per
 burst pushed the ceiling's projection past its bound, and the brief's test

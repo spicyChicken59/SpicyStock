@@ -2539,7 +2539,12 @@ The schema of all three is `docs/operations/orders-schema.json`, checked by
 record, to that schema and to its own checks (a file whose `trade_allowed`,
 reasons, statuses, summary or mode are not what its checks give is refused),
 and `tests/test_orders.py` re-derives a committed `docs/orders.json` from the
-committed record. The agent's guide is `docs/operations/orders.md`.
+committed record. A merge that moves `orders.VERSION` leaves the files on
+`main` as the earlier code wrote them until the next evening rewrites them:
+they keep their own version's meaning, the gate and that test hold them to
+their binding alone (`orders.earlier_version()`), and the morning step
+derives no go/cancel file from one (`orders_written_under_an_earlier_version`).
+The agent's guide is `docs/operations/orders.md`.
 `tests/fixtures/orders/` holds golden files over the page and morning
 fixtures; `generate.py --check` runs in CI.
 

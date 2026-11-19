@@ -368,6 +368,10 @@ def orders_check(data_raw: bytes, orders_raw: bytes | None, receipt_raw: bytes |
         bound = False
     if not bound:
         return 'orders_not_bound_to_record'
+    from src import orders
+    if orders.earlier_version(orders_raw) is not None:
+        # written by the code before a version change: the next evening rewrites it
+        return 'orders_written_under_an_earlier_version'
     return None
 
 

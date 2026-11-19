@@ -59,7 +59,7 @@ if str(ROOT) not in sys.path:
 
 from src import schema_check  # noqa: E402  (stdlib only: the publication gate imports this module)
 
-VERSION = 1
+VERSION = 2
 FILE = "orders.json"
 MORNING_FILE = "orders-morning.json"
 POSITIONS_FILE = "positions-template.json"
@@ -708,13 +708,58 @@ def discard_unbound(docs) -> list[str]:
     return removed
 
 
+def earlier_version(raw: bytes) -> int | None:
+    """The version an ``orders.json`` (or a companion) says it was written
+    under, when that is an earlier one than this code writes; else None.
+
+    A merge that moves ``VERSION`` leaves the files on main as the earlier code
+    wrote them until the next evening rewrites them. They keep their own
+    versioned meaning: this code's schema is not theirs, so they are held to
+    their binding to the record and to each other, never to this schema, and
+    nothing derives this code's files from them."""
+    try:
+        value = json.loads(raw)
+    except ValueError:
+        return None
+    version = value.get("version") if isinstance(value, dict) else None
+    return version if type(version) is int and 1 <= version < VERSION else None
+
+
+def _binding(raw: bytes, field: str):
+    try:
+        value = json.loads(raw)
+    except ValueError:
+        return None
+    if not isinstance(value, dict):
+        return None
+    if field == "data_sha256":
+        source = value.get("source")
+        return source.get("data_sha256") if isinstance(source, dict) else None
+    return value.get(field)
+
+
 def check(docs) -> list[str]:
-    """Every way the files on disk are not this record's or not their schema's."""
+    """Every way the files on disk are not this record's or not their schema's.
+
+    Files an earlier code version wrote (``earlier_version()``) are held to
+    their binding alone: ``orders.json`` to the record, each companion to that
+    ``orders.json``."""
     docs = Path(docs)
     out = []
     data_sha = hashlib.sha256((docs / DATA_FILE).read_bytes()).hexdigest()
     try:
         orders_raw = (docs / FILE).read_bytes()
+    except OSError as exc:
+        return [f"orders.json: {exc}"]
+    if earlier_version(orders_raw) is not None:
+        if _binding(orders_raw, "data_sha256") != data_sha:
+            out.append("orders.json is not bound to data.json")
+        for name in (POSITIONS_FILE, MORNING_FILE):
+            if (docs / name).exists() and \
+                    _binding((docs / name).read_bytes(), "orders_sha256") != hashlib.sha256(orders_raw).hexdigest():
+                out.append(f"{name} is not bound to orders.json")
+        return out
+    try:
         orders = validate(orders_raw)
         if orders["source"]["data_sha256"] != data_sha:
             out.append("orders.json is not bound to data.json")
@@ -754,7 +799,14 @@ def main(argv=None) -> int:
         found = check(args.docs)
         for line in found:
             print(line)
+        if not found and (args.docs / FILE).exists() and earlier_version((args.docs / FILE).read_bytes()):
+            print(f"orders.json was written under version {earlier_version((args.docs / FILE).read_bytes())}; "
+                  f"held to its binding alone until the next evening writes version {VERSION}")
         return 1 if found else 0
+    if earlier_version(args.orders.read_bytes()) is not None:
+        print(f"orders.json was written under version {earlier_version(args.orders.read_bytes())}; this code "
+              f"writes version {VERSION}, so no go/cancel file is derived from it")
+        return 0
     raw = encode(build_morning(args.orders.read_bytes(),
                                args.receipt.read_bytes() if args.receipt and args.receipt.exists() else None,
                                args.data.read_bytes()))

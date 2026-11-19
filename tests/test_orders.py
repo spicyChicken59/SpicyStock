@@ -763,6 +763,10 @@ def test_the_committed_handoff_is_what_this_code_writes_for_the_committed_record
     if not (docs / "orders.json").exists():
         assert not any((docs / n).exists() for n in ("positions-template.json", "orders-morning.json"))
         return
+    if orders.earlier_version((docs / "orders.json").read_bytes()) is not None:
+        # an earlier code's files, between a merge that moved VERSION and the next evening
+        assert orders.check(docs) == []
+        return
     data_raw = (docs / "data.json").read_bytes()
     picks_raw = (docs / "picks.json").read_bytes() if (docs / "picks.json").exists() else None
     orders_raw = orders.encode(orders.build(data_raw, picks_raw))
@@ -775,3 +779,72 @@ def test_the_committed_handoff_is_what_this_code_writes_for_the_committed_record
         receipt = (docs / "morning.json").read_bytes()
         if committed["morning_sha256"] == hashlib.sha256(receipt).hexdigest():
             assert morning_file.read_bytes() == orders.encode(orders.build_morning(orders_raw, receipt, data_raw))
+
+
+# --------------------------------------- files an earlier version wrote ---
+def earlier_docs(tmp_path: Path) -> tuple[Path, bytes]:
+    """A record with the handoff an earlier code version wrote for it: bound to
+    the record, but not this schema's (its version, and a field it lacked)."""
+    docs = docs_with(tmp_path)
+    orders.write_publication(docs)
+    doc = json.loads((docs / orders.FILE).read_bytes())
+    doc["version"] = orders.VERSION - 1
+    doc.pop("night_checks")
+    raw = orders.encode(orders.sealed(doc))
+    (docs / orders.FILE).write_bytes(raw)
+    template = json.loads((docs / orders.POSITIONS_FILE).read_bytes())
+    template.update(version=orders.VERSION - 1, orders_sha256=hashlib.sha256(raw).hexdigest())
+    (docs / orders.POSITIONS_FILE).write_bytes(orders.encode(orders.sealed(template)))
+    return docs, raw
+
+
+def test_a_handoff_an_earlier_version_wrote_is_held_to_its_binding_not_this_schema(tmp_path):
+    docs, raw = earlier_docs(tmp_path)
+    assert orders.earlier_version(raw) == orders.VERSION - 1
+    with pytest.raises(ValueError, match="schema"):
+        orders.validate(raw)
+    assert orders.check(docs) == []
+    from tools import publish_dashboard
+    assert publish_dashboard.orders_files(tmp_path) == (orders.FILE, orders.POSITIONS_FILE)
+    (docs / orders.MORNING_FILE).write_text('{"version": 1, "orders_sha256": "' + "0" * 64 + '"}')
+    assert orders.check(docs) == ["orders-morning.json is not bound to orders.json"]
+    (docs / orders.MORNING_FILE).unlink()
+    (docs / "data.json").write_bytes(page("next"))
+    assert orders.check(docs) == ["orders.json is not bound to data.json"]
+    with pytest.raises(RuntimeError, match="execution handoff"):
+        publish_dashboard.orders_files(tmp_path)
+
+
+@pytest.mark.parametrize("version", [orders.VERSION + 1, 0, True, "1", None, 1.0])
+def test_only_an_earlier_whole_version_is_read_as_one(version):
+    assert orders.earlier_version(json.dumps({"version": version}).encode()) is None
+    assert orders.earlier_version(b"[1]") is None and orders.earlier_version(b"{") is None
+
+
+def test_the_morning_derives_nothing_from_an_earlier_versions_handoff(tmp_path, capsys):
+    docs, raw = earlier_docs(tmp_path)
+    out = tmp_path / "orders-morning.json"
+    assert orders.main(["morning", "--orders", str(docs / orders.FILE), "--data", str(docs / "data.json"),
+                        "--output", str(out)]) == 0
+    assert not out.exists() and f"written under version {orders.VERSION - 1}" in capsys.readouterr().out
+    assert orders.main(["check", "--docs", str(docs)]) == 0
+    assert "held to its binding alone" in capsys.readouterr().out
+
+
+def test_the_morning_check_names_an_earlier_versions_handoff_once_the_receipt_is_this_runs():
+    from tools import publish_morning
+    receipt = (MORNING / "observed.json").read_bytes()
+    doc = json.loads(golden_orders())
+    doc["version"] = orders.VERSION - 1
+    assert publish_morning.orders_check(PUBLICATION, orders.encode(orders.sealed(doc)), receipt,
+                                        "synthetic-observed") == "orders_written_under_an_earlier_version"
+
+
+def test_the_readme_and_the_guide_name_the_earlier_version_rule_as_the_code_spells_it():
+    readme = " ".join((ROOT / "README.md").read_text().split())
+    guide = " ".join((ROOT / "docs" / "operations" / "orders.md").read_text().split())
+    source = (ROOT / "tools" / "publish_morning.py").read_text()
+    assert "(`orders.earlier_version()`)" in readme and hasattr(orders, "earlier_version")
+    assert "(`orders_written_under_an_earlier_version`)" in readme
+    assert "'orders_written_under_an_earlier_version'" in source
+    assert "**Read the version.**" in guide and "nothing is entered from it" in guide
