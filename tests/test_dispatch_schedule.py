@@ -146,6 +146,32 @@ def test_repeat_ticks_start_a_slot_once_with_or_without_a_ledger(tmp_path):
     assert sum(1 for c in gh.calls if c[0] == "POST") == 2
 
 
+def test_with_a_ledger_a_started_slot_asks_github_nothing_again(tmp_path):
+    gh = FakeGitHub()
+    gh.now = at("2026-11-20", "18:21")
+    state = tmp_path / "ledger.json"
+    assert ds.tick(gh.now, gh, state) == ds.EXIT_OK
+    asked = len(gh.calls)
+    assert ds.tick(at("2026-11-20", "18:30"), gh, state) == ds.EXIT_OK
+    assert len(gh.calls) == asked            # the ledger answered; no listing, no dispatch
+
+
+def test_only_a_dispatched_run_counts_as_the_slots_own():
+    gh = FakeGitHub()
+    gh.now = at("2026-11-20", "18:21")
+    ds.tick(gh.now, gh)
+    listings = [path for method, path, _ in gh.calls if method == "GET"]
+    assert listings and all("event=workflow_dispatch" in path for path in listings)
+
+
+def test_a_slot_late_in_the_evening_is_still_due_after_local_midnight(monkeypatch):
+    # in Chicago, the later of the two zones: just past its midnight, every local date is the new day
+    monkeypatch.setattr(ds, "SLOTS", (("service-watch.yml", {}, CT, ("23:50",)),))
+    after_midnight = datetime(2026, 11, 21, 0, 5, tzinfo=CT)
+    assert {after_midnight.astimezone(z).date() for z in (ET, CT)} == {date(2026, 11, 21)}
+    assert [s.key for s in ds.due(after_midnight)] == ["service-watch.yml@2026-11-20T23:50:00-06:00"]
+
+
 def test_a_run_someone_else_started_after_the_slot_counts_as_started():
     gh = FakeGitHub()
     gh.runs["morning.yml"] = [(at("2026-11-20", "08:21", CT), 777)]
