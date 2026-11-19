@@ -468,7 +468,7 @@ def friday_minutes() -> pd.DataFrame:
     return minute_frame(AAA_MINUTES, start=datetime(2026, 9, 11, 13, 30, tzinfo=timezone.utc))
 
 
-def test_the_evening_reads_a_stop_sequence_day_from_its_minutes_and_retains_them(market, claude, fake_resend,
+def test_the_evening_reads_a_stop_sequence_day_from_its_minutes_and_retains_them(legacy_burst_trigger, market, claude, fake_resend,
                                                                                   fake_alpaca, tmp_path):
     evening(tmp_path, market)
     fake_alpaca.add_minutes("AAA", friday_minutes())
@@ -501,7 +501,7 @@ def test_the_evening_reads_a_stop_sequence_day_from_its_minutes_and_retains_them
     assert data["run"]["intraday"]["wanted"] == 0 and data["run"]["intraday"]["retained"] == 1
 
 
-def test_an_evening_without_the_minutes_leaves_the_plan_uncertain_and_publishes(market, claude, fake_resend,
+def test_an_evening_without_the_minutes_leaves_the_plan_uncertain_and_publishes(legacy_burst_trigger, market, claude, fake_resend,
                                                                                 fake_alpaca, tmp_path):
     evening(tmp_path, market)
     rep, data, docs = evening(tmp_path, market, now=FRIDAY)
@@ -512,7 +512,7 @@ def test_an_evening_without_the_minutes_leaves_the_plan_uncertain_and_publishes(
     assert not (docs / intraday.DIR_NAME).exists() and rep.quality_ledger["status"] == "retained"
 
 
-def test_a_minute_request_that_fails_never_fails_the_evening(market, claude, fake_resend, fake_alpaca, tmp_path):
+def test_a_minute_request_that_fails_never_fails_the_evening(legacy_burst_trigger, market, claude, fake_resend, fake_alpaca, tmp_path):
     evening(tmp_path, market)
     fake_alpaca.raise_on_minutes = ConnectionError("refused")
     rep, data, _ = evening(tmp_path, market, now=FRIDAY)
@@ -520,7 +520,7 @@ def test_a_minute_request_that_fails_never_fails_the_evening(market, claude, fak
     assert data["run"]["intraday"]["failures"] == [{"key": "burst:AAA:2026-09-10", "kind": "ConnectionError"}]
 
 
-def test_a_dry_run_reads_the_minutes_and_writes_none(market, claude, fake_resend, fake_alpaca, tmp_path):
+def test_a_dry_run_reads_the_minutes_and_writes_none(legacy_burst_trigger, market, claude, fake_resend, fake_alpaca, tmp_path):
     evening(tmp_path, market)
     fake_alpaca.add_minutes("AAA", friday_minutes())
     rep, data, docs = evening(tmp_path, market, now=FRIDAY, dry_run=True)
@@ -541,7 +541,7 @@ def test_the_rules_archive_the_minute_policy_and_a_record_without_the_block_is_r
         report.validate(data)
 
 
-def test_a_first_day_the_minutes_say_never_filled_frees_its_model_slot(market, claude, fake_resend, fake_alpaca,
+def test_a_first_day_the_minutes_say_never_filled_frees_its_model_slot(legacy_burst_trigger, market, claude, fake_resend, fake_alpaca,
                                                                      tmp_path):
     """The slots tonight's tickets are sized against read the same minutes as
     the published plans: AAA uncertain holds a slot and its commitment; the
@@ -697,7 +697,7 @@ def test_a_gathering_that_fails_still_walks_what_the_archive_retains(tmp_path, m
                                  "first day.")
 
 
-def test_an_evening_whose_gathering_fails_publishes_from_the_archive(market, claude, fake_resend, fake_alpaca,
+def test_an_evening_whose_gathering_fails_publishes_from_the_archive(legacy_burst_trigger, market, claude, fake_resend, fake_alpaca,
                                                                     tmp_path, monkeypatch):
     evening(tmp_path, market)
     fake_alpaca.add_minutes("AAA", friday_minutes())

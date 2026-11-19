@@ -1101,8 +1101,10 @@ def _part_fill_note() -> str:
 #: stop-limit order is entered at a stop price above the current market price
 #: (knowledge/broker-fidelity.md, item 2: read off a search excerpt), and
 #: SpicyStock's advice. A burst ticket's buy stop is the burst session's close
-#: (``plan.burst_plan()``: ``entry_ref`` is the close), so the ticket can be
-#: entered as written only while the stock trades under that close; which
+#: under the legacy rule and the close plus ``plan.trigger_cushion()`` under
+#: ``close_plus_cushion`` (``plan.burst_trigger()``; the record archives which
+#: as ``plan.burst_trigger_rule``), so the ticket can be entered as written
+#: only while the stock trades under that buy stop; which
 #: price Fidelity compares the stop with before the open is unconfirmed; the
 #: plan writes no other order (``plan.fidelity_orders()``); and the model's
 #: fill at the open (``record.fill()``) is the fill of an order already
@@ -1114,8 +1116,9 @@ def _part_fill_note() -> str:
 #: ``tests/test_broker_buy_stop.py`` holds the three equal.
 BROKER_BUY_STOP = ("Fidelity’s rule: a buy stop or buy stop-limit order must be entered at a stop price "
                    "above the current market price. "
-                   "SpicyStock’s advice: a burst ticket’s buy stop is the burst day’s close, so it can be "
-                   "entered as written only while the stock trades under that price; which price Fidelity "
+                   "SpicyStock’s advice: a burst ticket’s buy stop is the burst day’s close or a cushion "
+                   "over it (the trigger rule its record archived says which), so it can be entered as "
+                   "written only while the stock trades under the buy stop; which price Fidelity "
                    "compares it with before the open (the close or a pre-market quote) is unconfirmed. "
                    "Once the stock trades at or over the buy stop the ticket cannot be entered as written, "
                    "and SpicyStock offers no other order; the model’s ‘filled at the open’ assumes the order "

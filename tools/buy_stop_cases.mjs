@@ -1,8 +1,11 @@
 /* Fidelity's buy-stop rule beside a BURST ticket, and the band a ticket can
-   fill in. A burst ticket's buy stop is the burst session's close
-   (src/plan.py burst_plan()), and Fidelity's stated rule is that a buy stop is
-   entered above the current market price (knowledge/broker-fidelity.md, item
-   2). So the page prints a second labelled broker note directly after the
+   fill in. A burst ticket's buy stop is the burst session's close under the
+   legacy trigger rule and the close plus a cushion under close_plus_cushion,
+   the rule a record archives as plan.burst_trigger_rule (src/plan.py
+   burst_trigger()); Fidelity's stated rule is that a buy stop is entered
+   above the current market price (knowledge/broker-fidelity.md, item 2). The
+   pipeline's fixtures are made under the current rule; the legacy rule is
+   read over a labelled in-memory copy (legacy() below). So the page prints a second labelled broker note directly after the
    part-fill note wherever it prints a burst ticket's order, and never beside
    a setting-up ticket's, whose trigger sits above its last close.
 
@@ -36,6 +39,27 @@ const CASH = 'tests/fixtures/cash-preview';
 const FRESH = '2026-09-10T22:31:00Z';
 const usd = (v) => '$' + Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 const constant = (src, name) => src.match(new RegExp('const ' + name + " = '([^']+)';"))[1];
+// A labelled in-memory copy of a record as one made before
+// plan.burst_trigger_rule carries it: each burst plan's buy stop back at its
+// own cents-rounded close, in its order and its words, the archived rule and
+// the plan's cushion fields gone. What the legacy rule writes is pinned in
+// tests/test_plan.py; this copy is only what the page reads of it.
+const legacy = (data) => {
+  const copy = structuredClone(data);
+  if (copy.rules && copy.rules.plan) delete copy.rules.plan.burst_trigger_rule;
+  for (const b of copy.bursts || []) {
+    const p = b.plan;
+    if (!p || p.trigger_cushion === undefined) continue;
+    const was = p.entry_ref, at = p.burst.close;
+    const swap = (s) => typeof s === 'string' ? s.split(usd(was)).join(usd(at)).split(was.toFixed(2)).join(at.toFixed(2)) : s;
+    p.entry_ref = at;
+    for (const k of ['trigger_rule', 'trigger_cushion', 'trigger_note']) delete p[k];
+    if (p.order_json) p.order_json.stop_price = at;
+    p.order_line = swap(p.order_line); p.order_readback = swap(p.order_readback); p.reason = swap(p.reason);
+    if (Array.isArray(p.order_terms)) p.order_terms = p.order_terms.map(swap);
+  }
+  return copy;
+};
 
 // Every broker note under `scope` that is not under a [hidden] ancestor, in
 // document order: [where its container sits, which note, whether it is under
@@ -81,9 +105,10 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
   check('the buy-stop text keeps its two labels and no digit', want['buy-stop'].startsWith('Fidelity’s rule: ') && want['buy-stop'].includes(' SpicyStock’s advice: ') && !/\d/.test(want['buy-stop']), want['buy-stop']);
   const full = JSON.parse(await readFile(path.join(ROOT, PAGE, 'full.json'), 'utf8'));
   const burst = full.bursts.find((b) => (full.trades || []).includes(b.ticker) && b.plan && b.plan.order_json);
-  check('the full fixture carries a burst ticket whose buy stop is its close to the cent, so every check below can fail',
-    !!burst && burst.plan.order_json.stop_price === burst.plan.entry_ref && Math.abs(burst.plan.entry_ref - burst.close) <= 0.005 + 1e-9 && burst.plan.entry_low < burst.plan.entry_ref && burst.plan.entry_ref < burst.plan.limit,
-    burst && [burst.ticker, burst.close, burst.plan.entry_ref, burst.plan.entry_low, burst.plan.limit]);
+  check('the full fixture carries a burst ticket whose buy stop is its close plus its cushion, under the current rule, so every check below can fail',
+    !!burst && full.rules.plan.burst_trigger_rule === 'close_plus_cushion' && burst.plan.trigger_rule === 'close_plus_cushion' && burst.plan.order_json.stop_price === burst.plan.entry_ref
+      && burst.plan.trigger_cushion > 0 && Math.abs(burst.plan.entry_ref - burst.plan.trigger_cushion - burst.close) <= 0.005 + 1e-9 && burst.plan.entry_low < burst.plan.entry_ref && burst.plan.entry_ref < burst.plan.limit,
+    burst && [burst.ticker, burst.close, burst.plan.entry_ref, burst.plan.trigger_cushion, burst.plan.entry_low, burst.plan.limit]);
   if (!burst) return;
   const p = burst.plan;
   // a section that throws (a locator that never appears, an evaluate over a
@@ -148,8 +173,8 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
       await page.waitForFunction(() => document.getElementById('disc-plan').open);
       const fill = await page.locator('#disc-plan .sc-facts > div').filter({ has: page.locator('dt', { hasText: /^ticket fills$/ }) }).evaluateAll((rows) => rows.map((r) => { const dd = r.querySelector('dd'), k = dd.cloneNode(true); k.querySelectorAll('small').forEach((n) => n.remove()); return [k.textContent.trim(), (dd.querySelector('small') || {}).textContent || '']; }));
       eq(`${tag}: one row says where the ticket fills, by its own value: the buy stop up to the limit`, fill.map((r) => r[0]), [usd(p.entry_ref) + ' – ' + usd(p.limit)]);
-      check(`${tag}: and its sentence names the buy stop as the burst close and says the order buys nothing under it`,
-        fill.length === 1 && fill[0][1].startsWith(p.entry_window + ' · a buy stop at ' + usd(p.entry_ref) + ' (the burst close), limit ' + usd(p.limit) + ' · under the buy stop the order waits and buys nothing'), fill.length && fill[0][1]);
+      check(`${tag}: and its sentence names the buy stop as the burst close plus its cushion and says the order buys nothing under it`,
+        fill.length === 1 && fill[0][1].startsWith(p.entry_window + ' · a buy stop at ' + usd(p.entry_ref) + ' (the burst close plus ' + usd(p.trigger_cushion) + '), limit ' + usd(p.limit) + ' · under the buy stop the order waits and buys nothing'), fill.length && fill[0][1]);
       eq(`${tag}: no row is labelled buy, and the skip line keeps its own row`,
         await page.locator('#disc-plan .sc-facts > div dt').evaluateAll((dts, lo) => [dts.filter((d) => d.textContent === 'buy').length, dts.filter((d) => d.textContent === 'skip if it opens below').map((d) => { const k = d.nextElementSibling.cloneNode(true); k.querySelectorAll('small').forEach((n) => n.remove()); return k.textContent.trim(); })], null),
         [0, [usd(p.skip_if_open_below)]]);
@@ -194,9 +219,11 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
 
       // the next action: what is written, what Fidelity is known to do, what is unconfirmed
       const next = await page.locator('#next-p').innerText();
-      check(`${tag}: the next action says the stop is written as part of the order and what is unconfirmed, naming the burst's buy stop`,
-        next.includes('Its sell stop is written as part of the order (OTO): Fidelity releases an OTO stop only when the buy fills in full, and whether Fidelity’s ticket accepts this OTO, or a burst ticket’s buy stop at its last close, is unconfirmed. Cancel an unfilled entry by the end of the ')
-        && !next.includes('is part of the order (OTO), and Fidelity releases that stop'), next);
+      // a burst ticket whose buy stop sits over its close is not one Fidelity's
+      // pre-open comparison bites as written: no buy stop at the last close
+      check(`${tag}: the next action says the stop is written as part of the order and what is unconfirmed, and names no buy stop at its last close`,
+        next.includes('Its sell stop is written as part of the order (OTO): Fidelity releases an OTO stop only when the buy fills in full, and whether Fidelity’s ticket accepts this OTO is unconfirmed. Cancel an unfilled entry by the end of the ')
+        && !next.includes('buy stop at its last close') && !next.includes('is part of the order (OTO), and Fidelity releases that stop'), next);
 
       const writes = await writesOf(page);
       eq(`${tag}: every text the page wrote to the clipboard was the ticket, and none carried a broker note`, [writes.length, writes.filter((t) => t !== pre).length, writes.filter((t) => NOTE_WORDS.test(t)).length], [2, 0, 0]);
@@ -335,18 +362,50 @@ export async function checkBuyStop({ browser, base, open, check, eq, shotsDir })
   // close to the cent: a close a fraction of a cent off it is the close, and
   // a row whose recorded close is another price is not called one
   {
-    const multiple = JSON.parse(await readFile(path.join(ROOT, CASH, 'publication-multiple.json'), 'utf8'));
+    const current = JSON.parse(await readFile(path.join(ROOT, CASH, 'publication-multiple.json'), 'utf8'));
+    const multiple = legacy(current);
     const odd = multiple.bursts.find((b) => (multiple.trades || []).includes(b.ticker) && b.plan && b.plan.order_json);
-    check('the cash fixture\'s burst ticket closes a fraction of a cent off its buy stop, so the wording below can fail',
+    check('the cash fixture\'s burst ticket, read under the legacy rule, closes a fraction of a cent off its buy stop, so the wording below can fail',
       !!odd && odd.close !== odd.plan.entry_ref && Math.abs(odd.close - odd.plan.entry_ref) <= 0.005 + 1e-9, odd && [odd.close, odd.plan.entry_ref]);
     const fillRow = async (page) => { await page.evaluate(() => { document.getElementById('disc-plan').open = true; }); return page.locator('#disc-plan .sc-facts > div').filter({ has: page.locator('dt', { hasText: /^ticket fills$/ }) }).evaluateAll((rows) => (rows[0] ? rows[0].innerText : '')); };
     if (odd) {
       const a = await open(browser, base, `/${CASH}/publication-multiple.json`, '2026-09-11T13:35:00Z', 1280, { lens: 'all', hash: `#/explore/bursts/${odd.ticker}`,
-        beforeLoad: (page) => page.route('**/morning.json', (route) => route.fulfill({ status: 404, body: 'not found' })) });
+        beforeLoad: async (page) => { await page.route('**/morning.json', (route) => route.fulfill({ status: 404, body: 'not found' }));
+          await page.route(`**/${CASH}/publication-multiple.json`, (route) => route.fulfill({ json: multiple })); } });
       try {
         const got = await fillRow(a.page);
         check('a buy stop that is the close to the cent is called the burst close', got.includes('a buy stop at ' + usd(odd.plan.entry_ref) + ' (the burst close), limit ' + usd(odd.plan.limit)), got);
       } catch (e) { threw('the burst close, to the cent', e); } finally { await a.context.close(); }
+    }
+    // the same ticket as the pipeline wrote it, under the current rule: the
+    // buy stop is the close plus the cushion the plan carries, and says so
+    const cur = current.bursts.find((b) => b.ticker === (odd && odd.ticker));
+    check('the cash fixture\'s burst ticket, as written, sits its archived cushion over its close, so the wording below can fail',
+      !!cur && cur.plan.trigger_cushion > 0 && cur.plan.entry_ref > cur.close, cur && [cur.close, cur.plan.entry_ref, cur.plan.trigger_cushion]);
+    if (cur) {
+      const c = await open(browser, base, `/${CASH}/publication-multiple.json`, '2026-09-11T13:35:00Z', 1280, { lens: 'all', hash: `#/explore/bursts/${cur.ticker}`,
+        beforeLoad: (page) => page.route('**/morning.json', (route) => route.fulfill({ status: 404, body: 'not found' })) });
+      try {
+        const got = await fillRow(c.page);
+        check('a buy stop set over the close by its cushion is called the burst close plus that cushion',
+          got.includes('a buy stop at ' + usd(cur.plan.entry_ref) + ' (the burst close plus ' + usd(cur.plan.trigger_cushion) + '), limit ' + usd(cur.plan.limit)), got);
+      } catch (e) { threw('the burst close plus its cushion', e); } finally { await c.context.close(); }
+    }
+    // a night whose burst ticket's buy stop IS its close (a record made before
+    // plan.burst_trigger_rule): the next action names that buy stop as
+    // unconfirmed at Fidelity, which the current rule's night does not
+    {
+      const old = legacy(full);
+      const l = await open(browser, base, `/${PAGE}/full.json`, FRESH, 1280, { lens: 'all', hash: `#/explore/bursts/${burst.ticker}`,
+        beforeLoad: (page) => page.route(`**/${PAGE}/full.json`, (route) => route.fulfill({ json: old })) });
+      try {
+        const next = await l.page.locator('#next-p').innerText();
+        check('legacy rule: the next action names a burst ticket\'s buy stop at its last close as unconfirmed',
+          next.includes('and whether Fidelity’s ticket accepts this OTO, or a burst ticket’s buy stop at its last close, is unconfirmed. Cancel an unfilled entry by the end of the '), next);
+        const got = await fillRow(l.page);
+        check('legacy rule: the fill row calls that buy stop the burst close',
+          got.includes('a buy stop at ' + usd(old.bursts.find((b) => b.ticker === burst.ticker).plan.entry_ref) + ' (the burst close), limit ' + usd(p.limit)), got);
+      } catch (e) { threw('the legacy rule\'s night', e); } finally { await l.context.close(); }
     }
     const moved = structuredClone(full); moved.bursts.find((b) => b.ticker === burst.ticker).close = +(burst.close + 1).toFixed(2);
     const b = await open(browser, base, `/${PAGE}/full.json`, FRESH, 1280, { lens: 'all', hash: `#/explore/bursts/${burst.ticker}`,

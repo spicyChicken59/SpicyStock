@@ -255,6 +255,7 @@ def measure(frames: dict[str, pd.DataFrame], session: date, uni: universe.Univer
 
 
 def decide(m: Measurement, account: plan.Account, rec: dict, *, gate: bool,
+           trigger_rule: str | None = None,
            max_picks: int | None = None) -> tuple[dict, dict]:
     """One block's decision over a measurement: the open model plans of the
     sessions before counted against the slots, the plans, the cash budget,
@@ -271,7 +272,7 @@ def decide(m: Measurement, account: plan.Account, rec: dict, *, gate: bool,
     open_rows = record.open_plans(rec, m.frames, m.session.isoformat(), verdict)
     held = pipeline.slots_held(open_rows)
     pipeline._make_plans(m.bursts, account, m.regime if gate else UNGATED_REGIME, held,
-                         m.session, require_reader=False)
+                         m.session, require_reader=False, trigger_rule=trigger_rule)
     eligible = sum(1 for b in m.bursts if (b.get("plan") or {}).get("eligible")
                    and b["plan"].get("action") in plan.ORDER_ACTIONS)
     # This study remains reaction-only, but uses production's same reservation
@@ -315,10 +316,16 @@ def _partition(rows: list[dict], key) -> dict:
 
 
 def run(archive: Archive, *, lookback: int = PRODUCTION_LOOKBACK, account: plan.Account | None = None,
-        limit: int | None = None, progress=None) -> dict:
+        limit: int | None = None, progress=None, trigger_rule: str | None = None) -> dict:
     """Every evaluable session in order, both blocks, then the outcomes over
     the whole archive. ``limit`` keeps the last that many evaluable sessions
-    (a smoke run). ``progress`` is called with each session's row."""
+    (a smoke run). ``progress`` is called with each session's row.
+    ``trigger_rule`` is the burst buy stop's rule (``plan.BURST_TRIGGER_RULES``):
+    the production rule unless named, so the same archive can be read under
+    the legacy ``close`` and under ``close_plus_cushion``."""
+    trigger_rule = plan.BURST_TRIGGER_RULE if trigger_rule is None else trigger_rule
+    if trigger_rule not in plan.BURST_TRIGGER_RULES:
+        raise BacktestError(f"unknown burst trigger rule {trigger_rule!r}")
     if lookback < 1 or lookback > PRODUCTION_LOOKBACK:
         raise BacktestError(f"lookback must be between 1 and the run's own {PRODUCTION_LOOKBACK}")
     account = account or plan.Account()
@@ -340,13 +347,14 @@ def run(archive: Archive, *, lookback: int = PRODUCTION_LOOKBACK, account: plan.
         # the gate changes no measurement: one reading, two decisions, the
         # production block last so its candidates carry its plans
         for gate in reversed(GATES):
-            recs[gate], row = decide(m, account, recs[gate], gate=gate == PRODUCTION, max_picks=retention)
+            recs[gate], row = decide(m, account, recs[gate], gate=gate == PRODUCTION, max_picks=retention,
+                                     trigger_rule=trigger_rule)
             nights[gate].append(row)
         if equivalence["required"] and calendar.index(session) >= PRODUCTION_LOOKBACK:
             # both lookbacks over an empty record, so the slots cannot differ
-            _, short = decide(m, account, record.empty(), gate=True)
+            _, short = decide(m, account, record.empty(), gate=True, trigger_rule=trigger_rule)
             _, full = decide(measure(as_of(archive, session, PRODUCTION_LOOKBACK), session, uni), account,
-                             record.empty(), gate=True)
+                             record.empty(), gate=True, trigger_rule=trigger_rule)
             equivalence["compared"] += 1
             if fingerprint(short) != fingerprint(full):
                 equivalence["differences"].append({"session": session.isoformat(),
@@ -384,6 +392,7 @@ def run(archive: Archive, *, lookback: int = PRODUCTION_LOOKBACK, account: plan.
                                  "count": len(calendar)}},
         "lookback": {"sessions": lookback, "production": PRODUCTION_LOOKBACK, "equivalence": equivalence},
         "account": account.to_dict(), "rules_version": report.rules_version(rules),
+        "burst_trigger_rule": trigger_rule,
         "evaluated": {"from": evaluable[0].isoformat(), "through": last, "count": len(evaluable),
                       "seconds": round(time.monotonic() - started, 1)},
         "regimes": {"verdicts": dict(verdicts),
@@ -413,6 +422,7 @@ def summary_text(result: dict) -> str:
              f"lookback equivalence: {lb['equivalence']['status']} ({lb['equivalence']['compared']} sessions compared, "
              f"{len(lb['equivalence']['differences'])} differences)",
              f"account (configured, not a balance): {result['account']}",
+             *([f"burst trigger rule: {result['burst_trigger_rule']}"] if result.get("burst_trigger_rule") else []),
              f"reader: {result['reader']}",
              f"regimes: {result['regimes']['verdicts']}; 10-session ratio min/median/max "
              f"{_fmt(result['regimes']['ratio_10d']['min'])}/{_fmt(result['regimes']['ratio_10d']['median'])}/"
@@ -467,6 +477,8 @@ def main(argv=None) -> int:
     parser.add_argument("--lookback", type=int, default=PRODUCTION_LOOKBACK,
                         help=f"sessions of history before each evaluated session (default and maximum {PRODUCTION_LOOKBACK})")
     parser.add_argument("--sessions", type=int, default=None, help="evaluate only the last N evaluable sessions")
+    parser.add_argument("--burst-trigger-rule", choices=plan.BURST_TRIGGER_RULES, default=plan.BURST_TRIGGER_RULE,
+                        help=f"the burst buy stop's rule (default the production rule, {plan.BURST_TRIGGER_RULE})")
     args = parser.parse_args(argv)
     logging.getLogger("src").setLevel(logging.ERROR)
     try:
@@ -481,7 +493,7 @@ def main(argv=None) -> int:
                   f"bursts {row['bursts']} tickets {len(row['trades'])}", file=sys.stderr)
 
         result = run(archive, lookback=args.lookback, account=plan.Account.from_env(),
-                     limit=args.sessions, progress=progress)
+                     limit=args.sessions, progress=progress, trigger_rule=args.burst_trigger_rule)
         output.mkdir(parents=True, exist_ok=True)
         (output / "backtest.json").write_text(_encode(result), encoding="utf-8")
         text = summary_text(result)

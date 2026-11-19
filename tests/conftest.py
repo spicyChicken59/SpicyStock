@@ -199,3 +199,16 @@ def fake_resend(monkeypatch) -> FakeResend:
 def mocked_boundaries(fake_alpaca, fake_anthropic, fake_resend):
     """All three external boundaries at once, for end-to-end tests."""
     return {"alpaca": fake_alpaca, "anthropic": fake_anthropic, "resend": fake_resend}
+
+
+@pytest.fixture
+def legacy_burst_trigger(monkeypatch):
+    """The evening run under the legacy burst trigger rule, named and archived
+    alike (``plan.BURST_TRIGGER_RULE`` and ``rules.plan.burst_trigger_rule``
+    both ``close``): for a test of mechanics the synthetic market was drawn
+    around, whose first day reaches the buy stop at the close and not a cushion
+    over it. The rule itself is held in tests/test_burst_trigger_rule.py."""
+    from src import plan
+    monkeypatch.setattr(plan, "BURST_TRIGGER_RULE", plan.LEGACY_BURST_TRIGGER_RULE)
+    monkeypatch.setitem(plan.RULES, "plan.burst_trigger_rule", plan.LEGACY_BURST_TRIGGER_RULE)
+    return plan.LEGACY_BURST_TRIGGER_RULE

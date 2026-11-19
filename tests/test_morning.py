@@ -104,7 +104,8 @@ def test_anticipation_identity_and_levels_are_the_original_order():
 
 
 @pytest.mark.parametrize("price,state", [(121.42, "below_stop"), (121.43, "below_entry_floor"),
-                                          (121.73, "below_trigger"), (124.21, "within_published_band"),
+                                          (121.73, "below_trigger"), (124.32, "below_trigger"),
+                                          (124.33, "within_published_band"),
                                           (126.47, "within_published_band"), (126.48, "above_limit"),
                                           (129.18, "above_limit"), (129.19, "above_day2_extension")])
 def test_comparisons_preserve_exact_trigger_limit_stop_and_extension_boundaries(price, state):

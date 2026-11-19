@@ -571,12 +571,16 @@ def make_plans(bursts: list[dict], frames: dict[str, pd.DataFrame], account: pla
     return _make_plans(bursts, account, regime, open_count, session, require_reader=True)
 
 
-def _make_plans(bursts, account, regime, open_count, session, *, require_reader):
+def _make_plans(bursts, account, regime, open_count, session, *, require_reader, trigger_rule=None):
     """Construct plans after the applicable gates -- the regime's admitted
     grades, the quality veto, the discovery admission (src/admission.py) and,
     for the final plans, an accepted reader review; the trades list in
     rank order (the plans with an order that fit the slots and the equity)
-    and the cash budget over them, with every cut plan named and its reason."""
+    and the cash budget over them, with every cut plan named and its reason.
+    ``trigger_rule`` is the burst buy stop's rule: the production rule
+    (``plan.BURST_TRIGGER_RULE``) unless a reading names another, as
+    ``tools/historical_backtest.py --burst-trigger-rule`` does."""
+    trigger_rule = plan.BURST_TRIGGER_RULE if trigger_rule is None else trigger_rule
     verdict = regime.get("verdict", "green")
     multiplier = float(regime.get("size_multiplier", 1.0))
     admitted = admitted_grades(verdict)
@@ -592,7 +596,7 @@ def _make_plans(bursts, account, regime, open_count, session, *, require_reader)
                            open_=b["open"], prev_close=b["prev_close"], gain_pct=b["gain_pct"] or 0.0,
                            account=account.to_dict(), size_multiplier=multiplier,
                            scan="dollar" if b["scan"] == "dollar" else "4pct", extension_pct=b.get("extension_pct"),
-                           trigger_rule=plan.BURST_TRIGGER_RULE)
+                           trigger_rule=trigger_rule)
         try:
             p = plan.burst_plan(**{**plan_inputs, "account": account})
         except ValueError as exc:

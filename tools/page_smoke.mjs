@@ -971,13 +971,14 @@ async function checkVariant(browser, base, variant, data) {
     // before the window the next action says the stop is WRITTEN as part of
     // the order, what Fidelity is known to do with an OTO's stop, and what is
     // unconfirmed about Fidelity's ticket -- the OTO, and, only when a burst
-    // ticket is among the night's, a buy stop at its last close -- and never
+    // ticket whose buy stop IS its close is among the night's (one made before
+    // plan.burst_trigger_rule), a buy stop at its last close -- and never
     // to attach a second stop after a fill: its sentences are read whole, the
     // prepare-by time and the window off the record, and nothing after them
     // may speak of a stop
     const nextP = await text(page, '#next-p'), tmv = data.run.timing;
     const byWords = `${+tmv.prepare_by_et.slice(0, 2) % 12 || 12}:${tmv.prepare_by_et.slice(3)} ${+tmv.prepare_by_et.slice(0, 2) < 12 ? 'AM' : 'PM'} ET`;
-    const nextWant = `If you choose to follow a plan, review its conditions and prepare before ${byWords}. Its sell stop is written as part of the order (OTO): Fidelity releases an OTO stop only when the buy fills in full, and whether Fidelity’s ticket accepts this OTO${withOrders.length ? ', or a burst ticket’s buy stop at its last close,' : ''} is unconfirmed. Cancel an unfilled entry by the end of the ${tmv.window}. SpicyStock submits nothing. `;
+    const nextWant = `If you choose to follow a plan, review its conditions and prepare before ${byWords}. Its sell stop is written as part of the order (OTO): Fidelity releases an OTO stop only when the buy fills in full, and whether Fidelity’s ticket accepts this OTO${withOrders.some(b => b.plan.burst && b.plan.entry_ref <= b.plan.burst.close) ? ', or a burst ticket’s buy stop at its last close,' : ''} is unconfirmed. Cancel an unfilled entry by the end of the ${tmv.window}. SpicyStock submits nothing. `;
     check(`${variant} next: the sell stop is written as part of the order, Fidelity releases an OTO stop only on a full fill, its ticket's acceptance is unconfirmed, and no other stop is asked for`,
       nextP.startsWith(nextWant) && !/stop/i.test(nextP.slice(nextWant.length)), nextP);
   }

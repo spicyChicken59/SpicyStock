@@ -115,7 +115,10 @@ def test_the_example_is_what_the_code_writes_for_the_bars():
 
     bar = BARS[BURST]
     p = plan.burst_plan(ticker="XMPL", close=bar[3], low=bar[2], high=bar[1], open_=bar[0], prev_close=BARS[BURST - 1][3],
-                        gain_pct=scan["gain_pct"], account=plan.Account.from_env({}), extension_pct=pipeline.extension_pct(upto))
+                        gain_pct=scan["gain_pct"], account=plan.Account.from_env({}), extension_pct=pipeline.extension_pct(upto),
+                        trigger_rule=plan.BURST_TRIGGER_RULE)
+    # the walkthrough shows the production rule: the buy stop a cushion over the close
+    assert p["trigger_rule"] == plan.BURST_TRIGGER_RULE and EXAMPLE["close"] == bar[3] < p["entry_ref"]
     assert p["action"] == "buy_at_open" and p["eligible"] and p["flags"] == ["limit_narrowed", "risk_halved"]
     for key, field in (("trigger", "entry_ref"), ("limit", "limit"), ("limit_basis", "limit_basis"), ("day2_spent_above", "day2_spent_above"),
                        ("skip_below", "entry_low"), ("stop", "stop"), ("stop_basis", "stop_basis"), ("stop_pct", "stop_pct"),
@@ -155,7 +158,8 @@ def test_the_example_would_not_survive_a_bar_out_of_place():
     upto = df.iloc[: BURST + 1]
     bar = BARS[BURST]
     p = plan.burst_plan(ticker="XMPL", close=bar[3], low=bar[2], high=bar[1], open_=bar[0], prev_close=BARS[BURST - 1][3],
-                        gain_pct=scans.burst_4pct(upto)["gain_pct"], account=plan.Account.from_env({}))
+                        gain_pct=scans.burst_4pct(upto)["gain_pct"], account=plan.Account.from_env({}),
+                        trigger_rule=plan.BURST_TRIGGER_RULE)
     pick = pipeline.pick_of(p, "burst", "A+", 10.0)
     pick["date"] = str(SIGNAL)
     later = [{"date": dates[BURST + 1 + i], "o": b[0], "h": b[1], "l": b[2], "c": b[3]} for i, b in enumerate(BARS[BURST + 1:])]

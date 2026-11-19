@@ -1,0 +1,309 @@
+{
+ "base_spec": "docs/input-truthfulness/2026-11-07-signal-outcomes-spec-extended.json",
+ "base_spec_sha256": "ccc303bb3f00406f94dd4a4e5fa29d68fdf3f45503a09e8742ed12377a7cd970",
+ "cushion": {
+  "cents": 0.02,
+  "fraction": 0.001
+ },
+ "first_session": "2026-09-11",
+ "newest_session": "2026-11-18",
+ "nights": 49,
+ "publications": 55,
+ "ref": "b1192f3a581790df599b37524ca97b71084fce96",
+ "rules": {
+  "close": {
+   "admitted": {
+    "buckets": {
+     "basis_mismatch": 42,
+     "no_ticket": 810,
+     "not_filled": 431,
+     "open": 4,
+     "pending": 120,
+     "plan_error": 0,
+     "settled": 1090,
+     "uncertain": 1063,
+     "unmeasured": 1,
+     "unreadable": 0,
+     "unscored": 0
+    },
+    "costs_per_side_bps": {
+     "0": {
+      "mean_r": -0.151,
+      "n": 1090,
+      "sum_r": -164.05
+     },
+     "20": {
+      "mean_r": -0.298,
+      "n": 1090,
+      "sum_r": -324.76
+     },
+     "5": {
+      "mean_r": -0.188,
+      "n": 1090,
+      "sum_r": -204.78
+     }
+    },
+    "night_bootstrap": {
+     "ci95": [
+      -0.217,
+      0.062
+     ],
+     "mean_of_night_means": -0.077,
+     "nights": 46,
+     "reps": 2000,
+     "seed": 20261002
+    },
+    "rows": 3561,
+    "settled": {
+     "breakeven": 17,
+     "losses": 767,
+     "mean_r": -0.151,
+     "median_r": -0.39,
+     "n": 1090,
+     "sum_r": -164.05,
+     "wins": 306
+    },
+    "uncertain_bound": {
+     "bounded": 1050,
+     "pooled_mean_r_with_bound": -0.121,
+     "sum_r_if_filled_at_trigger": -93.96,
+     "uncertain": 1063
+    }
+   },
+   "all": {
+    "buckets": {
+     "basis_mismatch": 550,
+     "no_ticket": 6262,
+     "not_filled": 3026,
+     "open": 32,
+     "pending": 626,
+     "plan_error": 0,
+     "settled": 6662,
+     "uncertain": 7528,
+     "unmeasured": 13,
+     "unreadable": 0,
+     "unscored": 0
+    },
+    "costs_per_side_bps": {
+     "0": {
+      "mean_r": -0.181,
+      "n": 6662,
+      "sum_r": -1209.14
+     },
+     "20": {
+      "mean_r": -0.346,
+      "n": 6662,
+      "sum_r": -2305.21
+     },
+     "5": {
+      "mean_r": -0.223,
+      "n": 6662,
+      "sum_r": -1485.91
+     }
+    },
+    "night_bootstrap": {
+     "ci95": [
+      -0.249,
+      0.012
+     ],
+     "mean_of_night_means": -0.127,
+     "nights": 48,
+     "reps": 2000,
+     "seed": 20261002
+    },
+    "rows": 24699,
+    "settled": {
+     "breakeven": 78,
+     "losses": 4898,
+     "mean_r": -0.181,
+     "median_r": -0.54,
+     "n": 6662,
+     "sum_r": -1209.14,
+     "wins": 1686
+    },
+    "uncertain_bound": {
+     "bounded": 7446,
+     "pooled_mean_r_with_bound": -0.211,
+     "sum_r_if_filled_at_trigger": -1766.59,
+     "uncertain": 7528
+    }
+   },
+   "first_day_open": {
+    "at_buy_stop": 548,
+    "at_or_under_stop": 1221,
+    "in_band": 6147,
+    "no_first_day": 638,
+    "over_day2": 319,
+    "over_limit_to_day2": 2177,
+    "under_buy_stop": 6491,
+    "under_skip_line": 346
+   },
+   "first_day_open_admitted": {
+    "at_buy_stop": 81,
+    "at_or_under_stop": 66,
+    "in_band": 1013,
+    "no_first_day": 121,
+    "over_day2": 16,
+    "over_limit_to_day2": 330,
+    "under_buy_stop": 1051,
+    "under_skip_line": 31
+   },
+   "rule": "close",
+   "uncertainty": {
+    "open_above_limit": 1902,
+    "open_below_skip": 439,
+    "stop_sequence": 2027,
+    "trigger_timing": 3160
+   },
+   "withheld_by_the_stop_rule": 1949
+  },
+  "close_plus_cushion": {
+   "admitted": {
+    "buckets": {
+     "basis_mismatch": 41,
+     "no_ticket": 839,
+     "not_filled": 489,
+     "open": 3,
+     "pending": 120,
+     "plan_error": 0,
+     "settled": 927,
+     "uncertain": 1141,
+     "unmeasured": 1,
+     "unreadable": 0,
+     "unscored": 0
+    },
+    "costs_per_side_bps": {
+     "0": {
+      "mean_r": -0.16,
+      "n": 927,
+      "sum_r": -148.7
+     },
+     "20": {
+      "mean_r": -0.303,
+      "n": 927,
+      "sum_r": -281.07
+     },
+     "5": {
+      "mean_r": -0.197,
+      "n": 927,
+      "sum_r": -182.3
+     }
+    },
+    "night_bootstrap": {
+     "ci95": [
+      -0.236,
+      0.054
+     ],
+     "mean_of_night_means": -0.085,
+     "nights": 46,
+     "reps": 2000,
+     "seed": 20261002
+    },
+    "rows": 3561,
+    "settled": {
+     "breakeven": 16,
+     "losses": 655,
+     "mean_r": -0.16,
+     "median_r": -0.39,
+     "n": 927,
+     "sum_r": -148.7,
+     "wins": 256
+    },
+    "uncertain_bound": {
+     "bounded": 1128,
+     "pooled_mean_r_with_bound": -0.123,
+     "sum_r_if_filled_at_trigger": -103.42,
+     "uncertain": 1141
+    }
+   },
+   "all": {
+    "buckets": {
+     "basis_mismatch": 544,
+     "no_ticket": 6451,
+     "not_filled": 3344,
+     "open": 24,
+     "pending": 617,
+     "plan_error": 0,
+     "settled": 5674,
+     "uncertain": 8032,
+     "unmeasured": 13,
+     "unreadable": 0,
+     "unscored": 0
+    },
+    "costs_per_side_bps": {
+     "0": {
+      "mean_r": -0.192,
+      "n": 5674,
+      "sum_r": -1088.3
+     },
+     "20": {
+      "mean_r": -0.349,
+      "n": 5674,
+      "sum_r": -1978.43
+     },
+     "5": {
+      "mean_r": -0.231,
+      "n": 5674,
+      "sum_r": -1313.43
+     }
+    },
+    "night_bootstrap": {
+     "ci95": [
+      -0.249,
+      0.013
+     ],
+     "mean_of_night_means": -0.127,
+     "nights": 48,
+     "reps": 2000,
+     "seed": 20261002
+    },
+    "rows": 24699,
+    "settled": {
+     "breakeven": 66,
+     "losses": 4178,
+     "mean_r": -0.192,
+     "median_r": -0.53,
+     "n": 5674,
+     "sum_r": -1088.3,
+     "wins": 1430
+    },
+    "uncertain_bound": {
+     "bounded": 7946,
+     "pooled_mean_r_with_bound": -0.238,
+     "sum_r_if_filled_at_trigger": -2148.83,
+     "uncertain": 8032
+    }
+   },
+   "first_day_open": {
+    "at_buy_stop": 157,
+    "at_or_under_stop": 1273,
+    "in_band": 5542,
+    "no_first_day": 629,
+    "over_day2": 309,
+    "over_limit_to_day2": 2005,
+    "under_buy_stop": 7483,
+    "under_skip_line": 306
+   },
+   "first_day_open_admitted": {
+    "at_buy_stop": 15,
+    "at_or_under_stop": 70,
+    "in_band": 915,
+    "no_first_day": 121,
+    "over_day2": 16,
+    "over_limit_to_day2": 301,
+    "under_buy_stop": 1219,
+    "under_skip_line": 24
+   },
+   "rule": "close_plus_cushion",
+   "uncertainty": {
+    "open_above_limit": 1773,
+    "open_below_skip": 408,
+    "stop_sequence": 2220,
+    "trigger_timing": 3631
+   },
+   "withheld_by_the_stop_rule": 2138
+  }
+ },
+ "spec_sha256": "bda20348d9f31ef77f101f4204d20441b4611c48223134e83b5382677e5287a4",
+ "version": "burst-trigger-comparison-v1"
+}

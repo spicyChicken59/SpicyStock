@@ -55,9 +55,12 @@ the next session's open, and for a delayed event.
 - **No unbounded calls.** The bars endpoint was asked twice on the outage night
   (one batch, one retry, then dropped) and once on every other for the daily
   bars. Since the minute-bar reading (`src/intraday.py`, 13 October) the
-  evidence counts its requests apart: the retry night, whose two 4 September
-  tickets met a first day the daily bar could not place, asked once for that
-  session's minutes, within the two plans it asked for. Reader calls
+  evidence counts its requests apart. Under the burst trigger rule of 19
+  November (`close_plus_cushion`, the buy stop a cushion over the close) the
+  two 4 September tickets' first day is one the daily bar places, so no
+  night asks for minutes; under the rule before it the retry night asked
+  once for that session's minutes. The
+  minute path is held in `tests/test_intraday.py`. Reader calls
   stayed within names times `grader.ATTEMPTS` every night: the empty balance
   stopped them after **one** call (the second name was a fallback row without a
   call), the dead transport cost exactly four.

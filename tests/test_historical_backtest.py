@@ -398,3 +398,22 @@ def test_scorecard_rows_read_the_published_window_by_default_and_a_wider_one_on_
     wide = record.scorecard_rows(rec, frames, "2026-09-09", window_sessions=200)
     assert [r["ticker"] for r in wide] == ["OLD", "NEW"]
     assert record.summarize_scorecard(wide)["plans"] == 2
+
+
+def test_the_burst_trigger_rule_is_named_and_the_archive_can_be_read_under_each(archive, result):
+    """The replay plans through ``pipeline._make_plans`` under the production
+    trigger rule unless one is named: ``--burst-trigger-rule close`` reads the
+    same archive with every burst buy stop back at its close."""
+    assert result["burst_trigger_rule"] == plan.BURST_TRIGGER_RULE
+    with network_blocked():
+        legacy = backtest.run(archive, trigger_rule=plan.LEGACY_BURST_TRIGGER_RULE)
+    assert legacy["burst_trigger_rule"] == plan.LEGACY_BURST_TRIGGER_RULE
+    now = {(p["ticker"], p["date"]): p for p in result["outcomes"][backtest.PRODUCTION]["picks"]}
+    then = {(p["ticker"], p["date"]): p for p in legacy["outcomes"][backtest.PRODUCTION]["picks"]}
+    assert now and set(now) == set(then)
+    for key, old in then.items():
+        assert now[key]["entry_ref"] == plan.burst_trigger(old["entry_ref"], plan.BURST_TRIGGER_RULE) > old["entry_ref"], key
+    assert "burst trigger rule: close\n" in backtest.summary_text(legacy)
+    assert f"burst trigger rule: {plan.BURST_TRIGGER_RULE}\n" in backtest.summary_text(result)
+    with pytest.raises(backtest.BacktestError):
+        backtest.run(archive, trigger_rule="close_plus_a_lot")

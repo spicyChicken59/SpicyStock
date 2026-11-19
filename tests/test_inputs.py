@@ -1115,7 +1115,7 @@ NEXT_EVENING = EVENING + pd.Timedelta(days=1)   # Friday 11 Sep, the session aft
 
 
 @pytest.mark.parametrize('late,status', [('AAA', 'degraded'), ('QAAA', 'ok')], ids=['under-an-open-plan', 'control'])
-def test_a_stale_frame_under_an_open_model_plan_keeps_the_night_degraded(
+def test_a_stale_frame_under_an_open_model_plan_keeps_the_night_degraded(legacy_burst_trigger, 
         wide, claude, fake_resend, fake_alpaca, tmp_path, late, status):
     from src import record, report
     rep, data, _ = evening(tmp_path, wide)
@@ -1151,7 +1151,7 @@ def test_the_benchmark_with_no_earlier_bar_is_never_a_first_session(
     report.validate(data)
 
 
-def test_a_frame_with_no_earlier_bar_under_an_open_model_plan_keeps_the_night_degraded(
+def test_a_frame_with_no_earlier_bar_under_an_open_model_plan_keeps_the_night_degraded(legacy_burst_trigger, 
         wide, claude, fake_resend, fake_alpaca, tmp_path):
     """A plan made on a ticker's earlier bars, whose frame tonight carries the
     session's bar alone: the provider returned none of the history the plan

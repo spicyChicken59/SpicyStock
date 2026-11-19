@@ -1527,10 +1527,16 @@ def state_sentence_problems(text: str = PROMPT_RAW) -> list[str]:
     usual = [levels for levels in bursts if levels["stop"] < levels["entry_low"]]
     over = [levels for levels in bursts if levels["stop"] >= levels["entry_low"]]
     assert usual and over, "the fixtures carry a burst ticket of each shape"
-    orders = {tuple(sorted(ticket_lines(levels, "burst"), key=ticket_lines(levels, "burst").get)) for levels in usual}
-    assert len(orders) == 1 and all(levels["trigger"] == levels["last close"] for levels in bursts)
-    run = ", ".join("trigger (the last close)" if name == "trigger" else name for name in orders.pop())
-    phrases = [f"For a burst ticket the lines usually run, low to high: {run}."]
+    # the fixtures are made under the production trigger rule: every burst
+    # ticket's buy stop is its last close plus the cushion (plan.burst_trigger())
+    assert all(levels["trigger"] == plan.burst_trigger(levels["last close"], plan.BURST_TRIGGER_RULE) > levels["last close"]
+               for levels in bursts)
+    named = lambda levels: {**ticket_lines(levels, "burst"), "last close": levels["last close"]}
+    orders = {tuple(sorted(named(levels), key=named(levels).get)) for levels in usual}
+    assert len(orders) == 1
+    phrases = [f"For a burst ticket the lines usually run, low to high: {', '.join(orders.pop())}.",
+               f"Its trigger is the last close plus the larger of ${plan.TRIGGER_CENTS:.2f} and "
+               f"{g(plan.TRIGGER_FRACTION * 100)}% of the close."]
     for levels in over:                 # the stop at or over the skip-below line
         prices = cents(levels["entry_low"] - 1, levels["trigger"])
         states = {price: morning.price_state(price, levels, "recent") for price in prices}

@@ -223,7 +223,8 @@ def test_a_withheld_burst_prints_its_refusal_and_no_stop_limit_or_share_count():
     levels = row["research_levels"]
     assert levels["plan_rule_eligible"] is False and levels["refusal"].startswith("ticket withheld: no limit above")
     assert not {"stop", "limit", "shares", "cost", "risk", "at_yellow_size", "at_full_size"} & set(levels)
-    assert levels["trigger"] == 124.21                 # the setup stands: its trigger is still the record's
+    # the setup stands: its trigger is still the record's own, a cushion over the close
+    assert levels["trigger"] == burst(json.loads(derived("full")[0]), "TSLA")["plan"]["entry_ref"] == 124.33
     block = md_raw.decode().split("### TSLA ")[1].split("\n### ")[0]
     assert "ticket withheld: no limit above" in block and "model size" not in block and "shares" not in block
 
@@ -378,7 +379,7 @@ def test_the_binding_refuses_another_record_another_ledger_and_a_changed_byte():
         brief.validate_binding(raw, None, json_raw, md_raw)
     with pytest.raises(ValueError, match="does not render this brief.json"):
         brief.validate_binding(raw, picks_raw, json_raw, other_md)
-    flipped = json_raw.replace(b'"trigger":124.21', b'"trigger":124.22', 1)
+    flipped = json_raw.replace(b'"trigger":124.33', b'"trigger":124.34', 1)
     assert flipped != json_raw
     with pytest.raises(ValueError, match="does not render this brief.json"):
         brief.validate_binding(raw, picks_raw, flipped, md_raw)
@@ -497,7 +498,8 @@ def test_detail_is_given_up_before_compact_rows_and_in_steps():
     assert len(out["candidates"]["compact"]) == bounds["candidates_compact"] > 0
     for row in out["candidates"]["compact"]:
         assert row["model_status"] == brief.RESEARCH_SHORT and not any(name.startswith("order") for name in row)
-        assert row["trigger"] == 123.27 and "refusal" not in row
+        # derived under the record's own trigger rule: AMD's close plus the cushion
+        assert row["trigger"] == plan.burst_trigger(123.27, plan.BURST_TRIGGER_RULE) == 123.39 and "refusal" not in row
     assert "every row RESEARCH ONLY" in section(md, 6) or "RESEARCH ONLY" in md.split("### 6b.")[1].split("\n## ")[0]
 
 
@@ -820,16 +822,18 @@ def test_a_burst_tickets_order_entry_block_states_the_order_and_what_is_not_the_
     assert entry["lines"] == {"stop": recorded["stop"], "skip_below": recorded["skip_if_open_below"],
                               "trigger": recorded["entry_ref"], "limit": recorded["limit"],
                               "day2_line": recorded["day2_spent_above"], "extended_above": recorded["extended_above"]}
-    assert entry["last_close"] == burst(data, "AAPL")["close"] == entry["lines"]["trigger"]
-    assert entry["buy_stop_vs_last_close"] == "equal" and entry["buy_stop_note"] == brief.BUY_STOP_NOTE
+    # a ticket made under the production trigger rule: its buy stop sits a cushion over the last close
+    assert entry["last_close"] == burst(data, "AAPL")["close"] < entry["lines"]["trigger"]
+    assert entry["lines"]["trigger"] == plan.burst_trigger(entry["last_close"], plan.BURST_TRIGGER_RULE)
+    assert entry["buy_stop_vs_last_close"] == "above" and "buy_stop_note" not in entry
     assert entry["record_action_word"] == recorded["action"] == "buy_at_open"
     assert "legacy word" in entry["record_action_note"] and "never means a market-on-open order" in entry["record_action_note"]
     assert entry["shares"] == recorded["shares"] and entry["entry_window"]["opens_at"] == data["run"]["timing"]["opens_at"]
     assert entry["not_the_ticket"]["label"].startswith("not the ticket")
     assert entry["not_the_ticket"]["reader_entry_note"] == burst(data, "AAPL")["claude"]["entry_note"]
     md = section(md_raw.decode(), 5)
-    assert "the buy stop is `equal` the last close" in md and "record action word `buy_at_open` (legacy)" in md
-    assert "Reader's entry note (not the ticket)" in md and brief.BUY_STOP_NOTE in md
+    assert "the buy stop is `above` the last close" in md and "record action word `buy_at_open` (legacy)" in md
+    assert "Reader's entry note (not the ticket)" in md
 
 
 def test_a_setting_up_tickets_buy_stop_is_above_the_last_close_and_its_open_entry_note_is_not_the_ticket():
@@ -846,14 +850,21 @@ def test_a_setting_up_tickets_buy_stop_is_above_the_last_close_and_its_open_entr
 
 def test_the_buy_stop_note_is_a_burst_tickets_and_never_on_a_buy_stop_over_the_close():
     """The note says a broker takes a buy stop only above the current price. It belongs to a ticket whose buy stop
-    IS its last close (every burst ticket). An anticipation ticket's buy stop is above its last close, the right
-    side of the market, and carries no note."""
+    IS its last close: a burst ticket made before plan.burst_trigger_rule. A burst ticket made under
+    close_plus_cushion, like an anticipation ticket, has its buy stop above its last close, the right side of the
+    market, and carries no note."""
     for variant in ("full", "yellow", "next"):
-        bursts = [t for t in json.loads(derived(variant)[2])["tickets"] if t["stage"] == "burst"]
+        raw, _, json_raw, _ = derived(variant)
+        data, bursts = json.loads(raw), [t for t in json.loads(json_raw)["tickets"] if t["stage"] == "burst"]
         assert bursts
         for ticket in bursts:
             entry = ticket["order_entry"]
-            assert entry["buy_stop_vs_last_close"] == "equal" and entry["buy_stop_note"] == brief.BUY_STOP_NOTE
+            assert entry["buy_stop_vs_last_close"] == "above" and "buy_stop_note" not in entry
+        # the same ticket as a record made before the rule carries it: its buy stop back at its close
+        row = burst(data, bursts[0]["ticker"])
+        legacy = {**row["plan"], "entry_ref": row["plan"]["burst"]["close"]}
+        entry = brief.order_entry("burst", row, legacy, data)
+        assert entry["buy_stop_vs_last_close"] == "equal" and entry["buy_stop_note"] == brief.BUY_STOP_NOTE
     for variant in ("notrade", "degraded"):
         raw, _, json_raw, _ = derived(variant)
         data, out = json.loads(raw), json.loads(json_raw)

@@ -42,7 +42,7 @@ what the run does is this project's own choice. In short:
 
 | Part | Whose it is |
 |---|---|
-| Entering the next session | His main thesis enters on the burst day itself with the stop at that day's low. Entering the next session after an end-of-day scan is a route he also describes (PRIMARY). Using only that route, the buy stop at the burst close, the skip lines and the limit set from the stop are this project's (P, DERIVED). |
+| Entering the next session | His main thesis enters on the burst day itself with the stop at that day's low. Entering the next session after an end-of-day scan is a route he also describes (PRIMARY). Using only that route, the buy stop a cushion over the burst close, the skip lines and the limit set from the stop are this project's (P, DERIVED). |
 | The stop before day one closes | His stop is the entry day's low. The run cannot know that low when it writes the ticket, so it uses the burst day's low, else the burst bar's midpoint, as a stand-in (P). His own stop replaces it at the close of day one when it is higher. |
 | The checklist's weights and bands | The letters and what each asks are his. He publishes no weights, no pass count and no grade bands: the weights, the score, the bands and the rule that two letters must pass outright are this project's (DERIVED). |
 | The admission gate | This project's, the owner's decision of 4 November 2026 (P). The dollar scan is his; refusing a plan to a name only the dollar scan found, unless its day also expanded in range and volume, is not. |
@@ -224,7 +224,7 @@ Written by `burst_plan()` from the signal bar's close, low and high.
 
 | Rule | Class |
 |---|---|
-| Trigger: a buy stop at the signal close (the plan's `entry_ref`). | P |
+| Trigger: a buy stop at the signal close plus the larger of `TRIGGER_CENTS` = 0.02 dollars and `TRIGGER_FRACTION` = 0.001 of the close (`trigger_cushion()`, the setting-up ticket's own cushion), the plan's `entry_ref` (`burst_trigger()`, `BURST_TRIGGER_RULE` = "close_plus_cushion", the owner's decision of 19 November 2026, archived as `plan.burst_trigger_rule`). A record made before it archived no rule: its tickets carry the buy stop AT the signal close (`LEGACY_BURST_TRIGGER_RULE` = "close"), and it is replayed under that rule. | P |
 | Stop: the signal bar's low, else the midpoint of its high and low (`stop_candidates()`). The first of the two that is under the trigger and leaves a limit above the trigger is used. | B* for the line it is held to; DERIVED for the two stand-ins |
 | Limit: the lower of two prices (`burst_limit()`, `LIMIT_RULE` = "stop_constrained"). One is the close plus `ENTRY_ABOVE_PCT` = 4.0 percent. The other is the highest price at which the stop is still within `MAX_STOP_PCT` = 4.0 percent of it, rounded down to the cent. When neither stand-in leaves a limit above the trigger, the ticket is withheld and the setup is kept. | B* for the stop line; DERIVED for the rule (12 Sep 2026) |
 | The order can fill only from the trigger up to the limit. Under the trigger it waits and buys nothing. | P |
@@ -233,7 +233,7 @@ Written by `burst_plan()` from the signal bar's close, low and high.
 | A third printed line, the close plus `SKIP_GAP_PCT` = 8.0 percent, is the level at which he would be selling. | B* |
 | Indicative entry: the close plus `ASSUMED_SLIPPAGE_PCT` = 1.0 percent, capped at the limit. Only the targets and the exit levels on the ticket are quoted from it. It is not a fill and not the sizing price. | P |
 | Order: a day buy stop-limit with a sell stop-market order at the stop attached to it, good until cancelled (`fidelity_orders()`). The buy is cancelled by hand at the end of the entry window. | P |
-| The sell stop rides on the buy as a one-triggers-the-other order (`OTO`). Fidelity's stated rules release such a stop only when the buy fills in full, and take a buy stop only above the current price. A burst's trigger is its last close, so whether Fidelity accepts this ticket before the open is unconfirmed (`knowledge/broker-fidelity.md`). | R |
+| The sell stop rides on the buy as a one-triggers-the-other order (`OTO`). Fidelity's stated rules release such a stop only when the buy fills in full, and take a buy stop only above the current price. A burst's trigger sits a cushion over its last close (at the close itself in a record made before the trigger rule), so whether Fidelity accepts this ticket before the open is unconfirmed (`knowledge/broker-fidelity.md`). | R |
 
 ## 10. Size (`src/plan.py`)
 

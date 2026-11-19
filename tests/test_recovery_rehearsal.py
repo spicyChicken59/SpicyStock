@@ -95,11 +95,13 @@ def test_the_retry_slot_recovers_once_and_every_later_or_delayed_slot_is_refused
     assert n["previous"]["outcome"] == "replaced"
     assert n["previous"]["publication"] == night(result, "clean")["publication_identity"]
     assert decision(n, "before")["go"] is True and decision(n, "before")["session"] == "2026-09-08"
-    # its two 4 September tickets met a first day the daily bar could not place:
-    # one minute request for that session, counted apart from the daily batch
-    assert n["calls"]["bars_requests"] == 1 and n["calls"]["minute_requests"] == 1
-    assert n["publication"]["intraday"]["wanted"] == 2 and n["publication"]["intraday"]["asked"] == 2
-    assert n["minute_requests_bound"] == {"asked": 2, "maximum": 2, "within": True}
+    # its two 4 September tickets, their buy stop a cushion over the close
+    # (plan.burst_trigger_rule), meet a first day the daily bar places: nothing
+    # for the minutes to place, so the daily batch is the night's one request
+    # (the minute path itself is held in tests/test_intraday.py)
+    assert n["calls"]["bars_requests"] == 1 and n["calls"]["minute_requests"] == 0
+    assert n["publication"]["intraday"]["wanted"] == 0 and n["publication"]["intraday"]["asked"] == 0
+    assert n["minute_requests_bound"] == {"asked": 0, "maximum": 0, "within": True}
     again = decision(n, "after: the retry slot again")
     assert again["go"] is False and again["reason"] == "2026-09-08 is already published"
     delayed = decision(n, "after: a delayed primary event")
@@ -174,7 +176,7 @@ def test_the_summary_is_the_nights_added_up(result):
     assert s["reader_calls"] == {n["name"]: n["calls"]["reader_calls"] for n in nights}
     assert s["minute_requests_within_bound_every_night"] is True
     assert s["minute_requests"] == {n["name"]: n["calls"]["minute_requests"] for n in nights}
-    assert sum(s["minute_requests"].values()) == 1
+    assert sum(s["minute_requests"].values()) == 0
     assert s["guard"] == {"permitted": 10, "already_published": 7, "newer_published": 1, "expired": 2, "not_a_session": 2, "other": 0}
     assert sum(s["guard"].values()) == sum(len(n["guard"]) for n in nights)
     assert s["slots_admitted_after_a_publication"] == 0 and s["slots_admitted_after_a_failure"] == 2

@@ -1,5 +1,16 @@
 # Input truthfulness milestone
 
+[19 November 2026: the burst trigger rule, read both ways](2026-11-19-burst-trigger-comparison.md)
+runs the frozen signal-outcome study's own walk twice over 55 publications (49
+sessions, 11 September to 18 November), every burst ticket built once with
+its buy stop at the close (`close`, every record before the owner's decision
+of 19 November) and once at the close plus the anticipation ticket's cushion
+(`close_plus_cushion`, the production rule from that decision). The cushion
+moves an open just over the close under the buy stop, so more first days can
+be entered as written before the open; it withholds 189 more setups at the 4%
+stop line, and on daily bars more first days read uncertain. The admitted
+stratum's interval includes zero under both rules: no sign either way.
+
 [7 November 2026: the evidence review before any strategy change is promoted, read again](2026-11-07-evidence-review.md)
 supersedes the 12 October review, which stays frozen as written: `tools/evidence_review.py`
 now writes `evidence-review-v2` over the 7 November study (47 publications, 32

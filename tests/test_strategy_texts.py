@@ -125,7 +125,8 @@ def test_the_method_note_states_the_ticket_the_stop_and_the_weights_as_the_code_
         f"at most {plan.MAX_STOP_PCT:g}% under the ticket's LIMIT",
         f"replaces it at the close of day {plan.ENTRY_DAY} when it is higher",
         f"Between {plan.IDEAL_STOP_PCT:g}% and {plan.MAX_STOP_PCT:g}% the risk is halved (P), which is every burst ticket",
-        f"a buy stop AT the burst close with a limit at most {plan.ENTRY_ABOVE_PCT:g}% above it",
+        f"the larger of ${plan.TRIGGER_CENTS:.2f} and {plan.TRIGGER_FRACTION * 100:g}% of the close",
+        f"with a limit at most {plan.ENTRY_ABOVE_PCT:g}% above the close",
         f"an open more than {plan.ENTRY_BELOW_PCT:g}% under the close is the burst failing",
         f"+{plan.SKIP_GAP_PCT:g}% is the level at which he sells half",
     ):

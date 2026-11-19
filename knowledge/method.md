@@ -31,7 +31,8 @@ it hundreds of times a year. "This is a pattern and probability based trade."
 This build does not enter on day 1. It reads the finished burst day after the
 close and enters the next session, a route he also describes ("You can also use
 it for end of the day scanning and enter next day"); selecting only that route,
-the buy stop at the burst close and the burst-day low as a stand-in stop are
+the buy stop a cushion over the burst close (at the close itself before
+`plan.burst_trigger_rule`) and the burst-day low as a stand-in stop are
 SpicyStock's (P).
 
 ## Universe (`src/universe.py`)
@@ -185,8 +186,11 @@ less than 2%"): a stand-in (P) for his entry-day low, which replaces it at the
 close of day 1 when it is higher (B). Between 2% and 4% the risk is halved
 (P), which is every burst ticket, because the limit is set from the stop:
 0.25% of equity on green, 0.125% on yellow. Next-session entry only if not
-extended (B): the ticket is a buy stop AT the burst close with a limit at most
-4% above it, so it can fill only between the two (P); an open more than 2%
+extended (B): the ticket is a buy stop a cushion over the burst close, the larger of
+$0.02 and 0.1% of the close (`plan.trigger_cushion()`, the setting-up
+ticket's own cushion; records made before `plan.burst_trigger_rule` carry
+the buy stop AT the close), with a limit at most 4% above the close, so it
+can fill only between the two (P); an open more than 2%
 under the close is the burst failing and an open above +4% is day 2 already
 spent, and neither is taken (P); +8% is the level at which he sells half (B)
 and is printed as a third line. The order is a buy stop-limit with an
