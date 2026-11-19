@@ -7,15 +7,15 @@
   "previous_observation_sha256": null,
   "dry_run": false,
   "publication": {
-    "data_sha256": "a032aae3123f749187ed21bcb29732d5ea506152474d0c48f60c82d5dd20e803",
-    "context_sha256": "df503200b37f0b52945344a1949731375e3f9b76b802e18d7eb696475c64d526",
+    "data_sha256": "e31637d04606f532fbaf3c5435ed774b98108844b7de4d8ebf587062798e537e",
+    "context_sha256": "22fb5049ca7ba84e20dc3d1f2734fa8ad6e0f6a6738d9fbbfe552e1f11b75f95",
     "run_id": "synthetic-cash-preview-multiple",
-    "rules_version": "537feffd3f96",
+    "rules_version": "1e6167eba764",
     "measured_session": "2026-09-10",
     "applicable_session": "2026-09-11",
     "published_at": "2026-09-10T22:30:00+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "d71d11e4d588a51615b6be0a9a2d252a8809da1290d918e908e3b343504976c8"
+    "reader_sha256": "127040c47662b90c47bd3be5a3f965e9f1d0b6cc24b1c0c69f7e3aa28880507b"
   },
   "policy": {
     "version": 1,
@@ -136,8 +136,8 @@
     {
       "ticker": "AAPL",
       "kind": "burst",
-      "evidence_id": "f8f386aad73f48bcd70888bb060e199200fceecde0b8c4831b78a370e6c79e1b",
-      "plan_sha256": "a8e6c8dc68c90a82c0c763a7056399b241e962ecf2c3580d8f631a151f073211",
+      "evidence_id": "ca0c63343b22a6bcee22e870711b62d96390a87dbdc30331c388ca50e29ddca7",
+      "plan_sha256": "0a29abc8c3e9d85c8cc8bf55573ec0505e5c28689dec6b69f5041cd45c3f0b63",
       "levels": {
         "trigger": 62.1,
         "limit": 63.22,
@@ -199,8 +199,8 @@
         "corporate_action": {
           "version": 1,
           "coverage": "manual_known_events_only",
-          "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
-          "registry_reviewed_on": "2026-10-20",
+          "registry_sha256": "86c3b65b8386f98a6c2a98f1188aa8d5fd9143b0e3d8f3c474d6e84d013a0207",
+          "registry_reviewed_on": "2026-11-19",
           "session": "2026-09-11",
           "symbol": "AAPL",
           "blocked": false,
@@ -214,8 +214,8 @@
     {
       "ticker": "COIL",
       "kind": "anticipation",
-      "evidence_id": "fc6a2c8a4ecbb7c520ed3609620a411c82942045cdc24f086c0fefc33a9a5c98",
-      "plan_sha256": "ece0365fdedd914bf8003e322bf928c5827a8daa36b47228de8495380b90c566",
+      "evidence_id": "1d5eee2bbb96a37287cb631dfba07dba8b558e7273d0e54c19e95d7ed65e056a",
+      "plan_sha256": "660fe5aaa05425e4bdca8267f8b401008ad0f76364f0ac5fbf5c1b904e0badbf",
       "levels": {
         "trigger": 110.61,
         "limit": 111.72,
@@ -277,8 +277,8 @@
         "corporate_action": {
           "version": 1,
           "coverage": "manual_known_events_only",
-          "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
-          "registry_reviewed_on": "2026-10-20",
+          "registry_sha256": "86c3b65b8386f98a6c2a98f1188aa8d5fd9143b0e3d8f3c474d6e84d013a0207",
+          "registry_reviewed_on": "2026-11-19",
           "session": "2026-09-11",
           "symbol": "COIL",
           "blocked": false,

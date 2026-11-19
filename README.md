@@ -854,7 +854,14 @@ the offset at that occurrence, skips holidays and refuses a delayed run once
 the next session opens. Both scheduled slots skip an already published real
 ok/degraded record for that session; a failed or rehearsal record cannot
 suppress recovery, and a newer publication cannot be replaced by a late job.
-Manual dispatch keeps its explicit session and rehearsal controls. Every
+Manual dispatch keeps its explicit session and rehearsal controls, and has a
+fourth box, **only_if_unpublished**: ticked, the dispatch is decided by the
+scheduled slots' own rule -- the newest completed session is published only if
+it is still unpublished and the session after it has not opened, and otherwise
+the run does nothing. It takes no session. It exists so that a trigger outside
+GitHub's scheduler can start the evening on time, every evening and twice,
+without ever publishing a session a second time; a plain dispatch (the box
+unticked) runs as it always did. Every
 publication archives where it fell against that schedule (`run.delivery`,
 `src/delivery.py`): its latency after the measured session's completion, the
 two slots as instants in the exchange's zone, which of them it followed,
@@ -1326,6 +1333,21 @@ archived, and a record from before the block is asked for none. The run:
   records the dated release, short excerpt and response digest. Existing
   published records keep their original evidence; the next verified production
   publication must establish this added exclusion on the site.
+  The registry was reviewed again on 19 November 2026. Every review date had
+  passed, the oldest on 15 October; a passed date never clears an entry, so
+  each stayed blocked. MISTRAS's 28 October release (the go-shop ended with no
+  competing proposal; a stockholder vote on 24 November) was added as a source
+  for MG from the day it was published, from bytes the issuer-evidence collector
+  had itself captured. Six review dates were moved (MG to 25 November, ZIM to
+  2 December, PRTH, ARX, BWIN and CCC to 17 December). Five of those six
+  findings were read as web-search excerpts in a sandbox that reaches neither
+  sec.gov nor issuer sites, and say so in the
+  [review manifest](release-evidence/2026-11-19-event-review/manifest.json);
+  none of them added a source. ACV Auctions, whose acquisition a search excerpt
+  says Copart completed on 16 October, stays listed and blocked until a captured
+  source resolves it. A review date says someone looked that day and how; it
+  does not establish that a deal is still pending today. The daily brief and
+  the Method view state how old the review is.
 - **record** — the picks go to `docs/picks.json`; the open plans and the
   scorecard are computed from it and the bars. Suggested shares are model
   sizing, never shares bought. New plans carry a versioned evidence reference.
@@ -2204,6 +2226,102 @@ retains hosted test counts, real-feed diagnostics, the production observation,
 public asset hashes and phone/desktop browser results. The October 9 production
 check is after the entry cutoff, with no quote rows or eligible orders. It is
 evidence of correct binding and publication, not pre-open delivery or a trade.
+
+### The analyst's daily brief
+
+The owner's setup is layered (19 November 2026): SpicyStock is the view and the
+daily output; an outside analyst, a person or a bot the owner runs, researches
+the candidates, looks at the owner's account and recommends; the owner decides
+and places every order. The brief is what that analyst reads in place of the
+full record.
+
+Each evening the run derives two companions, `docs/brief.json` (at most
+250,000 bytes) and `docs/brief.md` (at most 80,000 bytes, rendered
+from brief.json and naming its SHA-256). They are a function of the canonical
+`data.json` bytes, the `picks.json` bytes and the model-record block the run
+computed, and of nothing else: no clock, no network, no other file
+(`src/brief.py`, `pipeline.publish_brief()`, after the research companions and
+before the retained copies). `python -m src.brief --docs docs --check` holds a
+committed pair to its derivation.
+
+- The brief carries no "built at" and no "is newest". Freshness is the reader's
+  own computation (`src/freshness.py`): `service.expected` gives the next
+  session's completion, the two slot instants and the recovery limit, and
+  `service.freshness_rule` says how to compare them with the reader's clock to
+  get `newest`, `not_due`, `pending`, `late` or `missing`.
+- Only the rows under `tickets` are published model tickets. Every other row is
+  marked `RESEARCH ONLY`: its levels are the record's plan rule over the row's
+  own bar at the archived model account, no order is printed for it, and a plan
+  the rule or the event registry refuses prints its refusal and no share count.
+- Tickets and names with a selected chart review are always in detail. The rest
+  are detailed while the file fits, then written as compact rows, then named in
+  the research tail; `bounds` states every count and what was left out.
+- The market block prints all five regime rules in the order they are asked,
+  fired or not, with the raw sums and the unrounded ratios. The verdict is
+  re-derived from the record's own inputs, and a record whose verdict differs
+  is refused.
+- The event block reads the registry the record archived, never today's file,
+  against every listed row, and says how old it is, which reviews are overdue
+  and how many listed names had no earnings check. A stock that is not in the
+  registry has not been cleared.
+- Each ticket carries an order-entry block: the order as written, the buy stop
+  against the last close, the six price states the morning check also uses, and
+  the note that a broker takes a buy stop only above the current price.
+
+The model-record block (`src/model_record.py`) is a second reading of the
+scorecard's own tickets. It walks every retained ticket as the scorecard does
+and refuses to speak when a ticket or a total differs from the scorecard's.
+Beside the ticket counts it gives the count of distinct setups (a ticket issued
+again inside the open-plan window while the one before has no fill known is the
+same setup), the model account each ticket was sized against, and each stop the
+model books at exactly the stop price read again at that session's close and at
+its low. A sum of R is not a sum of dollars: R counts each ticket as one unit
+whatever its size, and the model account has changed inside the window. The
+brief carries the block verbatim when its ticket count, bucket counts and sum
+of R are the scorecard's, its encoding is within 60,000 bytes, the brief
+still fits with it and it uses no property name the secret scan reads as a
+credential; otherwise the brief carries one fixed reason. `python -m
+src.model_record --docs docs` prints it from the record's own observations
+block without market data; a ticket whose bars the record no longer carries
+takes its bucket and R from the publication's quality-ledger row and is marked.
+
+The brief can never fail a night: a derivation that fails installs a pair that
+says the brief is unavailable for these bytes, a failed rename restores the
+previous pair, and anything else is one warning in the run log. The
+publication gate holds a committed pair to the committed record by its hashes
+(`brief_files()` in `tools/publish_dashboard.py`) and fetches both files from
+the served site. No pair is committed with this change: the first evening run
+after it writes the first one. After the page fixtures are regenerated,
+regenerate the brief's golden pair last (`python tests/fixtures/brief/generate.py`;
+CI runs it with `--check`).
+
+### Service watch
+
+GitHub starts this repository's scheduled runs hours after their slots, and
+until 19 November 2026 nothing said so when a night had not arrived.
+`tools/service_watch.py` asks two questions of the files on disk and a clock:
+
+- **Evening.** Has the session after the one `data.json` covers been published?
+  The answer is `src/freshness.py`'s. It is flagged only when the publication is
+  still absent 6 hours before its recovery limit (the next session's open),
+  or, for 12 hours, once it is past it. Late alone is never flagged: read off
+  the landing commits, the 23 first publications from 19 October to 18 November
+  2026 landed 9.36 hours or more before the next open.
+- **Morning.** Once the entry window has closed: did a morning check bound to
+  this record's bytes land inside its collection window? Flagged, for 12
+  hours, only when the record published a ticket; a night with nothing to quote
+  is reported and never flagged.
+
+It calls no provider and writes nothing. With `--mail` it sends each alert once
+through the evening's own transport, and it exits 0 with nothing to flag, 1 on
+an alert and 2 when the record cannot answer. `service-watch.yml` runs it on
+`main` at 05:07 and 09:07 UTC daily and 16:07 UTC on weekdays, read-only, with
+the three mail secrets and no other; an alert turns that run red. The watch is
+itself a scheduled run and so itself hours late on most days: the two morning
+slots are placed so that one of them lands inside the alert window before either
+open across zero to eight hours of delay, and nothing here can make GitHub's
+scheduler punctual. The same two answers are printed for anything else with a
+clock: `python tools/service_watch.py --docs docs`.
 
 ## One-time setup
 

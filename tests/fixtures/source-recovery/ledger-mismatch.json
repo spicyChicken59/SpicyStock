@@ -6,15 +6,15 @@
   "previous_observation_sha256": null,
   "dry_run": true,
   "publication": {
-    "data_sha256": "28cddbc4de4ea0e30dbafbc694c8e7aa2ef0169dfd80106798254a45ffabc557",
-    "context_sha256": "6d23c58a92993223c378ccb390df8ce757e10f88c560c0064d8ebc22ad237237",
+    "data_sha256": "2dc0141f950350f8f750a6bdee27dfb3c70d321c187a4b1a40aa4810cf7cf5e4",
+    "context_sha256": "fbed69031b4aa8e994565621d3cea28a49244c545dda05154caec280b5e89af4",
     "run_id": null,
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "measured_session": "2026-09-10",
     "applicable_session": "2026-09-11",
     "published_at": "2026-09-10T22:30:00+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "ed349c4fb304c5a468323c37151cb97b6eb77a93a05b1c75f7723031525eafb5"
+    "reader_sha256": "1108bb9782eaeb2054c216063bacc55e33dc45f8d4b2570d66526482734c2eda"
   },
   "frozen": {
     "session": "2026-09-10",
@@ -29,7 +29,7 @@
     "universe_size": 100,
     "intended_identity": "e5bc4085eaa4130b",
     "coverage_sha256": "b1c923dca9a30bd6724990f1ebeeaf0f41d2a0e1ed2646d5759ff24665a20a29",
-    "rules_version": "695623ef1e7d"
+    "rules_version": "bb98d7d1c166"
   },
   "window": {
     "next_session": "2026-09-11",
@@ -122,8 +122,8 @@
     "named_stocks": 0,
     "unnamed_frames": 1,
     "ledger": {
-      "path": "quality-ledger/v1/28cddbc4de4ea0e30dbafbc694c8e7aa2ef0169dfd80106798254a45ffabc557.json.gz",
-      "sha256": "53ebb0877f8a16226ad1b44dc7a8683fbfecdb268e4c0e98d2577b62aca2b35f",
+      "path": "quality-ledger/v1/2dc0141f950350f8f750a6bdee27dfb3c70d321c187a4b1a40aa4810cf7cf5e4.json.gz",
+      "sha256": "e612b13d429503e42581fa0edb24e7f6de6e87ed128f86ddbb3e0b58a2767dc7",
       "used": false
     }
   },

@@ -1,5 +1,19 @@
 # SpicyStock — working notes
 
+**The layered setup (Mo, 19 November 2026).** "From now on we have a layered
+approach. An external agent actually helps me analyze the burst outputs from
+spicystock and make trading decisions. You just serve as my view and my daily
+output. With some functionalities like me saving a setup and watching it change
+over days." SpicyStock is the view and the daily output: the record, the page,
+My setups, and the analyst's brief (`docs/brief.json`, `docs/brief.md`,
+`src/brief.py`). An outside analyst bot Mo runs (its instructions are
+`docs/analyst/prompt.md`) researches the candidates, looks at Mo's Fidelity
+account, recommends and keeps the trade ledger. Mo decides and places every
+order. Work here is judged by whether the daily output is correct, complete, on
+time and honest about its limits and whether the view is usable; it recommends
+nothing and reads no account. Where an older paragraph of this file or of
+PRODUCT_GOAL.md makes SpicyStock the place a trade is decided, this one governs.
+
 **Active goal (updated 17 October 2026):** [PRODUCT_GOAL.md](PRODUCT_GOAL.md) is the
 current product direction and milestone contract. Mo uses two Fidelity IRAs
 read as one $30,000 model account (4 November 2026; a $2,000 cash account before
@@ -58,7 +72,8 @@ An evening run over an explicitly selected US-stock universe, a static page that
 what to do tomorrow and why, and one email. Bonde's momentum burst method:
 `knowledge/method.md` says whose number every rule is, `README.md` says what
 the software does with them, `knowledge/strategy.md` is the rulebook the
-grader reads. Treat the code as evidence and the prose as suspect until
+grader reads, and `knowledge/rules.md` is every rule the run applies, in
+order, with its constant and its provenance class. Treat the code as evidence and the prose as suspect until
 checked.
 
 This is the second build. The first (fifteen rounds, a ledger of forward
@@ -162,7 +177,10 @@ filings and never a refusal (`run.earnings`, `src/earnings_risk.py`) → the rec
 frames joined to the universe's seed-only additions: `run.seed_stale`,
 `inputs.seed_stale()`, the names on the seed alone or the one reason the join
 could not be made) → `report.build()`
-and validate → email. Exit codes 0/1/2/3; seven problem words; `run.status`
+and validate → email → `publish_brief()` (the analyst's `brief.json` and
+`brief.md`, derived from the final installed bytes, carrying the model-record
+block `src/model_record.py` computed from this run's bars; never fails the
+night). Exit codes 0/1/2/3; seven problem words; `run.status`
 closed on a closed night. `run.status` ok beside a degraded acceptance means
 exactly one thing: the only gap was a stale tail the record's own archived
 tolerance allows, named in full.

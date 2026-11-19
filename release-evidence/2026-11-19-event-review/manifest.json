@@ -1,0 +1,110 @@
+{
+  "purpose": "A dated review of the manual event registry (knowledge/event-risk.json). It records what each entry's status was found to be on 19 November 2026 and how it was read. It is not news coverage, clears no stock, and resolves no entry.",
+  "reviewed_on": "2026-11-19",
+  "registry_before": {
+    "reviewed_on": "2026-10-20",
+    "sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67"
+  },
+  "registry_after": {
+    "reviewed_on": "2026-11-19",
+    "sha256": "86c3b65b8386f98a6c2a98f1188aa8d5fd9143b0e3d8f3c474d6e84d013a0207"
+  },
+  "how_read": "This review ran in a sandbox that reaches neither sec.gov nor issuer sites. One entry (MG) rests on response bytes the issuer-evidence collector itself captured and this repository retains. Every other finding is a web-search result excerpt, named as such below; no page bytes were captured for it and no source was added to the registry for it.",
+  "changes": [
+    "registry reviewed_on 2026-10-20 -> 2026-11-19",
+    "MG: evidence_as_of 2026-09-18 -> 2026-10-28, one source added, reviewed_on 2026-11-19, review_due 2026-11-25 (the day after its 24 November special meeting)",
+    "PRTH, ARX, BWIN, CCC: reviewed_on 2026-11-19, review_due 2026-12-17",
+    "ZIM: reviewed_on 2026-11-19, review_due 2026-12-02 (the day after its 1 December annual meeting)",
+    "ACVA: unchanged; see its entry"
+  ],
+  "entries": [
+    {
+      "symbol": "MG",
+      "status_found": "pending",
+      "basis": "captured bytes retained by this repository",
+      "source": {
+        "url": "https://www.sec.gov/Archives/edgar/data/1436126/000114036126041054/ef20084511_ex99-1.htm",
+        "published_on": "2026-10-28",
+        "bytes": 21096,
+        "sha256": "f86be38443d8bbc4096febea7c30918dfa7bb0d7385785b4f2a4febd0a992386",
+        "fetched_at": "2026-11-05T14:24:56.955723+00:00",
+        "retained_in": "docs/issuer-evidence/fd363841f54f3465841d1db6a808ff0124000968ab6b73206839f9071e16aa29.json",
+        "quote": "No alternative acquisition proposals were received from any third party prior to the expiration."
+      },
+      "also_in_that_capture": [
+        "The transaction is expected to close in late 2026 or early 2027, subject to customary closing conditions, including approval by the Company’s stockholders and the receipt of all required regulatory approvals.",
+        "The Company has mailed the definitive proxy statement and a proxy card to each stockholder entitled to vote at the special meeting relating to the proposed transaction, to be held virtually on November 24, 2026."
+      ],
+      "note": "SEC response bytes differ between fetches of one document (this one was 21,102 bytes on 3 November and 21,096 on 5 November), so the digest identifies the retained capture, not the document. No vote result or closing was found on 19 November (read as a search-result excerpt on 2026-11-19; page bytes not captured)."
+    },
+    {
+      "symbol": "PRTH",
+      "status_found": "pending",
+      "basis": "read as a search-result excerpt on 2026-11-19; page bytes not captured",
+      "pointer": {
+        "url": "https://www.sec.gov/Archives/edgar/data/0001653558/000165355826000163/ex991-prthq32026earningsre.htm",
+        "dated": "2026-11-05"
+      },
+      "excerpt": "The third-quarter release says the company expects to complete the transaction in the first half of 2027, subject to stockholder and regulatory approvals."
+    },
+    {
+      "symbol": "ARX",
+      "status_found": "pending",
+      "basis": "read as a search-result excerpt on 2026-11-19; page bytes not captured",
+      "pointer": {
+        "url": "https://www.sec.gov/Archives/edgar/data/0001997350/000199735026000022/ex991accelerantearningsrel.htm",
+        "dated": "2026-11-12"
+      },
+      "excerpt": "will not provide guidance for the fourth quarter of 2026 or the full year of 2026 as a result of the pending transaction"
+    },
+    {
+      "symbol": "BWIN",
+      "status_found": "pending",
+      "basis": "read as a search-result excerpt on 2026-11-19; page bytes not captured",
+      "pointer": {
+        "url": "https://www.sec.gov/Archives/edgar/data/0001781755/000114036126044248/ny20082659x6_defm14a.htm",
+        "dated": "2026-11"
+      },
+      "excerpt": "The record date for the Special Meeting is November 12, 2026",
+      "note": "The meeting date itself was not established."
+    },
+    {
+      "symbol": "ZIM",
+      "status_found": "pending; the approval the merger needs is unresolved",
+      "basis": "read as a search-result excerpt on 2026-11-19; page bytes not captured",
+      "pointer": {
+        "url": "https://www.fool.com/earnings/call-transcripts/2026/11/18/zim-zim-q3-2026-earnings-call-transcript/",
+        "dated": "2026-11-18"
+      },
+      "excerpt": "On the third-quarter call the company said the initial application was terminated and Hapag-Lloyd is to submit a revised proposal; closing is targeted for the first quarter of 2027, subject to regulatory approvals and the State of Israel's.",
+      "note": "A secondary transcript, not an issuer filing. The registry's own 30 September source already says a revised proposal was intended."
+    },
+    {
+      "symbol": "CCC",
+      "status_found": "pending",
+      "basis": "read as a search-result excerpt on 2026-11-19; page bytes not captured",
+      "pointer": {
+        "url": "https://www.sec.gov/Archives/edgar/data/0001818201/000119312526436974/ccc-ex99_1.htm",
+        "dated": "2026-10-29"
+      },
+      "excerpt": "In light of the pending transaction, the Company will not host a conference call or webcast to discuss the results"
+    },
+    {
+      "symbol": "ACVA",
+      "status_found": "completed on 2026-10-16, by search-result excerpt only",
+      "basis": "read as a search-result excerpt on 2026-11-19; page bytes not captured",
+      "pointer": {
+        "url": "https://www.sec.gov/Archives/edgar/data/0000900075/000119312526423478/d129535dex991.htm",
+        "dated": "2026-10-16"
+      },
+      "excerpt": "With the completion of the acquisition, shares of ACV common stock have ceased trading on the New York Stock Exchange",
+      "registry_action": "none",
+      "note": "The registry ends an entry only with a resolution that carries the SHA-256 of captured bytes. None could be captured here, so ACVA stays listed and blocked, and its review stays overdue. The retained Nasdaq directory snapshots agree that it no longer trades: listed in the snapshot fetched 2026-10-17T00:26:18Z, absent from the one fetched 2026-10-20T01:05:04Z onward. To resolve it, capture the release from a network that reaches sec.gov and add the resolution in a dated change."
+    }
+  ],
+  "limitations": [
+    "A review date says a person or agent looked on that day and how; it is not a source. Only the dated sources in the registry, each with the digest of captured bytes, are evidence the run prints.",
+    "A passed review date never clears an entry, and a current one does not establish that a deal is still pending today.",
+    "The registry is a manual list of known cash acquisitions. A stock that is not in it has not been cleared: nothing here reads company news."
+  ]
+}
