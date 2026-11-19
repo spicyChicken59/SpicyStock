@@ -1,0 +1,2615 @@
+{
+ "generator": "tests/fixtures/event-registry/classify_parity.py",
+ "note": "Synthetic registry and sessions; no entry is a real issuer, deal or filing.",
+ "registry": {
+  "version": 1,
+  "coverage": "manual_known_events_only",
+  "reviewed_on": "2026-04-30",
+  "coverage_note": "A synthetic registry for the page's parity corpus; no entry is a real event.",
+  "events": [
+   {
+    "id": "synthetic-open",
+    "symbol": "AAA",
+    "issuer": "Synthetic issuer AAA",
+    "kind": "cash_acquisition",
+    "announced_on": "2026-03-02",
+    "active_from": "2026-03-02",
+    "active_until": null,
+    "evidence_as_of": "2026-03-10",
+    "reviewed_on": "2026-03-12",
+    "review_due": "2026-03-20",
+    "reason": "Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "sources": [
+     {
+      "title": "Open deal announced",
+      "published_on": "2026-03-02",
+      "url": "https://example.invalid/synthetic/1",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+      "quote": "Synthetic quote 1; not a real filing."
+     },
+     {
+      "title": "Open deal update",
+      "published_on": "2026-03-10",
+      "url": "https://example.invalid/synthetic/2",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000002",
+      "quote": "Synthetic quote 2; not a real filing."
+     }
+    ]
+   },
+   {
+    "id": "synthetic-late-start",
+    "symbol": "BBB",
+    "issuer": "Synthetic issuer BBB",
+    "kind": "cash_acquisition",
+    "announced_on": "2026-03-03",
+    "active_from": "2026-03-05",
+    "active_until": null,
+    "evidence_as_of": "2026-03-06",
+    "reviewed_on": "2026-03-12",
+    "review_due": "2026-03-19",
+    "reason": "Synthetic entry synthetic-late-start: a pending cash deal invented for this corpus.",
+    "sources": [
+     {
+      "title": "Late start announced",
+      "published_on": "2026-03-03",
+      "url": "https://example.invalid/synthetic/3",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000003",
+      "quote": "Synthetic quote 3; not a real filing."
+     },
+     {
+      "title": "Late start update",
+      "published_on": "2026-03-06",
+      "url": "https://example.invalid/synthetic/11",
+      "sha256": "000000000000000000000000000000000000000000000000000000000000000b",
+      "quote": "Synthetic quote 11; not a real filing."
+     }
+    ]
+   },
+   {
+    "id": "synthetic-resolved",
+    "symbol": "CCC",
+    "issuer": "Synthetic issuer CCC",
+    "kind": "cash_acquisition",
+    "announced_on": "2026-03-04",
+    "active_from": "2026-03-04",
+    "active_until": "2026-03-25",
+    "evidence_as_of": "2026-03-04",
+    "reviewed_on": "2026-03-27",
+    "review_due": "2026-03-27",
+    "reason": "Synthetic entry synthetic-resolved: a pending cash deal invented for this corpus.",
+    "sources": [
+     {
+      "title": "Resolved deal announced",
+      "published_on": "2026-03-04",
+      "url": "https://example.invalid/synthetic/4",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000004",
+      "quote": "Synthetic quote 4; not a real filing."
+     }
+    ],
+    "resolution": {
+     "title": "Resolved deal completed",
+     "published_on": "2026-03-24",
+     "url": "https://example.invalid/synthetic/5",
+     "sha256": "0000000000000000000000000000000000000000000000000000000000000005",
+     "quote": "Synthetic quote 5; not a real filing."
+    }
+   },
+   {
+    "id": "synthetic-twin-first",
+    "symbol": "DDD",
+    "issuer": "Synthetic issuer DDD",
+    "kind": "cash_acquisition",
+    "announced_on": "2026-03-06",
+    "active_from": "2026-03-06",
+    "active_until": null,
+    "evidence_as_of": "2026-03-06",
+    "reviewed_on": "2026-03-13",
+    "review_due": "2026-03-16",
+    "reason": "Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus.",
+    "sources": [
+     {
+      "title": "Twin first announced",
+      "published_on": "2026-03-06",
+      "url": "https://example.invalid/synthetic/6",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000006",
+      "quote": "Synthetic quote 6; not a real filing."
+     }
+    ]
+   },
+   {
+    "id": "synthetic-twin-second",
+    "symbol": "DDD",
+    "issuer": "Synthetic issuer DDD",
+    "kind": "cash_acquisition",
+    "announced_on": "2026-03-11",
+    "active_from": "2026-03-11",
+    "active_until": null,
+    "evidence_as_of": "2026-03-17",
+    "reviewed_on": "2026-03-18",
+    "review_due": "2026-03-26",
+    "reason": "Synthetic entry synthetic-twin-second: a pending cash deal invented for this corpus.",
+    "sources": [
+     {
+      "title": "Twin second announced",
+      "published_on": "2026-03-11",
+      "url": "https://example.invalid/synthetic/7",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000007",
+      "quote": "Synthetic quote 7; not a real filing."
+     },
+     {
+      "title": "Twin second update",
+      "published_on": "2026-03-17",
+      "url": "https://example.invalid/synthetic/8",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000008",
+      "quote": "Synthetic quote 8; not a real filing."
+     }
+    ]
+   },
+   {
+    "id": "synthetic-dotted",
+    "symbol": "EE.F",
+    "issuer": "Synthetic issuer EE.F",
+    "kind": "cash_acquisition",
+    "announced_on": "2026-03-09",
+    "active_from": "2026-03-09",
+    "active_until": null,
+    "evidence_as_of": "2026-03-09",
+    "reviewed_on": "2026-03-12",
+    "review_due": "2026-03-23",
+    "reason": "Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "sources": [
+     {
+      "title": "Dotted symbol announced",
+      "published_on": "2026-03-09",
+      "url": "https://example.invalid/synthetic/9",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000009",
+      "quote": "Synthetic quote 9; not a real filing."
+     }
+    ]
+   },
+   {
+    "id": "synthetic-due-at-review",
+    "symbol": "GGG",
+    "issuer": "Synthetic issuer GGG",
+    "kind": "cash_acquisition",
+    "announced_on": "2026-03-12",
+    "active_from": "2026-03-12",
+    "active_until": null,
+    "evidence_as_of": "2026-03-12",
+    "reviewed_on": "2026-03-12",
+    "review_due": "2026-03-12",
+    "reason": "Synthetic entry synthetic-due-at-review: a pending cash deal invented for this corpus.",
+    "sources": [
+     {
+      "title": "Due at review announced",
+      "published_on": "2026-03-12",
+      "url": "https://example.invalid/synthetic/10",
+      "sha256": "000000000000000000000000000000000000000000000000000000000000000a",
+      "quote": "Synthetic quote 10; not a real filing."
+     }
+    ]
+   }
+  ]
+ },
+ "cases": [
+  {
+   "symbol": "AAA",
+   "session": "2026-03-01",
+   "expect": {
+    "symbol": "AAA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AAA",
+   "session": "2026-03-02",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-02",
+      "active_until": null,
+      "sources": [
+       "2026-03-02"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "AAA",
+   "session": "2026-03-03",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-02",
+      "active_until": null,
+      "sources": [
+       "2026-03-02"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "AAA",
+   "session": "2026-03-09",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-02",
+      "active_until": null,
+      "sources": [
+       "2026-03-02"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "AAA",
+   "session": "2026-03-10",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "AAA",
+   "session": "2026-03-11",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "AAA",
+   "session": "2026-03-12",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "AAA",
+   "session": "2026-03-13",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "AAA",
+   "session": "2026-03-19",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "AAA",
+   "session": "2026-03-20",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "AAA",
+   "session": "2026-03-21",
+   "expect": {
+    "symbol": "AAA",
+    "status": "review_required",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus. The manual review is overdue; new entries remain withheld pending a source review.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "BBB",
+   "session": "2026-03-02",
+   "expect": {
+    "symbol": "BBB",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "BBB",
+   "session": "2026-03-03",
+   "expect": {
+    "symbol": "BBB",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "BBB",
+   "session": "2026-03-04",
+   "expect": {
+    "symbol": "BBB",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "BBB",
+   "session": "2026-03-05",
+   "expect": {
+    "symbol": "BBB",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-late-start: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-late-start",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-03",
+      "active_until": null,
+      "sources": [
+       "2026-03-03"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "BBB",
+   "session": "2026-03-06",
+   "expect": {
+    "symbol": "BBB",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-late-start: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-late-start",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-03",
+       "2026-03-06"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "BBB",
+   "session": "2026-03-07",
+   "expect": {
+    "symbol": "BBB",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-late-start: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-late-start",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-03",
+       "2026-03-06"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "BBB",
+   "session": "2026-03-11",
+   "expect": {
+    "symbol": "BBB",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-late-start: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-late-start",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-03",
+       "2026-03-06"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "BBB",
+   "session": "2026-03-12",
+   "expect": {
+    "symbol": "BBB",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-late-start: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-late-start",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-03",
+       "2026-03-06"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "BBB",
+   "session": "2026-03-13",
+   "expect": {
+    "symbol": "BBB",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-late-start: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-late-start",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-03",
+       "2026-03-06"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "BBB",
+   "session": "2026-03-18",
+   "expect": {
+    "symbol": "BBB",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-late-start: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-late-start",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-03",
+       "2026-03-06"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "BBB",
+   "session": "2026-03-19",
+   "expect": {
+    "symbol": "BBB",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-late-start: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-late-start",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-03",
+       "2026-03-06"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "BBB",
+   "session": "2026-03-20",
+   "expect": {
+    "symbol": "BBB",
+    "status": "review_required",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-late-start: a pending cash deal invented for this corpus. The manual review is overdue; new entries remain withheld pending a source review.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-late-start",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-03",
+       "2026-03-06"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "CCC",
+   "session": "2026-03-03",
+   "expect": {
+    "symbol": "CCC",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "CCC",
+   "session": "2026-03-04",
+   "expect": {
+    "symbol": "CCC",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-resolved: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-resolved",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-04",
+      "active_until": null,
+      "sources": [
+       "2026-03-04"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "CCC",
+   "session": "2026-03-05",
+   "expect": {
+    "symbol": "CCC",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-resolved: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-resolved",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-04",
+      "active_until": null,
+      "sources": [
+       "2026-03-04"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "CCC",
+   "session": "2026-03-23",
+   "expect": {
+    "symbol": "CCC",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-resolved: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-resolved",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-04",
+      "active_until": null,
+      "sources": [
+       "2026-03-04"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "CCC",
+   "session": "2026-03-24",
+   "expect": {
+    "symbol": "CCC",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-resolved: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-resolved",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-04",
+      "active_until": "2026-03-25",
+      "sources": [
+       "2026-03-04"
+      ],
+      "resolution": true
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "CCC",
+   "session": "2026-03-25",
+   "expect": {
+    "symbol": "CCC",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "CCC",
+   "session": "2026-03-26",
+   "expect": {
+    "symbol": "CCC",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "CCC",
+   "session": "2026-03-27",
+   "expect": {
+    "symbol": "CCC",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "CCC",
+   "session": "2026-03-28",
+   "expect": {
+    "symbol": "CCC",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-05",
+   "expect": {
+    "symbol": "DDD",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-06",
+   "expect": {
+    "symbol": "DDD",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-07",
+   "expect": {
+    "symbol": "DDD",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-10",
+   "expect": {
+    "symbol": "DDD",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-11",
+   "expect": {
+    "symbol": "DDD",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus. Synthetic entry synthetic-twin-second: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     },
+     {
+      "id": "synthetic-twin-second",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-11",
+      "active_until": null,
+      "sources": [
+       "2026-03-11"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-12",
+   "expect": {
+    "symbol": "DDD",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus. Synthetic entry synthetic-twin-second: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     },
+     {
+      "id": "synthetic-twin-second",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-11",
+      "active_until": null,
+      "sources": [
+       "2026-03-11"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-13",
+   "expect": {
+    "symbol": "DDD",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus. Synthetic entry synthetic-twin-second: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     },
+     {
+      "id": "synthetic-twin-second",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-11",
+      "active_until": null,
+      "sources": [
+       "2026-03-11"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-14",
+   "expect": {
+    "symbol": "DDD",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus. Synthetic entry synthetic-twin-second: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     },
+     {
+      "id": "synthetic-twin-second",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-11",
+      "active_until": null,
+      "sources": [
+       "2026-03-11"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-15",
+   "expect": {
+    "symbol": "DDD",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus. Synthetic entry synthetic-twin-second: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     },
+     {
+      "id": "synthetic-twin-second",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-11",
+      "active_until": null,
+      "sources": [
+       "2026-03-11"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-16",
+   "expect": {
+    "symbol": "DDD",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus. Synthetic entry synthetic-twin-second: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     },
+     {
+      "id": "synthetic-twin-second",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-11",
+      "active_until": null,
+      "sources": [
+       "2026-03-11"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-17",
+   "expect": {
+    "symbol": "DDD",
+    "status": "review_required",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus. Synthetic entry synthetic-twin-second: a pending cash deal invented for this corpus. The manual review is overdue; new entries remain withheld pending a source review.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     },
+     {
+      "id": "synthetic-twin-second",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-17",
+      "active_until": null,
+      "sources": [
+       "2026-03-11",
+       "2026-03-17"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-18",
+   "expect": {
+    "symbol": "DDD",
+    "status": "review_required",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus. Synthetic entry synthetic-twin-second: a pending cash deal invented for this corpus. The manual review is overdue; new entries remain withheld pending a source review.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     },
+     {
+      "id": "synthetic-twin-second",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-17",
+      "active_until": null,
+      "sources": [
+       "2026-03-11",
+       "2026-03-17"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-19",
+   "expect": {
+    "symbol": "DDD",
+    "status": "review_required",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus. Synthetic entry synthetic-twin-second: a pending cash deal invented for this corpus. The manual review is overdue; new entries remain withheld pending a source review.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     },
+     {
+      "id": "synthetic-twin-second",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-17",
+      "active_until": null,
+      "sources": [
+       "2026-03-11",
+       "2026-03-17"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-25",
+   "expect": {
+    "symbol": "DDD",
+    "status": "review_required",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus. Synthetic entry synthetic-twin-second: a pending cash deal invented for this corpus. The manual review is overdue; new entries remain withheld pending a source review.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     },
+     {
+      "id": "synthetic-twin-second",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-17",
+      "active_until": null,
+      "sources": [
+       "2026-03-11",
+       "2026-03-17"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-26",
+   "expect": {
+    "symbol": "DDD",
+    "status": "review_required",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus. Synthetic entry synthetic-twin-second: a pending cash deal invented for this corpus. The manual review is overdue; new entries remain withheld pending a source review.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     },
+     {
+      "id": "synthetic-twin-second",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-17",
+      "active_until": null,
+      "sources": [
+       "2026-03-11",
+       "2026-03-17"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "DDD",
+   "session": "2026-03-27",
+   "expect": {
+    "symbol": "DDD",
+    "status": "review_required",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-twin-first: a pending cash deal invented for this corpus. Synthetic entry synthetic-twin-second: a pending cash deal invented for this corpus. The manual review is overdue; new entries remain withheld pending a source review.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-twin-first",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-06",
+      "active_until": null,
+      "sources": [
+       "2026-03-06"
+      ],
+      "resolution": false
+     },
+     {
+      "id": "synthetic-twin-second",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-17",
+      "active_until": null,
+      "sources": [
+       "2026-03-11",
+       "2026-03-17"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "EE.F",
+   "session": "2026-03-08",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "EE.F",
+   "session": "2026-03-09",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "EE.F",
+   "session": "2026-03-10",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "EE.F",
+   "session": "2026-03-11",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "EE.F",
+   "session": "2026-03-12",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "EE.F",
+   "session": "2026-03-13",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "EE.F",
+   "session": "2026-03-22",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "EE.F",
+   "session": "2026-03-23",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "EE.F",
+   "session": "2026-03-24",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "review_required",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus. The manual review is overdue; new entries remain withheld pending a source review.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "GGG",
+   "session": "2026-03-11",
+   "expect": {
+    "symbol": "GGG",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "GGG",
+   "session": "2026-03-12",
+   "expect": {
+    "symbol": "GGG",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-due-at-review: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-due-at-review",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-12",
+      "active_until": null,
+      "sources": [
+       "2026-03-12"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "GGG",
+   "session": "2026-03-13",
+   "expect": {
+    "symbol": "GGG",
+    "status": "review_required",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-due-at-review: a pending cash deal invented for this corpus. The manual review is overdue; new entries remain withheld pending a source review.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-due-at-review",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-12",
+      "active_until": null,
+      "sources": [
+       "2026-03-12"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "aaa",
+   "session": "2026-03-01",
+   "expect": {
+    "symbol": "AAA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "aaa",
+   "session": "2026-03-02",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-02",
+      "active_until": null,
+      "sources": [
+       "2026-03-02"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "aaa",
+   "session": "2026-03-03",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-02",
+      "active_until": null,
+      "sources": [
+       "2026-03-02"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "aaa",
+   "session": "2026-03-09",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-02",
+      "active_until": null,
+      "sources": [
+       "2026-03-02"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "aaa",
+   "session": "2026-03-10",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "aaa",
+   "session": "2026-03-11",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "aaa",
+   "session": "2026-03-12",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "aaa",
+   "session": "2026-03-13",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "aaa",
+   "session": "2026-03-19",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "aaa",
+   "session": "2026-03-20",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "aaa",
+   "session": "2026-03-21",
+   "expect": {
+    "symbol": "AAA",
+    "status": "review_required",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus. The manual review is overdue; new entries remain withheld pending a source review.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": " AAA ",
+   "session": "2026-03-01",
+   "expect": {
+    "symbol": "AAA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": " AAA ",
+   "session": "2026-03-02",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-02",
+      "active_until": null,
+      "sources": [
+       "2026-03-02"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": " AAA ",
+   "session": "2026-03-03",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-02",
+      "active_until": null,
+      "sources": [
+       "2026-03-02"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": " AAA ",
+   "session": "2026-03-09",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-02",
+      "active_until": null,
+      "sources": [
+       "2026-03-02"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": " AAA ",
+   "session": "2026-03-10",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": " AAA ",
+   "session": "2026-03-11",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": " AAA ",
+   "session": "2026-03-12",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": " AAA ",
+   "session": "2026-03-13",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": " AAA ",
+   "session": "2026-03-19",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": " AAA ",
+   "session": "2026-03-20",
+   "expect": {
+    "symbol": "AAA",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": " AAA ",
+   "session": "2026-03-21",
+   "expect": {
+    "symbol": "AAA",
+    "status": "review_required",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-open: a pending cash deal invented for this corpus. The manual review is overdue; new entries remain withheld pending a source review.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-open",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-10",
+      "active_until": null,
+      "sources": [
+       "2026-03-02",
+       "2026-03-10"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "AAAA",
+   "session": "2026-03-02",
+   "expect": {
+    "symbol": "AAAA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AAAA",
+   "session": "2026-03-04",
+   "expect": {
+    "symbol": "AAAA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AAAA",
+   "session": "2026-03-05",
+   "expect": {
+    "symbol": "AAAA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AAAA",
+   "session": "2026-03-06",
+   "expect": {
+    "symbol": "AAAA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AAAA",
+   "session": "2026-03-09",
+   "expect": {
+    "symbol": "AAAA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AAAA",
+   "session": "2026-03-11",
+   "expect": {
+    "symbol": "AAAA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AAAA",
+   "session": "2026-03-12",
+   "expect": {
+    "symbol": "AAAA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AA",
+   "session": "2026-03-02",
+   "expect": {
+    "symbol": "AA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AA",
+   "session": "2026-03-04",
+   "expect": {
+    "symbol": "AA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AA",
+   "session": "2026-03-05",
+   "expect": {
+    "symbol": "AA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AA",
+   "session": "2026-03-06",
+   "expect": {
+    "symbol": "AA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AA",
+   "session": "2026-03-09",
+   "expect": {
+    "symbol": "AA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AA",
+   "session": "2026-03-11",
+   "expect": {
+    "symbol": "AA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "AA",
+   "session": "2026-03-12",
+   "expect": {
+    "symbol": "AA",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "ZZZ",
+   "session": "2026-03-02",
+   "expect": {
+    "symbol": "ZZZ",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "ZZZ",
+   "session": "2026-03-04",
+   "expect": {
+    "symbol": "ZZZ",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "ZZZ",
+   "session": "2026-03-05",
+   "expect": {
+    "symbol": "ZZZ",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "ZZZ",
+   "session": "2026-03-06",
+   "expect": {
+    "symbol": "ZZZ",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "ZZZ",
+   "session": "2026-03-09",
+   "expect": {
+    "symbol": "ZZZ",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "ZZZ",
+   "session": "2026-03-11",
+   "expect": {
+    "symbol": "ZZZ",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "ZZZ",
+   "session": "2026-03-12",
+   "expect": {
+    "symbol": "ZZZ",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "ee.f",
+   "session": "2026-03-08",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "ee.f",
+   "session": "2026-03-09",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "ee.f",
+   "session": "2026-03-10",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "ee.f",
+   "session": "2026-03-11",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "ee.f",
+   "session": "2026-03-12",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "ee.f",
+   "session": "2026-03-13",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "ee.f",
+   "session": "2026-03-22",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "ee.f",
+   "session": "2026-03-23",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "known_event",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": false,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "ee.f",
+   "session": "2026-03-24",
+   "expect": {
+    "symbol": "EE.F",
+    "status": "review_required",
+    "blocked": true,
+    "reason": "Known cash-acquisition event: Synthetic entry synthetic-dotted: a pending cash deal invented for this corpus. The manual review is overdue; new entries remain withheld pending a source review.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": [
+     {
+      "id": "synthetic-dotted",
+      "review_overdue": true,
+      "evidence_as_of": "2026-03-09",
+      "active_until": null,
+      "sources": [
+       "2026-03-09"
+      ],
+      "resolution": false
+     }
+    ]
+   }
+  },
+  {
+   "symbol": "EE-F",
+   "session": "2026-03-02",
+   "expect": {
+    "symbol": "EE-F",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "EE-F",
+   "session": "2026-03-04",
+   "expect": {
+    "symbol": "EE-F",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "EE-F",
+   "session": "2026-03-05",
+   "expect": {
+    "symbol": "EE-F",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "EE-F",
+   "session": "2026-03-06",
+   "expect": {
+    "symbol": "EE-F",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "EE-F",
+   "session": "2026-03-09",
+   "expect": {
+    "symbol": "EE-F",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "EE-F",
+   "session": "2026-03-11",
+   "expect": {
+    "symbol": "EE-F",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  },
+  {
+   "symbol": "EE-F",
+   "session": "2026-03-12",
+   "expect": {
+    "symbol": "EE-F",
+    "status": "not_in_registry",
+    "blocked": false,
+    "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+    "registry_reviewed_on": "2026-04-30",
+    "matches": []
+   }
+  }
+ ]
+}

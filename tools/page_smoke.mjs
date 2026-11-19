@@ -54,6 +54,7 @@ import { checkSourceRecovery } from './source_recovery_cases.mjs';
 import { checkEarnings } from './earnings_cases.mjs';
 import { checkStockFinder } from './stock_finder_cases.mjs';
 import { checkAdmission } from './admission_cases.mjs';
+import { checkPageText } from './page_text_cases.mjs';
 import { checkReaderTransport } from './reader_cases.mjs';
 import { checkPublicationRecovery } from './publication_recovery_cases.mjs';
 import { checkObservations } from './observation_cases.mjs';
@@ -173,10 +174,11 @@ const TRADE_GRADES = ['A+', 'A'];   // the grades the run gives an order (pipeli
 const args = process.argv.slice(2);
 const shotsDir = args.includes('--shots') ? args[args.indexOf('--shots') + 1] : null;
 // --only <name[,name]> runs just those suites (variant names, or lens/compare/
-// evidence/map/reach/mobile/modes/following/through/session/refresh/volume/mapscale/ticket/states/walkthrough/findings/funnel/stock-finder/earnings/admission). It is for
+// evidence/map/reach/mobile/modes/following/through/session/refresh/volume/mapscale/ticket/states/walkthrough/findings/funnel/stock-finder/earnings/admission/page-text). It is for
 // judging a mutant in a minute; CI and the milestone gate run everything.
 const only = args.includes('--only') ? String(args[args.indexOf('--only') + 1] || '').split(',').filter(Boolean) : null;
 const runs = (name) => !only || only.includes(name);
+const pageTextParts = only ? only.filter((n) => n.startsWith('page-text:')).map((n) => n.slice('page-text:'.length)) : [];
 
 // The suites run in two lanes over one browser (main()); every line a lane
 // prints carries its letter, so a FAIL reads under its own suite's heading.
@@ -934,6 +936,8 @@ async function checkVariant(browser, base, variant, data) {
 
   // footer and errors
   check(`${variant} footer names the feed and the rules`, (await text(page, '#foot-line')).includes(data.app.rules_version), 'foot');
+  // the analyst's daily brief is linked by the script at run time; the shell names neither file (publish_dashboard.public_files reads its hrefs)
+  eq(`${variant} footer links the analyst brief`, await page.locator('#foot-line a').evaluateAll((links) => links.map((a) => a.getAttribute('href')).filter((h) => /(^|\/)brief\.(md|json)$/.test(h))), ['brief.md', 'brief.json']);
   eq(`${variant} page errors`, errors, []);
   if (aborted.length) console.log(`  (${aborted.length} chart/font requests not served, as expected offline)`);
   if (shotsDir) {
@@ -1932,12 +1936,26 @@ async function checkFollowBasis(browser, base, full, next) {
   eq('a plan picked on another session is shown apart, never as this one’s update', [await count(page, '#saved [data-model-update="matched"]'), await count(page, '#saved [data-model-update="apart"]')], [0, 1]);
   check('and says which signal it is for', (await said(page, '#saved [data-model-update="apart"]')).includes(dateWords('2026-08-03')), await said(page, '#saved [data-model-update="apart"]'));
   await closeSaved(page); await page.waitForTimeout(220);
+  // Tonight's rules digest nests the universe membership identity, so it moves
+  // on any night the directory's membership moves (23 of 25 publication pairs
+  // from 15 Oct to 17 Nov 2026). The plan's identity is its evidence reference.
   const rules = JSON.parse(JSON.stringify(plans));
   rules.app.rules_version = 'ffffffffffff';
+  rules.rules.universe.identity = 'ffffffffffffffff';
+  check('the sequel differs from the saved night in its rules digest and its membership identity', rules.app.rules_version !== full.app.rules_version && rules.rules.universe.identity !== full.rules.universe.identity && !!mine.evidence_ref,
+    JSON.stringify([full.app.rules_version, full.rules.universe.identity, mine.evidence_ref]));
   await rerender(page, rules, '2026-09-11T22:31:00Z');
   await openSaved(page, trade);
-  eq('a plan written under different rules is shown apart too', [await count(page, '#saved [data-model-update="matched"]'), await count(page, '#saved [data-model-update="apart"]')], [0, 1]);
-  check('naming both rule identities', (await said(page, '#saved [data-model-update="apart"]')).includes('ffffffff'), await said(page, '#saved [data-model-update="apart"]'));
+  eq('a sequel whose rules digest and membership identity both moved still attaches the plan', [await count(page, '#saved [data-model-update="matched"]'), await count(page, '#saved [data-model-update="apart"]')], [1, 0]);
+  check('and says the outcome matches the frozen evidence and plan identities', (await said(page, '#saved [data-model-update="matched"]')).includes('matches the frozen evidence and plan identities'), await said(page, '#saved [data-model-update="matched"]'));
+  check('naming no rules digest', !(await said(page, '#saved')).includes('ffffffff'), await said(page, '#saved [data-model-update]'));
+  await closeSaved(page); await page.waitForTimeout(220);
+  const foreign = JSON.parse(JSON.stringify(plans));
+  foreign.open_plans.forEach((p) => { if (p.ticker === trade) p.evidence_ref = Object.assign({}, p.evidence_ref, { plan_sha256: 'f'.repeat(64) }); });
+  await rerender(page, foreign, '2026-09-11T22:31:00Z');
+  await openSaved(page, trade);
+  eq('a sequel whose open plan carries a different evidence reference is shown apart', [await count(page, '#saved [data-model-update="matched"]'), await count(page, '#saved [data-model-update="apart"]')], [0, 1]);
+  check('in the words for a plan identity that is not this saved publication’s', (await said(page, '#saved [data-model-update="apart"]')).includes('The public model row has a different or missing plan identity. It is not linked to this saved publication.'), await said(page, '#saved [data-model-update="apart"]'));
   eq('basis page errors', errors, []);
   await context.close();
 }
@@ -4641,6 +4659,8 @@ async function main() {
       if (runs('earnings')) await checkEarnings({ browser, base, open, check, eq, shotsDir });
       if (runs('stock-finder')) await checkStockFinder({ browser, base, open, check, eq, shotsDir });
       if (runs('admission')) await checkAdmission({ browser, base, open, check, eq, shotsDir });
+      // --only page-text:veto (or :method, :market, :detail, :deals, :record) runs one part of it
+      if (runs('page-text') || pageTextParts.length) await checkPageText({ browser, base, open, check, eq, shotsDir, parts: runs('page-text') ? null : pageTextParts });
     };
     // both lanes finish before the browser closes; the first to throw is the error
     const settled = await Promise.allSettled([lane.run('A', laneA), lane.run('B', laneB)]);

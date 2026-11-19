@@ -28,6 +28,8 @@ const ROOTSEL = '#historical-evidence [data-find-root]';
 const settle = (p, ms) => p.waitForTimeout(ms || 80);
 const txt = (p, sel) => p.locator(sel).first().innerText();
 const tc = (p, sel) => p.locator(sel).first().textContent();
+// a node the page may not have drawn reads as empty, so its check fails by name and not by a locator's timeout
+const said = async (p, sel) => ((await p.locator(sel).count()) ? tc(p, sel) : '');
 const attr = (p, sel, a) => p.locator(sel).first().getAttribute(a);
 // the words the page uses for numbers, rebuilt here so a check never reads them off the page
 const thousands = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -151,8 +153,12 @@ function readingHolds(F, readAs, eq, check, tag) {
   check(tag + 'the exploratory sentence counts the red nights, dates the freeze and prints every stratum by the minimum\'s rule', readAs[0].startsWith('Exploratory: ' + (ex.red_nights === ex.nights
     ? 'the ' + plural(ex.nights, 'night') + ' from ' + span(ex) + ', every one red' : plural(ex.red_nights, 'red night') + ' of the ' + thousands(ex.nights) + ' from ' + span(ex)))
     && readAs[0].includes('frozen after ' + dayWords(rd.freeze)) && readAs[0].includes('The mean R per settled counterfactual ticket: ' + pooled + '. '), [pooled, readAs[0]]);
-  eq(tag + 'the exploratory sentence says the refusals had value only when every readable stratum is under zero, and calls itself exploratory', [readAs[0].includes('on the nights the gate refused, its refusals had value in sum'),
-    readAs[0].includes('Not every stratum is under zero'), readAs[0].endsWith('This is the exploratory reading, not evidence.')], [allUnder, !allUnder && readable.length > 0, readable.length > 0]);
+  // a mean under zero says those settled tickets lost in sum, and nothing about the gate's value
+  eq(tag + 'the exploratory sentence says the red nights\' tickets lost in sum only when every readable stratum is under zero, and calls itself exploratory', [
+    readAs[0].includes(': in each of them the settled counterfactual tickets of these red nights lost in sum. This is the exploratory reading of nights already public when the spec was frozen, not evidence that the gate adds value; the nights after the freeze are read next.'),
+    readAs[0].includes('Not every stratum is under zero: the settled counterfactual tickets of these red nights did not lose in every stratum.'),
+    readable.length > 0 && (readAs[0].endsWith('the nights after the freeze are read next.') || readAs[0].endsWith('This is the exploratory reading, not evidence.'))], [allUnder, !allUnder && readable.length > 0, readable.length > 0]);
+  check(tag + 'no sentence says the refusals had value', !readAs.join(' ').includes('had value'), readAs[0]);
   const cs = F.study.summary.phases.confirmatory, sc = cs.scorecard || {};
   check(tag + 'the confirmatory sentence counts its nights and reads the study\'s own split against its minimum', readAs[1].startsWith('Confirmatory: ' + plural(co.nights, 'night') + ' published after the freeze, ' + span(co))
     && readAs[1].includes('only from ' + plural(sc.min_read, 'settled ticket') + ': ') && readAs[1].includes(sc.readable ? 'the study’s confirmatory result is ' + R3(cs.settled.mean_r) + ' per settled ticket over ' + thousands(cs.settled.n) +
@@ -608,6 +614,12 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   const rates = await txt(p, '#historical-evidence p[data-find="backtest-rates"]');
   check('the rates line prints the win rate, the mean and the median the summary read', prod.settled.readable === true && rates.includes('Win rate ' + Math.round(prod.settled.win_rate * 100) + '%') && rates.includes('mean ' + R2(prod.settled.avg_r)) && rates.includes('median ' + R2(prod.settled.median_r)), rates);
   check('SPY at the two places the summary printed it', rates.includes('SPY ' + signed(prod.settled.spy_avg_pct, 2) + '%'), rates);
+  // the account and the rules the pasted summary was run under, from the file's own fields
+  eq('the backtest says the account and the rules it was run under, and that they are the summary\'s own', await said(p, '#historical-evidence p[data-find="backtest-account"]'),
+    'Sized at the summary’s own account of $' + thousands(L.account.equity) + ' at ' + String(L.account.risk_pct).replace(/\.0$/, '') + '% risk a ticket, under rules ' + L.rules_version +
+    ', burst tickets only. That account and those rules are the summary’s; a published record is sized and ruled by what it archives, which need not be these.');
+  check('and it sits between the opening paragraph and the strip', await p.locator('#historical-evidence p[data-find="backtest-account"]').count() === 1 && await p.locator('#historical-evidence p[data-find="backtest-account"]').evaluate((n) =>
+    n.nextElementSibling && n.nextElementSibling.getAttribute('data-find') === 'backtest-strip' && n.previousElementSibling.tagName === 'P'));
   check('and the equivalence the shortened lookback passed', rates.includes('equivalence ' + L.lookback.equivalence.status) && rates.includes(plural(L.lookback.equivalence.differences, 'difference')), rates);
   check('the rates line counts the uncertain and unfilled tickets, the bursts and the rules from the summary, in place',
     rates.includes(' · ' + thousands(prod.plans.uncertain) + ' uncertain on daily bars · ' + thousands(prod.plans.not_filled) + ' not filled · ')
@@ -854,6 +866,8 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   altered.market.thresholds = { ratio_10d_red: 1.1, ratio_10d_yellow: 2.2 };
   Object.assign(altered.nights_summary, { nights: 99, bursts: 12345, tickets_published: 3, setup_tickets_published: 4 });
   altered.backtest.lookback_130.evaluated.count = 777;
+  Object.assign(altered.backtest.lookback_130.account, { equity: 25000, risk_pct: 0.75 });
+  altered.backtest.lookback_130.rules_version = 'abcabcabcabc';
   const a = await load(FULL, 1280, { beforeLoad: routed(JSON.stringify(altered)) });
   eq('altered file: the replay is ready', await ready(a.page), 'ready');
   const afx = await facts(a.page);
@@ -870,6 +884,7 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   eq('the thresholds are labelled at the axis as changed', [await tc(a.page, '#historical-evidence text[data-ref-label="red"]'), await tc(a.page, '#historical-evidence text[data-ref-label="yellow"]')], ['1.1', '2.2']);
   check('the market line prints the changed burst size and ratio length', (await facts(a.page)).includes(' up 5% against ') && (await facts(a.page)).includes(' over 12 sessions, ratio '), await facts(a.page));
   check('the strip prints the changed session count', (await txt(a.page, '#historical-evidence dl[data-find="backtest-strip"]')).includes('777'));
+  check('the account sentence prints the changed account, risk and rules, so the page types none of them', (await said(a.page, '#historical-evidence p[data-find="backtest-account"]')).startsWith('Sized at the summary’s own account of $25,000 at 0.75% risk a ticket, under rules abcabcabcabc, burst tickets only.'), await said(a.page, '#historical-evidence p[data-find="backtest-account"]'));
   // the changed minimum: a night between it and the record's own reads as a rate now
   const between = F.nights.findIndex((n) => n.strata.admitted.settled.n >= 7 && n.strata.admitted.settled.n < min);
   check('the file has a night between the changed minimum and its own, so the next line can fail', between >= 0);
@@ -919,7 +934,7 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   }
   const bRead = await bb.page.locator('#historical-evidence ul[data-find="read-as"] > li').evaluateAll((e) => e.map((li) => li.textContent));
   readingHolds(branches, bRead, eq, check, 'branches: ');
-  check('branches: a positive stratum withdraws the refusals\' value', bRead[0].includes('Not every stratum is under zero') && !bRead[0].includes('had value in sum'), bRead[0]);
+  check('branches: a positive stratum withdraws the loss in sum', bRead[0].includes('Not every stratum is under zero: the settled counterfactual tickets of these red nights did not lose in every stratum. This is the exploratory reading, not evidence.') && !bRead[0].includes('lost in sum'), bRead[0]);
   check('branches: a readable confirmatory split is printed as the study\'s result with its interval, clear of zero', bRead[1].includes('the study’s confirmatory result is +0.141R per settled ticket over 27, and over 4 nights the mean of its night means is +0.133R, with the study’s night-bootstrap interval of +0.012R to +0.274R, which is clear of zero.'), bRead[1]);
   check('branches: the two nights made yellow and green are the ones named as not red, with the green one\'s two tickets counted, and kept out of the confirmatory result',
     bRead[4].startsWith('2 published nights here were not red (' + dayWords(ny.session) + ' and ' + dayWords(ngr.session) + ').') &&
@@ -1039,6 +1054,8 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     ['a market without its red threshold', JSON.stringify((() => { const x = structuredClone(F); delete x.market.thresholds.ratio_10d_red; return x; })()), 200, 'The findings carry no market.'],
     ['a run-6 session without its original', JSON.stringify((() => { const x = structuredClone(F); delete x.run6.sessions[Object.keys(x.run6.sessions)[0]].original; return x; })()), 200, 'The findings carry no fresh-bar reading.'],
     ['a backtest without its gates', JSON.stringify((() => { const x = structuredClone(F); delete x.backtest.lookback_130.gates; return x; })()), 200, 'The findings carry no backtest.'],
+    ['a backtest without its account', JSON.stringify((() => { const x = structuredClone(F); delete x.backtest.lookback_130.account; return x; })()), 200, 'The findings carry no backtest.'],
+    ['a backtest whose risk is not a number', JSON.stringify((() => { const x = structuredClone(F); x.backtest.lookback_130.account.risk_pct = '0.5'; return x; })()), 200, 'The findings carry no backtest.'],
     ['a run-6 session that is null', JSON.stringify((() => { const x = structuredClone(F); x.run6.sessions[Object.keys(x.run6.sessions)[0]] = null; return x; })()), 200, 'The findings carry no fresh-bar reading.'],
     ['a gate reason that is not a sentence', JSON.stringify((() => { const x = structuredClone(F); x.nights[0].regime.reasons = [null]; return x; })()), 200, 'A night of the findings is malformed.'],
     ['a file without its reading', JSON.stringify((() => { const x = structuredClone(F); delete x.reading; return x; })()), 200, 'The findings carry no reading.'],

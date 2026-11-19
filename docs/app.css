@@ -440,6 +440,12 @@ p.sc-hint.ss-order__broker { color: var(--sc-text-2); }
 .ss-regime .sc-callout__figure { display: flex; align-items: center; gap: var(--sc-s2); flex-wrap: wrap; }
 .ss-regime ul { margin: var(--sc-s1) 0 0; padding-left: 1.2em; }
 .ss-regime li { margin: 2px 0; }
+/* the five rules as the record's inputs read, under the record's own reasons */
+.ss-regime-rules { margin-top: var(--sc-s3); }
+.ss-regime-rules li { margin: 4px 0; }
+.ss-regime-rules .sc-hint { margin: var(--sc-s2) 0 0; }
+/* the ratio chart's caption: the re-reading sentence takes its own line */
+#ratio-chart .sc-chart-caption > p { flex: 1 1 100%; max-width: 90ch; }
 .ss-breadth-chart { margin-top: var(--sc-s3); }
 .ss-breadth-chart .sc-chart { --sc-tone: var(--sc-chart-emphasis); }
 .ss-breadth-chart .ss-ref { stroke: var(--sc-border-strong); stroke-width: 1; stroke-dasharray: 6 4; fill: none; }
