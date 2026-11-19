@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6841 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6862 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15713,23 +15713,27 @@ untouched.
 
 **SEC flags** (`src/sec_flags.py`, `run.sec_flags`): for every ticketed and
 listed name, at most `sec_flags.MAX_NAMES`, SEC's filing list is read for
-`sec_flags.FORMS` (SC TO-T, SC 14D9, DEFM14A, PREM14A and their amendments)
-and for 8-Ks carrying `sec_flags.ITEMS` (1.01, 2.01, 3.01, 5.01) filed in the
+`sec_flags.FORMS` (SC TO-T, SC 14D9, DEFM14A, PREM14A and each one's `/A`
+amendment: the forms `issuer_evidence.ACQUISITION_FORMS` counts, and a test
+holds the two equal) and for 8-Ks carrying `sec_flags.ITEMS` (1.01, 2.01, 3.01, 5.01) filed in the
 last `sec_flags.WINDOW_DAYS`. A name is `flagged`, `clear` or `unknown`
 (never clear when it could not be read). Flag only: a flagged or unknown
 ticket is `human_review` in `orders.json`, never withheld from the record.
 
-**The cross-check** (`src/cross_check.py`, `run.cross_check`): one request to
-Alpaca's IEX feed for the ticketed names, at most `cross_check.MAX_NAMES`;
-a signal-day price more than `cross_check.PRICE_PCT` off the SIP bar blocks
-the ticket in `orders.json`. **A deliberate deviation from the brief:** IEX
+**The cross-check** (`src/cross_check.py`, `run.cross_check`): one batch to
+Alpaca's IEX feed for the ticketed names, at most `cross_check.MAX_NAMES`,
+retried once on failure as every bars request is; a signal-day price more
+than `cross_check.PRICE_PCT` off the SIP bar, compared unrounded, blocks the
+ticket in `orders.json`. **A deliberate deviation from the brief:** IEX
 is one venue, so its absolute volume is a fraction of the consolidated
 tape's and a raw volume comparison would block every ticket. Under
 `cross_check.VOLUME_BASIS` `ratio_to_prior_session` each feed's volume is
 compared with its own prior session, and a ratio more than
 `cross_check.VOLUME_PCT` apart blocks the ticket; `absolute` is the brief's
-literal reading and is kept as a named option. The run counts the IEX
-request apart from the bars fetch.
+literal reading and is kept as a named option. It needs the owner's word,
+and the PR says so. The run records no IEX request count; the tests and the
+recovery rehearsal count the cross-check's request apart from the bars
+fetch.
 
 **The registry.** ACVA was reviewed again: Copart's 16 October release
 (an SEC exhibit read as a search excerpt, bytes not captured) says the
@@ -15738,15 +15742,42 @@ acquisition completed, and the retained directory snapshots drop ACVA from
 and blocked, with a `review_note` saying so. `event_risk` admits a
 `review_note` dated after the entry's due date, and
 `tools/check_event_reviews.py` (a CI step) fails the build the day after any
-unresolved entry's review falls due without a new review or a note: it
-reads New York's date on purpose. MG's review falls due 25 November.
+unresolved entry's review falls due without a new review or a note in force:
+it reads New York's date on purpose. A note answers for
+`event_risk.REVIEW_NOTE_DAYS` after its `noted_on`, so it never silences an
+entry for good. CI goes red on 26 November (MG), 3 December (ZIM) and
+4 December (ACVA's note lapses) unless the owner reviews each first.
 
 **The full suite found what the focused runs had not:** the extra IEX
-request broke the request-count tests and the recovery rehearsal; it is
-counted apart now.
+request broke the request-count tests and the recovery rehearsal, which
+count it apart now.
 
 **Mutation pass**, each mutant in a detached worktree judged by the test
 files naming its rule: 19 mutants, all dead; the control survives.
 
+**The review, worked.** The stack's review returned eleven PR 5 findings,
+each reproduced here before it was touched. The high one: a NaN in the IEX
+bar, or in either feed's prior volume, compared as a pass (`NaN > tolerance`
+is false), and the record then carried null differences on a `pass` row: any
+value that is not a finite positive number is `unknown` now
+(`bar_not_finite`, `no_prior_volume`), and a `pass` or `fail` row whose
+differences are not finite numbers is refused. The volume ratio read
+whatever row preceded the session: both feeds' prior rows must be the XNYS
+session before the signal (`no_prior_session`). The merger-proxy amendments
+were not flagged though the words said so. Three tests read the live
+registry's dates and would have gone red on the first re-review; they read a
+synthetic registry now. The validators held shape only: a row's result is
+re-derived from its own differences under the archived tolerances, the flags
+block's forms, items and window are held to the archived rules, a read row
+names its CIK, and each flagged filing is in the window with a listed form or
+item. A note silenced ACVA forever; it lapses now. The comparison rounded
+before it compared, so 0.5004% passed; it compares unrounded. And a merge
+that moves `orders.VERSION` would have left the committed `orders.json`
+failing the publication gate, the committed-handoff test and the morning
+step until the evening rewrote it: an earlier version's files are held to
+their binding alone (`orders.earlier_version()`), and the morning derives no
+go/cancel file from one.
+
 **Not claimable:** a live SEC read or IEX comparison on a ticket night (the
-first such evening after the merge); any trading edge.
+first such evening after the merge); the owner's word on the volume basis;
+any trading edge.

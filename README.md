@@ -2544,21 +2544,26 @@ reads, each a function of committed bytes and no clock:
 Two reads stand behind each ticket's checks. **`run.sec_flags`**
 (`src/sec_flags.py`) reads each ticket's and each listed setup's SEC filing
 list, the earnings warning's own transport and bounds, and names every
-tender offer, response, merger proxy (SC TO-T, SC 14D9, DEFM14A, PREM14A and
-their amendments) and every 8-K carrying item 1.01, 2.01, 3.01 or 5.01 filed
+tender offer, response, merger proxy (SC TO-T, SC TO-T/A, SC 14D9, SC 14D9/A, DEFM14A, DEFM14A/A, PREM14A, PREM14A/A)
+and every 8-K carrying item 1.01, 2.01, 3.01 or 5.01 filed
 in the 30 days before the signal session or since it; a flag, or a name SEC
 could not be read for, holds that ticket for a person's review and refuses
 nothing on the record itself. **`run.cross_check`** (`src/cross_check.py`)
 reads each ticket's signal-day bar again from Alpaca's iex feed, at most 20
-tickets: an open, high, low or close more than 0.5% from the sip bar, or a
-volume reading more than 10% off, blocks the ticket in `orders.json`, and a
-ticket iex has no bar for is held for review. IEX is one exchange, so its
-daily volume is a few percent of the consolidated tape's and an absolute
-comparison would fail every ticket; each feed's signal-day volume is read
-against its own previous session, and the two ratios are compared
-(`cross_check.VOLUME_BASIS`). Both are archived in the rules (`sec_flags`,
-`cross_check`), held by `report.validate()` under the rules that write them,
-and never fail a night.
+tickets, in one batch retried once on failure: an open, high, low or close
+more than 0.5% from the sip bar, or a volume reading more than 10% off,
+compared unrounded, blocks the ticket in `orders.json`; a ticket iex has no
+bar for, a bar with a value that is not a finite number, or a previous session
+the two feeds do not both carry as the XNYS session before the signal, is
+held for review. IEX is one exchange, so its daily volume is a few percent of
+the consolidated tape's and an absolute comparison would fail every ticket;
+each feed's signal-day volume is read against its own previous session, and
+the two ratios are compared (`cross_check.VOLUME_BASIS`, a departure from the
+program's literal volume rule that the owner's decision should confirm). Both
+are archived in the rules (`sec_flags`, `cross_check`), held by
+`report.validate()` under the rules that write them (a cross-check row's
+result re-derived from its own differences, a flag's filing held to the
+window and the listed forms), and never fail a night.
 
 The schema of all three is `docs/operations/orders-schema.json`, checked by
 `src/schema_check.py`; the publication gate holds each file to the committed

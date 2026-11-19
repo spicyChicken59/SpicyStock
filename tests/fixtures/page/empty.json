@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "901cff757d0c"
+  "rules_version": "bde327cb5640"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -936,7 +936,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "e26c555cad16488d78f15a1600afa9d69d0ea8341b39bf0a07306cb87021b3ee"
+   "context_sha256": "2e3dfd512d4184f0f663cf28b45c102858b7b834e8167b0d272eda484aae93e0"
   },
   "earnings": {
    "version": 2,
@@ -961,7 +961,9 @@
     "SC 14D9",
     "SC 14D9/A",
     "DEFM14A",
-    "PREM14A"
+    "DEFM14A/A",
+    "PREM14A",
+    "PREM14A/A"
    ],
    "items": [
     "1.01",
@@ -1622,7 +1624,9 @@
     "SC 14D9",
     "SC 14D9/A",
     "DEFM14A",
-    "PREM14A"
+    "DEFM14A/A",
+    "PREM14A",
+    "PREM14A/A"
    ],
    "items": [
     "1.01",
@@ -2255,7 +2259,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "901cff757d0c"
+  "replay_rules_version": "bde327cb5640"
  },
  "observations": {
   "as_of": "2026-09-10",

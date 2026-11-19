@@ -6,11 +6,14 @@ Every unresolved entry of ``knowledge/event-risk.json`` carries a
 (``event_risk.classify()`` reads it as overdue), and nothing says whether
 anyone looked. This exits 1, naming each such entry, until the entry is
 reviewed again (a new ``reviewed_on`` and ``review_due``) or carries a
-``review_note`` dated after its due date saying why it stands as it is.
+``review_note`` dated after its due date saying why it stands as it is. A note
+answers for ``event_risk.REVIEW_NOTE_DAYS`` after its ``noted_on``; past that
+the entry is due again, so a note never silences an entry for good.
 
 It reads today's date in New York, so it is the one check in CI whose answer
 moves with the calendar, on purpose: the day after a review falls due, every
-pull request is red until the registry is reviewed. ``--today`` pins it for a
+pull request is red until the registry is reviewed, and so is the day after a
+note lapses. ``--today`` pins it for a
 test or a rehearsal.
 
     python tools/check_event_reviews.py
@@ -48,12 +51,19 @@ def main(argv=None, now=None) -> int:
         return 2
     if lapsed:
         due = {e["symbol"]: e["review_due"] for e in registry["events"]}
-        print(f"lapsed on {today}: " + "; ".join(f"{s} (review due {due[s]})" for s in lapsed)
+        noted = {e["symbol"]: e["review_note"]["noted_on"] for e in registry["events"] if "review_note" in e}
+
+        def why(symbol):
+            if symbol in noted:
+                return f"{symbol} (review due {due[symbol]}; its note of {noted[symbol]} answered for " \
+                       f"{event_risk.REVIEW_NOTE_DAYS} days)"
+            return f"{symbol} (review due {due[symbol]})"
+        print(f"lapsed on {today}: " + "; ".join(why(s) for s in lapsed)
               + ". Review each entry again, or add a review_note dated after its due date.", file=sys.stderr)
         return 1
     overdue = [e["symbol"] for e in registry["events"] if e.get("active_until") is None and e["review_due"] < today]
     print(f"current on {today}: no unresolved entry's review has lapsed without a note"
-          + (f" ({', '.join(overdue)} overdue, each with its note)" if overdue else "") + ".")
+          + (f" ({', '.join(overdue)} overdue, each with a note in force)" if overdue else "") + ".")
     return 0
 
 

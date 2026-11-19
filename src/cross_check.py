@@ -15,12 +15,18 @@ record publishes (at most ``MAX_NAMES``), this asks the same provider's
   volume (``v > v1``), asked of both feeds. ``VOLUME_BASIS = "absolute"`` is
   the literal comparison, kept so the choice is one constant.
 
-A failed ticket is blocked in ``orders.json``; a ticket IEX has no bar for is
-``unknown``, which is never a pass. It reads the provider and decides nothing
-about the night: the record's own bars, plans and tickets do not move.
+A failed ticket is blocked in ``orders.json``; a ticket IEX has no bar for,
+a bar with a value that is not a finite number, or a previous session either
+feed does not carry (the XNYS session before the signal, the same in both),
+is ``unknown``, which is never a pass. The differences are compared
+unrounded and stored unrounded, so the validator re-derives each row's
+result from them exactly. It reads the provider and decides nothing about the
+night: the record's own bars, plans and tickets do not move. The IEX request
+is one batch, retried once on failure as every bars request is.
 """
 from __future__ import annotations
 
+import math
 from datetime import date
 from typing import Any
 
@@ -45,11 +51,17 @@ RULES = {"cross_check.version": VERSION, "cross_check.feed": FEED, "cross_check.
 
 
 def _pct(a: float, b: float) -> float | None:
-    return None if b == 0 else round(abs(a - b) / abs(b) * 100, 3)
+    """The difference as a percentage of ``b``, unrounded: compared and stored exactly."""
+    return None if b == 0 else abs(a - b) / abs(b) * 100
+
+
+def _finite(value) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
 def _two(frame, session: date):
-    """The signal session's bar and the one before it, as plain numbers, or None."""
+    """The signal session's bar, the volume of the row before it and that row's date, as plain
+    numbers, or None when the frame has no signal-session row with one before it."""
     if frame is None or len(frame) == 0:
         return None
     dates = [d.date() if hasattr(d, "date") else d for d in frame.index]
@@ -61,9 +73,17 @@ def _two(frame, session: date):
     row, prev = frame.iloc[i], frame.iloc[i - 1]
     try:
         today = {k: float(row[k]) for k in (*PRICES, "Volume")}
-        return today, float(prev["Volume"])
+        return today, float(prev["Volume"]), dates[i - 1]
     except (KeyError, TypeError, ValueError):
         return None
+
+
+def judge(diffs: dict, price_pct: float, volume_pct: float) -> list[str]:
+    """The fields over their tolerance; a difference that is not a finite number is over it."""
+    over = [k for k in ("open", "high", "low", "close") if not _finite(diffs.get(k)) or diffs[k] > price_pct]
+    if not _finite(diffs.get("volume")) or diffs["volume"] > volume_pct:
+        over.append("volume")
+    return over
 
 
 def compare(sip, iex, session: date, basis: str = VOLUME_BASIS) -> dict:
@@ -71,17 +91,20 @@ def compare(sip, iex, session: date, basis: str = VOLUME_BASIS) -> dict:
     a, b = _two(sip, session), _two(iex, session)
     if a is None or b is None:
         return {"result": UNKNOWN, "reason": "no_sip_bar" if a is None else "no_iex_bar", "differences": None}
-    (s, s_prior), (x, x_prior) = a, b
+    (s, s_prior, s_date), (x, x_prior, x_date) = a, b
+    if not all(_finite(v) and v > 0 for v in (*s.values(), *x.values())):
+        return {"result": UNKNOWN, "reason": "bar_not_finite", "differences": None}
     diffs: dict[str, Any] = {k.lower(): _pct(x[k], s[k]) for k in PRICES}
     if basis == "absolute":
         diffs["volume"] = _pct(x["Volume"], s["Volume"])
     else:
-        if s_prior <= 0 or x_prior <= 0:
-            return {"result": UNKNOWN, "reason": "no_prior_volume", "differences": diffs}
+        from src import sessions
+        if s_date != x_date or s_date != sessions.previous_session(session):
+            return {"result": UNKNOWN, "reason": "no_prior_session", "differences": None}
+        if not (_finite(s_prior) and _finite(x_prior)) or s_prior <= 0 or x_prior <= 0:
+            return {"result": UNKNOWN, "reason": "no_prior_volume", "differences": None}
         diffs["volume"] = _pct(x["Volume"] / x_prior, s["Volume"] / s_prior)
-    over = [k for k in ("open", "high", "low", "close") if diffs[k] is None or diffs[k] > PRICE_PCT]
-    if diffs["volume"] is None or diffs["volume"] > VOLUME_PCT:
-        over.append("volume")
+    over = judge(diffs, PRICE_PCT, VOLUME_PCT)
     return {"result": FAIL if over else PASS, "reason": ("differ: " + ", ".join(over)) if over else None,
             "differences": diffs}
 
@@ -173,7 +196,17 @@ def faults(data: dict) -> list[str]:
     if not isinstance(rows, list) or not all(isinstance(r, dict) and r.get("result") in RESULTS
                                              and isinstance(r.get("ticker"), str) for r in rows):
         return ["run.cross_check rows are not readable"]
+    if not (_finite(archived.get("price_pct")) and _finite(archived.get("volume_pct"))):
+        return ["rules.cross_check tolerances are not numbers"]
     out = []
+    for r in rows:
+        if r["result"] == UNKNOWN:
+            continue
+        diffs = r.get("differences")
+        if not isinstance(diffs, dict) or not all(_finite(diffs.get(k)) for k in ("open", "high", "low", "close", "volume")):
+            out.append(f"run.cross_check {r['ticker']}: a {r['result']} row carries no finite differences")
+        elif (FAIL if judge(diffs, archived.get("price_pct"), archived.get("volume_pct")) else PASS) != r["result"]:
+            out.append(f"run.cross_check {r['ticker']}: its result is not what its differences give")
     if block.get("status") != status_of(rows):
         out.append("run.cross_check status is not its rows'")
     if (block.get("price_pct"), block.get("volume_pct"), block.get("volume_basis")) != \

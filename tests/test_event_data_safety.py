@@ -12,6 +12,7 @@ import copy
 import json
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import pytest
@@ -311,11 +312,20 @@ def test_a_record_from_before_the_sec_flags_reads_the_earnings_items_alone():
 
 
 # ---------------------------------------------------- the event registry ---
-def registry_with(**event_changes) -> dict:
+def synthetic_registry() -> tuple[dict, dict, date]:
+    """The committed registry with its dates moved so these tests read none of the real ones: one
+    unresolved entry (``target``) falls due on its own review date, every other one a month after
+    the registry's review, so a real review of any entry never turns a test here red."""
     reg = copy.deepcopy(event_risk.REGISTRY)
-    acva = next(e for e in reg["events"] if e["symbol"] == "ACVA")
-    acva.update(event_changes)
-    return reg
+    later = date.fromisoformat(reg["reviewed_on"]) + timedelta(days=30)
+    reg["reviewed_on"] = later.isoformat()
+    unresolved = [e for e in reg["events"] if e.get("active_until") is None]
+    for e in unresolved:
+        e.pop("review_note", None)
+        e["review_due"] = later.isoformat()
+    target = unresolved[0]
+    target["review_due"] = target["reviewed_on"]
+    return event_risk.validate_registry(reg), target, date.fromisoformat(target["review_due"])
 
 
 def test_the_acva_entry_stays_blocked_and_carries_its_review_note():
@@ -328,39 +338,67 @@ def test_the_acva_entry_stays_blocked_and_carries_its_review_note():
     assert "review_note" not in match["matches"][0]
 
 
+def test_the_committed_registry_is_valid_and_lapses_nothing_on_its_own_review_date():
+    assert event_risk.lapsed_reviews(event_risk.REGISTRY, event_risk.REGISTRY["reviewed_on"]) == []
+
+
+@pytest.mark.parametrize("offset, words", [
+    (0, "dated after"),                     # on the due date, not after it
+    (None, "dated after"),                  # after the registry's own review
+])
+def test_a_review_note_is_dated_after_the_review_it_answers_and_before_the_registrys(offset, words):
+    reg, target, due = synthetic_registry()
+    noted = (due + timedelta(days=offset)) if offset is not None else \
+        date.fromisoformat(reg["reviewed_on"]) + timedelta(days=1)
+    target["review_note"] = {"noted_on": noted.isoformat(), "text": "x"}
+    with pytest.raises(ValueError, match=words):
+        event_risk.validate_registry(reg)
+
+
 @pytest.mark.parametrize("note, words", [
-    ({"noted_on": "2026-10-15", "text": "x"}, "dated after"),          # on the due date, not after it
-    ({"noted_on": "2026-11-20", "text": "x"}, "dated after"),          # after the registry's own review
-    ({"noted_on": "2026-11-19"}, "object of noted_on and text"),
-    ({"noted_on": "2026-11-19", "text": "x", "by": "me"}, "object of noted_on and text"),
-    ({"noted_on": "2026-11-19", "text": " "}, "review_note"),
+    ({"noted_on": None}, "object of noted_on and text"),
+    ({"noted_on": None, "text": "x", "by": "me"}, "object of noted_on and text"),
+    ({"noted_on": None, "text": " "}, "review_note"),
     ("a note", "object of noted_on and text"),
 ])
-def test_a_review_note_is_dated_after_the_review_it_answers_and_is_text(note, words):
+def test_a_review_note_is_an_object_of_its_date_and_its_text(note, words):
+    reg, target, due = synthetic_registry()
+    if isinstance(note, dict):
+        note = {**note, "noted_on": (due + timedelta(days=1)).isoformat()}
+    target["review_note"] = note
     with pytest.raises(ValueError, match=words):
-        event_risk.validate_registry(registry_with(review_note=note))
+        event_risk.validate_registry(reg)
 
 
-def test_a_lapsed_review_is_one_past_its_due_date_with_no_note():
-    reg = registry_with()
-    assert event_risk.lapsed_reviews(reg, "2026-11-25") == []          # MG on its due date
-    assert event_risk.lapsed_reviews(reg, "2026-11-26") == ["MG"]
-    bare = copy.deepcopy(reg)
-    next(e for e in bare["events"] if e["symbol"] == "ACVA").pop("review_note")
-    assert event_risk.lapsed_reviews(bare, "2026-11-19") == ["ACVA"]
-    assert event_risk.lapsed_reviews(bare, "2026-10-15") == []
+def test_a_lapsed_review_is_one_past_its_due_date_with_no_note_in_force():
+    reg, target, due = synthetic_registry()
+    day = lambda n: (due + timedelta(days=n)).isoformat()            # noqa: E731
+    assert event_risk.lapsed_reviews(reg, day(0)) == []                   # on its due date
+    assert event_risk.lapsed_reviews(reg, day(1)) == [target["symbol"]]
+    noted = copy.deepcopy(reg)
+    next(e for e in noted["events"] if e["symbol"] == target["symbol"])["review_note"] = \
+        {"noted_on": day(1), "text": "stands as it is, and why"}
+    noted = event_risk.validate_registry(noted)
+    span = event_risk.REVIEW_NOTE_DAYS
+    assert event_risk.lapsed_reviews(noted, day(1)) == []
+    assert event_risk.lapsed_reviews(noted, day(1 + span)) == []          # the note's last day
+    assert event_risk.lapsed_reviews(noted, day(2 + span)) == [target["symbol"]]   # due again
 
 
 def test_the_review_check_reads_new_yorks_date_and_names_each_lapsed_entry(tmp_path, capsys):
     from tools import check_event_reviews as tool
-    assert tool.main([], now=datetime(2026, 11, 26, 4, 0, tzinfo=timezone.utc)) == 0       # still the 25th in New York
-    assert tool.main([], now=datetime(2026, 11, 26, 5, 30, tzinfo=timezone.utc)) == 1
-    assert "MG (review due 2026-11-25)" in capsys.readouterr().err
-    assert tool.main(["--today", "2026-11-19"]) == 0
-    assert "ACVA overdue, each with its note" in capsys.readouterr().out
-    bad = tmp_path / "registry.json"
+    reg, target, due = synthetic_registry()
+    path = tmp_path / "registry.json"
+    path.write_text(json.dumps(reg))
+    midnight = datetime.combine(due + timedelta(days=1), datetime.min.time(), tzinfo=ZoneInfo("America/New_York"))
+    before, after = midnight - timedelta(minutes=30), midnight + timedelta(minutes=30)
+    assert tool.main(["--registry", str(path)], now=before.astimezone(timezone.utc)) == 0    # still the due date
+    assert tool.main(["--registry", str(path)], now=after.astimezone(timezone.utc)) == 1
+    assert f"{target['symbol']} (review due {target['review_due']})" in capsys.readouterr().err
+    assert tool.main(["--registry", str(path), "--today", due.isoformat()]) == 0
+    bad = tmp_path / "bad.json"
     bad.write_text("{}")
-    assert tool.main(["--registry", str(bad), "--today", "2026-11-19"]) == 2
+    assert tool.main(["--registry", str(bad), "--today", due.isoformat()]) == 2
 
 
 def test_ci_runs_the_review_check_on_the_real_date():
@@ -370,8 +408,7 @@ def test_ci_runs_the_review_check_on_the_real_date():
 
 def test_the_readme_quotes_the_flags_and_the_cross_checks_numbers_from_the_modules():
     readme = " ".join((ROOT / "README.md").read_text().split())
-    forms = ", ".join(f for f in sec_flags.FORMS if not f.endswith("/A"))
-    assert f"({forms} and their amendments)" in readme
+    assert f"({', '.join(sec_flags.FORMS)})" in readme
     items = sec_flags.ITEMS
     assert f"every 8-K carrying item {', '.join(items[:-1])} or {items[-1]}" in readme
     assert f"filed in the {sec_flags.WINDOW_DAYS} days before the signal session" in readme
@@ -379,7 +416,8 @@ def test_the_readme_quotes_the_flags_and_the_cross_checks_numbers_from_the_modul
     assert f"more than {cross_check.PRICE_PCT:g}% from the sip bar" in readme
     assert f"a volume reading more than {cross_check.VOLUME_PCT:g}% off" in readme
     assert f"prices within {cross_check.PRICE_PCT:g}% and the two feeds' volume ratios within {cross_check.VOLUME_PCT:g}%" in readme
-    assert cross_check.VOLUME_BASIS == "ratio_to_prior_session" and "(`cross_check.VOLUME_BASIS`)" in readme
+    assert cross_check.VOLUME_BASIS == "ratio_to_prior_session"
+    assert "(`cross_check.VOLUME_BASIS`, a departure from the program's literal volume rule" in readme
 
 
 def test_the_env_example_names_the_cross_checks_bound_and_needs_no_new_variable():
@@ -392,3 +430,145 @@ def test_a_rules_block_that_is_not_an_object_is_named_and_never_raises():
     data = page("full")
     data["rules"]["cross_check"] = "x"
     assert cross_check.faults(data) == ["rules.cross_check is not an object"]
+
+
+# ------------------------------------------- the review's holes, closed ---
+NAN = float("nan")
+
+
+@pytest.mark.parametrize("sip, x, reason", [
+    (SIP, frame([(PRIOR, 99.0, 100.0, 98.0, 99.5, 30_000), ("2026-11-18", NAN, NAN, NAN, NAN, NAN)]),
+     "bar_not_finite"),
+    (SIP, iex(close=NAN), "bar_not_finite"),
+    (SIP, iex(volume=NAN), "bar_not_finite"),
+    (SIP, iex(prior_volume=NAN), "no_prior_volume"),
+    (frame([(PRIOR, 99.0, 100.0, 98.0, 99.5, NAN), ("2026-11-18", 100.0, 106.0, 99.5, 105.0, 2_000_000)]),
+     iex(), "no_prior_volume"),
+    (SIP, iex(close=float("inf")), "bar_not_finite"),
+])
+def test_a_value_that_is_not_a_finite_number_is_unknown_never_a_pass(sip, x, reason):
+    out = cross_check.compare(sip, x, DAY)
+    assert (out["result"], out["reason"], out["differences"]) == ("unknown", reason, None)
+
+
+def test_a_prior_row_that_is_not_the_session_before_in_both_feeds_is_unknown():
+    gapped = frame([("2026-11-10", 99.0, 100.0, 98.0, 99.5, 30_000), ("2026-11-18", 100.0, 106.0, 99.5, 105.0, 60_000)])
+    out = cross_check.compare(SIP, gapped, DAY)
+    assert (out["result"], out["reason"]) == ("unknown", "no_prior_session")
+    sip_gapped = frame([("2026-11-10", 99.0, 100.0, 98.0, 99.5, 1_000_000),
+                        ("2026-11-18", 100.0, 106.0, 99.5, 105.0, 2_000_000)])
+    assert cross_check.compare(sip_gapped, gapped, DAY)["reason"] == "no_prior_session"
+    # the same frames compared on the absolute basis never ask the prior row
+    assert cross_check.compare(SIP, gapped, DAY, basis="absolute")["reason"] != "no_prior_session"
+
+
+@pytest.mark.parametrize("kwargs, field", [
+    ({"close": 105.0 * 1.005004}, "close"),
+    ({"volume": 60_000 * 1.10004}, "volume"),
+])
+def test_a_difference_just_past_its_tolerance_fails_unrounded(kwargs, field):
+    out = cross_check.compare(SIP, iex(**kwargs), DAY)
+    assert (out["result"], out["reason"]) == ("fail", f"differ: {field}")
+    tolerance = cross_check.PRICE_PCT if field == "close" else cross_check.VOLUME_PCT
+    assert tolerance < out["differences"][field] < tolerance + 0.01
+
+
+def _crossed() -> dict:
+    data = page("full")
+    data.pop("fixture", None)
+    rows = data["run"]["cross_check"]["rows"]
+    assert rows and data["run"]["cross_check"]["volume_basis"] == cross_check.VOLUME_BASIS
+    return data
+
+
+def test_the_validator_rederives_each_rows_result_from_its_differences():
+    data = _crossed()
+    assert cross_check.faults(data) == []
+    report.validate(data)
+    row = data["run"]["cross_check"]["rows"][0]
+    for diffs, result, words in (
+            ({"open": 9.0, "high": 9.0, "low": 9.0, "close": 9.0, "volume": 80.0}, "pass", "is not what its differences give"),
+            ({"open": 0.0, "high": 0.0, "low": 0.0, "close": 0.0, "volume": 0.0}, "fail", "is not what its differences give"),
+            (None, "pass", "carries no finite differences"),
+            ({"open": None, "high": 0.0, "low": 0.0, "close": 0.0, "volume": 0.0}, "pass", "carries no finite differences")):
+        forged = copy.deepcopy(data)
+        target = forged["run"]["cross_check"]["rows"][0]
+        target.update(result=result, differences=diffs, reason=None if result == "pass" else "differ: x")
+        forged["run"]["cross_check"]["status"] = cross_check.status_of(forged["run"]["cross_check"]["rows"])
+        assert any(words in f for f in cross_check.faults(forged)), words
+        with pytest.raises(ValueError, match="cross_check"):
+            report.validate(forged)
+    assert row["ticker"]
+    loosened = copy.deepcopy(data)
+    loosened["run"]["cross_check"]["price_pct"] = 9.0
+    assert "run.cross_check tolerances are not the rules it archived" in cross_check.faults(loosened)
+
+
+def test_an_amended_merger_proxy_is_flagged_as_the_issuer_reader_reads_it():
+    # the forms the issuer reader counts as an acquisition's, and no other
+    assert set(sec_flags.FORMS) == issuer_evidence.ACQUISITION_FORMS
+    sec = sec_with({"AMDP": [(days_before(8), "DEFM14A/A", "")], "AMPR": [(days_before(9), "PREM14A/A", "")]})
+    block = sec_flags.collect(names("AMDP", "AMPR"), SESSION, fetch=sec, now=NOW)
+    assert [(r["ticker"], r["state"], r["filings"][0]["form"]) for r in block["rows"]] == [
+        ("AMDP", "flagged", "DEFM14A/A"), ("AMPR", "flagged", "PREM14A/A")]
+
+
+def test_the_window_holds_its_first_day_and_not_the_day_before():
+    sec = sec_with({"EDGE": [(days_before(sec_flags.WINDOW_DAYS), "SC TO-T", "")],
+                    "PAST": [(days_before(sec_flags.WINDOW_DAYS + 1), "SC TO-T", "")]})
+    state = {r["ticker"]: r["state"] for r in sec_flags.collect(names("EDGE", "PAST"), SESSION, fetch=sec, now=NOW)["rows"]}
+    assert state == {"EDGE": "flagged", "PAST": "clear"}
+
+
+def test_a_spent_deadline_asks_nothing_and_leaves_every_name_unknown():
+    sec = sec_with({"AAA": [(days_before(2), "SC TO-T", "")], "BBB": []})
+    block = sec_flags.collect(names("AAA", "BBB"), SESSION, fetch=sec, now=NOW, deadline_seconds=0)
+    assert [(r["state"], r["reason"]) for r in block["rows"]] == [("unknown", "time_budget")] * 2
+    assert block["requests"] == 0 and sec.calls == [] and block["status"] == "unknown"
+
+
+def _flagged() -> dict:
+    data = page("full")
+    data.pop("fixture", None)
+    assert sec_flags.faults(data) == []
+    return data
+
+
+@pytest.mark.parametrize("change, words", [
+    (lambda b: b.update(forms=b["forms"][:-1]), "not the rules it archived"),
+    (lambda b: b.update(window_days=b["window_days"] + 1), "not the rules it archived"),
+    (lambda b: b.update(items=["9.01"]), "not the rules it archived"),
+    (lambda b: b["rows"][0].update(state="clear", cik=None, filings=[]), "names no CIK"),
+    (lambda b: b["rows"][0].update(state="flagged", cik=b["rows"][0].get("cik") or 1,
+                                   filings=[{"accession": "a", "filing_date": "2000-01-03", "form": "SC TO-T",
+                                             "items": []}]), "outside the window"),
+    (lambda b: b["rows"][0].update(state="flagged", cik=b["rows"][0].get("cik") or 1,
+                                   filings=[{"accession": "a", "filing_date": b["session"], "form": "10-Q",
+                                             "items": []}]), "of no listed form or item"),
+])
+def test_the_flags_validator_holds_each_row_to_the_window_and_the_archived_forms(change, words):
+    data = _flagged()
+    block = data["run"]["sec_flags"]
+    if not block["rows"]:
+        block["rows"].append({"stage": "burst", "ticker": "X", "state": "clear", "reason": None, "cik": 1,
+                              "filings": []})
+    change(block)
+    block["status"] = sec_flags.status_of(block["rows"])
+    assert any(words in f for f in sec_flags.faults(data)), (words, sec_flags.faults(data))
+    with pytest.raises(ValueError, match="sec_flags"):
+        report.validate(data)
+
+
+def test_a_lapsed_note_is_named_with_its_date_by_the_review_check(tmp_path, capsys):
+    from tools import check_event_reviews as tool
+    reg, target, due = synthetic_registry()
+    noted = (due + timedelta(days=1)).isoformat()
+    target["review_note"] = {"noted_on": noted, "text": "stands as it is, and why"}
+    path = tmp_path / "registry.json"
+    path.write_text(json.dumps(reg))
+    last = (due + timedelta(days=1 + event_risk.REVIEW_NOTE_DAYS)).isoformat()
+    after = (due + timedelta(days=2 + event_risk.REVIEW_NOTE_DAYS)).isoformat()
+    assert tool.main(["--registry", str(path), "--today", last]) == 0
+    assert "with a note in force" in capsys.readouterr().out
+    assert tool.main(["--registry", str(path), "--today", after]) == 1
+    assert f"its note of {noted} answered for {event_risk.REVIEW_NOTE_DAYS} days" in capsys.readouterr().err

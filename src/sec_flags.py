@@ -22,7 +22,7 @@ from typing import Any
 
 VERSION = 1
 #: (P) the forms a cash deal or a change of control files under, and their amendments
-FORMS = ("SC TO-T", "SC TO-T/A", "SC 14D9", "SC 14D9/A", "DEFM14A", "PREM14A")
+FORMS = ("SC TO-T", "SC TO-T/A", "SC 14D9", "SC 14D9/A", "DEFM14A", "DEFM14A/A", "PREM14A", "PREM14A/A")
 #: (P) the 8-K items that name a deal, a completed acquisition, a delisting notice or a change in control
 ITEMS = ("1.01", "2.01", "3.01", "5.01")
 #: (P) a filing within this many calendar days before the signal session, or since it, is recent
@@ -172,14 +172,23 @@ def safe_collect(names: list[dict], session: str, **kwargs) -> dict:
 
 
 def faults(data: dict) -> list[str]:
-    """The block's shape, one level in, under rules that archive it."""
+    """The block one level in, under rules that archive it: its forms, items and
+    window are the archived ones, a row that was read names its CIK, and each
+    flagged filing is inside the window and of a listed form or item. A ticket
+    with no row reads as unknown in ``orders.json``, so a dropped row holds the
+    ticket for review rather than clearing it."""
     archived = (data.get("rules") or {}).get("sec_flags") if isinstance(data.get("rules"), dict) else None
     run = data.get("run") if isinstance(data.get("run"), dict) else {}
     block = run.get("sec_flags")
     if archived is None:
         return [] if block is None else ["run.sec_flags present under rules that do not write it"]
+    if not isinstance(archived, dict):
+        return ["rules.sec_flags is not an object"]
     if not isinstance(block, dict) or block.get("version") != VERSION:
         return ["run.sec_flags is missing or not this version"]
+    if (block.get("forms"), block.get("items"), block.get("window_days")) != \
+            (archived.get("forms"), archived.get("items"), archived.get("window_days")):
+        return ["run.sec_flags forms, items or window are not the rules it archived"]
     out = []
     rows = block.get("rows")
     if not isinstance(rows, list) or not all(isinstance(r, dict) and r.get("state") in STATES
@@ -190,6 +199,14 @@ def faults(data: dict) -> list[str]:
         out.append("run.sec_flags status is not its rows'")
     elif any((r["state"] == FLAGGED) != bool(r["filings"]) for r in rows):
         out.append("run.sec_flags a row's state is not its filings'")
+    elif any(r["state"] != UNKNOWN and not isinstance(r.get("cik"), (str, int)) for r in rows):
+        out.append("run.sec_flags a row read as flagged or clear names no CIK")
+    elif not isinstance(block.get("since"), str) or any(
+            not isinstance(f, dict) or not isinstance(f.get("filing_date"), str) or f["filing_date"] < block["since"]
+            or not (f.get("form") in block["forms"] or (isinstance(f.get("items"), list) and f["items"]
+                                                        and set(f["items"]) <= set(block["items"])))
+            for r in rows for f in r["filings"]):
+        out.append("run.sec_flags a flagged filing is outside the window or of no listed form or item")
     if not isinstance(block.get("sentence"), str):
         out.append("run.sec_flags sentence is not text")
     return out
