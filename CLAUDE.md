@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6606 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6612 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15438,3 +15438,74 @@ touched and every one fixed:
 **Not claimable:** the first night's brief (the first evening run after the
 merge writes it; until then the brief's links are 404); the watch's first
 alert; that any analyst bot follows the prompt; any trading edge.
+
+## Checkpoint, 19 Nov 2026 -- PR #220 accepted; a burst ticket's buy stop is the close plus the anticipation cushion (#221)
+
+**PR #220, accepted.** Merged as `b1192f3a` on `main`. The program that
+followed it (the owner's of 19 November: a single nightly handoff an execution
+agent can trade from, in eight PRs) starts here.
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` restarted from
+`main` at `b1192f3a`, **PR #221**. The published record, picks, compact
+reader, every receipt, the history, the evidence objects and the quality
+ledger are untouched; no run, mail, dispatch or provider call.
+
+**The rule (the owner's decision).** A burst ticket's buy stop is the close
+plus `plan.trigger_cushion()` -- the larger of `plan.TRIGGER_CENTS` ($0.02)
+and `plan.TRIGGER_FRACTION` (0.1%) of the close, the anticipation ticket's own
+cushion -- where every earlier record bought from the close itself.
+- `plan.BURST_TRIGGER_RULE` is `close_plus_cushion`, archived as
+  `plan.burst_trigger_rule`, so `rules_version` moves. A record that archives
+  none was made under `close` (`plan.archived_burst_trigger_rule()`); an
+  unknown rule is a refusal.
+- `burst_plan()` defaults to the legacy rule, so the frozen signal-outcome
+  study keeps its meaning; the pipeline passes the production rule.
+- The limit, the stop cascade and the 4% line are all judged at the new
+  trigger (`burst_limit()`, `burst_stop(..., trigger=)`); a ticket whose line
+  fails there is withheld. The planned entry is never under the buy stop.
+- A plan made under the new rule carries `trigger_rule`, `trigger_cushion`
+  and `trigger_note`; a legacy plan keeps its exact shape.
+- `record.replay()` walks each pick from the `entry_ref` it archived; the
+  verifier, the review-selection replay, the brief, the stop research and the
+  two study tools each read the record's own rule.
+- The broker note, the protocol, `knowledge/rules.md`, `method.md`, the
+  analyst prompt, the page, the mail and the walkthrough say both rules.
+
+**The reading** (`docs/input-truthfulness/2026-11-19-burst-trigger-comparison.md`,
+`tools/burst_trigger_comparison.py`): the frozen study's walk run once per
+rule over 55 publications, 49 sessions. Under the cushion 7,483 first days
+open under the buy stop against 6,491 (46.9% open at or over it against
+53.3%), and 189 more setups are withheld by the 4% line at the higher
+trigger. Admitted mean R
+−0.151 against −0.16, both intervals including zero: no edge claim either
+way. **Not run:** the owner's lookback-130 backtest over the private run-6
+archive (`tools/historical_backtest.py --burst-trigger-rule`), which needs his
+computer; the commands are in the PR.
+
+**Fixtures.** The `next` fixture's AAPL opens a cent over its new buy stop
+(`tools/make_fixture.py`), so its story stays a fill and a stop; every
+cascaded generator regenerated in dependency order. Eight intraday and input
+tests that read the legacy mechanics run under a `legacy_burst_trigger`
+fixture.
+
+**Mutation pass**, each mutant in a detached worktree judged by the whole
+test files naming its rule: 18 mutants and a control. 14 died first; **four
+survived, each a hole**:
+- the stop cascade judged at the close;
+- the planned entry allowed under the buy stop;
+- the review-selection replay previewing under the legacy rule;
+- the entry-limit study pricing under the legacy rule.
+
+Each has its test now (a bar whose half-range stop sits a nickel over the
+close; a $1.20 bar whose cushion is wider than the slippage; a spy on the
+replay's previews; a one-row record under each archived rule), and all four
+die re-judged. The control (a comment) survives.
+
+**Keep / fix / defer / omit.** Keep: a rule is versioned and every old record
+reads under the one it archived. Fix if it bites: on a low-priced name the
+cushion is wider than the 1% slippage, so the planned entry is the trigger.
+Defer: whether Fidelity accepts the buy stop before the open, which only the
+owner's sitting shows. Omit: any change to the anticipation cushion.
+
+**Not claimable:** the first night under the rule; the private backtest; any
+trading edge.

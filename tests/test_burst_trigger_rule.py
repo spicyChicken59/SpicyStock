@@ -207,3 +207,68 @@ def test_the_stop_research_and_brief_read_an_older_plan_family_as_this_planner()
     assert plan.archived_rules_differ({**family, "burst_trigger_rule": "x"}) == ["plan.burst_trigger_rule"]
     assert plan.archived_rules_differ({**family, "max_stop_pct": 3.0}) == ["plan.max_stop_pct"]
     assert plan.archived_rules_differ({**family, "extra": 1}) == ["plan.extra"]
+
+
+# ------------------------------------------------ what the trigger moves ----
+def test_a_stop_over_the_close_holds_only_under_the_trigger_that_clears_it():
+    """The cascade asks each stop to sit under the TRIGGER, not the close: a
+    half-range stop a nickel over the close is a stop under the cushioned buy
+    stop, and under ``close`` the cascade falls through to the burst low."""
+    over = dict(ticker="X", close=100.0, low=96.05, high=104.05, open_=97.0, prev_close=95.0,
+                gain_pct=5.26, account=ACCOUNT)
+    new = plan.burst_plan(**over, trigger_rule=plan.BURST_TRIGGER_RULE)
+    old = plan.burst_plan(**over, trigger_rule=plan.LEGACY_BURST_TRIGGER_RULE)
+    assert new["eligible"] and new["stop_basis"] == "half_range"
+    assert over["close"] < new["stop"] < new["entry_ref"] < new["limit"]
+    assert (new["stop"], new["entry_ref"], new["limit"]) == (100.05, 100.10, 104.0)
+    assert old["stop_basis"] == "burst_low" and (old["stop"], old["limit"]) == (96.05, 100.05)
+
+
+def test_the_planned_entry_is_never_under_the_buy_stop():
+    """At a low price the cushion is wider than the 1% assumed slippage: the
+    planned entry, the targets' basis, is the trigger itself, never under it."""
+    low_price = dict(ticker="X", close=1.20, low=1.16, high=1.23, open_=1.17, prev_close=1.14,
+                     gain_pct=5.26, account=ACCOUNT)
+    new = plan.burst_plan(**low_price, trigger_rule=plan.BURST_TRIGGER_RULE)
+    assert new["eligible"] and (new["entry_ref"], new["limit"]) == (1.22, 1.23)
+    assert new["planned_entry"] == new["entry_ref"] == 1.22          # close + 1% would be 1.21
+    old = plan.burst_plan(**low_price, trigger_rule=plan.LEGACY_BURST_TRIGGER_RULE)
+    assert old["planned_entry"] == 1.21 > old["entry_ref"]
+
+
+def _one_row_record(trigger_rule):
+    data = json.loads((ROOT / "tests" / "fixtures" / "page" / "full.json").read_text())
+    row = {**next(b for b in data["bursts"] if b["ticker"] == "AAPL"),
+           "close": 100.0, "low": 96.05, "high": 104.05, "open": 97.0, "prev_close": 95.0, "gain_pct": 5.26}
+    data["bursts"] = [row]
+    if trigger_rule is None:
+        data["rules"]["plan"].pop("burst_trigger_rule")
+    else:
+        data["rules"]["plan"]["burst_trigger_rule"] = trigger_rule
+    return data
+
+
+@pytest.mark.parametrize("archived, basis, limit", [("close_plus_cushion", "half_range", 104.0),
+                                                     (None, "burst_low", 100.05)])
+def test_the_entry_limit_study_prices_a_record_under_the_rule_it_archived(archived, basis, limit):
+    from tools import entry_limit_study as study
+    out = study.study(_one_row_record(archived))
+    production = out["rows"][0]["production"]
+    assert (production["basis"], production["limit"]) == (basis, limit)
+
+
+@pytest.mark.parametrize("archived", ["close_plus_cushion", None])
+def test_the_review_selection_replay_previews_under_the_rule_the_record_archived(archived, monkeypatch):
+    from src import review_selection
+    seen, real = [], plan.burst_plan
+
+    def spy(**kwargs):
+        seen.append(kwargs.get("trigger_rule"))
+        return real(**kwargs)
+
+    monkeypatch.setattr(plan, "burst_plan", spy)
+    data = json.loads((ROOT / "tests" / "fixtures" / "page" / "full.json").read_text())
+    if archived is None:
+        data["rules"]["plan"].pop("burst_trigger_rule")
+    review_selection.replay(data)
+    assert seen and set(seen) == {archived or plan.LEGACY_BURST_TRIGGER_RULE}

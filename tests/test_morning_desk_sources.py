@@ -103,7 +103,9 @@ def test_the_buy_stop_sentence_is_the_broker_notes_rule_and_only_for_a_burst_row
     note = prose(ROOT / "knowledge" / "broker-fidelity.md")
     # the note's words for the rule, and the page's sentence quoting them
     assert "buy stop loss and buy stop limit orders must be entered at a price above the current market price" in note
-    assert "A burst ticket's trigger IS the burst session's close" in note
+    # under each burst trigger rule: the buy stop at the close, or a cushion over it
+    assert "Under `close`, the rule of every record made before it, a burst ticket's trigger IS the burst session's close" in note
+    assert "Under `close_plus_cushion`, the production rule, it is the close plus the same cushion" in note
     assert "Fidelity’s words say a buy stop must be entered above the current market price" in PAGE
     # words appended to the comparison line, for a burst row alone, before the sentence that keeps it no instruction
     assert "(row.kind === 'burst' ? buyStopWords(checks) : '') + ' These dated comparisons are not an entry or cancellation instruction.'" in PAGE
