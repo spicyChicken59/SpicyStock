@@ -7,6 +7,12 @@
   // a part fill, the text report.BROKER_PART_FILL and docs/app.js carry
   // (tests/test_docs.py holds the three equal).
   const BROKER_PART_FILL = 'Fidelity’s rule: an OTO’s sell stop is released only when the buy fills in full. SpicyStock’s advice: wherever a ticket, a plan or its dated schedule says the sell stop is attached at or live from the fill, that assumes a full fill; if the buy fills only in part, place a separate Sell Stop Loss, Good ’til Canceled, at the stop for the shares that filled, confirm Fidelity accepts it on shares bought that day, and check that no second sell stop remains for shares you do not hold.';
+  // Fidelity's stated buy-stop rule and what it means for a burst ticket, whose
+  // buy stop is the burst session's close: the text report.BROKER_BUY_STOP and
+  // docs/app.js carry (tests/test_broker_buy_stop.py holds the three equal).
+  // Shown in the readback of a bursts-stage draft only, after the part-fill
+  // text; a setting-up draft's trigger sits above its last close.
+  const BROKER_BUY_STOP = 'Fidelity’s rule: a buy stop or buy stop-limit order must be entered at a stop price above the current market price. SpicyStock’s advice: a burst ticket’s buy stop is the burst day’s close, so it can be entered as written only while the stock trades under that price; which price Fidelity compares it with before the open (the close or a pre-market quote) is unconfirmed. Once the stock trades at or over the buy stop the ticket cannot be entered as written, and SpicyStock offers no other order; the model’s ‘filled at the open’ assumes the order was already resting before the open.';
   const labels = {
     submitted_quantity: 'Total shares submitted', submitted_at: 'Submission time',
     filled_quantity: 'Cumulative entry shares filled', average_price: 'Average entry fill price ($)', filled_at: 'Latest entry fill time',
@@ -406,6 +412,7 @@
     readback.append(node('summary', {}, 'Saved draft readback and dated exit plan'),
       node('p', { class: 'sc-hint' }, 'Original personal draft, retained as history after broker facts are reported. A planned protective order is not confirmed protection.'),
       node('p', { class: 'sc-hint', 'data-broker-part-fill': '' }, BROKER_PART_FILL),
+      node('p', { class: 'sc-hint', 'data-broker-buy-stop': '', hidden: '' }, BROKER_BUY_STOP),
       node('pre', { class: 'ss-handoff__readback', 'data-handoff-text': '' }),
       node('h4', {}, 'Archived model exit schedule'),
       node('p', { class: 'sc-hint' }, 'Original published dates and wording. This schedule is not resized to your personal draft or reported holdings; review the whole-share exit check and your prior exits before acting.'),
@@ -526,6 +533,7 @@
       host.querySelector('[data-handoff-completed]').setAttribute('data-result-outcome', 'unknown');
       host.querySelector('[data-handoff-copy]').disabled = true;
       host.querySelector('[data-handoff-text]').textContent = '';
+      host.querySelector('[data-broker-buy-stop]').hidden = true;
       host.querySelector('[data-handoff-exits]').replaceChildren();
       refreshEditorStatus(); return;
     }
@@ -585,6 +593,8 @@
     host.querySelector('[data-handoff-warnings]').replaceChildren(...summary.warnings.map(text => node('li', {}, text)));
     host.querySelector('[data-handoff-exit-review]').textContent = summary.exit_review.message;
     host.querySelector('[data-handoff-text]').textContent = api.handoff.readback(item);
+    // the buy-stop rule beside a burst draft's readback only: the draft froze its stage
+    host.querySelector('[data-broker-buy-stop]').hidden = noDraft || item.plan.stage !== 'bursts';
     host.querySelector('[data-handoff-exits]').replaceChildren(...(noDraft ? [] : item.plan.exit_schedule.map(row => node('li', {}, row.date + ' · ' + row.instruction))));
     const available = current ? api.handoff.availability(current) : { ok: false, error: 'This handoff is no longer available in saved storage.' };
     host.querySelector('[data-handoff-copy]').disabled = !available.ok;

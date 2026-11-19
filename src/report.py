@@ -994,13 +994,20 @@ def _trade_block(burst: dict, breadth: dict | None) -> str:
     grade, score = _text(burst.get("grade")), _num(burst.get("score"))
     chip = _chip(f"{grade or _DASH} · {score:.1f}" if score is not None else (grade or _DASH),
                  _GRADE_TONE.get(grade or "", "neutral"))
-    lo, hi = _price(plan.get("entry_low")), _price(plan.get("entry_high"))
-    zone = f"{lo}–{hi}" if lo and hi else _show(lo or hi)
-    facts = [f"Buy zone {esc(zone)}", f"Stop {esc(_show(_price(plan.get('stop'))))}",
-             f"Shares {esc(_show(str(_int(plan.get('shares'))) if _int(plan.get('shares')) is not None else None))}"]
+    # The order is a buy stop at the trigger with a limit over it, so it buys
+    # nothing under the trigger: the facts name the buy stop, the limit and
+    # the line under which an open is skipped, each as its own price, where
+    # the plan carries it. They were printed as one "buy zone" from the skip
+    # line to the limit, a range the ticket cannot buy the lower part of.
+    trigger, hi, lo = _price(plan.get("entry_ref")), _price(plan.get("entry_high")), _price(plan.get("entry_low"))
+    facts = [f"Buy stop {esc(_show(trigger))}", f"Limit {esc(_show(hi))}"]
+    if lo:
+        facts.append(f"Skip an open under {esc(lo)}")
+    facts += [f"Stop {esc(_show(_price(plan.get('stop'))))}",
+              f"Shares {esc(_show(str(_int(plan.get('shares'))) if _int(plan.get('shares')) is not None else None))}"]
     # the ticket's limit and the day-2 line are two prices; where the record
-    # carries both and they differ, the mail says so rather than let the top
-    # of the buy zone be read as the extension threshold
+    # carries both and they differ, the mail says so rather than let the
+    # limit be read as the extension threshold
     outer = _price(plan.get("day2_spent_above"))
     if outer and hi and outer != hi:
         facts.append(f"Too extended over {esc(outer)}")
@@ -1087,6 +1094,36 @@ BROKER_PART_FILL = ("Fidelity’s rule: an OTO’s sell stop is released only wh
 
 def _part_fill_note() -> str:
     return f'<p style="{_S_MUTED}">{esc(BROKER_PART_FILL)}</p>'
+
+
+#: What Fidelity's stated rule for a buy stop means for a BURST ticket, labelled
+#: apart as the part-fill text is: Fidelity's rule, that a buy stop or buy
+#: stop-limit order is entered at a stop price above the current market price
+#: (knowledge/broker-fidelity.md, item 2: read off a search excerpt), and
+#: SpicyStock's advice. A burst ticket's buy stop is the burst session's close
+#: (``plan.burst_plan()``: ``entry_ref`` is the close), so the ticket can be
+#: entered as written only while the stock trades under that close; which
+#: price Fidelity compares the stop with before the open is unconfirmed; the
+#: plan writes no other order (``plan.fidelity_orders()``); and the model's
+#: fill at the open (``record.fill()``) is the fill of an order already
+#: resting. An anticipation ticket's trigger sits above its last close, so
+#: this is printed beside burst orders only, after the part-fill text, and
+#: never inside a ticket's terms or a copied order. The page holds the same
+#: text in ``docs/app.js`` and the private handoff in
+#: ``docs/app-handoff-ui.js`` (each ``BROKER_BUY_STOP``), and
+#: ``tests/test_broker_buy_stop.py`` holds the three equal.
+BROKER_BUY_STOP = ("Fidelity’s rule: a buy stop or buy stop-limit order must be entered at a stop price "
+                   "above the current market price. "
+                   "SpicyStock’s advice: a burst ticket’s buy stop is the burst day’s close, so it can be "
+                   "entered as written only while the stock trades under that price; which price Fidelity "
+                   "compares it with before the open (the close or a pre-market quote) is unconfirmed. "
+                   "Once the stock trades at or over the buy stop the ticket cannot be entered as written, "
+                   "and SpicyStock offers no other order; the model’s ‘filled at the open’ assumes the order "
+                   "was already resting before the open.")
+
+
+def _buy_stop_note() -> str:
+    return f'<p style="{_S_MUTED}">{esc(BROKER_BUY_STOP)}</p>'
 
 
 #: The words that already say a stock has no ticket. A reason that opens with
@@ -1261,6 +1298,9 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
             out.append(_earnings_line(data, "burst", b.get("ticker")))
         if any(_trade_order(b) for b in trades):
             out.append(_part_fill_note())
+            # burst orders only: a setting-up ticket's trigger is over its
+            # last close, so the alerts below bring the part-fill text alone
+            out.append(_buy_stop_note())
     else:
         out.append(f'<p style="margin:0 0 12px">No orders for the next session.</p>')
     out.extend(_no_ticket_lines(data))

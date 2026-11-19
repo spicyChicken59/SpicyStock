@@ -659,14 +659,16 @@ def test_no_consumer_reads_the_ticket_limit_as_the_day_two_line():
 
 
 def test_the_mail_names_the_day_two_line_only_when_it_is_not_the_limit():
-    """The digest prints the ticket's zone; where the record carries a
-    separate extension threshold it says so, and where the two are one price
-    it does not print it twice."""
+    """The digest prints the ticket's buy stop, its limit and the line under
+    which an open is skipped; where the record carries a separate extension
+    threshold it says so, and where the two are one price it does not print
+    it twice."""
     burst = {"ticker": "AAA", "grade": "A+", "score": 9.1, "summary": "AAA: a burst.",
-             "plan": {"entry_low": 98.0, "entry_high": 103.64, "day2_spent_above": 104.0,
+             "plan": {"entry_ref": 100.0, "entry_low": 98.0, "entry_high": 103.64, "day2_spent_above": 104.0,
                       "stop": 99.5, "shares": 6, "position_usd": 621.84}}
     html = report._trade_block(burst, None)
-    assert "Buy zone 98.00–103.64" in html and "Too extended over 104.00" in html
+    assert "Buy stop 100.00 · Limit 103.64 · Skip an open under 98.00" in html and "Too extended over 104.00" in html
+    assert "Buy zone" not in html
     same = json.loads(json.dumps(burst))
     same["plan"]["entry_high"] = same["plan"]["day2_spent_above"] = 104.0
     assert "Too extended over" not in report._trade_block(same, None)

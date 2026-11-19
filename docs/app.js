@@ -1702,7 +1702,7 @@
   // not a reason to hide what was published for it -- the reader may need to
   // read back an order already sitting in a broker -- but it is every reason
   // not to hand it over as something to place now.
-  function recordedTicket(plan, avail) {
+  function recordedTicket(plan, avail, burst) {
     const lines = ticket(plan.order_json) || [];
     const wrap = el('div', { 'class': 'ss-order ss-order--history', 'data-recorded-ticket': plan.ticker || '' });
     wrap.appendChild(el('div', { 'class': 'ss-order__head' }, [
@@ -1713,12 +1713,13 @@
     wrap.appendChild(pre);
     wrap.appendChild(el('p', { 'class': 'ss-order__readback', text: 'History, not an order to place. ' + cancelLine() }));
     wrap.appendChild(partFillNote());
+    if (burst) wrap.appendChild(buyStopNote());
     return wrap;
   }
   // the order, as written by the run: shown only when the plan carries one,
   // the page is not stale, pending or without a verdict, AND the session its
   // entry window belongs to has not had that window close
-  function orderBlock(plan, extraHint, withheld) {
+  function orderBlock(plan, extraHint, withheld, burst) {
     const lines = withheld ? null : ticket(plan.order_json);
     const wrap = el('div', { 'class': 'ss-order' });
     if (!lines) { wrap.appendChild(el('p', { 'class': 'sc-hint', text: extraHint || 'No order.' })); return wrap; }
@@ -1733,6 +1734,7 @@
       wrap.appendChild(el('ul', { 'class': 'ss-notes ss-order__terms' }, terms.map((t) => el('li', { text: t }))));
     }
     wrap.appendChild(partFillNote());
+    if (burst) wrap.appendChild(buyStopNote());
     return wrap;
   }
   function stopWords(plan) {
@@ -1879,6 +1881,17 @@
   // tests/test_docs.py.
   const BROKER_PART_FILL = 'Fidelity’s rule: an OTO’s sell stop is released only when the buy fills in full. SpicyStock’s advice: wherever a ticket, a plan or its dated schedule says the sell stop is attached at or live from the fill, that assumes a full fill; if the buy fills only in part, place a separate Sell Stop Loss, Good ’til Canceled, at the stop for the shares that filled, confirm Fidelity accepts it on shares bought that day, and check that no second sell stop remains for shares you do not hold.';
   const partFillNote = (extra) => el('p', { 'class': 'sc-hint ss-order__broker' + (extra ? ' ' + extra : ''), 'data-broker-part-fill': '', text: BROKER_PART_FILL });
+  // Fidelity's stated rule for a buy stop -- entered above the current market
+  // price -- and what it means for a BURST ticket, whose buy stop is the burst
+  // session's close (src/plan.py burst_plan(): entry_ref is the close), each
+  // labelled (knowledge/broker-fidelity.md, item 2). Printed through
+  // buyStopNote() directly after partFillNote() wherever that prints for a
+  // burst ticket, and never for a setting-up ticket, whose trigger sits above
+  // its last close; never inside a ticket's terms or a copied order.
+  // report.BROKER_BUY_STOP and the handoff's copy are held equal to it by
+  // tests/test_broker_buy_stop.py.
+  const BROKER_BUY_STOP = 'Fidelity’s rule: a buy stop or buy stop-limit order must be entered at a stop price above the current market price. SpicyStock’s advice: a burst ticket’s buy stop is the burst day’s close, so it can be entered as written only while the stock trades under that price; which price Fidelity compares it with before the open (the close or a pre-market quote) is unconfirmed. Once the stock trades at or over the buy stop the ticket cannot be entered as written, and SpicyStock offers no other order; the model’s ‘filled at the open’ assumes the order was already resting before the open.';
+  const buyStopNote = () => el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-buy-stop': '', text: BROKER_BUY_STOP });
   // Saying there is no ticket, once. STATUS_WORDS already answers "no ticket"
   // for below_grade, not_admitted and no_plan and CUT_WORDS answers "ticket
   // withheld", so a sentence that leads with those words must not close with
@@ -3370,8 +3383,12 @@
     wrap.appendChild(el('div', { 'class': 'sc-table-scroll ss-compare__facts' }, compareTable(a, b)));
     // the ticket row prints a recorded order line, so the broker's rule and the
     // advice for a part fill sit under the table whenever one is printed
-    if ([a, b].some((c) => c.status === 'ticket' && text((c.plan || {}).order_line)))
+    if ([a, b].some((c) => c.status === 'ticket' && text((c.plan || {}).order_line))) {
       wrap.appendChild(partFillNote());
+      // a comparison pins two candidates of one stage: the buy-stop rule
+      // follows only when the order line printed is a burst ticket's
+      if ([a, b].some((c) => c.stage === 'bursts' && c.status === 'ticket' && text((c.plan || {}).order_line))) wrap.appendChild(buyStopNote());
+    }
     wrap.appendChild(el('p', { 'class': 'sc-hint', text: 'Every value is the published record’s own, for ' + dateWords(run.session) + '. A marked row is one the two records differ on — it is not a verdict, and nothing here says which setup is better. Each chart keeps its own price scale and its own dates; the two are never drawn on one axis.' }));
     dlg.appendChild(wrap);
     function sync() {
@@ -4457,7 +4474,8 @@
         el('span', { 'class': 'sc-eyebrow', text: 'the instruction in that record' }),
         el('p', { 'class': 'ss-saved__order', text: '“' + (text(snap.instruction) || text(snap.order_line)) + '”' }),
         el('p', { 'class': 'sc-hint', text: 'Recorded for ' + dateWords(item.session) + ' and shown as history. It is not an instruction for today, and no order can be placed from it here.' }),
-        snap.status === 'ticket' ? partFillNote() : null
+        snap.status === 'ticket' ? partFillNote() : null,
+        snap.status === 'ticket' && item.kind === 'burst' ? buyStopNote() : null
       ]));
     }
     return box;
@@ -4625,7 +4643,10 @@
   // line, so the part-fill note follows it.
   function originalStatus(lead, c, tail) {
     const nodes = [el('p', { 'data-original-status': '', text: lead + statusWords(c.status)[0] + '. ' + c.reason + '. ' + tail })];
-    if (c.status === 'ticket' && text(c.reason)) nodes.push(partFillNote());
+    if (c.status === 'ticket' && text(c.reason)) {
+      nodes.push(partFillNote());
+      if (c.stage === 'bursts') nodes.push(buyStopNote());
+    }
     return nodes;
   }
   function entryInstruction(plan) {
@@ -4768,7 +4789,10 @@
     // The bar's offer moves with the clock, so reclockDetail() repaints both.
     const need = c.plan || {};
     const barCarries = c.stage !== 'bursts' && !!(candidateAvailability(c) || {}).offered && !!text(need.order_line);
-    if (c.status === 'ticket' && !barCarries && (entryInstruction(c.plan) || text(need.order_line))) section.querySelector('[data-item="need"]').appendChild(partFillNote());
+    if (c.status === 'ticket' && !barCarries && (entryInstruction(c.plan) || text(need.order_line))) {
+      section.querySelector('[data-item="need"]').appendChild(partFillNote());
+      if (c.stage === 'bursts') section.querySelector('[data-item="need"]').appendChild(buyStopNote());
+    }
     if (c.status !== 'ticket') {
       const reasons = independentWaitReasons(c, current);
       section.querySelector('[data-item="wait"]').appendChild(el('ul', { 'data-all-blockers': '' }, reasons.map(p => el('li', { text: p }))));
@@ -4830,9 +4854,10 @@
       if (isNum(plan.hazard_multiplier) && plan.hazard_multiplier < 1) sizing.push(...(plan.hazards || []).map(sentence));
       if (isNum((plan.multipliers || {}).regime) && plan.multipliers.regime < 1) sizing.push('Breadth size multiplier: ' + plain(plan.multipliers.regime) + '.');
       if (sizing.length) box.appendChild(el('p', { 'class': 'sc-hint ss-action__sizing', 'data-sizing-note': '', text: sizing.join(' ') }));
-      // the card's Copy order hands the ticket over, so Fidelity's rule is
-      // read just above it and is never inside the copied lines
+      // the card's Copy order hands the ticket over, so Fidelity's rules are
+      // read just above it and are never inside the copied lines
       box.appendChild(partFillNote());
+      box.appendChild(buyStopNote());
     } else {
       box.appendChild(el('p', { 'data-no-entry-reason': '', text: c.status === 'ticket' ? available.reason : cap(sentence(noTicketWhy(c) || 'The run did not publish a ticket.')) }));
     }
@@ -5038,8 +5063,18 @@
     const available = candidateAvailability(c), offered = !!(available && available.offered), withheld = c.status !== 'ticket' || !offered, t = plan.targets || {};
     if (c.stage === 'bursts' && withheld) kids.push(el('p', { 'class': 'sc-note', text: 'Recorded plan for inspection. No SpicyStock entry for this setup. ' + (c.status === 'ticket' ? available.reason : cap(sentence(noTicketWhy(c)))) }));
     if (c.stage === 'bursts') {
+      // The band a ticket can fill in: from the buy stop, which buys nothing
+      // under it, up to the limit. The row was "buy <skip line> – <limit>", a
+      // range whose lower part the order cannot buy; the skip line keeps its
+      // own row below. A setup the stop rule withheld (plan.eligible false)
+      // has no limit a ticket could carry, and the row says so. The buy stop
+      // is called the burst close only where it is the row's own close.
+      const atClose = isNum(c.row.close) && plan.entry_ref === c.row.close ? ' (the burst close)' : '';
+      const limitNote = text(plan.limit_note) ? ' · ' + plan.limit_note : '';
       kids.push(factList([
-        ['buy', usd(plan.entry_low) + ' – ' + usd(plan.entry_high), (plan.entry_window || '') + ' · a buy stop at ' + usd(plan.entry_ref) + ', limit ' + usd(plan.entry_high) + (text(plan.limit_note) ? ' · ' + plan.limit_note : ''), true],
+        plan.eligible === false
+          ? ['ticket fills', 'no ticket', 'the buy stop would be ' + usd(plan.entry_ref) + atClose + limitNote, true]
+          : ['ticket fills', usd(plan.entry_ref) + ' – ' + usd(plan.entry_high), (plan.entry_window || '') + ' · a buy stop at ' + usd(plan.entry_ref) + atClose + ', limit ' + usd(plan.entry_high) + ' · under the buy stop the order waits and buys nothing' + limitNote, true],
         ['skip if it opens above', usd(plan.skip_if_open_above), 'day 2 is spent' + (isNum(plan.limit) && isNum(plan.skip_if_open_above) && plan.limit !== plan.skip_if_open_above ? ', the outer threshold and not the ' + usd(plan.limit) + ' ticket limit' : '') + '; a resting order could still fill on a pullback, so cancel it'],
         ['skip if it opens below', usd(plan.skip_if_open_below), 'the burst is failing; do not place it'],
         ['stop', stopWords(plan), 'judged at the ' + usd(plan.sizing_price) + ' limit · move it to your entry day’s low once filled', true],
@@ -5077,8 +5112,8 @@
       : noTicketLine(c) + ' The setup is kept here for inspection.';
     // the ticket the record published stays printed as history even when it is
     // no longer offered: withdrawing the COPY is not erasing the evidence
-    if (c.status === 'ticket' && (av.timingBlocked || available.observationBlocked) && plan.order_json) kids.push(recordedTicket(plan, available));
-    kids.push(orderBlock(plan, hint, withheld));
+    if (c.status === 'ticket' && (av.timingBlocked || available.observationBlocked) && plan.order_json) kids.push(recordedTicket(plan, available, c.stage === 'bursts'));
+    kids.push(orderBlock(plan, hint, withheld, c.stage === 'bursts'));
     return disclosure('disc-plan', 'Conditional plan, sizing and order', withheld ? (c.status === 'ticket' ? available.lead : statusWords(c.status)[0]) : 'sized at the limit', kids);
   }
   // Whose rule an exit is, in words (the marks of src/plan.py's own legend).
@@ -5111,7 +5146,10 @@
         el('div', { 'class': 'sc-timeline__body' }, [el('p', { text: cap(s.instruction || '') })])
       ]))));
       else kids.push(el('p', { 'class': 'sc-hint', text: 'The plan carries no dated schedule.' }));
-      if (c.status === 'ticket' && entryInstruction(plan)) kids.push(partFillNote());
+      if (c.status === 'ticket' && entryInstruction(plan)) {
+        kids.push(partFillNote());
+        if (c.stage === 'bursts') kids.push(buyStopNote());
+      }
       const exits = (plan.exits || []).filter((x) => x && (x.when || x.rule));
       if (exits.length) {
         kids.push(el('div', { 'class': 'sc-eyebrow', text: 'the rules the schedule follows' }));
@@ -5250,7 +5288,8 @@
     const committed = rows.reduce((a, b) => a + (b.plan.position_usd || 0), 0), risk = rows.reduce((a, b) => a + (b.plan.risk_usd || 0), 0);
     table.appendChild(el('tfoot', null, el('tr', null, el('td', { colspan: '10', text: plural(rows.length, 'order') + ' · ' + usd(committed, 0) + ' would be committed at the limits · ' + usd(risk, 0) + ' planned price-to-stop risk · ' + (isNum(acct.equity) && acct.equity ? (100 * committed / acct.equity).toFixed(1) : '—') + '% of the configured equity' }))));
     sheet.appendChild(table);
-    if (rows.length) sheet.appendChild(partFillNote());
+    // the sheet lists burst tickets only, so the buy-stop rule follows too
+    if (rows.length) { sheet.appendChild(partFillNote()); sheet.appendChild(buyStopNote()); }
     rows.forEach(b => {
       const c = model.byId['bursts:' + b.ticker] || { status: '' };
       const words = earningsLine(c);
@@ -5547,14 +5586,20 @@
         : ['The entry window for ' + day + ' has ended.', 'Nothing new was offered for it. ' + (open ? 'Review the open public-model plans and wait for the next run.' : 'Wait for the next published scan.'), 'ended'];
     }
     const waitingForReader = (data.bursts || []).some(b => ['A+', 'A'].includes(b.grade) && readerCoverage(b).state !== 'accepted');
+    // What the ticket writes and what Fidelity is known to do with it, kept
+    // apart: the OTO is the ticket's own form, the full-fill release is
+    // Fidelity's stated rule, and whether Fidelity's ticket accepts this OTO --
+    // or, when a burst ticket is among them, a buy stop at the last close --
+    // is unconfirmed (knowledge/broker-fidelity.md).
+    const unconfirmed = 'Fidelity releases an OTO stop only when the buy fills in full, and whether Fidelity’s ticket accepts this OTO' + (model.tickets.bursts ? ', or a burst ticket’s buy stop at its last close,' : '') + ' is unconfirmed.';
     if (!orders && waitingForReader) return ['No new burst ticket for ' + day + '.',
       'Mechanical A+/A candidates remain research only while accepted reader review is missing. This does not establish a setup failure. ' + (open ? 'Existing open model plans keep their recorded instructions. ' : '') + line, 'quiet'];
     if (ph === 'open') {
       return orders
-        ? ['The entry window for ' + day + ' is in progress.', 'Review the ' + plural(orders, 'conditional ticket') + ' and each setup’s restrictions. If you submit an order, its sell stop is part of it (OTO), and Fidelity releases that stop only when the buy fills in full; cancel any unfilled entry by the end of the ' + window + '. ' + line, 'orders']
+        ? ['The entry window for ' + day + ' is in progress.', 'Review the ' + plural(orders, 'conditional ticket') + ' and each setup’s restrictions. If you submit an order, its sell stop is written as part of it (OTO): ' + unconfirmed + ' Cancel any unfilled entry by the end of the ' + window + '. ' + line, 'orders']
         : ['Nothing new to place in ' + day + '’s window.', 'No setup qualified with a ticket. ' + line, 'quiet'];
     }
-    if (orders) return ['Review ' + plural(orders, 'conditional ticket') + ' for ' + day + '.', 'If you choose to follow a plan, review its conditions and prepare before ' + by_ + '. Its sell stop is part of the order (OTO), and Fidelity releases that stop only when the buy fills in full; cancel an unfilled entry by the end of the ' + window + '. SpicyStock submits nothing. ' + line, 'orders'];
+    if (orders) return ['Review ' + plural(orders, 'conditional ticket') + ' for ' + day + '.', 'If you choose to follow a plan, review its conditions and prepare before ' + by_ + '. Its sell stop is written as part of the order (OTO): ' + unconfirmed + ' Cancel an unfilled entry by the end of the ' + window + '. SpicyStock submits nothing. ' + line, 'orders'];
     if (open) return ['Nothing new to place for ' + day + '. Review the open public-model plans.', 'No setup qualified with a ticket tonight; the open model plans still carry their instructions. ' + line, 'quiet'];
     return ['No new entry offered for ' + day + '.', 'No setup qualified with a ticket and there are no open public-model plans. Come back after the next run. ' + line, 'quiet'];
   }

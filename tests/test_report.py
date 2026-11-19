@@ -32,7 +32,7 @@ ORDER_LINE = "Buy 69 XYZ stop-limit 12.34/12.71 day; OTO sell stop 11.62 GTC"
 
 
 def _plan(**over) -> dict:
-    plan = {"entry_low": 12.34, "entry_high": 12.71, "stop": 11.62, "shares": 69, "position_usd": 852,
+    plan = {"entry_ref": 12.34, "entry_low": 12.34, "entry_high": 12.71, "stop": 11.62, "shares": 69, "position_usd": 852,
             "entry_window_minutes": 30, "target_low": 13.33, "target_high": 14.81, "horizon_sessions": 5,
             "order_line": ORDER_LINE}
     plan.update(over)
@@ -153,7 +153,7 @@ def test_the_mail_prints_the_part_fill_rule_only_beside_an_order_it_printed():
     # a trade whose plan carries no order line prints no ticket, so no broker sentence
     plan = {**_plan(), "order_line": None}
     text = _rendered(digest_html(build(**_night(bursts=[_burst(plan=plan), _miss()], watchlist=quiet))))
-    assert "Buy zone" in text and report.BROKER_PART_FILL not in text, text
+    assert "Buy stop 12.34" in text and report.BROKER_PART_FILL not in text, text
     # an alert row carrying its order line itself, its plan carrying none
     own = {"top": [{"ticker": "WCH", "setups": ["TI65"], "trigger": 20.05, "stop": 18.9, "shares": 40,
                     "order_line": "Buy 40 WCH stop 20.05 limit 20.30; OTO sell stop 18.90", "plan": {}}],
@@ -215,7 +215,7 @@ def test_an_order_line_of_blank_space_or_not_text_is_no_order_and_brings_no_part
         plan = {**_plan(), "order_line": line}
         html = digest_html(build(**_night(bursts=[_burst(plan=plan), _miss()], watchlist=quiet)))
         text = _rendered(html)
-        assert "Buy zone" in text and "Buy 69 XYZ" not in text and report.BROKER_PART_FILL not in text, (line, text)
+        assert "Buy stop 12.34" in text and "Buy 69 XYZ" not in text and report.BROKER_PART_FILL not in text, (line, text)
         # and the card prints no order block for it at all: a <pre> of blank
         # space or of a number is an order the sentence would have to follow
         assert "<pre" not in html, (line, html[html.find("<pre"):html.find("<pre") + 200])
@@ -672,7 +672,8 @@ def test_the_digest_carries_the_order_line_the_plans_and_the_alerts():
     markup = digest_html(data)
     text = _rendered(markup)
     assert ORDER_LINE in text
-    assert "Buy zone 12.34–12.71" in text and "Stop 11.62" in text and "Shares 69" in text
+    assert "Buy stop 12.34 · Limit 12.71" in text and "Stop 11.62" in text and "Shares 69" in text
+    assert "Buy zone" not in text
     assert summary(data["bursts"][0]) in text
     assert "SELL HALF" in text and "Sell half at the open; raise the stop to 9.40." in text
     assert "WCH" in text and "Trigger 20.05" in text and "Stop 18.90" in text and "Shares 40" in text
