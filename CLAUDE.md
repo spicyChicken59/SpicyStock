@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6901 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6926 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15843,3 +15843,34 @@ weighting moves); each has its case now. One mutant of mine was a syntax
 error and is not counted.
 
 **Not claimable:** any edge, for production or a variant.
+
+## Checkpoint, 19 Nov 2026 -- PR 6 accepted; the strategy page, generated from the code and the installed record (PR 7)
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` from `main` after
+PR 6. No rule moves. `docs/strategy.html` is new and is written by the code,
+never by hand.
+
+**What it is** (`src/strategy_page.py`, `tools/build_strategy_page.py`): one
+static page, built from the module constants and the installed
+`docs/data.json` alone: the market light with each of the five breadth rules
+at the night's own scaled thresholds and values, fired or clear; the
+discovery scans and the admission gate; the checklist's letters, weights,
+bands and veto names; the ticket (the buy stop at the close plus the
+cushion, the stop-constrained limit, the stop cascade and the 4% line); every
+exit rule of `plan.EXIT_RULES` with its source mark, the EP9M rule attributed
+to its third party; and the night's funnel in the record's own sentence.
+The module types no digit of its own (an AST guard). The evening writes the
+page after the handoff (`pipeline.publish_strategy()`) and removes one it
+cannot write; the publication gate serves it as committed and refuses a
+link; CI runs `python tools/build_strategy_page.py --check`, which fails when
+the page is not what the code and the committed record write.
+
+**Mutation pass**, each mutant in a detached worktree judged by
+`tests/test_strategy_page.py`: 7 mutants and a control. **One survived, a
+hole**: the alarm rule read strictly over its threshold, because no case sat
+on a threshold; each rule is now read at its own boundary and the mutant
+dies, with the strict-ratio and the hot-mark boundaries beside it. The
+control survives.
+
+**Not claimable:** the first page the evening writes (the first evening run
+after the merge); any trading edge.
