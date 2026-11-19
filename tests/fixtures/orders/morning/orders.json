@@ -8,7 +8,7 @@
   "risk_pct": 0.5,
   "slots_used": 4
  },
- "content_sha256": "8bf22b9778f3816c3db9518b5b6dfd149baee03827c1febf3dc962e571a17971",
+ "content_sha256": "ccd5671784a22db3721796c5c723e801c3dff9b507db75c40ccd1ed881bb83a9",
  "entry_window": {
   "cutoff_at": "2026-09-11T10:00:00-04:00",
   "opens_at": "2026-09-11T09:30:00-04:00",
@@ -63,6 +63,10 @@
   {
    "code": "cross_check_not_run",
    "scope": "night"
+  },
+  {
+   "code": "cross_check_not_run",
+   "scope": "AAPL"
   }
  ],
  "schema": "docs/operations/orders-schema.json",
@@ -92,8 +96,8 @@
  },
  "summary": {
   "blocked": 0,
-  "go": 1,
-  "human_review": 0,
+  "go": 0,
+  "human_review": 1,
   "tickets": 1
  },
  "tickets": [
@@ -113,6 +117,12 @@
      "status": "pass"
     },
     {
+     "detail": null,
+     "key": "cross_check",
+     "reason": "cross_check_not_run",
+     "status": "not_evaluated"
+    },
+    {
      "detail": "$505.88 at the limit against a $2,500.00 cap",
      "key": "position_cap",
      "reason": null,
@@ -125,7 +135,7 @@
      "status": "pass"
     }
    ],
-   "content_sha256": "429d0af0464f2c225f9612dc64b055e7bca5aa8b29b3684dab21344d3178422f",
+   "content_sha256": "216e1e575e6d56fda416b2190b2dc336b9aea70cbab399176b99ffa546506cf7",
    "entry": {
     "cancel_if_unfilled_at": "2026-09-11T10:00:00-04:00",
     "limit_price": 126.47,
@@ -429,7 +439,9 @@
     "time_in_force": "gtc",
     "type": "sell_stop"
    },
-   "reasons": [],
+   "reasons": [
+    "cross_check_not_run"
+   ],
    "risk": {
     "plan_risk_usd": 20.2,
     "position_cap_usd": 2500.0,
@@ -444,7 +456,7 @@
    "setup_type": "burst",
    "shares": 4,
    "size_multiplier": 0.5,
-   "status": "go",
+   "status": "human_review",
    "symbol": "AAPL"
   }
  ],

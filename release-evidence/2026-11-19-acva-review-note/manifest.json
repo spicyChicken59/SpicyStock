@@ -1,0 +1,20 @@
+{
+ "purpose": "A dated note on the manual event registry (knowledge/event-risk.json): ACVA's review had lapsed on 15 October 2026, and from this change CI refuses an unresolved entry whose review has lapsed without a review_note (tools/check_event_reviews.py). It records the note added and why ACVA stays listed. It is not news coverage, clears no stock, and resolves no entry.",
+ "noted_on": "2026-11-19",
+ "registry_before": {
+  "reviewed_on": "2026-11-19",
+  "sha256": "86c3b65b8386f98a6c2a98f1188aa8d5fd9143b0e3d8f3c474d6e84d013a0207"
+ },
+ "registry_after": {
+  "reviewed_on": "2026-11-19",
+  "sha256": "ce77e748e1d7b603fe84543b53ca0d6a0c23dcaa9bd19f21f8be483432eebbfa"
+ },
+ "changes": [
+  "ACVA: review_note added (noted_on 2026-11-19); reviewed_on, review_due, sources and status unchanged"
+ ],
+ "basis": "the 19 November 2026 event review's own finding for ACVA (release-evidence/2026-11-19-event-review/manifest.json): a search-result excerpt and the retained Nasdaq directory snapshots; no page bytes were captured, so no resolution was added",
+ "note": {
+  "noted_on": "2026-11-19",
+  "text": "Re-reviewed 19 November 2026. Copart's release of 16 October 2026 (https://www.sec.gov/Archives/edgar/data/0000900075/000119312526423478/d129535dex991.htm, read as a search-result excerpt; page bytes not captured) says the acquisition completed and ACV's shares ceased trading, and the retained Nasdaq directory snapshots drop ACVA from 20 October 2026. The registry ends an entry only with a resolution carrying the SHA-256 of captured bytes, and none could be captured from this sandbox, so the entry stays listed and blocked with its review overdue. A stock that no longer trades prints no bars and can carry no ticket. To end it, capture the release from a network that reaches sec.gov and add the resolution."
+ }
+}

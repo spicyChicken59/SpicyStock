@@ -2,6 +2,7 @@
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 import hashlib
+import copy
 import json
 from pathlib import Path
 
@@ -197,7 +198,15 @@ def test_the_november_review_adds_one_dated_source_and_resolves_nothing():
 def test_the_review_manifest_says_how_each_entry_was_read():
     manifest = json.loads((ROOT / "release-evidence" / "2026-11-19-event-review" / "manifest.json").read_text())
     assert manifest["reviewed_on"] == event_risk.REGISTRY["reviewed_on"]
-    assert manifest["registry_after"]["sha256"] == event_risk.registry_digest(event_risk.REGISTRY)
+    # the registry has moved once since, by ACVA's review note alone, and that
+    # change's own manifest names this one's registry as the one it began from
+    note = json.loads((ROOT / "release-evidence" / "2026-11-19-acva-review-note" / "manifest.json").read_text())
+    assert note["registry_before"] == manifest["registry_after"]
+    assert note["registry_after"]["sha256"] == event_risk.registry_digest(event_risk.REGISTRY)
+    before = copy.deepcopy(event_risk.REGISTRY)
+    acva = next(e for e in before["events"] if e["symbol"] == "ACVA")
+    assert note["note"] == acva.pop("review_note")
+    assert manifest["registry_after"]["sha256"] == event_risk.registry_digest(before)
     entries = {entry["symbol"]: entry for entry in manifest["entries"]}
     assert set(entries) == {event["symbol"] for event in event_risk.REGISTRY["events"]}
     # one entry rests on captured bytes, and they are the source the registry now carries

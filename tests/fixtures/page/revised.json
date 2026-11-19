@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "7d29c2846abd"
+  "rules_version": "901cff757d0c"
  },
  "cover": {
   "h1": "Trade next session. 2 A-quality bursts.",
@@ -945,7 +945,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "e25d869bf2e87a4a4eaa9fd47957adc41506a240ddf2283c57d390d9aa6af4c6"
+   "context_sha256": "cfd95da779533db8ae9b749bf6ae89b3496012b394c4df53564338d8fb86464c"
   },
   "earnings": {
    "version": 2,
@@ -1131,6 +1131,86 @@
    },
    "requests": 2,
    "sentence": "Earnings, estimated from SEC results filings for 2 tickets: 1 already reported this quarter; 1 not established. An estimate warns and never withholds a ticket. SEC current reports (8-K) in the 14 days before the signal or since: 1 with other items only; 1 not checked; a material item names a kind of event and withholds nothing."
+  },
+  "sec_flags": {
+   "version": 1,
+   "session": "2026-09-11",
+   "since": "2026-08-12",
+   "forms": [
+    "SC TO-T",
+    "SC TO-T/A",
+    "SC 14D9",
+    "SC 14D9/A",
+    "DEFM14A",
+    "PREM14A"
+   ],
+   "items": [
+    "1.01",
+    "2.01",
+    "3.01",
+    "5.01"
+   ],
+   "window_days": 30,
+   "rows": [
+    {
+     "stage": "burst",
+     "ticker": "NVDA",
+     "state": "clear",
+     "reason": null,
+     "cik": 1045810,
+     "filings": []
+    },
+    {
+     "stage": "burst",
+     "ticker": "COIL",
+     "state": "unknown",
+     "reason": "not_mapped",
+     "cik": null,
+     "filings": []
+    }
+   ],
+   "requests": 2,
+   "status": "unknown",
+   "retrieved_at": "2026-09-11T22:30:00+00:00",
+   "sentence": "SEC filings since 2026-08-12 were read for 2 names: none flagged; 1 could not be read (COIL), which is not clear. A flag names a filing's form or item, never what it says, and refuses nothing by itself."
+  },
+  "cross_check": {
+   "version": 1,
+   "feed": "iex",
+   "session": "2026-09-11",
+   "price_pct": 0.5,
+   "volume_pct": 10.0,
+   "volume_basis": "ratio_to_prior_session",
+   "rows": [
+    {
+     "stage": "burst",
+     "ticker": "NVDA",
+     "result": "pass",
+     "reason": null,
+     "differences": {
+      "open": 0.0,
+      "high": 0.0,
+      "low": 0.0,
+      "close": 0.0,
+      "volume": 0.0
+     }
+    },
+    {
+     "stage": "burst",
+     "ticker": "COIL",
+     "result": "pass",
+     "reason": null,
+     "differences": {
+      "open": 0.0,
+      "high": 0.0,
+      "low": 0.0,
+      "close": 0.0,
+      "volume": 0.0
+     }
+    }
+   ],
+   "status": "pass",
+   "sentence": "Each ticket's signal-day bar was read again from the iex feed: prices within 0.5% and each feed's volume against its own previous session within 10%. 2 of 2 agree."
   },
   "sanitised": {
    "replaced": 0,
@@ -1481,7 +1561,7 @@
    "max_events": 128,
    "max_sources": 8,
    "max_text_length": 2000,
-   "registry_sha256": "86c3b65b8386f98a6c2a98f1188aa8d5fd9143b0e3d8f3c474d6e84d013a0207",
+   "registry_sha256": "ce77e748e1d7b603fe84543b53ca0d6a0c23dcaa9bd19f21f8be483432eebbfa",
    "registry": {
     "version": 1,
     "coverage": "manual_known_events_only",
@@ -1617,7 +1697,11 @@
         "sha256": "a4c967bf63c74b3b15d5278adc37fcbc4c0ba738917e105fe0648c97a2a10eb5",
         "quote": "has been further extended until 5:00 p.m., Eastern Time, on October 15, 2026"
        }
-      ]
+      ],
+      "review_note": {
+       "noted_on": "2026-11-19",
+       "text": "Re-reviewed 19 November 2026. Copart's release of 16 October 2026 (https://www.sec.gov/Archives/edgar/data/0000900075/000119312526423478/d129535dex991.htm, read as a search-result excerpt; page bytes not captured) says the acquisition completed and ACV's shares ceased trading, and the retained Nasdaq directory snapshots drop ACVA from 20 October 2026. The registry ends an entry only with a resolution carrying the SHA-256 of captured bytes, and none could be captured from this sandbox, so the entry stays listed and blocked with its review overdue. A stock that no longer trades prints no bars and can carry no ticket. To end it, capture the release from a network that reaches sec.gov and add the resolution."
+      }
      },
      {
       "id": "zim-hapag-lloyd-cash-acquisition",
@@ -1760,6 +1844,33 @@
    "matching": "one_to_one",
    "window": "plan.final_exit_day sessions after the signal session",
    "unknown_policy": "never_clearance"
+  },
+  "sec_flags": {
+   "version": 1,
+   "forms": [
+    "SC TO-T",
+    "SC TO-T/A",
+    "SC 14D9",
+    "SC 14D9/A",
+    "DEFM14A",
+    "PREM14A"
+   ],
+   "items": [
+    "1.01",
+    "2.01",
+    "3.01",
+    "5.01"
+   ],
+   "window_days": 30,
+   "max_names": 20
+  },
+  "cross_check": {
+   "version": 1,
+   "feed": "iex",
+   "price_pct": 0.5,
+   "volume_pct": 10.0,
+   "volume_basis": "ratio_to_prior_session",
+   "max_names": 20
   },
   "pipeline": {
    "max_reads": 12,
@@ -2659,7 +2770,7 @@
     "event_risk": {
      "version": 1,
      "coverage": "manual_known_events_only",
-     "registry_sha256": "86c3b65b8386f98a6c2a98f1188aa8d5fd9143b0e3d8f3c474d6e84d013a0207",
+     "registry_sha256": "ce77e748e1d7b603fe84543b53ca0d6a0c23dcaa9bd19f21f8be483432eebbfa",
      "registry_reviewed_on": "2026-11-19",
      "session": "2026-09-11",
      "symbol": "NVDA",
@@ -2675,9 +2786,9 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "0a2bfd7f36781e395b17358ad01c10e0f1574fd427924687495aa7ebd7e76994",
-     "context_sha256": "e25d869bf2e87a4a4eaa9fd47957adc41506a240ddf2283c57d390d9aa6af4c6",
-     "plan_sha256": "d32d78df4508b72a6e62de2ccb5e110c4001892300b987a46ae35fc7149e2e8e",
+     "id": "ebb5899fbdee8cb02bf4c6edc28d7d105fdf7e649131c97d242323ca7e283dc9",
+     "context_sha256": "cfd95da779533db8ae9b749bf6ae89b3496012b394c4df53564338d8fb86464c",
+     "plan_sha256": "d3104f2a34fcb650373035567b336d2da083d7059d707b8b99df75c6d182d4f3",
      "pick_sha256": "ac99e3cc725c2f225d5b9a458e526ade8fd1a822562f3930a1c9b72fb4c4d0f3"
     }
    },
@@ -2782,7 +2893,7 @@
      },
      "regime_sha256": "230dd18557aab52477f733659567a590601fcd4c1ce6ec48a9b7e74989193906",
      "session": "2026-09-11",
-     "output_sha256": "d32d78df4508b72a6e62de2ccb5e110c4001892300b987a46ae35fc7149e2e8e",
+     "output_sha256": "d3104f2a34fcb650373035567b336d2da083d7059d707b8b99df75c6d182d4f3",
      "error": null,
      "pick_sha256": "ac99e3cc725c2f225d5b9a458e526ade8fd1a822562f3930a1c9b72fb4c4d0f3"
     },
@@ -2809,8 +2920,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-11",
-    "rules_version": "7d29c2846abd",
-    "context_sha256": "e25d869bf2e87a4a4eaa9fd47957adc41506a240ddf2283c57d390d9aa6af4c6",
+    "rules_version": "901cff757d0c",
+    "context_sha256": "cfd95da779533db8ae9b749bf6ae89b3496012b394c4df53564338d8fb86464c",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -2823,7 +2934,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "0a2bfd7f36781e395b17358ad01c10e0f1574fd427924687495aa7ebd7e76994"
+    "id": "ebb5899fbdee8cb02bf4c6edc28d7d105fdf7e649131c97d242323ca7e283dc9"
    },
    "series": [
     {
@@ -4289,7 +4400,7 @@
     "event_risk": {
      "version": 1,
      "coverage": "manual_known_events_only",
-     "registry_sha256": "86c3b65b8386f98a6c2a98f1188aa8d5fd9143b0e3d8f3c474d6e84d013a0207",
+     "registry_sha256": "ce77e748e1d7b603fe84543b53ca0d6a0c23dcaa9bd19f21f8be483432eebbfa",
      "registry_reviewed_on": "2026-11-19",
      "session": "2026-09-11",
      "symbol": "COIL",
@@ -4305,9 +4416,9 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "1a20f419c4b6fbbd5f6d5013b5de9dc4d9da225a4f03fa9d0fbb31fd19714549",
-     "context_sha256": "e25d869bf2e87a4a4eaa9fd47957adc41506a240ddf2283c57d390d9aa6af4c6",
-     "plan_sha256": "f9ccbac6e1ee13377109db3414152651a631f01fb0c90643b5c56e9df009684d",
+     "id": "26b6a315b029ccc90421dce82a534f7432ec6977762a9c9be94f47ac06f59895",
+     "context_sha256": "cfd95da779533db8ae9b749bf6ae89b3496012b394c4df53564338d8fb86464c",
+     "plan_sha256": "3e848c016328b563b85703a610d71dbd2db34b36b3fa873c67f642158b240a91",
      "pick_sha256": "9fdb24beebd58088eabaa9d1b32428e95984b77ddc18cae3d144100b84865f81"
     }
    },
@@ -4412,7 +4523,7 @@
      },
      "regime_sha256": "230dd18557aab52477f733659567a590601fcd4c1ce6ec48a9b7e74989193906",
      "session": "2026-09-11",
-     "output_sha256": "f9ccbac6e1ee13377109db3414152651a631f01fb0c90643b5c56e9df009684d",
+     "output_sha256": "3e848c016328b563b85703a610d71dbd2db34b36b3fa873c67f642158b240a91",
      "error": null,
      "pick_sha256": "9fdb24beebd58088eabaa9d1b32428e95984b77ddc18cae3d144100b84865f81"
     },
@@ -4439,8 +4550,8 @@
     "kind": "burst",
     "ticker": "COIL",
     "session": "2026-09-11",
-    "rules_version": "7d29c2846abd",
-    "context_sha256": "e25d869bf2e87a4a4eaa9fd47957adc41506a240ddf2283c57d390d9aa6af4c6",
+    "rules_version": "901cff757d0c",
+    "context_sha256": "cfd95da779533db8ae9b749bf6ae89b3496012b394c4df53564338d8fb86464c",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -4453,7 +4564,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "1a20f419c4b6fbbd5f6d5013b5de9dc4d9da225a4f03fa9d0fbb31fd19714549"
+    "id": "26b6a315b029ccc90421dce82a534f7432ec6977762a9c9be94f47ac06f59895"
    },
    "series": [
     {
@@ -5772,9 +5883,9 @@
    "limit": 126.47,
    "evidence_ref": {
     "version": 1,
-    "id": "0e5235d9e4cd67c4d3f2e6a4b41ed2549f7645774f3c46555bb3ff1cb32777a4",
-    "context_sha256": "ac165fc12bc20deada3d009832ebe926a076002391dea950a6d35da2dc299683",
-    "plan_sha256": "77d898e143644c9f12c0cfce19d88eed35d0ef48bee750dcb49e7df830133464",
+    "id": "a15704db2d6df376300545ef43553d3ff3c4b6309450601ae231c865daf5f4e2",
+    "context_sha256": "0f2f1709183bc671e9c559b5cf9416055bb1d27978748940a12d908c48d9473c",
+    "plan_sha256": "08a8f474c99587f085faadc5c6120ec7b9d6f176c5fc208ac7a26946df22b96c",
     "pick_sha256": "d61b9dc9c4f9b326d6040cc11ede22947c65e15fe7434f1f82c6bec390bf6ae5"
    }
   }
@@ -5834,7 +5945,7 @@
    "expected_session": "2026-09-11",
    "evaluated_session": "2026-09-11"
   },
-  "replay_rules_version": "7d29c2846abd"
+  "replay_rules_version": "901cff757d0c"
  },
  "observations": {
   "as_of": "2026-09-11",
@@ -6173,81 +6284,81 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:7d29c2846abd": {
+   "burst:AAPL:2026-09-10:901cff757d0c": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "7d29c2846abd",
+    "rules_version": "901cff757d0c",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:7d29c2846abd": {
+   "burst:AMD:2026-09-10:901cff757d0c": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "7d29c2846abd",
+    "rules_version": "901cff757d0c",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:7d29c2846abd": {
+   "burst:NVDA:2026-09-10:901cff757d0c": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "7d29c2846abd",
+    "rules_version": "901cff757d0c",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:7d29c2846abd": {
+   "burst:TSLA:2026-09-10:901cff757d0c": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "7d29c2846abd",
+    "rules_version": "901cff757d0c",
     "coverage": "observed"
    },
-   "burst:MSFT:2026-09-10:7d29c2846abd": {
+   "burst:MSFT:2026-09-10:901cff757d0c": {
     "ticker": "MSFT",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "7d29c2846abd",
+    "rules_version": "901cff757d0c",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:7d29c2846abd": {
+   "burst:PLUG:2026-09-10:901cff757d0c": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "7d29c2846abd",
+    "rules_version": "901cff757d0c",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:7d29c2846abd": {
+   "burst:DLLR:2026-09-10:901cff757d0c": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "7d29c2846abd",
+    "rules_version": "901cff757d0c",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:7d29c2846abd": {
+   "anticipation:COIL:2026-09-10:901cff757d0c": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "7d29c2846abd",
+    "rules_version": "901cff757d0c",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-11:7d29c2846abd": {
+   "burst:NVDA:2026-09-11:901cff757d0c": {
     "ticker": "NVDA",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "7d29c2846abd",
+    "rules_version": "901cff757d0c",
     "coverage": "observed"
    },
-   "burst:COIL:2026-09-11:7d29c2846abd": {
+   "burst:COIL:2026-09-11:901cff757d0c": {
     "ticker": "COIL",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "7d29c2846abd",
+    "rules_version": "901cff757d0c",
     "coverage": "observed"
    },
-   "anticipation:VRT:2026-09-11:7d29c2846abd": {
+   "anticipation:VRT:2026-09-11:901cff757d0c": {
     "ticker": "VRT",
     "session": "2026-09-11",
     "kind": "anticipation",
-    "rules_version": "7d29c2846abd",
+    "rules_version": "901cff757d0c",
     "coverage": "observed"
    }
   },
@@ -6528,7 +6639,7 @@
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
   "cover": "The night's verdict as sentences: h1, dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
-  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is what the night's chart reads cost in the API's own units -- calls sent, replies received, the four token classes -- under the model the run asked; it carries no price. run.intraday is the minute bars read for plans whose first day the daily bar could not place (a day that reached the trigger after the open): what tonight needed, asked for, fetched and stored under docs/intraday/, and the failures by kind; a plan walked from them names its object in minute_evidence. run.earnings is each published ticket's earnings warning, estimated from the company's SEC results filings (8-K item 2.02) a year back and read against the plan's hold window: an estimate and never an announced date, a warning and never a refusal, and a ticket SEC did not answer for says unknown; under version 2 each row also keeps the ticket's recent SEC current reports (8-K) and names the item codes they carry, a material item (1.01, 1.03, 2.01, 3.01, 5.01) by its heading and filing.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is what the night's chart reads cost in the API's own units -- calls sent, replies received, the four token classes -- under the model the run asked; it carries no price. run.intraday is the minute bars read for plans whose first day the daily bar could not place (a day that reached the trigger after the open): what tonight needed, asked for, fetched and stored under docs/intraday/, and the failures by kind; a plan walked from them names its object in minute_evidence. run.earnings is each published ticket's earnings warning, estimated from the company's SEC results filings (8-K item 2.02) a year back and read against the plan's hold window: an estimate and never an announced date, a warning and never a refusal, and a ticket SEC did not answer for says unknown; under version 2 each row also keeps the ticket's recent SEC current reports (8-K) and names the item codes they carry, a material item (1.01, 1.03, 2.01, 3.01, 5.01) by its heading and filing. run.sec_flags names each ticket's and listed setup's recent merger, tender-offer and deal filings by form and item code, a flag that holds the ticket for a person's review in orders.json and never a refusal or a clearance; run.cross_check reads each ticket's signal-day bar again from the iex feed, and a ticket whose two readings differ past the archived tolerances is blocked in orders.json.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",

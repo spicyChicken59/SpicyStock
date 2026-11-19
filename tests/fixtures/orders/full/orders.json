@@ -8,7 +8,7 @@
   "risk_pct": 0.5,
   "slots_used": 4
  },
- "content_sha256": "c4b43e5dd09a390c063d7adc7c962081ad21acf730b3d337b46f86ce50d3c9b2",
+ "content_sha256": "e92aa903d9dd58455361b8a24b2c4bd929437ac425c24ba882a982e9b9262656",
  "entry_window": {
   "cutoff_at": "2026-09-11T10:00:00-04:00",
   "opens_at": "2026-09-11T09:30:00-04:00",
@@ -43,10 +43,10 @@
    "status": "pass"
   },
   {
-   "detail": null,
+   "detail": "Each ticket's signal-day bar was read again from the iex feed: prices within 0.5% and each feed's volume against its own previous session within 10%. 1 of 1 agree.",
    "key": "cross_check",
-   "reason": "cross_check_not_run",
-   "status": "not_evaluated"
+   "reason": null,
+   "status": "pass"
   },
   {
    "detail": "4 of 4 slots; $2,268.86 committed and reserved of $10,000.00",
@@ -56,10 +56,6 @@
   }
  ],
  "reasons": [
-  {
-   "code": "cross_check_not_run",
-   "scope": "night"
-  },
   {
    "code": "sec_flag",
    "scope": "AAPL"
@@ -89,7 +85,7 @@
    "48 tickets in the scorecard's window are 48 distinct setups.",
    "By model account: $10,000 at 0.5% risk, 1 ticket from 2026-09-10 through 2026-09-10, 0 settled, no R yet. No model account is recorded for 47 more tickets.",
    "The 18 stopped tickets booked at the stop sum to -2.13R; read at that session's close, -1.74R; at its low, -4.67R.",
-   "There is no earlier publication's breadth to compare.",
+   "There is no earlier publication's breadth history to compare.",
    "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
   ],
   "settled": 20,
@@ -103,13 +99,13 @@
  },
  "source": {
   "applicable_session": "2026-09-11",
-  "context_sha256": "ac165fc12bc20deada3d009832ebe926a076002391dea950a6d35da2dc299683",
-  "data_sha256": "c884e304518e3e00fb57fed59f81a5c71b4c67a9e4dd5bac4dfd780efb3c0e16",
+  "context_sha256": "0f2f1709183bc671e9c559b5cf9416055bb1d27978748940a12d908c48d9473c",
+  "data_sha256": "65aa64d68df84ecc12071c073e36fce39fc61dea0b6645883618dec39c3998a6",
   "dry_run": false,
   "fixture": true,
-  "picks_sha256": "1427fe7847168a5fde0bc185f205e7b0979632fcd1bb4501f213b35921639bbb",
+  "picks_sha256": "6041bce20cd2448ff875045725b4c442704ca60075493269f51aaa2b5142ed83",
   "published_at": "2026-09-10T22:30:00+00:00",
-  "rules_version": "7d29c2846abd",
+  "rules_version": "901cff757d0c",
   "run_id": null,
   "session": "2026-09-10"
  },
@@ -136,6 +132,12 @@
      "status": "fail"
     },
     {
+     "detail": null,
+     "key": "cross_check",
+     "reason": null,
+     "status": "pass"
+    },
+    {
      "detail": "$505.88 at the limit against a $2,500.00 cap",
      "key": "position_cap",
      "reason": null,
@@ -148,7 +150,7 @@
      "status": "pass"
     }
    ],
-   "content_sha256": "60487858f30af70a1f1995764234a9eb8cd680f393fb99349eea8eba376410c3",
+   "content_sha256": "aa03815972a8c8b799a0b44657c1f1c2140f0543b480dc1fb43df35a69f469c2",
    "entry": {
     "cancel_if_unfilled_at": "2026-09-11T10:00:00-04:00",
     "limit_price": 126.47,
@@ -163,8 +165,8 @@
     "valid_until": "2026-09-11T10:00:00-04:00"
    },
    "evidence": {
-    "evidence_id": "0e5235d9e4cd67c4d3f2e6a4b41ed2549f7645774f3c46555bb3ff1cb32777a4",
-    "plan_sha256": "77d898e143644c9f12c0cfce19d88eed35d0ef48bee750dcb49e7df830133464"
+    "evidence_id": "a15704db2d6df376300545ef43553d3ff3c4b6309450601ae231c865daf5f4e2",
+    "plan_sha256": "08a8f474c99587f085faadc5c6120ec7b9d6f176c5fc208ac7a26946df22b96c"
    },
    "exit_plan": {
     "entry_basis": "average_fill_price",
@@ -464,7 +466,7 @@
     "risk_budget_usd": 25.0,
     "risk_usd": 20.2
    },
-   "rules_version": "7d29c2846abd",
+   "rules_version": "901cff757d0c",
    "session": "2026-09-10",
    "setup_type": "burst",
    "shares": 4,

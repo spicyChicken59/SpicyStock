@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "7d29c2846abd"
+  "rules_version": "901cff757d0c"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -953,7 +953,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "d423652de3ef1ef7002dfbef03cf6c207f00687a08183a408f085104a37403ac"
+   "context_sha256": "c097225bb0a357fda960c0c4a407cc88951a6cddbe44f2b50dc4638c566194d2"
   },
   "earnings": {
    "version": 2,
@@ -967,6 +967,41 @@
    "items_counts": {},
    "requests": 0,
    "sentence": "Earnings: no ticket to check."
+  },
+  "sec_flags": {
+   "version": 1,
+   "session": "2026-09-10",
+   "since": "2026-08-11",
+   "forms": [
+    "SC TO-T",
+    "SC TO-T/A",
+    "SC 14D9",
+    "SC 14D9/A",
+    "DEFM14A",
+    "PREM14A"
+   ],
+   "items": [
+    "1.01",
+    "2.01",
+    "3.01",
+    "5.01"
+   ],
+   "window_days": 30,
+   "rows": [],
+   "requests": 0,
+   "status": "not_applicable",
+   "sentence": "No ticket or listed setup to check SEC filings for."
+  },
+  "cross_check": {
+   "version": 1,
+   "feed": "iex",
+   "session": "2026-09-10",
+   "price_pct": 0.5,
+   "volume_pct": 10.0,
+   "volume_basis": "ratio_to_prior_session",
+   "rows": [],
+   "status": "not_applicable",
+   "sentence": "No ticket to cross-check."
   },
   "sanitised": {
    "replaced": 0,
@@ -1312,7 +1347,7 @@
    "max_events": 128,
    "max_sources": 8,
    "max_text_length": 2000,
-   "registry_sha256": "86c3b65b8386f98a6c2a98f1188aa8d5fd9143b0e3d8f3c474d6e84d013a0207",
+   "registry_sha256": "ce77e748e1d7b603fe84543b53ca0d6a0c23dcaa9bd19f21f8be483432eebbfa",
    "registry": {
     "version": 1,
     "coverage": "manual_known_events_only",
@@ -1448,7 +1483,11 @@
         "sha256": "a4c967bf63c74b3b15d5278adc37fcbc4c0ba738917e105fe0648c97a2a10eb5",
         "quote": "has been further extended until 5:00 p.m., Eastern Time, on October 15, 2026"
        }
-      ]
+      ],
+      "review_note": {
+       "noted_on": "2026-11-19",
+       "text": "Re-reviewed 19 November 2026. Copart's release of 16 October 2026 (https://www.sec.gov/Archives/edgar/data/0000900075/000119312526423478/d129535dex991.htm, read as a search-result excerpt; page bytes not captured) says the acquisition completed and ACV's shares ceased trading, and the retained Nasdaq directory snapshots drop ACVA from 20 October 2026. The registry ends an entry only with a resolution carrying the SHA-256 of captured bytes, and none could be captured from this sandbox, so the entry stays listed and blocked with its review overdue. A stock that no longer trades prints no bars and can carry no ticket. To end it, capture the release from a network that reaches sec.gov and add the resolution."
+      }
      },
      {
       "id": "zim-hapag-lloyd-cash-acquisition",
@@ -1591,6 +1630,33 @@
    "matching": "one_to_one",
    "window": "plan.final_exit_day sessions after the signal session",
    "unknown_policy": "never_clearance"
+  },
+  "sec_flags": {
+   "version": 1,
+   "forms": [
+    "SC TO-T",
+    "SC TO-T/A",
+    "SC 14D9",
+    "SC 14D9/A",
+    "DEFM14A",
+    "PREM14A"
+   ],
+   "items": [
+    "1.01",
+    "2.01",
+    "3.01",
+    "5.01"
+   ],
+   "window_days": 30,
+   "max_names": 20
+  },
+  "cross_check": {
+   "version": 1,
+   "feed": "iex",
+   "price_pct": 0.5,
+   "volume_pct": 10.0,
+   "volume_basis": "ratio_to_prior_session",
+   "max_names": 20
   },
   "pipeline": {
    "max_reads": 12,
@@ -2185,7 +2251,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "7d29c2846abd"
+  "replay_rules_version": "901cff757d0c"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -2463,7 +2529,7 @@
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
   "cover": "The night's verdict as sentences: h1, dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
-  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is what the night's chart reads cost in the API's own units -- calls sent, replies received, the four token classes -- under the model the run asked; it carries no price. run.intraday is the minute bars read for plans whose first day the daily bar could not place (a day that reached the trigger after the open): what tonight needed, asked for, fetched and stored under docs/intraday/, and the failures by kind; a plan walked from them names its object in minute_evidence. run.earnings is each published ticket's earnings warning, estimated from the company's SEC results filings (8-K item 2.02) a year back and read against the plan's hold window: an estimate and never an announced date, a warning and never a refusal, and a ticket SEC did not answer for says unknown; under version 2 each row also keeps the ticket's recent SEC current reports (8-K) and names the item codes they carry, a material item (1.01, 1.03, 2.01, 3.01, 5.01) by its heading and filing.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is what the night's chart reads cost in the API's own units -- calls sent, replies received, the four token classes -- under the model the run asked; it carries no price. run.intraday is the minute bars read for plans whose first day the daily bar could not place (a day that reached the trigger after the open): what tonight needed, asked for, fetched and stored under docs/intraday/, and the failures by kind; a plan walked from them names its object in minute_evidence. run.earnings is each published ticket's earnings warning, estimated from the company's SEC results filings (8-K item 2.02) a year back and read against the plan's hold window: an estimate and never an announced date, a warning and never a refusal, and a ticket SEC did not answer for says unknown; under version 2 each row also keeps the ticket's recent SEC current reports (8-K) and names the item codes they carry, a material item (1.01, 1.03, 2.01, 3.01, 5.01) by its heading and filing. run.sec_flags names each ticket's and listed setup's recent merger, tender-offer and deal filings by form and item code, a flag that holds the ticket for a person's review in orders.json and never a refusal or a clearance; run.cross_check reads each ticket's signal-day bar again from the iex feed, and a ticket whose two readings differ past the archived tolerances is blocked in orders.json.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",

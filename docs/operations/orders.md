@@ -70,15 +70,20 @@ Any JSON Schema validator reads it; the repository checks its own files with
   - `risk`: one R per share is the limit less the stop (the highest fill the
     ticket permits, the price the plan is sized at), `risk_usd` is shares
     times that, beside the night's risk budget and the position cap;
-  - `checks` and `status`: `go`, `human_review` (an SEC filing flag) or
-    `blocked` (the event registry, the position cap or the risk budget),
-    with the reasons.
+  - `checks` and `status`: `go`; `human_review` when an SEC filing flag
+    names the ticket (`run.sec_flags`, or a material 8-K item the earnings
+    warning read), when SEC could not be read for it, or when the
+    second-source cross-check could not be made for it; `blocked` when the
+    event registry refuses it, its iex signal-day bar differs from the
+    record's past the archived tolerance, or the position cap or the risk
+    budget is exceeded. Every reason is listed.
 - **`night_checks`**: the light, the run's status, whether the record was
   published in time (the run's own clock, `run.published_at`, before the
   entry window's `prepare_by` instant and before the applicable session
   opened; the run's clock is set near its start, so this measures when the
-  run began, not when its commit landed), the second-source cross-check, and
-  the account's slots and commitments. Each is `pass`, `fail` or
+  run began, not when its commit landed), whether the second-source
+  cross-check ran (`run.cross_check`; each ticket carries its own result),
+  and the account's slots and commitments. Each is `pass`, `fail` or
   `not_evaluated`, with a reason code.
 - **`trade_allowed`**: true only when every night check passes and at least
   one ticket is `go`. **`reasons`** lists every code that kept it false, for
@@ -93,7 +98,8 @@ Each ticket re-read against the morning receipt on `main`
 (`src/orders.MORNING_REASONS`):
 
 - the night did not allow trading, or `orders.json` did not mark the ticket
-  `go`;
+  `go` (`news_or_sec_flag` when an SEC flag or an unread SEC filing list held
+  it, `ticket_not_go` for any other hold or block);
 - the receipt is not bound to this record, or has no row for the ticket;
 - the receipt was completed outside the ticket's entry window: at or after its
   cutoff (`valid_until`, carried on each morning ticket), or in a phase that is
@@ -126,6 +132,8 @@ to this public repository.
 
 ## What it does not do
 
-It reads no account, no quote and no news of its own. It does not size from
+It reads no account, no quote and no news of its own: the SEC flags name a
+filing's form or item and never what it says, and the cross-check compares two
+of the provider's own feeds. It does not size from
 the owner's cash, does not confirm Fidelity accepts an order, and does not
 know whether a fill happened. A ticket here is the record's model plan.

@@ -86,7 +86,9 @@ DECISIONS = (GO, CANCEL)
 #: the night's checks, in the order they are reported
 NIGHT_CHECKS = ("light", "data", "publication_time", "cross_check", "account")
 #: each ticket's own checks, in the order they are reported
-TICKET_CHECKS = ("event_registry", "sec_flags", "position_cap", "risk_budget")
+TICKET_CHECKS = ("event_registry", "sec_flags", "cross_check", "position_cap", "risk_budget")
+#: a ticket reason that holds it for a person's review rather than blocking it
+REVIEW_REASONS = ("sec_flag", "sec_unknown", "cross_check_not_run", "cross_check_unknown")
 #: every reason a night or a ticket can carry
 REASONS = {
     "light_red": "the market light is red: no new longs",
@@ -100,6 +102,9 @@ REASONS = {
     "no_tickets": "the record published no ticket",
     "event_blocked": "the manual event registry refuses this ticket",
     "sec_flag": "an SEC filing flag needs a person's review",
+    "sec_unknown": "SEC filings could not be read for this ticket, which is not clear: a person reviews it",
+    "cross_check_failed": "the iex feed's signal-day bar differs from the record's past the archived tolerance",
+    "cross_check_unknown": "the iex feed had no comparable signal-day bar for this ticket: a person reviews it",
     "position_cap": "shares at the limit cost more than the position cap",
     "risk_budget": "shares at the limit risk more than the night's risk budget",
 }
@@ -136,8 +141,6 @@ GO_STATES = {"burst": ("below_trigger",), "anticipation": ("below_trigger", "bel
 HALT_CLEAR = ("not_listed", "resumption_reported")
 #: the receipt phases a ticket can still be entered in
 ENTRY_PHASES = ("upcoming", "open")
-#: the ticket reasons that hold a ticket for a person's review rather than block it
-REVIEW_REASONS = ("sec_flag",)
 POSITION_STATUSES = ("not_submitted", "submitted", "partially_filled", "filled", "cancelled", "closed")
 EXIT_REASONS = ("protective_stop", "stopped_at_open", "gap_20pct", "sell_half_8pct", "abnormal_10pct",
                 "day3_no_progress", "day3_sell_half", "day5_exit", "manual")
@@ -289,7 +292,11 @@ def _night(data: dict, tickets: list) -> list:
         on_time = before and published < prepare_by
         add("publication_time", PASS if on_time else FAIL, None if on_time else "late_publish",
             delivery.get("published_at"))
-    add("cross_check", NOT_EVALUATED, "cross_check_not_run")
+    cross = run.get("cross_check")
+    if isinstance(cross, dict) and isinstance(cross.get("status"), str):
+        add("cross_check", PASS, None, cross.get("sentence") if isinstance(cross.get("sentence"), str) else None)
+    else:
+        add("cross_check", NOT_EVALUATED, "cross_check_not_run")
     budget, account = _dict(data.get("cash_budget")), _dict(data.get("account"))
     committed = budget.get("committed_usd")
     reserved = budget.get("reserved_usd", 0.0)
@@ -305,19 +312,50 @@ def _night(data: dict, tickets: list) -> list:
 
 
 def ticket_status(failed: list) -> str:
-    """A ticket's status from its failed checks' reasons: blocked by any reason
-    that is not a review reason, held for review by a review reason alone."""
+    """A ticket's status from the reasons of its checks that did not pass:
+    blocked by any reason that is not a review reason, held for review by
+    review reasons alone."""
     return BLOCKED if set(failed) - set(REVIEW_REASONS) else HUMAN_REVIEW if failed else GO
 
 
-def _sec_flagged(data: dict, kind: str, ticker: str) -> str | None:
+def _row_for(block, kind: str, ticker: str):
     stage = "burst" if kind == "burst" else "anticipation"
-    for row in _list(_dict(_dict(data.get("run")).get("earnings")).get("rows")):
+    for row in _list(_dict(block).get("rows")):
         if isinstance(row, dict) and row.get("ticker") == ticker and row.get("stage") in (stage, kind):
-            items = _dict(row.get("items"))
-            if items.get("status") == "material":
-                return items.get("sentence") or "a current report carries a material 8-K item"
+            return row
     return None
+
+
+def _sec_check(data: dict, kind: str, ticker: str) -> tuple[str, str | None, str | None]:
+    """(status, reason, detail) for the ticket's SEC filings: ``run.sec_flags``
+    under rules that write it, and the earnings warning's material 8-K items
+    under every rule. A name SEC could not be read for is not clear."""
+    run = _dict(data.get("run"))
+    earn = _dict(_row_for(run.get("earnings"), kind, ticker)).get("items")
+    if _dict(earn).get("status") == "material":
+        return FAIL, "sec_flag", _dict(earn).get("sentence") or "a current report carries a material 8-K item"
+    if _dict(data.get("rules")).get("sec_flags") is None:
+        return PASS, None, None
+    row = _row_for(run.get("sec_flags"), kind, ticker)
+    if row is None or row.get("state") not in ("flagged", "clear"):
+        return FAIL, "sec_unknown", (row or {}).get("reason") if isinstance(row, dict) else None
+    if row["state"] == "flagged":
+        return FAIL, "sec_flag", "; ".join(
+            f"{f.get('form')}" + (" item " + ", ".join(f.get("items") or []) if f.get("items") else "")
+            + f" {f.get('filing_date')}" for f in _list(row.get("filings")) if isinstance(f, dict))
+    return PASS, None, None
+
+
+def _cross_check(data: dict, kind: str, ticker: str) -> tuple[str, str | None, str | None]:
+    block = _dict(data.get("run")).get("cross_check")
+    if not isinstance(block, dict):
+        return NOT_EVALUATED, "cross_check_not_run", None
+    row = _row_for(block, kind, ticker)
+    if row is None or row.get("result") not in ("pass", "fail"):
+        return NOT_EVALUATED, "cross_check_unknown", (row or {}).get("reason") if isinstance(row, dict) else None
+    if row["result"] == "fail":
+        return FAIL, "cross_check_failed", row.get("reason")
+    return PASS, None, None
 
 
 def _ticket(data: dict, admitted: dict, days: list[str]) -> dict:
@@ -344,15 +382,18 @@ def _ticket(data: dict, admitted: dict, days: list[str]) -> dict:
         checks.append({"key": key, "status": PASS if ok else FAIL, "reason": None if ok else reason,
                        "detail": detail})
 
+    def read(key, status, reason, detail):
+        checks.append({"key": key, "status": status, "reason": reason, "detail": detail})
+
     event = _dict(p.get("event_risk"))
     add("event_registry", not event.get("blocked"), "event_blocked", event.get("status"))
-    sec = _sec_flagged(data, kind, ticker)
-    add("sec_flags", sec is None, "sec_flag", sec)
+    read("sec_flags", *_sec_check(data, kind, ticker))
+    read("cross_check", *_cross_check(data, kind, ticker))
     add("position_cap", cap is not None and position <= cap, "position_cap",
         f"${position:,.2f} at the limit against a ${cap:,.2f} cap" if cap is not None else None)
     add("risk_budget", budget is not None and risk <= budget + 0.005, "risk_budget",
         f"${risk:,.2f} at the limit against a ${budget:,.2f} budget" if budget is not None else None)
-    failed = [c["reason"] for c in checks if c["status"] == FAIL]
+    failed = [c["reason"] for c in checks if c["status"] != PASS]
     status = ticket_status(failed)
     entry = {"type": ENTRY_TYPE, "stop_price": trigger, "limit_price": limit, "time_in_force": "day",
              "valid_from": timing.get("opens_at"), "valid_until": timing.get("cutoff_at"),
@@ -508,7 +549,7 @@ def build_morning(orders_raw: bytes, receipt_raw: bytes | None, data_raw: bytes 
         if not orders["trade_allowed"]:
             reasons.append("night_not_allowed")
         if t["status"] != GO:
-            reasons.append("news_or_sec_flag" if t["status"] == HUMAN_REVIEW else "ticket_not_go")
+            reasons.append("news_or_sec_flag" if {"sec_flag", "sec_unknown"} & set(t["reasons"]) else "ticket_not_go")
         row = by_key.get((t["setup_type"], t["symbol"], t["evidence"]["evidence_id"], t["evidence"]["plan_sha256"]))
         valid_until = _instant(t["entry"]["valid_until"])
         observed = None
@@ -601,9 +642,9 @@ def consistency(value: dict, kind: str = "orders") -> list[str]:
             if (c["status"] == PASS) != (c["reason"] is None):
                 out.append(f"night check {c['key']}: a reason must be given exactly when it does not pass")
         for t in tickets:
-            failed = [c["reason"] for c in t["checks"] if c["status"] == FAIL]
+            failed = [c["reason"] for c in t["checks"] if c["status"] != PASS]
             if any((c["status"] == PASS) != (c["reason"] is None) for c in t["checks"]):
-                out.append(f"ticket {t['symbol']}: a check's reason must be given exactly when it fails")
+                out.append(f"ticket {t['symbol']}: a check's reason must be given exactly when it does not pass")
             if t["reasons"] != failed or t["status"] != ticket_status(failed):
                 out.append(f"ticket {t['symbol']}: its status and reasons are not its checks'")
         allowed = all(c["status"] == PASS for c in night) and any(t["status"] == GO for t in tickets)

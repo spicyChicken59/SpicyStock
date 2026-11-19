@@ -101,7 +101,28 @@ def validate_registry(registry):
             resolution_day = _source(event.get("resolution"))
             if not start < end or not resolution_day <= end <= checked:
                 raise ValueError("event-risk ending requires a dated, reviewed resolution")
+        if "review_note" in event:
+            note = event["review_note"]
+            if not isinstance(note, dict) or set(note) != {"noted_on", "text"}:
+                raise ValueError("event-risk review note must be an object of noted_on and text")
+            _text(note.get("text"), "review_note")
+            if not due < _day(note.get("noted_on")) <= reviewed:
+                raise ValueError("event-risk review note must be dated after the review it answers")
     return registry
+
+
+def lapsed_reviews(registry, today):
+    """The unresolved entries whose review date has passed with no note.
+
+    A note is written after an overdue review and says why the entry stands as
+    it is; it never clears a stock (``classify()`` still withholds an overdue
+    entry). ``today`` is the caller's date: ``tools/check_event_reviews.py``
+    passes the real one, so CI goes red the day after a review falls due."""
+    registry = validate_registry(registry)
+    day = _day(today)
+    return [event["symbol"] for event in registry["events"]
+            if event.get("active_until") is None and _day(event["review_due"]) < day
+            and "review_note" not in event]
 
 
 def registry_digest(registry):
@@ -143,6 +164,9 @@ and reports uncertainty; it is never an automatic clearance.
         if event.get("active_until") is not None and evaluated >= _day(event["active_until"]):
             continue
         matched = deepcopy(event)
+        # the note is the registry's own record of an overdue review: a match
+        # carries the event as a classification reads it, and the note clears nothing
+        matched.pop("review_note", None)
         matched["sources"] = [source for source in matched["sources"]
                               if _day(source["published_on"]) <= evaluated]
         matched["evidence_as_of"] = max(source["published_on"] for source in matched["sources"])
