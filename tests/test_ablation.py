@@ -309,3 +309,17 @@ def test_the_committed_ablation_is_what_the_tool_writes_over_its_recorded_popula
         base = json.loads((ROOT / SPEC["base_spec"]).read_text())
         walked = [{k: e[k] for k in ("commit", "session", "blob")} for e in cmp.population(SPEC["ref"], base)]
         assert walked == population
+
+
+def test_a_variant_whose_rows_do_not_add_up_is_refused():
+    spec = {"cost_bps_per_side": [0, 5, 20], "bootstrap": {"reps": 50, "seed": 7}}
+    # a row both ticketed and withheld counts twice: tickets 1 + withheld 1 over 1 admitted
+    rows = [{"session": "2026-11-02", "r": None, "filled": False, "cost_r": {}, "uncertainty": None,
+             "ticker": "X", "bucket": so.NO_TICKET, "ticket": {}}]
+    with pytest.raises(ab.AblationError, match="not its tickets, withheld and unwalked rows"):
+        ab.summary_of(rows, spec)
+
+
+def test_the_admitted_band_tells_a_plus_from_a_and_both_from_the_rest():
+    assert [ab.admitted_band(g) for g in ("A+", "A", "B", "C", "skip", None)] == ["A+", "A", None, None, None, None]
+    assert set(pipeline.TRADE_GRADES) == {"A+", "A"}
