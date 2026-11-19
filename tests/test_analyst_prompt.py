@@ -1567,11 +1567,21 @@ def exchanged(heading: str, pattern: str, first: int, second: int):
     return edit
 
 
+def findings(hold, text: str) -> tuple[str, ...]:
+    """What a hold reports of a text; a hold that could not make its reading
+    of the code at all (the code changed under it) reports that, once."""
+    try:
+        return tuple(hold(text))
+    except AssertionError as exc:
+        return (f"{hold.__name__} could not read the code: {exc}",)
+
+
 @functools.lru_cache(maxsize=None)
 def found_as_committed() -> dict:
     """What each hold reports of the prompt as it stands: nothing, unless the
-    prompt is itself wrong, and then the edits below are judged against it."""
-    return {hold: tuple(hold(PROMPT_RAW)) for hold in HOLDS}
+    prompt or the code has moved, and then the edits below are judged against
+    that, so one real failure is not repeated by every edit."""
+    return {hold: findings(hold, PROMPT_RAW) for hold in HOLDS}
 
 
 TABLE_ROW, LIST_ITEM = r"^\| (\d+) \| (.+) \|$", r"^(\d+)\. (.+(?:\n   .+)*)$"
@@ -1643,12 +1653,12 @@ def test_an_edit_that_once_passed_is_named_by_the_hold_of_its_rule(edit):
     change, hold = EDITS[edit]
     edited, before = change(PROMPT_RAW), found_as_committed()
     assert edited != PROMPT_RAW
-    assert [problem for problem in hold(edited) if problem not in before[hold]], edit
+    assert [problem for problem in findings(hold, edited) if problem not in before[hold]], edit
     # and by that hold alone: no other hold says anything new of an edit that is not its rule's
-    assert not [other.__name__ for other in HOLDS if other is not hold and tuple(other(edited)) != before[other]]
+    assert not [other.__name__ for other in HOLDS if other is not hold and findings(other, edited) != before[other]]
 
 
 def test_an_edit_no_hold_names_passes_every_hold():
     """The control: a sentence none of the holds reads, reworded."""
     edited = replaced("Read the four prices this way:", "Read the four prices like this:")(PROMPT_RAW)
-    assert not [hold.__name__ for hold in HOLDS if tuple(hold(edited)) != found_as_committed()[hold]]
+    assert not [hold.__name__ for hold in HOLDS if findings(hold, edited) != found_as_committed()[hold]]
