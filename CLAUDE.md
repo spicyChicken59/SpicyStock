@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6665 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6666 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15543,7 +15543,11 @@ GitHub's crons stay as the backup.
 record's own `run.delivery.after_primary_minutes`, flagged for 14 hours; and
 judges the morning check from `MORNING_DUE_CT` (08:45) on the applicable
 session, on every session, ticket or not. `actions/checkout` and
-`actions/setup-python` move to their pinned Node 24 releases in every workflow.
+`actions/setup-python` move to their pinned Node 24 releases in every workflow
+but `secret-scan.yml`, whose exact bytes the native-5 disposition holds to its
+retained public blob (`tests/secret_scan_controls.py`); the first full suite
+caught the bump there, and it stays on `actions/checkout@v4` until a dated
+disposition moves it.
 
 **Mutation pass**, each mutant in a detached worktree judged by the whole test
 files naming its rule: 19 mutants and a control. 16 died first; **three

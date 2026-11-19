@@ -72,6 +72,12 @@ def test_railway_builds_that_file_with_one_replica_restarted_always():
     assert (ROOT / config["build"]["dockerfilePath"]).is_file()
 
 
+#: the one workflow whose bytes retained evidence pins (the native-5 secret-scan
+#: disposition holds it to its public git blob), so it keeps its checkout until a
+#: dated disposition moves it
+PINNED_BYTES = {"secret-scan.yml": "actions/checkout@v4"}
+
+
 def test_every_workflow_checks_out_and_sets_up_python_on_the_pinned_node24_release():
     uses = []
     for workflow in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
@@ -79,7 +85,15 @@ def test_every_workflow_checks_out_and_sets_up_python_on_the_pinned_node24_relea
             m = re.match(r"\s*(?:-\s*)?uses:\s*(actions/(?:checkout|setup-python)@.*)$", line)
             if m:
                 uses.append((workflow.name, m.group(1).strip()))
-    assert uses and {u for _, u in uses} == {CHECKOUT, SETUP_PYTHON}, sorted({u for _, u in uses})
+    moved = {u for name, u in uses if name not in PINNED_BYTES}
+    assert uses and moved == {CHECKOUT, SETUP_PYTHON}, sorted(moved)
+    assert {(name, u) for name, u in uses if name in PINNED_BYTES} == set(PINNED_BYTES.items())
+
+
+def test_the_workflow_kept_on_its_old_checkout_is_the_one_retained_evidence_pins():
+    from tests import secret_scan_controls as controls
+    assert set(PINNED_BYTES) == {Path(controls.NATIVE5_WORKFLOW).name}
+    controls.native5_public_preservation()      # raises unless the file is still the retained blob
 
 
 def test_the_operations_note_names_the_slots_the_tool_runs():
