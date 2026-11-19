@@ -210,6 +210,8 @@ jobs:
             docs/stop-research/
             docs/research-outcomes.json
             docs/research-outcomes/
+            docs/brief.json
+            docs/brief.md
             docs/picks.json
             docs/charts/
             docs/evidence/

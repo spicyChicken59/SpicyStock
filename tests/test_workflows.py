@@ -233,6 +233,7 @@ def test_the_artifact_keeps_records_charts_and_retained_evidence():
     assert set(art["with"]["path"].split()) == {"docs/data.json", "docs/reader.json", "docs/reader-observations/",
                                              "docs/stop-research.json", "docs/stop-research/",
                                              "docs/research-outcomes.json", "docs/research-outcomes/",
+                                             "docs/brief.json", "docs/brief.md",
                                              "docs/picks.json", "docs/charts/", "docs/evidence/", "docs/history/"}
 
 
@@ -573,6 +574,8 @@ def test_ci_runs_the_suite_the_fixture_check_the_chart_check_and_the_page_smoke(
         'python tests/fixtures/research-outcomes/generate.py --check',
         'python tests/fixtures/research-observations/generate.py --check',
         'python tests/fixtures/source-recovery/generate.py --check',
+        # the analyst's brief over the `full` fixture, after the page fixtures it is derived from
+        'python tests/fixtures/brief/generate.py --check',
         # the study's frozen case files, held to the study's own digests
         'python tools/freeze_validation_cases.py --check']
     page = steps(wf, "page")["Open the page against every fixture and read it back"]["run"]
