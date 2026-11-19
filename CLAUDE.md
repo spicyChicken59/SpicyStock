@@ -15872,5 +15872,34 @@ on a threshold; each rule is now read at its own boundary and the mutant
 dies, with the strict-ratio and the hot-mark boundaries beside it. The
 control survives.
 
+**The review, worked.** The stack's review returned thirteen PR 7 findings,
+each reproduced before it was touched. The page named the record's rules
+version but printed the code's constants, so the committed page said the 18
+November record's buy stop was `close_plus_cushion` when that record was
+made under `close`, and every merge that moves a constant would have
+attributed the new value to the older record: every rule is read from the
+record's archived `rules` now (`strategy_page.Rules`), the code's constant
+only where the record archives none and named, a constant that moved since
+the record named with both values, and the buy-stop rule through
+`plan.archived_burst_trigger_rule()`. The exits were captioned "in the order
+the model applies them" over the rulebook's order: the page now gives
+`plan.follow()`'s precedence (the stop first, day-3 no-progress closing the
+whole position before the day-3 half, an abnormal close selling nothing),
+held by driving `plan.follow()`, and says each level is measured from the
+booked fill. The linearity veto read "ER under 0.4" where the code vetoes
+only when ER and R² both fail and a short leg is no veto; `up_days` lacked
+"in a row". The size omitted the two hazards. The page said nothing of the
+entry window, the skip lines, the chart-reader requirement or the setting-up
+ticket, and nothing linked it: each is on it, and the Method view links it.
+The "types no number" guard read string constants in function bodies only,
+and an account-less record printed typed zeros: it reads every number
+literal (only an index and the unit `PERCENT` pass) and module-level
+strings, and an absent account prints unrecorded words. Edge records printed
+`None` and `--check` raised: they print `undefined` and `not read`, and
+`check()` names what it cannot build from. The gate served any page: it holds
+the page's record digest to the committed `data.json`. Most rules were held
+by byte equality alone: each printed rule has its own assertion, and every
+light rule its boundary (the 5-session rule's two halves, the yellow ratio).
+
 **Not claimable:** the first page the evening writes (the first evening run
 after the merge); any trading edge.
