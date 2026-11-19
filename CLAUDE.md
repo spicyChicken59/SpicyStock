@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6949 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6976 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15903,3 +15903,50 @@ light rule its boundary (the 5-session rule's two halves, the yellow ratio).
 
 **Not claimable:** the first page the evening writes (the first evening run
 after the merge); any trading edge.
+
+## Checkpoint, 19 Nov 2026 -- PR 7 accepted; the go-live gate: orders.json is paper until four conditions hold (PR 8)
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` from `main` after
+PR 7. `go_live` is archived, so `rules_version` moves and every cascaded
+generator was regenerated; `orders.json` is version 3. The published
+record, picks, receipts, history, evidence and ledger are untouched.
+
+**The gate** (`src/go_live.py`, `run.go_live`; the owner's guide
+`docs/operations/go-live.md`). `live_ready` is true only when all four hold,
+each read from committed bytes:
+- `fidelity_protocol`: `knowledge/go-live/fidelity-protocol.json` records
+  the one-sitting protocol as passed by the owner. It is committed unpassed;
+  nothing here can pass it, and it must hold nothing private.
+- `on_time_sessions`: the newest `go_live.ON_TIME_SESSIONS` consecutive XNYS
+  sessions were each published by `go_live.PUBLISH_BY_ET` New York time on
+  the session's own date, started automatically (a scheduled run, or the
+  dispatcher's `only_if_unpublished` dispatch; `run.trigger` archives how
+  the evening was started), and checked by a morning file bound to that
+  publication by `go_live.MORNING_DUE_CT` Chicago time. A session is closed
+  the evening after, when its morning file exists; the ledger starts with
+  the first record that archives its trigger, so it starts at zero.
+- `settled_forward_plans`: at least `go_live.MIN_SETTLED_FORWARD` model plans
+  settled in the scorecard's window, each picked on or after the session from
+  which the strategy's rules have stood unchanged (the rules digest without
+  the nightly universe membership).
+- `ablation_report`: the pre-registered ablation's results are committed.
+Until it is true `orders.json`'s `mode` is `paper` and `live_ready.reasons`
+names each unmet condition. The Record view prints the gate's sentence and
+each condition.
+
+**Not a criterion, and said so in the guide:** a positive expectancy. The
+gate is a sample size and a service record, not a result.
+
+**Mutation pass**, each mutant in a detached worktree judged by
+`tests/test_go_live.py`: 15 mutants and a control. **One survived, a hole**:
+the settled count read every bucket, because every row of its case was
+settled; a case now carries uncertain, open and pre-standing rows, and the
+mutant dies. The control survives.
+
+**The replay found one more**: PR 7 added its page check to CI's fixture
+step without adding it to the workflow test's list of that step's commands;
+the list names it now.
+
+**Not claimable:** a live-ready night, which needs the owner's protocol
+record, ten on-time sessions from the first one this gate counts, and twenty
+settled plans under the standing rules; any trading edge.
