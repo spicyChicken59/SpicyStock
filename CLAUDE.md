@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6759 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6799 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15624,3 +15624,81 @@ mutation pass, 20 mutants over these rules and a control: all 20 die.
 **Not claimable:** the first nightly `orders.json` (the first evening run
 after the merge writes it); that an execution agent reads it; any trading
 edge.
+
+## Checkpoint, 19 Nov 2026 -- PR #223 accepted; the scorecard read honestly beside its own numbers (PR 4)
+
+**PR #223, accepted.** Merged on green CI; the first evening after it writes
+the first nightly `docs/orders.json`.
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` from `main` after
+#223. `record.scorecard()`'s numbers do not move; the published record,
+picks, receipts, history, evidence and ledger are untouched.
+`pipeline.scorecard_reading_version` is archived, so `rules_version` moves
+and the page fixtures and every cascaded generator were regenerated.
+
+**What it adds.** `scorecard_reading` (`src/scorecard_reading.py`, composed
+by `pipeline.read_scorecard()` after `report.build()`), printed verbatim by
+the Record view, the mail and `orders.json`'s `scorecard`: the tickets
+against their distinct setups (`model_record.setups()`), the tickets by the
+model account each was sized against (`model_record.eras()`), the stopped
+tickets as booked, at that session's close and at its low
+(`model_record.stop_bounds()`), the sessions whose breadth this record
+computes differently from the figures that session's own first publication
+carried (carried forward record to record in
+`breadth_revisions.published`, named newest first), and real against model,
+whose status is `private`: the record never reads a positions file, and
+`tools/positions_compare.py` reads a filled private copy of
+`docs/positions-template.json` on the owner's computer, each position's real
+R beside the model's, never added. That is a deliberate departure from the
+program's "once positions exist, real vs model R on the page, the email and
+orders.json": the owner's trades never enter this public repository. A model
+record that cannot be computed is said so and never fails the night. The
+publication ceiling counts the block once a night (`NIGHTLY`).
+
+**`orders.json` is version 2:** its `scorecard` is a new required field, so
+the first `orders.json` an evening writes under #223 (version 1) is not this
+schema's. A merge that moves `orders.VERSION` leaves the files on `main` as
+the earlier code wrote them until the next evening rewrites them: the gate
+and the committed-handoff test hold such a file to its binding alone
+(`orders.earlier_version()`), the morning step derives no go/cancel file
+from it (`orders_written_under_an_earlier_version`), and the agent's guide
+says nothing is entered from it. Found by the stack's review, which built a
+version-1 file beside the later code and watched the gate, three
+publication-gate tests and the morning step fail.
+
+**The full suite found what the focused runs had not:** the block spread per
+burst pushed the ceiling's projection past its bound, and the brief's test
+heard only one of the two readers that warn when the model record cannot be
+computed. Both fixed.
+
+**Mutation pass**, each mutant in a detached worktree judged by
+`tests/test_scorecard_reading.py`: 14 mutants, all dead; the control
+survives.
+
+**The review, worked.** The stack's review returned seven PR 4 findings, each
+reproduced here before it was touched. The breadth comparison diffed against
+the previous record's own re-reading, so every "published" figure for an
+older session was a later night's, the one real revision (the previous
+session) was folded into "and N more", and a same-session revision counted
+tonight's session as an earlier one: each session is held now to the figures
+its own first publication carried, carried forward, named newest first, with
+the sessions first published before the rule counted, not compared. The
+validator test could not fail (every page fixture is refused for its
+`fixture` key first): it validates the record without the label and matches
+each refusal by name. The validator held no figure: it re-derives the
+sentences from the block's own figures and counts its sessions, tickets and
+setups. The scorecard-numbers test read nothing that could move: it drives
+`read_scorecard()` and holds the record byte for byte. The stop sentence said
+"sum to not given" and undercounted when a stopped ticket's bars were gone:
+it names the unexamined tickets and withholds the sum. And
+`tools/positions_compare.py` called a position open with more shares exited
+than filled, raised on a ticket id it could not split, and joined a position
+to a model ticket with a different stop: each is named now. A second
+mutation pass, 16 mutants over these rules and a control: four survived, each
+a missing case (a previous record from before the rule seeding its own
+session, the first publication of a session winning over a later one, the
+count rule alone with the sentences made to agree, and the stop sentence with
+a ticket whose bars are gone). Each has its case now and dies.
+
+**Not claimable:** a real-against-model reading, which needs the owner's
+filled positions file; any trading edge.

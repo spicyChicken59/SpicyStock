@@ -5532,6 +5532,7 @@
     method.appendChild(el('p', { 'class': 'sc-note', text: 'SPY over matched entry-to-exit dates: ' + (readable ? pct(sc.spy_avg_pct, 2) : '—') + ' · ' + (isNum(sc.benchmark_pairs) ? num(sc.benchmark_pairs) + ' matched resolved plans' : 'pair count unknown') + '. A price comparison in percent, not portfolio performance or excess R. ' + (sc.note || '') }));
     method.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-booking': '', text: 'No fees, spread, slippage, tax or actual execution are measured. A stop first reached inside a session is booked at exactly the stop price, so a stop on the fill day is always exactly minus one R whatever that day’s low or close; only a session that opens at or under the stop is booked at its open. R is counted per ticket whatever its size, and whole-share sales make it depend on the share count (a one-share ticket sells whole at its half-sale), so a sum of R is not a sum of dollars. An expired unfilled order is not filled; an ended walk without reconciled sales remains unscored. R = 0 after the recorded two-decimal rounding is breakeven.' }));
     card.appendChild(method);
+    card.appendChild(scorecardReading(data));
     // fourteen nights of reliability, from nights[]: ok, degraded, closed, missing
     const nights = {}; (data.nights || []).forEach((x) => { if (x && x.session) nights[x.session] = x; });
     const end = (data.run || {}).expected_session || (data.run || {}).session;
@@ -5551,6 +5552,28 @@
       el('span', null, [el('i', { 'class': 'ss-night is-closed' }), counts.closed + ' closed']),
       el('span', null, [el('i', { 'class': 'ss-night is-missing' }), (counts.missing + counts.failed) + ' missing'])
     ]));
+  }
+  // The scorecard read honestly (src/scorecard_reading.py): the record's own
+  // sentences, verbatim, beside the scorecard's numbers, which it never moves.
+  // A record from before the block, or one whose block is not readable, says so.
+  function scorecardReading(data) {
+    const block = data.scorecard_reading;
+    const box = el('section', { 'class': 'ss-scorecard-reading', 'data-scorecard-reading': '', 'aria-label': 'The scorecard read honestly' },
+      [el('div', { 'class': 'sc-eyebrow', style: 'margin-top:16px', text: 'the scorecard, read honestly' })]);
+    const sentences = block && Array.isArray(block.sentences) ? block.sentences.filter((s) => typeof s === 'string' && s) : null;
+    if (!block) {
+      box.setAttribute('data-scorecard-reading', 'absent');
+      box.appendChild(el('p', { 'class': 'sc-note', text: 'This record is from before the scorecard reading: distinct setups, model accounts and stop readings are not recorded with it.' }));
+      return box;
+    }
+    if (!sentences || !sentences.length) {
+      box.setAttribute('data-scorecard-reading', 'unreadable');
+      box.appendChild(el('p', { 'class': 'sc-note', text: 'This record’s scorecard reading could not be read.' }));
+      return box;
+    }
+    box.setAttribute('data-scorecard-reading', String(block.status || ''));
+    sentences.forEach((s) => box.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-reading-sentence': '', text: s })));
+    return box;
   }
   function renderRecordView(data) {
     const rules = data.rules || {}, holdDays = (rules.plan || {}).final_exit_day, window = (rules.record || {}).open_plan_sessions;

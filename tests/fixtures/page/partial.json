@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "583191ddb160"
+  "rules_version": "7d29c2846abd"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -953,7 +953,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "5b7e3700223a2b4fc5a2bc788cbae8aa789936b304243ef0cf1aad4bf7aa28e3"
+   "context_sha256": "d423652de3ef1ef7002dfbef03cf6c207f00687a08183a408f085104a37403ac"
   },
   "earnings": {
    "version": 2,
@@ -1615,6 +1615,7 @@
    "reader_refusal_min": 1,
    "reads_version": 2,
    "reader_usage_version": 1,
+   "scorecard_reading_version": 1,
    "delivery_version": 1,
    "delivery_primary_et": "18:16",
    "delivery_retry_et": "20:16",
@@ -2184,7 +2185,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "583191ddb160"
+  "replay_rules_version": "7d29c2846abd"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -2359,6 +2360,104 @@
   },
   "sentence": "Candidate funnel under a GREEN market: 0 reaction candidates discovered, 0 potentially usable (mechanical grade in the admitted band, no veto, discovery admitted), 0 reaction tickets. Anticipation: 0 momentum names, 0 quiet, 0 passing the coil checks, 0 listed, 0 tickets. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
  },
+ "scorecard_reading": {
+  "version": 1,
+  "status": "computed",
+  "model_record": {
+   "status": "computed",
+   "reason": null,
+   "tickets": 47,
+   "distinct_setups": 47,
+   "reissued_tickets": 0,
+   "buckets": {
+    "settled": 13,
+    "open": 0,
+    "pending": 0,
+    "uncertain": 18,
+    "not_filled": 0,
+    "unmeasured": 16,
+    "unreadable": 0,
+    "unscored": 0
+   },
+   "buckets_by_setup": {
+    "settled": 13,
+    "open": 0,
+    "pending": 0,
+    "uncertain": 18,
+    "not_filled": 0,
+    "unmeasured": 16,
+    "unreadable": 0,
+    "unscored": 0
+   },
+   "sum_r": -2.28,
+   "eras": [
+    {
+     "label": "account not recorded",
+     "issued_equity": null,
+     "risk_pct": null,
+     "from": "2026-07-01",
+     "through": "2026-09-08",
+     "tickets": 47,
+     "setups": 47,
+     "settled": 13,
+     "wins": 0,
+     "losses": 13,
+     "breakeven": 0,
+     "sum_r": -2.28
+    }
+   ],
+   "stops": {
+    "count": 13,
+    "unexamined": 0,
+    "sum_r": {
+     "booked": -2.28,
+     "at_close": -0.7,
+     "at_low": -3.5
+    },
+    "settled_sum_r": {
+     "booked": -2.28,
+     "at_close": -0.7,
+     "at_low": -3.5
+    }
+   },
+   "sentences": [
+    "The model record counts 47 tickets issued from 2026-07-01 through 2026-09-08: 47 distinct setups, and 0 tickets that issued a setup again on a later night.",
+    "By ticket: 13 settled, 18 uncertain, 16 missing or stale bars. By setup: 13 settled, 18 uncertain, 16 missing or stale bars.",
+    "The 13 settled tickets sum to -2.28R (0 wins, 13 losses, 0 breakeven). Below 20 settled tickets the record prints no rate.",
+    "No account is recorded for the 47 tickets.",
+    "A sum of R is not a sum of dollars: R counts each ticket as one unit whatever its size. The settled tickets sum to -2.28R and to -$60.27 in model dollars.",
+    "13 settled tickets ended on a stop. As the model books them, a stop first reached inside a session at exactly the stop price, the sum is -2.28R (-$60.27). With the same exits at the stop day's close it is -0.70R (-$19.65): what holding to the close would have been, not a fill estimate. At the stop day's low, a worst-case bound, it is -3.50R (-$92.08).",
+    "Under those readings the settled sum is -2.28R as booked, -0.70R at the closes and -3.50R at the lows.",
+    "18 tickets are uncertain: the bars cannot say whether each filled, and they are in no sum. ONTO 2026-07-10 reads -0.44R if filled at its $26.44 limit and +0.03R if filled at its $25.56 trigger; MU 2026-07-14 reads -0.47R if filled at its $26.51 limit and -0.02R if filled at its $25.55 trigger; IONQ 2026-07-20 reads -0.46R if filled at its $26.61 limit and -0.05R if filled at its $25.64 trigger; FIX 2026-07-23 reads -0.56R if filled at its $26.55 limit and -0.19R if filled at its $25.68 trigger; ELF 2026-07-24 reads -0.46R if filled at its $26.54 limit and -0.02R if filled at its $25.69 trigger; CRDO 2026-07-28 reads -0.48R if filled at its $26.66 limit and -0.03R if filled at its $25.75 trigger; ANET 2026-07-29 reads -0.47R if filled at its $26.48 limit and -0.06R if filled at its $25.67 trigger; PLTR 2026-08-12 reads -0.55R if filled at its $26.64 limit and -0.14R if filled at its $25.71 trigger; ONTO 2026-08-13 reads -0.66R if filled at its $26.63 limit and -0.37R if filled at its $25.73 trigger; NBIS 2026-08-14 reads -0.47R if filled at its $26.40 limit and -0.10R if filled at its $25.67 trigger; LITE 2026-08-18 reads -0.57R if filled at its $26.46 limit and -0.22R if filled at its $25.60 trigger; KTOS 2026-08-19 reads -0.57R if filled at its $26.43 limit and -0.21R if filled at its $25.57 trigger; IONQ 2026-08-21 reads -0.48R if filled at its $26.61 limit and -0.01R if filled at its $25.69 trigger; GLW 2026-08-25 reads -0.42R if filled at its $26.57 limit and +0.02R if filled at its $25.64 trigger; ELF 2026-08-27 reads -0.56R if filled at its $26.68 limit and -0.16R if filled at its $25.73 trigger; DELL 2026-08-28 reads -0.59R if filled at its $26.63 limit and -0.23R if filled at its $25.75 trigger; ANET 2026-09-01 reads -0.38R if filled at its $26.57 limit and +0.06R if filled at its $25.75 trigger. These are bounds, not results."
+   ]
+  },
+  "breadth_revisions": {
+   "previous_session": null,
+   "compared": 0,
+   "not_retained": 29,
+   "differ_count": 0,
+   "differ": [],
+   "published": {
+    "2026-09-10": {
+     "up4": 0,
+     "down4": 0,
+     "ratio_10d": null
+    }
+   },
+   "sentence": "There is no earlier publication's breadth to compare."
+  },
+  "real_vs_model": {
+   "status": "private",
+   "sentence": "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
+  },
+  "sentences": [
+   "47 tickets in the scorecard's window are 47 distinct setups.",
+   "No model account is recorded for the 47 tickets.",
+   "The 13 stopped tickets booked at the stop sum to -2.28R; read at that session's close, -0.70R; at its low, -3.50R.",
+   "There is no earlier publication's breadth to compare.",
+   "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
+  ]
+ },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
@@ -2377,6 +2476,7 @@
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
   "scorecard": "All retained published plans in the stated window, including pending and missing evidence. Disjoint outcome counts reconcile to plans; rates use resolved plans alone, with an explicit denominator and minimum sample. Public model results, independent of personal selections.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
+  "scorecard_reading": "The scorecard read honestly, beside its own numbers, which do not move: the model record's distinct setups, the model account each ticket was sized against, the stopped tickets at the session's close and low beside the stop they were booked at, the breadth figures this record computes differently from the publication before it, and where real trades are compared with the model (privately). Its sentences are printed verbatim.",
   "funnel": "Where every discovered reaction candidate and every listed anticipation setup stopped: one terminal stage each, in the order the run applies its gates, so the stage counts sum to the discovered count. Derived from the fields above and re-derived by the validator; the labels the page and the mail print travel with it. A stage is the record's own accounting of its gates, never a judgement of the setup and never an entry.",
   "observations": "Public coverage of every published saveable signal, independent of local saves. Each signal keeps its own identity and 21-calendar-day window. Symbols carry the latest real bar plus up to 20 dated observations from already-fetched frames; missing bars stay missing, and missing frames retain earlier actual observations. This is research coverage, never a quote feed or personal trading history.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."

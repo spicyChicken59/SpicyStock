@@ -2539,9 +2539,55 @@ The schema of all three is `docs/operations/orders-schema.json`, checked by
 record, to that schema and to its own checks (a file whose `trade_allowed`,
 reasons, statuses, summary or mode are not what its checks give is refused),
 and `tests/test_orders.py` re-derives a committed `docs/orders.json` from the
-committed record. The agent's guide is `docs/operations/orders.md`.
+committed record. A merge that moves `orders.VERSION` leaves the files on
+`main` as the earlier code wrote them until the next evening rewrites them:
+they keep their own version's meaning, the gate and that test hold them to
+their binding alone (`orders.earlier_version()`), and the morning step
+derives no go/cancel file from one (`orders_written_under_an_earlier_version`).
+The agent's guide is `docs/operations/orders.md`.
 `tests/fixtures/orders/` holds golden files over the page and morning
 fixtures; `generate.py --check` runs in CI.
+
+### The scorecard, read honestly
+
+`record.scorecard()` counts tickets and sums R, and its numbers do not move.
+Beside it, each record carries `scorecard_reading` (`src/scorecard_reading.py`,
+composed by `pipeline.read_scorecard()` after `report.build()` and before the
+mail), and the Record view, the mail and `orders.json`'s `scorecard` print its
+sentences verbatim:
+
+- **distinct setups**: the tickets in the scorecard's window against the
+  setups they are (`model_record.setups()`: a setup issued again on a later
+  night is one setup);
+- **the model accounts**: the tickets by the account each was sized against,
+  with its settled count and R (`model_record.eras()`); tickets with no
+  recorded account are counted, not guessed;
+- **the stopped tickets read three ways**: as booked at the stop, at that
+  session's close and at its low (`model_record.stop_bounds()`), because a
+  stop touched inside a session is booked at exactly the stop;
+- **published against revised breadth**: the sessions whose up 4%, down 4%
+  or 10-session ratio this record computes differently from the figures that
+  session's own first publication carried, named newest first. Each record
+  carries those first-published figures forward
+  (`scorecard_reading.breadth_revisions.published`), so a session is held to
+  what its own night printed, never to a later re-reading; a session first
+  published before the figures were retained is counted, not compared;
+- **real against model**: real trades are not public. An execution agent
+  fills a private copy of `docs/positions-template.json`, and
+  `tools/positions_compare.py --positions <file> --docs docs` reads it beside
+  the published record on the owner's computer: each position's real R (the
+  average fill less the planned stop as one R, each exit weighted by its
+  shares) beside the model's R for the same ticket, never added, writing
+  nothing but an explicit `--json` outside the repository.
+
+A model record that cannot be computed is said so in the block and never fails
+the night. The validator asks for the block only under rules that archive
+`pipeline.scorecard_reading_version`, so a record from before it is read as it
+was written, and it re-derives the block's sentences from the block's own
+figures, so a sentence that says other than its figures is refused. Real
+against model stays private (`real_vs_model.status` is `private`): the record
+never reads a positions file, so the page, the mail and `orders.json` carry
+only the sentence that says where it is read.
 
 ### The analyst's instructions
 
@@ -3082,6 +3128,7 @@ src/            history.py (public recovery and coverage)
                 timing.py (which session a plan is for, and when its window is over)
                 delivery.py (where a publication fell against the evening workflow's own slots and the next open; the record archives it, the page and the service-health reading read it)
                 freshness.py (what a record says about the next publication: the next session, its completion, the two slots and the recovery limit; state() answers newest, not_due, pending, late or missing for a reader's own clock; standard library only)
+                scorecard_reading.py (the scorecard read honestly: distinct setups, model accounts, the stopped tickets at the stop, the close and the low, breadth revisions; copied from the model record, never moving the scorecard's numbers)
                 orders.py (the execution handoff: orders.json and its positions template each night, and the morning's go/cancel file, from committed bytes and no clock) · schema_check.py (the JSON Schema subset the handoff's schema uses; any other keyword is refused)
                 brief.py (the analyst's daily brief: brief.json and brief.md, a function of the record's bytes, the pick ledger's bytes and the run's model-record block; no clock, no network)
                 model_record.py (a reading of the model's own record for the daily brief: tickets against distinct setups, the model account each ticket was sized against, a stop booked at the stop beside its close and its low; held to the scorecard's rows, changes nothing; python -m src.model_record --docs docs)
@@ -3124,6 +3171,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 page_text_cases.mjs (the page smoke's page-text suite: the page's own words for vetoes, Method, Market, the stock detail, a known deal and the Record view, held to the record and the modules; `--only page-text`, or one part such as `page-text:market`)
                 first_trade_cases.mjs (the page smoke's first-trade rehearsal: one journey from refused cash to a downloaded private backup; SCSTOCK_FIRST_TRADE_WRITE=1 writes tests/fixtures/first-trade/)
                 private_results_parity.mjs (the page's own verdicts, from app-handoff.js run in a vm, on a corpus of private backups, written gzipped beside the rehearsal's backup; --check in CI)
+                positions_compare.py (a reader of a filled private positions file: each position's real R beside the model's R for the same ticket, never added; writes nothing but an explicit --json outside the repository)
                 private_results.py (a reader of the owner's private backup: each reported result re-derived by the page's rules, traced to its publication by SHA-256 and frozen plan, the model's replay beside it and never added; writes nothing but an explicit --json)
 deploy/         scheduler/ (the dispatcher's own Railway service: Dockerfile and railway.json; requirements-scheduler.txt beside the root)
 .github/        evening.yml · intraday.yml · morning.yml · source-recovery.yml · issuer-evidence.yml · service-watch.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml

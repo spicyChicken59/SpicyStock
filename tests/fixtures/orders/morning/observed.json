@@ -1,6 +1,6 @@
 {
  "applicable_session": "2026-09-11",
- "content_sha256": "db6d40715830bc955c9b4a570e0754201bd063673a66cfa97b564c8305404410",
+ "content_sha256": "846d53d8de1ed94d657948b7ba9b1dd7839d3166c13b08cad5d9d64c053ea9b8",
  "data_sha256": "9e34f06249d04c55a2480695a29d6e4dfaa620f16fe1de0041883f47784bc44f",
  "kind": "orders_morning",
  "mode": "paper",
@@ -9,7 +9,7 @@
  "morning_sha256": "efb553ccd84fbc0eafcff7f13ec1d45449310a179471f349ce89341b84f0d9f8",
  "morning_status": "observed",
  "observation_run_id": "synthetic-observed",
- "orders_sha256": "63acecd5a78057324410de2249a5f8a0eaf2f66a78a9c558186ce8624ee51dd4",
+ "orders_sha256": "13d6c86da83a0af375e9e9b836dfaa1611eb9004b72005dd5862efad18e526be",
  "schema": "docs/operations/orders-schema.json#/$defs/orders_morning",
  "session": "2026-09-10",
  "summary": {
@@ -43,5 +43,5 @@
    "valid_until": "2026-09-11T10:00:00-04:00"
   }
  ],
- "version": 1
+ "version": 2
 }

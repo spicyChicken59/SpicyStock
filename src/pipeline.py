@@ -22,6 +22,7 @@ from src import history, breadth, charts, clock, discovery, grader, market_data,
 from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
 from src import universe, reader_coverage, followup
 from src import watchlist, allocation, event_risk, review_selection, funnel, delivery, intraday, earnings_risk, admission
+from src import scorecard_reading
 
 log = logging.getLogger("spicystock.pipeline")
 
@@ -101,6 +102,7 @@ RULES = {
     "pipeline.reader_refusal_min": READER_REFUSAL_MIN,
     "pipeline.reads_version": reader_coverage.READS_VERSION,
     "pipeline.reader_usage_version": reader_coverage.USAGE_VERSION,
+    "pipeline.scorecard_reading_version": scorecard_reading.VERSION,
     **delivery.RULES,   # the evening workflow's slots and recovery window, as the record archives them
     "pipeline.series_bars": SERIES_BARS,
     "pipeline.series_top": SERIES_TOP,
@@ -1019,6 +1021,8 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         data = report.build(run_block, account_block, build_rules(uni), breadth_block, published_bursts,
                             trades, beyond_cap, budget, lists, open_plans, scorecard, nights, generated,
                             observations=observed)
+        data["scorecard_reading"] = read_scorecard(rec, frames, minutes, data, docs, previous)
+        report.validate(data)
         retention = provenance.publish_bundle(data, rec, docs, evidence_objects, dry_run=dry_run)
         log_retention(retention)
         rep.published = True
@@ -1187,6 +1191,21 @@ def publish_research_outcomes(docs: Path, rec: dict) -> None:
     except Exception as exc:  # noqa: BLE001 — optional derived research only
         log.warning("Research outcomes publication unavailable (%s); evening record retained.",
                     type(exc).__name__)
+
+
+def read_scorecard(rec: dict, frames: dict, minutes, data: dict, docs: Path, previous: dict | None) -> dict:
+    """The scorecard read honestly (``src/scorecard_reading.py``): the model
+    record's distinct setups, account eras and stop readings, and the breadth
+    figures this record computes differently from the publication before it.
+    A model record that cannot be computed is said so in the block; it never
+    fails the night, and the scorecard's own numbers never move."""
+    try:
+        from src import model_record
+        block = model_record.build(rec, frames, minutes, data, docs=docs)
+    except Exception as exc:  # noqa: BLE001 -- the block names what it could not compute
+        log.warning("Model record unavailable for the scorecard reading (%s).", type(exc).__name__)
+        block = {"status": scorecard_reading.NOT_COMPUTED, "reason": f"the model record failed ({type(exc).__name__})"}
+    return scorecard_reading.build(block, previous, data)
 
 
 def publish_orders(docs: Path) -> None:

@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "583191ddb160"
+  "rules_version": "7d29c2846abd"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -953,7 +953,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "f3c2c4c8e16b506d514f22f78362125b34c3b3b808ac3a36ed75c0f722600b03"
+   "context_sha256": "3bcc408922af38a882f6f34e6a0802615607111cfc311ef461e152e6ac4cec6a"
   },
   "earnings": {
    "version": 2,
@@ -1665,6 +1665,7 @@
    "reader_refusal_min": 1,
    "reads_version": 2,
    "reader_usage_version": 1,
+   "scorecard_reading_version": 1,
    "delivery_version": 1,
    "delivery_primary_et": "18:16",
    "delivery_retry_et": "20:16",
@@ -2335,8 +2336,8 @@
     "kind": "burst",
     "ticker": "MSFT",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "f3c2c4c8e16b506d514f22f78362125b34c3b3b808ac3a36ed75c0f722600b03",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "3bcc408922af38a882f6f34e6a0802615607111cfc311ef461e152e6ac4cec6a",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -2349,7 +2350,7 @@
      "reason": "route_not_admitted",
      "detail": null
     },
-    "id": "ee66e5774acb74520ac997012d380bce376baa1569629e179356e9ca3f621556"
+    "id": "950ca3dd9acb7d70c8bfd567491650feb58cae3a59837057225f307dcc0128db"
    },
    "series": [
     {
@@ -3595,8 +3596,8 @@
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "f3c2c4c8e16b506d514f22f78362125b34c3b3b808ac3a36ed75c0f722600b03",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "3bcc408922af38a882f6f34e6a0802615607111cfc311ef461e152e6ac4cec6a",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -3609,7 +3610,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "fb7e6c71d4cc3db7ceef20441e02ca481a08d9f46a39944d5b3f9f8285f2d941"
+    "id": "308026dca007bae10b67c1c0a264f4a7559ea72709b6bc720364d0d9637c3b1e"
    },
    "series": [
     {
@@ -4857,8 +4858,8 @@
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "f3c2c4c8e16b506d514f22f78362125b34c3b3b808ac3a36ed75c0f722600b03",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "3bcc408922af38a882f6f34e6a0802615607111cfc311ef461e152e6ac4cec6a",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -4871,7 +4872,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "2df95d9b14fcecc0402896e094ea1bb271c04766f5ffae91b536543197b8605c"
+    "id": "7418ebfc8c0aea6debd9ef60f990c3c1219209a780783c77038d37a6e2997053"
    },
    "series": [
     {
@@ -6243,8 +6244,8 @@
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "f3c2c4c8e16b506d514f22f78362125b34c3b3b808ac3a36ed75c0f722600b03",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "3bcc408922af38a882f6f34e6a0802615607111cfc311ef461e152e6ac4cec6a",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -6257,7 +6258,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "c0bc03f7ce228c4c63f9b44801a1f0322c58662e0bf1ec570f5fe10568fdd1f4"
+    "id": "dc203bf282d96ba0ba611fe0c7fbcee39830ee334451bf993cbb2bdfce2baea9"
    },
    "series": [
     {
@@ -7573,8 +7574,8 @@
     "kind": "burst",
     "ticker": "AMD",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "f3c2c4c8e16b506d514f22f78362125b34c3b3b808ac3a36ed75c0f722600b03",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "3bcc408922af38a882f6f34e6a0802615607111cfc311ef461e152e6ac4cec6a",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -7587,7 +7588,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "d0962eaa3aef5173cb366ab8a0456a8930552e0918a91525fa4fa81dc0868f2b"
+    "id": "ae5d945c89c12c98e3cae2d9c3fbd046d405deb1cc4810db3a94e60b1d9839ec"
    },
    "series": [
     {
@@ -8871,8 +8872,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "f3c2c4c8e16b506d514f22f78362125b34c3b3b808ac3a36ed75c0f722600b03",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "3bcc408922af38a882f6f34e6a0802615607111cfc311ef461e152e6ac4cec6a",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -8885,7 +8886,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "98e40e8318431f4d55d85d729a427141d4a95648b6559bdadc21fcc8aeb5cfdf"
+    "id": "a933e78f1a1a57c46dc82ec280fffcfc7e8d608106f51dcffc835e4b49d142e4"
    },
    "series": [
     {
@@ -10213,8 +10214,8 @@
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2026-09-10",
-    "rules_version": "583191ddb160",
-    "context_sha256": "f3c2c4c8e16b506d514f22f78362125b34c3b3b808ac3a36ed75c0f722600b03",
+    "rules_version": "7d29c2846abd",
+    "context_sha256": "3bcc408922af38a882f6f34e6a0802615607111cfc311ef461e152e6ac4cec6a",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -10227,7 +10228,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "0ef4a93a360cbce096fa58d109300bf513d1a28c54da7e49190b1b6227bcb37d"
+    "id": "adb95c2e0e6b4ef26beefc13a11505ac9b2d783d5bf00338754f2a7157e2236b"
    },
    "series": [
     {
@@ -11449,8 +11450,8 @@
      },
      "evidence_ref": {
       "version": 1,
-      "id": "c2736ad0d8318a12df981b9553ff5d450304b9be5b86b5d611147c04a5db38b1",
-      "context_sha256": "f3c2c4c8e16b506d514f22f78362125b34c3b3b808ac3a36ed75c0f722600b03",
+      "id": "09b0bc83904ce67c9767dbbf08a9e502c867440c5156305badc3d0159011f618",
+      "context_sha256": "3bcc408922af38a882f6f34e6a0802615607111cfc311ef461e152e6ac4cec6a",
       "plan_sha256": "fae581da85e4606430c63a2c6e880375f608cb43e2f5815b6217cf75a6584b4f",
       "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
      }
@@ -12458,8 +12459,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2026-09-10",
-     "rules_version": "583191ddb160",
-     "context_sha256": "f3c2c4c8e16b506d514f22f78362125b34c3b3b808ac3a36ed75c0f722600b03",
+     "rules_version": "7d29c2846abd",
+     "context_sha256": "3bcc408922af38a882f6f34e6a0802615607111cfc311ef461e152e6ac4cec6a",
      "gate": {
       "regime": "green",
       "final_grade": "watch",
@@ -12468,7 +12469,7 @@
       "reason": null,
       "detail": null
      },
-     "id": "c2736ad0d8318a12df981b9553ff5d450304b9be5b86b5d611147c04a5db38b1"
+     "id": "09b0bc83904ce67c9767dbbf08a9e502c867440c5156305badc3d0159011f618"
     }
    }
   ],
@@ -12721,7 +12722,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "583191ddb160"
+  "replay_rules_version": "7d29c2846abd"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -12960,60 +12961,60 @@
    }
   },
   "signals": {
-   "burst:MSFT:2026-09-10:583191ddb160": {
+   "burst:MSFT:2026-09-10:7d29c2846abd": {
     "ticker": "MSFT",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:583191ddb160": {
+   "burst:PLUG:2026-09-10:7d29c2846abd": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:583191ddb160": {
+   "burst:DLLR:2026-09-10:7d29c2846abd": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "burst:AAPL:2026-09-10:583191ddb160": {
+   "burst:AAPL:2026-09-10:7d29c2846abd": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:583191ddb160": {
+   "burst:AMD:2026-09-10:7d29c2846abd": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:583191ddb160": {
+   "burst:NVDA:2026-09-10:7d29c2846abd": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:583191ddb160": {
+   "burst:TSLA:2026-09-10:7d29c2846abd": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:583191ddb160": {
+   "anticipation:COIL:2026-09-10:7d29c2846abd": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "583191ddb160",
+    "rules_version": "7d29c2846abd",
     "coverage": "observed"
    }
   },
@@ -13203,6 +13204,118 @@
   },
   "sentence": "Candidate funnel under a GREEN market: 7 reaction candidates discovered, 4 potentially usable (mechanical grade in the admitted band, no veto, discovery admitted), 0 reaction tickets. Reaction candidates stopped at: 2 mechanical grade below the regime's admitted band, 1 dollar scan alone, without a range-expansion, higher-volume day, 4 review lowered the grade below the admitted band. Anticipation: 10 momentum names, 4 quiet, 1 passing the coil checks, 1 listed, 1 ticket. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
  },
+ "scorecard_reading": {
+  "version": 1,
+  "status": "computed",
+  "model_record": {
+   "status": "computed",
+   "reason": null,
+   "tickets": 48,
+   "distinct_setups": 48,
+   "reissued_tickets": 0,
+   "buckets": {
+    "settled": 20,
+    "open": 2,
+    "pending": 1,
+    "uncertain": 12,
+    "not_filled": 13,
+    "unmeasured": 0,
+    "unreadable": 0,
+    "unscored": 0
+   },
+   "buckets_by_setup": {
+    "settled": 20,
+    "open": 2,
+    "pending": 1,
+    "uncertain": 12,
+    "not_filled": 13,
+    "unmeasured": 0,
+    "unreadable": 0,
+    "unscored": 0
+   },
+   "sum_r": -1.75,
+   "eras": [
+    {
+     "label": "$10,000 at 0.5% risk",
+     "issued_equity": 10000.0,
+     "risk_pct": 0.5,
+     "from": "2026-09-10",
+     "through": "2026-09-10",
+     "tickets": 1,
+     "setups": 1,
+     "settled": 0,
+     "wins": 0,
+     "losses": 0,
+     "breakeven": 0,
+     "sum_r": null
+    },
+    {
+     "label": "account not recorded",
+     "issued_equity": null,
+     "risk_pct": null,
+     "from": "2026-07-01",
+     "through": "2026-09-08",
+     "tickets": 47,
+     "setups": 47,
+     "settled": 20,
+     "wins": 5,
+     "losses": 15,
+     "breakeven": 0,
+     "sum_r": -1.75
+    }
+   ],
+   "stops": {
+    "count": 18,
+    "unexamined": 0,
+    "sum_r": {
+     "booked": -2.13,
+     "at_close": -1.74,
+     "at_low": -4.67
+    },
+    "settled_sum_r": {
+     "booked": -1.75,
+     "at_close": -1.36,
+     "at_low": -4.29
+    }
+   },
+   "sentences": [
+    "The model record counts 48 tickets issued from 2026-07-01 through 2026-09-10: 48 distinct setups, and 0 tickets that issued a setup again on a later night.",
+    "By ticket: 20 settled, 2 open, 1 awaiting first session, 12 uncertain, 13 not filled. By setup: 20 settled, 2 open, 1 awaiting first session, 12 uncertain, 13 not filled.",
+    "The 20 settled tickets sum to -1.75R (5 wins, 15 losses, 0 breakeven).",
+    "The tickets were sized against 1 model account: $10,000 at 0.5% risk (1 ticket, none settled). No account is recorded for 47 more tickets.",
+    "A sum of R is not a sum of dollars: R counts each ticket as one unit whatever its size. The settled tickets sum to -1.75R and to -$59.16 in model dollars.",
+    "18 settled tickets ended on a stop. As the model books them, a stop first reached inside a session at exactly the stop price, the sum is -2.13R (-$68.70). With the same exits at the stop day's close it is -1.74R (-$54.97): what holding to the close would have been, not a fill estimate. At the stop day's low, a worst-case bound, it is -4.67R (-$139.56).",
+    "Under those readings the settled sum is -1.75R as booked, -1.36R at the closes and -4.29R at the lows.",
+    "12 tickets are uncertain: the bars cannot say whether each filled, and they are in no sum. UBER 2026-07-01 reads -0.70R if filled at its $29.28 limit and -0.42R if filled at its $28.24 trigger; QTWO 2026-07-08 reads -0.61R if filled at its $26.43 limit and -0.25R if filled at its $25.52 trigger; LITE 2026-07-15 reads -0.43R if filled at its $22.48 limit and +0.06R if filled at its $21.68 trigger; HOOD 2026-07-21 reads -0.87R if filled at its $26.12 limit and -0.76R if filled at its $25.34 trigger; FIX 2026-07-23 reads -0.67R if filled at its $27.93 limit and -0.38R if filled at its $26.98 trigger; ANET 2026-07-29 reads -0.26R if filled at its $30.07 limit and +0.28R if filled at its $29.14 trigger; UBER 2026-08-05 reads -1.00R if filled at its $29.35 limit and -1.00R if filled at its $28.35 trigger; PLTR 2026-08-12 reads -0.88R if filled at its $25.58 limit and -0.77R if filled at its $24.69 trigger; MU 2026-08-17 reads -0.39R if filled at its $27.95 limit and -0.12R if filled at its $27.03 trigger; IONQ 2026-08-21 reads -0.32R if filled at its $26.19 limit and +0.55R if filled at its $25.38 trigger; CRDO 2026-08-31 reads -0.33R if filled at its $31.17 limit and +0.00R if filled at its $30.29 trigger; SMCI 2026-09-04 reads -0.35R if filled at its $25.32 limit. These are bounds, not results."
+   ]
+  },
+  "breadth_revisions": {
+   "previous_session": null,
+   "compared": 0,
+   "not_retained": 29,
+   "differ_count": 0,
+   "differ": [],
+   "published": {
+    "2026-09-10": {
+     "up4": 5,
+     "down4": 0,
+     "ratio_10d": 2.75
+    }
+   },
+   "sentence": "There is no earlier publication's breadth to compare."
+  },
+  "real_vs_model": {
+   "status": "private",
+   "sentence": "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
+  },
+  "sentences": [
+   "48 tickets in the scorecard's window are 48 distinct setups.",
+   "By model account: $10,000 at 0.5% risk, 1 ticket from 2026-09-10 through 2026-09-10, 0 settled, no R yet. No model account is recorded for 47 more tickets.",
+   "The 18 stopped tickets booked at the stop sum to -2.13R; read at that session's close, -1.74R; at its low, -4.67R.",
+   "There is no earlier publication's breadth to compare.",
+   "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
+  ]
+ },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
@@ -13221,6 +13334,7 @@
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
   "scorecard": "All retained published plans in the stated window, including pending and missing evidence. Disjoint outcome counts reconcile to plans; rates use resolved plans alone, with an explicit denominator and minimum sample. Public model results, independent of personal selections.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
+  "scorecard_reading": "The scorecard read honestly, beside its own numbers, which do not move: the model record's distinct setups, the model account each ticket was sized against, the stopped tickets at the session's close and low beside the stop they were booked at, the breadth figures this record computes differently from the publication before it, and where real trades are compared with the model (privately). Its sentences are printed verbatim.",
   "funnel": "Where every discovered reaction candidate and every listed anticipation setup stopped: one terminal stage each, in the order the run applies its gates, so the stage counts sum to the discovered count. Derived from the fields above and re-derived by the validator; the labels the page and the mail print travel with it. A stage is the record's own accounting of its gates, never a judgement of the setup and never an entry.",
   "observations": "Public coverage of every published saveable signal, independent of local saves. Each signal keeps its own identity and 21-calendar-day window. Symbols carry the latest real bar plus up to 20 dated observations from already-fetched frames; missing bars stay missing, and missing frames retain earlier actual observations. This is research coverage, never a quote feed or personal trading history.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."
