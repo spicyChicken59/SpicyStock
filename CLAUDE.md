@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6666 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6759 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15559,3 +15559,68 @@ All three die re-judged; the control lives.
 
 **Not claimable:** that Railway builds or runs the dispatcher; any on-time
 start.
+
+## Checkpoint, 19 Nov 2026 -- PR #222 accepted; the execution handoff: orders.json, orders-morning.json and the positions template (PR 3)
+
+**PR #222, accepted.** Merged as `f888b59a` on `main`, all seven checks green
+on `15dec1e1` (pytest, page, the gate, the central and stress native cases,
+both gitleaks runs). Deploying the Railway dispatcher is the owner's step.
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` from `main` at
+`f888b59a`. No rule moves (`rules_version` stands); the published record,
+picks, receipts, history, evidence and ledger are untouched; the handoff
+files are written by the next evening run, not committed here.
+
+**What it writes** (`src/orders.py`, schema
+`docs/operations/orders-schema.json` checked by `src/schema_check.py`, the
+agent's guide `docs/operations/orders.md`):
+- `docs/orders.json` after the brief each night (`pipeline.publish_orders()`):
+  every ticket the record published (`morning.admitted_rows()`), each with its
+  day buy stop-limit and entry window, its OTO sell stop, the exit plan as
+  machine-readable rules in `plan.follow()`'s order, risk in dollars and in R
+  (the limit less the stop), the position cap and risk budget checked again,
+  a status (`go`, `human_review`, `blocked`) and a content hash; the night's
+  checks and `trade_allowed`, true only when every night check passes and a
+  ticket is `go`, with every reason that kept it false. `mode` is `paper`. A
+  night that cannot write it removes the previous night's.
+- `docs/positions-template.json`: one blank position per ticket, for the
+  agent's private copy; never committed filled.
+- `docs/orders-morning.json` from the morning persist job
+  (`python -m tools.publish_morning orders`): each ticket re-read against
+  that run's receipt, `go` or `cancel` with its reasons.
+The publication gate holds each file to the committed record and the schema.
+
+**Mutation pass**, each mutant in a detached worktree judged by the test
+files naming its rule: 29 mutants and a control. 28 died first; **one
+survived, a hole**: the position priced at the stop instead of the limit,
+which the fixtures' caps never bound. A test prices it at the limit now and
+the mutant dies (6 tests). The control survives.
+
+**The review, worked.** A workflow by execution over the whole stack (ten
+finders, two skeptics a finding) returned its PR 3 findings while CI was
+green and before the merge; every one was reproduced here before it was
+touched. The morning file failed open in four ways: a halt source that could
+not say (unavailable, stale, an unknown code) read as clear, and cancels now
+as `halt_unknown`; a retained corporate exclusion the receipt carries, which
+the page withholds entry on, was ignored, and cancels now; a receipt completed
+at or after the ticket's cutoff still said go, and cancels now as
+`outside_entry_window` (each morning ticket carries `valid_until`); and a
+price in a state the file did not list read as go, and cancels as
+`price_unknown`. A setting-up ticket could never be go: the receipt sets its
+entry floor at its trigger, so every price under the trigger read as a gap
+under the skip line it does not have; under its trigger and over its stop it
+is go now. The checker held a file only to its schema and hashes, so a file
+resealed with `mode` live or `trade_allowed` on a red night was served:
+`consistency()` holds every decision field to the file's own checks, and a
+test re-derives a committed `docs/orders.json` from the committed record. A
+file that is not an object raised; it is named. The morning command read an
+unvalidated receipt; it needs the record. A run whose clock is at or after
+the window's `prepare_by` is late. Each hold day carries its scheduled close
+(an early close moves it). And the guide said the model walks from the
+trigger, when `record.replay()` walks from the fill, and gave a hash recipe
+JavaScript cannot reproduce; both say what the code does now. A second
+mutation pass, 20 mutants over these rules and a control: all 20 die.
+
+**Not claimable:** the first nightly `orders.json` (the first evening run
+after the merge writes it); that an execution agent reads it; any trading
+edge.

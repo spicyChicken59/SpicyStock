@@ -10,6 +10,11 @@ The same path publishes the bound source recovery (``--target recovery``): one
 file, ``docs/source-recovery.json``, validated against the current main record,
 the quality ledger's entry for it and the prior receipt.
 
+The same path publishes the morning's go/cancel file for the execution handoff
+(``orders``): one file, ``docs/orders-morning.json``, derived on the spot from
+the ``orders.json``, the morning receipt and the record on main
+(``src/orders.build_morning``), and only from a receipt this run published.
+
 The same path publishes the dated research observation (``--target research``):
 one file, ``docs/research-observations.json``, validated against the current
 main record AND the research cohort receipt and bundle committed beside it.
@@ -32,6 +37,9 @@ RESEARCH_SNAPSHOT_PATH = 'docs/research-observations.json'
 RECOVERY_SNAPSHOT_PATH = 'docs/source-recovery.json'
 COHORT_RECEIPT_PATH = 'docs/stop-research.json'
 RECORD_PATH = 'docs/data.json'
+ORDERS_PATH = 'docs/orders.json'
+ORDERS_MORNING_PATH = 'docs/orders-morning.json'
+ORDERS_MESSAGE = b'Publish the morning go/cancel for the execution handoff\n'
 MAX_SNAPSHOT_BYTES = 1024 * 1024
 # One snapshot file per target; a commit may change that file and nothing else.
 TARGETS = {
@@ -322,19 +330,69 @@ def publish(root: Path, snapshot_raw: bytes, *, ref: str, run_id: str, target: s
             refusal = research_check(observation, data_raw, receipt_raw, bundle_raw, previous_raw)
         if refusal:
             return refusal
-        blob = git(root, 'hash-object', '-w', '--stdin', input=snapshot_raw).stdout.decode().strip()
-        with tempfile.TemporaryDirectory(prefix='spicystock-morning-index-') as temporary:
-            env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary) / 'index'),
-                       GIT_AUTHOR_NAME='spicystock', GIT_AUTHOR_EMAIL='actions@github.com',
-                       GIT_COMMITTER_NAME='spicystock', GIT_COMMITTER_EMAIL='actions@github.com')
-            git(root, 'read-tree', tip, env=env)
-            git(root, 'update-index', '--add', '--cacheinfo', f'100644,{blob},{snapshot_path}', env=env)
-            tree = git(root, 'write-tree', env=env).stdout.decode().strip()
-            commit = git(root, 'commit-tree', tree, '-p', tip, input=message, env=env).stdout.decode().strip()
-        changed = git(root, 'diff-tree', '--no-commit-id', '--name-only', '-r', commit).stdout.decode().splitlines()
-        if changed != [snapshot_path]:
-            raise RuntimeError('morning_commit_must_change_only_observation')
-        if git(root, 'push', 'origin', f'{commit}:refs/heads/main', check=False).returncode == 0:
+        if _commit_one(root, tip, snapshot_path, snapshot_raw, message):
+            return 'published'
+    raise RuntimeError('morning_publication_race_retry_exhausted')
+
+
+def _commit_one(root: Path, tip: str, path: str, raw: bytes, message: bytes) -> bool:
+    """A commit on ``tip`` that changes ``path`` and nothing else, pushed as a
+    fast-forward; False when main moved and the caller must start again."""
+    blob = git(root, 'hash-object', '-w', '--stdin', input=raw).stdout.decode().strip()
+    with tempfile.TemporaryDirectory(prefix='spicystock-morning-index-') as temporary:
+        env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary) / 'index'),
+                   GIT_AUTHOR_NAME='spicystock', GIT_AUTHOR_EMAIL='actions@github.com',
+                   GIT_COMMITTER_NAME='spicystock', GIT_COMMITTER_EMAIL='actions@github.com')
+        git(root, 'read-tree', tip, env=env)
+        git(root, 'update-index', '--add', '--cacheinfo', f'100644,{blob},{path}', env=env)
+        tree = git(root, 'write-tree', env=env).stdout.decode().strip()
+        commit = git(root, 'commit-tree', tree, '-p', tip, input=message, env=env).stdout.decode().strip()
+    changed = git(root, 'diff-tree', '--no-commit-id', '--name-only', '-r', commit).stdout.decode().splitlines()
+    if changed != [path]:
+        raise RuntimeError('morning_commit_must_change_only_observation')
+    return git(root, 'push', 'origin', f'{commit}:refs/heads/main', check=False).returncode == 0
+
+
+def orders_check(data_raw: bytes, orders_raw: bytes | None, receipt_raw: bytes | None, run_id: str) -> str | None:
+    """Why main's files cannot give this run's go/cancel file, or None."""
+    if orders_raw is None:
+        return 'no_orders_on_main'
+    if receipt_raw is None:
+        return 'no_morning_receipt_on_main'
+    if read_snapshot(receipt_raw).get('observation_run_id') != run_id:
+        return 'morning_receipt_not_this_run'
+    try:
+        source = json.loads(orders_raw).get('source', {})
+        bound = isinstance(source, dict) and source.get('data_sha256') == hashlib.sha256(data_raw).hexdigest()
+    except (ValueError, AttributeError):
+        bound = False
+    if not bound:
+        return 'orders_not_bound_to_record'
+    return None
+
+
+def publish_orders(root: Path, *, ref: str, run_id: str) -> str:
+    """``docs/orders-morning.json`` from main's own orders.json, morning
+    receipt and record, committed alone; nothing is read from the runner."""
+    from src import orders
+    if ref != 'refs/heads/main':
+        raise ValueError('morning_publication_requires_main')
+    if not run_id:
+        raise ValueError('morning_observation_run_mismatch')
+    for _ in range(PUSH_ATTEMPTS):
+        git(root, 'fetch', '--no-tags', 'origin', '+refs/heads/main:refs/remotes/origin/main')
+        tip = git(root, 'rev-parse', 'refs/remotes/origin/main').stdout.decode().strip()
+        data_raw = git(root, 'show', f'{tip}:{RECORD_PATH}').stdout
+        orders_raw = _tip_blob(root, tip, ORDERS_PATH, orders.MAX_BYTES, 'orders')
+        receipt_raw = _tip_blob(root, tip, SNAPSHOT_PATH, MAX_SNAPSHOT_BYTES, 'morning_snapshot')
+        refusal = orders_check(data_raw, orders_raw, receipt_raw, run_id)
+        if refusal:
+            return refusal
+        raw = orders.encode(orders.build_morning(orders_raw, receipt_raw, data_raw))
+        orders.validate(raw, 'orders_morning')
+        if _tip_blob(root, tip, ORDERS_MORNING_PATH, orders.MAX_BYTES, 'orders_morning') == raw:
+            return 'unchanged'
+        if _commit_one(root, tip, ORDERS_MORNING_PATH, raw, ORDERS_MESSAGE):
             return 'published'
     raise RuntimeError('morning_publication_race_retry_exhausted')
 
@@ -348,6 +406,8 @@ def main() -> int:
     commit.add_argument('--snapshot', type=Path, required=True)
     commit.add_argument('--root', type=Path, default=Path.cwd())
     commit.add_argument('--target', choices=sorted(TARGETS), default='morning')
+    orders_cmd = commands.add_parser('orders', help="derive and publish docs/orders-morning.json from main")
+    orders_cmd.add_argument('--root', type=Path, default=Path.cwd())
     args = parser.parse_args()
     try:
         if args.command == 'guard':
@@ -357,6 +417,10 @@ def main() -> int:
             print(f'Morning guard: {reason}')
             with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
                 output.write(f'go={str(go).lower()}\n')
+        elif args.command == 'orders':
+            outcome = publish_orders(args.root, ref=os.environ.get('GITHUB_REF', ''),
+                                     run_id=os.environ.get('GITHUB_RUN_ID', ''))
+            print(f'Orders morning publication: {outcome}')
         else:
             outcome = publish(args.root, snapshot_file(args.snapshot), target=args.target,
                               ref=os.environ.get('GITHUB_REF', ''), run_id=os.environ.get('GITHUB_RUN_ID', ''))

@@ -43,6 +43,17 @@ regexTarget = "secret"
 regexes = ['''^(down25_quarter|pct_above_40ma)$''']
 paths = ['''^tests/fixtures/grading/(record\.json|reader-commentary/record\.json)$''']
 
+# The execution handoff (src/orders.py) names each exit rule by its plan.EXIT_RULES
+# key. Of those, only abnormal_10pct is read by the default detector as a key
+# (8.24.3, run on each), and only in the published orders.json, its schema and
+# its two golden fixtures.
+[[rules.allowlists]]
+description = "The one exit-rule key the detector reads in the generated execution handoff and its schema"
+condition = "AND"
+regexTarget = "secret"
+regexes = ['''^(abnormal_10pct)$''']
+paths = ['''^(docs/orders\.json|docs/operations/orders-schema\.json|tests/fixtures/orders/(full|morning)/orders\.json)$''']
+
 # The morning browser fixtures are produced by the same synthetic evening
 # pipeline. These three public rule identifiers are unchanged from page/full.
 [[rules.allowlists]]

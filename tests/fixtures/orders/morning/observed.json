@@ -1,0 +1,47 @@
+{
+ "applicable_session": "2026-09-11",
+ "content_sha256": "db6d40715830bc955c9b4a570e0754201bd063673a66cfa97b564c8305404410",
+ "data_sha256": "9e34f06249d04c55a2480695a29d6e4dfaa620f16fe1de0041883f47784bc44f",
+ "kind": "orders_morning",
+ "mode": "paper",
+ "morning_bound": true,
+ "morning_generated_at": "2026-09-11T13:35:00+00:00",
+ "morning_sha256": "efb553ccd84fbc0eafcff7f13ec1d45449310a179471f349ce89341b84f0d9f8",
+ "morning_status": "observed",
+ "observation_run_id": "synthetic-observed",
+ "orders_sha256": "63acecd5a78057324410de2249a5f8a0eaf2f66a78a9c558186ce8624ee51dd4",
+ "schema": "docs/operations/orders-schema.json#/$defs/orders_morning",
+ "session": "2026-09-10",
+ "summary": {
+  "cancel": 1,
+  "go": 0,
+  "tickets": 1
+ },
+ "tickets": [
+  {
+   "decision": "cancel",
+   "observed": {
+    "ask": 125.02,
+    "bid": 125,
+    "price_checks": {
+     "ask": "within_published_band",
+     "trade": "within_published_band"
+    },
+    "quote_at": "2026-09-11T13:35:00+00:00",
+    "quote_status": "recent",
+    "trade_at": "2026-09-11T13:35:00+00:00",
+    "trade_price": 125,
+    "trade_status": "recent"
+   },
+   "reasons": [
+    "night_not_allowed",
+    "trigger_crossed"
+   ],
+   "symbol": "AAPL",
+   "ticket_id": "2026-09-10:burst:AAPL",
+   "ticket_sha256": "429d0af0464f2c225f9612dc64b055e7bca5aa8b29b3684dab21344d3178422f",
+   "valid_until": "2026-09-11T10:00:00-04:00"
+  }
+ ],
+ "version": 1
+}

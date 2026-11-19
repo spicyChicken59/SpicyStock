@@ -1,0 +1,441 @@
+{
+ "account": {
+  "committed_usd": 505.88,
+  "equity": 10000.0,
+  "max_open_positions": 4,
+  "max_position_pct": 25.0,
+  "reserved_usd": 1762.98,
+  "risk_pct": 0.5,
+  "slots_used": 4
+ },
+ "content_sha256": "1d5f2dd7a2c75e5a317fe207623cbd6446656746755c12a4f4ed7e1dffa24f3e",
+ "entry_window": {
+  "cutoff_at": "2026-09-11T10:00:00-04:00",
+  "opens_at": "2026-09-11T09:30:00-04:00",
+  "prepare_by": "2026-09-11T09:28:00-04:00",
+  "timezone": "America/New_York"
+ },
+ "kind": "orders",
+ "live_ready": {
+  "reasons": [
+   "go_live_gate_not_evaluated"
+  ],
+  "value": false
+ },
+ "mode": "paper",
+ "night_checks": [
+  {
+   "detail": "green",
+   "key": "light",
+   "reason": null,
+   "status": "pass"
+  },
+  {
+   "detail": "ok",
+   "key": "data",
+   "reason": null,
+   "status": "pass"
+  },
+  {
+   "detail": null,
+   "key": "publication_time",
+   "reason": "publication_time_unknown",
+   "status": "not_evaluated"
+  },
+  {
+   "detail": null,
+   "key": "cross_check",
+   "reason": "cross_check_not_run",
+   "status": "not_evaluated"
+  },
+  {
+   "detail": "4 of 4 slots; $2,268.86 committed and reserved of $10,000.00",
+   "key": "account",
+   "reason": null,
+   "status": "pass"
+  }
+ ],
+ "reasons": [
+  {
+   "code": "publication_time_unknown",
+   "scope": "night"
+  },
+  {
+   "code": "cross_check_not_run",
+   "scope": "night"
+  }
+ ],
+ "schema": "docs/operations/orders-schema.json",
+ "source": {
+  "applicable_session": "2026-09-11",
+  "context_sha256": "594a667047ab65d68dcb7d916f49d738d60653a3c92656c7e47bdf6f43b04dbf",
+  "data_sha256": "9e34f06249d04c55a2480695a29d6e4dfaa620f16fe1de0041883f47784bc44f",
+  "dry_run": false,
+  "fixture": false,
+  "picks_sha256": null,
+  "published_at": "2026-09-10T22:30:00+00:00",
+  "rules_version": "633f6d0caeb4",
+  "run_id": "synthetic-morning-full",
+  "session": "2026-09-10"
+ },
+ "summary": {
+  "blocked": 0,
+  "go": 1,
+  "human_review": 0,
+  "tickets": 1
+ },
+ "tickets": [
+  {
+   "applicable_session": "2026-09-11",
+   "checks": [
+    {
+     "detail": "not_in_registry",
+     "key": "event_registry",
+     "reason": null,
+     "status": "pass"
+    },
+    {
+     "detail": null,
+     "key": "sec_flags",
+     "reason": null,
+     "status": "pass"
+    },
+    {
+     "detail": "$505.88 at the limit against a $2,500.00 cap",
+     "key": "position_cap",
+     "reason": null,
+     "status": "pass"
+    },
+    {
+     "detail": "$20.20 at the limit against a $25.00 budget",
+     "key": "risk_budget",
+     "reason": null,
+     "status": "pass"
+    }
+   ],
+   "content_sha256": "429d0af0464f2c225f9612dc64b055e7bca5aa8b29b3684dab21344d3178422f",
+   "entry": {
+    "cancel_if_unfilled_at": "2026-09-11T10:00:00-04:00",
+    "limit_price": 126.47,
+    "prepare_by": "2026-09-11T09:28:00-04:00",
+    "skip_if_open_above": 129.18,
+    "skip_if_open_below": 121.73,
+    "stop_price": 124.21,
+    "time_in_force": "day",
+    "trigger_rule": "close",
+    "type": "buy_stop_limit",
+    "valid_from": "2026-09-11T09:30:00-04:00",
+    "valid_until": "2026-09-11T10:00:00-04:00"
+   },
+   "evidence": {
+    "evidence_id": "744d2f3e77f1b60f367d214e419d48dc6b2e86467d07b738bb7c2c6643021523",
+    "plan_sha256": "2dd13de7f67b811c59c955a7663de818d3af290b41017388e2a14a3d749ec3fe"
+   },
+   "exit_plan": {
+    "entry_basis": "average_fill_price",
+    "half_shares": 2,
+    "rules": [
+     {
+      "from_date": "2026-09-11",
+      "from_day": 1,
+      "key": "stopped_at_open",
+      "sequence": 1,
+      "source": "B",
+      "then": {
+       "action": "sell",
+       "at": "open",
+       "quantity": "all"
+      },
+      "to_date": "2026-09-17",
+      "to_day": 5,
+      "when": {
+       "level": "stop",
+       "op": "at_or_below",
+       "price": "open"
+      }
+     },
+     {
+      "from_date": "2026-09-11",
+      "from_day": 1,
+      "key": "gap_20pct",
+      "sequence": 2,
+      "source": "B",
+      "then": {
+       "action": "sell",
+       "at": "open",
+       "quantity": "all"
+      },
+      "to_date": "2026-09-17",
+      "to_day": 5,
+      "when": {
+       "level": "entry_pct",
+       "op": "at_or_above",
+       "pct": 20.0,
+       "price": "open",
+       "price_at_trigger": 149.05
+      }
+     },
+     {
+      "from_date": "2026-09-11",
+      "from_day": 1,
+      "key": "protective_stop",
+      "sequence": 3,
+      "source": "B",
+      "then": {
+       "action": "sell",
+       "at": "stop",
+       "order_type": "stop_market",
+       "quantity": "all"
+      },
+      "to_date": "2026-09-17",
+      "to_day": 5,
+      "when": {
+       "level": "stop",
+       "op": "at_or_below",
+       "price": "low"
+      }
+     },
+     {
+      "from_date": "2026-09-11",
+      "from_day": 1,
+      "key": "sell_half_8pct",
+      "once": true,
+      "sequence": 4,
+      "source": "B",
+      "then": {
+       "action": "sell",
+       "at": "the_higher_of_open_and_level",
+       "cents": 0.25,
+       "cents_max": 0.5,
+       "quantity": "half",
+       "shares": 2,
+       "stop_to": "day_high_minus"
+      },
+      "to_date": "2026-09-17",
+      "to_day": 5,
+      "when": {
+       "level": "entry_pct",
+       "op": "at_or_above",
+       "pct": 8.0,
+       "price": "high",
+       "price_at_trigger": 134.15
+      }
+     },
+     {
+      "from_date": "2026-09-11",
+      "from_day": 1,
+      "key": "abnormal_10pct",
+      "sequence": 5,
+      "source": "B",
+      "then": {
+       "action": "raise_stop",
+       "cents": 0.25,
+       "stop_to": "day_high_minus",
+       "take": "partial_profit"
+      },
+      "to_date": "2026-09-17",
+      "to_day": 5,
+      "when": {
+       "level": "entry_pct",
+       "op": "at_or_above",
+       "pct": 10.0,
+       "price": "close",
+       "price_at_trigger": 136.63
+      }
+     },
+     {
+      "from_date": "2026-09-15",
+      "from_day": 3,
+      "key": "day3_no_progress",
+      "sequence": 6,
+      "source": "B",
+      "then": {
+       "action": "sell",
+       "at": "close",
+       "quantity": "all"
+      },
+      "to_date": "2026-09-15",
+      "to_day": 3,
+      "when": {
+       "level": "entry",
+       "op": "at_or_below",
+       "price": "close"
+      }
+     },
+     {
+      "from_date": "2026-09-15",
+      "from_day": 3,
+      "key": "day3_sell_half",
+      "sequence": 7,
+      "source": "B",
+      "then": {
+       "action": "sell",
+       "at": "close",
+       "quantity": "half",
+       "shares": 2
+      },
+      "to_date": "2026-09-15",
+      "to_day": 3,
+      "when": {
+       "op": "session_close",
+       "price": "close",
+       "unless": "sell_half_8pct"
+      }
+     },
+     {
+      "from_date": "2026-09-11",
+      "from_day": 1,
+      "key": "entry_day_low",
+      "sequence": 8,
+      "source": "B",
+      "then": {
+       "action": "raise_stop",
+       "only_up": true,
+       "stop_to": "entry_day_low"
+      },
+      "to_date": "2026-09-11",
+      "to_day": 1,
+      "when": {
+       "op": "session_close",
+       "price": "close"
+      }
+     },
+     {
+      "from_date": "2026-09-15",
+      "from_day": 3,
+      "key": "trail_after_day3",
+      "sequence": 9,
+      "source": "P",
+      "then": {
+       "action": "raise_stop",
+       "only_up": true,
+       "stop_to": "day_low"
+      },
+      "to_date": "2026-09-17",
+      "to_day": 5,
+      "when": {
+       "op": "session_close",
+       "price": "close"
+      }
+     },
+     {
+      "from_date": "2026-09-17",
+      "from_day": 5,
+      "key": "day5_exit",
+      "sequence": 10,
+      "source": "B",
+      "then": {
+       "action": "sell",
+       "at": "close",
+       "quantity": "remainder"
+      },
+      "to_date": "2026-09-17",
+      "to_day": 5,
+      "when": {
+       "op": "session_close",
+       "price": "close"
+      }
+     },
+     {
+      "from_date": "2026-09-14",
+      "from_day": 2,
+      "key": "no_breakeven",
+      "sequence": 11,
+      "source": "T",
+      "then": {
+       "action": "hold_stop",
+       "do_not": "move_stop_to_breakeven"
+      },
+      "to_date": "2026-09-16",
+      "to_day": 4,
+      "when": {
+       "op": "session_close",
+       "price": "close"
+      }
+     }
+    ],
+    "sessions": [
+     {
+      "close_at": "2026-09-11T16:00:00-04:00",
+      "date": "2026-09-11",
+      "day": 1,
+      "early_close": false
+     },
+     {
+      "close_at": "2026-09-14T16:00:00-04:00",
+      "date": "2026-09-14",
+      "day": 2,
+      "early_close": false
+     },
+     {
+      "close_at": "2026-09-15T16:00:00-04:00",
+      "date": "2026-09-15",
+      "day": 3,
+      "early_close": false
+     },
+     {
+      "close_at": "2026-09-16T16:00:00-04:00",
+      "date": "2026-09-16",
+      "day": 4,
+      "early_close": false
+     },
+     {
+      "close_at": "2026-09-17T16:00:00-04:00",
+      "date": "2026-09-17",
+      "day": 5,
+      "early_close": false
+     }
+    ],
+    "shares": 4,
+    "within_a_session": "open first, then the low against the stop, then the high, then the close: the order of a bar's high and low is unknown, so the stop wins"
+   },
+   "grade": "A+",
+   "id": "2026-09-10:burst:AAPL",
+   "light": "green",
+   "order_as_written": {
+    "action": "buy",
+    "conditional": "one_triggers_the_other",
+    "limit_price": 126.47,
+    "order_type": "stop_limit",
+    "quantity": 4,
+    "stop_price": 124.21,
+    "symbol": "AAPL",
+    "then": {
+     "action": "sell",
+     "order_type": "stop",
+     "quantity": 4,
+     "stop_price": 121.42,
+     "time_in_force": "gtc"
+    },
+    "time_in_force": "day"
+   },
+   "protective_stop": {
+    "attached": "one_triggers_the_other",
+    "note": "Fidelity releases an OTO's sell stop only when the buy fills in full; on a partial fill place a separate sell stop for the shares that filled",
+    "quantity": 4,
+    "stop_price": 121.42,
+    "time_in_force": "gtc",
+    "type": "sell_stop"
+   },
+   "reasons": [],
+   "risk": {
+    "plan_risk_usd": 20.2,
+    "position_cap_usd": 2500.0,
+    "position_usd": 505.88,
+    "r_basis": "the limit less the stop: the highest fill the ticket permits, which is the price the plan is sized at",
+    "r_per_share": 5.05,
+    "risk_budget_usd": 25.0,
+    "risk_usd": 20.2
+   },
+   "rules_version": "633f6d0caeb4",
+   "session": "2026-09-10",
+   "setup_type": "burst",
+   "shares": 4,
+   "size_multiplier": 0.5,
+   "status": "go",
+   "symbol": "AAPL"
+  }
+ ],
+ "trade_allowed": false,
+ "version": 1
+}

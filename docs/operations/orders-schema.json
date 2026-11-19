@@ -1,0 +1,1439 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://spicychicken59.github.io/SpicyStock/operations/orders-schema.json",
+ "title": "SpicyStock execution handoff, version 1",
+ "description": "orders.json is the root; orders-morning.json is #/$defs/orders_morning and positions-template.json is #/$defs/positions. Written by src/orders.py and held to this file by src/schema_check.py and tests/test_orders.py.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": "docs/operations/orders-schema.json"
+  },
+  "version": {
+   "const": 1
+  },
+  "kind": {
+   "const": "orders"
+  },
+  "mode": {
+   "enum": [
+    "paper",
+    "live"
+   ]
+  },
+  "live_ready": {
+   "type": "object",
+   "properties": {
+    "value": {
+     "type": "boolean"
+    },
+    "reasons": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   },
+   "required": [
+    "reasons",
+    "value"
+   ],
+   "additionalProperties": false
+  },
+  "source": {
+   "type": "object",
+   "properties": {
+    "data_sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "picks_sha256": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "rules_version": {
+     "type": "string"
+    },
+    "context_sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "run_id": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "session": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "applicable_session": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "published_at": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+    },
+    "fixture": {
+     "type": "boolean"
+    },
+    "dry_run": {
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "applicable_session",
+    "context_sha256",
+    "data_sha256",
+    "dry_run",
+    "fixture",
+    "picks_sha256",
+    "published_at",
+    "rules_version",
+    "run_id",
+    "session"
+   ],
+   "additionalProperties": false
+  },
+  "account": {
+   "type": "object",
+   "properties": {
+    "equity": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "risk_pct": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "max_position_pct": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "committed_usd": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "reserved_usd": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "max_open_positions": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "slots_used": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    }
+   },
+   "required": [
+    "committed_usd",
+    "equity",
+    "max_open_positions",
+    "max_position_pct",
+    "reserved_usd",
+    "risk_pct",
+    "slots_used"
+   ],
+   "additionalProperties": false
+  },
+  "entry_window": {
+   "type": "object",
+   "properties": {
+    "opens_at": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+    },
+    "cutoff_at": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+    },
+    "prepare_by": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+    },
+    "timezone": {
+     "type": [
+      "string",
+      "null"
+     ]
+    }
+   },
+   "required": [
+    "cutoff_at",
+    "opens_at",
+    "prepare_by",
+    "timezone"
+   ],
+   "additionalProperties": false
+  },
+  "night_checks": {
+   "type": "array",
+   "minItems": 5,
+   "maxItems": 5,
+   "items": {
+    "$ref": "#/$defs/night_check"
+   }
+  },
+  "trade_allowed": {
+   "type": "boolean"
+  },
+  "reasons": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/reason"
+   }
+  },
+  "tickets": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/ticket"
+   }
+  },
+  "summary": {
+   "type": "object",
+   "properties": {
+    "tickets": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "go": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "human_review": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "blocked": {
+     "type": "integer",
+     "minimum": 0
+    }
+   },
+   "required": [
+    "blocked",
+    "go",
+    "human_review",
+    "tickets"
+   ],
+   "additionalProperties": false
+  },
+  "content_sha256": {
+   "type": "string",
+   "pattern": "^[0-9a-f]{64}$"
+  }
+ },
+ "required": [
+  "account",
+  "content_sha256",
+  "entry_window",
+  "kind",
+  "live_ready",
+  "mode",
+  "night_checks",
+  "reasons",
+  "schema",
+  "source",
+  "summary",
+  "tickets",
+  "trade_allowed",
+  "version"
+ ],
+ "additionalProperties": false,
+ "$defs": {
+  "night_check": {
+   "type": "object",
+   "properties": {
+    "key": {
+     "enum": [
+      "light",
+      "data",
+      "publication_time",
+      "cross_check",
+      "account"
+     ]
+    },
+    "status": {
+     "enum": [
+      "pass",
+      "fail",
+      "not_evaluated"
+     ]
+    },
+    "reason": {
+     "enum": [
+      "account_limit",
+      "cross_check_not_run",
+      "data_degraded",
+      "event_blocked",
+      "late_publish",
+      "light_red",
+      "light_unknown",
+      "no_tickets",
+      "position_cap",
+      "publication_time_unknown",
+      "risk_budget",
+      "sec_flag",
+      null
+     ]
+    },
+    "detail": {
+     "type": [
+      "string",
+      "null"
+     ]
+    }
+   },
+   "required": [
+    "detail",
+    "key",
+    "reason",
+    "status"
+   ],
+   "additionalProperties": false
+  },
+  "reason": {
+   "type": "object",
+   "properties": {
+    "scope": {
+     "type": "string"
+    },
+    "code": {
+     "enum": [
+      "account_limit",
+      "cross_check_not_run",
+      "data_degraded",
+      "event_blocked",
+      "late_publish",
+      "light_red",
+      "light_unknown",
+      "no_tickets",
+      "position_cap",
+      "publication_time_unknown",
+      "risk_budget",
+      "sec_flag"
+     ]
+    }
+   },
+   "required": [
+    "code",
+    "scope"
+   ],
+   "additionalProperties": false
+  },
+  "ticket": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "string"
+    },
+    "session": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "applicable_session": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "symbol": {
+     "type": "string",
+     "minLength": 1
+    },
+    "setup_type": {
+     "enum": [
+      "burst",
+      "anticipation"
+     ]
+    },
+    "grade": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "rules_version": {
+     "type": "string"
+    },
+    "light": {
+     "enum": [
+      "green",
+      "yellow",
+      "red"
+     ]
+    },
+    "size_multiplier": {
+     "type": "number",
+     "minimum": 0
+    },
+    "shares": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "entry": {
+     "type": "object",
+     "properties": {
+      "type": {
+       "const": "buy_stop_limit"
+      },
+      "stop_price": {
+       "type": "number",
+       "exclusiveMinimum": 0
+      },
+      "limit_price": {
+       "type": "number",
+       "exclusiveMinimum": 0
+      },
+      "time_in_force": {
+       "const": "day"
+      },
+      "valid_from": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+      },
+      "valid_until": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+      },
+      "prepare_by": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+      },
+      "cancel_if_unfilled_at": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+      },
+      "skip_if_open_below": {
+       "type": [
+        "number",
+        "null"
+       ]
+      },
+      "skip_if_open_above": {
+       "type": [
+        "number",
+        "null"
+       ]
+      },
+      "trigger_rule": {
+       "type": [
+        "string",
+        "null"
+       ]
+      }
+     },
+     "required": [
+      "cancel_if_unfilled_at",
+      "limit_price",
+      "prepare_by",
+      "skip_if_open_above",
+      "skip_if_open_below",
+      "stop_price",
+      "time_in_force",
+      "trigger_rule",
+      "type",
+      "valid_from",
+      "valid_until"
+     ],
+     "additionalProperties": false
+    },
+    "protective_stop": {
+     "type": "object",
+     "properties": {
+      "type": {
+       "const": "sell_stop"
+      },
+      "stop_price": {
+       "type": "number",
+       "exclusiveMinimum": 0
+      },
+      "quantity": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "time_in_force": {
+       "const": "gtc"
+      },
+      "attached": {
+       "const": "one_triggers_the_other"
+      },
+      "note": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "attached",
+      "note",
+      "quantity",
+      "stop_price",
+      "time_in_force",
+      "type"
+     ],
+     "additionalProperties": false
+    },
+    "order_as_written": {
+     "type": "object"
+    },
+    "exit_plan": {
+     "$ref": "#/$defs/exit_plan"
+    },
+    "risk": {
+     "type": "object",
+     "properties": {
+      "r_per_share": {
+       "type": "number",
+       "exclusiveMinimum": 0
+      },
+      "r_basis": {
+       "type": "string"
+      },
+      "risk_usd": {
+       "type": "number",
+       "minimum": 0
+      },
+      "plan_risk_usd": {
+       "type": [
+        "number",
+        "null"
+       ]
+      },
+      "risk_budget_usd": {
+       "type": [
+        "number",
+        "null"
+       ]
+      },
+      "position_usd": {
+       "type": "number",
+       "exclusiveMinimum": 0
+      },
+      "position_cap_usd": {
+       "type": [
+        "number",
+        "null"
+       ]
+      }
+     },
+     "required": [
+      "plan_risk_usd",
+      "position_cap_usd",
+      "position_usd",
+      "r_basis",
+      "r_per_share",
+      "risk_budget_usd",
+      "risk_usd"
+     ],
+     "additionalProperties": false
+    },
+    "checks": {
+     "type": "array",
+     "minItems": 4,
+     "maxItems": 4,
+     "items": {
+      "$ref": "#/$defs/ticket_check"
+     }
+    },
+    "status": {
+     "enum": [
+      "go",
+      "human_review",
+      "blocked"
+     ]
+    },
+    "reasons": {
+     "type": "array",
+     "items": {
+      "enum": [
+       "account_limit",
+       "cross_check_not_run",
+       "data_degraded",
+       "event_blocked",
+       "late_publish",
+       "light_red",
+       "light_unknown",
+       "no_tickets",
+       "position_cap",
+       "publication_time_unknown",
+       "risk_budget",
+       "sec_flag"
+      ]
+     }
+    },
+    "evidence": {
+     "type": "object",
+     "properties": {
+      "evidence_id": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{64}$"
+      },
+      "plan_sha256": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{64}$"
+      }
+     },
+     "required": [
+      "evidence_id",
+      "plan_sha256"
+     ],
+     "additionalProperties": false
+    },
+    "content_sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    }
+   },
+   "required": [
+    "applicable_session",
+    "checks",
+    "content_sha256",
+    "entry",
+    "evidence",
+    "exit_plan",
+    "grade",
+    "id",
+    "light",
+    "order_as_written",
+    "protective_stop",
+    "reasons",
+    "risk",
+    "rules_version",
+    "session",
+    "setup_type",
+    "shares",
+    "size_multiplier",
+    "status",
+    "symbol"
+   ],
+   "additionalProperties": false
+  },
+  "exit_plan": {
+   "type": "object",
+   "properties": {
+    "entry_basis": {
+     "const": "average_fill_price"
+    },
+    "shares": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "half_shares": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "sessions": {
+     "type": "array",
+     "minItems": 1,
+     "description": "each hold day with its scheduled close: an early-close session closes before the regular hour",
+     "items": {
+      "type": "object",
+      "properties": {
+       "day": {
+        "type": "integer",
+        "minimum": 1
+       },
+       "date": {
+        "type": "string",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+       },
+       "close_at": {
+        "type": "string",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+       },
+       "early_close": {
+        "type": "boolean"
+       }
+      },
+      "required": [
+       "close_at",
+       "date",
+       "day",
+       "early_close"
+      ],
+      "additionalProperties": false
+     }
+    },
+    "within_a_session": {
+     "type": "string"
+    },
+    "rules": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "$ref": "#/$defs/exit_rule"
+     }
+    }
+   },
+   "required": [
+    "entry_basis",
+    "half_shares",
+    "rules",
+    "sessions",
+    "shares",
+    "within_a_session"
+   ],
+   "additionalProperties": false
+  },
+  "exit_rule": {
+   "type": "object",
+   "properties": {
+    "key": {
+     "type": "string"
+    },
+    "sequence": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "source": {
+     "enum": [
+      "B",
+      "P",
+      "T"
+     ]
+    },
+    "from_day": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "to_day": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "from_date": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "to_date": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "once": {
+     "type": "boolean"
+    },
+    "when": {
+     "$ref": "#/$defs/exit_when"
+    },
+    "then": {
+     "$ref": "#/$defs/exit_then"
+    }
+   },
+   "required": [
+    "key",
+    "sequence",
+    "source",
+    "from_day",
+    "to_day",
+    "from_date",
+    "to_date",
+    "when",
+    "then"
+   ],
+   "additionalProperties": false
+  },
+  "exit_when": {
+   "type": "object",
+   "properties": {
+    "price": {
+     "enum": [
+      "open",
+      "high",
+      "low",
+      "close"
+     ]
+    },
+    "op": {
+     "enum": [
+      "at_or_above",
+      "at_or_below",
+      "session_close"
+     ]
+    },
+    "level": {
+     "enum": [
+      "stop",
+      "entry",
+      "entry_pct"
+     ]
+    },
+    "pct": {
+     "type": "number"
+    },
+    "price_at_trigger": {
+     "type": "number",
+     "exclusiveMinimum": 0
+    },
+    "unless": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "price",
+    "op"
+   ],
+   "additionalProperties": false
+  },
+  "exit_then": {
+   "type": "object",
+   "properties": {
+    "action": {
+     "enum": [
+      "sell",
+      "raise_stop",
+      "hold_stop"
+     ]
+    },
+    "quantity": {
+     "enum": [
+      "all",
+      "half",
+      "remainder"
+     ]
+    },
+    "shares": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "at": {
+     "enum": [
+      "open",
+      "stop",
+      "close",
+      "the_higher_of_open_and_level"
+     ]
+    },
+    "order_type": {
+     "enum": [
+      "stop_market"
+     ]
+    },
+    "stop_to": {
+     "enum": [
+      "day_high_minus",
+      "entry_day_low",
+      "day_low"
+     ]
+    },
+    "cents": {
+     "type": "number"
+    },
+    "cents_max": {
+     "type": "number"
+    },
+    "only_up": {
+     "type": "boolean"
+    },
+    "take": {
+     "enum": [
+      "partial_profit"
+     ]
+    },
+    "do_not": {
+     "enum": [
+      "move_stop_to_breakeven"
+     ]
+    }
+   },
+   "required": [
+    "action"
+   ],
+   "additionalProperties": false
+  },
+  "orders_morning": {
+   "type": "object",
+   "properties": {
+    "schema": {
+     "const": "docs/operations/orders-schema.json#/$defs/orders_morning"
+    },
+    "version": {
+     "const": 1
+    },
+    "kind": {
+     "const": "orders_morning"
+    },
+    "mode": {
+     "enum": [
+      "paper",
+      "live"
+     ]
+    },
+    "orders_sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "data_sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "morning_sha256": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "morning_bound": {
+     "type": "boolean"
+    },
+    "morning_status": {
+     "enum": [
+      "observed",
+      "partial",
+      "provider_unavailable",
+      "no_tickets",
+      "inapplicable",
+      null
+     ]
+    },
+    "morning_generated_at": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+    },
+    "observation_run_id": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "session": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "applicable_session": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "tickets": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/morning_ticket"
+     }
+    },
+    "summary": {
+     "type": "object",
+     "properties": {
+      "tickets": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "go": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "cancel": {
+       "type": "integer",
+       "minimum": 0
+      }
+     },
+     "required": [
+      "cancel",
+      "go",
+      "tickets"
+     ],
+     "additionalProperties": false
+    },
+    "content_sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    }
+   },
+   "required": [
+    "applicable_session",
+    "content_sha256",
+    "data_sha256",
+    "kind",
+    "mode",
+    "morning_bound",
+    "morning_generated_at",
+    "morning_sha256",
+    "morning_status",
+    "observation_run_id",
+    "orders_sha256",
+    "schema",
+    "session",
+    "summary",
+    "tickets",
+    "version"
+   ],
+   "additionalProperties": false
+  },
+  "morning_ticket": {
+   "type": "object",
+   "properties": {
+    "ticket_id": {
+     "type": "string"
+    },
+    "ticket_sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "symbol": {
+     "type": "string"
+    },
+    "valid_until": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}",
+     "description": "the ticket's entry cutoff, copied from orders.json: a go is good only before it"
+    },
+    "decision": {
+     "enum": [
+      "go",
+      "cancel"
+     ]
+    },
+    "reasons": {
+     "type": "array",
+     "items": {
+      "enum": [
+       "gap_above_limit",
+       "gap_below_floor",
+       "halt_unknown",
+       "halted",
+       "news_or_sec_flag",
+       "night_not_allowed",
+       "no_morning_check",
+       "not_checked",
+       "outside_entry_window",
+       "price_unknown",
+       "stale_data",
+       "ticket_not_go",
+       "trigger_crossed"
+      ]
+     }
+    },
+    "observed": {
+     "type": [
+      "object",
+      "null"
+     ],
+     "properties": {
+      "trade_status": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "trade_price": {
+       "type": [
+        "number",
+        "null"
+       ]
+      },
+      "trade_at": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+      },
+      "quote_status": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "bid": {
+       "type": [
+        "number",
+        "null"
+       ]
+      },
+      "ask": {
+       "type": [
+        "number",
+        "null"
+       ]
+      },
+      "quote_at": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+      },
+      "price_checks": {
+       "type": "object"
+      }
+     },
+     "additionalProperties": false
+    }
+   },
+   "required": [
+    "decision",
+    "observed",
+    "reasons",
+    "symbol",
+    "ticket_id",
+    "ticket_sha256",
+    "valid_until"
+   ],
+   "additionalProperties": false
+  },
+  "positions": {
+   "type": "object",
+   "properties": {
+    "schema": {
+     "const": "docs/operations/orders-schema.json#/$defs/positions"
+    },
+    "version": {
+     "const": 1
+    },
+    "kind": {
+     "const": "positions"
+    },
+    "orders_sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "session": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "applicable_session": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "mode": {
+     "enum": [
+      "paper",
+      "live"
+     ]
+    },
+    "privacy": {
+     "type": "string"
+    },
+    "positions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/position"
+     }
+    },
+    "content_sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    }
+   },
+   "required": [
+    "applicable_session",
+    "content_sha256",
+    "kind",
+    "mode",
+    "orders_sha256",
+    "positions",
+    "privacy",
+    "schema",
+    "session",
+    "version"
+   ],
+   "additionalProperties": false
+  },
+  "position": {
+   "type": "object",
+   "properties": {
+    "ticket_id": {
+     "type": "string"
+    },
+    "ticket_sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "symbol": {
+     "type": "string"
+    },
+    "planned": {
+     "type": "object",
+     "properties": {
+      "shares": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "stop_price": {
+       "type": "number",
+       "exclusiveMinimum": 0
+      },
+      "limit_price": {
+       "type": "number",
+       "exclusiveMinimum": 0
+      },
+      "protective_stop": {
+       "type": "number",
+       "exclusiveMinimum": 0
+      }
+     },
+     "required": [
+      "limit_price",
+      "protective_stop",
+      "shares",
+      "stop_price"
+     ],
+     "additionalProperties": false
+    },
+    "broker": {
+     "type": "object",
+     "properties": {
+      "account_label": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "maxLength": 40
+      },
+      "entry_order_id": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "stop_order_id": {
+       "type": [
+        "string",
+        "null"
+       ]
+      }
+     },
+     "required": [
+      "account_label",
+      "entry_order_id",
+      "stop_order_id"
+     ],
+     "additionalProperties": false
+    },
+    "status": {
+     "enum": [
+      "not_submitted",
+      "submitted",
+      "partially_filled",
+      "filled",
+      "cancelled",
+      "closed"
+     ]
+    },
+    "submitted_at": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+    },
+    "submitted_shares": {
+     "type": [
+      "integer",
+      "null"
+     ],
+     "minimum": 0
+    },
+    "cancelled_shares": {
+     "type": [
+      "integer",
+      "null"
+     ],
+     "minimum": 0
+    },
+    "fills": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/fill"
+     }
+    },
+    "exits": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/exit"
+     }
+    },
+    "fees_usd": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "minimum": 0
+    },
+    "notes": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "maxLength": 500
+    }
+   },
+   "required": [
+    "broker",
+    "cancelled_shares",
+    "exits",
+    "fees_usd",
+    "fills",
+    "notes",
+    "planned",
+    "status",
+    "submitted_at",
+    "submitted_shares",
+    "symbol",
+    "ticket_id",
+    "ticket_sha256"
+   ],
+   "additionalProperties": false
+  },
+  "fill": {
+   "type": "object",
+   "properties": {
+    "at": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+    },
+    "shares": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "price": {
+     "type": "number",
+     "exclusiveMinimum": 0
+    }
+   },
+   "required": [
+    "at",
+    "price",
+    "shares"
+   ],
+   "additionalProperties": false
+  },
+  "exit": {
+   "type": "object",
+   "properties": {
+    "at": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"
+    },
+    "shares": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "price": {
+     "type": "number",
+     "exclusiveMinimum": 0
+    },
+    "reason": {
+     "enum": [
+      "protective_stop",
+      "stopped_at_open",
+      "gap_20pct",
+      "sell_half_8pct",
+      "abnormal_10pct",
+      "day3_no_progress",
+      "day3_sell_half",
+      "day5_exit",
+      "manual"
+     ]
+    },
+    "broker_order_id": {
+     "type": [
+      "string",
+      "null"
+     ]
+    }
+   },
+   "required": [
+    "at",
+    "shares",
+    "price",
+    "reason"
+   ],
+   "additionalProperties": false
+  },
+  "ticket_check": {
+   "type": "object",
+   "properties": {
+    "key": {
+     "enum": [
+      "event_registry",
+      "sec_flags",
+      "position_cap",
+      "risk_budget"
+     ]
+    },
+    "status": {
+     "enum": [
+      "pass",
+      "fail",
+      "not_evaluated"
+     ]
+    },
+    "reason": {
+     "enum": [
+      "account_limit",
+      "cross_check_not_run",
+      "data_degraded",
+      "event_blocked",
+      "late_publish",
+      "light_red",
+      "light_unknown",
+      "no_tickets",
+      "position_cap",
+      "publication_time_unknown",
+      "risk_budget",
+      "sec_flag",
+      null
+     ]
+    },
+    "detail": {
+     "type": [
+      "string",
+      "null"
+     ]
+    }
+   },
+   "required": [
+    "detail",
+    "key",
+    "reason",
+    "status"
+   ],
+   "additionalProperties": false
+  }
+ }
+}

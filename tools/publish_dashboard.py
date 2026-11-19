@@ -190,6 +190,28 @@ def brief_files(root: Path) -> tuple[str, ...]:
     return (brief.JSON_FILE, brief.MD_FILE)
 
 
+def orders_files(root: Path) -> tuple[str, ...]:
+    """The execution handoff, held to the committed record and its schema.
+
+    Absent, it names no files. Present, ``orders.json`` must meet its schema,
+    hold its own hash and be bound to the committed ``data.json``; the
+    positions template and the morning's go/cancel file, when present, must
+    meet theirs and be bound to that exact ``orders.json``. Tickets that read
+    as tonight's beside a newer record are the failure this exists to stop."""
+    docs = root / 'docs'
+    from src import orders
+    if not ((docs / orders.FILE).exists() or (docs / orders.FILE).is_symlink()):
+        return ()
+    for name in (orders.FILE, orders.POSITIONS_FILE, orders.MORNING_FILE):
+        if (docs / name).is_symlink():
+            raise RuntimeError(f'The execution handoff file {name} is a symlink.')
+    found = orders.check(docs)
+    if found:
+        raise RuntimeError('The execution handoff does not match the committed publication: ' + found[0])
+    return tuple(name for name in (orders.FILE, orders.POSITIONS_FILE, orders.MORNING_FILE)
+                 if (docs / name).exists())
+
+
 STUDY_FILE = "historical-validation.json"
 STUDY_CASE_DIR = "historical-validation"
 MAX_STUDY_BYTES = 1024 * 1024
@@ -270,6 +292,7 @@ def public_files(root: Path) -> tuple[str, ...]:
     names.extend(name for name in stop_research_files(root) if name not in names)
     names.extend(name for name in research_outcomes_files(root) if name not in names)
     names.extend(name for name in brief_files(root) if name not in names)
+    names.extend(name for name in orders_files(root) if name not in names)
     names.extend(name for name in study_case_files(root) if name not in names)
     return tuple(names)
 

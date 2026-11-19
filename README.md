@@ -2501,6 +2501,48 @@ after it writes the first one. After the page fixtures are regenerated,
 regenerate the brief's golden pair last (`python tests/fixtures/brief/generate.py`;
 CI runs it with `--check`).
 
+### The execution handoff
+
+An execution agent outside this repository decides and places the owner's
+trades; SpicyStock still decides nothing. `src/orders.py` writes what it
+reads, each a function of committed bytes and no clock:
+
+- **`docs/orders.json`**, after the brief each night (`pipeline.publish_orders()`):
+  every ticket the record published (`morning.admitted_rows()`, the rows the
+  morning receipt quotes), each with its day buy stop-limit, its entry window,
+  its OTO sell stop, the exit plan as machine-readable rules in
+  `plan.follow()`'s order, its risk in dollars and in R (the limit less the
+  stop), the position cap and the risk budget checked again, its status
+  (`go`, `human_review`, `blocked`) and a content hash. Beside them, the
+  night's five checks (`light`, `data`, `publication_time`, `cross_check`,
+  `account`), each `pass`, `fail` or `not_evaluated`, and `trade_allowed`:
+  true only when every night check passes and a ticket is `go`, with every
+  reason that kept it false. `mode` is `paper` and `live_ready` false until
+  the go-live gate is computed. A night that cannot write it removes the
+  previous night's, so no earlier tickets read as tonight's.
+- **`docs/positions-template.json`**, beside it: one blank position per
+  ticket for the agent to fill with real orders, fills and exits in a private
+  copy that is never committed here.
+- **`docs/orders-morning.json`**, from the morning's persist job
+  (`python -m tools.publish_morning orders`): each ticket re-read against the
+  receipt that run published, `go` or `cancel` with its reasons (the night not
+  allowed, no recent price, a halt or a halt source that could not say, the
+  receipt completed after the ticket's cutoff, the event registry, a retained
+  corporate exclusion or an SEC flag, a price over the limit, under the skip
+  line, or at or over the buy stop, or in a state the file does not know). A
+  setting-up ticket has no skip line, so under its trigger it stays `go`.
+  Derived on the spot from `main`'s own `orders.json`, receipt and record, and
+  committed alone.
+
+The schema of all three is `docs/operations/orders-schema.json`, checked by
+`src/schema_check.py`; the publication gate holds each file to the committed
+record, to that schema and to its own checks (a file whose `trade_allowed`,
+reasons, statuses, summary or mode are not what its checks give is refused),
+and `tests/test_orders.py` re-derives a committed `docs/orders.json` from the
+committed record. The agent's guide is `docs/operations/orders.md`.
+`tests/fixtures/orders/` holds golden files over the page and morning
+fixtures; `generate.py --check` runs in CI.
+
 ### The analyst's instructions
 
 `docs/analyst/prompt.md` is the standing instruction file for the outside
@@ -3040,6 +3082,7 @@ src/            history.py (public recovery and coverage)
                 timing.py (which session a plan is for, and when its window is over)
                 delivery.py (where a publication fell against the evening workflow's own slots and the next open; the record archives it, the page and the service-health reading read it)
                 freshness.py (what a record says about the next publication: the next session, its completion, the two slots and the recovery limit; state() answers newest, not_due, pending, late or missing for a reader's own clock; standard library only)
+                orders.py (the execution handoff: orders.json and its positions template each night, and the morning's go/cancel file, from committed bytes and no clock) · schema_check.py (the JSON Schema subset the handoff's schema uses; any other keyword is refused)
                 brief.py (the analyst's daily brief: brief.json and brief.md, a function of the record's bytes, the pick ledger's bytes and the run's model-record block; no clock, no network)
                 model_record.py (a reading of the model's own record for the daily brief: tickets against distinct setups, the model account each ticket was sized against, a stop booked at the stop beside its close and its low; held to the scorecard's rows, changes nothing; python -m src.model_record --docs docs)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · morning_service.py · morning_service_worker.py · morning_service_journal.py · morning_service_report.py · morning_host.py · morning_host_wsgi.py · reader.py · issuer_evidence.py

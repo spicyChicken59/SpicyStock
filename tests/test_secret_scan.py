@@ -110,7 +110,7 @@ def test_native5_disposition_is_exact_public_blob_at_exact_preservation_path():
     document = json.loads(native5_public_preservation())
     assert document["protected_git_objects"][NATIVE5_WORKFLOW] == NATIVE5_PUBLIC_BLOB
     assert allowed(NATIVE5_PRESERVATION, NATIVE5_PUBLIC_BLOB)
-    assert len(dispositions()) == 11
+    assert len(dispositions()) == 12
     entry = next(item for item in dispositions() if item["description"].startswith("Native5 recovery"))
     assert set(entry) == {"description", "condition", "regexTarget", "regexes", "paths"}
     assert entry["condition"] == "AND" and entry["regexTarget"] == "secret"
