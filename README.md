@@ -528,8 +528,9 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    session, buy-stop trigger, stop-limit limit, protective stop and suggested
    model shares directly, with **Copy order** and **Plan details**. It prints
    the recorded order fields and keeps material sizing explanations, and under
-   them Fidelity's part-fill rule and SpicyStock's advice (below), which the
-   copied order never carries. A setup
+   them one closed native **Broker notes** disclosure holding two labelled
+   notes, Fidelity's part-fill rule and Fidelity's buy-stop rule, each with
+   SpicyStock's advice (below), which the copied order never carries. A setup
    without a usable ticket says **No SpicyStock entry for this setup** and the
    actual grade, planner, budget, breadth or timing/publication reason. Expired
    plans remain inspectable as recorded history with no actionable levels or
@@ -577,8 +578,13 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    criteria, formulas and original fields remain in an accessible disclosure.
    Unknown rule formats retain their recorded wording without inferred meaning.
    Then the base, the burst and the grade); the plan, sizing and
-   order (the buy zone, whose top IS the ticket's own limit; the two skip
-   lines, of which the upper one is the +4% day-2 threshold and not the
+   order (for a burst, the *ticket fills* row: the buy stop, which is the
+   burst close, up to the ticket's own limit, with the sentence that under
+   the buy stop the order waits and buys nothing, or *no ticket* where the
+   stop rule withheld the setup; the chart calls the skip line to the limit
+   the *entry zone*, labels a card's band by its two prices alone, and says
+   in its levels row that a buy stop fills only from its trigger up; the two
+   skip lines, of which the upper one is the +4% day-2 threshold and not the
    limit; the stop and its basis; the shares sized at the limit — the
    highest fill the ticket permits, so the fixed quantity keeps the risk
    budget, the position cap and his 4% stop line at every fill it can take
@@ -607,8 +613,30 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    blocks (`report.BROKER_PART_FILL`, held equal to the page's two copies
    by `tests/test_docs.py`); a pick card's summary never falls back to a
    ticket's order line; before and during the window the next action says
-   the sell stop is part of the order (OTO) and that Fidelity releases it
-   only when the buy fills in full.
+   the sell stop is written as part of the order (OTO), that Fidelity
+   releases an OTO stop only when the buy fills in full, and that whether
+   Fidelity's ticket accepts this OTO is unconfirmed, and, on a night with a
+   burst ticket, whether it accepts a burst ticket's buy stop at its last
+   close. Beside a burst ticket's order, directly after that text, a second
+   labelled note: Fidelity's rule, that a buy stop or buy stop-limit order
+   must be entered at a stop price above the current market price
+   (`knowledge/broker-fidelity.md`, item 2, read off a search excerpt), and
+   SpicyStock's advice, that a burst ticket's buy stop is the burst day's
+   close, so it can be entered as written only while the stock trades under
+   that price; that which price Fidelity compares it with before the open is
+   unconfirmed; that once the stock trades at or over the buy stop
+   SpicyStock offers no other order; and that the model's *filled at the
+   open* assumes an order already resting before the open
+   (`report.BROKER_BUY_STOP`, held equal to the page's two copies by
+   `tests/test_broker_buy_stop.py`). It is printed at each of those places
+   for a burst ticket, in the private handoff's readback for a bursts-stage
+   draft, and in the mail once after the burst orders; never beside a
+   setting-up ticket, whose trigger sits above its last close. On the
+   Burst's action card and in the decision summary's entry the two notes
+   ride under one closed native **Broker notes** disclosure, both kept in
+   the page: printed open there, the second note moved the card's **Copy
+   order** from 602 px to 852 px under the card's top on a 390 px phone,
+   past its 844 px screen; under the disclosure it sits at 480 px.
    `knowledge/broker-fidelity.md` (revised 19 November 2026) maps each field
    onto Fidelity's ticket, the field names labelled unconfirmed, and labels
    each fact as Fidelity's words or a regulator's words with its source,
@@ -628,7 +656,7 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    backup through `tools/private_results.py`); the
    model exit guidance, dated; and the provenance (what Claude saw in the
    chart, the bars, the rules digest). Where the limit is under the day-2
-   line the buy row says so in the plan's own words, and a burst no limit
+   line the *ticket fills* row says so in the plan's own words, and a burst no limit
    above its buy stop can hold a stop under keeps its card and has its
    ticket withheld, with the reason in the action area. Below the workspace, two more disclosures: **Tomorrow's
    tickets** (the model allocation over the configured sizing assumptions
@@ -915,7 +943,10 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    comparison rather than remapping its pins onto other stocks, saying so.
 
 The email is the same record in fewer words: the verdict, the breadth line,
-one block per trade with its order line and the day-order term, the plans
+one block per trade with its buy stop, its limit and the line under which an
+open is skipped as three prices, its order line and the day-order term, then
+Fidelity's part-fill rule and, after the burst orders only, Fidelity's
+buy-stop rule, the plans
 without a ticket and why, the open model plans' instructions, the alerts,
 the problems and a link. Delivery failing never costs the page.
 

@@ -556,12 +556,15 @@ def test_the_page_the_handoff_and_the_mail_print_fidelitys_rule_and_the_advice_a
     words put the stop at the fill (the ticket's terms, the plan's entry
     instruction, its dated schedule) they assume a full fill. The mail, the
     page and the private handoff's readback print it, defined once in each
-    file: the page through one helper, partFillNote(), called at each of its
-    ten places (the order block, the recorded ticket, the comparison, the
-    Burst card, the setting-up action bar, the tickets sheet, the decision
-    summary's need, the model exits, the saved setup's archived order and an
-    archived original's status), the handoff at its readback. The plan's own
-    words, which provenance replays, stay broker-neutral."""
+    file: the page through one helper, partFillNote(), called ten times --
+    once under the Broker notes disclosure a burst ticket's card and entry
+    share with the buy-stop note (brokerNotesFold();
+    tests/test_broker_buy_stop.py holds that text and its places), and at the
+    order block, the recorded ticket, the comparison, the setting-up action
+    bar, the tickets sheet, a setting-up ticket's entry in the decision
+    summary, the model exits, the saved setup's archived order and an archived
+    original's status -- the handoff at its readback. The plan's own words,
+    which provenance replays, stay broker-neutral."""
     rule, advice = report.BROKER_PART_FILL.split(" SpicyStock’s advice: ")
     assert rule.startswith("Fidelity’s rule: ") and "in full" in rule, rule
     assert "attached at or live from the fill, that assumes a full fill" in advice, advice
@@ -659,14 +662,16 @@ def test_no_consumer_reads_the_ticket_limit_as_the_day_two_line():
 
 
 def test_the_mail_names_the_day_two_line_only_when_it_is_not_the_limit():
-    """The digest prints the ticket's zone; where the record carries a
-    separate extension threshold it says so, and where the two are one price
-    it does not print it twice."""
+    """The digest prints the ticket's buy stop, its limit and the line under
+    which an open is skipped; where the record carries a separate extension
+    threshold it says so, and where the two are one price it does not print
+    it twice."""
     burst = {"ticker": "AAA", "grade": "A+", "score": 9.1, "summary": "AAA: a burst.",
-             "plan": {"entry_low": 98.0, "entry_high": 103.64, "day2_spent_above": 104.0,
+             "plan": {"entry_ref": 100.0, "entry_low": 98.0, "entry_high": 103.64, "day2_spent_above": 104.0,
                       "stop": 99.5, "shares": 6, "position_usd": 621.84}}
     html = report._trade_block(burst, None)
-    assert "Buy zone 98.00–103.64" in html and "Too extended over 104.00" in html
+    assert "Buy stop 100.00 · Limit 103.64 · Skip an open under 98.00" in html and "Too extended over 104.00" in html
+    assert "Buy zone" not in html
     same = json.loads(json.dumps(burst))
     same["plan"]["entry_high"] = same["plan"]["day2_spent_above"] = 104.0
     assert "Too extended over" not in report._trade_block(same, None)
