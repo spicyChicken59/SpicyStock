@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "695623ef1e7d"
+  "rules_version": "bb98d7d1c166"
  },
  "cover": {
   "h1": "Stand aside.",
@@ -947,7 +947,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "6d23c58a92993223c378ccb390df8ce757e10f88c560c0064d8ebc22ad237237"
+   "context_sha256": "fbed69031b4aa8e994565621d3cea28a49244c545dda05154caec280b5e89af4"
   },
   "earnings": {
    "version": 2,
@@ -1310,11 +1310,11 @@
    "max_events": 128,
    "max_sources": 8,
    "max_text_length": 2000,
-   "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
+   "registry_sha256": "86c3b65b8386f98a6c2a98f1188aa8d5fd9143b0e3d8f3c474d6e84d013a0207",
    "registry": {
     "version": 1,
     "coverage": "manual_known_events_only",
-    "reviewed_on": "2026-10-20",
+    "reviewed_on": "2026-11-19",
     "coverage_note": "A bounded manual registry of known cash-acquisition events, not a live news feed, exhaustive corporate-action screen, or clearance of unlisted stocks. Each event records its own source dates and manual review date. Unresolved events stay excluded after review_due and require a new source review; expected closing dates and go-shop deadlines never automatically clear a stock.",
     "events": [
      {
@@ -1325,9 +1325,9 @@
       "announced_on": "2026-09-18",
       "active_from": "2026-09-18",
       "active_until": null,
-      "evidence_as_of": "2026-09-18",
-      "reviewed_on": "2026-10-09",
-      "review_due": "2026-10-16",
+      "evidence_as_of": "2026-10-28",
+      "reviewed_on": "2026-11-19",
+      "review_due": "2026-11-25",
       "reason": "MISTRAS announced an agreement for H.I.G. affiliates to acquire its shares for $20.35 in cash. The announced go-shop runs through October 27, 2026. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -1336,6 +1336,13 @@
         "url": "https://www.sec.gov/Archives/edgar/data/1436126/000114036126037107/ef20082419_ex99-1.htm",
         "sha256": "82b440c1820daeb6a78c73b0bbc8d630dea5fc7d0731d4d15cfdccb9acfbe1d0",
         "quote": "Under the terms of the agreement, MISTRAS stockholders will receive $20.35 per share in cash for each share of common stock they own."
+       },
+       {
+        "title": "MISTRAS announces expiration of go-shop period; H.I.G. transaction still expected to close in late 2026 or early 2027",
+        "published_on": "2026-10-28",
+        "url": "https://www.sec.gov/Archives/edgar/data/1436126/000114036126041054/ef20084511_ex99-1.htm",
+        "sha256": "f86be38443d8bbc4096febea7c30918dfa7bb0d7385785b4f2a4febd0a992386",
+        "quote": "No alternative acquisition proposals were received from any third party prior to the expiration."
        }
       ]
      },
@@ -1348,8 +1355,8 @@
       "active_from": "2026-09-21",
       "active_until": null,
       "evidence_as_of": "2026-09-21",
-      "reviewed_on": "2026-10-09",
-      "review_due": "2026-10-16",
+      "reviewed_on": "2026-11-19",
+      "review_due": "2026-12-17",
       "reason": "Priority announced a CEO-led take-private agreement for $8.05 per share in cash, expected at announcement to close in the first half of 2027. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -1370,8 +1377,8 @@
       "active_from": "2026-08-13",
       "active_until": null,
       "evidence_as_of": "2026-09-23",
-      "reviewed_on": "2026-10-09",
-      "review_due": "2026-10-16",
+      "reviewed_on": "2026-11-19",
+      "review_due": "2026-12-17",
       "reason": "Accelerant announced an all-cash acquisition by Thoma Bravo at $20.25 per share. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -1399,8 +1406,8 @@
       "active_from": "2026-09-14",
       "active_until": null,
       "evidence_as_of": "2026-09-14",
-      "reviewed_on": "2026-10-09",
-      "review_due": "2026-10-16",
+      "reviewed_on": "2026-11-19",
+      "review_due": "2026-12-17",
       "reason": "Baldwin announced an acquisition by affiliates of Sequence Holdings and the Dell Family Office for $32.50 per share in cash, expected at announcement to close in the first quarter of 2027. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -1450,8 +1457,8 @@
       "active_from": "2026-02-16",
       "active_until": null,
       "evidence_as_of": "2026-10-06",
-      "reviewed_on": "2026-10-10",
-      "review_due": "2026-10-16",
+      "reviewed_on": "2026-11-19",
+      "review_due": "2026-12-02",
       "reason": "ZIM announced an agreement for Hapag-Lloyd to acquire its shares for $35.00 in cash. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -1486,8 +1493,8 @@
       "active_from": "2026-10-15",
       "active_until": null,
       "evidence_as_of": "2026-10-15",
-      "reviewed_on": "2026-10-20",
-      "review_due": "2026-10-27",
+      "reviewed_on": "2026-11-19",
+      "review_due": "2026-12-17",
       "reason": "CCC announced an agreement to be acquired by a consortium led by GTCR and including Elliott for $7.75 per share in cash. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -2337,8 +2344,8 @@
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2026-09-10",
-    "rules_version": "695623ef1e7d",
-    "context_sha256": "6d23c58a92993223c378ccb390df8ce757e10f88c560c0064d8ebc22ad237237",
+    "rules_version": "bb98d7d1c166",
+    "context_sha256": "fbed69031b4aa8e994565621d3cea28a49244c545dda05154caec280b5e89af4",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "red",
@@ -2348,7 +2355,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "f62cc50d06be45dece0bd723d2dd406430f31c29537400d8fba913ab33d09801"
+    "id": "7529c07b379844a2102ed1ca17b538984a028ab079f84130d9784c0edab2d4ab"
    },
    "series": [
     {
@@ -3593,8 +3600,8 @@
     "kind": "burst",
     "ticker": "AMD",
     "session": "2026-09-10",
-    "rules_version": "695623ef1e7d",
-    "context_sha256": "6d23c58a92993223c378ccb390df8ce757e10f88c560c0064d8ebc22ad237237",
+    "rules_version": "bb98d7d1c166",
+    "context_sha256": "fbed69031b4aa8e994565621d3cea28a49244c545dda05154caec280b5e89af4",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "red",
@@ -3604,7 +3611,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "8ad4183c35889fa8c7d64224bb9f150468f3993fc811fce52bdc0800a25295fa"
+    "id": "59280b94c325e5589141797b74ea8383b48dfeafa1e13816b2cd9516087cb01f"
    },
    "series": [
     {
@@ -4817,8 +4824,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-10",
-    "rules_version": "695623ef1e7d",
-    "context_sha256": "6d23c58a92993223c378ccb390df8ce757e10f88c560c0064d8ebc22ad237237",
+    "rules_version": "bb98d7d1c166",
+    "context_sha256": "fbed69031b4aa8e994565621d3cea28a49244c545dda05154caec280b5e89af4",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "red",
@@ -4828,7 +4835,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "7e4463fb42c8b6fd13da607f6476c1e8fa6831afbe12b18397f9d64ef2a630d0"
+    "id": "d8cd6fc2c6d2a0d2dfd1700ea627ebcee46b049754019fc3817806ab40ba50d8"
    },
    "series": [
     {
@@ -6144,8 +6151,8 @@
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2026-09-10",
-    "rules_version": "695623ef1e7d",
-    "context_sha256": "6d23c58a92993223c378ccb390df8ce757e10f88c560c0064d8ebc22ad237237",
+    "rules_version": "bb98d7d1c166",
+    "context_sha256": "fbed69031b4aa8e994565621d3cea28a49244c545dda05154caec280b5e89af4",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "red",
@@ -6155,7 +6162,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "2bee09d556d06ab6865f9a697cf9c77319bfb6af10a3ecc4a27ad50fc3c1a5e2"
+    "id": "d5b2623090531f61359332694236bafe30e53573ae1a5a5fdbf082366727f21f"
    },
    "series": [
     {
@@ -7402,8 +7409,8 @@
     "kind": "burst",
     "ticker": "MSFT",
     "session": "2026-09-10",
-    "rules_version": "695623ef1e7d",
-    "context_sha256": "6d23c58a92993223c378ccb390df8ce757e10f88c560c0064d8ebc22ad237237",
+    "rules_version": "bb98d7d1c166",
+    "context_sha256": "fbed69031b4aa8e994565621d3cea28a49244c545dda05154caec280b5e89af4",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "red",
@@ -7413,7 +7420,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "81462a494bc8b794166cb0fddbb1c16b2c11fa4dd01caa65e146d79ba3b2982e"
+    "id": "2063397be3fa948abb1d7bf9ca3bb1b9931300481ba4b66b4f2cea50f48b67f1"
    },
    "series": [
     {
@@ -8659,8 +8666,8 @@
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2026-09-10",
-    "rules_version": "695623ef1e7d",
-    "context_sha256": "6d23c58a92993223c378ccb390df8ce757e10f88c560c0064d8ebc22ad237237",
+    "rules_version": "bb98d7d1c166",
+    "context_sha256": "fbed69031b4aa8e994565621d3cea28a49244c545dda05154caec280b5e89af4",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "red",
@@ -8670,7 +8677,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "29910a5f4da3bde874e2d4c8c28b5930315b75c342809f21cb8d7a89ce4270b4"
+    "id": "95318ee4ebf786c02592aa1eda6e4b50e8f4eb8124d1f8d8b0874890f90dd968"
    },
    "series": [
     {
@@ -9918,8 +9925,8 @@
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2026-09-10",
-    "rules_version": "695623ef1e7d",
-    "context_sha256": "6d23c58a92993223c378ccb390df8ce757e10f88c560c0064d8ebc22ad237237",
+    "rules_version": "bb98d7d1c166",
+    "context_sha256": "fbed69031b4aa8e994565621d3cea28a49244c545dda05154caec280b5e89af4",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "red",
@@ -9929,7 +9936,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "3b562e7ff1bf054888003306c370037b58e90670a2c0f53d329bccdd3a138e81"
+    "id": "253a674ba6ae86c9837b62db205cb5b30f5ebeb72b909934af631d8655c644c4"
    },
    "series": [
     {
@@ -11176,8 +11183,8 @@
      "event_risk": {
       "version": 1,
       "coverage": "manual_known_events_only",
-      "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
-      "registry_reviewed_on": "2026-10-20",
+      "registry_sha256": "86c3b65b8386f98a6c2a98f1188aa8d5fd9143b0e3d8f3c474d6e84d013a0207",
+      "registry_reviewed_on": "2026-11-19",
       "session": "2026-09-10",
       "symbol": "COIL",
       "blocked": false,
@@ -11192,9 +11199,9 @@
      },
      "evidence_ref": {
       "version": 1,
-      "id": "adce7d05419665debdb5b8298b56689e5a18a1ac149c6cb0f1cfbea64ea302cc",
-      "context_sha256": "6d23c58a92993223c378ccb390df8ce757e10f88c560c0064d8ebc22ad237237",
-      "plan_sha256": "bb807e5a8d01d14964a867e587d9eafda9d9407f56bad88c7bdf678adcdd87b8",
+      "id": "df74a18904c489f114e9ba574f1c6b1f7acc53363056dd394bddb75e2a9e2bf6",
+      "context_sha256": "fbed69031b4aa8e994565621d3cea28a49244c545dda05154caec280b5e89af4",
+      "plan_sha256": "692c010ba025eac39025dd25d398e60752e9c3b28370d93dd5e7e2ca38293b62",
       "pick_sha256": "54966b85e25b3ea1e78f42fd652783d9efd61f338c6ad3b6fe9a7efa63f2a57f"
      }
     },
@@ -12193,7 +12200,7 @@
       },
       "regime_sha256": "dbc888fe8677250458f08ab076e361d494f1ab40f89c6600bdca46590cbdad07",
       "session": "2026-09-10",
-      "output_sha256": "bb807e5a8d01d14964a867e587d9eafda9d9407f56bad88c7bdf678adcdd87b8",
+      "output_sha256": "692c010ba025eac39025dd25d398e60752e9c3b28370d93dd5e7e2ca38293b62",
       "error": null,
       "pick_sha256": "54966b85e25b3ea1e78f42fd652783d9efd61f338c6ad3b6fe9a7efa63f2a57f"
      },
@@ -12201,8 +12208,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2026-09-10",
-     "rules_version": "695623ef1e7d",
-     "context_sha256": "6d23c58a92993223c378ccb390df8ce757e10f88c560c0064d8ebc22ad237237",
+     "rules_version": "bb98d7d1c166",
+     "context_sha256": "fbed69031b4aa8e994565621d3cea28a49244c545dda05154caec280b5e89af4",
      "gate": {
       "regime": "red",
       "final_grade": "watch",
@@ -12211,7 +12218,7 @@
       "reason": "regime_gate",
       "detail": null
      },
-     "id": "adce7d05419665debdb5b8298b56689e5a18a1ac149c6cb0f1cfbea64ea302cc"
+     "id": "df74a18904c489f114e9ba574f1c6b1f7acc53363056dd394bddb75e2a9e2bf6"
     }
    }
   ],
@@ -12285,7 +12292,7 @@
   "readable": false,
   "contract_version": 2,
   "sessions": 60,
-  "note": "from bars alone, a model and not a brokerage record: a daily bar books a fill only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open is read again from that session's retained minute bars, which book a fill in the first 30 minutes at the trigger (or the crossing minute's open over it), none after it, and leave a crossing minute that cannot order the fill against the limit or the stop uncertain; without those minutes such a day, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by day 5",
+  "note": "from bars alone, a model and not a brokerage record: a daily bar books a fill only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open is read again from that session's retained minute bars, which book a fill in the first 30 minutes at the trigger (or the crossing minute's open over it), none after it, and leave a crossing minute that cannot order the fill against the limit or the stop uncertain; without those minutes such a day, whether or not its low also reached the stop, and an open past the limit or under the skip line that could still have filled are uncertain, counted here and in no rate; a fill at the open whose day then reaches the stop is booked at exactly the stop; the published stop is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by day 5",
   "population": {
    "from": "2026-06-15",
    "through": "2026-09-10",
@@ -12303,7 +12310,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "695623ef1e7d"
+  "replay_rules_version": "bb98d7d1c166"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -12594,116 +12601,116 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-09:695623ef1e7d": {
+   "burst:AAPL:2026-09-09:bb98d7d1c166": {
     "ticker": "AAPL",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-09:695623ef1e7d": {
+   "burst:AMD:2026-09-09:bb98d7d1c166": {
     "ticker": "AMD",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-09:695623ef1e7d": {
+   "burst:NVDA:2026-09-09:bb98d7d1c166": {
     "ticker": "NVDA",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-09:695623ef1e7d": {
+   "burst:TSLA:2026-09-09:bb98d7d1c166": {
     "ticker": "TSLA",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "burst:MSFT:2026-09-09:695623ef1e7d": {
+   "burst:MSFT:2026-09-09:bb98d7d1c166": {
     "ticker": "MSFT",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-09:695623ef1e7d": {
+   "burst:PLUG:2026-09-09:bb98d7d1c166": {
     "ticker": "PLUG",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-09:695623ef1e7d": {
+   "burst:DLLR:2026-09-09:bb98d7d1c166": {
     "ticker": "DLLR",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-09:695623ef1e7d": {
+   "anticipation:COIL:2026-09-09:bb98d7d1c166": {
     "ticker": "COIL",
     "session": "2026-09-09",
     "kind": "anticipation",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "burst:AAPL:2026-09-10:695623ef1e7d": {
+   "burst:AAPL:2026-09-10:bb98d7d1c166": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:695623ef1e7d": {
+   "burst:AMD:2026-09-10:bb98d7d1c166": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:695623ef1e7d": {
+   "burst:NVDA:2026-09-10:bb98d7d1c166": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:695623ef1e7d": {
+   "burst:TSLA:2026-09-10:bb98d7d1c166": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "burst:MSFT:2026-09-10:695623ef1e7d": {
+   "burst:MSFT:2026-09-10:bb98d7d1c166": {
     "ticker": "MSFT",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:695623ef1e7d": {
+   "burst:PLUG:2026-09-10:bb98d7d1c166": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:695623ef1e7d": {
+   "burst:DLLR:2026-09-10:bb98d7d1c166": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:695623ef1e7d": {
+   "anticipation:COIL:2026-09-10:bb98d7d1c166": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "695623ef1e7d",
+    "rules_version": "bb98d7d1c166",
     "coverage": "observed"
    }
   },

@@ -134,7 +134,7 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
   const yMax = g.y(Math.max(...highs)), yMin = g.y(Math.min(...lows));
   ok('the stop line y is between the price extremes', g.stop && g.stop.y > yMax && g.stop.y < yMin && g.stop.y >= g.plot.top && g.stop.y <= g.plot.bottom);
   ok('the stop sits below the burst bar', g.stop.y >= g.burst.yLow - 0.5);
-  ok('the stop is under the trigger, which is under the buy zone', g.stop.y > g.trigger.y && g.trigger.y >= g.entry.y2 - 0.6);
+  ok('the stop is under the trigger, which is under the entry zone', g.stop.y > g.trigger.y && g.trigger.y >= g.entry.y2 - 0.6);
   ok('a level label the collision pass moved carries a leader back to its line', g.leftLabels.filter((l) => Math.abs(l.y - l.yTrue) > 2).every((l) => l.leader && Math.abs(l.leader.y1 - (l.kind === 'stop' ? g.stop.y : l.kind === 'trigger' ? g.trigger.y : g.entry.y1)) < 0.6) && g.leftLabels.filter((l) => Math.abs(l.y - l.yTrue) <= 2).every((l) => !l.leader));
   ok('the burst column spans both panes over the burst slot', g.burst.column && g.burst.column.y === g.plot.top && Math.abs(g.burst.column.y + g.burst.column.h - g.vol.bottom) < 0.2 && g.burst.column.x <= g.burst.x && g.burst.column.x + g.burst.column.w >= g.burst.x);
   ok('at 360px the base label does not sit on a level label', g360.leftLabels.every((l) => Math.abs(l.y - g360.box.label.y) >= 14 || g360.box.label.x >= l.x + l.text.length * 6.6 + 8));
@@ -160,6 +160,12 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
       for (const m of gc.upTicks.concat(gc.breakdownMarks)) labels.push({ x: m.x - 3, y: m.y - 9, w: 6, h: 10, text: 'mark@' + m.index, mark: true });
       ok(`the card keeps its date axis at ${W}x${H}`, Array.isArray(gc.dateTicks) && gc.dateTicks.length >= 2, JSON.stringify(gc.dateTicks));
       ok(`the entry label and the stop pill are always drawn at ${W}x${H}`, gc.entry && gc.entry.label && gc.stopTag);
+      // the card's zone is labelled with its two prices and never "buy": the zone
+      // may start under the trigger, where a buy stop buys nothing. The text has
+      // exactly the length of the "buy a–b" it replaced, so no position moved.
+      ok(`the card's entry label is its two prices, says no buy, and is as long as the label it replaced at ${W}x${H}`,
+        gc.entry.label.text === SCStock.format.price(cardOpts.entryLow) + ' – ' + SCStock.format.price(cardOpts.entryHigh)
+        && gc.entry.label.text.length === ('buy ' + SCStock.format.price(cardOpts.entryLow).replace('$', '') + '–' + SCStock.format.price(cardOpts.entryHigh).replace('$', '')).length, gc.entry.label.text);
       const clashes = [];
       for (let i = 0; i < labels.length; i++) for (let j = i + 1; j < labels.length; j++) if (!(labels[i].mark && labels[j].mark) && hits(labels[i], labels[j])) clashes.push(labels[i].text + ' / ' + labels[j].text);
       ok(`card labels never overlap at ${W}x${H}`, clashes.length === 0, clashes.join('; '));
@@ -168,7 +174,13 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
     }
   }
   ok('the target label reads +8% … +20% off the entry reference', g.target.text === '+8% … +20%' && g.target.pctLow === 8 && g.target.pctHigh === 20);
-  ok('the entry zone is inside the pane and its label names both bounds', g.entry.y1 >= g.plot.top && g.entry.y2 <= g.plot.bottom && /^buy zone \$[\d.,]+–\$[\d.,]+$/.test(g.entry.label.text));
+  ok('the entry zone is inside the pane and its label names both bounds', g.entry.y1 >= g.plot.top && g.entry.y2 <= g.plot.bottom && /^entry zone [\d.,]+–[\d.,]+$/.test(g.entry.label.text));
+  // "entry zone", never "buy zone": the band runs from the zone's low to the
+  // limit and a buy stop buys nothing under its trigger. The geometry reads a
+  // label only by its length, so the new text is exactly as long as the old.
+  ok('the entry label names the zone by its two prices, says no buy, and is as long as the "buy zone $a–$b" it replaced',
+    g.entry.label.text === 'entry zone ' + SCStock.format.price(options.entryLow).replace('$', '') + '–' + SCStock.format.price(options.entryHigh).replace('$', '')
+    && g.entry.label.text.length === ('buy zone ' + SCStock.format.price(options.entryLow) + '–' + SCStock.format.price(options.entryHigh)).length && !/buy/i.test(g.entry.label.text), g.entry.label.text);
   ok('the trigger line carries a labelled price', g.trigger && /^trigger \$/.test(g.trigger.label.text) && Math.abs(g.trigger.y - g.entry.y2) < 0.6);
   ok('the stop label names its price', /^stop \$[\d.,]+$/.test(g.stop.label.text));
 
@@ -198,7 +210,7 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
     const far = SCStock.chartGeometry(tail, { stop: tLow * 0.8, targetLow: tHigh * 1.15, targetHigh: tHigh * 1.3, trigger: tHigh * 1.05, entryLow: tHigh * 1.05, entryHigh: tHigh * 1.07 }, 640, 320);
     ok('a stop far below the bars still lands inside the pane', far.stop.y <= far.plot.bottom && far.stop.y > far.y(tLow));
     ok('a target far above the bars still lands inside the pane', far.target.y1 >= far.plot.top && far.target.y2 < far.y(tHigh));
-    ok('a trigger and buy zone above every bar still land inside the pane', far.trigger.y >= far.plot.top && far.entry.y1 >= far.plot.top);
+    ok('a trigger and entry zone above every bar still land inside the pane', far.trigger.y >= far.plot.top && far.entry.y1 >= far.plot.top);
   }
   let threw = null;
   try {
@@ -408,7 +420,28 @@ if (!chromium) {
       ok(`${tag}: the SVG is aria-hidden and as wide as its host`, await host.evaluate((h) => { const s = h.querySelector('.sc-chart__stage > svg'); const r = s.getBoundingClientRect(); return s.getAttribute('aria-hidden') === 'true' && Math.abs(r.width - h.clientWidth) < 2 && s.getAttribute('viewBox').split(' ')[2] === String(Math.round(h.clientWidth)); }));
       ok(`${tag}: the table twin holds the last 10 bars and the levels`, await host.evaluate((h) => h.querySelectorAll('.sc-details [data-sc-twin=bars] tbody tr').length === 10 && h.querySelectorAll('.sc-details [data-sc-twin=levels] tbody tr').length === 7 && h.querySelector('.sc-details summary') !== null));
       ok(`${tag}: the table twin's newest row is the last session and names the burst row`, await host.evaluate((h) => { const rows = [...h.querySelectorAll('[data-sc-twin=bars] tbody tr')].map((r) => r.firstChild.textContent); return rows[0] === '2026-09-09' && rows.some((t) => /▲ burst$/.test(t)); }));
-      ok(`${tag}: every annotation label is drawn`, await host.evaluate((h) => { const t = [...h.querySelectorAll('svg text')].map((x) => x.textContent); return ['base · 17 sessions', '+8% … +20%'].every((s) => t.includes(s)) && t.some((s) => /^burst \+/.test(s)) && t.some((s) => /^stop \$/.test(s)) && t.some((s) => /^buy zone \$/.test(s)) && t.some((s) => /^trigger \$/.test(s)); }));
+      ok(`${tag}: every annotation label is drawn`, await host.evaluate((h) => { const t = [...h.querySelectorAll('svg text')].map((x) => x.textContent); return ['base · 17 sessions', '+8% … +20%'].every((s) => t.includes(s)) && t.some((s) => /^burst \+/.test(s)) && t.some((s) => /^stop \$/.test(s)) && t.some((s) => /^entry zone \d/.test(s)) && !t.some((s) => /buy/i.test(s)) && t.some((s) => /^trigger \$/.test(s)); }));
+      // the levels table and the spoken label name the zone for what it is. The
+      // harness chart's zone starts AT its trigger (a coil's), so the row adds
+      // nothing; a zone that starts under the trigger (a burst's, whose low is
+      // the skip line) says a buy stop fills only from the trigger up.
+      ok(`${tag}: the levels table and the spoken label say entry zone, and a zone starting at its trigger adds no sentence`, await host.evaluate((h) => {
+        const row = [...h.querySelectorAll('[data-sc-twin=levels] tbody tr')].map((r) => [...r.children].map((c) => c.textContent)).filter((r) => /zone/.test(r[0]));
+        const o = window.__data.options, f = SCStock.format.price;
+        return row.length === 1 && row[0][0] === 'entry zone' && row[0][1] === f(o.entryLow) + ' – ' + f(o.entryHigh) && /^width [\d.]+%$/.test(row[0][2])
+          && (h.getAttribute('aria-label') || '').includes('. Entry zone ' + f(o.entryLow) + ' to ' + f(o.entryHigh) + '. Trigger ') && !/buy zone/i.test(h.getAttribute('aria-label') + h.textContent);
+      }));
+      ok(`${tag}: a zone that starts under its trigger says a buy stop fills only from the trigger up, with or without gutter labels`, await page.evaluate(() => {
+        const o = window.__data.options, f = SCStock.format.price, low = Math.round(o.trigger * 0.98 * 100) / 100;
+        return [false, true].every((gutterLabels) => {
+          const c = SCStock.chart(window.__data.bars, Object.assign({}, o, { entryLow: low, gutterLabels: gutterLabels }));
+          document.body.appendChild(c);
+          const row = [...c.querySelectorAll('[data-sc-twin=levels] tbody tr')].map((r) => [...r.children].map((x) => x.textContent)).filter((r) => /zone/.test(r[0]));
+          c.remove();
+          return row.length === 1 && row[0][0] === (gutterLabels ? 'entry zone (to the limit)' : 'entry zone') && row[0][1] === f(low) + ' – ' + f(o.entryHigh)
+            && row[0][2].endsWith(' · a buy stop fills only from the ' + f(o.trigger) + ' trigger up');
+        });
+      }));
       // text wears text tokens, never a series colour; marks wear chart tokens
       const paint = await host.evaluate((h) => {
         const cs = getComputedStyle(document.documentElement);

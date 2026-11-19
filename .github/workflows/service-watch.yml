@@ -1,0 +1,61 @@
+name: Service watch
+# Is the evening publication late near its limit or missing, and did the
+# morning check land (tools/service_watch.py)? It reads the two files on main
+# and a clock, calls no provider, and writes nothing. Each run mails each alert
+# it finds through the evening's own transport and turns red; the watch keeps
+# no memory, so one late night can mail from two runs.
+#
+# Three daily slots, because Actions starts scheduled runs hours late and this
+# watch is no exception: 05:07 and 09:07 UTC are meant to land inside the six
+# hours before the next session's open (13:30 UTC, 14:30 in winter) while the
+# scheduler is up to 8.3 hours late in daylight time and 9.3 in standard time,
+# and 16:07 UTC on weekdays lands after the entry window has closed, when the
+# morning check can be judged. A slot that lands outside those windows flags
+# nothing.
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch' && 'Service watch (manual)'
+      || format('Service watch cron {0}', github.event.schedule) }}
+on:
+  schedule:
+    - cron: "7 5 * * *"
+    - cron: "7 9 * * *"
+    - cron: "7 16 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      mail:
+        description: "Mail an alert through the evening's transport when the watch flags one."
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: service-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    # The record the watch judges is main's.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt -c constraints.txt
+      - name: Watch the evening publication and the morning check
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          WATCH_MAIL_FLAG: ${{ (github.event_name != 'workflow_dispatch' || inputs.mail == true) && '--mail' || '' }}
+        # Exit 1 is an alert and 2 a record that could not answer: both turn the run red.
+        run: python tools/service_watch.py --docs docs $WATCH_MAIL_FLAG

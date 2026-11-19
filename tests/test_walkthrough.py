@@ -79,7 +79,7 @@ def test_the_walkthrough_quotes_no_number_it_does_not_name():
     captions = SOURCE.split("const STEPS = [", 1)[1].split("// the stop in force", 1)[0]
     literal = re.findall(r"'[^']*'", captions)
     rule_key = re.compile(r"^'(universe|scans|quality|breadth|plan|record)\.[a-z0-9_]+'$")
-    allowed = re.compile(r"of 10|2LYNCH|20(09|11|14|16|18)|2015|2017|3rd|R²|\b2 (and|B|·)|day 2 already spent")
+    allowed = re.compile(r"of 10|2LYNCH|20(09|11|14|16|18|20|26)|2015|2017|3rd|R²|\b2 (and|B|·)|day 2 already spent")
     stray = [chunk for chunk in literal if not rule_key.match(chunk) and re.search(r"\d", allowed.sub("", chunk))]
     assert not stray, stray
     # the guard can fail: the source line that once read "the 15% hazard E"

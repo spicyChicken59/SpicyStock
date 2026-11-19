@@ -23,10 +23,15 @@ method is Pradeep Bonde's (Stockbee) momentum burst: reaction candidates
 discovered by either the 4% or Dollar route, admitted to the trade band when
 the 4% scan found them or the dollar scan found them on a range-expansion,
 higher-volume day (`src/admission.py`), then judged for expansion out of
-a quiet base, bought the next morning inside a narrow zone with
-the stop under the burst bar, sold into strength over three to five days,
-and only when breadth allows it. `knowledge/method.md` says whose number
-every rule is; this file says what the software does with them. The dated
+a quiet base, bought the next session through a buy stop at the burst close,
+up to a limit set from the stop, with the stop at the burst bar's low or its
+midpoint and every such ticket at half risk, sold into strength over three to
+five days, and only when breadth allows it. `knowledge/method.md` says whose
+number every rule is; `knowledge/rules.md` states every rule the evening run
+applies, in pipeline order, each with its constant and its provenance class,
+and says what is Bonde's and what is this project's (`tests/test_rule_sheet.py`
+holds its numbers to the modules); this file says what the software does with
+them. The dated
 [reaction discovery source contract](knowledge/reaction-discovery.md) pins
 the primary 2015 4% and 2017 Dollar formulas, their differing volume
 boundaries, and the repository's separate precision/universe choices.
@@ -69,6 +74,13 @@ of which stopped into the 5 November alarm: none establishes a sign --
 and the owner's backtest over 158 archive sessions (100
 yellow, 58 red, no green) wrote 99 half-size A+ tickets, of which 44
 settled, 16 won, 27 lost and 1 was even, +3.72R net, the reader not run. The
+same replay with every night treated as green (grades A and A+ at full size; a
+counterfactual, not a policy) summed +17.40R over 69 settled; +1.14R of that
+came from the red nights (25 settled, 7 won, 18 lost) and +16.26R from the
+yellow nights, where it also admits grade A, so the gap to +3.72R is mostly the
+yellow band and not the red refusal, and neither figure has an interval. No
+published night has been green: 35 red and 13 yellow over the 48 sessions from
+11 September to 17 November 2026. The
 Record view replays those nights one at a time from
 `docs/historical-findings.json`, which `tools/build_historical_findings.py`
 builds from the committed evidence files and binds to their digests; the
@@ -516,8 +528,9 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    session, buy-stop trigger, stop-limit limit, protective stop and suggested
    model shares directly, with **Copy order** and **Plan details**. It prints
    the recorded order fields and keeps material sizing explanations, and under
-   them Fidelity's part-fill rule and SpicyStock's advice (below), which the
-   copied order never carries. A setup
+   them one closed native **Broker notes** disclosure holding two labelled
+   notes, Fidelity's part-fill rule and Fidelity's buy-stop rule, each with
+   SpicyStock's advice (below), which the copied order never carries. A setup
    without a usable ticket says **No SpicyStock entry for this setup** and the
    actual grade, planner, budget, breadth or timing/publication reason. Expired
    plans remain inspectable as recorded history with no actionable levels or
@@ -565,8 +578,13 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    criteria, formulas and original fields remain in an accessible disclosure.
    Unknown rule formats retain their recorded wording without inferred meaning.
    Then the base, the burst and the grade); the plan, sizing and
-   order (the buy zone, whose top IS the ticket's own limit; the two skip
-   lines, of which the upper one is the +4% day-2 threshold and not the
+   order (for a burst, the *ticket fills* row: the buy stop, which is the
+   burst close, up to the ticket's own limit, with the sentence that under
+   the buy stop the order waits and buys nothing, or *no ticket* where the
+   stop rule withheld the setup; the chart calls the skip line to the limit
+   the *entry zone*, labels a card's band by its two prices alone, and says
+   in its levels row that a buy stop fills only from its trigger up; the two
+   skip lines, of which the upper one is the +4% day-2 threshold and not the
    limit; the stop and its basis; the shares sized at the limit — the
    highest fill the ticket permits, so the fixed quantity keeps the risk
    budget, the position cap and his 4% stop line at every fill it can take
@@ -595,15 +613,53 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    blocks (`report.BROKER_PART_FILL`, held equal to the page's two copies
    by `tests/test_docs.py`); a pick card's summary never falls back to a
    ticket's order line; before and during the window the next action says
-   the sell stop is part of the order (OTO) and that Fidelity releases it
-   only when the buy fills in full.
-   `knowledge/broker-fidelity.md` maps each field onto Fidelity's ticket,
-   the field names labelled unconfirmed, and labels each fact as Fidelity's
-   words or a regulator's words with its source, inferred, unconfirmed or
-   SpicyStock's advice); the
+   the sell stop is written as part of the order (OTO), that Fidelity
+   releases an OTO stop only when the buy fills in full, and that whether
+   Fidelity's ticket accepts this OTO is unconfirmed; on a night with a burst
+   ticket it adds, before the window, that whether Fidelity accepts a burst
+   ticket's buy stop at its last close is unconfirmed, and inside it, that a
+   burst ticket cannot be entered as written while the stock trades at or
+   over its buy stop. Beside a burst ticket's order, directly after that text, a second
+   labelled note: Fidelity's rule, that a buy stop or buy stop-limit order
+   must be entered at a stop price above the current market price
+   (`knowledge/broker-fidelity.md`, item 2, read off a search excerpt), and
+   SpicyStock's advice, that a burst ticket's buy stop is the burst day's
+   close, so it can be entered as written only while the stock trades under
+   that price; that which price Fidelity compares it with before the open is
+   unconfirmed; that once the stock trades at or over the buy stop
+   SpicyStock offers no other order; and that the model's *filled at the
+   open* assumes an order already resting before the open
+   (`report.BROKER_BUY_STOP`, held equal to the page's two copies by
+   `tests/test_broker_buy_stop.py`). It is printed at each of those places
+   for a burst ticket, in the private handoff's readback for a bursts-stage
+   draft, and in the mail once after the burst orders; never beside a
+   setting-up ticket, whose trigger sits above its last close. On the
+   Burst's action card and in the decision summary's entry the two notes
+   ride under one closed native **Broker notes** disclosure, both kept in
+   the page: printed open there, the second note pushed the card's **Copy
+   order** past the bottom of a 390 px phone's 844 px screen (602 px under
+   the card's top with the part-fill note alone); under the disclosure it
+   sits 480 px under the card's top.
+   `knowledge/broker-fidelity.md` (revised 19 November 2026) maps each field
+   onto Fidelity's ticket, the field names labelled unconfirmed, and labels
+   each fact as Fidelity's words or a regulator's words with its source,
+   inferred, unconfirmed or SpicyStock's advice, and what came from the owner
+   as the owner's words, Fidelity's screen with its date, or the owner's
+   practice, which is never a SpicyStock ticket. Every Fidelity fact in it is
+   a search excerpt; nothing was read on Fidelity's own pages. A burst
+   ticket's buy stop is its last close: before the open it is unconfirmed
+   which price Fidelity compares it with, and once the stock trades at or
+   over that close the order cannot be entered as written. Over 13,599
+   counterfactual burst tickets on 40 nights (signal sessions 11 September to
+   5 November 2026), day 1 opened at or over the buy stop on 54.8%.
+   `knowledge/broker-fidelity-protocol.md` is the one-sitting check of every
+   unconfirmed point, with order entry by price state and the cash-account
+   working rules; `knowledge/trade-ledger.md` is the ledger of real orders
+   and fills the outside analyst keeps, reconciled weekly with the private
+   backup through `tools/private_results.py`); the
    model exit guidance, dated; and the provenance (what Claude saw in the
    chart, the bars, the rules digest). Where the limit is under the day-2
-   line the buy row says so in the plan's own words, and a burst no limit
+   line the *ticket fills* row says so in the plan's own words, and a burst no limit
    above its buy stop can hold a stop under keeps its card and has its
    ticket withheld, with the reason in the action area. Below the workspace, two more disclosures: **Tomorrow's
    tickets** (the model allocation over the configured sizing assumptions
@@ -674,6 +730,19 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    and both statuses stay on screen. *Open setup* and the same Follow
    action are offered from each side, and closing returns the reader to the
    stock, the lens, the scroll and the focus they left.
+   A veto is printed as measured: "N rising closes in a row before the burst
+   (three or more of any size refuse a setup)", the count the row's own and
+   the threshold the record's archived `quality.veto_up_days`. The model
+   exits name each rule's source in words. A burst ticket's dated timeline is
+   preceded by one sentence saying the buy stop triggers at the trigger and
+   can fill to its limit, and that the lower figure in the day-1 line is the
+   skip line, not a buy price. A listed row with no plan whose ticker is in
+   the record's archived event registry wears a "known deal" chip, prints the
+   registry's own sentence and sources, and is offered no order
+   (`registryMatch()`, held to `event_risk.classify()` by
+   `tests/fixtures/event-registry/classify-parity.json`, 119 synthetic
+   cases); rows with a plan keep the plan's own `event_risk`, and a saved
+   setup freezes the flag in its limitations.
 4. **Record.** **Open model plans** is every pick from the last five
    sessions walked from bars alone as a model: *day 3: sell half*,
    *stopped*, *not filled*, *uncertain* (neither the daily bar nor, where
@@ -720,12 +789,34 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    tap within a finger of more than one night asks which, nearest first, and
    stops Play; the list of nights is the precise way to one, and a narrow chart
    shows no tooltip because the caption and the tables carry the values.
+   The Record view says every retained ticket is counted once for each night
+   it was issued, that a stop first reached inside a session is booked at
+   exactly the stop (so a stop on the fill day is exactly minus one R), that
+   no fees, spread, slippage or tax are counted, and that a first day the
+   daily bar cannot place is read again from retained one-minute bars under
+   the archived rule and window. The replay's exploratory sentence says the
+   settled counterfactual tickets of the red nights lost in sum and that
+   this is not evidence the gate adds value; the backtest block prints the
+   summary's own account, risk and rules digest and says a published record
+   is sized and ruled by what it archives.
 5. **Market.** Bonde's Market Monitor over usable fetched stock frames for the measured session:
    up and down 4% on volume, the 5- and 10-day ratios, the
    25%-in-a-quarter and 25%/50%-in-a-month counts, the share above the
    40-day average, the 10-day ratio over the last thirty sessions with his
    line drawn on it, and the regime verdict with every rule that fired.
    Thresholds are scaled to the measured universe against his ~6,500.
+   The stocks counted are those with a usable bar that night and a close of $3
+   or more that night (3,513 of 4,756 intended on 17 November 2026). The thirty
+   sessions are read again each night over that night's stocks, so an earlier
+   session's counts differ from what its own night published: all 47 sessions
+   from 11 September to 16 November 2026 moved (a median of 9 names; at most
+   0.06 in the ratio). A published verdict is never recomputed, and only one of
+   1,048 later readings (5 October, 1.00 against the published 0.97) would have
+   changed one. The view lists the five regime rules as the record's own
+   inputs and scaled thresholds give them tonight, fired or not
+   (`regimeRules()`), and withholds the list when those inputs do not give
+   the record's verdict. A scaled count note is introduced as SpicyStock's
+   scaling of a quoted reading, not as Bonde's number.
 6. **Method: How to read SpicyStock.** The view opens on **The method, one burst at a time**
    (`docs/app-method.js`): an animated walkthrough of Bonde’s burst over one
    synthetic series, eleven steps from the thesis to the record — the
@@ -735,11 +826,25 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    is named for the constant it quotes and held to `src/` by
    `tests/test_walkthrough.py`, which also re-derives the example ticket and its
    five-session replay through `plan.burst_plan()` and `record.replay()`, so the
-   walkthrough prints what the code writes. It reads no record and stands on
+   walkthrough prints what the code writes. Its captions also say what the model
+   does where a ticket's words say more, the admission rule, the five regime rules
+   with the scaled counts and what a fill at the open assumes;
+   `tests/test_strategy_texts.py` holds those sentences, the method note and the
+   help terms. It reads no record and stands on
    the no-record page; `#/method/walkthrough` deep-links to it; the bars have a
    table twin. Then the reading journey and concise definitions
    precede the original scan summary, full publication details and configured
-   sizing assumptions. Nearby help opens on hover, keyboard focus or deliberate
+   sizing assumptions. Method names the gates a record archived and no
+   others, says the bars come from one provider with no second source,
+   counts the archived event registry's entries, its review date and how
+   many in force are past their review dates (a manual list, not a news
+   screen), says a changed rules digest can reflect membership alone, says
+   SpicyStock is a view and a daily output that places no order, and links
+   the rule sheet (`knowledge/rules.md`). The footer links the analyst brief
+   (`brief.md`, `brief.json`) at run time; `docs/index.html` names neither
+   file. The page does not ask whether they exist, so each link's title says
+   it answers 404 until the first evening run that writes the pair, and on a
+   night the pair could not be written. Nearby help opens on hover, keyboard focus or deliberate
    tap; its interactive disclosure supports Close/Escape and viewport placement,
    including Compare and enlarged text. `#/method/<topic>` routes open the
    relevant definition; **Back to what I was reading** restores selection,
@@ -841,7 +946,10 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    comparison rather than remapping its pins onto other stocks, saying so.
 
 The email is the same record in fewer words: the verdict, the breadth line,
-one block per trade with its order line and the day-order term, the plans
+one block per trade with its buy stop, its limit and the line under which an
+open is skipped as three prices, its order line and the day-order term, then
+Fidelity's part-fill rule and, after the burst orders only, Fidelity's
+buy-stop rule, the plans
 without a ticket and why, the open model plans' instructions, the alerts,
 the problems and a link. Delivery failing never costs the page.
 
@@ -854,7 +962,16 @@ the offset at that occurrence, skips holidays and refuses a delayed run once
 the next session opens. Both scheduled slots skip an already published real
 ok/degraded record for that session; a failed or rehearsal record cannot
 suppress recovery, and a newer publication cannot be replaced by a late job.
-Manual dispatch keeps its explicit session and rehearsal controls. Every
+Manual dispatch keeps its explicit session and rehearsal controls, and has a
+fourth box, **only_if_unpublished**: ticked, the dispatch is decided by the
+scheduled slots' own rule -- the newest completed session is published only if
+its primary slot (6:16 PM ET) has passed, it is still unpublished and the
+session after it has not opened, and otherwise the run does nothing. It waits
+for the slot as the schedule does, because a session's bars still move after
+the close, and a record published earlier would make both slots skip. It takes no session. It exists so that a trigger outside
+GitHub's scheduler can start the evening on time, every evening and twice,
+without ever publishing a session a second time; a plain dispatch (the box
+unticked) runs as it always did. Every
 publication archives where it fell against that schedule (`run.delivery`,
 `src/delivery.py`): its latency after the measured session's completion, the
 two slots as instants in the exchange's zone, which of them it followed,
@@ -957,9 +1074,14 @@ archived, and a record from before the block is asked for none. The run:
   pins retained evidence and separates the missing-bar symptom from unresolved causes.
   Method shows the ledger concisely, and incomplete empty results are qualified
   beside the verdict and empty-state text.
-- **breadth** — the Market Monitor columns and the regime: green (full
-  size), yellow (half size, A+ only), red (no new longs; the open plans get
-  a tighten-and-sell clause).
+- **breadth** — the Market Monitor columns over the stocks measured that
+  night and the regime, five rules: red (no new longs; an open plan's
+  instruction gains a sell-into-strength clause and no stop is moved) on names
+  down 4% at or over 700 scaled, a 10-day ratio under 1, or a 5-day ratio under
+  0.5 with more down than up; yellow (half size, A+ only) on a 10-day ratio
+  under 2 or more than 20 scaled names up 50% in a month; green (full size)
+  otherwise. The two counts are scaled by measured stocks / 6,500 (378.3 and
+  10.8 on 17 November 2026); the ratios are not.
 - **scan** — the repository's recorded formulas: `c/c1 >= 1.04 and v > v1 and v >= 100000`
   and the dollar breakout `c - o >= 0.90 and v > 100000`, then the
   checklist over every hit: **2** not up two days in a row, **L** a linear
@@ -1326,6 +1448,24 @@ archived, and a record from before the block is asked for none. The run:
   records the dated release, short excerpt and response digest. Existing
   published records keep their original evidence; the next verified production
   publication must establish this added exclusion on the site.
+  The registry was reviewed again on 19 November 2026. Every review date had
+  passed, the oldest on 15 October; a passed date never clears an entry, so
+  each stayed blocked. MISTRAS's 28 October release (the go-shop ended with no
+  competing proposal; a stockholder vote on 24 November) was added as a source
+  for MG from the day it was published, from bytes the issuer-evidence collector
+  had itself captured (the collector's text of them and the response's digest
+  are kept beside the manifest, since the archive they were published in drops
+  a superseded bundle after 21 days; the response bytes were not kept). Six
+  review dates were moved (MG to 25 November, ZIM to
+  2 December, PRTH, ARX, BWIN and CCC to 17 December). Five of those six
+  findings were read as web-search excerpts in a sandbox that reaches neither
+  sec.gov nor issuer sites, and say so in the
+  [review manifest](release-evidence/2026-11-19-event-review/manifest.json);
+  none of them added a source. ACV Auctions, whose acquisition a search excerpt
+  says Copart completed on 16 October, stays listed and blocked until a captured
+  source resolves it. A review date says someone looked that day and how; it
+  does not establish that a deal is still pending today. The daily brief and
+  the Method view state how old the review is.
 - **record** — the picks go to `docs/picks.json`; the open plans and the
   scorecard are computed from it and the bars. Suggested shares are model
   sizing, never shares bought. New plans carry a versioned evidence reference.
@@ -1390,6 +1530,22 @@ sentence for each; the message the run recorded never reaches it.
 price/volume fields do not establish entry validity. The workflow sends no
 email, forwards no delivery credentials, writes `docs/live.json` and commits
 nothing. Use the separate morning-observation path for dated quote checks.
+
+### What is checked about events, and for whom
+
+`knowledge/event-coverage.md` says it check by check. (1) A manual registry of
+known cash acquisitions blocks a ticket; it is reviewed by hand, and a passed
+review date never clears an entry. (2) For published tickets only: an earnings
+estimate from SEC results filings (a warning, never a refusal) and the 8-K item
+codes of the last 14 days. (3) For tickets and registry-blocked plans only: up
+to three recent SEC current reports and the merger and tender forms on file.
+(4) On the morning of a ticket, if a morning check runs: Nasdaq's halt feed.
+Nothing reads company press releases, news wires, announced earnings dates,
+offerings, FDA dates, index changes, lockups or dividends, and on a night with
+no ticket and no registry-blocked plan (26 of the 48 sessions published from
+11 September to 17 November 2026) checks 2 to 4 run for no stock at all. Every
+candidate needs the outside analyst's ten-item event check before a trade;
+"not established" is never "clear".
 
 ### Earnings warnings
 
@@ -1483,6 +1639,18 @@ label measurement age, not permission to trade. Price comparisons use the retain
 trigger, limit and stop and do not authorize an order. Check current prices,
 spread and order terms at the broker.
 
+For a burst ticket's row the *Against published levels* line also says what the
+dated price means for its buy stop. A last trade or ask at or over the trigger
+(within the published band, above the limit or above the day-2 line) reads "At
+or over the trigger (…): Fidelity’s words say a buy stop must be entered above
+the current market price, so this ticket’s stop-limit cannot be entered as
+written while the stock trades there." One between the entry floor and the
+trigger reads "Under the trigger (…): the stop-limit as written is on the right
+side of the market while the stock trades there." The words are built from the
+receipt's two recorded comparisons, add no field, and the line still ends "These
+dated comparisons are not an entry or cancellation instruction." A setting-up
+row carries neither.
+
 Nasdaq's public halt RSS supplies named halt observations. A quote-resumption
 time alone does not establish trade resumption; older unresolved halts remain
 relevant. A missing symbol or unavailable feed is not a clearance. Issuer news
@@ -1557,9 +1725,11 @@ endpoint from the committed `spicystock-morning-endpoint` meta tag in
 `https://spicystock-production.up.railway.app/morning.json` (deployed and read
 from outside on 31 October 2026; [the Railway runbook](docs/operations/morning-railway.md)
 records what was read); empty, the site reads the same-origin static file and
-does not poll. Every offline check serves a copy of the shell with the tag blanked
+does not poll; set, it reads the host and that static file and polls both. Every offline check serves a copy of the shell with the tag blanked
 (`tools/offline_shell.mjs`), and `tools/morning_endpoint_live.mjs` reads the live
-endpoint from the site's own origin, outside every gate. Only a reviewed deployment may set
+endpoint from the site's own origin, outside every gate; its output names which
+file the shown receipt came from (`page.source`), since the page also reads the
+checkout's static `docs/morning.json`. Only a reviewed deployment may set
 that exact URL; query strings, fragments, credentials, other paths and malformed
 configuration are refused. The host answers 200 with the receipt bound to the
 publication it holds; 404 `{"publication_sha256":…,"status":"no_receipt"}`,
@@ -1583,8 +1753,23 @@ Hidden tabs, practice/replay records, missing timing, stale publications and
 zero-ticket publications do not poll. The manual reload remains available.
 An automatic read never overlaps another read; publication changes cancel old
 work and recheck the exact source binding. An outage, malformed response or older
-receipt preserves the last verified receipt and known event exclusions. There
-is no automatic static-file fallback. Reads cannot trigger provider work.
+receipt preserves the last verified receipt and known event exclusions.
+Beside the configured host the page reads the same-origin static `morning.json` the morning workflow commits, on every read;
+each file is held to the loaded publication by the same validation,
+the newest verified receipt is shown (the host's on a tie) and the summary
+names which file it came from (*Receipt source:*); positive halt and event
+facts are kept from both files, a receipt bound to another publication is never
+shown, and when the newest verified file omits a restriction the tab read from
+a file bound to this record, the read is refused and the restriction stays. A
+restriction the tab read only from a file bound to another publication (a host
+still serving an older receipt) keeps that ticker's entry copying withheld and
+is named (*Kept from another publication:*), but no longer refuses this
+record's own verified receipt for every other ticker. A failed read is said in
+plain words (no answer within the time allowed, an answer that was not JSON or
+not UTF-8 text, a file that could not be reached), never in the browser's own
+wording. One 15-second limit covers both
+reads, so a host that never answers holds a bound static receipt back until
+that limit. Reads cannot trigger provider work.
 This disabled-by-default adapter establishes no hosting, scheduler, source
 coverage or live-session delivery reliability; those remain deployment and
 operating acceptance requirements.
@@ -1631,7 +1816,11 @@ runs were created); only after the morning file was read and shown to hold no
 current check for this publication (a 404, a receipt bound to another
 publication, an inapplicable one, or one past its five-minute life), never
 while it is unread or unverifiable; and only when the publication admits a
-plan or the opened research comparison names allocation-fit rows. A no-ticket
+plan or the opened research comparison names allocation-fit rows. Under a
+configured morning host the offer is made only when that host's answer shows it does not hold the loaded publication
+(it served a receipt for another publication, or a 404 naming another
+publication or none); a host that holds the record checks it itself, and a host
+whose answer could not be read leaves that unknown, so nothing is offered. A no-ticket
 receipt stays final, and a publication with nothing to quote says so instead.
 Earlier that day it names when the window opens. The link goes to `morning.yml`
 on GitHub with the steps (main, **dry_run** unticked) and says what a run does:
@@ -1646,7 +1835,8 @@ publisher 38039664633 verified the served file 130 seconds after the run was
 created. Neither asked a market-data provider anything (one on a Saturday, one
 after the cutoff); the 10 October run's SEC collection made one request. So
 the offer says to press **Reload published observations** a minute or two
-after the run finishes. That button re-reads the morning file and, once the
+after the run finishes. That button re-reads the morning host's receipt and
+the static morning file and, once the
 research comparison has been opened, its dated research observation; the
 comparison's own reload re-reads that observation even when its cohort is
 unchanged. A press keeps what was verified until a newer file validates, and
@@ -2205,6 +2395,170 @@ public asset hashes and phone/desktop browser results. The October 9 production
 check is after the entry cutoff, with no quote rows or eligible orders. It is
 evidence of correct binding and publication, not pre-open delivery or a trade.
 
+### The analyst's daily brief
+
+The owner's setup is layered (19 November 2026): SpicyStock is the view and the
+daily output; an outside analyst, a person or a bot the owner runs, researches
+the candidates, looks at the owner's account and recommends; the owner decides
+and places every order. The brief is what that analyst reads in place of the
+full record.
+
+Each evening the run derives two companions, `docs/brief.json` (at most
+250,000 bytes) and `docs/brief.md` (at most 80,000 bytes, rendered
+from brief.json and naming its SHA-256). They are a function of the canonical
+`data.json` bytes, the `picks.json` bytes and the model-record block the run
+computed, and of nothing else: no clock, no network, no other file
+(`src/brief.py`, `pipeline.publish_brief()`, after the research companions and
+before the retained copies). `python -m src.brief --docs docs --check` holds a
+committed pair to its derivation.
+
+- The brief carries no "built at" and no "is newest". Freshness is the reader's
+  own computation (`src/freshness.py`): `service.expected` gives the next
+  session's completion, the two slot instants and the recovery limit, and
+  `service.freshness_rule` says how to compare them with the reader's clock to
+  get `newest`, `not_due`, `pending`, `late` or `missing`. `newest` means no
+  record of a later session can exist yet; the same session can still be
+  published again, and a later run can withdraw a ticket, so the rule tells
+  the reader to fetch again and compare the binding before acting. Freshness
+  is not permission: a ticket applies only inside `identity.entry_window`.
+- Only the rows under `tickets` are published model tickets. Every other row is
+  marked `RESEARCH ONLY`: a burst's levels are the record's plan rule over the
+  row's own bar at the archived model account, a setting-up row's are the
+  record's own plan, no order is printed for either, and a plan the rule or the
+  event registry refuses prints its refusal and no share count (a refused
+  setting-up plan still prints the record's trigger, limit and stop, marked
+  `plan_rule_eligible` false).
+- Tickets and names with a selected chart review are always in detail. The rest
+  are detailed while the file fits, then written as compact rows, then named in
+  the research tail; `bounds` states every count and what was left out.
+- The market block prints all five regime rules in the order they are asked,
+  fired or not, with the raw sums and the unrounded ratios. The verdict is
+  re-derived from the record's own inputs, and a record whose verdict differs
+  is refused.
+- The event block reads the registry the record archived, never today's file,
+  against every listed row, and says how old it is, which reviews are overdue
+  and how many listed names had no earnings check. A stock that is not in the
+  registry has not been cleared.
+- Each ticket carries an order-entry block: the order as written, the buy stop
+  against the last close, the six price states the morning check also uses, and
+  the note that a broker takes a buy stop only above the current price. A burst
+  ticket whose stop is at or over its skip-under line has no price in
+  `below_entry_floor`, and the block says so; an anticipation ticket carries
+  the record's own gap rule (an open over the gap line is gapped: catalyst
+  check before buying).
+
+The model-record block (`src/model_record.py`) is a second reading of the
+scorecard's own tickets. It walks every retained ticket as the scorecard does
+and refuses to speak when a ticket or a total differs from the scorecard's.
+Beside the ticket counts it gives the count of distinct setups (a ticket issued
+again inside the open-plan window while the one before has no fill known is the
+same setup), the model account each ticket was sized against, and each stop the
+model books at exactly the stop price read again at that session's close and at
+its low. A sum of R is not a sum of dollars: R counts each ticket as one unit
+whatever its size, and the model account has changed inside the window. The
+brief carries the block verbatim when its ticket count, bucket counts and sum
+of R are the scorecard's, its encoding is within 60,000 bytes, the brief
+still fits with it and it uses no property name the secret scan reads as a
+credential. A block over that bound is carried reduced: each plan row keeps its
+identity, its result and the account it was sized against, which is what the
+next night's model record reads back, and the setups table is left out. If
+that does not fit either, or the block disagrees, the brief carries one fixed
+reason. A ticket's account is read from the record on the night it is issued
+and from the previous brief afterwards, so a night with no carried block leaves
+later tickets' accounts unknown, said so and never guessed. `python -m
+src.model_record --docs docs` prints it from the record's own observations
+block without market data; a ticket whose bars the record no longer carries
+takes its bucket and R from the publication's quality-ledger row and is marked.
+
+The brief never fails a run: a derivation that fails installs a pair that says
+the brief is unavailable for these bytes, and anything else is one warning in
+the run log. When tonight's pair cannot be installed at all, the pair left on
+disk is an earlier publication's: `publish_brief()` removes it
+(`brief.discard_unbound()`), so a reader finds no brief rather than a stale one
+that reads as current, and the publication gate serves the record as it did
+before the brief existed. The gate holds a committed pair to the committed
+record by its hashes (`brief_files()` in `tools/publish_dashboard.py`) and
+fetches both files from the served site; a pair bound to another publication is
+refused. The gate checks the binding and not the content: a hand-edited
+brief.md that keeps its binding line passes it, and only
+`python -m src.brief --docs docs --check`, which re-derives the pair, would
+name it. No pair is committed with this change: the first evening run
+after it writes the first one. After the page fixtures are regenerated,
+regenerate the brief's golden pair last (`python tests/fixtures/brief/generate.py`;
+CI runs it with `--check`).
+
+### The analyst's instructions
+
+`docs/analyst/prompt.md` is the standing instruction file for the outside
+analyst: the three layers and the hard limits, what SpicyStock has and has not
+shown, the freshness check, the method as a rule sheet, how to read the brief,
+the decision tiers, the research checklist, sizing for a cash account, Fidelity
+order entry by price state, managing an open position, the message templates
+and the ledger. `docs/analyst/bootstrap.md` is a note of under 2,000 characters
+that tells a bot to fetch it, and `docs/analyst/README.md` tells the owner how
+to use both. `tests/test_analyst_prompt.py` holds every strategy number the
+prompt states to its module constant, its URLs to `report.PAGE_URL`, the page's
+`REPO` and the morning endpoint, the brief's section names, field names and
+bounds to `src/brief.py` and the golden brief, the freshness states to
+`src/freshness.py`, the morning receipt's fields to the collector, and all three
+files to carrying no email address, no account number, no owner's name and no
+dollar figure that is not the model's or inside a labelled synthetic example.
+The files are public: the owner's profile block in the prompt is filled in
+privately, never in the repository. The dated figures in section 2 of the
+prompt are as of 19 November 2026; the bot is told to prefer the live brief.
+
+### Service watch
+
+GitHub starts this repository's scheduled runs hours after their slots, and
+until 19 November 2026 nothing said so when a night had not arrived.
+`tools/service_watch.py` asks two questions of the files on disk and a clock:
+
+- **Evening.** Has the session after the one `data.json` covers been published?
+  The answer is `src/freshness.py`'s. It is flagged only when the publication is
+  still absent 6 hours before its recovery limit (the next session's open),
+  or, for 12 hours, once it is past it. The limit decides, not the state word: a
+  record with no readable delivery policy reads `pending` until its limit and
+  is flagged the same way. Late alone is never flagged: read off the landing
+  commits, the 23 first publications from 19 October to 18 November 2026 landed
+  9.36 hours or more before the next open. A second missed night in a row has
+  no `missing` of its own, because the record still names the first, so the
+  watch also counts the sessions that have completed since the record
+  (`sessions_behind`) and judges the newest of them by the same two bounds.
+- **Morning.** Once the entry window has closed: did a morning check bound to
+  this record's bytes land inside its collection window? Flagged, for 12
+  hours, only when the record published a ticket; a night with nothing to quote
+  is reported and never flagged. A receipt whose status says it quoted nothing
+  (`provider_unavailable`, `inapplicable`) has not landed. A check that landed
+  is said with when it ran and what it priced: every real ticket morning from
+  3 to 16 November 2026 reads "generated before the entry window opened, and 0
+  of its N ticket rows carried a recent price", which is what a dispatch before
+  the 8:30 AM CT open gives, and is reported, not flagged. A receipt bound to
+  an earlier publication of the same session (the session was published again
+  after the morning) is a check that landed.
+
+It calls no provider and writes nothing. With `--mail` each run mails each
+alert it finds through the evening's own transport; it keeps no memory, so one
+late night can mail from two runs and a missed one from two or three. It exits
+0 with nothing to flag, 1 on an alert and 2 when the record cannot answer, and
+with `--mail` a record on `main` that cannot be read at all is mailed too.
+`service-watch.yml` runs it on
+`main` at 05:07 and 09:07 UTC daily and 16:07 UTC on weekdays, read-only, with
+the three mail secrets and no other; an alert turns that run red. The watch is
+itself a scheduled run and so itself hours late on most days: the two morning
+slots are placed so that one of them lands inside the alert window before the
+open while the scheduler is up to 8.3 hours late in daylight time and 9.3 in
+standard time (the longest delay the 13 October schedule reading recorded was
+8.4 hours), and nothing here can make GitHub's scheduler punctual. A missing
+night's alert says what can still publish it: the scheduled slots and a
+dispatch with **only_if_unpublished** ticked cannot, and a plain dispatch with
+the session box filled can, for an entry window that may have ended. When
+more than one session is unpublished it names the first missed one beside
+that, and says the newest can still be published by a dispatch with
+**only_if_unpublished** ticked while its own limit is ahead (such a dispatch
+does nothing before the session's primary slot, 6:16 PM ET). The same
+two answers are printed for anything else with a clock:
+`python tools/service_watch.py --docs docs`.
+
 ## One-time setup
 
 Six repository secrets: `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`,
@@ -2463,7 +2817,13 @@ python tools/verify_provenance.py --record docs/data.json --picks docs/picks.jso
 
 **The scorecard is the rules' record, not yours.** It counts every retained
 published Burst and Anticipation ticket from the prior 60 exchange sessions
-plus the current publication. Current plans await their first session. Missing
+plus the current publication. A ticket is one night's order: a setup issued
+again on a later night is a new ticket and is counted again, and a ticket a
+later run of the same session withdrew stays in the file and in the count. R is
+counted per ticket whatever its size, and the model account the tickets were
+sized against has changed inside the window ($10,000, then $2,000 from the
+second 8 October publication, then $30,000 from 4 November), so a sum of R is
+not a sum of dollars. Current plans await their first session. Missing
 or stale observations, uncertain fills, unreadable walks and unfilled orders
 stay in the total; none is silently converted to a loss, a win or zero R.
 Non-ticket setups and browser-local selections never enter that population.
@@ -2492,10 +2852,15 @@ its low reached it; minutes that do not are another feed's account of the day.
 An open past the limit or under the skip line keeps the daily answer, and a day
 with no usable retained minutes stays uncertain. The published stop is
 one R on the whole position; a half sold at +8% or at day 3 is at least half in
-whole shares, and every sale is weighted by its quantity. With complete usable
+whole shares, so a one-share ticket sells whole at that step and its R differs
+from the same plan at two or more shares, and every sale is weighted by its
+quantity. With complete usable
 bars, everything settles by day 5. Missing evidence never establishes that exit.
 Only those five sessions feed the scorecard; later data gaps cannot erase its
-resolved result. A stop gap is modeled at the open, not at the stop price.
+resolved result. A session that opens at or under the stop is booked at its
+open, not at the stop price; a stop first reached inside a session, the fill
+day included, is booked at exactly the stop price with no slippage, so a stop
+on the fill day is always -1.00R whatever that day's low or close.
 
 The evening asks for those minutes itself, once: `record.needs_minutes()` names
 the plans in the scorecard window whose first day the daily bar left uncertain on
@@ -2526,7 +2891,7 @@ mean and median R use the same plans. Breakeven is the existing R rounded to two
 decimals equalling zero. SPY is a percent-price comparison over matched entry/exit
 dates, with its own pair count, not portfolio performance or excess R. Small
 samples remain prominent, and twenty observations alone do not establish an edge.
-Fees, spread, tax, actual executions and subsequent split rebasing are not measured.
+Fees, spread, slippage, tax, actual executions and subsequent split rebasing are not measured.
 
 [The scorecard contract](docs/scorecard-contract.md) documents all states,
 retention, price basis, regime, versioning and the offline analysis command.
@@ -2636,20 +3001,25 @@ src/            history.py (public recovery and coverage)
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 delivery.py (where a publication fell against the evening workflow's own slots and the next open; the record archives it, the page and the service-health reading read it)
+                freshness.py (what a record says about the next publication: the next session, its completion, the two slots and the recovery limit; state() answers newest, not_due, pending, late or missing for a reader's own clock; standard library only)
+                brief.py (the analyst's daily brief: brief.json and brief.md, a function of the record's bytes, the pick ledger's bytes and the run's model-record block; no clock, no network)
+                model_record.py (a reading of the model's own record for the daily brief: tickets against distinct setups, the model account each ticket was sized against, a stop booked at the stop beside its close and its low; held to the scorecard's rows, changes nothing; python -m src.model_record --docs docs)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · morning_service.py · morning_service_worker.py · morning_service_journal.py · morning_service_report.py · morning_host.py · morning_host_wsgi.py · reader.py · issuer_evidence.py
 docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · app-issuer-evidence.js · app-stop-research.js · app-research-observations.js · app-research-outcomes.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 reader.json · reader-observations/ (derived browser projection and deferred public history)
                 stop-research.json · stop-research/ (registered comparison and immutable cohorts)
                 research-outcomes.json · research-outcomes/ (dated conditional follow-through snapshots)
+                brief.json · brief.md (the analyst's daily brief, derived each evening and bound to data.json and picks.json by SHA-256; written by the first evening run after this change)
+                analyst/ (prompt.md · bootstrap.md · README.md: the outside analyst's standing instructions, the short note that tells a bot to fetch them, and the owner's guide; public, no account data; held to the modules by tests/test_analyst_prompt.py)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)
                 historical-validation/ (the study's case files -- each case's archive context and evidence, byte for byte, under the digests the study recorded; frozen by tools/freeze_validation_cases.py because the archive below prunes, and held by its --check)
                 history/ (recovery) · evidence/ (deduplicated source objects)
                 intraday/ (minute bars of plans' first days, one content-addressed object per plan, written once)
                 quality-ledger/ (versioned publication facts; created by future real publications)
-knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
-                broker-fidelity.md (the ticket on Fidelity's order entry; each fact labelled Fidelity's words, a regulator's words, inferred, unconfirmed or SpicyStock's advice)
-tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
+knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose) · rules.md (every rule the run applies, in pipeline order, each with its constant and class; held by tests/test_rule_sheet.py)
+                broker-fidelity.md (the ticket on Fidelity's order entry; each fact labelled Fidelity's words, a regulator's words, inferred, unconfirmed, SpicyStock's advice, the owner's words, Fidelity's screen or the owner's practice) · broker-fidelity-protocol.md (the one-sitting check, order entry by price state, cash working rules) · trade-ledger.md (the outside analyst's ledger of real orders and fills) · event-coverage.md (what is checked about events and for whom; the ten-item check)
+tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/ · fixtures/brief/ (the brief's golden pair from the page fixture full; generate.py --check holds it) · fixtures/model-record/ (the 17 November 2026 record with its bars, frozen from git by its build.py; --check holds it)
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py · publish_morning.py · probe_morning_sources.py · sync_morning_service.py
                 probe_sec_access.py (a dispatch-only diagnostic: SEC requests for AAPL and ZIM, or up to four named tickers, through the issuer collector's transport, and the index rows its row rules refuse, printed to the log; never published)
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)
@@ -2665,12 +3035,14 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots (the ones each record's rules archived, else the current policy's) by the landing commit's time with the record's own clock beside it, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
                 recovery_rehearsal.py (a rehearsal, not a reading: run_evening() through the suite's doubles over one synthetic market, one injected failure a night -- the bars endpoint, every frame stale, the reader's credit, the reader's transport, the mail -- with the evening workflow's own guard executed before and after each night under a frozen clock; the exit codes, what was published, whether the previous publication's bytes survived, how often each boundary was asked and what the guard decided; --check runs it again and holds its two files; calls no provider and changes nothing)
                 schedule_reliability.py (a reading of GitHub's scheduler, not the service: the public Actions listing of scheduled runs, each placed at its cron slot, the minutes from slot to creation per workflow, cron and week, expected slots with no run, the first run more than an hour late, and push runs on main as the contrast; --fetch is its only network path and --check holds its two files to the committed snapshot; changes nothing)
+                service_watch.py (a watch, not a reading: the record on disk and a clock -- is the session after it published, late near its recovery limit or missing, and did a morning check for this record land inside its collection window; mails through the evening's transport only with --mail and only on an alert; exit 0, 1 an alert, 2 a record that cannot answer)
                 stale_inputs.py (a reading of the stale stocks across nights: each session's newest publication's named stock-sessions joined to every later follow-up reading and source-recovery row, each in one class -- would have been listed, scanned and not listed, under the $3 policy, a later bar read for its volume only against the 4%, breakdown and $ scans' floor, a later bar whose volume could not be read, no later bar; --check holds its two files; establishes no cause, changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
+                page_text_cases.mjs (the page smoke's page-text suite: the page's own words for vetoes, Method, Market, the stock detail, a known deal and the Record view, held to the record and the modules; `--only page-text`, or one part such as `page-text:market`)
                 first_trade_cases.mjs (the page smoke's first-trade rehearsal: one journey from refused cash to a downloaded private backup; SCSTOCK_FIRST_TRADE_WRITE=1 writes tests/fixtures/first-trade/)
                 private_results_parity.mjs (the page's own verdicts, from app-handoff.js run in a vm, on a corpus of private backups, written gzipped beside the rehearsal's backup; --check in CI)
                 private_results.py (a reader of the owner's private backup: each reported result re-derived by the page's rules, traced to its publication by SHA-256 and frozen plan, the model's replay beside it and never added; writes nothing but an explicit --json)
-.github/        evening.yml · intraday.yml · morning.yml · source-recovery.yml · issuer-evidence.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
+.github/        evening.yml · intraday.yml · morning.yml · source-recovery.yml · issuer-evidence.yml · service-watch.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```
 
 Paper prices, one venue's prints, no slippage. Not investment advice.

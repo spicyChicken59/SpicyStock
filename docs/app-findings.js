@@ -107,7 +107,7 @@
       const b = bt[k];
       if (!obj(b) || !obj(b.gates) || !obj(b.gates.production) || !obj(b.gates.no_regime_gate) || !nums(b.evaluated, ['count']) || !obj(b.regimes) ||
           !obj(b.regimes.verdicts) || !obj(b.candidates) || !obj(b.lookback) || !obj(b.lookback.equivalence) || !str(b.lookback.equivalence.status) ||
-          !str(b.rules_version) || !obj(b.source) || !str(b.source.sha256) || !Array.isArray(b.limitations) ||
+          !str(b.rules_version) || !nums(b.account, ['equity', 'risk_pct']) || !obj(b.source) || !str(b.source.sha256) || !Array.isArray(b.limitations) ||
           ['production', 'no_regime_gate'].some((g) => !obj(b.gates[g].settled) || !obj(b.gates[g].plans) || typeof b.gates[g].settled.readable !== 'boolean')) return 'The findings carry no backtest.';
     }
     const R = F.run6;
@@ -858,6 +858,10 @@
     sec.appendChild(el('p', { text: 'The same nightly decision replayed over the bars of the acquisition archive, session by session, from ' + words(L.evaluated.from) +
       ' to ' + words(L.evaluated.through) + ', on the owner’s computer. The chart reader was not run, so every ticket here is one it could still have refused. ' +
       'The gate said ' + verdictCount(v) + (green ? '.' : ', never green, so the full-size state has not been exercised on real bars.') }));
+    // the account and the rules the pasted summary was run under, from the file's own fields:
+    // a published record is sized and ruled by what IT archives, which this module never reads
+    sec.appendChild(el('p', { 'class': 'sc-note', 'data-find': 'backtest-account', text: 'Sized at the summary’s own account of $' + num(L.account.equity) + ' at ' + plain(L.account.risk_pct) +
+      '% risk a ticket, under rules ' + L.rules_version + ', burst tickets only. That account and those rules are the summary’s; a published record is sized and ruled by what it archives, which need not be these.' }));
     const strip = el('dl', { 'class': 'sc-stat-strip sc-stat-strip--4 sc-stat-strip--instrument ss-find__stats', 'data-find': 'backtest-strip' }, [
       stat(el, 'sessions', num(L.evaluated.count), short(L.evaluated.from) + ' to ' + short(L.evaluated.through)),
       stat(el, 'yellow nights', num(v.yellow || 0), num(v.red || 0) + ' red · ' + num(green) + ' green'),
@@ -941,9 +945,12 @@
         : plural(ex.red_nights, 'red night') + ' of the ' + num(ex.nights) + ' from ' + span(ex)) +
         ', whose every next close was public before the study’s spec was frozen after ' + words(rd.freeze) + (ex.inside_hold ? ', ' + num(ex.inside_hold) +
         ' of them still inside their hold on the records through ' + words(rd.as_of) : '') + '. The mean R per settled counterfactual ticket: ' + pooled(ex) + '. ' +
+        // what a mean under zero establishes is that those settled tickets lost in sum: it is
+        // not a measurement of the gate, which these nights' later closes were public before
         (allUnder ? (readable.length === STRATA.length - 1 ? 'Every stratum is under zero' : 'Every stratum with enough settled tickets to read is under zero') +
-          ': on the nights the gate refused, its refusals had value in sum. This is the exploratory reading, not evidence.'
-          : anyOver ? 'Not every stratum is under zero, so the refusals did not have value in every grade. This is the exploratory reading, not evidence.'
+          ': in each of them the settled counterfactual tickets of these red nights lost in sum. This is the exploratory reading of nights already public when the spec was frozen, ' +
+          'not evidence that the gate adds value; the nights after the freeze are read next.'
+          : anyOver ? 'Not every stratum is under zero: the settled counterfactual tickets of these red nights did not lose in every stratum. This is the exploratory reading, not evidence.'
           : 'No stratum has enough settled tickets to read.'));
     }
     // 2. the confirmatory split, the only one the spec reads as evidence, from the study's own figure

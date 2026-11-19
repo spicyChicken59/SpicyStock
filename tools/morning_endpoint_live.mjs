@@ -12,6 +12,12 @@
    checkout's docs/: run it on a checkout at main's current publication, or a valid
    receipt for main's newer publication reads as another publication's.
 
+   Beside the endpoint the page reads the same-origin static morning.json, which here
+   is this checkout's docs/morning.json and never the network. It shows the newest
+   receipt verified for the loaded publication, so `page.source` says which file the
+   shown receipt came from (`host` or `static`), and `page.said` may be the checkout's
+   static receipt when the live host holds none for this publication.
+
    node tools/morning_endpoint_live.mjs [--shots <dir>] */
 import { readFile, stat, mkdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -63,7 +69,7 @@ try {
   if (r) answered.push({ status: r.status(), headers: await r.allHeaders() });
   await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'), null, { timeout: 30000 });
   await page.waitForFunction(() => window.SCStock && SCStock.observations && !['unbound', 'loading'].includes(SCStock.observations.facts().state), null, { timeout: 30000 }).catch(() => {});
-  const facts = await page.evaluate(() => { const f = SCStock.observations.facts(); return { state: f.state, headline: f.headline, generated_at: f.generatedAt || null, fresh: f.fresh, checkout_publication_sha256: f.canonicalHash || null }; });
+  const facts = await page.evaluate(() => { const f = SCStock.observations.facts(); return { state: f.state, absent: f.absent || null, headline: f.headline, source: f.source || null, generated_at: f.generatedAt || null, fresh: f.fresh, checkout_publication_sha256: f.canonicalHash || null }; });
   const said = await page.evaluate(() => { const n = document.querySelector('[data-morning-observations], #morning-observations, [data-observations]'); return n ? n.textContent.replace(/\s+/g, ' ').trim().slice(0, 300) : null; });
   if (shots) { await mkdir(shots, { recursive: true }); await page.screenshot({ path: path.join(shots, 'morning-endpoint-live.png'), fullPage: false }); }
   // which of these the browser sent, never what: a value could be a credential

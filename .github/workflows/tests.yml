@@ -136,6 +136,8 @@ jobs:
           .github/workflows/publish-dashboard.yml
           .github/workflows/issuer-evidence.yml
           .github/workflows/source-recovery.yml
+          .github/workflows/evening.yml
+          .github/workflows/service-watch.yml
       - name: Install verified age for offline historical transport controls
         run: python tools/install_historical_age.py --destination "$RUNNER_TEMP/historical-age"
       - name: Run tests
@@ -157,6 +159,7 @@ jobs:
           python tests/fixtures/research-outcomes/generate.py --check
           python tests/fixtures/research-observations/generate.py --check
           python tests/fixtures/source-recovery/generate.py --check
+          python tests/fixtures/brief/generate.py --check
           python tools/freeze_validation_cases.py --check
       - name: Fail if the suite dirtied the working tree
         run: |

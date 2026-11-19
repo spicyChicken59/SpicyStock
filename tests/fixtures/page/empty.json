@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "537feffd3f96"
+  "rules_version": "1e6167eba764"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -936,7 +936,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "c99d769c17bfc25df4fca3265f76d22c5aa54184e6b1af69a8a9a4b708749a33"
+   "context_sha256": "e4fb6885023d8d89019a9d104ee0e5e519d9fb133d66681c9387c0e7108cdecd"
   },
   "earnings": {
    "version": 2,
@@ -1294,11 +1294,11 @@
    "max_events": 128,
    "max_sources": 8,
    "max_text_length": 2000,
-   "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
+   "registry_sha256": "86c3b65b8386f98a6c2a98f1188aa8d5fd9143b0e3d8f3c474d6e84d013a0207",
    "registry": {
     "version": 1,
     "coverage": "manual_known_events_only",
-    "reviewed_on": "2026-10-20",
+    "reviewed_on": "2026-11-19",
     "coverage_note": "A bounded manual registry of known cash-acquisition events, not a live news feed, exhaustive corporate-action screen, or clearance of unlisted stocks. Each event records its own source dates and manual review date. Unresolved events stay excluded after review_due and require a new source review; expected closing dates and go-shop deadlines never automatically clear a stock.",
     "events": [
      {
@@ -1309,9 +1309,9 @@
       "announced_on": "2026-09-18",
       "active_from": "2026-09-18",
       "active_until": null,
-      "evidence_as_of": "2026-09-18",
-      "reviewed_on": "2026-10-09",
-      "review_due": "2026-10-16",
+      "evidence_as_of": "2026-10-28",
+      "reviewed_on": "2026-11-19",
+      "review_due": "2026-11-25",
       "reason": "MISTRAS announced an agreement for H.I.G. affiliates to acquire its shares for $20.35 in cash. The announced go-shop runs through October 27, 2026. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -1320,6 +1320,13 @@
         "url": "https://www.sec.gov/Archives/edgar/data/1436126/000114036126037107/ef20082419_ex99-1.htm",
         "sha256": "82b440c1820daeb6a78c73b0bbc8d630dea5fc7d0731d4d15cfdccb9acfbe1d0",
         "quote": "Under the terms of the agreement, MISTRAS stockholders will receive $20.35 per share in cash for each share of common stock they own."
+       },
+       {
+        "title": "MISTRAS announces expiration of go-shop period; H.I.G. transaction still expected to close in late 2026 or early 2027",
+        "published_on": "2026-10-28",
+        "url": "https://www.sec.gov/Archives/edgar/data/1436126/000114036126041054/ef20084511_ex99-1.htm",
+        "sha256": "f86be38443d8bbc4096febea7c30918dfa7bb0d7385785b4f2a4febd0a992386",
+        "quote": "No alternative acquisition proposals were received from any third party prior to the expiration."
        }
       ]
      },
@@ -1332,8 +1339,8 @@
       "active_from": "2026-09-21",
       "active_until": null,
       "evidence_as_of": "2026-09-21",
-      "reviewed_on": "2026-10-09",
-      "review_due": "2026-10-16",
+      "reviewed_on": "2026-11-19",
+      "review_due": "2026-12-17",
       "reason": "Priority announced a CEO-led take-private agreement for $8.05 per share in cash, expected at announcement to close in the first half of 2027. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -1354,8 +1361,8 @@
       "active_from": "2026-08-13",
       "active_until": null,
       "evidence_as_of": "2026-09-23",
-      "reviewed_on": "2026-10-09",
-      "review_due": "2026-10-16",
+      "reviewed_on": "2026-11-19",
+      "review_due": "2026-12-17",
       "reason": "Accelerant announced an all-cash acquisition by Thoma Bravo at $20.25 per share. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -1383,8 +1390,8 @@
       "active_from": "2026-09-14",
       "active_until": null,
       "evidence_as_of": "2026-09-14",
-      "reviewed_on": "2026-10-09",
-      "review_due": "2026-10-16",
+      "reviewed_on": "2026-11-19",
+      "review_due": "2026-12-17",
       "reason": "Baldwin announced an acquisition by affiliates of Sequence Holdings and the Dell Family Office for $32.50 per share in cash, expected at announcement to close in the first quarter of 2027. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -1434,8 +1441,8 @@
       "active_from": "2026-02-16",
       "active_until": null,
       "evidence_as_of": "2026-10-06",
-      "reviewed_on": "2026-10-10",
-      "review_due": "2026-10-16",
+      "reviewed_on": "2026-11-19",
+      "review_due": "2026-12-02",
       "reason": "ZIM announced an agreement for Hapag-Lloyd to acquire its shares for $35.00 in cash. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -1470,8 +1477,8 @@
       "active_from": "2026-10-15",
       "active_until": null,
       "evidence_as_of": "2026-10-15",
-      "reviewed_on": "2026-10-20",
-      "review_due": "2026-10-27",
+      "reviewed_on": "2026-11-19",
+      "review_due": "2026-12-17",
       "reason": "CCC announced an agreement to be acquired by a consortium led by GTCR and including Elliott for $7.75 per share in cash. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -2162,7 +2169,7 @@
   "readable": false,
   "contract_version": 2,
   "sessions": 60,
-  "note": "from bars alone, a model and not a brokerage record: a daily bar books a fill only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open is read again from that session's retained minute bars, which book a fill in the first 30 minutes at the trigger (or the crossing minute's open over it), none after it, and leave a crossing minute that cannot order the fill against the limit or the stop uncertain; without those minutes such a day, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by day 5",
+  "note": "from bars alone, a model and not a brokerage record: a daily bar books a fill only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open is read again from that session's retained minute bars, which book a fill in the first 30 minutes at the trigger (or the crossing minute's open over it), none after it, and leave a crossing minute that cannot order the fill against the limit or the stop uncertain; without those minutes such a day, whether or not its low also reached the stop, and an open past the limit or under the skip line that could still have filled are uncertain, counted here and in no rate; a fill at the open whose day then reaches the stop is booked at exactly the stop; the published stop is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by day 5",
   "population": {
    "from": "2026-06-15",
    "through": "2026-09-10",
@@ -2180,7 +2187,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "537feffd3f96"
+  "replay_rules_version": "1e6167eba764"
  },
  "observations": {
   "as_of": "2026-09-10",

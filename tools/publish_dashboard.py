@@ -4,8 +4,9 @@ GitHub documents that GITHUB_TOKEN pushes do not trigger Pages builds. The
 publication workflow requests one explicitly, then checks every public file
 against the committed checkout: the HTML, the records app.js fetches (the two
 the run writes and the two historical findings files the Record view reads),
-each script and stylesheet the page loads, and the vendored design system it
-is drawn on. The list is read off ``docs/index.html`` (``public_files``) so it
+each script and stylesheet the page loads, the vendored design system it
+is drawn on, and the analyst's daily brief when the evening has written one
+(``brief_files``). The list is read off ``docs/index.html`` (``public_files``) so it
 cannot fall behind the page; the fetched records are named in ``RECORD_FILES``
 because the page does not link them. No market-data, scoring or delivery credentials are used, and
 no scan artifacts are read.
@@ -155,6 +156,40 @@ def research_outcomes_files(root: Path) -> tuple[str, ...]:
     return ('research-outcomes.json', ref['path'])
 
 
+def brief_files(root: Path) -> tuple[str, ...]:
+    """The analyst's daily brief, held to the committed record by its hashes.
+
+    Absent, the pair names no files: a new installation has none until its
+    first evening run writes it. Present, both files are read (bounded, no
+    symlink) and ``brief.validate_binding`` holds the byte bounds, the
+    envelope, brief.json's binding to the committed ``data.json`` and
+    ``picks.json``, and brief.md's binding to that exact brief.json. One file
+    without the other, or a pair bound to another publication, raises: a
+    brief that reads as current beside a newer record is the failure this
+    exists to stop. Nothing is compared against the brief module's own text
+    or renderer, so a merge that rewords a sentence does not turn the gate
+    red before the next evening run rewrites the pair; byte-for-byte
+    re-derivation is the module's own ``validate()``, which needs the
+    repository's dependencies and runs in the tests and in ``--check``."""
+    docs = root / 'docs'
+    from src import brief
+    present = [name for name in (brief.JSON_FILE, brief.MD_FILE)
+               if (docs / name).exists() or (docs / name).is_symlink()]
+    if not present:
+        return ()
+    try:
+        canonical_raw = reader_asset(docs, brief.DATA_FILE, brief.MAX_SOURCE_BYTES)
+        picks_path = docs / brief.PICKS_FILE
+        picks_raw = (reader_asset(docs, brief.PICKS_FILE, brief.MAX_PICKS_BYTES)
+                     if picks_path.exists() or picks_path.is_symlink() else None)
+        brief.validate_binding(canonical_raw, picks_raw,
+                               reader_asset(docs, brief.JSON_FILE, brief.MAX_JSON_BYTES),
+                               reader_asset(docs, brief.MD_FILE, brief.MAX_MD_BYTES))
+    except (OSError, ValueError, TypeError, KeyError):
+        raise RuntimeError('The daily brief does not match the committed canonical publication.') from None
+    return (brief.JSON_FILE, brief.MD_FILE)
+
+
 STUDY_FILE = "historical-validation.json"
 STUDY_CASE_DIR = "historical-validation"
 MAX_STUDY_BYTES = 1024 * 1024
@@ -234,6 +269,7 @@ def public_files(root: Path) -> tuple[str, ...]:
     names.extend(name for name in issuer_files(root) if name not in names)
     names.extend(name for name in stop_research_files(root) if name not in names)
     names.extend(name for name in research_outcomes_files(root) if name not in names)
+    names.extend(name for name in brief_files(root) if name not in names)
     names.extend(name for name in study_case_files(root) if name not in names)
     return tuple(names)
 

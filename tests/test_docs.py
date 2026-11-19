@@ -22,7 +22,7 @@ def prose(path: Path) -> str:
 
 
 README_RAW = (ROOT / "README.md").read_text()
-NUMBER_WORDS = {8: "eight"}
+NUMBER_WORDS = {5: "five", 8: "eight"}
 README = prose(ROOT / "README.md")
 ENV = prose(ROOT / ".env.example")
 CLAUDE_MD = prose(ROOT / "CLAUDE.md")
@@ -556,12 +556,15 @@ def test_the_page_the_handoff_and_the_mail_print_fidelitys_rule_and_the_advice_a
     words put the stop at the fill (the ticket's terms, the plan's entry
     instruction, its dated schedule) they assume a full fill. The mail, the
     page and the private handoff's readback print it, defined once in each
-    file: the page through one helper, partFillNote(), called at each of its
-    ten places (the order block, the recorded ticket, the comparison, the
-    Burst card, the setting-up action bar, the tickets sheet, the decision
-    summary's need, the model exits, the saved setup's archived order and an
-    archived original's status), the handoff at its readback. The plan's own
-    words, which provenance replays, stay broker-neutral."""
+    file: the page through one helper, partFillNote(), called ten times --
+    once under the Broker notes disclosure a burst ticket's card and entry
+    share with the buy-stop note (brokerNotesFold();
+    tests/test_broker_buy_stop.py holds that text and its places), and at the
+    order block, the recorded ticket, the comparison, the setting-up action
+    bar, the tickets sheet, a setting-up ticket's entry in the decision
+    summary, the model exits, the saved setup's archived order and an archived
+    original's status -- the handoff at its readback. The plan's own words,
+    which provenance replays, stay broker-neutral."""
     rule, advice = report.BROKER_PART_FILL.split(" SpicyStock’s advice: ")
     assert rule.startswith("Fidelity’s rule: ") and "in full" in rule, rule
     assert "attached at or live from the fill, that assumes a full fill" in advice, advice
@@ -659,14 +662,16 @@ def test_no_consumer_reads_the_ticket_limit_as_the_day_two_line():
 
 
 def test_the_mail_names_the_day_two_line_only_when_it_is_not_the_limit():
-    """The digest prints the ticket's zone; where the record carries a
-    separate extension threshold it says so, and where the two are one price
-    it does not print it twice."""
+    """The digest prints the ticket's buy stop, its limit and the line under
+    which an open is skipped; where the record carries a separate extension
+    threshold it says so, and where the two are one price it does not print
+    it twice."""
     burst = {"ticker": "AAA", "grade": "A+", "score": 9.1, "summary": "AAA: a burst.",
-             "plan": {"entry_low": 98.0, "entry_high": 103.64, "day2_spent_above": 104.0,
+             "plan": {"entry_ref": 100.0, "entry_low": 98.0, "entry_high": 103.64, "day2_spent_above": 104.0,
                       "stop": 99.5, "shares": 6, "position_usd": 621.84}}
     html = report._trade_block(burst, None)
-    assert "Buy zone 98.00–103.64" in html and "Too extended over 104.00" in html
+    assert "Buy stop 100.00 · Limit 103.64 · Skip an open under 98.00" in html and "Too extended over 104.00" in html
+    assert "Buy zone" not in html
     same = json.loads(json.dumps(burst))
     same["plan"]["entry_high"] = same["plan"]["day2_spent_above"] = 104.0
     assert "Too extended over" not in report._trade_block(same, None)
@@ -976,3 +981,51 @@ def test_docs_name_the_hosts_no_receipt_answer_in_the_routes_own_word():
     assert "last_detail" in runbook and "watch paths" in runbook
     assert f"newest {NUMBER_WORDS[service.STATUS_EVENTS]} journal events" in runbook
     assert "redeployed after every merge" in README
+
+
+def test_the_readme_quotes_the_briefs_bounds_from_the_module():
+    """The analyst's brief: its two byte bounds, the model record's own bound, the
+    five freshness words and where the hook sits, each read off the code."""
+    from src import brief, freshness, model_record
+    assert f"`docs/brief.json` (at most {brief.MAX_JSON_BYTES:,} bytes)" in README
+    assert f"`docs/brief.md` (at most {brief.MAX_MD_BYTES:,} bytes" in README
+    assert f"its encoding is within {brief.MODEL_RECORD_MAX_BYTES:,} bytes" in README
+    assert (brief.JSON_FILE, brief.MD_FILE) == ("brief.json", "brief.md")
+    words = "`newest`, `not_due`, `pending`, `late` or `missing`"
+    assert words in README and tuple(re.findall(r"`(\w+)`", words)) == freshness.STATES
+    assert "marked `RESEARCH ONLY`" in README and brief.RESEARCH_SHORT == "RESEARCH ONLY"
+    full = json.loads((ROOT / "tests" / "fixtures" / "page" / "full.json").read_text())
+    assert f"all {NUMBER_WORDS[len(brief.regime_rules(full)['rules'])]} regime rules" in README
+    assert "`python -m src.model_record --docs docs`" in README and model_record.VERSION == 1
+    # the hook runs after the research companions and before the retained copies, as the README says
+    body = (ROOT / "src" / "pipeline.py").read_text().split("def finish_publication", 1)[1].split("\ndef ", 1)[0]
+    order = [body.index(name) for name in ("publish_research_outcomes(", "publish_brief(", "retain_publication(")]
+    assert order == sorted(order)
+    assert "after the research companions and\nbefore the retained copies" in README_RAW
+
+
+def test_the_readme_quotes_the_service_watch_from_the_tool_and_its_workflow():
+    import yaml
+    from tools import service_watch as sw
+    assert f"still absent {sw.ALERT_WITHIN_HOURS} hours before its recovery limit" in README
+    assert f"or, for {sw.MISSING_ALERT_HOURS} hours, once it is past it" in README
+    assert f"Flagged, for {sw.MORNING_ALERT_HOURS} hours, only when the record published a ticket" in README
+    assert (sw.EXIT_OK, sw.EXIT_ALERT, sw.EXIT_UNKNOWN) == (0, 1, 2)
+    assert "exits 0 with nothing to flag, 1 on an alert and 2 when the record cannot answer" in README
+    wf = yaml.safe_load((ROOT / ".github" / "workflows" / "service-watch.yml").read_text())
+    crons = [c["cron"] for c in (wf.get("on") or wf.get(True))["schedule"]]
+    assert crons == ["7 5 * * *", "7 9 * * *", "7 16 * * 1-5"]
+    assert "at 05:07 and 09:07 UTC daily and 16:07 UTC on weekdays" in README
+    assert "only_if_unpublished" in sw.DISPATCH_HINT and "**only_if_unpublished**" in README_RAW
+
+
+def test_the_readme_dates_the_registry_review_as_the_registry_does():
+    from src import event_risk
+    reviewed = event_risk.REGISTRY["reviewed_on"]
+    assert reviewed == "2026-11-19" and "reviewed again on 19 November 2026" in README
+    due = {event["symbol"]: event["review_due"] for event in event_risk.REGISTRY["events"]}
+    assert "MG to 25 November, ZIM to 2 December, PRTH, ARX, BWIN and CCC to 17 December" in README
+    assert due == {"MG": "2026-11-25", "ZIM": "2026-12-02", "PRTH": "2026-12-17", "ARX": "2026-12-17",
+                   "BWIN": "2026-12-17", "CCC": "2026-12-17", "ACVA": "2026-10-15"}
+    assert "release-evidence/2026-11-19-event-review/manifest.json" in README_RAW
+    assert (ROOT / "release-evidence" / "2026-11-19-event-review" / "manifest.json").is_file()

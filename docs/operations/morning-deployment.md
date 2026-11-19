@@ -96,7 +96,13 @@ its value empty until a concrete route exists (it names the Railway route from
 31 October 2026: [the Railway runbook](morning-railway.md) records what was read). It accepts no query, fragment,
 user information or private account values. The browser's visible-window polling
 reads receipts only and cannot trigger provider work. A failed dynamic read
-remains unavailable; do not silently redirect it to an older static receipt.
+shows nothing of its own. Beside the dynamic route the page reads the
+same-origin static receipt the morning workflow commits, on every read; it
+shows that receipt only when it is verified for the loaded publication, never
+when it is older than a receipt already verified, and names which file the
+shown receipt came from. Positive halt and event facts are kept from both
+files, and when the newest verified file omits a restriction the other
+carries, the read is refused and the restriction stays.
 
 ## Bring-up and verification
 

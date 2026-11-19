@@ -1123,6 +1123,7 @@ def finish_publication(rep: RunReport, docs: Path, data: dict, rec: dict, frames
         restamped = None
     publish_stop_research(docs, rec)
     publish_research_outcomes(docs, rec)
+    publish_brief(docs, data, rec, frames, minutes)
     if failure is not None:
         rep.fail(failure)
     if restamped is not None:
@@ -1180,6 +1181,47 @@ def publish_research_outcomes(docs: Path, rec: dict) -> None:
     except Exception as exc:  # noqa: BLE001 — optional derived research only
         log.warning("Research outcomes publication unavailable (%s); evening record retained.",
                     type(exc).__name__)
+
+
+def publish_brief(docs: Path, data: dict, rec: dict, frames: dict, minutes) -> None:
+    """The analyst's daily brief (``src/brief.py``): two compact companions an
+    outside reader takes in place of the record, derived from the final
+    installed bytes after the optional research and before the retained
+    copies. The model-record block is computed here, from this run's fetched
+    bars, and carried in; a run that cannot compute it says so in the brief.
+
+    Like the two optional producers above it, this one never fails the
+    run: it sets no stage and adds no problem word, a derivation that
+    fails installs the pair that says the brief is unavailable for these
+    bytes, and anything else is one warning with the evening record retained
+    and an earlier publication's pair removed, so a reader finds no brief
+    rather than a stale one and the publication gate still serves the record."""
+    try:
+        from src import brief
+        try:
+            from src import model_record
+            block = model_record.build(rec, frames, minutes, data, docs=docs)
+        except Exception as exc:  # noqa: BLE001 -- an ImportError too: the brief names the reason it carries none
+            log.warning("Model record unavailable (%s); the analyst brief says it was not computed.",
+                        type(exc).__name__)
+            block = brief.not_computed(brief.NOT_COMPUTED_FAILED)
+        picks_path = docs / record.PICKS_FILE
+        result = brief.write_publication((docs / DATA_FILE).read_bytes(),
+                                         picks_path.read_bytes() if picks_path.exists() else None,
+                                         docs, model_record=block)
+        log.log(logging.INFO if result["status"] == "derived" else logging.WARNING,
+                "Analyst brief: %s.", result["sentence"])
+    except Exception as exc:  # noqa: BLE001 -- optional derived companion only
+        log.warning("Analyst brief unavailable (%s); evening record retained.", type(exc).__name__)
+        # The pair still on disk is then an earlier publication's. Left there it would read as current to an
+        # outside reader, and the publication gate would refuse the whole site over it: no brief is the honest state.
+        try:
+            from src import brief
+            removed = brief.discard_unbound(docs)
+            if removed:
+                log.warning("Analyst brief: removed %s, bound to an earlier publication.", " and ".join(removed))
+        except Exception as inner:  # noqa: BLE001 -- never fails the night
+            log.warning("Analyst brief: the earlier pair could not be removed (%s).", type(inner).__name__)
 
 
 def restamp(data: dict, rep: RunReport, closed: bool) -> None:

@@ -546,6 +546,22 @@ def test_uncertain_fills_are_counted_by_reason_and_reach_no_rate_nor_the_read_th
     assert "uncertain" in sc["note"] and "in no rate" in sc["note"] and sc["note"] == record.SCORECARD_NOTE
 
 
+def test_the_scorecard_note_says_what_the_fill_rule_does_with_a_low_under_the_stop():
+    """The note the record publishes beside its scorecard: a fill at the open whose
+    day then reaches the stop is a fill, booked at exactly the stop; only a day that
+    crossed the trigger after the open is uncertain, its low under the stop or not."""
+    at_the_open = {"o": 100.5, "h": 101.0, "l": 95.0, "c": 95.5, "date": "2026-09-02"}
+    assert record.fill(pick(), at_the_open)[0] == "filled"
+    walked = record.replay(pick(), [at_the_open])
+    assert record.r_multiple(walked, 96.0) == -1.0
+    crossed_later = {"o": 99.5, "h": 101.0, "l": 95.0, "c": 95.5, "date": "2026-09-02"}
+    assert record.fill(pick(), crossed_later)[0] == record.UNCERTAIN and record.fill(pick(), crossed_later)[3] == "stop_sequence"
+    note = record.SCORECARD_NOTE
+    assert "a fill at the open whose day then reaches the stop is booked at exactly the stop" in note
+    assert "whether or not its low also reached the stop" in note
+    assert "a fill-day low under the stop are uncertain" not in note and "fill-day low under the stop is uncertain" not in note
+
+
 def test_an_uncertain_plan_keeps_its_slot_in_the_model_allocation():
     from src import pipeline
     assert record.UNCERTAIN in pipeline.SLOT_STATUSES

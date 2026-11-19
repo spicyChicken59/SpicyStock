@@ -126,7 +126,13 @@
    obituary. Every other number is printed, never derived from a rule:
    thresholds come out of the archived `rules` and `breadth.regime` blocks,
    sizes out of `plan`, sentences out of `cover`, `open_plans[]` and
-   `breadth.regime.reasons[]`, verbatim. Selection, stage and view are page
+   `breadth.regime.reasons[]`, verbatim. Two readings are re-read from fields
+   the record archived, each held to its module and neither a decision: the
+   five regime rules as the record's own inputs and thresholds give them
+   (regimeRules(), withheld when they do not give the record's verdict), and
+   whether a row the run built no plan for is in the record's archived event
+   registry (registryMatch(), src/event_risk.py classify()'s interval rule).
+   Selection, stage and view are page
    state, kept in the hash (#/explore/bursts/AAPL) so a link reloads and the
    Back button works; choosing a stock fetches nothing and grades nothing.
 
@@ -162,6 +168,15 @@
   const METHOD_URL = 'https://github.com/' + REPO + '/blob/main/knowledge/method.md';
   const DISCOVERY_SOURCES_URL = 'https://github.com/' + REPO + '/blob/main/knowledge/reaction-discovery.md';
   const RULEBOOK_URL = 'https://github.com/' + REPO + '/blob/main/knowledge/strategy.md';
+  const RULE_SHEET_URL = 'https://github.com/' + REPO + '/blob/main/knowledge/rules.md';
+  // The analyst's daily brief (src/brief.py), written beside the record by the
+  // evening. Linked from the footer at run time only: docs/index.html names
+  // neither file, because the publication gate reads every href off that page
+  // and a night without the pair would fail it. The page does not ask whether
+  // the files exist (no request is added to a page load), so each link says in
+  // its title when it can be absent.
+  const BRIEF_FILES = [['brief.md', 'analyst brief'], ['brief.json', 'brief.json']];
+  const BRIEF_TITLE = 'Written by the evening run beside the record. Absent until the first evening run that writes it, and on a night it could not be written; then this link answers 404. Its identity block names the record it was derived from.';
 
   // One fixed sentence per problem kind, the same seven src/report.py mails
   // (tests/test_docs.py holds the two lists equal); the message the run
@@ -195,7 +210,30 @@
     two_days: 'up days', linearity: 'linear', young_trend: 'young', narrow_or_negative: 'quiet',
     consolidation: 'tight', close_near_high: 'close', range_expansion: 'range', volume: 'volume'
   };
-  const VETO_WORDS = { up_days: 'three up days in a row', not_linear: 'the prior leg is not linear' };
+  // A veto as the record measured it (src/quality.py assess()). `up_days` is
+  // VETO_UP_DAYS or more consecutive RISING CLOSES of any size ending the
+  // session before the burst: not the 2 check's count of days above +1%, which
+  // a vetoed name can pass. The threshold is the record's own archived
+  // rules.quality.veto_up_days; a record without one reads the module's
+  // (tests/test_page_text.py holds VETO_UP_DAYS to quality.VETO_UP_DAYS).
+  const VETO_UP_DAYS = 3;
+  const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+  const countWord = (n) => COUNT_WORDS[n] || String(n);
+  const VETO_WORDS = { not_linear: 'the prior leg is not linear' };
+  // One helper for every place a veto is printed. `q` is the row's quality
+  // block: its two_days check carries the count the checklist measured
+  // (values.up_closes), printed when the record has it and it is a veto's.
+  function vetoWords(v, q, record) {
+    if (v !== 'up_days') return VETO_WORDS[v] || words(v);
+    const archived = ((((record || current || {}).rules || {}).quality || {}).veto_up_days);
+    const need = Number.isInteger(archived) && archived > 0 ? archived : VETO_UP_DAYS;
+    const two = ((q && q.checks) || []).find((x) => x && x.key === 'two_days');
+    const closes = two && two.values ? two.values.up_closes : null;
+    return Number.isInteger(closes) && closes >= need
+      ? closes + ' rising closes in a row before the burst (' + countWord(need) + ' or more of any size refuse a setup)'
+      : countWord(need) + ' or more rising closes in a row before the burst, of any size';
+  }
+  const vetoList = (vetoes, q, record) => (vetoes || []).map((v) => vetoWords(v, q, record)).join(', ');
   const STOP_BASIS = { burst_low: 'the burst day’s low', half_range: 'the burst bar’s midpoint' };
   const STAGES = ['bursts', 'setting-up'];
   const STAGE_NAME = { bursts: 'Bursts', 'setting-up': 'Setting up' };
@@ -852,7 +890,7 @@
     const reasons = [], b = c.row, reg = ((data.breadth || {}).regime || {});
     if (reg.verdict === 'red') reasons.push('Market permission: RED prevents new longs.');
     if (c.stage === 'bursts') {
-      if ((b.vetoes || []).length) reasons.push('Quality veto: ' + b.vetoes.map(v => VETO_WORDS[v] || words(v)).join(', ') + '.');
+      if ((b.vetoes || []).length) reasons.push('Quality veto: ' + vetoList(b.vetoes, b.quality, data) + '.');
       const grades = listRule(data, reg.verdict === 'yellow' ? 'yellow_grades' : 'trade_grades', reg.verdict === 'yellow' ? ['A+'] : ['A+', 'A']);
       if (!grades.includes(b.grade)) reasons.push('Final quality: ' + (b.grade || 'unknown') + '; the quality gate requires ' + grades.join('/') + ' before market permission.');
       const review = readerCoverage(b);
@@ -1203,12 +1241,46 @@
     recovery.receipt = null; recovery.askedLine = li;
     loadRecovery(li, recovery.lineData);
   }
+  // What app.rules_version is a digest OF. pipeline.build_rules() nests the
+  // selection's membership identity (rules.universe.identity) beside every
+  // module's rules, so the digest moves on any night the membership moves as
+  // well as when a rule changes; a record whose rules carry no identity is
+  // said to digest its archived rules and nothing more.
+  // Discovery, then the gates a burst ticket passes, each named only when this
+  // record archived it: the admission rule (src/admission.py), the accepted
+  // chart review (pipeline.reader_policy), the stop line at the limit
+  // (plan.max_stop_pct on plan.sizing_basis) and the event registry.
+  function gatesWords(data) {
+    const rules = (data || {}).rules || {}, plan = rules.plan || {}, adm = rules.admission;
+    const admitted = adm && typeof adm === 'object'
+      ? ' A candidate only the Dollar scan found is admitted to a plan or a chart read only under the admission rule printed under Published run' +
+        (Array.isArray(adm.dollar_checks) && adm.dollar_checks.join(',') === 'RE,VOL' ? ' (a range-expansion, higher-volume day)' : '') + '.'
+      : '';
+    const needs = ['a permitted market regime and a grade in the band it admits', 'no veto',
+      (rules.pipeline || {}).reader_policy === 'accepted_required_v1' ? 'an accepted chart review' : '',
+      isNum(plan.max_stop_pct) && plan.sizing_basis === 'order_limit' ? 'a stop within ' + plain(plan.max_stop_pct) + '% of its limit' : '',
+      registryOf(data).present ? 'no entry in the event registry' : '',
+      'a whole share', 'a free slot', 'valid publication'].filter(Boolean);
+    return 'Discovery uses this record’s 4% breakout or Dollar breakout rules. A Dollar candidate can qualify below +4%; A-quality is judged after discovery.' + admitted +
+      ' A grade is a weighted assessment, not a probability or an executable order. A burst ticket also needs ' + needs.join(', ') + ' and an unexpired entry window.';
+  }
+  function rulesDigestWords(data, lead) {
+    const app = (data || {}).app || {}, identity = text((((data || {}).rules || {}).universe || {}).identity);
+    const what = identity
+      ? 'a digest of this record’s archived rules and its universe membership identity' + (lead ? ' (' + identity + ')' : '') + '; it moves on any night the membership moves'
+      : 'a digest of this record’s archived rules';
+    if (!lead) return what;
+    return 'Rules ' + (app.rules_version || '—') + ': ' + what + '.' + (identity ? ' A changed digest can reflect membership alone; it does not by itself mean a rule changed.' : '');
+  }
   function renderMethod(data) {
     renderStrip(data);
     const run = data.run || {}, uni = run.universe || {}, app = data.app || {}, acct = data.account || {};
     const meta = clear($('run-meta'));
     const line = (t) => meta.appendChild(el('li', { text: t }));
     line('Bars: Alpaca ' + String(run.feed || '').toUpperCase() + ', daily, ' + barBasis(run) + ', the request window sixteen minutes behind the clock; ' + num(uni.size) + ' selected stocks from ' + (uni.source || '—') + (uni.label ? ' (' + uni.label + ')' : '') + '.');
+    // one provider, as of this run's fetch: nothing here cross-checks a bar
+    line('One price source: these bars are ' + (text((run.input_basis || {}).provider) || 'Alpaca') + '’s as this run fetched them (the run’s own clock reads ' + (run.published_at || 'not recorded') +
+      '). No second source cross-checks a close, a volume or a split, and the provider can revise a session’s bar afterwards; the next run reads the session again.').setAttribute('data-method-line', 'price-source');
     const cov = run.coverage || {}, a = cov.acceptance || {}, sel = uni.selection || {};
     line('Universe snapshot: ' + (uni.fetched_at || 'no directory timestamp recorded') +
       '; relative to scan session: ' + words(uni.snapshot_relation || 'unrecorded') +
@@ -1283,7 +1355,9 @@
     if (run.earnings === undefined) line('Earnings: this record predates the earnings warning; no ticket’s report date was checked.');
     else if (text((run.earnings || {}).sentence)) line(run.earnings.sentence);
     else line('Earnings: this record carries an earnings block in a shape this page cannot read, so no ticket’s report date is said to be checked.');
-    line('Rules ' + (app.rules_version || '—') + ': a digest of recorded policy and universe identity. A changed digest can reflect membership alone; it does not necessarily mean the strategy changed. Universe identity ' + (uni.identity || '—') + '.');
+    // the manual registry of known deals, as this record archived it (registryLine)
+    line(registryLine(data)).setAttribute('data-method-line', 'event-registry');
+    line(rulesDigestWords(data, true)).setAttribute('data-method-line', 'rules-digest');
     line('Timing: ' + num(run.elapsed_seconds) + ' s for the run, ' + num(run.fetch_seconds) + ' s of it fetching; generated ' + (run.published_at || '—') + '.');
     // where THIS publication fell against the service's schedule, and what that
     // schedule is, both as the run archived them; the page adds no hour of its own
@@ -1329,10 +1403,11 @@
     body.appendChild(el('p', { text: reading.terms.journey[1] }));
     body.appendChild(el('p', { text: 'Selected operating variant: after-close reaction review, then a conditional entry in the next exchange session’s first 30 minutes. Final daily measurements were not available at the signal day’s morning open. Anticipation is a separate route; its intraday price and volume pace require your own timely verification.' }));
     body.appendChild(el('p', null, [el('a', { href: '#/record', text: 'Read the historical validation and its limits' }), d.createTextNode(' · '), el('a', { href: 'input-truthfulness/2026-09-28-operating-contract.md', text: 'Operating contract v1 and source attribution' })]));
-    body.appendChild(el('p', { text: 'Discovery uses this record’s 4% breakout or Dollar breakout rules. A Dollar candidate can qualify below +4%; A-quality is judged after discovery. A grade is a weighted assessment, not a probability or an executable order. A published ticket still needs valid publication, a permitted market regime and an unexpired entry window.' }));
+    body.appendChild(el('p', { 'data-method-role': '', text: 'SpicyStock is a view and a daily output: it lists candidates and what its rules say about them, and it places no order. An outside analyst and the owner decide what, if anything, to trade.' }));
+    body.appendChild(el('p', { 'data-method-gates': '', text: gatesWords(data) }));
     body.appendChild(el('p', { text: 'Read colours locally: a passing criterion, a favourable market filter, a saved confirmation and a positive model outcome mean different things. None establishes that a stock is profitable or that a trade was placed. The definitions below explain each context.' }));
     body.appendChild(el('p', { 'class': 'sc-hint', text: 'SpicyStock implements the momentum-burst method with explicit choices. Some rules are primary-source formulas; others are later changes, community interpretations or implementation proxies. Rationale describes the method, not evidence of predictive accuracy.' }));
-    body.appendChild(el('p', null, [el('a', { href: METHOD_URL, target: '_blank', rel: 'noopener', text: 'Whose number each rule is (knowledge/method.md)' }), d.createTextNode(' · '), el('a', { href: RULEBOOK_URL, target: '_blank', rel: 'noopener', text: 'The detailed rulebook (knowledge/strategy.md)' })]));
+    body.appendChild(el('p', null, [el('a', { href: RULE_SHEET_URL, target: '_blank', rel: 'noopener', 'data-rule-sheet': '', text: 'Every rule the run applies, in order (knowledge/rules.md)' }), d.createTextNode(' · '), el('a', { href: METHOD_URL, target: '_blank', rel: 'noopener', text: 'Whose number each rule is (knowledge/method.md)' }), d.createTextNode(' · '), el('a', { href: RULEBOOK_URL, target: '_blank', rel: 'noopener', text: 'The detailed rulebook (knowledge/strategy.md)' })]));
     body.appendChild(el('p', { 'class': 'sc-hint' }, [el('a', { href: DISCOVERY_SOURCES_URL, target: '_blank', rel: 'noopener', text: 'Current discovery sources' }), d.createTextNode(': primary 4% formula dated May 21, 2015; primary Dollar formula dated July 13, 2017. Precision and universe filters are SpicyStock choices. Historical records keep their recorded rules.')]));
     const topics = clear($('method-topics'));
     Object.entries(reading.terms).forEach(([key, term]) => {
@@ -1354,6 +1429,64 @@
     const diff = now - before;
     return (diff > 0 ? '▲ ' : diff < 0 ? '▼ ' : '· ') + num(Math.abs(diff)) + ' vs yesterday' + (unit || '');
   }
+  // Whose number a Market Monitor note quotes. The two count notes print the
+  // record's SCALED threshold (breadth.scaled_threshold(): the reading times
+  // the stocks measured over the reference universe), which is SpicyStock's
+  // number and not the reading itself, so each says what was scaled and to
+  // what; the note's own text follows verbatim. src/breadth.py says of the
+  // quarter reading that it is the field guide's wording, not yet checked
+  // against Bonde's own, and the lead says that too.
+  const SCALED_NOTES = {
+    up50_month: ['up50_month_hot', 'The method notes quote Bonde’s reading as '],
+    down25_quarter: ['down25_quarter_oversold', 'A field guide’s wording, not checked against Bonde’s own, gives ']
+  };
+  function noteLead(noteKey, rules, th) {
+    const scaled = SCALED_NOTES[noteKey];
+    if (!scaled) return 'Bonde: ';
+    const reading = (rules || {})[scaled[0]];
+    return isNum(reading) && isNum(th.reference_universe) && isNum(th.universe)
+      ? scaled[1] + num(reading) + ' over ' + num(th.reference_universe) + ' stocks; SpicyStock scales it to the ' + num(th.universe) + ' measured: '
+      : 'A threshold SpicyStock scaled to the stocks measured: ';
+  }
+  // The five regime rules as this record's own inputs and thresholds read
+  // (src/breadth.py regime()): three red, two yellow, each fired or not. The
+  // record's `reasons` list only the rules of the verdict's tier that fired
+  // (every rule on a green night), so a scaled alarm that did not fire, or a
+  // yellow rule under a red night, is printed nowhere else. Nothing is decided
+  // here: when the rules read this way do not give the record's verdict, the
+  // list is withheld and the record's reasons stand alone.
+  function regimeRules(b) {
+    const reg = b.regime || {}, th = reg.thresholds || {}, x = reg.inputs || {}, rules = b.rules || {};
+    const need = [th.down4_alarm, th.ratio_10d_red, th.ratio_5d_red, th.ratio_10d_yellow, th.up50_month_hot, th.universe, th.reference_universe,
+      x.down4, x.up4, x.up50_month, rules.down4_alarm, rules.up50_month_hot];
+    if (!need.every(isNum)) return null;
+    const ratio = (v) => v === null || v === undefined || isNum(v);
+    if (!ratio(x.ratio_10d) || !ratio(x.ratio_5d)) return null;
+    const scaled = (reading) => num(reading) + ' per ' + num(th.reference_universe) + ', over ' + num(th.universe) + ' measured';
+    const sums = (up, down) => isNum(up) && isNum(down) ? ' (' + num(up) + ' up, ' + num(down) + ' down)' : '';
+    const r10 = isNum(x.ratio_10d) ? plain(x.ratio_10d) + sums(x.up4_10d, x.down4_10d) : 'none' + sums(x.up4_10d, x.down4_10d);
+    const r5 = isNum(x.ratio_5d) ? plain(x.ratio_5d) + sums(x.up4_5d, x.down4_5d) : 'none' + sums(x.up4_5d, x.down4_5d);
+    const list = [
+      ['red', 'down4_alarm', x.down4 >= th.down4_alarm,
+        'names down 4% today: ' + num(x.down4) + ' against the scaled alarm of ' + plain(th.down4_alarm) + ' (' + scaled(rules.down4_alarm) + '); it fires at or over the alarm'],
+      ['red', 'ratio_10d_red', isNum(x.ratio_10d) && x.ratio_10d < th.ratio_10d_red,
+        '10-session ratio: ' + r10 + ' against ' + plain(th.ratio_10d_red) + '; it fires under it'],
+      ['red', 'ratio_5d_red', isNum(x.ratio_5d) && x.ratio_5d < th.ratio_5d_red && x.down4 > x.up4,
+        '5-session ratio: ' + r5 + ' against ' + plain(th.ratio_5d_red) + ', with ' + num(x.down4) + ' down and ' + num(x.up4) + ' up today; it fires under it only with more down than up today'],
+      ['yellow', 'ratio_10d_yellow', isNum(x.ratio_10d) && x.ratio_10d < th.ratio_10d_yellow,
+        '10-session ratio: ' + r10 + ' against ' + plain(th.ratio_10d_yellow) + '; it fires under it'],
+      ['yellow', 'up50_month_hot', x.up50_month > th.up50_month_hot,
+        'names up 50% in a month: ' + num(x.up50_month) + ' against the scaled hot mark of ' + plain(th.up50_month_hot) + ' (' + scaled(rules.up50_month_hot) + '); it fires over the mark']
+    ];
+    const tier = list.some((r) => r[0] === 'red' && r[2]) ? 'red' : list.some((r) => r[2]) ? 'yellow' : 'green';
+    if (tier !== reg.verdict) return null;
+    return el('div', { 'class': 'ss-regime-rules', 'data-regime-rules': '' }, [
+      el('div', { 'class': 'sc-eyebrow', text: 'all five rules, read from this record’s inputs' }),
+      el('ul', null, list.map((r) => el('li', { 'data-regime-rule': r[1], 'data-tier': r[0], 'data-fired': r[2] ? 'true' : 'false' },
+        [chip(r[0] + (r[2] ? ' · fired' : ' · not fired'), r[2] ? REGIME_TONE[r[0]] : 'neutral'), d.createTextNode(' ' + r[3] + '.')]))),
+      el('p', { 'class': 'sc-hint', text: 'Any red rule that fires makes the night red; otherwise any yellow rule makes it yellow; otherwise it is green. The two count thresholds are scaled by SpicyStock to the stocks measured that night; the ratios are not scaled.' })
+    ]);
+  }
   function renderBreadth(data) {
     const b = data.breadth || {}, reg = b.regime || {}, th = reg.thresholds || {}, hist = b.history || [];
     const prev = hist.length >= 2 ? hist[hist.length - 2] : {};
@@ -1371,6 +1504,8 @@
     regime.appendChild(el('div', { 'class': 'sc-callout__label', text: 'regime' }));
     regime.appendChild(el('div', { 'class': 'sc-callout__figure' }, [chip(verdict.toUpperCase(), REGIME_TONE[verdict] || 'neutral', true), el('span', { text: sizeWords })]));
     regime.appendChild(el('ul', null, (reg.reasons || []).map((r) => el('li', { text: r }))));
+    const evaluated = regimeRules(b);
+    if (evaluated) regime.appendChild(evaluated);
     regime.appendChild(help('market', 'How to read this filter'));
 
     renderRatioChart(data);
@@ -1384,7 +1519,7 @@
       card.appendChild(el('p', { 'class': 'sc-hint', text: hint }));
       card.appendChild(el('dl', { 'class': 'sc-facts' }, pairs.map((p) => el('div', null, [el('dt', { text: p[0] }), el('dd', { text: p[1] })]))));
       if (extra) card.appendChild(extra);
-      if (notes[noteKey]) card.appendChild(el('p', { 'class': 'sc-note', text: 'Bonde: ' + notes[noteKey] }));
+      if (notes[noteKey]) card.appendChild(el('p', { 'class': 'sc-note', 'data-note': noteKey, text: noteLead(noteKey, rules, th) + notes[noteKey] }));
       return card;
     }
     facts.appendChild(factCard('the quarter', num(rules.quarter_sessions) + ' sessions, names moving ' + plain(rules.quarter_move_pct) + '%',
@@ -1492,7 +1627,8 @@
     fig.appendChild(twin.firstChild);
     const ratioNote = (b.notes || []).find((n) => n && n.key === 'ratio_10d');
     fig.appendChild(el('figcaption', { 'class': 'sc-chart-caption' }, [
-      el('p', { text: 'Counts over ' + num(b.universe) + ' common stocks with a bar on ' + dateWords(b.date) + '; ratio = Σ up 4% ÷ Σ down 4% over ' + plain((b.rules || {}).ratio_long_sessions) + ' sessions. The dashed line is the archived yellow threshold.' + (ratioNote ? ' Bonde: ' + ratioNote.text + '.' : '') })
+      el('p', { text: 'Counts over ' + num(b.universe) + ' common stocks with a bar on ' + dateWords(b.date) + '; ratio = Σ up 4% ÷ Σ down 4% over ' + plain((b.rules || {}).ratio_long_sessions) + ' sessions. The dashed line is the archived yellow threshold.' + (ratioNote ? ' Bonde: ' + ratioNote.text + '.' : '') }),
+      el('p', { 'data-history-reread': '', text: 'The ' + plural(hist.length, 'session') + ' in this chart and its table are this run’s own re-reading over the stocks it measured on ' + dateWords(b.date) + ', so an earlier session’s counts can differ from what that night published. A published verdict is never recomputed.' })
     ]));
   }
 
@@ -1569,7 +1705,7 @@
   // not a reason to hide what was published for it -- the reader may need to
   // read back an order already sitting in a broker -- but it is every reason
   // not to hand it over as something to place now.
-  function recordedTicket(plan, avail) {
+  function recordedTicket(plan, avail, burst) {
     const lines = ticket(plan.order_json) || [];
     const wrap = el('div', { 'class': 'ss-order ss-order--history', 'data-recorded-ticket': plan.ticker || '' });
     wrap.appendChild(el('div', { 'class': 'ss-order__head' }, [
@@ -1580,12 +1716,13 @@
     wrap.appendChild(pre);
     wrap.appendChild(el('p', { 'class': 'ss-order__readback', text: 'History, not an order to place. ' + cancelLine() }));
     wrap.appendChild(partFillNote());
+    if (burst) wrap.appendChild(buyStopNote());
     return wrap;
   }
   // the order, as written by the run: shown only when the plan carries one,
   // the page is not stale, pending or without a verdict, AND the session its
   // entry window belongs to has not had that window close
-  function orderBlock(plan, extraHint, withheld) {
+  function orderBlock(plan, extraHint, withheld, burst) {
     const lines = withheld ? null : ticket(plan.order_json);
     const wrap = el('div', { 'class': 'ss-order' });
     if (!lines) { wrap.appendChild(el('p', { 'class': 'sc-hint', text: extraHint || 'No order.' })); return wrap; }
@@ -1600,6 +1737,7 @@
       wrap.appendChild(el('ul', { 'class': 'ss-notes ss-order__terms' }, terms.map((t) => el('li', { text: t }))));
     }
     wrap.appendChild(partFillNote());
+    if (burst) wrap.appendChild(buyStopNote());
     return wrap;
   }
   function stopWords(plan) {
@@ -1746,6 +1884,31 @@
   // tests/test_docs.py.
   const BROKER_PART_FILL = 'Fidelity’s rule: an OTO’s sell stop is released only when the buy fills in full. SpicyStock’s advice: wherever a ticket, a plan or its dated schedule says the sell stop is attached at or live from the fill, that assumes a full fill; if the buy fills only in part, place a separate Sell Stop Loss, Good ’til Canceled, at the stop for the shares that filled, confirm Fidelity accepts it on shares bought that day, and check that no second sell stop remains for shares you do not hold.';
   const partFillNote = (extra) => el('p', { 'class': 'sc-hint ss-order__broker' + (extra ? ' ' + extra : ''), 'data-broker-part-fill': '', text: BROKER_PART_FILL });
+  // Fidelity's stated rule for a buy stop -- entered above the current market
+  // price -- and what it means for a BURST ticket, whose buy stop is the burst
+  // session's close (src/plan.py burst_plan(): entry_ref is the close), each
+  // labelled (knowledge/broker-fidelity.md, item 2). Printed through
+  // buyStopNote() directly after partFillNote() wherever that prints for a
+  // burst ticket, and never for a setting-up ticket, whose trigger sits above
+  // its last close; never inside a ticket's terms or a copied order.
+  // report.BROKER_BUY_STOP and the handoff's copy are held equal to it by
+  // tests/test_broker_buy_stop.py.
+  const BROKER_BUY_STOP = 'Fidelity’s rule: a buy stop or buy stop-limit order must be entered at a stop price above the current market price. SpicyStock’s advice: a burst ticket’s buy stop is the burst day’s close, so it can be entered as written only while the stock trades under that price; which price Fidelity compares it with before the open (the close or a pre-market quote) is unconfirmed. Once the stock trades at or over the buy stop the ticket cannot be entered as written, and SpicyStock offers no other order; the model’s ‘filled at the open’ assumes the order was already resting before the open.';
+  const buyStopNote = () => el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-buy-stop': '', text: BROKER_BUY_STOP });
+  // Where a burst ticket's two notes sit on a screen the reader has opened
+  // nothing on -- the Burst's action card and the decision summary's entry --
+  // they ride under one native disclosure, closed, both in the DOM with their
+  // attributes. Printed open, the second note pushed the card's Copy order off
+  // the phone screen the card starts on: on the full fixture's ticket at
+  // 390 px the control's top sat 602 px under the card's own top with the
+  // part-fill note alone and past 844 px, a phone screen's height, with both
+  // printed open. Every other site is under
+  // something the reader opened themselves and prints the notes open. A
+  // setting-up ticket has the one note and keeps it open, as before.
+  const brokerNotesFold = () => el('details', { 'class': 'sc-disclosure ss-broker-notes', 'data-broker-notes': '' }, [
+    el('summary', null, el('span', null, [d.createTextNode('Broker notes'), el('span', { 'class': 'sc-muted', text: ' · Fidelity’s part-fill and buy-stop rules' })])),
+    el('div', { 'class': 'sc-disclosure__body' }, [partFillNote(), buyStopNote()])
+  ]);
   // Saying there is no ticket, once. STATUS_WORDS already answers "no ticket"
   // for below_grade, not_admitted and no_plan and CUT_WORDS answers "ticket
   // withheld", so a sentence that leads with those words must not close with
@@ -1816,11 +1979,90 @@
     if (a.unreadable) return ' Admission: this record carries an admission block in a shape this page cannot read, so the name is neither read as admitted nor as stopped.';
     return ' Admission: ' + cap(a.reason) + '.';
   }
+  // ------------------------------------------------- the record's archived event registry
+  // The run applies its event registry only where it builds a plan
+  // (src/pipeline.py _make_plans(), make_watchlist()), so a listed row with no
+  // plan -- an unplanned burst, an also-quiet coil -- carries no event
+  // evidence even when its ticker is in the registry the record archived.
+  // registryMatch() mirrors src/event_risk.py classify() over that ARCHIVED
+  // registry and the record's own session: the interval includes active_from
+  // and excludes active_until, a source or a resolution published after the
+  // session is not shown, and a passed review date never clears an entry. The
+  // page adds no judgement: the reason is the registry's own, composed as
+  // classify() composes it (tests/fixtures/event-registry/classify_parity.py
+  // holds the two equal, the boundary days included).
+  const DAY = /^\d{4}-\d{2}-\d{2}$/;
+  const REGISTRY_SYMBOL = /^[A-Z][A-Z0-9.\-]*$/;
+  const REGISTRY_LEAD = 'Known cash-acquisition event: ';
+  const REGISTRY_OVERDUE = ' The manual review is overdue; new entries remain withheld pending a source review.';
+  const REGISTRY_NONE = 'No applicable entry in the manual event registry; live news and other corporate events have not been cleared.';
+  const isDay = (v) => typeof v === 'string' && DAY.test(v) && !!parseISO(v) && toISO(parseISO(v)) === v;
+  // { present, readable, registry }: present is false for a record that
+  // predates the registry; readable is false for a block the page will not
+  // index into, which flags nothing and says so on the Method view.
+  function registryOf(data) {
+    const rules = (data && data.rules) || {};
+    if (rules.event_risk === undefined) return { present: false, readable: false, registry: null };
+    const reg = rules.event_risk && typeof rules.event_risk === 'object' ? rules.event_risk.registry : null;
+    const readable = !!reg && typeof reg === 'object' && isDay(reg.reviewed_on) && Array.isArray(reg.events) && reg.events.every((e) =>
+      !!e && typeof e === 'object' && typeof e.symbol === 'string' && typeof e.reason === 'string' && isDay(e.active_from) && isDay(e.review_due) &&
+      (e.active_until === null || e.active_until === undefined || isDay(e.active_until)) &&
+      Array.isArray(e.sources) && e.sources.every((x) => !!x && typeof x === 'object' && isDay(x.published_on)) &&
+      (e.resolution === null || e.resolution === undefined || (typeof e.resolution === 'object' && isDay(e.resolution.published_on))));
+    return { present: true, readable: readable, registry: readable ? reg : null };
+  }
+  function registryMatch(ticker, session, registry) {
+    const symbol = typeof ticker === 'string' ? ticker.trim().toUpperCase() : '';
+    if (!registry || !REGISTRY_SYMBOL.test(symbol) || !isDay(session)) return null;
+    const matches = [];
+    registry.events.forEach((event) => {
+      if (event.symbol !== symbol || session < event.active_from) return;
+      if (event.active_until !== null && event.active_until !== undefined && session >= event.active_until) return;
+      const m = Object.assign({}, event);
+      m.sources = event.sources.filter((x) => x.published_on <= session);
+      m.evidence_as_of = m.sources.reduce((newest, x) => (newest === null || x.published_on > newest ? x.published_on : newest), null);
+      if (m.resolution && m.resolution.published_on > session) { delete m.resolution; m.active_until = null; }
+      m.review_overdue = session > event.review_due;
+      matches.push(m);
+    });
+    const overdue = matches.some((m) => m.review_overdue);
+    return { version: 1, registry_reviewed_on: registry.reviewed_on, session: session, symbol: symbol, blocked: matches.length > 0,
+      status: overdue ? 'review_required' : matches.length ? 'known_event' : 'not_in_registry',
+      reason: matches.length ? REGISTRY_LEAD + matches.map((m) => m.reason).join(' ') + (overdue ? REGISTRY_OVERDUE : '') : REGISTRY_NONE,
+      matches: matches };
+  }
+  SCStock.registryMatch = registryMatch;
+  // The Method view's one line for the registry: its entries, its last review
+  // and how many of the entries in force at this record's session are past
+  // their own review date. Counted from the archived registry and the
+  // session, with no clock of the page's.
+  function registryLine(data) {
+    const r = registryOf(data), session = text(((data || {}).run || {}).session);
+    if (!r.present) return 'Event registry: this record predates it; no list of known deals was archived with it.';
+    if (!r.readable || !isDay(session)) return 'Event registry: this record archives a registry in a shape this page cannot read, so no listed stock is flagged from it.';
+    const events = r.registry.events, n = events.length;
+    const inForce = events.filter((e) => session >= e.active_from && !(e.active_until !== null && e.active_until !== undefined && session >= e.active_until));
+    const overdue = inForce.filter((e) => session > e.review_due);
+    const days = Math.round((parseISO(session) - parseISO(r.registry.reviewed_on)) / 86400000);
+    const kind = events.every((e) => e.kind === 'cash_acquisition') ? 'known cash-acquisition ' : 'known-event ';
+    const nextDue = inForce.map((e) => e.review_due).sort()[0];
+    const state = !inForce.length ? 'none is in force at this session'
+      : overdue.length ? overdue.length + ' of the ' + inForce.length + ' in force at this session ' + (overdue.length === 1 ? 'is past its review date and stays blocked' : 'are past their review dates and stay blocked')
+        : 'none of the ' + inForce.length + ' in force at this session is past its review date (next due ' + nextDue + ')';
+    return 'Event registry: ' + n + ' ' + kind + (n === 1 ? 'entry' : 'entries') + ', a manual list last reviewed ' + r.registry.reviewed_on +
+      (days >= 0 ? ' (' + plural(days, 'day') + ' before this session)' : ' (after this session)') + '; ' + state +
+      '. It is not a news screen: a stock that is not listed has not been cleared.';
+  }
+
   function buildModel(data) {
     const trades = data.trades || [], cb = data.cash_budget || {}, cuts = {};
     (cb.cut || []).forEach((c) => { if (c && c.ticker && (!c.setup_kind || c.setup_kind === 'burst') && !cuts[c.ticker]) cuts[c.ticker] = c; });
     const reg = (data.breadth || {}).regime || {}, verdict = reg.verdict;
     const tradeGrades = listRule(data, 'trade_grades', ['A+', 'A']), yellowGrades = listRule(data, 'yellow_grades', ['A+']);
+    // a row the run built no plan for carries no event evidence of its own:
+    // its ticker is read against the record's archived registry (registryMatch)
+    const archived = registryOf(data).registry, signalSession = text((data.run || {}).session);
+    const dealOf = (ticker, plan) => { const m = plan ? null : registryMatch(ticker, signalSession, archived); return m && m.blocked ? m : null; };
     const bursts = (data.bursts || []).filter((b) => b && b.ticker).map((b, i) => {
       const plan = b.plan || null, q = b.quality || {}, vetoes = q.vetoes || b.vetoes || [], cut = cuts[b.ticker] || null, adm = admissionOf(b);
       let status, reason;
@@ -1829,7 +2071,7 @@
       else if (plan && plan.eligible === false) { status = 'withheld'; reason = plan.reason || ''; }
       else if (plan && plan.action === 'no_new_longs') { status = 'no_new_longs'; reason = plan.reason || 'breadth sizes new positions at zero tonight'; }
       else if (plan && plan.shares === 0) { status = 'no_shares'; reason = plan.reason || 'the size came to zero whole shares'; }
-      else if (vetoes.length) { status = 'vetoed'; reason = 'veto: ' + vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', '); }
+      else if (vetoes.length) { status = 'vetoed'; reason = 'veto: ' + vetoList(vetoes, q, data); }
       else if (tradeGrades.indexOf(b.grade) < 0) {
         const miss = (q.checks || []).find((c) => c && !c.pass);
         status = 'below_grade';
@@ -1845,7 +2087,7 @@
       const flags = (b.flags || []).slice();
       (plan && plan.flags || []).forEach((f) => { if (flags.indexOf(f) < 0) flags.push(f); });
       return { id: 'bursts:' + b.ticker, stage: 'bursts', ticker: b.ticker, name: text(b.name), rank: isNum(b.rank) ? b.rank : i + 1,
-        grade: b.grade || null, score: b.score, admitted: adm.admitted, status: status, reason: reason, cut: cut, plan: plan, row: b, quiet: false, flags: flags,
+        grade: b.grade || null, score: b.score, admitted: adm.admitted, status: status, reason: reason, cut: cut, plan: plan, deal: dealOf(b.ticker, plan), row: b, quiet: false, flags: flags,
         series: Array.isArray(b.series) ? b.series.filter((x) => x && x.date) : [],
         measures: [['gain', pct(b.gain_pct)], ['vol', isNum(volumeRatio(b).value) ? volumeTimes(b) + '×' : '—'], ['close', usd(b.close)]] };
     });
@@ -1862,7 +2104,7 @@
       else if (plan) { status = 'no_order'; reason = plan.reason || 'no order was written for this plan'; }
       else { status = 'watch'; reason = 'on the list; the run wrote no plan for it'; }
       return { id: 'setting-up:' + r.ticker, stage: 'setting-up', ticker: r.ticker, name: text(r.name), rank: i + 1, grade: null, score: null,
-        status: status, reason: reason, cut: null, plan: plan, row: r, quiet: !!quiet, flags: plan && plan.flags ? plan.flags.slice() : [],
+        status: status, reason: reason, cut: null, plan: plan, deal: dealOf(r.ticker, plan), row: r, quiet: !!quiet, flags: plan && plan.flags ? plan.flags.slice() : [],
         series: Array.isArray(r.series) ? r.series.filter((x) => x && x.date) : [],
         measures: [['quiet', plain(r.quiet_days) + ' d'], ['range', plain(r.range_pct) + '%'], quiet ? ['close', usd(r.close)] : ['box', plain(box.sessions) + ' s']] };
     };
@@ -2230,7 +2472,10 @@
   const matches = (c, q) => !q || c.ticker.indexOf(q) >= 0 || (c.name && c.name.toUpperCase().indexOf(q) >= 0);
   function setQuery(q) { state.query = q; $('search').value = q; if (model && state.view === 'explore') { renderPicks(); renderDetail(); } }
   function pickItem(c) {
-    const sw = statusWords(c.status);
+    // a row with no plan whose ticker is in the record's archived registry wears
+    // the flag where its status chip sits (the status stays on data-status and
+    // in the detail), so the card is no taller for it
+    const sw = c.deal ? ['known deal', 'warn'] : statusWords(c.status);
     const btn = el('button', { 'class': 'ss-pick', type: 'button', 'data-id': c.id, 'data-ticker': c.ticker, 'data-status': c.status, 'data-rank': String(c.rank), 'aria-pressed': 'false', 'aria-controls': 'detail', tabindex: '-1' }, [
       el('span', { 'class': 'ss-pick__row' }, [
         el('span', { 'class': 'ss-pick__ticker sc-case', text: c.ticker }),
@@ -2243,6 +2488,7 @@
         // the published rank stays a label of its own, whatever the cards are sorted by
         .concat([el('span', { 'class': 'ss-pick__rank', text: 'rank ' + plain(c.rank) })]))
     ]);
+    if (c.deal) btn.setAttribute('data-deal', c.deal.status);
     btn.addEventListener('click', () => { state.gesture = true; navigate(routeHash(c.stage, c.id)); });
     btn.addEventListener('focus', () => { d.querySelectorAll('#pick-list .ss-pick').forEach((p) => { p.tabIndex = p === btn ? 0 : -1; }); });
     // the Compare toggle is a SIBLING of the selection button, never inside it:
@@ -2456,6 +2702,8 @@
     if (c.grade) chips.push(chip(c.grade + (isNum(c.score) ? ' · ' + c.score.toFixed(1) : ''), 'brand', true));
     if (c.stage === 'bursts') chips.push(readerChip(b));
     chips.push(chip(sw[0], sw[1]));
+    // no plan and a ticker in the record's archived event registry (buildModel's dealOf)
+    if (c.deal) { const flag = chip('known deal', 'warn'); flag.setAttribute('data-deal', c.deal.status); chips.push(flag); }
     if (c.stage === 'setting-up') (b.setups || []).forEach((s) => chips.push(chip(String(s), 'neutral', true)));
     c.flags.forEach((f) => chips.push(chip(FLAG_WORDS[f] || words(f), 'warn')));
     const last = run.session || null;
@@ -3152,8 +3400,12 @@
     wrap.appendChild(el('div', { 'class': 'sc-table-scroll ss-compare__facts' }, compareTable(a, b)));
     // the ticket row prints a recorded order line, so the broker's rule and the
     // advice for a part fill sit under the table whenever one is printed
-    if ([a, b].some((c) => c.status === 'ticket' && text((c.plan || {}).order_line)))
+    if ([a, b].some((c) => c.status === 'ticket' && text((c.plan || {}).order_line))) {
       wrap.appendChild(partFillNote());
+      // a comparison pins two candidates of one stage: the buy-stop rule
+      // follows only when the order line printed is a burst ticket's
+      if ([a, b].some((c) => c.stage === 'bursts' && c.status === 'ticket' && text((c.plan || {}).order_line))) wrap.appendChild(buyStopNote());
+    }
     wrap.appendChild(el('p', { 'class': 'sc-hint', text: 'Every value is the published record’s own, for ' + dateWords(run.session) + '. A marked row is one the two records differ on — it is not a verdict, and nothing here says which setup is better. Each chart keeps its own price scale and its own dates; the two are never drawn on one axis.' }));
     dlg.appendChild(wrap);
     function sync() {
@@ -3336,8 +3588,10 @@
     if (c.stage === 'bursts') {
       if (readerCoverage(b).state !== 'accepted') out.push(readerCoverage(b).detail);
       else if (cl.chart_seen === false) out.push('the chart reader answered without a chart');
-      (q.vetoes || []).forEach((v) => out.push('veto: ' + (VETO_WORDS[v] || words(v))));
+      (q.vetoes || []).forEach((v) => out.push('veto: ' + vetoWords(v, q)));
     } else out.push('anticipation names are measured, not graded: the record carries no pass or fail for a coil');
+    // a row with no plan whose ticker was in that record's archived event registry
+    if (c.deal) out.push('in that record’s event registry: ' + sentence(c.deal.reason));
     if (!(c.series || []).length) out.push('no browser bars were loaded for it, so no chart was saved');
     return out;
   }
@@ -3534,7 +3788,6 @@
             ? 'The public model window ended without an exact outcome loaded here. No result is inferred.'
             : 'No exact model outcome is available in this record. No fill or result is inferred.'};
     }
-    const app = current.app || {};
     const same = (current.open_plans || []).filter((o) => o && o.ticker === item.ticker);
     if (!same.length) return { plan: null, matched: false, why: '' };
     const exact = same.find((o) => text(o.picked) === item.session && text(o.kind) === item.kind);
@@ -3546,10 +3799,10 @@
     const reference = SCStock.follow.planReference(item.snapshot);
     if (reference && !SCStock.follow.sameReference(reference, exact.evidence_ref)) return {plan:null, matched:false,
       why:'The public model row has a different or missing plan identity. It is not linked to this saved publication.'};
-    if (text(app.rules_version) && text(item.rules_version) && app.rules_version !== item.rules_version) {
-      return { plan: null, matched: false, other: exact,
-        why: 'The record’s model plan for this signal was written under different rules (' + app.rules_version.slice(0, 8) + ' against the saved ' + item.rules_version.slice(0, 8) + '), so it is shown apart from the saved plan rather than as an update to it.' };
-    }
+    // The open plan row carries no rules digest of its own: its identity is the
+    // evidence reference held above. Tonight's app.rules_version is NOT the
+    // plan's rules -- it nests the universe membership identity and moves on
+    // any night the directory's membership moves -- so it is never compared.
     return { plan: exact, matched: true, exact:!!reference, why: '' };
   }
   // is this symbol in the loaded record at all, and is it THIS signal?
@@ -4238,7 +4491,8 @@
         el('span', { 'class': 'sc-eyebrow', text: 'the instruction in that record' }),
         el('p', { 'class': 'ss-saved__order', text: '“' + (text(snap.instruction) || text(snap.order_line)) + '”' }),
         el('p', { 'class': 'sc-hint', text: 'Recorded for ' + dateWords(item.session) + ' and shown as history. It is not an instruction for today, and no order can be placed from it here.' }),
-        snap.status === 'ticket' ? partFillNote() : null
+        snap.status === 'ticket' ? partFillNote() : null,
+        snap.status === 'ticket' && item.kind === 'burst' ? buyStopNote() : null
       ]));
     }
     return box;
@@ -4289,7 +4543,7 @@
         el('p', null, [d.createTextNode('Day ' + plain(p.day) + ' · '), chip(PLAN_STATUS[p.status] ? PLAN_STATUS[p.status][0] : words(p.status), PLAN_STATUS[p.status] ? PLAN_STATUS[p.status][1] : 'neutral'),
           d.createTextNode(isNum(p.current_stop) ? ' · stop now ' + usd(p.current_stop) : '')]),
         text(p.instruction) ? el('p', { 'class': 'ss-saved__quote', text: '“' + p.instruction + '”' }) : null,
-        el('p', { 'class': 'sc-hint', text: upd.exact ? 'The public model outcome matches the frozen evidence and plan identities. It is not your position or execution.' : 'Legacy model association by signal session and rules only; exact plan identity was not recorded. It is not your position or execution.' })
+        el('p', { 'class': 'sc-hint', text: upd.exact ? 'The public model outcome matches the frozen evidence and plan identities. It is not your position or execution.' : 'Legacy model association by ticker, signal session and kind only; exact plan identity was not recorded. It is not your position or execution.' })
       ]));
     } else if (upd.why) {
       box.appendChild(el('div', { 'class': 'ss-saved__model', 'data-model-update': 'apart' }, [
@@ -4406,7 +4660,10 @@
   // line, so the part-fill note follows it.
   function originalStatus(lead, c, tail) {
     const nodes = [el('p', { 'data-original-status': '', text: lead + statusWords(c.status)[0] + '. ' + c.reason + '. ' + tail })];
-    if (c.status === 'ticket' && text(c.reason)) nodes.push(partFillNote());
+    if (c.status === 'ticket' && text(c.reason)) {
+      nodes.push(partFillNote());
+      if (c.stage === 'bursts') nodes.push(buyStopNote());
+    }
     return nodes;
   }
   function entryInstruction(plan) {
@@ -4441,6 +4698,9 @@
     const plan = c.plan || {}, reader = c.stage === 'bursts' ? readerRisk(c.row.claude) : '';
     const event = plan.event_risk;
     if (event && event.version === 1 && event.blocked === true && text(event.reason)) return 'Recorded corporate event: ' + sentence(event.reason);
+    // no plan, so the run recorded no event evidence for this row: the page's
+    // reading of the record's archived registry, in the registry's own words
+    if (c.deal) return 'In this record’s event registry: ' + sentence(c.deal.reason);
     if (reader) return cap(sentence(reader));
     const risk = firstText(plan.stop_risk_reason, plan.hazards, plan.notes);
     return risk ? 'Plan-derived risk: ' + cap(sentence(risk))
@@ -4546,7 +4806,8 @@
     // The bar's offer moves with the clock, so reclockDetail() repaints both.
     const need = c.plan || {};
     const barCarries = c.stage !== 'bursts' && !!(candidateAvailability(c) || {}).offered && !!text(need.order_line);
-    if (c.status === 'ticket' && !barCarries && (entryInstruction(c.plan) || text(need.order_line))) section.querySelector('[data-item="need"]').appendChild(partFillNote());
+    if (c.status === 'ticket' && !barCarries && (entryInstruction(c.plan) || text(need.order_line)))
+      section.querySelector('[data-item="need"]').appendChild(c.stage === 'bursts' ? brokerNotesFold() : partFillNote());
     if (c.status !== 'ticket') {
       const reasons = independentWaitReasons(c, current);
       section.querySelector('[data-item="wait"]').appendChild(el('ul', { 'data-all-blockers': '' }, reasons.map(p => el('li', { text: p }))));
@@ -4554,7 +4815,7 @@
     return section;
   }
   function corporateEventSources(c) {
-    const event = (c.plan || {}).event_risk;
+    const event = (c.plan || {}).event_risk || c.deal;
     if (!event || event.version !== 1 || event.blocked !== true) return null;
     const sources = el('details', { 'data-event-sources': '', 'class': 'sc-disclosure' }, [
       el('summary', { text: 'Corporate event sources · manual review' }),
@@ -4608,9 +4869,10 @@
       if (isNum(plan.hazard_multiplier) && plan.hazard_multiplier < 1) sizing.push(...(plan.hazards || []).map(sentence));
       if (isNum((plan.multipliers || {}).regime) && plan.multipliers.regime < 1) sizing.push('Breadth size multiplier: ' + plain(plan.multipliers.regime) + '.');
       if (sizing.length) box.appendChild(el('p', { 'class': 'sc-hint ss-action__sizing', 'data-sizing-note': '', text: sizing.join(' ') }));
-      // the card's Copy order hands the ticket over, so Fidelity's rule is
-      // read just above it and is never inside the copied lines
-      box.appendChild(partFillNote());
+      // the card's Copy order hands the ticket over, so Fidelity's rules sit
+      // just above it, under one disclosure, and are never inside the copied
+      // lines
+      box.appendChild(brokerNotesFold());
     } else {
       box.appendChild(el('p', { 'data-no-entry-reason': '', text: c.status === 'ticket' ? available.reason : cap(sentence(noTicketWhy(c) || 'The run did not publish a ticket.')) }));
     }
@@ -4775,7 +5037,7 @@
       // onto the chart only where there is something for it to mark
       const offered = {}; evidenceItems(c).forEach((it) => { offered[it.key] = true; });
       if (checks.length) kids.push(el('div', { 'class': 'ss-checks' }, checks.map((x) => checkTile(x, vetoedCheck(x.key, vetoes), offered))));
-      if (vetoes.length) kids.push(el('p', { 'class': 'sc-note', text: 'Veto: ' + vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') + '.' }));
+      if (vetoes.length) kids.push(el('p', { 'class': 'sc-note', 'data-veto-note': '', text: 'Veto: ' + vetoList(vetoes, q) + '.' }));
       kids.push(el('div', { 'class': 'sc-eyebrow', text: 'the measurements' }));
       const vr = volumeRatio(b);
       const volumeNote = vr.source === 'checklist' ? ' · volume ratio read from the checklist’s block, the scan’s own field being empty in this record'
@@ -4816,8 +5078,19 @@
     const available = candidateAvailability(c), offered = !!(available && available.offered), withheld = c.status !== 'ticket' || !offered, t = plan.targets || {};
     if (c.stage === 'bursts' && withheld) kids.push(el('p', { 'class': 'sc-note', text: 'Recorded plan for inspection. No SpicyStock entry for this setup. ' + (c.status === 'ticket' ? available.reason : cap(sentence(noTicketWhy(c)))) }));
     if (c.stage === 'bursts') {
+      // The band a ticket can fill in: from the buy stop, which buys nothing
+      // under it, up to the limit. The row was "buy <skip line> – <limit>", a
+      // range whose lower part the order cannot buy; the skip line keeps its
+      // own row below. A setup the stop rule withheld (plan.eligible false)
+      // has no limit a ticket could carry, and the row says so. The buy stop
+      // is called the burst close only where it is the row's own close to the
+      // cent (src/plan.py rounds the close once on the way in).
+      const atClose = isNum(c.row.close) && isNum(plan.entry_ref) && Math.abs(plan.entry_ref - c.row.close) <= 0.005 + 1e-9 ? ' (the burst close)' : '';
+      const limitNote = text(plan.limit_note) ? ' · ' + plan.limit_note : '';
       kids.push(factList([
-        ['buy', usd(plan.entry_low) + ' – ' + usd(plan.entry_high), (plan.entry_window || '') + ' · a buy stop at ' + usd(plan.entry_ref) + ', limit ' + usd(plan.entry_high) + (text(plan.limit_note) ? ' · ' + plan.limit_note : ''), true],
+        plan.eligible === false
+          ? ['ticket fills', 'no ticket', 'the buy stop would be ' + usd(plan.entry_ref) + atClose + limitNote, true]
+          : ['ticket fills', usd(plan.entry_ref) + ' – ' + usd(plan.entry_high), (plan.entry_window || '') + ' · a buy stop at ' + usd(plan.entry_ref) + atClose + ', limit ' + usd(plan.entry_high) + ' · under the buy stop the order waits and buys nothing' + limitNote, true],
         ['skip if it opens above', usd(plan.skip_if_open_above), 'day 2 is spent' + (isNum(plan.limit) && isNum(plan.skip_if_open_above) && plan.limit !== plan.skip_if_open_above ? ', the outer threshold and not the ' + usd(plan.limit) + ' ticket limit' : '') + '; a resting order could still fill on a pullback, so cancel it'],
         ['skip if it opens below', usd(plan.skip_if_open_below), 'the burst is failing; do not place it'],
         ['stop', stopWords(plan), 'judged at the ' + usd(plan.sizing_price) + ' limit · move it to your entry day’s low once filled', true],
@@ -4855,25 +5128,48 @@
       : noTicketLine(c) + ' The setup is kept here for inspection.';
     // the ticket the record published stays printed as history even when it is
     // no longer offered: withdrawing the COPY is not erasing the evidence
-    if (c.status === 'ticket' && (av.timingBlocked || available.observationBlocked) && plan.order_json) kids.push(recordedTicket(plan, available));
-    kids.push(orderBlock(plan, hint, withheld));
+    if (c.status === 'ticket' && (av.timingBlocked || available.observationBlocked) && plan.order_json) kids.push(recordedTicket(plan, available, c.stage === 'bursts'));
+    kids.push(orderBlock(plan, hint, withheld, c.stage === 'bursts'));
     return disclosure('disc-plan', 'Conditional plan, sizing and order', withheld ? (c.status === 'ticket' ? available.lead : statusWords(c.status)[0]) : 'sized at the limit', kids);
+  }
+  // Whose rule an exit is, in words (the marks of src/plan.py's own legend).
+  // The break-even caution is a third party's test of a different setup
+  // (plan.NO_BREAKEVEN_BEFORE_DAY: theStrat Lab's EP9M backtest), which this
+  // build carried over without measuring it on bursts, and it says so.
+  const EXIT_SOURCES = { B: 'Bonde, per the method notes', P: 'this build’s reading', T: 'a third party’s measurement, not Bonde’s', R: 'a regulation or a broker rule' };
+  const EXIT_SOURCE_BY_RULE = { no_breakeven: 'a third party’s test of another setup, not measured on bursts' };
+  const exitSource = (x) => EXIT_SOURCE_BY_RULE[x.key] || EXIT_SOURCES[x.source] || text(x.source);
+  // The day-1 line of a burst plan's dated schedule (src/plan.py
+  // dated_schedule()) reads "buy ... inside <skip line>-<limit>". The order is
+  // a buy stop at the trigger, so it cannot fill under the trigger: the lower
+  // figure is the price under which an OPEN is skipped. One sentence composed
+  // from the plan's own fields, printed only when that line carries the figure.
+  function entryBandNote(c, sched) {
+    const plan = c.plan || {}, first = (sched || []).find((x) => x && x.key === 'entry');
+    if (c.stage !== 'bursts' || c.status !== 'ticket' || !first || !isNum(plan.entry_ref) || !isNum(plan.limit) || !isNum(plan.entry_low)) return null;
+    if (!(plan.entry_low < plan.entry_ref && plan.entry_ref < plan.limit) || text(first.instruction).indexOf(usd(plan.entry_low)) < 0) return null;
+    return el('p', { 'class': 'sc-note', 'data-entry-band': '', text: 'The buy stop triggers at ' + usd(plan.entry_ref) + ' and can fill up to its ' + usd(plan.limit) + ' limit; ' + usd(plan.entry_low) + ' in the day-1 line is the skip line, not a buy price.' });
   }
   function discExits(c) {
     const plan = c.plan, kids = [];
     if (!plan) kids.push(el('p', { 'class': 'sc-hint', text: 'No plan, so no model exits.' }));
     else {
       const sched = plan.exit_schedule || [];
+      const band = entryBandNote(c, sched);
+      if (band) kids.push(band);
       if (sched.length) kids.push(el('ol', { 'class': 'sc-timeline' }, sched.map((s) => el('li', { 'class': 'sc-timeline__item' }, [
         el('div', { 'class': 'sc-timeline__stamp', text: dateWords(s.date) + ' · day ' + plain(s.day) }),
         el('div', { 'class': 'sc-timeline__body' }, [el('p', { text: cap(s.instruction || '') })])
       ]))));
       else kids.push(el('p', { 'class': 'sc-hint', text: 'The plan carries no dated schedule.' }));
-      if (c.status === 'ticket' && entryInstruction(plan)) kids.push(partFillNote());
+      if (c.status === 'ticket' && entryInstruction(plan)) {
+        kids.push(partFillNote());
+        if (c.stage === 'bursts') kids.push(buyStopNote());
+      }
       const exits = (plan.exits || []).filter((x) => x && (x.when || x.rule));
       if (exits.length) {
         kids.push(el('div', { 'class': 'sc-eyebrow', text: 'the rules the schedule follows' }));
-        kids.push(el('ul', { 'class': 'ss-notes' }, exits.map((x) => el('li', { text: (x.when ? cap(x.when) + ': ' : '') + (x.rule || '') + (x.source ? ' (' + x.source + ')' : '') }))));
+        kids.push(el('ul', { 'class': 'ss-notes', 'data-exit-rules': '' }, exits.map((x) => el('li', { 'data-exit-rule': text(x.key), text: (x.when ? cap(x.when) + ': ' : '') + (x.rule || '') + (exitSource(x) ? ' (' + exitSource(x) + ')' : '') }))));
       }
     }
     kids.push(el('p', { 'class': 'sc-hint', text: 'Model guidance on daily bars: what the published ticket’s own rules would say on each day, not a record of a position.' }));
@@ -4906,7 +5202,7 @@
     } else kids.push(el('p', { 'class': 'sc-hint', text: 'Anticipation names are measured, not graded: no chart reader, no letters.' }));
     kids.push(factList([
       ['bars', 'Alpaca ' + String(run.feed || '').toUpperCase() + ', daily, ' + barBasis(run), c.series.length ? plural(c.series.length, 'session') + ' archived through ' + dateWords(c.series[c.series.length - 1].date) : SCStock.sourceReference(b, current) ? 'browser chart not loaded; matching retained source reference is available' : 'no usable chart source in this record'],
-      ['rules', app.rules_version || '—', 'the digest of every strategy constant in this record'],
+      ['rules', app.rules_version || '—', rulesDigestWords(current, false)],
       ['run', (run.status || '—') + ' · ' + dateWords(run.session), 'published ' + timeET(run.published_at)],
       b.chart ? ['chart file', b.chart, 'the PNG the grader was shown, when the run rendered it'] : null
     ]));
@@ -5008,7 +5304,8 @@
     const committed = rows.reduce((a, b) => a + (b.plan.position_usd || 0), 0), risk = rows.reduce((a, b) => a + (b.plan.risk_usd || 0), 0);
     table.appendChild(el('tfoot', null, el('tr', null, el('td', { colspan: '10', text: plural(rows.length, 'order') + ' · ' + usd(committed, 0) + ' would be committed at the limits · ' + usd(risk, 0) + ' planned price-to-stop risk · ' + (isNum(acct.equity) && acct.equity ? (100 * committed / acct.equity).toFixed(1) : '—') + '% of the configured equity' }))));
     sheet.appendChild(table);
-    if (rows.length) sheet.appendChild(partFillNote());
+    // the sheet lists burst tickets only, so the buy-stop rule follows too
+    if (rows.length) { sheet.appendChild(partFillNote()); sheet.appendChild(buyStopNote()); }
     rows.forEach(b => {
       const c = model.byId['bursts:' + b.ticker] || { status: '' };
       const words = earningsLine(c);
@@ -5129,7 +5426,7 @@
       ]));
       keys.forEach((k) => tr.appendChild(signalCell(checks[k], (k === 'two_days' && vetoes.indexOf('up_days') >= 0) || (k === 'linearity' && vetoes.indexOf('not_linear') >= 0))));
       const miss = (q.checks || []).find((c) => c && !c.pass);
-      const gradeNote = vetoes.length ? 'veto · ' + vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') : q.reclass ? 'reclassified · ' + words(q.reclass) : miss ? 'first miss · ' + (miss.label || words(miss.key) || 'a check') : 'nothing missed';
+      const gradeNote = vetoes.length ? 'veto · ' + vetoList(vetoes, q) : q.reclass ? 'reclassified · ' + words(q.reclass) : miss ? 'first miss · ' + (miss.label || words(miss.key) || 'a check') : 'nothing missed';
       const gradeTone = b.grade === 'A+' || b.grade === 'A' ? 'brand' : 'neutral';
       tr.appendChild(el('td', { 'class': 'sc-signal-matrix__value' }, [chip((b.grade || '—') + (isNum(b.score) ? ' · ' + b.score.toFixed(1) : ''), gradeTone, true),
         el('span', { 'class': 'ss-grade-note', text: readerCoverage(b).label + ' · ' + gradeNote + (b.claude && b.claude.source === 'claude' && b.claude.agree === false ? ' · Claude lowered it' : '') + (isTrade ? ' · trade' : '') + stopped(b.ticker) })]));
@@ -5183,6 +5480,15 @@
   function tile(label, value, sub) {
     return el('div', { 'class': 'sc-tile' }, [el('div', { 'class': 'sc-tile__label', text: label }), el('div', { 'class': 'sc-tile__value sc-tile__value--sm', text: value }), el('div', { 'class': 'sc-tile__sub', text: sub })]);
   }
+  // The one-minute bars that place a first-day fill (src/intraday.py,
+  // record.replay()), named only for a record whose rules archive the rule:
+  // rules.record.intraday_fill and the window in rules.intraday.
+  function minuteBarWords(data) {
+    const rules = (data || {}).rules || {}, policy = text((rules.record || {}).intraday_fill), minutes = (rules.intraday || {}).window_minutes;
+    if (!policy) return '';
+    return '; a first day the daily bar cannot place is read again from that session’s retained one-minute bars, which place a fill only inside the plan’s ' +
+      (isNum(minutes) ? 'first ' + plain(minutes) + ' minutes' : 'entry window') + ' (rule ' + policy + ')';
+  }
   function renderRecord(data) {
     const sc = data.scorecard || {}, card = clear($('record-card'));
     const settled = isNum(sc.settled) ? sc.settled : 0, minRead = sc.min_read, readable = sc.readable === true;
@@ -5204,7 +5510,7 @@
     card.appendChild(el('p', { 'class': 'sc-note', text: num(sc.wins) + ' wins · ' + num(sc.losses) + ' losses · ' + (isNum(sc.breakeven) ? num(sc.breakeven) : 'unknown') + ' breakeven among resolved plans.' }));
     card.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-accounting': '', text:
       num(sc.settled) + ' settled · ' + num(sc.open) + ' open · ' + num(uncertain) + ' uncertain · ' + num(sc.not_filled) + ' not filled · ' + num(sc.unreadable) + ' unreadable · ' + num(sc.unscored) + ' ended without a reconciled result' +
-      (complete ? ' · ' + num(sc.pending) + ' awaiting first session · ' + num(sc.unmeasured) + ' missing or stale observations. Every published plan is counted once.' : '. Pending and missing observations: unknown.') }));
+      (complete ? ' · ' + num(sc.pending) + ' awaiting first session · ' + num(sc.unmeasured) + ' missing or stale observations. Every retained ticket is counted once for each night it was issued: a setup issued again on a later night is a new ticket and is counted again, and a ticket a later run of the same session withdrew stays counted.' : '. Pending and missing observations: unknown.') }));
     const signedR = v => readable && isNum(v) ? (v > 0 ? '+' : '') + v.toFixed(2) : '—';
     card.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-rates': '' }, [
       el('strong', { text: 'Win rate ' + (readable && isNum(sc.win_rate) ? (100 * sc.win_rate).toFixed(0) + '%' : '—') + ' · Mean R ' + signedR(sc.avg_r) + ' · Median R ' + signedR(sc.median_r) }),
@@ -5218,9 +5524,9 @@
       : 'This publication predates complete population accounting. Its archived counts are preserved.' }));
     if (population.at_capacity || population.problem) card.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-limit': '', text: 'Coverage limit: ' + (population.at_capacity ? 'the retained picks file is at capacity; earlier published plans may be absent. ' : '') + (population.problem || '') }));
     const basis = sc.input_basis || {};
-    method.appendChild(el('p', { 'class': 'sc-note', text: 'Replay prices: ' + (basis.adjustment ? basis.adjustment + '-adjusted daily bars · ' + (basis.feed || 'feed unknown') : 'basis not recorded in this summary') + '. Frozen original levels may differ after a later split; no automatic rebasing is inferred. Replay rules: ' + (sc.replay_rules_version || 'unknown') + '. Original plan rules and scan routes require their own publication; they are not inferred from current rules.' }));
+    method.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-prices': '', text: 'Replay prices: ' + (basis.adjustment ? basis.adjustment + '-adjusted daily bars · ' + (basis.feed || 'feed unknown') : 'basis not recorded in this summary') + minuteBarWords(data) + '. Frozen original levels may differ after a later split; no automatic rebasing is inferred. Replay rules: ' + (sc.replay_rules_version || 'unknown') + '. Original plan rules and scan routes require their own publication; they are not inferred from current rules.' }));
     method.appendChild(el('p', { 'class': 'sc-note', text: 'SPY over matched entry-to-exit dates: ' + (readable ? pct(sc.spy_avg_pct, 2) : '—') + ' · ' + (isNum(sc.benchmark_pairs) ? num(sc.benchmark_pairs) + ' matched resolved plans' : 'pair count unknown') + '. A price comparison in percent, not portfolio performance or excess R. ' + (sc.note || '') }));
-    method.appendChild(el('p', { 'class': 'sc-note', text: 'No fees, spread, tax or actual execution are measured. An expired unfilled order is not filled; an ended walk without reconciled sales remains unscored. R = 0 after the recorded two-decimal rounding is breakeven.' }));
+    method.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-booking': '', text: 'No fees, spread, slippage, tax or actual execution are measured. A stop first reached inside a session is booked at exactly the stop price, so a stop on the fill day is always exactly minus one R whatever that day’s low or close; only a session that opens at or under the stop is booked at its open. R is counted per ticket whatever its size, and whole-share sales make it depend on the share count (a one-share ticket sells whole at its half-sale), so a sum of R is not a sum of dollars. An expired unfilled order is not filled; an ended walk without reconciled sales remains unscored. R = 0 after the recorded two-decimal rounding is breakeven.' }));
     card.appendChild(method);
     // fourteen nights of reliability, from nights[]: ok, degraded, closed, missing
     const nights = {}; (data.nights || []).forEach((x) => { if (x && x.session) nights[x.session] = x; });
@@ -5245,7 +5551,7 @@
   function renderRecordView(data) {
     const rules = data.rules || {}, holdDays = (rules.plan || {}).final_exit_day, window = (rules.record || {}).open_plan_sessions;
     const hold = clear($('hold-rows')), plans = data.open_plans || [], hint = $('hold-hint');
-    if (hint) hint.textContent = 'Model plans from the last ' + (isNum(window) ? plain(window) : 'five') + ' sessions, walked from daily bars by the published ticket’s own rules. SpicyStock does not know what you hold: if you took a plan, this is what its rules say next; if you did not, ignore its row. UNCERTAIN means the bars cannot say whether it filled.';
+    if (hint) hint.textContent = 'Model plans from the last ' + (isNum(window) ? plain(window) : 'five') + ' sessions, walked from daily bars' + (text((rules.record || {}).intraday_fill) ? ', and from retained one-minute bars where a first day needs them,' : '') + ' by the published ticket’s own rules. SpicyStock does not know what you hold: if you took a plan, this is what its rules say next; if you did not, ignore its row. UNCERTAIN means the bars cannot say whether it filled.';
     if (!plans.length) hold.appendChild(empty('No open model plans. Nothing was picked in the last ' + (isNum(window) ? plain(window) : 'five') + ' sessions.'));
     plans.forEach((p) => { if (p && p.ticker) hold.appendChild(planRow(p, holdDays)); });
     renderRecord(data);
@@ -5296,14 +5602,24 @@
         : ['The entry window for ' + day + ' has ended.', 'Nothing new was offered for it. ' + (open ? 'Review the open public-model plans and wait for the next run.' : 'Wait for the next published scan.'), 'ended'];
     }
     const waitingForReader = (data.bursts || []).some(b => ['A+', 'A'].includes(b.grade) && readerCoverage(b).state !== 'accepted');
+    // What the ticket writes and what Fidelity is known to do with it, kept
+    // apart: the OTO is the ticket's own form, the full-fill release is
+    // Fidelity's stated rule, and whether Fidelity's ticket accepts this OTO --
+    // or, when a burst ticket is among them, a buy stop at the last close --
+    // is unconfirmed (knowledge/broker-fidelity.md).
+    const unconfirmed = 'Fidelity releases an OTO stop only when the buy fills in full, and whether Fidelity’s ticket accepts this OTO' + (model.tickets.bursts ? ', or a burst ticket’s buy stop at its last close,' : '') + ' is unconfirmed.';
+    // Inside the window which price Fidelity compares a buy stop with is no
+    // longer the question: once the stock trades at or over a burst ticket's
+    // buy stop the order cannot be entered as written (broker-fidelity.md, U5).
+    const unconfirmedOpen = 'Fidelity releases an OTO stop only when the buy fills in full, and whether Fidelity’s ticket accepts this OTO is unconfirmed.' + (model.tickets.bursts ? ' A burst ticket cannot be entered as written while the stock trades at or over its buy stop.' : '');
     if (!orders && waitingForReader) return ['No new burst ticket for ' + day + '.',
       'Mechanical A+/A candidates remain research only while accepted reader review is missing. This does not establish a setup failure. ' + (open ? 'Existing open model plans keep their recorded instructions. ' : '') + line, 'quiet'];
     if (ph === 'open') {
       return orders
-        ? ['The entry window for ' + day + ' is in progress.', 'Review the ' + plural(orders, 'conditional ticket') + ' and each setup’s restrictions. If you submit an order, its sell stop is part of it (OTO), and Fidelity releases that stop only when the buy fills in full; cancel any unfilled entry by the end of the ' + window + '. ' + line, 'orders']
+        ? ['The entry window for ' + day + ' is in progress.', 'Review the ' + plural(orders, 'conditional ticket') + ' and each setup’s restrictions. If you submit an order, its sell stop is written as part of it (OTO): ' + unconfirmedOpen + ' Cancel any unfilled entry by the end of the ' + window + '. ' + line, 'orders']
         : ['Nothing new to place in ' + day + '’s window.', 'No setup qualified with a ticket. ' + line, 'quiet'];
     }
-    if (orders) return ['Review ' + plural(orders, 'conditional ticket') + ' for ' + day + '.', 'If you choose to follow a plan, review its conditions and prepare before ' + by_ + '. Its sell stop is part of the order (OTO), and Fidelity releases that stop only when the buy fills in full; cancel an unfilled entry by the end of the ' + window + '. SpicyStock submits nothing. ' + line, 'orders'];
+    if (orders) return ['Review ' + plural(orders, 'conditional ticket') + ' for ' + day + '.', 'If you choose to follow a plan, review its conditions and prepare before ' + by_ + '. Its sell stop is written as part of the order (OTO): ' + unconfirmed + ' Cancel an unfilled entry by the end of the ' + window + '. SpicyStock submits nothing. ' + line, 'orders'];
     if (open) return ['Nothing new to place for ' + day + '. Review the open public-model plans.', 'No setup qualified with a ticket tonight; the open model plans still carry their instructions. ' + line, 'quiet'];
     return ['No new entry offered for ' + day + '.', 'No setup qualified with a ticket and there are no open public-model plans. Come back after the next run. ' + line, 'quiet'];
   }
@@ -5321,6 +5637,8 @@
     if (run.run_id) { foot.appendChild(el('a', { href: 'https://github.com/' + REPO + '/actions/runs/' + run.run_id, target: '_blank', rel: 'noopener', text: 'run ' + run.run_id })); foot.appendChild(d.createTextNode(' · ')); }
     foot.appendChild(el('a', { href: RUNS_URL, target: '_blank', rel: 'noopener', text: 'dispatch' }));
     foot.appendChild(d.createTextNode(' · generated ' + (run.published_at ? timeET(run.published_at) : '—') + ' · paper prices, published daily bars, no slippage · not investment advice'));
+    // the analyst's daily brief, when the evening wrote one beside the record
+    BRIEF_FILES.forEach((f) => { foot.appendChild(d.createTextNode(' · ')); foot.appendChild(el('a', { href: f[0], 'data-brief': f[0], title: BRIEF_TITLE, text: f[1] })); });
   }
 
   // ---------------------------------------------------------------- live run log (optional; silent on failure)
@@ -5576,9 +5894,13 @@
     const held = node.contains(d.activeElement);
     const key = held ? focusKey(d.activeElement) : null;
     const wasOpen = node.tagName === 'DETAILS' ? node.open : null;
+    // the broker notes' disclosure inside the subtree: one the reader opened
+    // stays open in the replacement, read in document order
+    const folds = Array.prototype.map.call(node.querySelectorAll('details[data-broker-notes]'), (x) => x.open);
     const next = build();
     node.parentNode.replaceChild(next, node);
     if (wasOpen !== null && 'open' in next) next.open = wasOpen;
+    Array.prototype.forEach.call(next.querySelectorAll('details[data-broker-notes]'), (x, i) => { if (folds[i]) x.open = true; });
     if (!held) return next;
     // The control the reader was on may be the very one the clock withdrew --
     // a copy button on a window that closed is exactly that. Focus falls back

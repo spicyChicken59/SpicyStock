@@ -20,6 +20,39 @@ daily ticket by dropping a market, data, event or account constraint. A more
 speculative idea may be useful research when its added risks, missing evidence
 and experimental status are explicit.
 
+## The layered setup — 19 November 2026
+
+Mo, 19 November 2026: "From now on we have a layered approach. An external
+agent actually helps me analyze the burst outputs from spicystock and make
+trading decisions. You just serve as my view and my daily output. With some
+functionalities like me saving a setup and watching it change over days."
+
+This supersedes the parts of the goal above and below that make SpicyStock
+the place a trade is decided. The layers:
+
+1. **SpicyStock** is the view and the daily output. Each evening it publishes
+   the record, the page and a compact brief for an outside reader
+   (`docs/brief.json`, `docs/brief.md`): the model tickets, the candidates as
+   research rows, the market gate rule by rule, the event registry's age, the
+   model's own record, and a fixed list of what none of it establishes. It
+   keeps My setups: saving a setup and watching it change over days. It
+   recommends nothing to buy and reads no account.
+2. **An outside analyst** (a bot such as Grok or Muse, run by Mo) takes the
+   brief, researches the candidates, looks at Mo's Fidelity account, sizes
+   and recommends, and keeps the trade ledger. Its instructions are
+   `docs/analyst/prompt.md`, with `docs/analyst/bootstrap.md` (the short
+   note a bot is given first) and `docs/analyst/README.md` (the owner's
+   guide).
+3. **Mo** decides and places every order.
+
+What follows from it for this repository: product work is now measured by
+whether the daily output is correct, complete, on time and honest about its
+limits, and whether the view is usable. Proving an edge, testing a ticket at
+Fidelity and broad event coverage are the outer layers' work, supported here
+by what the record and the brief say plainly. The eleven gaps of the
+19 November audit, what was corrected and what remains the owner's or the
+analyst's are in CLAUDE.md's checkpoint of that date.
+
 ## Current release reconciliation — 18 October 2026
 
 [PR #185](https://github.com/spicyChicken59/SpicyStock/pull/185) and

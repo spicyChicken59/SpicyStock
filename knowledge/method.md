@@ -16,6 +16,10 @@ Marks: **(B)** Bonde's own words or formula · **(V)** his 2018 video, one
 machine transcription, corroborated by an independent port · **(P)** this
 repo's provisional proxy, no source number · **(E)** third-party evidence.
 
+Every rule the run applies, in pipeline order, each with its constant and its
+class, and what is Bonde's against what is this project's: [rules.md](rules.md).
+`tests/test_rule_sheet.py` holds that sheet's numbers to the modules.
+
 ## The thesis (B)
 
 Stocks move in momentum bursts of 3–5 days of 8–20% (lower-priced names up to
@@ -23,6 +27,12 @@ Stocks move in momentum bursts of 3–5 days of 8–20% (lower-priced names up t
 out of a quiet consolidation. Enter day 1, stop at the entry day's low, risk
 0.25–1%, exit into strength in 3–5 days, gate everything by breadth, and do
 it hundreds of times a year. "This is a pattern and probability based trade."
+
+This build does not enter on day 1. It reads the finished burst day after the
+close and enters the next session, a route he also describes ("You can also use
+it for end of the day scanning and enter next day"); selecting only that route,
+the buy stop at the burst close and the burst-day low as a stand-in stop are
+SpicyStock's (P).
 
 ## Universe (`src/universe.py`)
 
@@ -56,8 +66,10 @@ warning, not a filter Bonde applies).
   research, earns no ticket and is sent to no chart reader. The scan formulas
   and the checklist are unchanged.
 - Anticipation pool: Double Trouble `c/minl252 >= 1.8`, TI65
-  `avgc7/avgc65 > 1.05`, MDT `c/avgc126 > 1.19`, each with `minv3.1 > 100000`
-  (B), on a quiet day of −1%..+1% (B, 2014; ±0.4% is his 2018 tightening).
+  `avgc7/avgc65 > 1.05`, MDT `c/avgc126 > 1.19`, each on 100,000 shares over
+  the prior three sessions (`minv3.1`: at least for Double Trouble, more than
+  for the other two) (B), on a quiet day of −1%..+1% (B, 2014; ±0.4% is his
+  2018 tightening).
 - Episodic pivot `c/c1 > 1.04 and v > 3*avgv50.1 and v >= 300000` and EP9M
   `v >= 9,000,000 and c >= 3` (B) — measured, not traded here.
 
@@ -66,7 +78,7 @@ warning, not a filter Bonde applies).
 | letter | rule | source |
 |---|---|---|
 | 2 | not up two days in a row before the burst; a day under +1% is flat | (B) 2LYNCH 2020/2024 |
-| 2 veto | three consecutive up closes of any size → refused | (B) 2014–2018 "not up 3 days in a row"; (V) |
+| 2 veto | three or more consecutive rising closes ending the session before the burst, of any size → refused (grade skip) | (B) 2014–2018 "not up 3 days in a row"; (V); counting a rise of any size is (P) |
 | L | prior leg linear: efficiency ratio ≥ 0.40 or R² ≥ 0.55; failure is a veto | ER formula (B) 2009; veto (B) 2011; thresholds (P) |
 | Y | first or second breakout of the move | (B) 2LYNCH; the "start of the move" definition is (P) |
 | N | prior day negative OR its range under 2% of price | (B) "narrow or negative"; 2% (V) |
@@ -78,6 +90,12 @@ warning, not a filter Bonde applies).
 A or A+ requires 2 and H to pass outright (P, from Bonde's emphasis). A name
 that meets everything but H is an anticipation setup, not a rejection (B,
 bootcamp notes). Bonde publishes no pass count; the score weights are (P).
+
+Weights (P): L 2, C 2, and 1.5 each for 2, Y, N and H, ten in all; a partial
+earns half, and RE and VOL score nothing. Bands (P, `grader.GRADE_BANDS`): A+
+from 9.0 with at least four of the eight checks at their A+ standard (else A),
+A from 8.0, B from 6.5, C from 5.0, skip below. A veto is skip whatever the
+score.
 
 ## Reader authority (`src/reader_authority.py`)
 
@@ -133,21 +151,45 @@ again, and two names refused alike in a row stop the asking.
 His Telechart v12.4 formulas (B): up/down 4% with `V >= 100000 and V > V1`;
 25% in a quarter (65 sessions) and 25%/50% in a month (20 sessions) with
 `AVGC20*AVGV20 >= 250000`; 13% in 34 days; % above the 40-day average.
-Regime (B, thresholds scaled to the measured universe against his ~6,500):
-10-day ratio below 2 → not ideal for swing longs (yellow); 700+ names down 4%
-in a day, or a 10-day ratio below 1, or a 5-day ratio below 0.5 with more
-down than up today → red; 50%-in-a-month above 20 → frothy (yellow). Below
-200 down-25%-in-a-quarter is an oversold flag (B), informational.
+Regime: five rules over the stocks measured that night (N). The three count
+thresholds are his readings over ~6,500 stocks as the field guide quotes them,
+each scaled before it is compared: threshold × N ÷ 6,500, rounded to one
+decimal (`scaled_threshold()`, P). The ratios are never scaled. As an example,
+at N = 3,513 (the 17 November 2026 record) 700 becomes 378.3, 20 becomes 10.8
+and 200 becomes 108.1.
+
+- Red, no new longs and no burst plan (the size multiplier is 0): names down
+  4% today at or over the scaled 700 (`DOWN4_ALARM`; his reading is "a series
+  of days with 700+", and firing on a single day is P), or a 10-day ratio
+  below 1 (`RED_RATIO_10D`, P), or a 5-day ratio below 0.5 with more names
+  down 4% than up 4% today (`RED_RATIO_5D`, P).
+- Yellow, half size and A+ bursts only (the size and the band are P): a 10-day
+  ratio below 2 (`YELLOW_RATIO_10D`: "not an ideal time for swing longs"), or
+  more names up 50% in a month than the scaled 20 (`UP50_MONTH_HOT`: frothy).
+- Green, full size, A+ and A bursts: none of the five fires. A 10-day ratio at
+  or over 2 alone is not enough.
+
+Fewer names down 25% in a quarter than the scaled 200 is an oversold flag,
+informational and never a verdict input (`DOWN25_QUARTER_OVERSOLD`; the guide's
+wording, not yet checked against his own). The gate is SpicyStock's reading of
+his Market Monitor for its own model tickets; the record does not establish
+that it improves outcomes.
 
 ## The plan (`src/plan.py`)
 
 Risk 0.5% of equity per trade (B: 0.25–1%), position ≤ 25% of equity and at
 most four open plans (P, scaled from "fully invested across 3–4 positions").
-Shares = risk ÷ (entry − stop) (B). Stop: the burst day's low, else half its
-range, kept under 4% (B: "less than 4% and ideally less than 2%"); between 2%
-and 4% the risk is halved (P). Next-morning entry only if not extended (B):
-a buy zone from 2% under the burst close to 4% above it (P), a skip at +8%
-(B: the level at which he sells half). The order is a buy stop-limit with an
+Shares = risk ÷ (entry − stop) (B). Stop: the burst day's low, else the bar's
+midpoint, at most 4% under the ticket's LIMIT (B: "less than 4% and ideally
+less than 2%"): a stand-in (P) for his entry-day low, which replaces it at the
+close of day 1 when it is higher (B). Between 2% and 4% the risk is halved
+(P), which is every burst ticket, because the limit is set from the stop:
+0.25% of equity on green, 0.125% on yellow. Next-session entry only if not
+extended (B): the ticket is a buy stop AT the burst close with a limit at most
+4% above it, so it can fill only between the two (P); an open more than 2%
+under the close is the burst failing and an open above +4% is day 2 already
+spent, and neither is taken (P); +8% is the level at which he sells half (B)
+and is printed as a third line. The order is a buy stop-limit with an
 attached stop-market loss (B: "if they reverse then get stopped out"; stop
 type per Qullamaggie "market stops, never limit stops"). The ticket's shares,
 its stop distance and the halving are judged at its limit, the highest fill
@@ -159,25 +201,63 @@ low, then its cent-rounded midpoint, and requires a stop below the trigger
 and a limit strictly above it. This DERIVED choice has been implemented since
 September 12; the old fixed-ceiling incompatibility is not current behavior.
 Price-to-stop risk is not a guaranteed maximum loss: stop-market gaps can
-exceed it. Exits (B, 2018):
-+8% same or next day → sell half and raise the stop under that day's high;
-10%+ abnormal day → partial; 20%+ gap after entry → out at the open; day 3
-close → sell at least half; no progress by day 3 → out; after day 3 trail the
-stop to each day's low; day 5 → out. No break-even move before day 5 (E).
-Hazards halve the size, never veto: a burst day of 15%+ (E: the worst cell in
-the one event study, −9.3% at 20 sessions, 36% win rate) and extension of 20%
-over the 20-day average (P).
+exceed it.
+
+Exits (B, 2018, unless marked), as `plan.EXIT_RULES` prints them on every
+ticket and `plan.follow()` walks them, measured from the fill. Each bar is
+read open first, then the low against the stop, then the high, then the close
+(P).
+
+- `sell_half_8pct`: +8% same or next day → sell half and raise the stop to
+  25–50 cents under that day's high. The model uses 25 cents and applies the
+  rule on any day until day 3's close has sold a half.
+- `abnormal_10pct`: a close 10% or more over the entry → at least partial
+  profit. The model books no sale for it and only raises the stop to 25 cents
+  under that day's high.
+- `gap_20pct`: an open 20% or more over the entry → out at the open.
+- `entry_day_low`: close of day 1 → the stop rises to the entry day's low when
+  that is higher. This is his own stop; the burst-day low stood in for it.
+- `day3_sell_half`: day 3 close → sell at least half, in whole shares, if no
+  half has been sold.
+- `day3_no_progress`: a day-3 close at or under the entry → out.
+- `trail_after_day3`: from the close of day 3 the stop rises to each day's low
+  and never moves down (P, a reading of "after 3rd day keep moving stop to low
+  of day").
+- `day5_exit`: day 5 close → out.
+- `stop`: the protective stop is a stop-market order. In the model an open at
+  or under the stop is out at that open, which can be well under the stop, and
+  a low at or under it is out at the stop price, even when the same bar's high
+  reached a sale level (P). The ticket adds "if it is somehow not filled, exit
+  on any close below it", which the model does not walk.
+- `no_breakeven`: every ticket also prints "do not move the stop to break-even
+  before day 5 just because it is green". That is theStrat Lab's backtest of a
+  different setup (EP 9M), carried over by this build (DERIVED, unvalidated on
+  bursts); his own 2015 text describes earlier break-even management, and the
+  model moves no stop for it.
+
+Under a red market an open plan's instruction gains "sell into any strength;
+do not add" (P); no stop is moved and no sale is booked for it.
+
+Hazards halve the size, never veto, and both together still halve it once: a
+burst day of 15%+ (E: the worst cell in the one event study, −9.3% at 20
+sessions, 36% win rate) and a close more than 20% over the 20-day average (P).
 
 ## Anticipation watchlist (`src/watchlist.py`)
 
 His three scans on a quiet day (B), then range contraction made numeric (all
-P): three tight days at 70% of the 20-day range, a 7-session range ≤ 0.75 of
+P): three tight days in a row, each under 70% of the 20-day average range, or
+three such days in the last ten; a 7-session range ≤ 0.75 of
 the norm and ≥ 0.30 of it (under that the price is pinned, not coiled: every
 name below it on the lists from 11 Sep to 7 Oct 2026 was a pending cash
-takeover), dry volume, ≤ 1 breakdown, not up two days, not extended. Trigger =
-box high + a few cents (B), stop = the low of the last 2–3 days (B), refused
-over 4% (B). "Most good anticipation setups break out in the first 10 to 15
-minutes" (B), so the order is placed the night before.
+takeover); ≤ 1 breakdown in the last ten sessions; not up three days in a row;
+a close at most 1.10 times its 20-session average; a box of 3–10 sessions.
+Dry volume is measured and decides nothing. Trigger =
+box high + a few cents (B), stop = the lowest low of the last 3 sessions (B),
+ticket refused when that stop is more than 4% under the ticket's limit, the
+trigger +1% (the 4% is B, measuring it at the limit is P). The list's own
+`eligible` measures the same 4% from the trigger, so a listed name can still
+have its ticket withheld. "Most good anticipation setups break out in the
+first 10 to 15 minutes" (B), so the order is placed the night before.
 
 ## Earnings warnings (`src/earnings_risk.py`)
 
@@ -209,8 +289,11 @@ The one pre-registered test of mechanised 2LYNCH gates (n=10,947) found the
 gates remove the losing half and do not find the winning half; the raw 4%
 scan has no median edge at 20 days; the ≥15% burst day is the worst cell.
 theStrat Lab's EP9M backtest: negative expectancy without a hard low-of-day
-stop; break-even on day 2 collapses the win rate. Attribution: the 4% event
-studies are Fluxus-Trade-Lab's, not theStrat Lab's.
+stop; break-even on day 2 collapses the win rate. That is a different setup:
+this build carries its break-even caution onto burst tickets without having
+measured it on bursts. Attribution: the 4% event
+studies are Fluxus-Trade-Lab's, not theStrat Lab's. None of this is
+SpicyStock's own evidence.
 
 ## Earlier access limits
 
@@ -231,14 +314,20 @@ one-third/quarter giveback or tightness-ratio formula was verified.
 
 ## The record (`src/record.py`)
 
-Every published plan is kept (`docs/picks.json`) and replayed from daily bars
-alone as a model (P): a ticket is booked filled only at the next open, at or
-over its trigger and at or under its limit. A day that reached the trigger
-after the open, an open past the limit or under the skip line that could
-still have filled a resting order, and a fill-day low under the stop are
-uncertain -- no fill, no R, counted by reason -- because a daily bar cannot
-give the crossing time the first-30-minute entry (B) needs, nor the order of
-a fill and a low. The published stop is one R on the whole position; "at
+Every published plan is kept (`docs/picks.json`) and replayed as a model (P).
+A daily bar books a ticket filled only at the next open, at or over its
+trigger and at or under its limit. A first day that opened under the trigger
+and reached it later is read again from that session's one-minute bars
+(`src/intraday.py`, `first_window_minute_v1`, P): the first minute of the first
+30 whose high reaches the trigger fills at the trigger, or at that minute's
+open when it opened over it; none means not filled; and a crossing minute that
+cannot be ordered against the limit or the stop stays uncertain. Without usable
+minute bars such a day is uncertain, and so is an open past the limit or under
+the skip line that could still have filled a resting order: no fill, no R,
+counted by reason. A plan filled at the open whose first-day low then reaches
+the stop is not uncertain: it is booked out at the stop, one R lost. A fill at
+the open assumes the order was already resting at the broker before the open.
+The published stop is one R on the whole position; "at
 least half" is whole shares (2 of 3, 1 of 1) and every sale is weighted by
 the shares it sold; everything settles by day 5 (B, the hold). The scorecard
 prints counts from the first night and rates only from twenty settled plans

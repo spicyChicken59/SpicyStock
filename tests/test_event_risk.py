@@ -3,10 +3,13 @@ from copy import deepcopy
 from datetime import date, datetime, timedelta
 import hashlib
 import json
+from pathlib import Path
 
 import pytest
 
 from src import event_risk, plan
+
+ROOT = Path(__file__).resolve().parent.parent
 
 
 def registry():
@@ -136,7 +139,7 @@ def test_ccc_review_and_expected_closing_dates_never_resolve_the_pending_event()
     assert reviewed["blocked"] is True and reviewed["status"] == "known_event"
     assert reviewed["matches"][0]["active_until"] is None
     assert reviewed["matches"][0]["evidence_as_of"] == "2026-10-15"
-    for session in ("2026-10-28", "2027-04-01"):
+    for session in ("2026-12-18", "2027-04-01"):
         overdue = event_risk.classify("CCC", session)
         assert overdue["blocked"] is True and overdue["status"] == "review_required"
         assert overdue["matches"][0]["active_until"] is None
@@ -160,11 +163,92 @@ def test_unlisted_stock_does_not_restore_an_existing_refusal():
 
 
 def test_review_expiry_retains_block_and_names_uncertainty():
-    assert event_risk.classify("MG", "2026-10-16")["status"] == "known_event"
-    overdue = event_risk.classify("MG", "2026-10-17")
+    assert event_risk.classify("MG", "2026-11-25")["status"] == "known_event"
+    overdue = event_risk.classify("MG", "2026-11-26")
     assert overdue["blocked"] is True and overdue["status"] == "review_required"
     assert overdue["matches"][0]["review_overdue"] is True
     assert "review is overdue" in overdue["reason"]
+
+
+def test_the_november_review_adds_one_dated_source_and_resolves_nothing():
+    """The 19 November 2026 review: MISTRAS's 28 October release is evidence only
+    from its own date on, every entry is still unresolved, and the one deal a
+    search excerpt says has closed (ACVA) stays blocked, because no bytes were
+    captured to resolve it with (release-evidence/2026-11-19-event-review)."""
+    before = event_risk.classify("MG", "2026-10-27")["matches"][0]
+    after = event_risk.classify("MG", "2026-10-28")["matches"][0]
+    assert [s["published_on"] for s in before["sources"]] == ["2026-09-18"] and before["evidence_as_of"] == "2026-09-18"
+    assert [s["published_on"] for s in after["sources"]] == ["2026-09-18", "2026-10-28"]
+    assert after["evidence_as_of"] == "2026-10-28"
+    # the reason a ticket prints names the announcement alone, at every session
+    assert before["reason"] == after["reason"] and "2026-10-28" not in after["reason"]
+    assert event_risk.REGISTRY["reviewed_on"] == "2026-11-19"
+    events = {event["symbol"]: event for event in event_risk.REGISTRY["events"]}
+    assert all(event["active_until"] is None and "resolution" not in event for event in events.values())
+    assert {symbol: (event["reviewed_on"], event["review_due"]) for symbol, event in events.items()} == {
+        "MG": ("2026-11-19", "2026-11-25"), "ZIM": ("2026-11-19", "2026-12-02"),
+        "PRTH": ("2026-11-19", "2026-12-17"), "ARX": ("2026-11-19", "2026-12-17"),
+        "BWIN": ("2026-11-19", "2026-12-17"), "CCC": ("2026-11-19", "2026-12-17"),
+        "ACVA": ("2026-10-09", "2026-10-15")}
+    closed = event_risk.classify("ACVA", "2026-11-18")
+    assert closed["blocked"] is True and closed["status"] == "review_required"
+
+
+def test_the_review_manifest_says_how_each_entry_was_read():
+    manifest = json.loads((ROOT / "release-evidence" / "2026-11-19-event-review" / "manifest.json").read_text())
+    assert manifest["reviewed_on"] == event_risk.REGISTRY["reviewed_on"]
+    assert manifest["registry_after"]["sha256"] == event_risk.registry_digest(event_risk.REGISTRY)
+    entries = {entry["symbol"]: entry for entry in manifest["entries"]}
+    assert set(entries) == {event["symbol"] for event in event_risk.REGISTRY["events"]}
+    # one entry rests on captured bytes, and they are the source the registry now carries
+    captured = [symbol for symbol, entry in entries.items() if "captured bytes" in entry["basis"]]
+    assert captured == ["MG"]
+    added = next(event for event in event_risk.REGISTRY["events"] if event["symbol"] == "MG")["sources"][-1]
+    assert {name: entries["MG"]["source"][name] for name in ("url", "published_on", "sha256", "quote")} == {
+        name: added[name] for name in ("url", "published_on", "sha256", "quote")}
+    # every other finding says it is a search excerpt, and none of them added a source
+    for symbol, entry in entries.items():
+        if symbol != "MG":
+            assert entry["basis"] == "read as a search-result excerpt on 2026-11-19; page bytes not captured"
+            assert "source" not in entry
+    assert entries["ACVA"]["registry_action"] == "none"
+
+
+def test_the_captured_source_behind_the_review_is_retained_outside_the_rolling_archive():
+    """MG's added source rests on a capture the issuer-evidence collector made. The bundle that
+    carries it was published under docs/issuer-evidence/, which removes a superseded bundle after
+    21 days, so a byte-for-byte copy is kept beside the manifest and must be what the manifest says."""
+    folder = ROOT / "release-evidence" / "2026-11-19-event-review"
+    manifest = json.loads((folder / "manifest.json").read_text())
+    entry = next(entry for entry in manifest["entries"] if entry["symbol"] == "MG")
+    source = entry["source"]
+    retained = ROOT / source["retained_in"]
+    assert retained.parent == folder and not retained.is_symlink()
+    raw = retained.read_bytes()
+    # the copy is the published bundle: its name is its digest, as the collector names it
+    assert retained.name == f"issuer-evidence-{hashlib.sha256(raw).hexdigest()}.json"
+    assert source["retained_document"]["first_published_at"].startswith(
+        f"docs/issuer-evidence/{hashlib.sha256(raw).hexdigest()}.json")
+    bundle = json.loads(raw)
+    issuer = next(issuer for issuer in bundle["issuers"] if issuer["ticker"] == source["retained_document"]["issuer"])
+    pointer = source["retained_document"]
+    document = next(document for document in issuer["documents"]
+                    if document["accession"] == pointer["accession"] and document["role"] == pointer["role"])
+    # the digest the registry carries is the collector's digest of that response, and its size
+    assert document["source"]["url"] == source["url"]
+    assert document["source"]["raw_sha256"] == source["sha256"]
+    assert document["source"]["bytes"] == source["bytes"]
+    assert document["source"]["fetched_at"] == source["fetched_at"]
+    # the text is whole and is what its own digest says; every quoted sentence is in it
+    excerpt = document["excerpt"]
+    assert excerpt["truncated"] is False and excerpt["characters"] == len(excerpt["text"])
+    assert excerpt["sha256"] == hashlib.sha256(excerpt["text"].encode("utf-8")).hexdigest()
+    for sentence in [source["quote"], *entry["also_in_that_capture"]]:
+        assert sentence in excerpt["text"], sentence
+    registry_source = next(event for event in event_risk.REGISTRY["events"] if event["symbol"] == "MG")["sources"][-1]
+    assert registry_source["quote"] in excerpt["text"] and registry_source["sha256"] == document["source"]["raw_sha256"]
+    # the manifest does not claim the response bytes themselves are kept
+    assert "were not retained" in manifest["how_read"]
 
 
 def test_future_updates_are_not_claimed_as_earlier_session_evidence():

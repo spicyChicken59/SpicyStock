@@ -19,8 +19,11 @@
                          names the session after that signal instead.
      targetRuler: true   the target band is a right-gutter ruler with two ticks
                          ("+8%", "+20%") clamped to the scale and never widens it
-     card: true          card labels: the buy zone is the accent fill from the
-                         burst bar across the gutter labelled "buy 12.34–12.71",
+     card: true          card labels: the entry zone is the accent fill from the
+                         burst bar across the gutter labelled with its two
+                         prices, "$12.34 – $12.71" (its low to the limit; a buy
+                         stop fills only from its trigger up, which the levels
+                         table says),
                          the stop a solid danger line with a pill "stop 11.62",
                          the base box "base · N sessions · D% deep" (box.depthPct),
                          the burst bar "+6.1% · 1.9× vol" (burstVolumeRatio), a
@@ -341,8 +344,8 @@
     }
 
     /* levels — labelled at the left edge. The stop reads under its line, the
-       trigger over its line (under it when the buy zone starts there), the
-       buy zone inside its band when the band is tall enough and over it
+       trigger over its line (under it when the entry zone starts there), the
+       entry zone inside its band when the band is tall enough and over it
        otherwise; then one collision pass, and a label the pass moved gets a
        leader back to the level it names. The base label joins the pass when
        its box starts under these. With gutterLabels every level label goes
@@ -355,7 +358,7 @@
     }
     var ey1 = null, ey2 = null;
     if (entryLow !== null && entryHigh !== null) { ey1 = y(entryHigh); ey2 = y(entryLow); }
-    /* where the buy zone starts on a card: the right edge of the burst bar
+    /* where the entry zone starts on a card: the right edge of the burst bar
        (else the last bar), so it reads as "from here, tomorrow" */
     var zoneX = burstIndex !== null ? r1(x(burstIndex) + bodyW / 2 + 2) : n ? r1(x(n - 1) + bodyW / 2 + 2) : plot.left;
     var stopTag = null;
@@ -371,16 +374,22 @@
       triggerG = { y: tyy, price: trigger, label: leftLabel(r1(under ? tyy + 11 : tyy - 4), 'trigger ' + fmtPrice(trigger), 'trigger', 'warn') };
     }
     if (ey1 !== null) {
+      /* The zone's labels say "entry zone" and never "buy": the band runs
+         from the zone's low, which for a burst is the skip line under the
+         trigger, and a buy stop buys nothing under its trigger. Each new text
+         has exactly as many characters as the one it replaced ("buy zone
+         $a–$b", "buy a–b"), because a label's length is the only thing about
+         it the geometry reads: no position moves with the wording. */
       var inside = ey2 - ey1 >= 2 * LABEL_H;
       if (card) {
-        var etext = 'buy ' + fmtPrice(entryLow).replace('$', '') + '–' + fmtPrice(entryHigh).replace('$', '');
+        var etext = fmtPrice(entryLow) + ' – ' + fmtPrice(entryHigh);
         var ew = etext.length * CHAR + 8, ex = zoneX + 4, eanchor = 'start';
         if (ex + ew > plot.right) { ex = plot.right - 3; eanchor = 'end'; }
         entryG = { y1: ey1, y2: ey2, h: Math.max(1, r1(ey2 - ey1)), low: entryLow, high: entryHigh, x: zoneX, w: Math.max(1, r1(plot.right - zoneX)),
                    label: gutterLabels ? null : { x: ex, y: inside ? r1(ey1 + 11) : r1(ey1 - 4), yTrue: ey1, text: etext, kind: 'entry', tone: 'accent', anchor: eanchor, leader: null } };
       } else {
         entryG = { y1: ey1, y2: ey2, h: Math.max(1, r1(ey2 - ey1)), low: entryLow, high: entryHigh, x: plot.left, w: plot.width,
-                   label: leftLabel(inside ? r1(ey1 + 11) : r1(ey1 - 4), 'buy zone ' + fmtPrice(entryLow) + '–' + fmtPrice(entryHigh), 'entry', 'chart-emphasis') };
+                   label: leftLabel(inside ? r1(ey1 + 11) : r1(ey1 - 4), 'entry zone ' + fmtPrice(entryLow).replace('$', '') + '–' + fmtPrice(entryHigh).replace('$', ''), 'entry', 'chart-emphasis') };
       }
     }
     var leftWidth = 0;
@@ -719,7 +728,7 @@
     for (i = 0; i < g.grid.length; i++) grid.appendChild(SC.svg('line', { 'class': 'sc-chart__grid', x1: plot.left, x2: plot.right, y1: g.grid[i].y, y2: g.grid[i].y }));
     grid.appendChild(SC.svg('line', { 'class': 'sc-chart__grid', x1: plot.left, x2: plot.right, y1: g.vol.bottom, y2: g.vol.bottom }));
     svg.appendChild(grid);
-    /* the burst column under everything but the grid, then the bands: target (faint, full width + gutter strip), buy zone, base box */
+    /* the burst column under everything but the grid, then the bands: target (faint, full width + gutter strip), entry zone, base box */
     if (g.burst && !card && setup) svg.appendChild(SC.svg('rect', { 'class': 'sc-chart__band sc-chart__band--faint', style: toneStyle('accent'), x: g.burst.column.x, y: g.burst.column.y, width: g.burst.column.w, height: g.burst.column.h }));
     if (g.target && g.target.ruler) {
       /* the ruler lives in the gutter only: a rule band, never a forecast over history */
@@ -895,7 +904,10 @@
     if (g.burst) rows.push(['burst', fmtPrice(g.burst.close), g.burst.date + ' · ' + fmtPct(g.burst.pct) + ' on the day · vol ' + fmtVol(g.burst.volume)]);
     if (g.box) rows.push(['base', fmtPrice(g.box.low) + ' – ' + fmtPrice(g.box.high), g.bars[g.box.start].date + ' → ' + g.bars[g.box.end].date + ' · ' + g.box.sessions + ' sessions']);
     if (g.trigger) rows.push(['trigger', fmtPrice(g.trigger.price), vs(g.trigger.price)]);
-    if (g.entry) rows.push([g.gutterLabels ? 'buy zone (to the limit)' : 'buy zone', fmtPrice(g.entry.low) + ' – ' + fmtPrice(g.entry.high), 'width ' + fmtPct((g.entry.high / g.entry.low - 1) * 100).replace('+', '')]);
+    /* the zone is drawn from its low to the limit; a buy stop fills only from
+       its trigger up, so where the trigger sits over the zone's low (a burst,
+       whose zone low is the skip line) the row says so */
+    if (g.entry) rows.push([g.gutterLabels ? 'entry zone (to the limit)' : 'entry zone', fmtPrice(g.entry.low) + ' – ' + fmtPrice(g.entry.high), 'width ' + fmtPct((g.entry.high / g.entry.low - 1) * 100).replace('+', '') + (g.trigger && g.trigger.price > g.entry.low && g.trigger.price <= g.entry.high ? ' · a buy stop fills only from the ' + fmtPrice(g.trigger.price) + ' trigger up' : '')]);
     if (g.stop) rows.push(['stop', fmtPrice(g.stop.price), vs(g.stop.price)]);
     if (g.target) rows.push([g.target.ruler ? 'aim' : 'target', fmtPrice(g.target.low) + ' – ' + fmtPrice(g.target.high), g.target.text + (g.target.ref !== null ? ' vs ' + fmtPrice(g.target.ref) : '') + (g.target.offscale ? ' · outside the visible range' : '')]);
     if (lc !== null) rows.push(['last close', fmtPrice(lc), g.bars.length ? g.bars[g.bars.length - 1].date : '']);
@@ -969,7 +981,7 @@
     if (g.lastClose !== null) s += ', last close ' + fmtPrice(g.lastClose);
     if (g.burst) s += '. Burst ' + fmtPct(g.burst.pct) + ' on ' + g.burst.date;
     if (g.box) s += '. Base of ' + g.box.sessions + ' sessions between ' + fmtPrice(g.box.low) + ' and ' + fmtPrice(g.box.high);
-    if (g.entry) s += '. Buy zone ' + fmtPrice(g.entry.low) + ' to ' + fmtPrice(g.entry.high);
+    if (g.entry) s += '. Entry zone ' + fmtPrice(g.entry.low) + ' to ' + fmtPrice(g.entry.high);
     if (g.trigger) s += '. Trigger ' + fmtPrice(g.trigger.price);
     if (g.stop) s += '. Stop ' + fmtPrice(g.stop.price);
     if (g.target) s += '. Target ' + fmtPrice(g.target.low) + ' to ' + fmtPrice(g.target.high);

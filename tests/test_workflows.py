@@ -34,7 +34,7 @@ def scheduled_guard() -> dict:
 
 
 def run_scheduled_guard(monkeypatch, tmp_path, at, cron='16 0 * * 2-6', previous=None,
-                        event='schedule', requested=''):
+                        event='schedule', requested='', only_if_unpublished=None):
     """Execute the workflow's actual Python body with a pinned UTC clock."""
     instant = datetime_module.datetime.fromisoformat(at)
 
@@ -54,14 +54,18 @@ def run_scheduled_guard(monkeypatch, tmp_path, at, cron='16 0 * * 2-6', previous
         patch.setenv('SCAN_EVENT_NAME', event)
         patch.setenv('SCAN_EVENT_SCHEDULE', cron)
         patch.setenv('SCAN_REQUESTED_SESSION', requested)
+        if only_if_unpublished is None:
+            patch.delenv('SCAN_ONLY_IF_UNPUBLISHED', raising=False)
+        else:
+            patch.setenv('SCAN_ONLY_IF_UNPUBLISHED', only_if_unpublished)
         patch.setenv('GITHUB_OUTPUT', str(output))
         exec(compile(code, 'evening.yml scheduled guard', 'exec'), {})
     return dict(line.split('=', 1) for line in output.read_text().splitlines())
 
 
-def test_the_workflow_inventory_is_exactly_the_nine_the_docs_name():
+def test_the_workflow_inventory_is_exactly_the_ten_the_docs_name():
     assert sorted(p.name for p in WORKFLOWS.glob("*.yml")) == \
-        ["evening.yml", "historical-input-proof.yml", "intraday.yml", "issuer-evidence.yml", "morning.yml", "publish-dashboard.yml", "secret-scan.yml", "source-recovery.yml", "tests.yml"]
+        ["evening.yml", "historical-input-proof.yml", "intraday.yml", "issuer-evidence.yml", "morning.yml", "publish-dashboard.yml", "secret-scan.yml", "service-watch.yml", "source-recovery.yml", "tests.yml"]
 
 
 # ----------------------------------------------------------- evening -----
@@ -165,10 +169,78 @@ def test_manual_dispatch_keeps_its_explicit_or_unset_session(monkeypatch, tmp_pa
                                    'go': 'true', 'session': requested}
 
 
-def test_the_dispatch_form_has_the_three_boxes_and_forwards_each():
+GUARDED = dict(event='workflow_dispatch', only_if_unpublished='true')
+
+
+@pytest.mark.parametrize('at,target', [
+    ('2026-10-08T22:24:00+00:00', '2026-10-08'),   # 6:24 PM ET, an on-time outside trigger
+    ('2026-10-08T22:16:00+00:00', '2026-10-08'),   # the primary slot itself
+    ('2026-10-09T06:03:00+00:00', '2026-10-08'),   # after ET midnight, before the next open
+    ('2026-10-10T15:00:00+00:00', '2026-10-09'),   # a Saturday: Friday is recoverable until Monday's open
+    ('2026-11-03T23:24:00+00:00', '2026-11-03'),   # standard time
+    ('2026-11-27T23:16:00+00:00', '2026-11-27'),   # the early close, at its primary slot
+])
+def test_a_guarded_dispatch_publishes_the_newest_completed_session_when_it_is_unpublished(monkeypatch, tmp_path,
+                                                                                         at, target):
+    assert run_scheduled_guard(monkeypatch, tmp_path, at, **GUARDED) == {'go': 'true', 'session': target}
+    older = {'run': {'session': '2026-10-01', 'status': 'ok', 'dry_run': False}}
+    assert run_scheduled_guard(monkeypatch, tmp_path, at, previous=older, **GUARDED) == {'go': 'true', 'session': target}
+
+
+@pytest.mark.parametrize('status', ['ok', 'degraded'])
+def test_a_guarded_dispatch_does_nothing_once_the_session_is_published(monkeypatch, tmp_path, status):
+    """The reason for the box: an outside trigger may fire on time every evening,
+    and twice, and after a scheduled slot has already published."""
+    previous = {'run': {'session': '2026-10-08', 'status': status, 'dry_run': False}}
+    for at in ('2026-10-08T22:24:00+00:00', '2026-10-09T06:03:00+00:00'):
+        assert run_scheduled_guard(monkeypatch, tmp_path, at, previous=previous, **GUARDED) == {
+            'go': 'false', 'session': ''}
+    # the same record, the box unticked: a plain dispatch runs as it always did
+    assert run_scheduled_guard(monkeypatch, tmp_path, '2026-10-08T22:24:00+00:00', previous=previous,
+                               event='workflow_dispatch', only_if_unpublished='false') == {'go': 'true', 'session': ''}
+
+
+@pytest.mark.parametrize('at,previous', [
+    ('2026-10-08T22:24:00+00:00', {'run': {'session': '2026-10-09', 'status': 'ok', 'dry_run': False}}),  # a newer one
+    ('2026-10-09T13:30:00+00:00', None),   # the next session's open: the recovery limit, inclusive
+    ('2026-10-09T15:00:00+00:00', None),   # after it, before that day's own completion
+    ('2026-10-08T19:00:00+00:00', None),   # 3 PM ET: today has not completed and yesterday's limit has passed
+    ('2026-10-08T20:15:00+00:00', None),   # the completion instant: the day's bars still move, the slot is 6:16 PM
+    ('2026-10-08T22:15:59+00:00', None),   # one second before the primary slot
+    ('2026-11-03T23:15:59+00:00', None),   # the same second in standard time, an hour later in UTC
+    ('2026-11-27T18:15:00+00:00', None),   # the early close: completed at 1:15 PM ET, the slot is still 6:16 PM
+    ('2026-11-26T23:24:00+00:00', {'run': {'session': '2026-11-25', 'status': 'ok', 'dry_run': False}}),  # Thanksgiving
+])
+def test_a_guarded_dispatch_never_runs_for_a_newer_expired_or_incomplete_session(monkeypatch, tmp_path, at, previous):
+    assert run_scheduled_guard(monkeypatch, tmp_path, at, previous=previous, **GUARDED) == {'go': 'false', 'session': ''}
+
+
+@pytest.mark.parametrize('previous', [
+    {'run': {'session': '2026-10-08', 'status': 'failed', 'dry_run': False}},
+    {'run': {'session': '2026-10-08', 'status': 'ok', 'dry_run': True}},
+    {'fixture': True, 'run': {'session': '2026-10-08', 'status': 'ok', 'dry_run': False}},
+    {'run': []},
+    [],
+])
+def test_a_guarded_dispatch_is_not_fooled_by_a_failed_rehearsed_or_malformed_record(monkeypatch, tmp_path, previous):
+    assert run_scheduled_guard(monkeypatch, tmp_path, '2026-10-08T22:24:00+00:00', previous=previous, **GUARDED) == {
+        'go': 'true', 'session': '2026-10-08'}
+    (tmp_path / 'docs' / 'data.json').write_text('{incomplete')
+    assert run_scheduled_guard(monkeypatch, tmp_path, '2026-10-08T22:24:00+00:00', **GUARDED) == {
+        'go': 'true', 'session': '2026-10-08'}
+
+
+def test_a_guarded_dispatch_takes_no_session(monkeypatch, tmp_path):
+    assert run_scheduled_guard(monkeypatch, tmp_path, '2026-10-08T22:24:00+00:00', requested='2026-10-08',
+                               **GUARDED) == {'go': 'false', 'session': ''}
+
+
+def test_the_dispatch_form_has_the_four_boxes_and_forwards_each():
     wf = load("evening.yml")
     inputs = triggers(wf)["workflow_dispatch"]["inputs"]
-    assert set(inputs) == {"session", "dry_run", "skip_email"}
+    assert set(inputs) == {"session", "dry_run", "skip_email", "only_if_unpublished"}
+    assert inputs["only_if_unpublished"]["type"] == "boolean" and inputs["only_if_unpublished"]["default"] is False
+    assert scheduled_guard()['env']['SCAN_ONLY_IF_UNPUBLISHED'] == "${{ inputs.only_if_unpublished == true && 'true' || 'false' }}"
     env = steps(wf, "scan")["Run evening pipeline"]["env"]
     assert env["SCAN_SESSION_DATE"] == "${{ steps.guard.outputs.session }}"
     assert scheduled_guard()['env']['SCAN_REQUESTED_SESSION'] == '${{ inputs.session }}'
@@ -233,6 +305,7 @@ def test_the_artifact_keeps_records_charts_and_retained_evidence():
     assert set(art["with"]["path"].split()) == {"docs/data.json", "docs/reader.json", "docs/reader-observations/",
                                              "docs/stop-research.json", "docs/stop-research/",
                                              "docs/research-outcomes.json", "docs/research-outcomes/",
+                                             "docs/brief.json", "docs/brief.md",
                                              "docs/picks.json", "docs/charts/", "docs/evidence/", "docs/history/"}
 
 
@@ -573,6 +646,8 @@ def test_ci_runs_the_suite_the_fixture_check_the_chart_check_and_the_page_smoke(
         'python tests/fixtures/research-outcomes/generate.py --check',
         'python tests/fixtures/research-observations/generate.py --check',
         'python tests/fixtures/source-recovery/generate.py --check',
+        # the analyst's brief over the `full` fixture, after the page fixtures it is derived from
+        'python tests/fixtures/brief/generate.py --check',
         # the study's frozen case files, held to the study's own digests
         'python tools/freeze_validation_cases.py --check']
     page = steps(wf, "page")["Open the page against every fixture and read it back"]["run"]
@@ -600,3 +675,64 @@ def test_the_publisher_only_reads_committed_main_after_the_evening_workflow():
     checkout = [s for s in wf["jobs"]["publish"]["steps"] if str(s.get("uses", "")).startswith("actions/checkout")][0]
     assert checkout["with"] == {"ref": "main", "persist-credentials": False}
     assert wf["permissions"] == {"contents": "read", "pages": "write"}
+
+
+# ------------------------------------------------------ service watch -----
+def test_the_service_watch_reads_main_mails_through_the_evenings_transport_and_writes_nothing():
+    wf = load('service-watch.yml')
+    assert [c['cron'] for c in triggers(wf)['schedule']] == ['7 5 * * *', '7 9 * * *', '7 16 * * 1-5']
+    mail = triggers(wf)['workflow_dispatch']['inputs']['mail']
+    assert mail['type'] == 'boolean' and mail['default'] is True
+    assert wf['permissions'] == {'contents': 'read'}             # it commits nothing and dispatches nothing
+    assert wf['concurrency'] == {'group': 'service-watch', 'cancel-in-progress': False}
+    assert list(wf['jobs']) == ['watch']
+    job = wf['jobs']['watch']
+    assert job['if'] == "github.ref == 'refs/heads/main'" and 'permissions' not in job
+    named = steps(wf, 'watch')
+    assert named['actions/checkout@v4']['with'] == {'ref': 'main', 'persist-credentials': False}
+    assert named['Install dependencies']['run'] == 'pip install -r requirements.txt -c constraints.txt'
+    step = named['Watch the evening publication and the morning check']
+    assert step['run'] == 'python tools/service_watch.py --docs docs $WATCH_MAIL_FLAG'
+    env = step['env']
+    assert set(env) == {'RESEND_API_KEY', 'RESEND_FROM', 'EMAIL_TO', 'WATCH_MAIL_FLAG'}
+    for secret in ('RESEND_API_KEY', 'RESEND_FROM', 'EMAIL_TO'):
+        assert env[secret] == f"${{{{ secrets.{secret} }}}}"
+    # a scheduled run mails; a hand-started one mails unless its box is unticked
+    assert env['WATCH_MAIL_FLAG'] == "${{ (github.event_name != 'workflow_dispatch' || inputs.mail == true) && '--mail' || '' }}"
+    # CI's semantic gate reads it, and the evening workflow whose guard it tells the reader to start
+    lint = steps(load('tests.yml'), 'pytest')['Validate changed workflow contexts and syntax']['run']
+    assert '.github/workflows/service-watch.yml' in lint and '.github/workflows/evening.yml' in lint
+    # no market-data, model or repository-write credential is anywhere in it
+    text = (WORKFLOWS / 'service-watch.yml').read_text()
+    for word in ('ALPACA', 'ANTHROPIC', 'contents: write', 'git push', 'gh workflow', 'upload-artifact'):
+        assert word not in text
+
+
+def test_the_service_watch_slots_land_where_its_judgements_can_answer():
+    """The watch flags a late publication only inside ``ALERT_WITHIN_HOURS`` before the
+    next open, and judges the morning check only after the entry window has closed.
+    Actions starts scheduled runs anywhere from on time to about eight hours late
+    (3.56 to 7.99 hours for the evening crons from 2 to 18 November 2026), so the two
+    daily slots together must cover that range for both opens, and the weekday slot
+    must start after the window in both seasons."""
+    from src import morning
+    from tools import service_watch
+
+    wf = load('service-watch.yml')
+    crons = [c['cron'] for c in triggers(wf)['schedule']]
+    minutes = [int(c.split()[1]) * 60 + int(c.split()[0]) for c in crons]
+    early, late, afternoon = minutes
+    opens = (13 * 60 + 30, 14 * 60 + 30)                          # 9:30 AM ET in UTC, daylight and standard time
+    alert = service_watch.ALERT_WITHIN_HOURS * 60
+    observed_worst = 8 * 60
+    for open_at in opens:
+        # started on time, the later slot is already inside the alert window and before the open
+        assert 0 < open_at - late <= alert
+        # started as late as observed, the earlier slot still lands before the open
+        assert early + observed_worst < open_at
+        # between them no delay from zero to the observed worst leaves both slots outside the window:
+        # the later slot covers delays up to (open - late), the earlier one from (open - alert - early) on
+        assert open_at - alert - early <= open_at - late
+    # the entry window closes 30 minutes after the open; the weekday slot starts after it in both seasons
+    assert crons[2].endswith('1-5') and all(afternoon > open_at + 30 for open_at in opens)
+    assert morning.POLICY['preopen_minutes'] == 30
