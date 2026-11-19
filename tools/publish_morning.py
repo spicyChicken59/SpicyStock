@@ -361,7 +361,12 @@ def orders_check(data_raw: bytes, orders_raw: bytes | None, receipt_raw: bytes |
         return 'no_morning_receipt_on_main'
     if read_snapshot(receipt_raw).get('observation_run_id') != run_id:
         return 'morning_receipt_not_this_run'
-    if json.loads(orders_raw).get('source', {}).get('data_sha256') != hashlib.sha256(data_raw).hexdigest():
+    try:
+        source = json.loads(orders_raw).get('source', {})
+        bound = isinstance(source, dict) and source.get('data_sha256') == hashlib.sha256(data_raw).hexdigest()
+    except (ValueError, AttributeError):
+        bound = False
+    if not bound:
         return 'orders_not_bound_to_record'
     return None
 

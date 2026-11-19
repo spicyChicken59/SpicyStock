@@ -8,7 +8,7 @@
   "risk_pct": 0.5,
   "slots_used": 4
  },
- "content_sha256": "c241463952768d79e2ce0cf9a6086ef7d8a7229f08038d82b6a6793d42f2ee94",
+ "content_sha256": "982b9f659e535a64876f43e238df482989c81ae0bb40933c0ada988ea859314b",
  "entry_window": {
   "cutoff_at": "2026-09-11T10:00:00-04:00",
   "opens_at": "2026-09-11T09:30:00-04:00",
@@ -113,7 +113,7 @@
      "status": "pass"
     }
    ],
-   "content_sha256": "9404868bec6d9df0d38fcbd1b5c8d136fc667010fab5c1fac79095533b45c576",
+   "content_sha256": "7852d95e5fc491410a2fdcea2273c57e5c1af9840e2a19efeb3ee33f31f2aa8a",
    "entry": {
     "cancel_if_unfilled_at": "2026-09-11T10:00:00-04:00",
     "limit_price": 126.47,
@@ -352,6 +352,38 @@
        "op": "session_close",
        "price": "close"
       }
+     }
+    ],
+    "sessions": [
+     {
+      "close_at": "2026-09-11T16:00:00-04:00",
+      "date": "2026-09-11",
+      "day": 1,
+      "early_close": false
+     },
+     {
+      "close_at": "2026-09-14T16:00:00-04:00",
+      "date": "2026-09-14",
+      "day": 2,
+      "early_close": false
+     },
+     {
+      "close_at": "2026-09-15T16:00:00-04:00",
+      "date": "2026-09-15",
+      "day": 3,
+      "early_close": false
+     },
+     {
+      "close_at": "2026-09-16T16:00:00-04:00",
+      "date": "2026-09-16",
+      "day": 4,
+      "early_close": false
+     },
+     {
+      "close_at": "2026-09-17T16:00:00-04:00",
+      "date": "2026-09-17",
+      "day": 5,
+      "early_close": false
      }
     ],
     "shares": 4,

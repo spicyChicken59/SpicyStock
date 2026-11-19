@@ -2526,14 +2526,20 @@ reads, each a function of committed bytes and no clock:
 - **`docs/orders-morning.json`**, from the morning's persist job
   (`python -m tools.publish_morning orders`): each ticket re-read against the
   receipt that run published, `go` or `cancel` with its reasons (the night not
-  allowed, no recent price, a halt, the event registry or an SEC flag, a price
-  over the limit, under the skip line, or at or over the buy stop). Derived
-  on the spot from `main`'s own `orders.json`, receipt and record, and
+  allowed, no recent price, a halt or a halt source that could not say, the
+  receipt completed after the ticket's cutoff, the event registry, a retained
+  corporate exclusion or an SEC flag, a price over the limit, under the skip
+  line, or at or over the buy stop, or in a state the file does not know). A
+  setting-up ticket has no skip line, so under its trigger it stays `go`.
+  Derived on the spot from `main`'s own `orders.json`, receipt and record, and
   committed alone.
 
 The schema of all three is `docs/operations/orders-schema.json`, checked by
 `src/schema_check.py`; the publication gate holds each file to the committed
-record and to that schema. The agent's guide is `docs/operations/orders.md`.
+record, to that schema and to its own checks (a file whose `trade_allowed`,
+reasons, statuses, summary or mode are not what its checks give is refused),
+and `tests/test_orders.py` re-derives a committed `docs/orders.json` from the
+committed record. The agent's guide is `docs/operations/orders.md`.
 `tests/fixtures/orders/` holds golden files over the page and morning
 fixtures; `generate.py --check` runs in CI.
 

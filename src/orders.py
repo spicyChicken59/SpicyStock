@@ -23,8 +23,15 @@ morning receipt quotes), every price is the plan's, and every rule number is a
 ``orders-morning.json`` (``build_morning()``), written by the morning's persist
 job from the ``orders.json`` and the morning receipt on ``main``: each ticket
 re-read against the receipt's pre-open observation and marked ``go`` or
-``cancel`` with its reasons. It reads no clock of its own, so the same two
-files give the same bytes.
+``cancel`` with its reasons. Every source it cannot read as clear cancels: a
+halt source that could not say, a retained corporate exclusion, a receipt
+completed outside the entry window, a price in a state it does not know. It
+reads no clock of its own, so the same two files give the same bytes.
+
+``problems()`` holds a file to its schema, its hashes and its own checks
+(``consistency()``): a file whose verdicts were changed and sealed again is
+refused by the publication gate as well as by the test suite, which re-derives
+the committed file from the committed record.
 
 ``positions-template.json`` (``positions_template()``): one blank position per
 ticket, the shape the execution agent fills with real orders, fills and
@@ -42,7 +49,7 @@ import json
 import os
 import sys
 import tempfile
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -85,7 +92,8 @@ REASONS = {
     "light_red": "the market light is red: no new longs",
     "light_unknown": "the record names no market light",
     "data_degraded": "the run's status is not ok",
-    "late_publish": "the record was published after the applicable session opened",
+    "late_publish": "the run's own clock put the record at or after the entry window's prepare-by instant, "
+                    "or after the applicable session opened",
     "publication_time_unknown": "the record carries no delivery block to say when it was published",
     "cross_check_not_run": "no second-source cross-check of the tickets' signal-day bars was run",
     "account_limit": "the night's commitments or slots are over the account's limits",
@@ -102,18 +110,34 @@ MORNING_REASONS = {
     "news_or_sec_flag": "an event flag (the manual registry, or an SEC filing orders.json holds for review) "
                         "refuses or holds this ticket",
     "halted": "the halt source reports a halt without a trading resumption",
+    "halt_unknown": "the halt source could not say whether this name is halted (its coverage was unavailable or "
+                    "stale, or it reported an unrecognized halt code): no halt seen is not a halt cleared",
+    "outside_entry_window": "the morning receipt was completed outside the ticket's entry window (after its "
+                            "cutoff, or with no window it could read)",
+    "price_unknown": "a recent price could not be placed against the ticket's levels",
     "stale_data": "no recent price was observed for this ticket",
     "not_checked": "the morning receipt has no row for this ticket",
     "no_morning_check": "the morning receipt on main is not bound to this record",
     "night_not_allowed": "orders.json does not allow trading tonight",
     "ticket_not_go": "orders.json did not mark this ticket go",
 }
-#: a price state the morning receipt names, and what it does to a ticket
+#: a price state the morning receipt names that cancels a ticket, and its reason; a state that is
+#: neither here nor a go state of the ticket's kind cancels as price_unknown
 STATE_REASON = {
-    "below_stop": "gap_below_floor", "below_entry_floor": "gap_below_floor", "below_trigger": None,
+    "below_stop": "gap_below_floor", "below_entry_floor": "gap_below_floor",
     "within_published_band": "trigger_crossed", "above_limit": "gap_above_limit",
     "above_day2_extension": "gap_above_limit",
 }
+#: the price states in which a ticket's buy stop is still above the market, by kind: a setting-up
+#: ticket has no skip-under line (the receipt sets its entry floor at the trigger), so a price under
+#: its trigger and over its stop reads below_entry_floor and is still waiting for its breakout
+GO_STATES = {"burst": ("below_trigger",), "anticipation": ("below_trigger", "below_entry_floor")}
+#: the halt states the morning receipt names that see no halt in force, on a fresh snapshot only
+HALT_CLEAR = ("not_listed", "resumption_reported")
+#: the receipt phases a ticket can still be entered in
+ENTRY_PHASES = ("upcoming", "open")
+#: the ticket reasons that hold a ticket for a person's review rather than block it
+REVIEW_REASONS = ("sec_flag",)
 POSITION_STATUSES = ("not_submitted", "submitted", "partially_filled", "filled", "cancelled", "closed")
 EXIT_REASONS = ("protective_stop", "stopped_at_open", "gap_20pct", "sell_half_8pct", "abnormal_10pct",
                 "day3_no_progress", "day3_sell_half", "day5_exit", "manual")
@@ -130,6 +154,17 @@ def _dict(value) -> dict:
 
 def _list(value) -> list:
     return value if isinstance(value, list) else []
+
+
+def _instant(value) -> datetime | None:
+    """An offset-aware instant, or None."""
+    if not isinstance(value, str):
+        return None
+    try:
+        out = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return out if out.tzinfo is not None else None
 
 
 def _num(value) -> bool:
@@ -159,10 +194,13 @@ def exit_plan(trigger: float, shares: int, days: list[str]) -> dict:
     """The hold as rules in ``plan.follow()``'s order, numbers from ``plan``.
 
     ``entry`` is the position's average fill. The model's own walk prices the
-    levels from the buy stop (``record.replay()`` reads ``entry_ref``), so each
-    percentage level carries its price at the trigger; a fill elsewhere moves
-    it by the same percentage."""
-    from src import plan
+    percentage levels from the fill it books (``record.replay()`` hands
+    ``plan.follow()`` the fill as ``entry_ref``: the open when the session
+    opens inside the ticket, the trigger when it crosses later), so each level
+    carries its price for a fill at the trigger only; a fill elsewhere moves it
+    by the same percentage. Each hold day carries its scheduled close, which an
+    early-close session moves."""
+    from src import plan, sessions
     half = shares - shares // 2
     at_trigger = plan.exit_levels(trigger)
     sources = {r["key"]: r["source"] for r in plan.EXIT_RULES}
@@ -215,7 +253,11 @@ def exit_plan(trigger: float, shares: int, days: list[str]) -> dict:
     ]
     for i, rule in enumerate(rules, 1):
         rule["sequence"] = i
-    return {"entry_basis": "average_fill_price", "shares": shares, "half_shares": half,
+    hold = []
+    for i, day in enumerate(days, 1):
+        _, close, shortened = sessions.hours(date.fromisoformat(day))
+        hold.append({"day": i, "date": day, "close_at": close.isoformat(), "early_close": bool(shortened)})
+    return {"entry_basis": "average_fill_price", "shares": shares, "half_shares": half, "sessions": hold,
             "within_a_session": "open first, then the low against the stop, then the high, then the close: "
                                 "the order of a bar's high and low is unknown, so the stop wins",
             "rules": rules}
@@ -238,12 +280,15 @@ def _night(data: dict, tickets: list) -> list:
     status = run.get("status")
     add("data", PASS if status == "ok" else FAIL, None if status == "ok" else "data_degraded",
         status if isinstance(status, str) else None)
-    before = _dict(run.get("delivery")).get("before_next_open")
-    if before is None or not isinstance(before, bool):
+    delivery, timing = _dict(run.get("delivery")), _dict(run.get("timing"))
+    before = delivery.get("before_next_open")
+    published, prepare_by = _instant(run.get("published_at")), _instant(timing.get("prepare_by"))
+    if not isinstance(before, bool) or published is None or prepare_by is None:
         add("publication_time", NOT_EVALUATED, "publication_time_unknown")
     else:
-        add("publication_time", PASS if before else FAIL, None if before else "late_publish",
-            _dict(run.get("delivery")).get("published_at"))
+        on_time = before and published < prepare_by
+        add("publication_time", PASS if on_time else FAIL, None if on_time else "late_publish",
+            delivery.get("published_at"))
     add("cross_check", NOT_EVALUATED, "cross_check_not_run")
     budget, account = _dict(data.get("cash_budget")), _dict(data.get("account"))
     committed = budget.get("committed_usd")
@@ -257,6 +302,12 @@ def _night(data: dict, tickets: list) -> list:
         add("account", PASS if within else FAIL, None if within else "account_limit",
             f"{slots} of {slots_max} slots; ${committed + reserved:,.2f} committed and reserved of ${equity:,.2f}")
     return checks
+
+
+def ticket_status(failed: list) -> str:
+    """A ticket's status from its failed checks' reasons: blocked by any reason
+    that is not a review reason, held for review by a review reason alone."""
+    return BLOCKED if set(failed) - set(REVIEW_REASONS) else HUMAN_REVIEW if failed else GO
 
 
 def _sec_flagged(data: dict, kind: str, ticker: str) -> str | None:
@@ -302,7 +353,7 @@ def _ticket(data: dict, admitted: dict, days: list[str]) -> dict:
     add("risk_budget", budget is not None and risk <= budget + 0.005, "risk_budget",
         f"${risk:,.2f} at the limit against a ${budget:,.2f} budget" if budget is not None else None)
     failed = [c["reason"] for c in checks if c["status"] == FAIL]
-    status = BLOCKED if set(failed) - {"sec_flag"} else HUMAN_REVIEW if failed else GO
+    status = ticket_status(failed)
     entry = {"type": ENTRY_TYPE, "stop_price": trigger, "limit_price": limit, "time_in_force": "day",
              "valid_from": timing.get("opens_at"), "valid_until": timing.get("cutoff_at"),
              "prepare_by": timing.get("prepare_by"), "cancel_if_unfilled_at": timing.get("cutoff_at"),
@@ -428,6 +479,7 @@ def build_morning(orders_raw: bytes, receipt_raw: bytes | None, data_raw: bytes 
              and _dict(receipt.get("publication")).get("data_sha256") == orders["source"]["data_sha256"])
     by_key = {(r.get("kind"), r.get("ticker"), r.get("evidence_id"), r.get("plan_sha256")): r
               for r in (_list(receipt.get("rows")) if bound else []) if isinstance(r, dict)}
+    generated = _instant(receipt.get("generated_at")) if bound else None
     out = []
     for t in orders["tickets"]:
         reasons = []
@@ -436,25 +488,40 @@ def build_morning(orders_raw: bytes, receipt_raw: bytes | None, data_raw: bytes 
         if t["status"] != GO:
             reasons.append("news_or_sec_flag" if t["status"] == HUMAN_REVIEW else "ticket_not_go")
         row = by_key.get((t["setup_type"], t["symbol"], t["evidence"]["evidence_id"], t["evidence"]["plan_sha256"]))
+        valid_until = _instant(t["entry"]["valid_until"])
         observed = None
         if not bound:
             reasons.append("no_morning_check")
-        elif row is None:
-            reasons.append("not_checked")
         else:
-            observed = _observed(row)
-            events = _dict(row.get("events"))
-            if _dict(events.get("halt")).get("blocks_entry") is True:
-                reasons.append("halted")
-            if _dict(events.get("corporate_action")).get("blocked") is True and "news_or_sec_flag" not in reasons:
-                reasons.append("news_or_sec_flag")
-            states = [observed["price_checks"].get(k) for k, status in
-                      (("trade", observed["trade_status"]), ("ask", observed["quote_status"])) if status == "recent"]
-            if not states:
-                reasons.append("stale_data")
-            for code in dict.fromkeys(STATE_REASON.get(s) for s in states if STATE_REASON.get(s)):
-                reasons.append(code)
+            if (receipt.get("entry_phase") not in ENTRY_PHASES or generated is None or valid_until is None
+                    or generated >= valid_until):
+                reasons.append("outside_entry_window")
+            if row is None:
+                reasons.append("not_checked")
+            else:
+                observed = _observed(row)
+                events = _dict(row.get("events"))
+                halt = _dict(events.get("halt"))
+                if halt.get("blocks_entry") is True:
+                    reasons.append("halted")
+                elif halt.get("status") not in HALT_CLEAR:
+                    reasons.append("halt_unknown")
+                # a retained exclusion stands until a sourced resolution clears it, as the page reads it
+                corporate = (_dict(events.get("corporate_action")).get("blocked") is True
+                             or bool(_list(events.get("retained_corporate_actions"))))
+                if corporate and "news_or_sec_flag" not in reasons:
+                    reasons.append("news_or_sec_flag")
+                states = [observed["price_checks"].get(k) for k, status in
+                          (("trade", observed["trade_status"]), ("ask", observed["quote_status"]))
+                          if status == "recent"]
+                if not states:
+                    reasons.append("stale_data")
+                go_states = GO_STATES.get(t["setup_type"], ())
+                for code in dict.fromkeys(STATE_REASON.get(s, "price_unknown") for s in states
+                                          if s not in go_states):
+                    reasons.append(code)
         out.append({"ticket_id": t["id"], "ticket_sha256": t["content_sha256"], "symbol": t["symbol"],
+                    "valid_until": t["entry"]["valid_until"],
                     "decision": CANCEL if reasons else GO, "reasons": reasons, "observed": observed})
     return sealed({
         "schema": "docs/operations/orders-schema.json#/$defs/orders_morning", "version": VERSION,
@@ -481,21 +548,73 @@ def schema() -> dict:
 
 
 def problems(value: dict, kind: str = "orders") -> list[str]:
-    """Where ``value`` does not meet its schema, and whether it holds its hash."""
+    """Where ``value`` does not meet its schema, whether it holds its hash, and
+    whether its decisions are the ones its own checks give (``consistency()``)."""
     root = schema()
     target = root if kind == "orders" else {"$ref": f"#/$defs/{kind}"}
     found = schema_check.errors(value, target, root)
+    if not isinstance(value, dict):
+        return found
     if not seal_holds(value):
         found.append("$: content_sha256 is not the hash of the rest")
     for t in _list(value.get("tickets")) if kind == "orders" else []:
         if isinstance(t, dict) and not seal_holds(t):
             found.append(f"$.tickets[{t.get('symbol')}]: content_sha256 is not the hash of the rest")
+    if not found:
+        found += consistency(value, kind)
     return found
+
+
+def consistency(value: dict, kind: str = "orders") -> list[str]:
+    """Each decision field against the checks it is made of, as ``build()`` and
+    ``build_morning()`` make it: a file whose hashes hold but whose verdicts do
+    not follow from its own checks (trade allowed on a failing night, a ticket
+    go with a failed check, live without the gate) is refused. It reads the
+    file alone; the committed file is held to the record by the test suite."""
+    out = []
+    if kind == "orders":
+        night = value["night_checks"]
+        tickets = value["tickets"]
+        for c in night:
+            if (c["status"] == PASS) != (c["reason"] is None):
+                out.append(f"night check {c['key']}: a reason must be given exactly when it does not pass")
+        for t in tickets:
+            failed = [c["reason"] for c in t["checks"] if c["status"] == FAIL]
+            if any((c["status"] == PASS) != (c["reason"] is None) for c in t["checks"]):
+                out.append(f"ticket {t['symbol']}: a check's reason must be given exactly when it fails")
+            if t["reasons"] != failed or t["status"] != ticket_status(failed):
+                out.append(f"ticket {t['symbol']}: its status and reasons are not its checks'")
+        allowed = all(c["status"] == PASS for c in night) and any(t["status"] == GO for t in tickets)
+        if value["trade_allowed"] is not allowed:
+            out.append("trade_allowed is not what the night's checks and the tickets give")
+        want = ([{"scope": "night", "code": c["reason"]} for c in night if c["status"] != PASS]
+                + ([{"scope": "night", "code": "no_tickets"}] if not tickets else [])
+                + [{"scope": t["symbol"], "code": code} for t in tickets for code in t["reasons"]])
+        if value["reasons"] != want:
+            out.append("reasons are not the failed checks' reasons")
+        live = value["live_ready"]
+        if (value["mode"] == "live") is not (live["value"] is True) or (live["value"] is True) == bool(live["reasons"]):
+            out.append("mode is not what live_ready gives")
+        counts = {"tickets": len(tickets), "go": sum(t["status"] == GO for t in tickets),
+                  "human_review": sum(t["status"] == HUMAN_REVIEW for t in tickets),
+                  "blocked": sum(t["status"] == BLOCKED for t in tickets)}
+        if value["summary"] != counts:
+            out.append("summary does not count the tickets")
+    elif kind == "orders_morning":
+        for t in value["tickets"]:
+            if (t["decision"] == GO) is not (not t["reasons"]):
+                out.append(f"morning ticket {t['symbol']}: decision is go exactly when it has no reason")
+        counts = {"tickets": len(value["tickets"]), "go": sum(t["decision"] == GO for t in value["tickets"]),
+                  "cancel": sum(t["decision"] == CANCEL for t in value["tickets"])}
+        if value["summary"] != counts:
+            out.append("summary does not count the morning tickets")
+    return out
 
 
 def validate(raw: bytes, kind: str = "orders") -> dict:
     _require(0 < len(raw) <= MAX_BYTES, f"{kind} is not within {MAX_BYTES} bytes")
     value = json.loads(raw)
+    _require(isinstance(value, dict), f"{kind} is not a JSON object")
     found = problems(value, kind)
     _require(not found, f"{kind} fails its schema: " + "; ".join(found[:5]))
     return value
@@ -589,6 +708,8 @@ def check(docs) -> list[str]:
             continue
         if value["orders_sha256"] != hashlib.sha256(orders_raw).hexdigest():
             out.append(f"{name} is not bound to orders.json")
+        elif value["mode"] != orders["mode"]:
+            out.append(f"{name} does not carry orders.json's mode")
     return out
 
 
@@ -600,6 +721,8 @@ def main(argv=None) -> int:
     m = sub.add_parser("morning", help="write orders-morning.json from the orders.json and morning.json given")
     m.add_argument("--orders", type=Path, required=True)
     m.add_argument("--receipt", type=Path, default=None)
+    m.add_argument("--data", type=Path, required=True,
+                   help="the record orders.json is bound to: the receipt is validated against it")
     m.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.command == "evening":
@@ -611,7 +734,8 @@ def main(argv=None) -> int:
             print(line)
         return 1 if found else 0
     raw = encode(build_morning(args.orders.read_bytes(),
-                               args.receipt.read_bytes() if args.receipt and args.receipt.exists() else None))
+                               args.receipt.read_bytes() if args.receipt and args.receipt.exists() else None,
+                               args.data.read_bytes()))
     validate(raw, "orders_morning")
     args.output.write_bytes(raw)
     return 0

@@ -14,7 +14,7 @@ import json
 import re
 import subprocess
 import tomllib
-from datetime import date
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -317,10 +317,23 @@ def test_each_committed_morning_receipt_gives_its_cancel_reasons(receipt, decisi
     assert out["morning_bound"] is (receipt != "no-tickets")
 
 
+def passing_night(doc: dict) -> dict:
+    """``doc`` with every night check passed and its decisions made again from its own checks, so
+    that the validator's consistency rules hold: the morning's own rules can then be read alone."""
+    doc = copy.deepcopy(doc)
+    doc["night_checks"] = [{**c, "status": "pass", "reason": None} for c in doc["night_checks"]]
+    doc["reasons"] = [{"scope": t["symbol"], "code": code} for t in doc["tickets"] for code in t["reasons"]]
+    doc["trade_allowed"] = any(t["status"] == "go" for t in doc["tickets"])
+    doc["summary"] = {"tickets": len(doc["tickets"]), **{s: sum(t["status"] == s for t in doc["tickets"])
+                                                          for s in ("go", "human_review", "blocked")}}
+    return doc
+
+
 def allowed_orders() -> tuple[bytes, dict]:
-    """The golden orders with trade allowed, sealed again: the morning's own rules can then be read alone."""
-    doc = json.loads(golden_orders())
-    return resealed(doc, trade_allowed=True, reasons=[]), doc
+    """The golden orders with every night check passed, sealed again."""
+    doc = passing_night(json.loads(golden_orders()))
+    assert doc["trade_allowed"] is True
+    return resealed(doc), doc
 
 
 @pytest.mark.parametrize("state, reasons", [
@@ -350,10 +363,18 @@ def test_a_stale_price_cancels_and_a_missing_row_is_not_checked():
 
 def test_a_ticket_orders_json_did_not_mark_go_never_goes_in_the_morning():
     raw, doc = allowed_orders()
-    for status, reason in (("human_review", "news_or_sec_flag"), ("blocked", "ticket_not_go")):
+    for check, failed, reason in (("sec_flags", "sec_flag", "news_or_sec_flag"),
+                                  ("position_cap", "position_cap", "ticket_not_go")):
         forged = copy.deepcopy(doc)
-        forged["tickets"][0] = orders.sealed({**forged["tickets"][0], "status": status})
-        forged_raw = resealed(forged, trade_allowed=True, reasons=[])
+        ticket = forged["tickets"][0]
+        ticket["checks"] = [{**c, "status": "fail", "reason": failed} if c["key"] == check else c
+                            for c in ticket["checks"]]
+        ticket["reasons"] = [failed]
+        ticket["status"] = orders.ticket_status([failed])
+        forged["tickets"][0] = orders.sealed(ticket)
+        forged = passing_night(forged)
+        assert forged["trade_allowed"] is False         # the night has no go ticket left
+        forged_raw = resealed(forged)
         receipt = json.loads((MORNING / "observed.json").read_bytes())
         receipt["rows"][0]["price_checks"] = {"trade": "below_trigger", "ask": "below_trigger"}
         out = orders.build_morning(forged_raw, json.dumps(receipt).encode())
@@ -525,3 +546,232 @@ def test_the_morning_workflow_publishes_the_go_cancel_after_the_receipt():
     step = next(s for s in steps if s.get("name") == "Publish the morning go/cancel for the execution handoff")
     assert step["run"] == "python -m tools.publish_morning orders"
     assert names.index("Publish only against the unchanged source record") < names.index(step["name"])
+
+
+# ------------------------------------------- the morning, read fail-closed --
+def receipt_for(doc: dict, ticket: dict, *, state="below_trigger", halt="not_listed", blocks=None,
+                retained=(), phase="open", generated_at=None, blocked=False) -> bytes:
+    """A receipt bound to ``doc`` with one row for ``ticket``, read as given (no record): the
+    morning's decision rules alone."""
+    until = datetime.fromisoformat(ticket["entry"]["valid_until"])
+    return json.dumps({
+        "publication": {"data_sha256": doc["source"]["data_sha256"]}, "status": "observed",
+        "entry_phase": phase, "observation_run_id": "run-1",
+        "generated_at": generated_at or (until - timedelta(minutes=30)).isoformat(),
+        "rows": [{"kind": ticket["setup_type"], "ticker": ticket["symbol"],
+                  "evidence_id": ticket["evidence"]["evidence_id"], "plan_sha256": ticket["evidence"]["plan_sha256"],
+                  "trade": {"status": "recent", "price": 1.0, "timestamp": None},
+                  "quote": {"status": "recent", "bid": 1.0, "ask": 1.0, "timestamp": None},
+                  "price_checks": {"trade": state, "ask": state},
+                  "events": {"halt": {"status": halt, "blocks_entry": blocks},
+                             "corporate_action": {"blocked": blocked},
+                             "retained_corporate_actions": list(retained)}}],
+    }).encode()
+
+
+def decided(raw: bytes, receipt: bytes) -> tuple:
+    t = orders.build_morning(raw, receipt)["tickets"][0]
+    return t["decision"], t["reasons"]
+
+
+def anticipation_orders() -> tuple[bytes, dict, dict]:
+    doc = json.loads(orders.encode(orders.build(page("notrade"))))
+    ticket = next(t for t in doc["tickets"] if t["setup_type"] == "anticipation")
+    doc = passing_night(doc)
+    assert ticket["status"] == "go" and doc["trade_allowed"] is True
+    return resealed(doc), doc, ticket
+
+
+@pytest.mark.parametrize("state, reasons", [
+    # a setting-up ticket has no skip-under line: under its trigger and over its stop it is waiting
+    ("below_trigger", []), ("below_entry_floor", []),
+    ("below_stop", ["gap_below_floor"]), ("within_published_band", ["trigger_crossed"]),
+    ("above_limit", ["gap_above_limit"]),
+    ("unknown", ["price_unknown"]), ("a_word_the_receipt_never_writes", ["price_unknown"]),
+])
+def test_a_setting_up_ticket_reads_its_own_go_states(state, reasons):
+    raw, doc, ticket = anticipation_orders()
+    assert decided(raw, receipt_for(doc, ticket, state=state)) == ("go" if not reasons else "cancel", reasons)
+
+
+def test_a_burst_ticket_reads_a_price_under_its_skip_line_as_a_gap_and_an_unknown_state_as_unknown():
+    raw, doc = allowed_orders()
+    ticket = doc["tickets"][0]
+    assert decided(raw, receipt_for(doc, ticket, state="below_entry_floor")) == ("cancel", ["gap_below_floor"])
+    assert decided(raw, receipt_for(doc, ticket, state="unknown")) == ("cancel", ["price_unknown"])
+
+
+@pytest.mark.parametrize("halt, blocks, reasons", [
+    ("not_listed", None, []), ("resumption_reported", None, []),
+    ("halt_reported", True, ["halted"]), ("security_deleted", True, ["halted"]),
+    ("resumption_scheduled", True, ["halted"]),
+    # the source could not be read, was stale, or named a code it does not know: not a clearance
+    ("unknown", None, ["halt_unknown"]), ("a_state_never_written", None, ["halt_unknown"]), (None, None, ["halt_unknown"]),
+])
+def test_a_halt_source_that_cannot_say_cancels_like_a_halt(halt, blocks, reasons):
+    raw, doc = allowed_orders()
+    ticket = doc["tickets"][0]
+    assert decided(raw, receipt_for(doc, ticket, halt=halt, blocks=blocks)) == \
+        ("go" if not reasons else "cancel", reasons)
+
+
+def test_a_halt_outage_from_the_real_collector_cancels():
+    # the committed outage receipt with its prices moved under the trigger and its halt coverage gone
+    raw, doc = allowed_orders()
+    receipt = json.loads((MORNING / "outage.json").read_bytes())
+    row = receipt["rows"][0]
+    row["trade"]["status"] = row["quote"]["status"] = "recent"
+    row["price_checks"] = {"trade": "below_trigger", "ask": "below_trigger"}
+    assert decided(raw, json.dumps(receipt).encode()) == ("go", [])
+    row["events"]["halt"] = {"status": "unknown", "blocks_entry": None,
+                             "reason": "Current halt coverage is unavailable or stale; verify with the broker and exchange."}
+    assert decided(raw, json.dumps(receipt).encode()) == ("cancel", ["halt_unknown"])
+
+
+def test_a_retained_corporate_exclusion_cancels_though_tonights_registry_no_longer_lists_it():
+    raw, doc = allowed_orders()
+    ticket = doc["tickets"][0]
+    assert decided(raw, receipt_for(doc, ticket, blocked=True)) == ("cancel", ["news_or_sec_flag"])
+    assert decided(raw, receipt_for(doc, ticket, retained=[{"event_id": "x"}])) == ("cancel", ["news_or_sec_flag"])
+    # the committed corporate-retained receipt, its prices under the trigger
+    receipt = json.loads((MORNING / "corporate-retained.json").read_bytes())
+    assert receipt["rows"][0]["events"]["retained_corporate_actions"]
+    receipt["rows"][0]["price_checks"] = {"trade": "below_trigger", "ask": "below_trigger"}
+    receipt["rows"][0]["trade"]["status"] = receipt["rows"][0]["quote"]["status"] = "recent"
+    out = orders.build_morning(raw, json.dumps(receipt).encode())["tickets"][0]
+    assert out["decision"] == "cancel" and "news_or_sec_flag" in out["reasons"]
+
+
+@pytest.mark.parametrize("phase, minutes, reasons", [
+    ("upcoming", -60, []), ("open", -1, []),
+    ("open", 0, ["outside_entry_window"]), ("ended", 1, ["outside_entry_window"]),
+    ("ended", -1, ["outside_entry_window"]), ("unknown", -30, ["outside_entry_window"]),
+])
+def test_a_receipt_completed_at_or_after_the_cutoff_never_says_go(phase, minutes, reasons):
+    raw, doc = allowed_orders()
+    ticket = doc["tickets"][0]
+    at = (datetime.fromisoformat(ticket["entry"]["valid_until"]) + timedelta(minutes=minutes)).isoformat()
+    out = orders.build_morning(raw, receipt_for(doc, ticket, phase=phase, generated_at=at))["tickets"][0]
+    assert (out["decision"], out["reasons"]) == ("go" if not reasons else "cancel", reasons)
+    assert out["valid_until"] == ticket["entry"]["valid_until"]
+
+
+# ------------------------------------------- a file whose verdicts are its own --
+@pytest.mark.parametrize("change", [
+    {"trade_allowed": True},                                      # on a red night with no ticket
+    {"mode": "live"},
+    {"live_ready": {"value": True, "reasons": []}},
+    {"reasons": []},
+    {"summary": {"tickets": 0, "go": 1, "human_review": 0, "blocked": 0}},
+])
+def test_a_resealed_file_whose_verdict_is_not_its_checks_is_refused(change, tmp_path):
+    doc = built("red")
+    forged = resealed(doc, **change)
+    with pytest.raises(ValueError, match="fails its schema"):
+        orders.validate(forged)
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "data.json").write_bytes(page("red"))
+    (docs / "orders.json").write_bytes(forged)
+    assert orders.check(docs) and orders.check(docs)[0].startswith("orders.json:")
+
+
+def test_a_resealed_ticket_whose_status_is_not_its_checks_is_refused():
+    doc = built("full")                     # its one ticket is held for review by its material 8-K item
+    forged = copy.deepcopy(doc)
+    ticket = next(t for t in forged["tickets"] if t["status"] != "go")
+    forged["tickets"][forged["tickets"].index(ticket)] = orders.sealed({**ticket, "status": "go", "reasons": []})
+    with pytest.raises(ValueError, match="status and reasons are not its checks'"):
+        orders.validate(resealed(forged))
+
+
+@pytest.mark.parametrize("raw", [b"[]", b"null", b'"x"', b"1"])
+def test_a_file_that_is_not_an_object_is_named_not_raised(raw, tmp_path):
+    with pytest.raises(ValueError, match="not a JSON object"):
+        orders.validate(raw)
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "data.json").write_bytes(page("full"))
+    (docs / "orders.json").write_bytes(raw)
+    assert orders.check(docs) == ["orders.json: orders is not a JSON object"]
+    assert orders.problems(json.loads(raw)) and all(isinstance(p, str) for p in orders.problems(json.loads(raw)))
+    from tools import publish_morning
+    assert publish_morning.orders_check(page("full"), raw, b"{}", "run") in (
+        "orders_not_bound_to_record", "morning_receipt_not_this_run")
+
+
+def test_a_morning_file_that_does_not_carry_orders_modes_is_named(tmp_path):
+    docs = docs_with(tmp_path)
+    orders.write_publication(docs)
+    raw = (docs / "orders.json").read_bytes()
+    morning_doc = orders.build_morning(raw, None)
+    (docs / "orders-morning.json").write_bytes(orders.encode(orders.sealed({**morning_doc, "mode": "live"})))
+    assert "orders-morning.json does not carry orders.json's mode" in orders.check(docs)
+
+
+def test_the_morning_command_reads_the_receipt_against_the_record(tmp_path):
+    with pytest.raises(SystemExit):
+        orders.main(["morning", "--orders", "x", "--output", str(tmp_path / "o.json")])
+    raw = golden_orders()
+    (tmp_path / "orders.json").write_bytes(raw)
+    (tmp_path / "data.json").write_bytes(PUBLICATION)
+    receipt = json.loads((MORNING / "observed.json").read_bytes())
+    receipt["rows"][0]["trade"]["price"] = 1.0                  # tampered: the record refuses it
+    (tmp_path / "morning.json").write_bytes(json.dumps(receipt).encode())
+    with pytest.raises(ValueError):
+        orders.main(["morning", "--orders", str(tmp_path / "orders.json"), "--receipt", str(tmp_path / "morning.json"),
+                     "--data", str(tmp_path / "data.json"), "--output", str(tmp_path / "o.json")])
+    (tmp_path / "morning.json").write_bytes((MORNING / "observed.json").read_bytes())
+    assert orders.main(["morning", "--orders", str(tmp_path / "orders.json"), "--receipt",
+                        str(tmp_path / "morning.json"), "--data", str(tmp_path / "data.json"),
+                        "--output", str(tmp_path / "o.json")]) == 0
+
+
+# ---------------------------------------------------- the night and the hold --
+def test_a_run_whose_clock_is_at_or_after_the_prepare_by_instant_is_late():
+    full = json.loads(page("full"))
+    prepare_by = datetime.fromisoformat(full["run"]["timing"]["prepare_by"])
+    assert night(full)["publication_time"]["status"] == "pass"
+    for minutes, status in ((-1, "pass"), (0, "fail"), (30, "fail")):
+        late = copy.deepcopy(full)
+        late["run"]["published_at"] = (prepare_by + timedelta(minutes=minutes)).isoformat()
+        check = night(late)["publication_time"]
+        assert (check["status"], check["reason"]) == (status, None if status == "pass" else "late_publish")
+    naive = copy.deepcopy(full)
+    naive["run"]["published_at"] = "2026-09-11T22:00:00"
+    assert night(naive)["publication_time"]["status"] == "not_evaluated"
+
+
+def test_each_hold_day_carries_its_scheduled_close_and_an_early_close_says_so():
+    from src import sessions
+    days = [d.isoformat() for d in plan.next_sessions(date(2026, 11, 23), plan.FINAL_EXIT_DAY)]
+    hold = orders.exit_plan(100.0, 4, days)["sessions"]
+    assert [h["date"] for h in hold] == days and [h["day"] for h in hold] == list(range(1, len(days) + 1))
+    for h in hold:
+        _, close, shortened = sessions.hours(date.fromisoformat(h["date"]))
+        assert (h["close_at"], h["early_close"]) == (close.isoformat(), shortened)
+    friday = next(h for h in hold if h["date"] == "2026-11-27")
+    assert friday["early_close"] is True and friday["close_at"].startswith("2026-11-27T13:00")
+    assert all(not h["early_close"] for h in hold if h["date"] != "2026-11-27")
+
+
+def test_the_committed_handoff_is_what_this_code_writes_for_the_committed_record():
+    """The gate holds the files to their schema, their hashes, their binding and their own checks;
+    this re-derives them, so a file whose verdicts were changed and sealed again, or one an older
+    rule wrote, is red here. Before the first evening under this code none is committed."""
+    docs = ROOT / "docs"
+    if not (docs / "orders.json").exists():
+        assert not any((docs / n).exists() for n in ("positions-template.json", "orders-morning.json"))
+        return
+    data_raw = (docs / "data.json").read_bytes()
+    picks_raw = (docs / "picks.json").read_bytes() if (docs / "picks.json").exists() else None
+    orders_raw = orders.encode(orders.build(data_raw, picks_raw))
+    assert (docs / "orders.json").read_bytes() == orders_raw
+    assert (docs / "positions-template.json").read_bytes() == \
+        orders.encode(orders.positions_template(json.loads(orders_raw), orders_raw))
+    morning_file = docs / "orders-morning.json"
+    if morning_file.exists():
+        committed = json.loads(morning_file.read_bytes())
+        receipt = (docs / "morning.json").read_bytes()
+        if committed["morning_sha256"] == hashlib.sha256(receipt).hexdigest():
+            assert morning_file.read_bytes() == orders.encode(orders.build_morning(orders_raw, receipt, data_raw))
