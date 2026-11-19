@@ -407,6 +407,39 @@ export async function checkMorningServiceReader({ browser, base, open, check, eq
     await two('the compact reader: the host names another publication, the static receipt is bound to the reader', { status: 404, body: noReceipt('f'.repeat(64)), projected: derive(raw), staticReceipt: readerObserved }, ['loaded', null, 'static', readerObserved.generated_at, []], async (tab, label) => {
       eq(label + 'the page loaded the compact reader', (await facts(tab.page)).projected, true);
     });
+    // A host still serving an old receipt for another publication, whose halt
+    // memory names this record's ticket: the halt is kept and entry copying
+    // for that ticker stays withheld, but it cannot veto this record's own
+    // verified receipt. A halt learned from a file bound to THIS record stays
+    // fail closed (the tie and newest-wins cases above).
+    // (Its halt's own source date and clock are checked against its stamps, so
+    // it keeps them; what makes it the deployed case is the other binding.)
+    const staleHalted = structuredClone(halted); staleHalted.publication.data_sha256 = 'e'.repeat(64);
+    const KEPT = 'Kept from another publication: A halt or event exclusion for AAPL was read from a morning file bound to another publication.';
+    await two('a stale host bound elsewhere carries a halt for this ticker: the static receipt for this record is shown, the halt kept', { receipt: staleHalted, staticReceipt: observed }, ['loaded', null, 'static', observed.generated_at, ['burst:AAPL']], async (tab, label) => {
+      const { page } = tab;
+      const text = await summaryText(page);
+      eq(label + 'the kept halt is named as from another publication', (await facts(page)).elsewhere, ['AAPL']);
+      check(label + 'its sentence says where it came from and that entry stays withheld', text.includes(KEPT) && text.includes('entry copying for it stays withheld'));
+      check(label + 'the omission sentence is not printed: nothing bound to this record was omitted', !text.includes(OMITTED));
+      eq(label + 'entry copying for that ticker stays withheld', await page.locator('#detail [data-copy]').count(), 0);
+      eq(label + 'the headline names the withheld entry', (await facts(page)).headline, 'Entry copying withheld by a sourced event check');
+      await page.clock.runFor(30001); await wait(page);
+      eq(label + 'the next read shows the same, the unchanged host not taken again', [await shown(page), (await facts(page)).elsewhere, tab.counts()], [['loaded', null, 'static', observed.generated_at, ['burst:AAPL']], ['AAPL'], [2, 2]]);
+      // the same halt, now in a file bound to this record: a receipt that omits it is refused again
+      tab.publish(halted); await tab.read();
+      eq(label + 'the halt in this record\u2019s own file is shown with its receipt', await shown(page), ['loaded', null, 'static', halted.generated_at, ['burst:AAPL']]);
+      eq(label + 'and no longer named as from another publication', (await facts(page)).elsewhere, []);
+      tab.publish(later(observed, 20)); await tab.read();   // newer than the halted file, not ahead of the clock
+      check(label + 'a later receipt for this record omitting it is refused in the existing words', (await summaryText(page)).includes(OMITTED) && (await facts(page)).state === 'unavailable');
+    });
+    // A failed read is said in plain words, never the browser's own wording.
+    await two('a static file that is not JSON beside a host 404 is said in plain words', { status: 404, body: noReceipt('f'.repeat(64)), staticReceipt: observed }, ['loaded', null, 'static', observed.generated_at, []], async (tab, label) => {
+      tab.publish('{', 200); await tab.read();
+      const text = await summaryText(tab.page);
+      check(label + 'the static file is named beside plain words', text.includes('Static morning file: The answer was not JSON.'), text);
+      check(label + 'no engine wording is printed', !/position|line \d|column|Expected|Unexpected token/.test(text), text);
+    });
     // One request limit covers both files: a host that never answers holds
     // the static receipt back until the 15-second bound, and no longer.
     let release;
@@ -418,6 +451,16 @@ export async function checkMorningServiceReader({ browser, base, open, check, eq
       eq('two sources / an unanswered host: at the request bound the static receipt is shown', await shown(slow.page), ['loaded', null, 'static', observed.generated_at, []]);
       check('two sources / an unanswered host: entry copying returns with the bound receipt', (await slow.page.locator('#detail [data-copy]').count()) > 0);
     } finally { release(); await slow.context.close(); }
+    // and with no static receipt to fall back on, the timeout is said in plain words
+    let releaseAlone;
+    const alone = await setup({ hold: new Promise(resolve => { releaseAlone = resolve; }) });
+    try {
+      await alone.page.waitForFunction(() => SCStock.observations.facts().state === 'loading');
+      await alone.page.clock.runFor(15000); await wait(alone.page);
+      const text = await summaryText(alone.page);
+      check('two sources / an unanswered host alone: the timeout is said in plain words', text.includes('Morning host: No answer came within the time allowed (at most 15 seconds).'), text);
+      check('two sources / an unanswered host alone: the browser\u2019s abort wording is not printed', !/abort/i.test(text), text);
+    } finally { releaseAlone(); await alone.context.close(); }
   }
 
   const retained = await setup({ receipt: halted });

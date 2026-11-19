@@ -75,6 +75,23 @@
   let hostHolds = null;
   let halted = new Map(), corporate = new Map(), onChange = null, storageIssue = '', cachedHalt = false, pinned = false;
   const sourceMemory = { halts: {}, corporate: {} };
+  // Which publications each remembered restriction was read from, by ticker.
+  // A restriction this tab learned from a file bound to the loaded record is
+  // fail closed: a newer receipt for the record that omits it is refused. One
+  // learned only from files bound to another publication (a morning host still
+  // serving an older receipt) keeps that ticker's entry withheld and is named,
+  // but cannot veto the record's own verified receipt for every other ticker.
+  const factOrigins = {};
+  let elsewhereRetained = [];
+  const canonicalSha = () => readerBinding ? readerBinding.canonicalSha : recordHash;
+  function noteOrigins(value) {
+    const sha = value && value.publication && value.publication.data_sha256;
+    if (!HEX.test(sha || '')) return;
+    [...Object.keys(value.halt_memory || {}), ...Object.keys(value.corporate_memory || {})].forEach(ticker => {
+      (factOrigins[ticker] || (factOrigins[ticker] = new Set())).add(sha);
+    });
+  }
+  const learnedHere = ticker => !!(factOrigins[ticker] && factOrigins[ticker].has(canonicalSha()));
   // The text last taken in full from each source. A file this tab has already
   // taken adds no source fact, so it is not taken again while it is unchanged:
   // an older file that still carries a halt would otherwise undo, on every
@@ -342,20 +359,23 @@
     const source = value.coverage.halts;
     return old.status !== 'security_deleted' && halt.status === 'resumption_reported' && freshStamp(value.generated_at, RECEIPT_AGE) && source.status === 'fresh' && dateMs(source.expires_at) >= now && dateMs(source.source_published_at) > dateMs(old.sourcePublished) && dateMs(value.generated_at) > dateMs(old.at) && dateMs(halt.events[0].halted_at) >= dateMs(old.haltedAt);
   }
-  function preservesRestrictions(value) {
+  // The tickers whose remembered restriction `value` omits without a sourced
+  // resumption or resolution; empty when it preserves every one.
+  function omittedRestrictions(value) {
+    const omitted = new Set();
     for (const [key, old] of halted) {
       const row = value.rows.find(row => row.kind + ':' + row.ticker === key), halt = row && row.events.halt, ticker = key.slice(key.indexOf(':') + 1);
       if (value.halt_memory[ticker] || halt && halt.blocks_entry === true) continue;
       if (halt && resumes(old, halt, value)) continue;
-      return false;
+      omitted.add(ticker);
     }
     for (const [key] of corporate) {
       const row = value.rows.find(row => row.kind + ':' + row.ticker === key), ticker = key.slice(key.indexOf(':') + 1);
       const remembered = sourceMemory.corporate[ticker] || [];
       const incoming = [...(value.corporate_memory[ticker] || []), ...(row ? row.events.retained_corporate_actions : [])];
-      if (!remembered.every(fact => incoming.some(next => next.event.id === fact.event.id && next.event.active_from === fact.event.active_from) || resolutionFor(fact, value))) return false;
+      if (!remembered.every(fact => incoming.some(next => next.event.id === fact.event.id && next.event.active_from === fact.event.active_from) || resolutionFor(fact, value))) omitted.add(ticker);
     }
-    return true;
+    return [...omitted].sort();
   }
   function refusal(c) {
     if (!c || c.status !== 'ticket') return null;
@@ -364,6 +384,19 @@
     if (event) return 'Morning corporate-event exclusion, last checked ' + atCT(event.at) + '. ' + event.action.reason + ' Entry copying remains withheld; verify the sourced event and broker restrictions.';
     return halt ? 'Morning check: ' + words(halt.status) + ', last reported ' + atCT(halt.at) + '. ' + halt.reason + ' Entry copying is withheld until a sourced resumption is recorded; check your broker.'
       : !receipt && ['unbound', 'loading'].includes(state) ? 'Checking published morning halt evidence; entry copying is briefly paused while this record is matched.' : null;
+  }
+  // The fatal decoder throws a TypeError, which a failed fetch also throws:
+  // name it here so the two cannot be read as one.
+  function utf8(decoder, bytes, stream) {
+    try { return bytes ? decoder.decode(bytes, { stream }) : decoder.decode(); } catch (e) { throw Error('The file is not valid UTF-8 text.'); }
+  }
+  // What a read that failed says to the reader: this module's own sentences as
+  // they are, and the browser's own errors in plain words, never its wording.
+  function plain(e) {
+    if (e && e.name === 'AbortError') return Error('No answer came within the time allowed (at most 15 seconds).');
+    if (e instanceof SyntaxError) return Error('The answer was not JSON.');
+    if (e instanceof TypeError) return Error('The file could not be reached.');
+    return e instanceof Error ? e : Error('Observation file unavailable.');
   }
   async function readBounded(response, any = false) {
     if (!any && !response.ok) throw Error('The published morning file could not be read.');
@@ -378,9 +411,9 @@
         if (part.done) break;
         bytes += part.value.byteLength;
         if (bytes > MAX_BYTES) { await reader.cancel(); throw Error('Observation document exceeds the size limit.'); }
-        text += decoder.decode(part.value, { stream: true });
+        text += utf8(decoder, part.value, true);
       }
-      return text + decoder.decode();
+      return text + utf8(decoder);
     } finally { reader.releaseLock(); }
   }
   // A 404 is read before it is refused. The morning host names the publication
@@ -433,7 +466,7 @@
       if (response.status === 404) throw await noReceipt(response, source.id);
       const raw = await readBounded(response);
       return { source, raw, parsed: JSON.parse(raw) };
-    } catch (e) { return { source, error: e }; }
+    } catch (e) { return { source, error: plain(e) }; }
   }
   // What a file that gave no receipt said, as a sentence under its source's name.
   const SOURCE_NAMES = { host: 'Morning host', static: 'Static morning file' };
@@ -474,6 +507,7 @@
         try {
           result.known = taken[result.source.id] === result.raw;
           if (!result.known) taken[result.source.id] = ingestPositive(result.parsed) ? result.raw : null;
+          noteOrigins(result.parsed);
           readable.push(result);
         } catch (e) { result.error = e; }
       }
@@ -496,8 +530,9 @@
       // Fail closed: when the newest verified file omits a restriction another
       // file carries, the read is refused and the restriction stays. An older
       // verified file is never shown in its place.
-      if (!preservesRestrictions(next)) throw refused('A previous event exclusion was omitted without a sourced resolution; it remains withheld.', results, best);
-      receipt = next; receiptSource = best.source.id; state = 'loaded'; issue = ''; absent = null;
+      const omitted = omittedRestrictions(next);
+      if (omitted.some(learnedHere)) throw refused('A previous event exclusion was omitted without a sourced resolution; it remains withheld.', results, best);
+      receipt = next; receiptSource = best.source.id; state = 'loaded'; issue = ''; absent = null; elsewhereRetained = omitted;
       rememberHalts(next);
       resolveSourceMemory(next); savePublicFacts(next);
       paintAll(); if (onChange) onChange();
@@ -514,7 +549,7 @@
     if (controller) controller.abort();
     controller = null; automaticRequest = false; lastRequest = -Infinity;
     if (reloadTimer !== null) { w.clearTimeout(reloadTimer); reloadTimer = null; }
-    record = data; recordHash = null; readerBinding = null; receipt = null; receiptSource = null; hostHolds = null; halted = new Map(); corporate = new Map(); issue = ''; storageIssue = ''; cachedHalt = false; pinned = !!clockPinned; absent = null;
+    record = data; recordHash = null; readerBinding = null; receipt = null; receiptSource = null; hostHolds = null; halted = new Map(); corporate = new Map(); elsewhereRetained = []; issue = ''; storageIssue = ''; cachedHalt = false; pinned = !!clockPinned; absent = null;
     state = data && data.fixture ? 'practice' : 'unbound'; now = at ? new Date(at).getTime() : Date.now();
     if (state !== 'practice') applySourceMemory();
     paintAll();
@@ -527,7 +562,8 @@
         const saved = w.sessionStorage.getItem(CACHE_KEY);
         if (saved) {
           require(saved.length <= MAX_BYTES && new TextEncoder().encode(saved).byteLength <= MAX_BYTES, 'Cached evidence exceeds its limit.');
-          ingestPositive(JSON.parse(saved)); cachedHalt = halted.size > 0 || corporate.size > 0;
+          const cached = JSON.parse(saved);
+          ingestPositive(cached); noteOrigins(cached); cachedHalt = halted.size > 0 || corporate.size > 0;
         }
       } catch (e) {
         storageIssue = 'Earlier tab source evidence could not be verified and was ignored; this does not establish event clearance.';
@@ -639,6 +675,9 @@
     if (issue) line(body, 'File status:', issue);
     if (storageIssue) line(body, 'Reload coverage:', storageIssue);
     if (cachedHalt) line(body, 'Earlier public evidence:', 'A sourced halt or event exclusion was retained in this tab. Cached evidence is not a new quote check.');
+    if (state === 'loaded' && elsewhereRetained.length) line(body, 'Kept from another publication:', 'A halt or event exclusion for ' + elsewhereRetained.join(', ') +
+      ' was read from a morning file bound to another publication. This record\u2019s receipt does not carry it and records no sourced resolution, so entry copying for ' +
+      (elsewhereRetained.length === 1 ? 'it' : 'them') + ' stays withheld; check the current halt list and your broker.', { class: 'sc-note', 'data-observation-elsewhere': elsewhereRetained.join(' ') });
     if (!c) candidates().forEach(candidate => {
       if (halted.has(rowKey(candidate)) || corporate.has(rowKey(candidate))) line(body, candidate.ticker + ' — entry withheld:', refusal(candidate), { class: 'sc-note', 'data-observation-refusal': '' });
     });
@@ -731,7 +770,7 @@
     clock: at => { now = new Date(at).getTime(); paintAll(); scheduleReload(); },
     repaint: () => paintAll(),
     onChange: handler => { onChange = handler; },
-    facts: () => ({ state, absent, recordHash, canonicalHash: readerBinding ? readerBinding.canonicalSha : recordHash, projected: !!readerBinding, headline: headline(), generatedAt: receipt && receipt.generated_at, source: receipt ? receiptSource : null, fresh: receiptFresh(), pending: !receipt && ['unbound', 'loading'].includes(state), restricted: [...new Set([...halted.keys(), ...corporate.keys()])] })
+    facts: () => ({ state, absent, recordHash, canonicalHash: readerBinding ? readerBinding.canonicalSha : recordHash, projected: !!readerBinding, headline: headline(), generatedAt: receipt && receipt.generated_at, source: receipt ? receiptSource : null, fresh: receiptFresh(), pending: !receipt && ['unbound', 'loading'].includes(state), restricted: [...new Set([...halted.keys(), ...corporate.keys()])], elsewhere: elsewhereRetained.slice() })
   };
   d.addEventListener('visibilitychange', scheduleReload);
   w.addEventListener('pageshow', scheduleReload);

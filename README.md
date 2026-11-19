@@ -1725,8 +1725,15 @@ each file is held to the loaded publication by the same validation,
 the newest verified receipt is shown (the host's on a tie) and the summary
 names which file it came from (*Receipt source:*); positive halt and event
 facts are kept from both files, a receipt bound to another publication is never
-shown, and when the newest verified file omits a restriction the other carries
-the read is refused and the restriction stays. One 15-second limit covers both
+shown, and when the newest verified file omits a restriction the tab read from
+a file bound to this record, the read is refused and the restriction stays. A
+restriction the tab read only from a file bound to another publication (a host
+still serving an older receipt) keeps that ticker's entry copying withheld and
+is named (*Kept from another publication:*), but no longer refuses this
+record's own verified receipt for every other ticker. A failed read is said in
+plain words (no answer within the time allowed, an answer that was not JSON or
+not UTF-8 text, a file that could not be reached), never in the browser's own
+wording. One 15-second limit covers both
 reads, so a host that never answers holds a bound static receipt back until
 that limit. Reads cannot trigger provider work.
 This disabled-by-default adapter establishes no hosting, scheduler, source
