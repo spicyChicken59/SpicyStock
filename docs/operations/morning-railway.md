@@ -206,8 +206,13 @@ image keeps no proxy certificate.
    until then. Every offline check serves a copy of the shell with the tag
    blanked (`tools/offline_shell.mjs`), so no check reads the live service in place
    of its fixtures; the page smoke holds the copy it serves to that. Use the normal reviewed Pages release and verify phone/desktop
-   reads, source changes, outages and visible expiry. Do not add a static fallback
-   when the configured dynamic route fails.
+   reads, source changes, outages and visible expiry. Beside the dynamic route the
+   page reads the same-origin static `morning.json` the morning workflow commits,
+   on every read. It holds each file to the loaded publication and shows the
+   newest verified receipt (the host's on a tie), naming which file it came from.
+   A failed dynamic read shows nothing of its own: never route it to a file that
+   is not held to that publication. The hand-started morning run is offered only
+   when the host's answer shows it does not hold the loaded publication.
 6. Read back workspace spending limits and current/projected costs. Check disk
    headroom, restart behavior and provider access during actual expected sessions.
    Export dated reports to a separate retained location before journal pruning;

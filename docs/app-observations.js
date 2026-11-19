@@ -64,8 +64,22 @@
   // publication) or 'missing' (a 404 naming no publication: no file at all).
   let absent = null;
   let readerBinding = null;
+  // Which published file the shown receipt was read from: 'host' (the
+  // configured morning host) or 'static' (the same-origin morning.json the
+  // morning workflow commits).
+  let receiptSource = null;
+  // What the morning host's answer to the last read said about THIS
+  // publication: true (a receipt verified for it, or a no_receipt naming it),
+  // false (it answered for another publication, or named none), null (no host
+  // is configured, or its answer could not be read).
+  let hostHolds = null;
   let halted = new Map(), corporate = new Map(), onChange = null, storageIssue = '', cachedHalt = false, pinned = false;
   const sourceMemory = { halts: {}, corporate: {} };
+  // The text last taken in full from each source. A file this tab has already
+  // taken adds no source fact, so it is not taken again while it is unchanged:
+  // an older file that still carries a halt would otherwise undo, on every
+  // read, the sourced resumption a newer receipt recorded.
+  const taken = {};
   const hosts = new Map();
   const candidates = () => Object.values((api.model || {}).stages || {}).flat().filter(c => c.status === 'ticket');
   const findCandidate = (kind, ticker) => candidates().find(c => rowKey(c) === kind + ':' + ticker);
@@ -178,12 +192,15 @@
       if (events && events.length) corporate.set(rowKey(c), { action: { matches: events.map(fact => fact.event), reason: events.map(fact => fact.event.reason).join(' ') }, at: events[0].observed_at });
     });
   }
+  // Returns whether every fact of the file is now held: false when the bounded
+  // memory left one out, so the file is taken again on the next read.
   function ingestPositive(value) {
     positiveFacts(value);
+    let full = true;
     Object.entries(value.halt_memory).forEach(([ticker, fact]) => {
       const old = sourceMemory.halts[ticker];
       if (old && (old.halt.status === 'security_deleted' || dateMs(fact.source.source_published_at) < dateMs(old.source.source_published_at) || dateMs(fact.halt.events[0].halted_at) < dateMs(old.halt.events[0].halted_at))) return;
-      if (old || Object.keys(sourceMemory.halts).length < 100) sourceMemory.halts[ticker] = fact;
+      if (old || Object.keys(sourceMemory.halts).length < 100) sourceMemory.halts[ticker] = fact; else full = false;
     });
     Object.entries(value.corporate_memory).forEach(([ticker, facts]) => {
       const prior = sourceMemory.corporate[ticker] || (sourceMemory.corporate[ticker] = []);
@@ -191,10 +208,12 @@
         const index = prior.findIndex(old => old.event.id === fact.event.id && old.event.active_from === fact.event.active_from);
         if (index >= 0) { if (dateMs(fact.observed_at) >= dateMs(prior[index].observed_at)) prior[index] = fact; }
         else if (Object.values(sourceMemory.corporate).reduce((n, list) => n + list.length, 0) < 128) prior.push(fact);
+        else full = false;
       });
       if (prior.length) sourceMemory.corporate[ticker] = prior;
     });
     applySourceMemory();
+    return full;
   }
   function resolutionFor(fact, value) {
     if (!freshStamp(value.generated_at, RECEIPT_AGE) || dateMs(value.expires_at) < now) return false;
@@ -223,16 +242,20 @@
     });
     halted = new Map(); corporate = new Map(); applySourceMemory();
   }
+  const OMITS = 'The latest file omits earlier source evidence; this tab retains its earlier public receipt for reloads.';
+  const NEITHER = 'Neither published morning file carries every source fact this tab retains, so neither was saved for reloads.';
   function savePublicFacts(value) {
     // Save only received public bytes with independently validated source facts
     // that retain every unresolved fact. Cached prices never become quote state.
+    // Returns whether the file retained them all; the caller says so when none did.
     const keeps = Object.entries(sourceMemory.halts).every(([ticker, fact]) => value.halt_memory[ticker] && dateMs(value.halt_memory[ticker].source.source_published_at) >= dateMs(fact.source.source_published_at)) &&
       Object.entries(sourceMemory.corporate).every(([ticker, facts]) => facts.every(fact => (value.corporate_memory[ticker] || []).some(next => next.event.id === fact.event.id && next.event.active_from === fact.event.active_from)));
-    if (!keeps) { storageIssue = 'The latest file omits earlier source evidence; this tab retains its earlier public receipt for reloads.'; return; }
+    if (!keeps) return false;
     try {
       const saved = JSON.stringify(value);
       if (new TextEncoder().encode(saved).byteLength <= MAX_BYTES) w.sessionStorage.setItem(CACHE_KEY, saved);
     } catch (e) { storageIssue = 'This tab could not retain public halt/event evidence for reloads; coverage must be checked again at your broker.'; }
+    return true;
   }
 
   function validate(value) {
@@ -365,7 +388,7 @@
   // (`{"publication_sha256":…,"status":"no_receipt"}`), so the page can say
   // whether this record is simply unchecked yet or the host holds another
   // publication. Any other 404 body says only that no file is published.
-  async function noReceipt(response) {
+  async function noReceipt(response, source) {
     let named = null;
     try {
       const body = JSON.parse(await readBounded(response, true));
@@ -374,7 +397,7 @@
     const canonical = readerBinding ? readerBinding.canonicalSha : recordHash;
     if (named && named === canonical) return Object.assign(Error('No morning check has run for this publication yet; the morning host holds this record and no receipt for it.'), { elsewhere: true, absent: 'none' });
     if (named) return Object.assign(Error('The morning host holds another publication, not this record, so no check for this record has run; it may not have received this publication yet.'), { elsewhere: true, absent: 'other' });
-    return Object.assign(Error(endpoint.service ? 'The morning host answered that no file exists, without naming the publication it holds.' : 'No morning file is published beside this record.'), { elsewhere: true, absent: 'missing' });
+    return Object.assign(Error(source === 'host' ? 'The morning host answered that no file exists, without naming the publication it holds.' : 'No morning file is published beside this record.'), { elsewhere: true, absent: 'missing' });
   }
   function autoEligible() {
     if (!endpoint.url || !recordHash || !record || record.fixture || pinned || d.hidden || !candidates().length || !api.availability) return false;
@@ -394,6 +417,38 @@
       if (autoEligible()) void reload(true);
     }, Math.min(Math.max(0, lastRequest + RELOAD_MS - Date.now()), cutoff - Date.now()));
   }
+  // A deployment that names a morning host still publishes the static file the
+  // morning workflow commits, so both are read on every read. Each is held to
+  // the loaded publication by validate(); a file that cannot be read, or is
+  // bound to another publication, shows nothing of its own.
+  const sources = () => endpoint.service
+    ? [{ id: 'host', url: endpoint.url, mode: 'cors' }, { id: 'static', url: 'morning.json', mode: 'same-origin' }]
+    : [{ id: 'static', url: 'morning.json', mode: 'same-origin' }];
+  async function readSource(source, signal) {
+    try {
+      const url = new URL(source.url, w.location.href);
+      if (source.mode === 'same-origin' && (url.origin !== w.location.origin || !['http:', 'https:'].includes(url.protocol))) throw Error('Same-origin observations are unavailable.');
+      url.hash = ''; url.search = '';
+      const response = await w.fetch(url.href, { cache: 'no-store', credentials: 'omit', mode: source.mode, redirect: 'error', referrerPolicy: 'no-referrer', signal });
+      if (response.status === 404) throw await noReceipt(response, source.id);
+      const raw = await readBounded(response);
+      return { source, raw, parsed: JSON.parse(raw) };
+    } catch (e) { return { source, error: e }; }
+  }
+  // What a file that gave no receipt said, as a sentence under its source's name.
+  const SOURCE_NAMES = { host: 'Morning host', static: 'Static morning file' };
+  const said = result => { const message = result.error && result.error.message || 'Observation file unavailable.'; return SOURCE_NAMES[result.source.id] + ': ' + (/[.!?]$/.test(message) ? message : message + '.'); };
+  // No file verified. The absence of a check is KNOWN only when every source
+  // was read and each said so: 'none' (the host holds this record, unchecked
+  // yet) says the most, then 'other', then 'missing'. Two sources are each
+  // named beside what they said; one source says it in its own words.
+  function unverified(results) {
+    const message = results.length === 1 ? results[0].error && results[0].error.message || 'Observation file unavailable.' : results.map(said).join(' ');
+    const kinds = results.map(result => result.error && result.error.elsewhere ? result.error.absent || 'missing' : null);
+    return Object.assign(Error(message), kinds.every(Boolean) ? { elsewhere: true, absent: ['none', 'other', 'missing'].find(kind => kinds.includes(kind)) } : {});
+  }
+  // The newest verified receipt was refused: say why, and what any other file said.
+  const refused = (message, results, best) => Error([message, ...results.filter(result => result !== best && result.error).map(said)].join(' '));
   async function reload(automatic = false) {
     if (!recordHash || state === 'practice') return;
     if (automatic && (controller || !autoEligible())) return;
@@ -407,21 +462,42 @@
     state = 'loading'; issue = ''; paintAll();
     try {
       if (endpoint.error) throw Error(endpoint.error);
-      const url = new URL(endpoint.url || 'morning.json', w.location.href);
-      if (!endpoint.service && (url.origin !== w.location.origin || !['http:', 'https:'].includes(url.protocol))) throw Error('Same-origin observations are unavailable.');
-      url.hash = ''; url.search = '';
-      const response = await w.fetch(url.href, { cache: 'no-store', credentials: 'omit', mode: endpoint.service ? 'cors' : 'same-origin', redirect: 'error', referrerPolicy: 'no-referrer', signal: active.signal });
-      if (response.status === 404) throw await noReceipt(response);
-      const raw = await readBounded(response);
+      // One abort signal and the one request limit cover every source.
+      const results = await Promise.all(sources().map(source => readSource(source, active.signal)));
       if (token !== epoch || request !== sequence) return;
       if (!pinned) now = Date.now();
-      const parsed = JSON.parse(raw);
-      ingestPositive(parsed);
-      savePublicFacts(parsed);
-      const next = validate(parsed);
-      if (receipt && dateMs(next.generated_at) < dateMs(receipt.generated_at)) throw Error('An older observation file was not loaded.');
-      require(preservesRestrictions(next), 'A previous event exclusion was omitted without a sourced resolution; it remains withheld.');
-      receipt = next; state = 'loaded'; issue = ''; absent = null;
+      // Positive source facts are kept from every readable file, bound to this
+      // publication or not; only a receipt bound to it can be shown.
+      const readable = [], verified = [];
+      for (const result of results) {
+        if (result.error) continue;
+        try {
+          result.known = taken[result.source.id] === result.raw;
+          if (!result.known) taken[result.source.id] = ingestPositive(result.parsed) ? result.raw : null;
+          readable.push(result);
+        } catch (e) { result.error = e; }
+      }
+      // For reloads, keep the first readable file that retains every unresolved fact.
+      if (readable.length && !readable.some(result => savePublicFacts(result.parsed))) storageIssue = readable.length > 1 ? NEITHER : OMITS;
+      for (const result of readable) {
+        try { result.value = validate(result.parsed); verified.push(result); } catch (e) { result.error = e; }
+      }
+      const host = results.find(result => result.source.id === 'host');
+      hostHolds = !host ? null : !host.error ? true : host.error.elsewhere ? host.error.absent === 'none' : null;
+      if (!verified.length) throw unverified(results);
+      // The newest verified receipt is the one shown; the host's on a tie
+      // (it is listed first, and only a later one replaces it).
+      const best = verified.reduce((a, b) => dateMs(b.value.generated_at) > dateMs(a.value.generated_at) ? b : a);
+      const next = best.value;
+      if (receipt && dateMs(next.generated_at) < dateMs(receipt.generated_at)) throw refused('An older observation file was not loaded.', results, best);
+      // The receipt that is shown always carries its own restrictions, so its
+      // facts are taken again even when its text was taken before.
+      if (best.known && !ingestPositive(best.parsed)) taken[best.source.id] = null;
+      // Fail closed: when the newest verified file omits a restriction another
+      // file carries, the read is refused and the restriction stays. An older
+      // verified file is never shown in its place.
+      if (!preservesRestrictions(next)) throw refused('A previous event exclusion was omitted without a sourced resolution; it remains withheld.', results, best);
+      receipt = next; receiptSource = best.source.id; state = 'loaded'; issue = ''; absent = null;
       rememberHalts(next);
       resolveSourceMemory(next); savePublicFacts(next);
       paintAll(); if (onChange) onChange();
@@ -438,7 +514,7 @@
     if (controller) controller.abort();
     controller = null; automaticRequest = false; lastRequest = -Infinity;
     if (reloadTimer !== null) { w.clearTimeout(reloadTimer); reloadTimer = null; }
-    record = data; recordHash = null; readerBinding = null; receipt = null; halted = new Map(); corporate = new Map(); issue = ''; storageIssue = ''; cachedHalt = false; pinned = !!clockPinned; absent = null;
+    record = data; recordHash = null; readerBinding = null; receipt = null; receiptSource = null; hostHolds = null; halted = new Map(); corporate = new Map(); issue = ''; storageIssue = ''; cachedHalt = false; pinned = !!clockPinned; absent = null;
     state = data && data.fixture ? 'practice' : 'unbound'; now = at ? new Date(at).getTime() : Date.now();
     if (state !== 'practice') applySourceMemory();
     paintAll();
@@ -489,8 +565,13 @@
   // so it is final. An unread or unverifiable file leaves the answer unknown,
   // so nothing is offered: only a file read and shown absent counts as none.
   // Research rows count once the comparison has loaded and named its fits.
+  // The Actions link publishes the static file, which this page reads beside a
+  // configured morning host. Under a host the run is offered only when the
+  // host's answer shows it does not hold this publication: a host that holds
+  // the record checks it itself, and one that could not be read leaves that
+  // unknown.
   function handoff() {
-    if (endpoint.service) return null; // The Actions link publishes the static file only.
+    if (endpoint.service && hostHolds !== false) return null;
     const tm = record && record.run && record.run.timing;
     if (!tm || !(state === 'loaded' || state === 'unavailable' && absent)) return null;
     const opens = dateMs(tm.opens_at), cutoff = dateMs(tm.cutoff_at);
@@ -526,6 +607,19 @@
       { class: 'sc-note', 'data-observation-handoff': offer.expired ? 'expired' : 'due' });
     body.append(node('a', { href: MORNING_WORKFLOW, target: '_blank', rel: 'noopener noreferrer', 'data-observation-link': MORNING_WORKFLOW, 'data-observation-workflow': '' }, 'Open the morning workflow on GitHub'));
   }
+  // What a recorded price beside a burst ticket's trigger means for its buy
+  // stop. A burst's trigger is its last close, and Fidelity's words
+  // (knowledge/broker-fidelity.md, item 2) say a buy stop must be entered above
+  // the current market price. price_state() in src/morning.py orders the
+  // states, so each of OVER_TRIGGER is at or over the trigger. The words name
+  // which dated price was where; they add no field and instruct nothing.
+  const OVER_TRIGGER = ['within_published_band', 'above_limit', 'above_day2_extension'], UNDER_TRIGGER = ['below_trigger'];
+  function buyStopWords(checks) {
+    const named = states => [['trade', 'last trade'], ['ask', 'ask']].filter(([key]) => states.includes(checks[key])).map(([, label]) => label).join(' and ');
+    const over = named(OVER_TRIGGER), under = named(UNDER_TRIGGER);
+    return (over ? ' At or over the trigger (' + over + '): Fidelity’s words say a buy stop must be entered above the current market price, so this ticket’s stop-limit cannot be entered as written while the stock trades there.' : '') +
+      (under ? ' Under the trigger (' + under + '): the stop-limit as written is on the right side of the market while the stock trades there.' : '');
+  }
   function line(host, label, value, attrs) {
     const p = node('p', Object.assign({ class: 'sc-hint' }, attrs));
     p.append(node('strong', {}, label + ' '), d.createTextNode(value)); host.append(p);
@@ -549,6 +643,9 @@
       if (halted.has(rowKey(candidate)) || corporate.has(rowKey(candidate))) line(body, candidate.ticker + ' — entry withheld:', refusal(candidate), { class: 'sc-note', 'data-observation-refusal': '' });
     });
     if (receipt) line(body, state === 'unavailable' ? 'Last available receipt:' : 'Checked:', atCT(receipt.generated_at) + ' · ' + ageWords(receipt.generated_at, now) + (receiptFresh() ? '' : ' · receipt expired'), { 'data-observation-time': '' });
+    // Under a configured host two files are read; say which one this receipt came from.
+    if (receipt && endpoint.service) line(body, 'Receipt source:', receiptSource === 'host' ? 'the morning host.'
+      : 'the static morning file the morning workflow publishes.' + (state === 'loaded' ? ' The morning host served no newer verified receipt for this record.' : ''), { 'data-observation-source': receiptSource });
     if (c && c.status !== 'ticket') {
       line(body, 'No quote check requested.', 'This setup has no admitted published order. A quote cannot change that refusal.');
     } else if (c && !row) {
@@ -560,7 +657,7 @@
       line(body, 'Quoted size:', (finite(q.bid_size) ? q.bid_size : 'unknown') + ' bid · ' + (finite(q.ask_size) ? q.ask_size : 'unknown') + ' ask, as supplied by IEX. This does not establish executable liquidity.');
       line(body, 'Last IEX trade:', money(t.price) + ' · ' + atCT(t.timestamp) + ' · ' + (tradeFresh ? words(t.status) : 'stale or unavailable'));
       const checks = row.price_checks || {};
-      line(body, 'Against published levels:', 'last trade ' + words(checks.trade) + '; ask ' + words(checks.ask) + '. These dated comparisons are not an entry or cancellation instruction.', { 'data-observation-comparison': '' });
+      line(body, 'Against published levels:', 'last trade ' + words(checks.trade) + '; ask ' + words(checks.ask) + '.' + (row.kind === 'burst' ? buyStopWords(checks) : '') + ' These dated comparisons are not an entry or cancellation instruction.', { 'data-observation-comparison': '' });
       const volume = row.delayed_volume || {};
       line(body, 'Delayed SIP volume:', words(volume.status) + ' · ' + (finite(volume.partial_volume) ? volume.partial_volume.toLocaleString('en-US') + ' partial shares' : 'partial volume unavailable') + ' · ' + words(volume.comparison) + '. Consolidated data is delayed at least 15 minutes.');
       line(body, 'Bar timestamps:', atCT(volume.daily_timestamp) + ' · prior ' + atCT(volume.previous_timestamp) + '. These label sessions; the volume data-through time is unavailable.');
@@ -623,7 +720,7 @@
       });
       host.append(button);
       host.append(node('p', { class: 'sc-hint' }, endpoint.service
-        ? 'Reload reads the configured public morning receipt and, once opened, the separate published research observation. While this tab is visible, admitted plans are checked at most once every 30 seconds during their session’s pre-open and entry window. Failed reads retain the last verified receipt with its original time. Reads do not request a new market quote or start a provider refresh.'
+        ? 'Reload reads the morning host’s receipt and the static morning file the morning workflow publishes, shows the newest one verified for this record, and, once opened, reads the separate published research observation. While this tab is visible, admitted plans are checked at most once every 30 seconds during their session’s pre-open and entry window. Failed reads retain the last verified receipt with its original time. Reads do not request a new market quote or start a provider refresh.'
         : 'Reload reads the latest static morning file and, once the research comparison has been opened, its dated observation, keeping what was verified when a read fails. It does not request a new market quote or start a provider refresh.'));
     } else host.id = 'disc-observations';
     const descriptor = { kind, candidate }; hosts.set(host, descriptor); paintHost(host, descriptor); return host;
@@ -634,7 +731,7 @@
     clock: at => { now = new Date(at).getTime(); paintAll(); scheduleReload(); },
     repaint: () => paintAll(),
     onChange: handler => { onChange = handler; },
-    facts: () => ({ state, absent, recordHash, canonicalHash: readerBinding ? readerBinding.canonicalSha : recordHash, projected: !!readerBinding, headline: headline(), generatedAt: receipt && receipt.generated_at, fresh: receiptFresh(), pending: !receipt && ['unbound', 'loading'].includes(state), restricted: [...new Set([...halted.keys(), ...corporate.keys()])] })
+    facts: () => ({ state, absent, recordHash, canonicalHash: readerBinding ? readerBinding.canonicalSha : recordHash, projected: !!readerBinding, headline: headline(), generatedAt: receipt && receipt.generated_at, source: receipt ? receiptSource : null, fresh: receiptFresh(), pending: !receipt && ['unbound', 'loading'].includes(state), restricted: [...new Set([...halted.keys(), ...corporate.keys()])] })
   };
   d.addEventListener('visibilitychange', scheduleReload);
   w.addEventListener('pageshow', scheduleReload);

@@ -14,6 +14,11 @@ export async function checkObservations({ browser, base, open, check, eq, shotsD
   const records = Object.fromEntries(await Promise.all(['observed', 'outage', 'no-tickets', 'halted', 'resumed', 'corporate-excluded', 'corporate-retained', 'corporate-resolved', 'corporate-resolution-carried', 'qeta-captured'].map(async name => [name, JSON.parse(await readFile(path.join(FIXTURES, name + '.json'), 'utf8'))])));
   const wait = page => page.waitForFunction(() => ['loaded', 'unavailable'].includes(SCStock.observations.facts().state));
   const facts = page => page.evaluate(() => SCStock.observations.facts());
+  // the selected stock's comparison line, and the two sentences a burst row may add to it
+  const comparison = async page => (await page.locator('#disc-observations [data-observation-comparison]').textContent()).replace(/\s+/g, ' ').trim();
+  const OVER = prices => ' At or over the trigger (' + prices + '): Fidelity’s words say a buy stop must be entered above the current market price, so this ticket’s stop-limit cannot be entered as written while the stock trades there.';
+  const UNDER = prices => ' Under the trigger (' + prices + '): the stop-limit as written is on the right side of the market while the stock trades there.';
+  const NO_INSTRUCTION = ' These dated comparisons are not an entry or cancellation instruction.';
   const setup = async (name = 'observed', options = {}) => {
     const response = { body: JSON.stringify(records[name]), status: options.status || 200, delay: 0, hold: options.hold || null };
     const requests = [];
@@ -58,6 +63,8 @@ export async function checkObservations({ browser, base, open, check, eq, shotsD
       check('entitlement describes actual request and feed limits', detail.includes('request succeeded') && detail.includes('at least 15 minutes') && detail.includes('data-through time is unavailable'));
       check('unmatched halt coverage never implies clearance', detail.includes('not listed') && detail.includes('absence is not trading clearance') && detail.includes('not comprehensive event clearance'));
       check('recorded price comparison never promises an entry', detail.includes('within published band') && detail.includes('not an entry or cancellation instruction'));
+      eq('a burst row at or over its trigger says what that means for its buy stop, and stays no instruction', await comparison(page),
+        'Against published levels: last trade within published band; ask within published band.' + OVER('last trade and ask') + NO_INSTRUCTION);
       await page.locator('#morning-open').click();
       await page.locator('.ss-morning__prep > summary').click();
       await page.locator('#morning-cash').fill('950');
@@ -77,6 +84,47 @@ export async function checkObservations({ browser, base, open, check, eq, shotsD
       eq('receipt expires independently of quote age', (await facts(page)).fresh, false);
       eq('browser observation errors', errors, []);
     } finally { await context.close(); }
+  }
+
+  // What a recorded price beside a burst ticket's trigger means for its buy
+  // stop: words built from the row's two recorded comparisons, naming which
+  // dated price was where. The states are set here by hand (the browser holds
+  // them to the collector's list, not to the prices); no field is added.
+  const states = await setup();
+  try {
+    for (const [trade, ask, want] of [
+      ['within_published_band', 'above_limit', OVER('last trade and ask')],
+      ['above_day2_extension', 'above_day2_extension', OVER('last trade and ask')],
+      ['below_trigger', 'within_published_band', OVER('ask') + UNDER('last trade')],
+      ['within_published_band', 'unknown', OVER('last trade')],
+      ['below_trigger', 'below_trigger', UNDER('last trade and ask')],
+      ['below_entry_floor', 'below_trigger', UNDER('ask')],
+      ['below_stop', 'below_entry_floor', ''],
+      ['unknown', 'unknown', '']
+    ]) {
+      const variant = structuredClone(records.observed); variant.rows[0].price_checks = { trade, ask };
+      await states.reload(variant);
+      eq(`burst row, last trade ${trade}, ask ${ask}: the buy-stop words`, [(await facts(states.page)).state, await comparison(states.page)],
+        ['loaded', 'Against published levels: last trade ' + trade.replace(/_/g, ' ') + '; ask ' + ask.replace(/_/g, ' ') + '.' + want + NO_INSTRUCTION]);
+    }
+    eq('buy-stop words: no browser errors', states.errors, []);
+  } finally { await states.context.close(); }
+  // A setting-up ticket's trigger sits above its last close, so its row says
+  // nothing of a buy stop, in the same receipt in which the burst's row does.
+  {
+    const multiple = await readFile(path.join(ROOT, 'tests/fixtures/cash-preview/observed-multiple.json'), 'utf8');
+    const tab = await open(browser, base, '/tests/fixtures/cash-preview/publication-multiple.json', NOW, 1280, {
+      hash: '#/explore/setting-up/COIL', reducedMotion: 'reduce',
+      beforeLoad: async page => { await page.route('**/morning.json', route => route.fulfill({ contentType: 'application/json', body: multiple })); }
+    });
+    try {
+      await wait(tab.page);
+      eq('setting-up row: the receipt carries a burst row and a setting-up row, both over their limits', [(await facts(tab.page)).state, JSON.parse(multiple).rows.map(row => [row.kind, row.price_checks.trade, row.price_checks.ask])], ['loaded', [['burst', 'above_day2_extension', 'above_day2_extension'], ['anticipation', 'above_limit', 'above_limit']]]);
+      eq('setting-up row: no buy-stop words', await comparison(tab.page), 'Against published levels: last trade above limit; ask above limit.' + NO_INSTRUCTION);
+      await tab.page.evaluate(() => { location.hash = '#/explore/bursts/AAPL'; }); await tab.page.waitForTimeout(250);
+      eq('the burst row of the same receipt carries them', await comparison(tab.page), 'Against published levels: last trade above day2 extension; ask above day2 extension.' + OVER('last trade and ask') + NO_INSTRUCTION);
+      eq('setting-up row: no browser errors', tab.errors, []);
+    } finally { await tab.context.close(); }
   }
 
   for (const name of ['outage', 'no-tickets']) {
