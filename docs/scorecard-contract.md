@@ -17,12 +17,16 @@ An empty settlement sample supplies no expectancy or cost-adjusted performance.
 Every valid retained pick in `docs/picks.json` whose signal session is within
 the prior 60 XNYS sessions or the current publication is included. Both published
 Burst tickets and eligible Anticipation tickets are counted; non-ticket setups,
-slot cuts, dry-run proposals and local saves/selections are excluded. Existing
-append semantics replace a rerun of the same kind/ticker/session. This counts
-retained plans, not every superseded publication revision. The file retains up
-to 260 picks, so it can truncate the window in a busy period. Capacity and load
-problems are disclosed; invalid picks cannot be scored and are named as a
-coverage limitation. Outside-window retained picks have an explicit count.
+slot cuts, dry-run proposals and local saves/selections are excluded. A rerun
+replaces a pick of the same kind, ticker and session (`record.append()`). A pick
+the rerun no longer issues is kept, so a ticket a later revision of its session
+withdrew is still counted (MG and SN of 8 October 2026, SN among the settled,
+and ZIM of 9 October). A setup issued again on a later night is a separate pick
+and is counted again (on 17 November 2026: 22 tickets, 17 distinct setups). The
+file retains up to 260 picks, so it can truncate the window in a busy period.
+Capacity and load problems are disclosed; invalid picks cannot be scored and are
+named as a coverage limitation. Outside-window retained picks have an explicit
+count.
 
 The following disjoint buckets sum to **published plans**:
 
@@ -56,24 +60,33 @@ cannot order the fill against the limit or the stop stays UNCERTAIN
 (`minute_order`). Minutes that do not reproduce the daily bar are not used, and
 every other potential fill remains UNCERTAIN with its original reason. The
 minutes establish the fill only; the walk from it is the daily model's.
-Stop-market gaps use the open; otherwise the stop takes precedence over
-same-bar profit-taking. Whole-share partial sales, stop raises and dated exits
-are exactly `plan.follow()`'s existing rules. All shares must reconcile before
-R exists. There is no second fill inference in the browser; the analysis tool
-reads the same retained minutes only when given `--docs`.
+Stop-market gaps use the open; a stop first reached inside a session is booked
+at exactly the stop price, with no slippage, the fill day included; otherwise
+the stop takes precedence over same-bar profit-taking. A stop on the fill day
+is therefore always -1.00R, whatever that day's low or close. Whole-share
+partial sales, stop raises and dated exits are exactly `plan.follow()`'s
+existing rules. All shares must reconcile before R exists. There is no second
+fill inference in the browser; the analysis tool reads the same retained
+minutes only when given `--docs`.
 
 R is the whole-share-weighted result divided by initial model risk from the
-established fill to the published protective stop. Existing two-decimal R
-rounding is retained: positive = win, negative = loss, zero = breakeven. Those
-three counts sum to resolved. Win rate = wins / resolved, including breakeven;
-mean and median R use exactly that denominator. Rates and mean/median are hidden
-below 20 resolved plans. This display threshold is not statistical validation.
+established fill to the published protective stop. R is unweighted by size and,
+through whole-share sales, depends on the share count; tickets sized under
+different model accounts are summed as equals. That is: every sum and mean
+counts a ticket's R as one unit whatever the ticket's size, a one-share ticket
+sells whole at its half-sale step, and a sum of R is not a sum of dollars.
+Existing two-decimal R rounding is retained: positive = win, negative = loss,
+zero = breakeven. Those three counts sum to resolved. Win rate = wins /
+resolved, including breakeven; mean and median R use exactly that denominator.
+Rates and mean/median are hidden below 20 resolved plans. This display
+threshold is not statistical validation.
 
 SPY is the average percent-price move from each resolved plan's entry-day open
 to its final sale day's close, using only matched pairs. Its pair count is
 separate; it is neither an investable portfolio benchmark nor an R comparison.
-There is no equity curve, compounding, execution P&L, fee/spread/tax model or
-claim of profitability. No optimization or favorable subgroup selection occurs.
+There is no equity curve, compounding, execution P&L, fee/spread/slippage/tax
+model or claim of profitability. No optimization or favorable subgroup
+selection occurs.
 
 ## Prices, regime and versions
 
