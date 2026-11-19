@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6976 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 7003 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15908,8 +15908,9 @@ after the merge); any trading edge.
 
 **Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` from `main` after
 PR 7. `go_live` is archived, so `rules_version` moves and every cascaded
-generator was regenerated; `orders.json` is version 3. The published
-record, picks, receipts, history, evidence and ledger are untouched.
+generator was regenerated; `orders.json` is version 4 (`live_ready`'s
+reasons are the gate's criteria). The published record, picks, receipts,
+history, evidence and ledger are untouched.
 
 **The gate** (`src/go_live.py`, `run.go_live`; the owner's guide
 `docs/operations/go-live.md`). `live_ready` is true only when all four hold,
@@ -15924,7 +15925,8 @@ each read from committed bytes:
   the evening was started), and checked by a morning file bound to that
   publication by `go_live.MORNING_DUE_CT` Chicago time. A session is closed
   the evening after, when its morning file exists; the ledger starts with
-  the first record that archives its trigger, so it starts at zero.
+  the first record that archives its trigger, so it starts at zero, and the
+  run must end on the session before tonight's.
 - `settled_forward_plans`: at least `go_live.MIN_SETTLED_FORWARD` model plans
   settled in the scorecard's window, each picked on or after the session from
   which the strategy's rules have stood unchanged (the rules digest without
@@ -15946,6 +15948,36 @@ mutant dies. The control survives.
 **The replay found one more**: PR 7 added its page check to CI's fixture
 step without adding it to the workflow test's list of that step's commands;
 the list names it now.
+
+**The review, worked.** The stack's review returned 22 PR 8 findings, two
+high, each reproduced before it was touched. The high one, found by three
+lenses: the streak was never measured against tonight, so after a run of
+missed sessions (which leave no row) ten counted sessions ending weeks ago
+still read met, and `orders.json` could have gone live on the first evening
+after an outage. `consecutive(ledger, session)` requires the run to end on
+the XNYS session before tonight's, and the validator re-derives the count
+from the record's own ledger. A morning check that quoted nothing (an
+inapplicable or unavailable receipt, a rehearsal, one before its window)
+counted as on time: only `go_live.MORNING_RAN` (the watch's own statuses)
+inside the collection window counts now. "Published by 7 PM" read the run's
+start clock: it reads the finish (the start plus `run.elapsed_seconds`),
+and the guide says the commit lands minutes later. Every event-registry
+review, which the PR 5 CI check forces every week or two, changed the
+strategy digest and restarted the settled count at zero:
+`go_live.NON_STRATEGY_RULES` leaves the registry out. A rule change first
+seen on a backfill made the backfill's own picks forward plans: `since`
+stands from the session after the newest publication. Recording the
+protocol as the guide says would have turned CI red and moved every
+fixture: the suite, `make_fixture.py` and the rehearsal read a pinned,
+unpassed copy. A non-object protocol or ablation file raised and failed the
+evening; it reads as unpassed. `orders.check()` now holds `live_ready` to
+the committed record's gate, and a gate with a non-string reason never
+makes the file live. The ten-session line, an uncounted newest session,
+each of `live_ready`'s two conditions, the pipeline's morning binding and
+the page's live state each have their case. `.env.example` names the two
+trigger variables. **Recorded, not fixed:** a hand dispatch with
+`only_if_unpublished` ticked counts as automatic; the record cannot tell it
+from the dispatcher's, and the guide says so.
 
 **Not claimable:** a live-ready night, which needs the owner's protocol
 record, ten on-time sessions from the first one this gate counts, and twenty

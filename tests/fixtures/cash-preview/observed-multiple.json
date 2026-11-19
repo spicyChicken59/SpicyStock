@@ -7,15 +7,15 @@
   "previous_observation_sha256": null,
   "dry_run": false,
   "publication": {
-    "data_sha256": "e9722494d55e6a7996943a180f48034fd8bb689fe79e2f9bc4a22ce2eff9e94c",
-    "context_sha256": "a0fd461b6f76eab06949d6cc99e586d4a816d5a9b2cea75ef31f9cf394c289dc",
+    "data_sha256": "6f057174cb78bd343f7c0cc59c917fb6a3c84238ca3a6c3e7261695b6af551ca",
+    "context_sha256": "12e0ee0ad8fe1868cb52094b8d63a502add78377b97e4ffc144e842740c34669",
     "run_id": "synthetic-cash-preview-multiple",
-    "rules_version": "ffc1bef74ba9",
+    "rules_version": "795e33f0209f",
     "measured_session": "2026-09-10",
     "applicable_session": "2026-09-11",
     "published_at": "2026-09-10T22:30:00+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "0fc969c324152396c9ab2f5ba8658509646a064a1b3c26236e75072188a777c3"
+    "reader_sha256": "c2c3ace80aa4a4365b10c06c6e3d17390028747c78dc6b5b55fa2bb43d844910"
   },
   "policy": {
     "version": 1,
@@ -136,7 +136,7 @@
     {
       "ticker": "AAPL",
       "kind": "burst",
-      "evidence_id": "16c9124d0f9a926510b8abcda3d59ce44bd3d7a076c6713d220f9ec5f5f329ad",
+      "evidence_id": "de5635cb488ce60b8d55da407799d9590269d2e522e1f9b8ed5ca3b49d27a740",
       "plan_sha256": "20fd2cbed4d2fc50fd6bd909700bc732864b527b40bd5f309e1a997b98e60ac9",
       "levels": {
         "trigger": 62.16,
@@ -214,7 +214,7 @@
     {
       "ticker": "COIL",
       "kind": "anticipation",
-      "evidence_id": "6fbede69775bc4abe1eaaa613ae39ebe0438cf11503ccce7ffb4bf9da12cd2f6",
+      "evidence_id": "23955cb4c4a1007c80271754be1dbec754db97defe560e550555df2a0cdccf45",
       "plan_sha256": "c0f200e616090c0e55e87ba44146e4bd1c81ee15601da0b9d578da15f09f138a",
       "levels": {
         "trigger": 110.61,

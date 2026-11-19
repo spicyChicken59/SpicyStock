@@ -576,6 +576,20 @@ async function recordView({ browser, base, open, check, eq, full, shotsDir }) {
       eq(`record ${name}: and names no criterion`, await page.locator('#record-card [data-go-live-criterion]').count(), 0);
     } finally { await context.close(); }
   }
+  // a gate that holds is shown live, its own sentence printed, every criterion met
+  {
+    const d = clone(full);
+    d.run.go_live.ready = true; d.run.go_live.reasons = [];
+    d.run.go_live.criteria.forEach((c) => { c.met = true; });
+    d.run.go_live.sentence = 'Live ready: every go-live condition holds; orders.json is no longer paper only.';
+    const rg = routed('record-gate-live', d);
+    const { page, context } = await open(browser, base, rg.url, NOW, 1280, { beforeLoad: rg.beforeLoad, reducedMotion: 'reduce' });
+    try {
+      await toView(page, 'record');
+      eq('record gate-live: the gate is shown live', await page.evaluate(() => { const n = document.querySelector('#record-card [data-go-live]'); return n ? n.getAttribute('data-go-live') : null; }), 'live');
+      eq('record gate-live: and prints the record’s own sentence', await first(page, '#record-card [data-go-live-sentence]'), d.run.go_live.sentence);
+    } finally { await context.close(); }
+  }
   // a record from before the minute-bar rule names no minute bars
   const older = clone(full); delete older.rules.record.intraday_fill;
   const r = routed('record-older', older);

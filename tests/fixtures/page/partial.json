@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "ffc1bef74ba9"
+  "rules_version": "795e33f0209f"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -953,7 +953,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "13e0e641bc43659fbba160105c520fcee229b2751e7b77176d7f38aa791f8224"
+   "context_sha256": "2d99414f666dc4a67ba23efc0f5bc40a4474d7de21236a2c2182507e77306b9e"
   },
   "earnings": {
    "version": 2,
@@ -978,7 +978,9 @@
     "SC 14D9",
     "SC 14D9/A",
     "DEFM14A",
-    "PREM14A"
+    "DEFM14A/A",
+    "PREM14A",
+    "PREM14A/A"
    ],
    "items": [
     "1.01",
@@ -1046,7 +1048,7 @@
     "settled_forward_plans"
    ],
    "strategy": {
-    "digest": "12ffb41c39bd27dd33759333c079158ed1629c2f4e55a2e6c2c80cd5b64ac922",
+    "digest": "4fe97a8dc8f1ca9e645b272e543e2fa8af7d99cfccdedd58ac096dcb0343c6f5",
     "since": "2026-09-10"
    },
    "ledger": [],
@@ -1688,7 +1690,9 @@
     "SC 14D9",
     "SC 14D9/A",
     "DEFM14A",
-    "PREM14A"
+    "DEFM14A/A",
+    "PREM14A",
+    "PREM14A/A"
    ],
    "items": [
     "1.01",
@@ -2307,7 +2311,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "ffc1bef74ba9"
+  "replay_rules_version": "795e33f0209f"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -2556,9 +2560,17 @@
   "breadth_revisions": {
    "previous_session": null,
    "compared": 0,
+   "not_retained": 29,
    "differ_count": 0,
    "differ": [],
-   "sentence": "There is no earlier publication's breadth history to compare."
+   "published": {
+    "2026-09-10": {
+     "up4": 0,
+     "down4": 0,
+     "ratio_10d": null
+    }
+   },
+   "sentence": "There is no earlier publication's breadth to compare."
   },
   "real_vs_model": {
    "status": "private",
@@ -2568,7 +2580,7 @@
    "47 tickets in the scorecard's window are 47 distinct setups.",
    "No model account is recorded for the 47 tickets.",
    "The 13 stopped tickets booked at the stop sum to -2.28R; read at that session's close, -0.70R; at its low, -3.50R.",
-   "There is no earlier publication's breadth history to compare.",
+   "There is no earlier publication's breadth to compare.",
    "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
   ]
  },

@@ -59,7 +59,7 @@ if str(ROOT) not in sys.path:
 
 from src import schema_check  # noqa: E402  (stdlib only: the publication gate imports this module)
 
-VERSION = 3
+VERSION = 4
 FILE = "orders.json"
 MORNING_FILE = "orders-morning.json"
 POSITIONS_FILE = "positions-template.json"
@@ -483,7 +483,7 @@ def live_ready(data: dict) -> dict:
     block = _dict(_dict(data.get("run")).get("go_live"))
     reasons = block.get("reasons")
     if block.get("version") != go_live.VERSION or not isinstance(reasons, list) \
-            or not set(reasons) <= set(go_live.CRITERIA):
+            or not all(isinstance(r, str) for r in reasons) or not set(reasons) <= set(go_live.CRITERIA):
         return {"value": False, "reasons": [LIVE_READY_REASON]}
     ready = block.get("ready") is True and not reasons
     return {"value": ready, "reasons": [] if ready else (list(reasons) or [LIVE_READY_REASON])}
@@ -821,6 +821,9 @@ def check(docs) -> list[str]:
         orders = validate(orders_raw)
         if orders["source"]["data_sha256"] != data_sha:
             out.append("orders.json is not bound to data.json")
+        elif orders["live_ready"] != live_ready(json.loads((docs / DATA_FILE).read_bytes())):
+            # the mode follows live_ready (consistency()); live_ready follows the record's own gate
+            out.append("orders.json's live_ready is not the committed record's gate")
     except (OSError, ValueError) as exc:
         return [f"orders.json: {exc}"]
     for name, kind in ((POSITIONS_FILE, "positions"), (MORNING_FILE, "orders_morning")):
