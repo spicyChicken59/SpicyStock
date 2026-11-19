@@ -17,7 +17,7 @@
     "reader_calls": 2
    },
    "clock": "2026-09-04T22:30:00+00:00",
-   "files_changed": 19,
+   "files_changed": 21,
    "guard": [
     {
      "at": "2026-09-04T22:20:00+00:00",
@@ -288,7 +288,7 @@
     "reader_calls": 2
    },
    "clock": "2026-09-09T00:30:00+00:00",
-   "files_changed": 15,
+   "files_changed": 17,
    "guard": [
     {
      "at": "2026-09-09T00:20:00+00:00",
@@ -425,7 +425,7 @@
     "reader_calls": 1
    },
    "clock": "2026-09-09T22:30:00+00:00",
-   "files_changed": 15,
+   "files_changed": 17,
    "guard": [
     {
      "at": "2026-09-09T22:20:00+00:00",
@@ -550,7 +550,7 @@
     "reader_calls": 4
    },
    "clock": "2026-09-10T22:30:00+00:00",
-   "files_changed": 15,
+   "files_changed": 17,
    "guard": [
     {
      "at": "2026-09-10T22:20:00+00:00",
@@ -673,7 +673,7 @@
     "reader_calls": 2
    },
    "clock": "2026-09-11T22:30:00+00:00",
-   "files_changed": 15,
+   "files_changed": 17,
    "guard": [
     {
      "at": "2026-09-11T22:20:00+00:00",
@@ -881,7 +881,7 @@
     "reader_calls": 2
    },
    "clock": "2026-09-15T22:30:00+00:00",
-   "files_changed": 15,
+   "files_changed": 17,
    "guard": [
     {
      "at": "2026-09-15T22:20:00+00:00",

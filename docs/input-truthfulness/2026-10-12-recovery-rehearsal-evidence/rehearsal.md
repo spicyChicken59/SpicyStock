@@ -18,7 +18,7 @@ Policy `recovery_rehearsal_v1` (version 1). `pipeline.run_evening()` through the
 
 ## What each night did
 
-**clean** — a clean night: every boundary answers. Exit 0, status `ok`. Published 2026-09-04 (ok; reads 2 of 2, verdict complete; 2 reaction and 1 anticipation ticket(s); cover "Trade next session. 2 A-quality bursts."). Mailed: 'Trade next session. 2 A-quality bursts. · 2026-09-04'. 19 file(s) under docs changed.
+**clean** — a clean night: every boundary answers. Exit 0, status `ok`. Published 2026-09-04 (ok; reads 2 of 2, verdict complete; 2 reaction and 1 anticipation ticket(s); cover "Trade next session. 2 A-quality bursts."). Mailed: 'Trade next session. 2 A-quality bursts. · 2026-09-04'. 21 file(s) under docs changed.
 - guard before: the primary slot (2026-09-04T22:20, `16 22 * * 1-5`): go=true, session 2026-09-04 — Scheduled session 2026-09-04; nominal slot 2026-09-04T22:16:00+00:00
 - guard after: the retry slot (2026-09-05T00:20, `16 0 * * 2-6`): go=false — 2026-09-04 is already published
 
@@ -31,21 +31,21 @@ Policy `recovery_rehearsal_v1` (version 1). `pipeline.run_evening()` through the
 - guard after: the retry slot (2026-09-09T00:20, `16 0 * * 2-6`): go=true, session 2026-09-08 — Scheduled session 2026-09-08; nominal slot 2026-09-09T00:16:00+00:00
 - guard after: the next session's open, with nothing recovered (2026-09-09T13:30, `16 0 * * 2-6`): go=false — 2026-09-08 recovery expired at the next session open
 
-**provider_recovered_at_retry** — the retry slot, 8:30 PM ET the same evening: the provider answers again. Exit 0, status `ok`. Published 2026-09-08 (ok; reads 2 of 2, verdict complete; 0 reaction and 1 anticipation ticket(s); cover "Nothing qualifies. Keep cash."). Mailed: 'Nothing qualifies. Keep cash. · 2026-09-08'. 15 file(s) under docs changed.
+**provider_recovered_at_retry** — the retry slot, 8:30 PM ET the same evening: the provider answers again. Exit 0, status `ok`. Published 2026-09-08 (ok; reads 2 of 2, verdict complete; 0 reaction and 1 anticipation ticket(s); cover "Nothing qualifies. Keep cash."). Mailed: 'Nothing qualifies. Keep cash. · 2026-09-08'. 17 file(s) under docs changed.
 - guard before: the retry slot (2026-09-09T00:20, `16 0 * * 2-6`): go=true, session 2026-09-08 — Scheduled session 2026-09-08; nominal slot 2026-09-09T00:16:00+00:00
 - guard after: the retry slot again (2026-09-09T01:00, `16 0 * * 2-6`): go=false — 2026-09-08 is already published
 - guard after: a delayed primary event for the same evening (2026-09-09T00:40, `16 22 * * 1-5`): go=false — 2026-09-08 is already published
 - guard after: a delayed retry event for the 4 September slot (a synthetic clock, to show the rule) (2026-09-05T06:00, `16 0 * * 2-6`): go=false — A newer session than 2026-09-04 is already published
 
-**reader_credit** — the reader's account has no credit left. Exit 2, status `degraded`; problems claude_unavailable. Published 2026-09-09 (degraded; reads 0 of 2, verdict unavailable; 0 reaction and 1 anticipation ticket(s); cover "No new burst tickets. Reader review incomplete."). Mailed: 'No new burst tickets. Reader review incomplete. · 2026-09-09'. 15 file(s) under docs changed.
+**reader_credit** — the reader's account has no credit left. Exit 2, status `degraded`; problems claude_unavailable. Published 2026-09-09 (degraded; reads 0 of 2, verdict unavailable; 0 reaction and 1 anticipation ticket(s); cover "No new burst tickets. Reader review incomplete."). Mailed: 'No new burst tickets. Reader review incomplete. · 2026-09-09'. 17 file(s) under docs changed.
 - guard before: the primary slot (2026-09-09T22:20, `16 22 * * 1-5`): go=true, session 2026-09-09 — Scheduled session 2026-09-09; nominal slot 2026-09-09T22:16:00+00:00
 - guard after: the retry slot (2026-09-10T00:20, `16 0 * * 2-6`): go=false — 2026-09-09 is already published
 
-**reader_transport** — the reader's transport fails on every call. Exit 2, status `degraded`; problems claude_unavailable. Published 2026-09-10 (degraded; reads 0 of 2, verdict unavailable; 0 reaction and 1 anticipation ticket(s); cover "No new burst tickets. Reader review incomplete."). Mailed: 'No new burst tickets. Reader review incomplete. · 2026-09-10'. 15 file(s) under docs changed.
+**reader_transport** — the reader's transport fails on every call. Exit 2, status `degraded`; problems claude_unavailable. Published 2026-09-10 (degraded; reads 0 of 2, verdict unavailable; 0 reaction and 1 anticipation ticket(s); cover "No new burst tickets. Reader review incomplete."). Mailed: 'No new burst tickets. Reader review incomplete. · 2026-09-10'. 17 file(s) under docs changed.
 - guard before: the primary slot (2026-09-10T22:20, `16 22 * * 1-5`): go=true, session 2026-09-10 — Scheduled session 2026-09-10; nominal slot 2026-09-10T22:16:00+00:00
 - guard after: the retry slot (2026-09-11T00:20, `16 0 * * 2-6`): go=false — 2026-09-10 is already published
 
-**email_failed** — the record publishes and the mail provider refuses the digest. Exit 3, status `degraded`, failed at `email`: `RuntimeError: Resend refused the request`; problems email_failed. Published 2026-09-11 (degraded; reads 2 of 2, verdict complete; 2 reaction and 1 anticipation ticket(s); cover "Trade next session. 2 A-quality bursts."). Mailed nothing. 15 file(s) under docs changed.
+**email_failed** — the record publishes and the mail provider refuses the digest. Exit 3, status `degraded`, failed at `email`: `RuntimeError: Resend refused the request`; problems email_failed. Published 2026-09-11 (degraded; reads 2 of 2, verdict complete; 2 reaction and 1 anticipation ticket(s); cover "Trade next session. 2 A-quality bursts."). Mailed nothing. 17 file(s) under docs changed.
 - guard before: the primary slot (2026-09-11T22:20, `16 22 * * 1-5`): go=true, session 2026-09-11 — Scheduled session 2026-09-11; nominal slot 2026-09-11T22:16:00+00:00
 - guard after: the retry slot (2026-09-12T00:20, `16 0 * * 2-6`): go=false — 2026-09-11 is already published
 
@@ -54,7 +54,7 @@ Policy `recovery_rehearsal_v1` (version 1). `pipeline.run_evening()` through the
 - guard after: the retry slot (2026-09-15T00:20, `16 0 * * 2-6`): go=true, session 2026-09-14 — Scheduled session 2026-09-14; nominal slot 2026-09-15T00:16:00+00:00
 - guard after: the next session's open, with nothing recovered (2026-09-15T13:30, `16 0 * * 2-6`): go=false — 2026-09-14 recovery expired at the next session open
 
-**next_session_after_a_missed_night** — the night after a missed one: every boundary answers again. Exit 0, status `ok`. Published 2026-09-15 (ok; reads 2 of 2, verdict complete; 2 reaction and 1 anticipation ticket(s); cover "Trade next session. 2 A-quality bursts."). Mailed: 'Trade next session. 2 A-quality bursts. · 2026-09-15'. 15 file(s) under docs changed.
+**next_session_after_a_missed_night** — the night after a missed one: every boundary answers again. Exit 0, status `ok`. Published 2026-09-15 (ok; reads 2 of 2, verdict complete; 2 reaction and 1 anticipation ticket(s); cover "Trade next session. 2 A-quality bursts."). Mailed: 'Trade next session. 2 A-quality bursts. · 2026-09-15'. 17 file(s) under docs changed.
 - guard before: the primary slot (2026-09-15T22:20, `16 22 * * 1-5`): go=true, session 2026-09-15 — Scheduled session 2026-09-15; nominal slot 2026-09-15T22:16:00+00:00
 - guard after: the retry slot (2026-09-16T00:20, `16 0 * * 2-6`): go=false — 2026-09-15 is already published
 

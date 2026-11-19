@@ -2636,12 +2636,16 @@ src/            history.py (public recovery and coverage)
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 delivery.py (where a publication fell against the evening workflow's own slots and the next open; the record archives it, the page and the service-health reading read it)
+                freshness.py (what a record says about the next publication: the next session, its completion, the two slots and the recovery limit; state() answers newest, not_due, pending, late or missing for a reader's own clock; standard library only)
+                brief.py (the analyst's daily brief: brief.json and brief.md, a function of the record's bytes, the pick ledger's bytes and the run's model-record block; no clock, no network)
+                model_record.py (a reading of the model's own record for the daily brief: tickets against distinct setups, the model account each ticket was sized against, a stop booked at the stop beside its close and its low; held to the scorecard's rows, changes nothing; python -m src.model_record --docs docs)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · morning_service.py · morning_service_worker.py · morning_service_journal.py · morning_service_report.py · morning_host.py · morning_host_wsgi.py · reader.py · issuer_evidence.py
 docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · app-issuer-evidence.js · app-stop-research.js · app-research-observations.js · app-research-outcomes.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 reader.json · reader-observations/ (derived browser projection and deferred public history)
                 stop-research.json · stop-research/ (registered comparison and immutable cohorts)
                 research-outcomes.json · research-outcomes/ (dated conditional follow-through snapshots)
+                brief.json · brief.md (the analyst's daily brief, derived each evening and bound to data.json and picks.json by SHA-256; written by the first evening run after this change)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)
                 historical-validation/ (the study's case files -- each case's archive context and evidence, byte for byte, under the digests the study recorded; frozen by tools/freeze_validation_cases.py because the archive below prunes, and held by its --check)
                 history/ (recovery) · evidence/ (deduplicated source objects)
@@ -2649,7 +2653,7 @@ docs/           index.html · app.js · app.css · app-reading.js · app-method.
                 quality-ledger/ (versioned publication facts; created by future real publications)
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
                 broker-fidelity.md (the ticket on Fidelity's order entry; each fact labelled Fidelity's words, a regulator's words, inferred, unconfirmed or SpicyStock's advice)
-tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
+tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/ · fixtures/brief/ (the brief's golden pair from the page fixture full; generate.py --check holds it) · fixtures/model-record/ (the 17 November 2026 record with its bars, frozen from git by its build.py; --check holds it)
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py · publish_morning.py · probe_morning_sources.py · sync_morning_service.py
                 probe_sec_access.py (a dispatch-only diagnostic: SEC requests for AAPL and ZIM, or up to four named tickers, through the issuer collector's transport, and the index rows its row rules refuse, printed to the log; never published)
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)
