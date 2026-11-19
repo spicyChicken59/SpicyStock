@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6568 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6575 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15124,3 +15124,317 @@ in a detached worktree judged by the whole test files naming their rule.
 **Not claimable:** a live candidate whose listed 8-K carries a material item;
 the first night under earnings block v2 (Monday 9 November); the morning host
 under #213 and #214 (Mo's redeploy); any trading edge.
+
+## Checkpoint, 19 Nov 2026 -- the layered setup: a daily brief for an outside analyst, the analyst's prompt, and the audit's eleven gaps
+
+**The owner's instruction.** Mo, 19 November: SpicyStock is the view and the
+daily output, with saving a setup and watching it change over days; an outside
+analyst agent takes the burst outputs, researches them, looks at his Fidelity
+account and helps him decide; he places every order. He attached an outside
+audit's eleven gaps, asked for them corrected, and asked for a detailed prompt
+for that analyst. The paragraph at the top of this file and `PRODUCT_GOAL.md`
+say so.
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` from `main` at
+`0e1a3e10`, **PR #220**, `main` merged in once (`a8f67329`, the 18 November
+publication). Untouched: the published record, picks, compact reader and every
+receipt; the history, the evidence objects and the quality ledger; the vendored
+design system; the pinned sources (`breadth.py`, `quality.py`, `scans.py`,
+`sessions.py`); every sentence `src/plan.py` emits. No rule moved, so
+`rules_version` moves only with the registry (below). No run, mail, dispatch,
+provider call or credential. The audit's own evidence file was not in this
+workspace; "the strategy page" was read as the Method walkthrough and
+`knowledge/method.md`, which fit all six of its sub-claims.
+
+**How it was worked.**
+- Eight read-only verifiers checked each gap by execution before anything was
+  changed. Their numbers are below.
+- Eight builders, one worktree each, then one integration pass here.
+- A usage limit stopped five builders at 07:03 UTC. Their partial work stood as
+  WIP commits and was finished on a second pass.
+- A second usage limit stopped the first review's skeptics and two builders
+  (the buy-stop notes and the test holes). Two continuation engineers read
+  each builder's commits against its brief and finished it in its own
+  worktree; a final review read what changed after the first one.
+
+**What was built.**
+- **The brief** (`src/brief.py`, `docs/brief.json`, `docs/brief.md`): one
+  publication read for an outside analyst, derived from the installed record
+  and pick ledger and nothing else, bounded at 250,000 and 80,000 bytes. It
+  says what the file does not establish, prints all five regime rules fired or
+  not, marks every row a ticket or research only, and gives the instants to
+  judge freshness with the reader's own clock (`src/freshness.py`).
+  `pipeline.publish_brief()` writes it after the research companions and never
+  fails a night. Over the 18 November record it is 238,063 and 77,973 bytes,
+  38 candidates in detail and 15 compact.
+- **The model record** (`src/model_record.py`): the same retained tickets read
+  by setup and by account, with each stop at the booked price, that day's close
+  and that day's low. It refuses to speak when it disagrees with the scorecard.
+- **The analyst's prompt** (`docs/analyst/prompt.md`, with a short bootstrap
+  and an owner's note): the
+  outside analyst's standing instructions (`prompt.md`): its role and hard
+  limits (read only, no credentials, never an order, the owner decides), what
+  SpicyStock has and has not shown gap by gap, how to read and bind the brief
+  and judge its freshness with its own clock, the method as a rule sheet with
+  each rule's source, decision tiers, a ten-item event check, sizing for two
+  cash IRAs, Fidelity order entry by price state with the one-sitting check,
+  managing a position, a Chicago-time cadence, message templates, a trade
+  ledger in `knowledge/trade-ledger.md`'s words, and a private profile Mo
+  fills in; `bootstrap.md` is a 2,000-character start for a bot with a short
+  instruction box, and `README.md` is the owner's guide.
+  `tests/test_analyst_prompt.py` holds every number the prompt states to the
+  code's constants, and the order of the exit ladder, the gates, the fill
+  rules, the admission rule, the half, the clamp and the state tables to the
+  code's own walks.
+- **The service watch** (`tools/service_watch.py`, `service-watch.yml`): flags
+  a publication still absent six hours before its limit, a missing one, and a
+  ticket night with no morning check; mails only on a flag. It runs on the same
+  late scheduler, and says so.
+- **`only_if_unpublished`** on `evening.yml`: a dispatch from outside GitHub's
+  scheduler that publishes the newest completed session once, from that
+  session's primary slot (6:16 PM ET), and is safe to repeat. Creating that
+  trigger is Mo's.
+- **The Morning desk** reads the static receipt beside the host and shows the
+  newest receipt verified for the record.
+- **The texts**: the walkthrough, `knowledge/method.md`, the help terms and the
+  page's own sentences say what the code does; `knowledge/rules.md` states
+  every rule in pipeline order with its provenance class.
+- **The notes**: the Fidelity note revised, a one-sitting verification
+  protocol, a trade ledger, what is checked about events, a scorecard contract.
+- **The registry**, reviewed 19 November: one dated source added for MG, six
+  review dates moved, nothing resolved; ACVA waits on captured bytes.
+- **Fidelity's buy-stop rule beside every burst order**: a burst ticket's buy stop is its last close,
+  and Fidelity's rule (a search excerpt, labelled) is that a buy stop must be
+  entered above the current market price. A second labelled note says so
+  beside every burst order on the page, in the handoff's readback and once in
+  the mail, never beside a setting-up ticket; on the action card and the
+  decision summary both broker notes sit under one closed disclosure,
+  because printed open they pushed *Copy order* past a 390 px phone's screen
+  (602 px under the card's top with the part-fill note alone; 480 px
+  folded). The plan's row is
+  *ticket fills* (the buy stop up to the limit), the chart's band is the
+  entry zone, and the mail's facts line names the buy stop, the limit and
+  the skip line.
+
+**The eleven gaps: found, changed, open.**
+
+1. *No proven edge.* Confirmed. The live scorecard is 22 tickets, 5 settled,
+   +0.43R, under its own 20-settled floor. The backtest's +0.08R a ticket was
+   at another account, the reader not run, under rules from before the
+   admission gate. The frozen study's confirmatory interval includes zero.
+   Changed: the brief and the prompt lead with it. Open: evidence, which only
+   more nights and a ledger of real trades can supply. No night has been GREEN.
+2. *Fidelity never tested with a ticket.* Confirmed. A burst ticket's buy stop
+   is its last close; whether Fidelity accepts it before the open, or the OTO
+   at all, is unconfirmed. Over 13,599 counterfactual burst tickets, day 1
+   opened at or over the buy stop on 54.8%. Changed: the note, the protocol,
+   order entry by price state in the brief and the prompt, the labelled note
+   beside each burst order. Open: the sitting itself, which is Mo's.
+3. *Scheduled jobs run hours late and nothing alerts.* Confirmed: the evening
+   cron was created 3.56 to 7.99 hours late from 2 to 18 November, and every
+   session still published before the next open (the narrowest margin 9.36
+   hours). The desk had said "No morning check for this record" for ten
+   sessions, because the page read only the Railway host, still on its
+   31 October image. Changed: the desk, the watch, the dispatch box, the
+   brief's freshness instants. Open: GitHub's scheduler; the on-time trigger
+   and the Railway redeploy are Mo's.
+4. *The strategy page contradicts the code.* Confirmed, six ways. The veto is
+   three or more rising closes of any size, not "three up days"; the ticket is
+   a buy stop at the close with a stop-set limit, not a zone; two exit steps
+   were missing; the break-even figure is a third party's test of another
+   setup. Changed: the texts and the rule sheet.
+5. *The traffic light is unvalidated and almost always off.* Confirmed: 48
+   sessions through 17 November, 35 RED, 13 YELLOW, 0 GREEN. The backtest's
+   "no gate" column treats every night as GREEN; +1.14R of its +13.68R gap is
+   the RED nights. Changed: the brief and the Market view print the five rules
+   every night; the texts say the gate is this project's and is not shown to
+   improve outcomes. Open: the gate's value.
+6. *Much of the method is this project's own provisional rules.* Confirmed.
+   Changed: the rule sheet gives every rule its class and says what is Bonde's
+   and what is not.
+7. *The scorecard counts repeats and mixes account sizes.* Confirmed: the 22
+   tickets are 17 distinct setups, sized against three model accounts. Changed:
+   the model record; the Record view and the contract say how tickets are
+   counted, and `record.SCORECARD_NOTE`, which every record publishes, says a
+   fill at the open whose day then reaches the stop is booked at exactly the
+   stop (it had said a fill-day low under the stop is uncertain). Not
+   changed: the scorecard's arithmetic.
+8. *Takeover and news coverage is stale.* Confirmed: all seven registry reviews
+   were overdue. Changed: the review; the brief, Method and a known-deal chip
+   state the registry's age and flag a listed row that is in it; the coverage
+   note. Open: no news is read here, by design.
+9. *Gap-down losses are understated.* Confirmed: a stop touched inside a
+   session is booked at exactly the stop. The three 4 November tickets read
+   -1.00R each as booked, -4.66R together at that day's closes and -5.78R at
+   its lows. Changed: the model record carries all three readings; the texts
+   say what is booked.
+10. *Inputs shift from night to night.* Confirmed: a stale tail of 13 to 27
+    stocks, membership moving on 23 of 25 publications, breadth history read
+    again over each night's stocks. Changed: the brief says what the inputs do
+    not establish; a saved setup's model plan is matched by its evidence
+    reference, where the moving rules digest had hidden it from the night
+    after. Open: one price source, with nothing to cross-check it.
+11. *The tests are strong but nothing watches the system.* Confirmed. Changed:
+    the watch, and the analyst's first step every session.
+
+**Measured** (this sandbox, Python 3.12; the commit `526b52b2`):
+- the whole pytest suite in a worktree outside the repository, the one file
+  that needs a `pip` module this sandbox's venv lacks left out: 6,499
+  passed and 34 environment-gated skips in 24 m 42 s (6,568 collected);
+- every fixture generator's `--check` current after the cascade, the recovery
+  rehearsal current, the parity corpus current (171 cases, 47 accepted by the
+  page), the five frozen validation copies current;
+- the whole page smoke with `--shots`: 19,115 of 19,127. The twelve failures
+  are the wait-explanation scroll checks at 390 and 320 px, which a routed
+  copy of the base's page fails identically here and which CI's page job
+  passes on this head; screenshots of the burst card closed and open, the
+  plan disclosure and the handoff at 390 and 1280 were looked at;
+- CI on `526b52b2`: pytest, page, both historical runtimes and both gitleaks
+  runs green;
+- actionlint clean on the changed workflows; gitleaks with the repository's
+  config clean on the copied issuer bundle.
+
+On the final tree, after the second review's fixes: the whole pytest suite in
+a worktree outside the repository, the same file left out, 6,506 passed and
+34 environment-gated skips in 24 m 26 s (6,575 collected); the browser suites
+the fixes touch (`morning-service-reader`, `observations`, `session`,
+`buystop`, `page-text`, `full`) 1,696 of 1,696; gitleaks over the changed
+files clean.
+
+**Mutation passes**, every mutant in a scratch copy, the tree never written:
+- brief: 98 mutants and 5 controls over three passes; two survivors were holes
+  (the hot-mark rule exactly at its line; an exception's text published) and
+  are closed;
+- model record: 117 mutants, 116 dead and 1 equivalent; 6 controls alive;
+- texts and rule sheet: 60 mutants dead, 8 controls alive;
+- Morning desk: 22 page mutants dead, 2 controls alive;
+- knowledge notes: 59 mutants dead, 4 controls alive;
+- page text: 76 page mutants; three survivors were holes and are closed;
+- service watch and the dispatch guard: 36 mutants; one survivor (a naive
+  clock refused by another rule first) is closed; 3 controls alive;
+- the brief's model-record integration: 2 mutants dead, a control alive;
+- the test holes the first review named (the prompt's rules and six brief
+  and model-record rules): 15 holes, each listed mutant dead in the test
+  naming its rule, controls alive;
+- the buy-stop notes: 6 Python and 17 page mutants dead, controls alive;
+- the review's fixes: the guard's slot rule (3 mutants), the retained
+  evidence (5), the brief links' title (1), the Morning desk's veto and
+  error words (7), the scorecard note (3: the old note, a fill-day low read as uncertain, the note losing its words); controls alive;
+- the second review's fixes: the saved halt origins (2 page mutants: the
+  restore dropped, and a fact with no saved origin read as another
+  publication's, which survived until the legacy-cache case was added), the
+  in-window next action (1 page mutant), the agreement holds and the minute
+  fill (8 mutants), each dying in the check naming its rule; controls alive.
+
+**The review, worked.** One workflow by execution over `db59d4fd`, four
+lenses (the analyst prompt; the brief and the model record; the service watch
+and the guard; the documents), a skeptic for each medium or high finding. It
+returned 39 findings: 1 high, 16 medium, 22 low. Six skeptics, all of the
+prompt lens, finished and reproduced their finding; the other eleven died on
+the session's usage limit, and a skeptic that died is not a refutation, so
+every finding was reproduced here by execution before it was touched. All 39
+are closed or recorded:
+- the high: the freshness word `newest` said no newer record could exist,
+  when a session can be published twice and a ticket withdrawn; it says the
+  same session can be published again, and to compare the binding first;
+- the brief: a failed install left last night's pair beside a new record, so
+  the publication gate refused the site (the pair is removed now when it is
+  not bound to the installed record); an anticipation ticket's order line said
+  "gap ok above" where the record's rule says a gapped open asks for a
+  catalyst check; a burst whose stop sits over its skip-under line got
+  overlapping price states; the bars' fetch instant was the directory's
+  capture time; the model-record block was all or nothing at its bound (it is
+  carried reduced first); five fixed sentences said more than the file; the
+  research tail's cap cut the admitted names first;
+- the prompt: a burst's order-entry table assumed the stop under the skip
+  line; a refused setting-up row prints levels that are not usable; a stop
+  raised under a day's high can sit above the market; the pre-open card was a
+  burst card only; the ledger words differed from the ledger note; a query
+  on the morning host's address is refused; a Markdown-only reader cannot fill
+  an evidence id;
+- the service watch: a morning check that quoted nothing counted as landed;
+  "nothing can publish that session now" was false; a second missed night was
+  silent; an unreadable record mailed nothing; a guarded dispatch ran from the
+  session's completion, two hours before the slot the schedule waits for (it
+  waits for the primary slot now);
+- the Morning desk: a host stuck on a receipt bound to another publication
+  vetoed the record's own verified receipt for every ticker through a halt it
+  remembered (that halt keeps its ticker's entry withheld and is named; a
+  restriction read from a file bound to this record stays fail closed); a
+  failed read printed the browser's own error wording;
+- the documents: the registry review's one captured source sat in a rolling
+  archive that drops it after 27 November (kept beside the manifest now); the
+  day-2 line was said never to be the limit; two event-coverage sentences;
+  footer links that 404 until the first run (their title says so);
+- the scorecard note said a fill-day low under the stop is uncertain, beside
+  the Record view's sentence that a stop on the fill day is minus one R; it
+  says what `record.fill()` does now, and every record-derived fixture was
+  regenerated through its own generator;
+- recorded, not changed: the publication gate holds the brief's binding to
+  the record, not its content.
+
+**The second review, worked.** A workflow by execution over `526b52b2`, three
+lenses (the buy-stop notes; the first review's fixes; whether the analyst's
+files agree with each other and with the code), one skeptic for each medium
+or high finding. Eight agents, none errored; all five skeptics reproduced
+their finding. Fourteen findings, every one reproduced here before it was
+touched and every one fixed:
+- the high was a regression of the first review's fix: the Morning desk
+  remembered which publication taught it a halt only in memory, so after a
+  reload a halt learned from this record's own morning file no longer refused
+  a receipt that omitted it. The origins are saved beside the cached facts
+  now, and a cached fact with no saved origin is treated as this record's
+  (fail closed); a reload case for each side and a legacy-cache case hold it;
+- inside the entry window the next action still called a burst buy stop's
+  acceptance unconfirmed after the open, where the broker note says a buy stop
+  under the market is refused; it says the ticket cannot be entered while the
+  stock trades at or over its buy stop;
+- two missed nights in a row named only the first night's rule; the alert
+  says the newest night can still be published by a guarded dispatch while its
+  window is open;
+- `.env.example` stated the guarded dispatch without its primary-slot
+  condition;
+- the prompt's open-state table quoted the shares of the broker note's price
+  ranges as shares of price states; a stop at or over the skip line moves
+  tickets between them. The note carries a state table now (6.1% `below_stop`,
+  1.8% `below_entry_floor`, 37.3% `below_trigger`), the prompt and the
+  protocol quote it, and `tests/test_analyst_agreement.py` holds the state
+  table to the range table through the two crossings the note names;
+- the lows: the prompt said a minute-bar fill is always at the trigger (at
+  the crossing minute's open when that opened over it); a ledger column the
+  ledger note lacked; a view named "Today's scan" where the page says "Latest
+  scan"; "the five" capabilities beside a table of six; where the prompt's
+  version line sits; the broker note did not record the buy-stop note it
+  feeds; a pixel figure that did not reproduce; and the analyst files named
+  the owner's account types, which PRODUCT_GOAL keeps off the repository
+  (they are "IRA 1" and "IRA 2" now; the types stay in git history from
+  PR #212).
+
+**Keep / fix / defer / omit.**
+- *Keep:* SpicyStock recommends nothing and reads no account; the brief is
+  derived from the installed bytes; a research row is never called a ticket.
+- *Fix if it bites:* past 60,000 bytes (about 53 retained tickets) the
+  model-record block is carried reduced, and past that it is not carried; the
+  brief fills to its bound on a busy night, and says what it left out; the
+  footer's brief links are not checked by the page, only labelled.
+- *Defer:* ACVA's resolution; a second price source; a `rules` link in the
+  brief; R in `tools/private_results.py`.
+- *Omit:* a broker connection; any order SpicyStock places; a claude.ai trigger
+  created without Mo's ask.
+
+**Mo's own steps.**
+- Run the Fidelity sitting (`knowledge/broker-fidelity-protocol.md`), and say
+  how the 5 November orders were entered.
+- Redeploy the Railway host from `main`, and delete the `skillful-light`
+  project.
+- Create the on-time evening trigger that ticks `only_if_unpublished`, if he
+  wants one; it does nothing before 6:16 PM ET.
+- The morning dispatch fires at 8:21 AM CT, before the 8:30 open, so every
+  ticket morning's receipt through 18 November carried no recent quote. Moving it into the
+  entry window, or redeploying the Railway host, would give in-window quotes;
+  the trigger is his.
+- Give the analyst bot the bootstrap note.
+
+**Not claimable:** the first night's brief (the first evening run after the
+merge writes it; until then the brief's links are 404); the watch's first
+alert; that any analyst bot follows the prompt; any trading edge.
