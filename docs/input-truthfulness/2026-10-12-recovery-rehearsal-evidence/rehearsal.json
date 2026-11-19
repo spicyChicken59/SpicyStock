@@ -8,7 +8,8 @@
     "within": true
    },
    "calls": {
-    "bars_requests": 2,
+    "bars_requests": 1,
+    "cross_check_requests": 1,
     "mail_subjects": [
      "Trade next session. 2 A-quality bursts. \u00b7 2026-09-04"
     ],
@@ -130,6 +131,7 @@
    },
    "calls": {
     "bars_requests": 0,
+    "cross_check_requests": 0,
     "mail_subjects": [],
     "mails": 0,
     "minute_requests": 0,
@@ -200,6 +202,7 @@
    },
    "calls": {
     "bars_requests": 2,
+    "cross_check_requests": 0,
     "mail_subjects": [
      "FAILED \u2014 no plan for 2026-09-08"
     ],
@@ -279,7 +282,8 @@
     "within": true
    },
    "calls": {
-    "bars_requests": 2,
+    "bars_requests": 1,
+    "cross_check_requests": 1,
     "mail_subjects": [
      "Trade next session. 2 A-quality bursts. \u00b7 2026-09-08"
     ],
@@ -419,7 +423,8 @@
     "within": true
    },
    "calls": {
-    "bars_requests": 2,
+    "bars_requests": 1,
+    "cross_check_requests": 1,
     "mail_subjects": [
      "No new burst tickets. Reader review incomplete. \u00b7 2026-09-09"
     ],
@@ -544,7 +549,8 @@
     "within": true
    },
    "calls": {
-    "bars_requests": 2,
+    "bars_requests": 1,
+    "cross_check_requests": 1,
     "mail_subjects": [
      "No new burst tickets. Reader review incomplete. \u00b7 2026-09-10"
     ],
@@ -669,7 +675,8 @@
     "within": true
    },
    "calls": {
-    "bars_requests": 2,
+    "bars_requests": 1,
+    "cross_check_requests": 1,
     "mail_subjects": [],
     "mails": 0,
     "minute_requests": 0,
@@ -796,6 +803,7 @@
    },
    "calls": {
     "bars_requests": 1,
+    "cross_check_requests": 0,
     "mail_subjects": [
      "FAILED \u2014 no plan for 2026-09-14"
     ],
@@ -875,7 +883,8 @@
     "within": true
    },
    "calls": {
-    "bars_requests": 2,
+    "bars_requests": 1,
+    "cross_check_requests": 1,
     "mail_subjects": [
      "Trade next session. 2 A-quality bursts. \u00b7 2026-09-15"
     ],
@@ -1026,14 +1035,14 @@
  },
  "summary": {
   "bars_requests": {
-   "clean": 2,
-   "email_failed": 2,
+   "clean": 1,
+   "email_failed": 1,
    "holiday": 0,
-   "next_session_after_a_missed_night": 2,
+   "next_session_after_a_missed_night": 1,
    "provider_outage": 2,
-   "provider_recovered_at_retry": 2,
-   "reader_credit": 2,
-   "reader_transport": 2,
+   "provider_recovered_at_retry": 1,
+   "reader_credit": 1,
+   "reader_transport": 1,
    "stale_feed": 1
   },
   "bars_requests_within_bound_every_night": true,

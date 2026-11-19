@@ -1,6 +1,7 @@
 """Public history/coverage stays bounded, source-grounded, and independent of saves."""
 from copy import deepcopy
 from datetime import date, timedelta
+from src import cross_check
 import gzip
 import hashlib
 import json
@@ -115,7 +116,10 @@ def test_pipeline_covers_every_saveable_signal_without_more_boundary_calls(marke
     # The real pipeline with its normal doubles: no additional fetch/read client.
     rep,data,docs=evening(tmp_path,market)
     assert rep.exit_code()==0
-    assert len(fake_alpaca.bar_requests)==1
+    # one scan request; the cross-check reads the tickets' signal day from the iex feed in one more
+    scan=[r for r in fake_alpaca.bar_requests if r.feed.value!=cross_check.FEED]
+    cross=[r for r in fake_alpaca.bar_requests if r.feed.value==cross_check.FEED]
+    assert len(scan)==1 and len(cross)==(1 if data['run']['cross_check']['rows'] else 0)
     assert len(claude.calls)==1
     assert (docs/"history/index.json").exists()
     assert set(history.signals(data)) <= set(data['observations']['signals'])
