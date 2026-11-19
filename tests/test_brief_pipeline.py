@@ -123,7 +123,11 @@ def test_a_model_record_that_cannot_be_built_costs_the_night_nothing(market, cla
     assert out["status"] == "derived"
     assert out["model_record"] == {"status": "not_computed", "reason": brief.NOT_COMPUTED_FAILED}
     warned = [r.getMessage() for r in caplog.records if r.getMessage().startswith("Model record unavailable")]
-    assert len(warned) == 1 and ("(RuntimeError)" if failure == "raises" else "(ModuleNotFoundError)") in warned[0]
+    # two readers ask for it -- the scorecard reading and the brief -- and each says once that it could not
+    kind = "(RuntimeError)" if failure == "raises" else "(ModuleNotFoundError)"
+    assert warned == [f"Model record unavailable for the scorecard reading {kind}.",
+                      f"Model record unavailable {kind}; the analyst brief says it was not computed."]
+    assert data["scorecard_reading"]["status"] == "not_computed" and kind in data["scorecard_reading"]["sentences"][0]
     assert b"must not reach" not in (docs / brief.JSON_FILE).read_bytes() + (docs / brief.MD_FILE).read_bytes()
 
 

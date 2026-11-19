@@ -18,7 +18,9 @@ The growth tripwires read the regenerated `red.json` fixture against what it
 was when the ceiling was measured: an unreviewed, unplanned burst, a funnel
 row, an observation signal, a history bar and a symbol entry, each added once
 for every such entry the design point carries; the rules, added once; the
-ledger's candidate for one of those bursts, once a burst; and everything else,
+ledger's candidate for one of those bursts, once a burst; the blocks the code
+writes once a night and bounds whatever the burst count (``NIGHTLY``), once;
+and everything else,
 in the record and in its ledger entry, as if it came once a burst. That last is
 an overestimate for anything written once a night -- a fixed addition of a few
 kilobytes already asks for a re-measure -- and never an underestimate for a new
@@ -59,8 +61,14 @@ FIXTURE_ROWS = ("AMD", "NVDA", "PLUG", "DLLR")
 #: the blob below, read out of git at the commit (on main) that wrote it, by its whole id, and measured
 #: with the current code.
 BASELINE = {"burst": (4, 28641), "funnel_row": (6, 203), "signal": (7, 1027), "bar": (10, 1424),
-            "symbol": (10, 1172), "rules": (1, 16402), "residual": (6, 58050),
+            "symbol": (10, 1172), "rules": (1, 16402), "residual": (6, 58050), "nightly": (1, 0),
             "ledger_candidate": (4, 7221), "ledger_residual": (6, 8965)}
+#: Blocks the code writes once a night and bounds whatever the burst count -- a reading with a
+#: fixed number of sentences and a bounded list of revisions -- added after the ceiling was
+#: measured. Each is carried once, in the record and the projection, and is taken out of the
+#: record's rest, which would otherwise spread it over every burst of the design point. A block
+#: that grows with the candidates does not belong here.
+NIGHTLY = (("scorecard_reading",),)
 BASELINE_COMMIT = "3ee0e427ecb42a972715736cd893e74ab8bedfaa"
 BASELINE_BLOB = "579481ffe341f904568bc38d237cdf179d567269"
 #: The components whose total is a whole record's rest: their growth is spread over its bursts.
@@ -70,7 +78,7 @@ SPREAD = ("residual", "ledger_residual")
 #: of the record's files; the record's headroom is the smallest, so that never trips first.
 LANDS = {"burst": ("burst", (0, 1)), "funnel_row": ("burst", (0, 1)),
          "signal": ("signal", (0, 2)), "bar": ("bar", (0, 2)), "symbol": ("symbol", (0, 2)),
-         "rules": ("once", (0, 1, 3)), "residual": ("burst", (0, 1, 2)),
+         "rules": ("once", (0, 1, 3)), "residual": ("burst", (0, 1, 2)), "nightly": ("once", (0, 1)),
          "ledger_candidate": ("burst", (3,)), "ledger_residual": ("burst", (3,))}
 #: The length of every clone's ticker and every added symbol's name: a letter and five digits.
 CLONE, SYMBOL = "Z00000", "Y00000"
@@ -140,6 +148,13 @@ def components(data) -> dict:
     rest = {**data, "bursts": [], "rules": {},
             "funnel": {**data["funnel"], "reaction": {**data["funnel"]["reaction"], "rows": []}},
             "observations": {**observations, "symbols": {}, "signals": {}}}
+    nightly = 0
+    for path in NIGHTLY:
+        holder = rest if len(path) == 1 else rest.setdefault(path[0], {})
+        if len(path) == 2:
+            rest[path[0]] = holder = dict(holder)
+        if path[-1] in holder:
+            nightly += len(compact(holder.pop(path[-1])))
     ledger_rest = quality_ledger.build({**data, "bursts": [], "rules": {}}, "0" * 64, [])
     return {"burst": (len(bursts), sum(bursts)),
             "funnel_row": (len(funnel), sum(len(compact(r)) for r in funnel)),
@@ -148,6 +163,7 @@ def components(data) -> dict:
             "symbol": (len(symbols), sum(entry(k, {**v, "history": []}) for k, v in symbols.items())),
             "rules": (1, len(compact(data["rules"]))),
             "residual": (len(data["bursts"]), len(compact(rest))),
+            "nightly": (1, nightly),
             "ledger_candidate": (len(candidates), sum(candidates)),
             "ledger_residual": (len(data["bursts"]), ledger_bytes(ledger_rest))}
 
@@ -434,7 +450,8 @@ def test_each_components_growth_lands_in_the_files_that_carry_it_once_an_entry(m
     b, s, bar, sym = n["burst"], n["signal"], n["bar"], n["symbol"]
     expected = {"burst": [b, b, 0, 0], "funnel_row": [b, b, 0, 0], "signal": [s, 0, s, 0],
                 "bar": [bar, 0, bar, 0], "symbol": [sym, 0, sym, 0], "rules": [1, 1, 0, 1],
-                "residual": [b, b, b, 0], "ledger_candidate": [0, 0, 0, b], "ledger_residual": [0, 0, 0, b]}
+                "residual": [b, b, b, 0], "nightly": [1, 1, 0, 0], "ledger_candidate": [0, 0, 0, b],
+                "ledger_residual": [0, 0, 0, b]}
     assert set(expected) == set(BASELINE)
     for name in BASELINE:
         moved = [after - before for after, before in zip(projected(measured, {**NONE, name: 1}), start)]
@@ -461,6 +478,8 @@ def mutate(data, name):
                "bar": [b for v in observations["symbols"].values() for b in v["history"]],
                "symbol": list(observations["symbols"].values()),
                "rules": [data["rules"]],
+               # the first nightly block the fixture carries: one block, so one ADDED
+               "nightly": [next(data[p[0]] if len(p) == 1 else data[p[0]][p[1]] for p in NIGHTLY)],
                "ledger_candidate": [r["quality"]["checks"][0]["values"] for r in rows]}[name]
     for value in targets:
         value[KEY] = "x" * 89
@@ -473,7 +492,8 @@ ALSO = {"ledger_candidate": ("burst",), "ledger_residual": ("residual",)}
 #: The files each mutation of the fixture really grows. The run's rest lands in the record and the
 #: projection, never in the sidecar the projection lets it reach.
 REAL = {"burst": (0, 1), "funnel_row": (0, 1), "signal": (0, 2), "bar": (0, 2), "symbol": (0, 2),
-        "rules": (0, 1, 3), "residual": (0, 1), "ledger_candidate": (0, 1, 3), "ledger_residual": (0, 1, 3)}
+        "rules": (0, 1, 3), "residual": (0, 1), "nightly": (0, 1), "ledger_candidate": (0, 1, 3),
+        "ledger_residual": (0, 1, 3)}
 
 
 def test_the_rests_tripwires_spread_a_difference_not_a_mean(tmp_path):
