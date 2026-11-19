@@ -91,7 +91,34 @@
       (factOrigins[ticker] || (factOrigins[ticker] = new Set())).add(sha);
     });
   }
-  const learnedHere = ticker => !!(factOrigins[ticker] && factOrigins[ticker].has(canonicalSha()));
+  // A fact restored from this tab's cache with no saved origin is treated as
+  // read here: fail closed, as every restriction was before origins were kept.
+  const UNKNOWN_ORIGIN = 'unknown';
+  const learnedHere = ticker => !!(factOrigins[ticker] && (factOrigins[ticker].has(canonicalSha()) || factOrigins[ticker].has(UNKNOWN_ORIGIN)));
+  // The origins travel with the cached file: the file saved for reloads is the
+  // first readable one that keeps every fact, which can be a file bound to
+  // another publication, so its own binding would lose where a fact was read.
+  const ORIGINS_KEY = CACHE_KEY + ':origins';
+  function savedOrigins() {
+    const out = {};
+    [...Object.keys(sourceMemory.halts), ...Object.keys(sourceMemory.corporate)].forEach(ticker => {
+      if (factOrigins[ticker]) out[ticker] = [...factOrigins[ticker]].filter(sha => HEX.test(sha) || sha === UNKNOWN_ORIGIN).sort();
+    });
+    return out;
+  }
+  function restoreOrigins(cached, saved) {
+    let origins = null;
+    try {
+      const value = saved ? JSON.parse(saved) : null;
+      if (value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length <= 228 &&
+          Object.entries(value).every(([ticker, list]) => /^[A-Z0-9][A-Z0-9.\-/$]*$/.test(ticker) && Array.isArray(list) && list.length <= 16 && list.every(sha => HEX.test(sha) || sha === UNKNOWN_ORIGIN))) origins = value;
+    } catch (e) { origins = null; }
+    [...Object.keys(cached.halt_memory || {}), ...Object.keys(cached.corporate_memory || {})].forEach(ticker => {
+      const into = factOrigins[ticker] || (factOrigins[ticker] = new Set());
+      const list = origins && origins[ticker];
+      (list && list.length ? list : [UNKNOWN_ORIGIN]).forEach(sha => into.add(sha));
+    });
+  }
   // The text last taken in full from each source. A file this tab has already
   // taken adds no source fact, so it is not taken again while it is unchanged:
   // an older file that still carries a halt would otherwise undo, on every
@@ -270,7 +297,7 @@
     if (!keeps) return false;
     try {
       const saved = JSON.stringify(value);
-      if (new TextEncoder().encode(saved).byteLength <= MAX_BYTES) w.sessionStorage.setItem(CACHE_KEY, saved);
+      if (new TextEncoder().encode(saved).byteLength <= MAX_BYTES) { w.sessionStorage.setItem(CACHE_KEY, saved); w.sessionStorage.setItem(ORIGINS_KEY, JSON.stringify(savedOrigins())); }
     } catch (e) { storageIssue = 'This tab could not retain public halt/event evidence for reloads; coverage must be checked again at your broker.'; }
     return true;
   }
@@ -563,11 +590,11 @@
         if (saved) {
           require(saved.length <= MAX_BYTES && new TextEncoder().encode(saved).byteLength <= MAX_BYTES, 'Cached evidence exceeds its limit.');
           const cached = JSON.parse(saved);
-          ingestPositive(cached); noteOrigins(cached); cachedHalt = halted.size > 0 || corporate.size > 0;
+          ingestPositive(cached); noteOrigins(cached); restoreOrigins(cached, w.sessionStorage.getItem(ORIGINS_KEY)); cachedHalt = halted.size > 0 || corporate.size > 0;
         }
       } catch (e) {
         storageIssue = 'Earlier tab source evidence could not be verified and was ignored; this does not establish event clearance.';
-        try { w.sessionStorage.removeItem(CACHE_KEY); } catch (ignored) { /* storage remains optional */ }
+        try { w.sessionStorage.removeItem(CACHE_KEY); w.sessionStorage.removeItem(ORIGINS_KEY); } catch (ignored) { /* storage remains optional */ }
       }
     if (!w.crypto || !w.crypto.subtle || !w.TextEncoder || !(typeof raw === 'string' || raw instanceof Uint8Array)) { state = 'unavailable'; issue = 'Exact publication verification is unavailable in this browser.'; paintAll(); if (onChange) onChange(); return; }
     try {

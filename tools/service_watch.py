@@ -82,7 +82,8 @@ NOT_DUE, LANDED, NOT_LANDED = "not_due", "landed", "not_landed"
 EXIT_OK, EXIT_ALERT, EXIT_UNKNOWN = 0, 1, 2
 
 DISPATCH_HINT = ("Start it by hand: GitHub, Actions, Evening scan, Run workflow, branch main, with only_if_unpublished "
-                 "ticked. It publishes the session if it is still unpublished and does nothing otherwise.")
+                 "ticked. From the session's primary slot (6:16 PM ET) on, it publishes the newest completed session "
+                 "if it is still unpublished, and it does nothing otherwise.")
 MISSING_HINT = ("The scheduled slots and a dispatch with only_if_unpublished ticked will not publish that session now. "
                 "A plain dispatch of the Evening scan with the session box filled still can, and the tickets it writes "
                 "would be for an entry window that may have ended. Read the evening workflow's runs for that evening, "
@@ -222,7 +223,12 @@ def evening(record: dict, now: datetime) -> dict:
             if newest_limit is not None and newest_limit - now <= timedelta(hours=ALERT_WITHIN_HOURS) \
                     and now - newest_limit < timedelta(hours=MISSING_ALERT_HOURS):
                 out["alert"] = True
-            out["action"] = f"{BEHIND_HINT} {MISSING_HINT}"
+            # MISSING_HINT is about the first missed session; the newest can still be published until its limit
+            if newest_limit is not None and now < newest_limit:
+                out["action"] = (f"{BEHIND_HINT} The newest, {behind['newest']}, can still be published: "
+                                 f"{DISPATCH_HINT} The first, {session}: {MISSING_HINT}")
+            else:
+                out["action"] = f"{BEHIND_HINT} The first, {session}: {MISSING_HINT}"
     elif (answer["state"] in (freshness.PENDING, freshness.LATE) and limit is not None
           and limit - now <= timedelta(hours=ALERT_WITHIN_HOURS)):
         # the limit decides, not the state word: a record with no readable delivery policy stays `pending` until

@@ -426,13 +426,42 @@ export async function checkMorningServiceReader({ browser, base, open, check, eq
       eq(label + 'the headline names the withheld entry', (await facts(page)).headline, 'Entry copying withheld by a sourced event check');
       await page.clock.runFor(30001); await wait(page);
       eq(label + 'the next read shows the same, the unchanged host not taken again', [await shown(page), (await facts(page)).elsewhere, tab.counts()], [['loaded', null, 'static', observed.generated_at, ['burst:AAPL']], ['AAPL'], [2, 2]]);
+      // a reload restores the halt from this tab's cache with where it was read
+      await page.reload(); await wait(page);
+      eq(label + 'after a reload the stale host\u2019s halt is still named as from another publication, and the receipt shown', [await shown(page), (await facts(page)).elsewhere], [['loaded', null, 'static', observed.generated_at, ['burst:AAPL']], ['AAPL']]);
       // the same halt, now in a file bound to this record: a receipt that omits it is refused again
       tab.publish(halted); await tab.read();
       eq(label + 'the halt in this record\u2019s own file is shown with its receipt', await shown(page), ['loaded', null, 'static', halted.generated_at, ['burst:AAPL']]);
       eq(label + 'and no longer named as from another publication', (await facts(page)).elsewhere, []);
       tab.publish(later(observed, 20)); await tab.read();   // newer than the halted file, not ahead of the clock
       check(label + 'a later receipt for this record omitting it is refused in the existing words', (await summaryText(page)).includes(OMITTED) && (await facts(page)).state === 'unavailable');
+      // The file saved for reloads is the first that keeps every fact: here the
+      // host's, bound to another publication. The halt was also read from this
+      // record's own file, and a reload must not forget that.
+      await page.reload(); await wait(page);
+      check(label + 'after a reload the halt this record\u2019s own file carried still refuses the receipt that omits it', (await summaryText(page)).includes(OMITTED) && (await facts(page)).state === 'unavailable');
+      eq(label + 'and it is not named as from another publication', (await facts(page)).elsewhere, []);
+      eq(label + 'and entry copying stays withheld', await page.locator('#detail [data-copy]').count(), 0);
     });
+    // A cache an earlier page wrote carries no origins: its facts are taken as
+    // read here and stay fail closed. With the origin saved beside it, a halt
+    // read only from another publication's file is kept and named instead.
+    for (const [what, origins, want, elsewhereWant] of [
+      ['a cached halt with no saved origin refuses the receipt that omits it', null, 'unavailable', []],
+      ['a cached halt whose saved origin is another publication is kept and named', { AAPL: ['e'.repeat(64)] }, 'loaded', ['AAPL']],
+    ]) {
+      await two(what, { status: 404, body: noReceipt('f'.repeat(64)), staticReceipt: observed }, ['loaded', null, 'static', observed.generated_at, []], async (tab, label) => {
+        const { page } = tab;
+        await page.evaluate(([cached, saved]) => {
+          sessionStorage.setItem('spicystock:morning-receipt:v1', cached);
+          if (saved === null) sessionStorage.removeItem('spicystock:morning-receipt:v1:origins'); else sessionStorage.setItem('spicystock:morning-receipt:v1:origins', saved);
+        }, [JSON.stringify(staleHalted), origins === null ? null : JSON.stringify(origins)]);
+        await page.reload(); await wait(page);
+        eq(label + 'after the reload', [(await facts(page)).state, (await facts(page)).restricted, (await facts(page)).elsewhere], [want, ['burst:AAPL'], elsewhereWant]);
+        check(label + 'the omission sentence is printed exactly when it refuses', (await summaryText(page)).includes(OMITTED) === (want === 'unavailable'));
+        eq(label + 'entry copying for the halted ticker stays withheld', await page.locator('#detail [data-copy]').count(), 0);
+      });
+    }
     // A failed read is said in plain words, never the browser's own wording.
     await two('a static file that is not JSON beside a host 404 is said in plain words', { status: 404, body: noReceipt('f'.repeat(64)), staticReceipt: observed }, ['loaded', null, 'static', observed.generated_at, []], async (tab, label) => {
       tab.publish('{', 200); await tab.read();

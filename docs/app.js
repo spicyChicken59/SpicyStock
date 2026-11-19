@@ -1900,8 +1900,9 @@
   // they ride under one native disclosure, closed, both in the DOM with their
   // attributes. Printed open, the second note pushed the card's Copy order off
   // the phone screen the card starts on: on the full fixture's ticket at
-  // 390 px the control's top went from 602 px to 852 px under the card's own
-  // top, and a phone screen is 844 px tall. Every other site is under
+  // 390 px the control's top sat 602 px under the card's own top with the
+  // part-fill note alone and past 844 px, a phone screen's height, with both
+  // printed open. Every other site is under
   // something the reader opened themselves and prints the notes open. A
   // setting-up ticket has the one note and keeps it open, as before.
   const brokerNotesFold = () => el('details', { 'class': 'sc-disclosure ss-broker-notes', 'data-broker-notes': '' }, [
@@ -5607,11 +5608,15 @@
     // or, when a burst ticket is among them, a buy stop at the last close --
     // is unconfirmed (knowledge/broker-fidelity.md).
     const unconfirmed = 'Fidelity releases an OTO stop only when the buy fills in full, and whether Fidelity’s ticket accepts this OTO' + (model.tickets.bursts ? ', or a burst ticket’s buy stop at its last close,' : '') + ' is unconfirmed.';
+    // Inside the window which price Fidelity compares a buy stop with is no
+    // longer the question: once the stock trades at or over a burst ticket's
+    // buy stop the order cannot be entered as written (broker-fidelity.md, U5).
+    const unconfirmedOpen = 'Fidelity releases an OTO stop only when the buy fills in full, and whether Fidelity’s ticket accepts this OTO is unconfirmed.' + (model.tickets.bursts ? ' A burst ticket cannot be entered as written while the stock trades at or over its buy stop.' : '');
     if (!orders && waitingForReader) return ['No new burst ticket for ' + day + '.',
       'Mechanical A+/A candidates remain research only while accepted reader review is missing. This does not establish a setup failure. ' + (open ? 'Existing open model plans keep their recorded instructions. ' : '') + line, 'quiet'];
     if (ph === 'open') {
       return orders
-        ? ['The entry window for ' + day + ' is in progress.', 'Review the ' + plural(orders, 'conditional ticket') + ' and each setup’s restrictions. If you submit an order, its sell stop is written as part of it (OTO): ' + unconfirmed + ' Cancel any unfilled entry by the end of the ' + window + '. ' + line, 'orders']
+        ? ['The entry window for ' + day + ' is in progress.', 'Review the ' + plural(orders, 'conditional ticket') + ' and each setup’s restrictions. If you submit an order, its sell stop is written as part of it (OTO): ' + unconfirmedOpen + ' Cancel any unfilled entry by the end of the ' + window + '. ' + line, 'orders']
         : ['Nothing new to place in ' + day + '’s window.', 'No setup qualified with a ticket. ' + line, 'quiet'];
     }
     if (orders) return ['Review ' + plural(orders, 'conditional ticket') + ' for ' + day + '.', 'If you choose to follow a plan, review its conditions and prepare before ' + by_ + '. Its sell stop is written as part of the order (OTO): ' + unconfirmed + ' Cancel an unfilled entry by the end of the ' + window + '. SpicyStock submits nothing. ' + line, 'orders'];

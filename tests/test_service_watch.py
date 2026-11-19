@@ -148,6 +148,11 @@ def test_a_second_missed_night_in_a_row_is_flagged_by_the_first_nights_own_rule(
     assert (out["judgement"], out["alert"]) == (sw.MISSING, alert)
     assert out["sessions_behind"]["count"] >= 2 and out["sessions_behind"]["newest"] >= "2026-09-14"
     assert "none of them is published" in out["sentence"] and sw.BEHIND_HINT in out["action"]
+    # the first night's hint names the first night; the newest is offered what can still publish it
+    newest_limit = sw._instant(out["sessions_behind"]["newest_limit"])
+    assert f"The first, {out['next_session']}: {sw.MISSING_HINT}" in out["action"]
+    can_still = f"The newest, {out['sessions_behind']['newest']}, can still be published: {sw.DISPATCH_HINT}"
+    assert (can_still in out["action"]) == (now < newest_limit)
 
 
 def test_the_missing_hint_does_not_say_nothing_can_publish_the_session():

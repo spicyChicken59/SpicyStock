@@ -3605,7 +3605,7 @@ async function checkSession(browser, base, full) {
     const nextP = await text(page, '#next-p');
     const nBursts = (next.trades || []).filter((t) => { const b = next.bursts.find((x) => x.ticker === t); return b && b.plan && b.plan.order_json; }).length;
     const n = nBursts + ((next.watchlist || {}).top || []).filter((r) => r.plan && r.plan.order_json).length;
-    const want = `Review the ${n} conditional ticket${n === 1 ? '' : 's'} and each setup’s restrictions. If you submit an order, its sell stop is written as part of it (OTO): Fidelity releases an OTO stop only when the buy fills in full, and whether Fidelity’s ticket accepts this OTO${nBursts ? ', or a burst ticket’s buy stop at its last close,' : ''} is unconfirmed. Cancel any unfilled entry by the end of the ${tm.window}. `;
+    const want = `Review the ${n} conditional ticket${n === 1 ? '' : 's'} and each setup’s restrictions. If you submit an order, its sell stop is written as part of it (OTO): Fidelity releases an OTO stop only when the buy fills in full, and whether Fidelity’s ticket accepts this OTO is unconfirmed.${nBursts ? ' A burst ticket cannot be entered as written while the stock trades at or over its buy stop.' : ''} Cancel any unfilled entry by the end of the ${tm.window}. `;
     check('inside the window the next action says the sell stop is written as part of the order, that Fidelity releases an OTO stop only on a full fill and that its ticket\'s acceptance is unconfirmed, and asks for no other stop',
       n > 0 && nextP.startsWith(want) && !/stop|after a fill/i.test(nextP.slice(want.length)), nextP);
   }

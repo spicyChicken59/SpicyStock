@@ -615,9 +615,11 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    ticket's order line; before and during the window the next action says
    the sell stop is written as part of the order (OTO), that Fidelity
    releases an OTO stop only when the buy fills in full, and that whether
-   Fidelity's ticket accepts this OTO is unconfirmed, and, on a night with a
-   burst ticket, whether it accepts a burst ticket's buy stop at its last
-   close. Beside a burst ticket's order, directly after that text, a second
+   Fidelity's ticket accepts this OTO is unconfirmed; on a night with a burst
+   ticket it adds, before the window, that whether Fidelity accepts a burst
+   ticket's buy stop at its last close is unconfirmed, and inside it, that a
+   burst ticket cannot be entered as written while the stock trades at or
+   over its buy stop. Beside a burst ticket's order, directly after that text, a second
    labelled note: Fidelity's rule, that a buy stop or buy stop-limit order
    must be entered at a stop price above the current market price
    (`knowledge/broker-fidelity.md`, item 2, read off a search excerpt), and
@@ -634,9 +636,10 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    setting-up ticket, whose trigger sits above its last close. On the
    Burst's action card and in the decision summary's entry the two notes
    ride under one closed native **Broker notes** disclosure, both kept in
-   the page: printed open there, the second note moved the card's **Copy
-   order** from 602 px to 852 px under the card's top on a 390 px phone,
-   past its 844 px screen; under the disclosure it sits at 480 px.
+   the page: printed open there, the second note pushed the card's **Copy
+   order** past the bottom of a 390 px phone's 844 px screen (602 px under
+   the card's top with the part-fill note alone); under the disclosure it
+   sits 480 px under the card's top.
    `knowledge/broker-fidelity.md` (revised 19 November 2026) maps each field
    onto Fidelity's ticket, the field names labelled unconfirmed, and labels
    each fact as Fidelity's words or a regulator's words with its source,
@@ -2548,7 +2551,11 @@ standard time (the longest delay the 13 October schedule reading recorded was
 8.4 hours), and nothing here can make GitHub's scheduler punctual. A missing
 night's alert says what can still publish it: the scheduled slots and a
 dispatch with **only_if_unpublished** ticked cannot, and a plain dispatch with
-the session box filled can, for an entry window that may have ended. The same
+the session box filled can, for an entry window that may have ended. When
+more than one session is unpublished it names the first missed one beside
+that, and says the newest can still be published by a dispatch with
+**only_if_unpublished** ticked while its own limit is ahead (such a dispatch
+does nothing before the session's primary slot, 6:16 PM ET). The same
 two answers are printed for anything else with a clock:
 `python tools/service_watch.py --docs docs`.
 
