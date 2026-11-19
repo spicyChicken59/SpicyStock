@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6862 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6892 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15782,3 +15782,39 @@ move the version, and this one moves it again.
 **Not claimable:** a live SEC read or IEX comparison on a ticket night (the
 first such evening after the merge); the owner's word on the volume basis;
 any trading edge.
+
+## Checkpoint, 19 Nov 2026 -- PR 5 accepted; the pre-registered ablation (PR 6)
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` from `main` after
+PR 5. Analysis only: no rule moves, nothing under `src/` changes. The spec
+(`docs/input-truthfulness/2026-11-19-ablation/spec.json`, pinned in
+`tools/ablation.py` by its SHA-256) is its own commit, made before any
+result was computed.
+
+**What it reads** (`tools/ablation.py`, `ablation.json`, the dated report
+rendered from it): six rule changes against the production mechanics, each
+alone -- no regime gate, a yellow night admitting A, unscaled breadth
+thresholds, the discovery admission off, the stop at the burst day's low
+only, equal checklist weights -- over 55 publications (49 sessions, 11
+September to 18 November) with the frozen signal study's walk, the reader
+not run and no slot cap. Each variant gives its tickets, settled count,
+uncertain by reason, win rate, mean and median R, a night-bootstrap
+interval and costs at 0, 5 and 20 bps a side. The regime read again from
+each record's inputs gives every recorded light, and the grades read again
+from each row's checks give every recorded grade, or the tool refuses.
+
+**What it found.** Production admits 20 rows, 9 settled: under the
+scorecard's own 20-settled floor, so no rate is read. Three variants reach
+it: `no_regime_gate` (240 settled, mean -0.328R), `yellow_admits_a` (126,
+-0.574R) and `admission_off` (21, -0.38R), and every one of their night
+intervals includes zero. Nothing is promoted.
+
+**Mutation pass**, each mutant in a detached worktree judged by
+`tests/test_ablation.py`: 11 mutants and a
+control. **Two survived, each a hole**: a
+partial letter scored at full weight (no case had a partial scored letter)
+and the readable floor made strict (the test read the committed file, which
+a mutant of the tool cannot move). Both have their tests now and die; the
+control survives.
+
+**Not claimable:** any edge, for production or a variant.
