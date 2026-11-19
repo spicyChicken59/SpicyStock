@@ -38,6 +38,7 @@ import { checkCashPreview } from './cash_preview_cases.mjs';
 import { checkHandoff } from './handoff_cases.mjs';
 import { checkBrokerTime } from './broker_time_cases.mjs';
 import { checkFirstTrade } from './first_trade_cases.mjs';
+import { checkBuyStop } from './buy_stop_cases.mjs';
 import { checkIssuerEvidence } from './issuer_evidence_cases.mjs';
 import { checkStopResearch } from './stop_research_cases.mjs';
 import { checkResearchOutcomes } from './research_outcomes_cases.mjs';
@@ -2661,7 +2662,7 @@ async function checkTicketPrices(browser, base, data) {
     eq(`${b.ticker}: no row is labelled buy, and no row's value starts the band at the skip line`,
       [await factValue(page, 'buy'), await page.locator('#disc-plan .sc-facts > div dd').evaluateAll((dds, lo) => dds.filter((dd) => { const k = dd.cloneNode(true); k.querySelectorAll('small').forEach((n) => n.remove()); return k.textContent.trim().startsWith(lo + ' – '); }).length, usd(p.entry_low))], [null, 0]);
     const fillRow = await page.locator('#disc-plan .sc-facts > div').filter({ has: page.locator('dt', { hasText: /^ticket fills$/ }) }).first().innerText();
-    check(`${b.ticker}: the fill row names the buy stop as the burst close`, fillRow.includes(p.eligible ? 'a buy stop at ' + usd(p.entry_ref) + ' (the burst close), limit ' + usd(p.limit) : 'the buy stop would be ' + usd(p.entry_ref) + ' (the burst close)') && p.entry_ref === b.close, fillRow);
+    check(`${b.ticker}: the fill row names the buy stop as the burst close`, fillRow.includes(p.eligible ? 'a buy stop at ' + usd(p.entry_ref) + ' (the burst close), limit ' + usd(p.limit) : 'the buy stop would be ' + usd(p.entry_ref) + ' (the burst close)') && Math.abs(p.entry_ref - b.close) <= 0.005 + 1e-9, fillRow);
     eq(`${b.ticker}: and says the order buys nothing under it, only where a ticket could fill`, fillRow.includes('under the buy stop the order waits and buys nothing'), !!p.eligible);
     eq(`${b.ticker}: the skip-above row's value is the day-2 line, not the limit`, await factValue(page, 'skip if it opens above'), usd(p.day2_spent_above));
     eq(`${b.ticker}: the skip-below row's value is the failing line`, await factValue(page, 'skip if it opens below'), usd(p.skip_if_open_below));
@@ -4691,6 +4692,7 @@ async function main() {
       if (runs('handoff')) await checkHandoff({ browser, base, open, check, eq, shotsDir });
       if (runs('broker-time')) await checkBrokerTime({ browser, base, open, check, eq, shotsDir });
       if (runs('firsttrade')) await checkFirstTrade({ browser, base, open, check, eq, shotsDir });
+      if (runs('buystop')) await checkBuyStop({ browser, base, open, check, eq, shotsDir });
       if (runs('issuer')) await checkIssuerEvidence({ browser, base, open, check, eq, shotsDir });
       if (runs('stop-research')) await checkStopResearch({ browser, base, open, check, eq, shotsDir });
       if (runs('research-outcomes')) await checkResearchOutcomes({ browser, base, open, check, eq, shotsDir });

@@ -5079,8 +5079,9 @@
       // range whose lower part the order cannot buy; the skip line keeps its
       // own row below. A setup the stop rule withheld (plan.eligible false)
       // has no limit a ticket could carry, and the row says so. The buy stop
-      // is called the burst close only where it is the row's own close.
-      const atClose = isNum(c.row.close) && plan.entry_ref === c.row.close ? ' (the burst close)' : '';
+      // is called the burst close only where it is the row's own close to the
+      // cent (src/plan.py rounds the close once on the way in).
+      const atClose = isNum(c.row.close) && isNum(plan.entry_ref) && Math.abs(plan.entry_ref - c.row.close) <= 0.005 + 1e-9 ? ' (the burst close)' : '';
       const limitNote = text(plan.limit_note) ? ' · ' + plan.limit_note : '';
       kids.push(factList([
         plan.eligible === false
