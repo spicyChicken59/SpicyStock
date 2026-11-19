@@ -1,6 +1,6 @@
 # The service's failures, rehearsed, and its recovery
 
-Policy `recovery_rehearsal_v1` (version 1). `pipeline.run_evening()` through the suite's doubles (`tests/fakes.py`) over one synthetic market of 14 names plus `SPY`, seed 20261012; the evening workflow's guard (`.github/workflows/evening.yml`, SHA-256 `85123fea0733…`) executed as written under a frozen clock. Every failure is injected; nothing here is a live provider, a runner or GitHub.
+Policy `recovery_rehearsal_v1` (version 1). `pipeline.run_evening()` through the suite's doubles (`tests/fakes.py`) over one synthetic market of 14 names plus `SPY`, seed 20261012; the evening workflow's guard (`.github/workflows/evening.yml`, SHA-256 `2826d4361ffa…`) executed as written under a frozen clock. Every failure is injected; nothing here is a live provider, a runner or GitHub.
 
 ## Nights
 

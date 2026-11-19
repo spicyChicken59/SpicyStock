@@ -40,7 +40,7 @@ on:
         required: false
         default: false
       only_if_unpublished:
-        description: "Start as a scheduled slot would: publish the newest completed session only if it is still unpublished and its next session has not opened; otherwise do nothing. Takes no session."
+        description: "Start as a scheduled slot would: publish the newest completed session only if its primary slot (6:16 PM ET) has passed, it is still unpublished and its next session has not opened; otherwise do nothing. Takes no session."
         type: boolean
         required: false
         default: false
@@ -81,7 +81,7 @@ jobs:
           from datetime import date, datetime, timedelta, timezone
           from pathlib import Path
 
-          from src import sessions
+          from src import delivery, sessions
 
           def unpublished(target, now):
               """Whether `target` may still be published at `now`, and why not."""
@@ -118,6 +118,13 @@ jobs:
                       return False, '', 'only_if_unpublished takes no session: it reads the newest completed session'
                   now = datetime.now(timezone.utc)
                   target = sessions.completed_session(now)
+                  # Not before the session's own primary slot: the scheduled
+                  # slots wait for it because a day's bars still move after the
+                  # close, and a dispatch that published earlier would make both
+                  # slots skip a record built on them.
+                  primary = delivery.slots(target)[0]
+                  if now < primary:
+                      return False, '', f'{target}: too early, its primary slot is {primary.isoformat()}'
                   go, reason = unpublished(target, now)
                   if not go:
                       return False, '', reason

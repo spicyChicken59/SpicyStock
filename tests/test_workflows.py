@@ -174,10 +174,11 @@ GUARDED = dict(event='workflow_dispatch', only_if_unpublished='true')
 
 @pytest.mark.parametrize('at,target', [
     ('2026-10-08T22:24:00+00:00', '2026-10-08'),   # 6:24 PM ET, an on-time outside trigger
-    ('2026-10-08T20:15:00+00:00', '2026-10-08'),   # the completion instant itself
+    ('2026-10-08T22:16:00+00:00', '2026-10-08'),   # the primary slot itself
     ('2026-10-09T06:03:00+00:00', '2026-10-08'),   # after ET midnight, before the next open
     ('2026-10-10T15:00:00+00:00', '2026-10-09'),   # a Saturday: Friday is recoverable until Monday's open
     ('2026-11-03T23:24:00+00:00', '2026-11-03'),   # standard time
+    ('2026-11-27T23:16:00+00:00', '2026-11-27'),   # the early close, at its primary slot
 ])
 def test_a_guarded_dispatch_publishes_the_newest_completed_session_when_it_is_unpublished(monkeypatch, tmp_path,
                                                                                          at, target):
@@ -204,6 +205,10 @@ def test_a_guarded_dispatch_does_nothing_once_the_session_is_published(monkeypat
     ('2026-10-09T13:30:00+00:00', None),   # the next session's open: the recovery limit, inclusive
     ('2026-10-09T15:00:00+00:00', None),   # after it, before that day's own completion
     ('2026-10-08T19:00:00+00:00', None),   # 3 PM ET: today has not completed and yesterday's limit has passed
+    ('2026-10-08T20:15:00+00:00', None),   # the completion instant: the day's bars still move, the slot is 6:16 PM
+    ('2026-10-08T22:15:59+00:00', None),   # one second before the primary slot
+    ('2026-11-03T23:15:59+00:00', None),   # the same second in standard time, an hour later in UTC
+    ('2026-11-27T18:15:00+00:00', None),   # the early close: completed at 1:15 PM ET, the slot is still 6:16 PM
     ('2026-11-26T23:24:00+00:00', {'run': {'session': '2026-11-25', 'status': 'ok', 'dry_run': False}}),  # Thanksgiving
 ])
 def test_a_guarded_dispatch_never_runs_for_a_newer_expired_or_incomplete_session(monkeypatch, tmp_path, at, previous):

@@ -931,8 +931,10 @@ suppress recovery, and a newer publication cannot be replaced by a late job.
 Manual dispatch keeps its explicit session and rehearsal controls, and has a
 fourth box, **only_if_unpublished**: ticked, the dispatch is decided by the
 scheduled slots' own rule -- the newest completed session is published only if
-it is still unpublished and the session after it has not opened, and otherwise
-the run does nothing. It takes no session. It exists so that a trigger outside
+its primary slot (6:16 PM ET) has passed, it is still unpublished and the
+session after it has not opened, and otherwise the run does nothing. It waits
+for the slot as the schedule does, because a session's bars still move after
+the close, and a record published earlier would make both slots skip. It takes no session. It exists so that a trigger outside
 GitHub's scheduler can start the evening on time, every evening and twice,
 without ever publishing a session a second time; a plain dispatch (the box
 unticked) runs as it always did. Every
