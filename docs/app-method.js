@@ -11,7 +11,8 @@
    argued. Nothing here reads the record, scans, grades or sizes: the
    walkthrough explains, the run decides. Whose number each rule is:
    knowledge/method.md (B Bonde's own words or formula, V his 2018 video, P
-   this repo's provisional proxy, E third-party evidence). */
+   this repo's provisional proxy, E third-party evidence); every rule the run
+   applies, in order, with its constant: knowledge/rules.md. */
 (function (w) {
   'use strict';
   const S = w.SCStock = w.SCStock || {};
@@ -30,6 +31,7 @@
     "quality.min_close_pos": 0.80, "quality.a_plus_close_pos": 0.90,
     "quality.re_window": 5, "quality.re_window_long": 10,
     "quality.a_plus_max_volume_rank": 3, "quality.volume_rank_sessions": 60, "quality.min_a_plus_letters": 4,
+    "quality.cv_base_sessions": 21, "quality.cv_min_volume": 1.5,
     "breadth.yellow_ratio_10d": 2.0, "breadth.red_ratio_10d": 1.0, "breadth.red_ratio_5d": 0.5,
     "breadth.down4_alarm": 700, "breadth.reference_universe": 6500, "breadth.up50_month_hot": 20,
     "breadth.burst_pct": 4.0, "breadth.quarter_move_pct": 25.0, "breadth.month_move_pct": 25.0, "breadth.month_big_move_pct": 50.0,
@@ -121,14 +123,17 @@
       title: 'The thesis',
       text: 'Stocks move in momentum bursts of ' + N('plan.sell_half_day') + '–' + N('plan.final_exit_day') + ' days of '
         + g(N('plan.target_low_pct')) + '–' + g(N('plan.target_high_pct')) + '%. A burst starts with a range-expansion day '
-        + 'out of a quiet consolidation. Enter the next morning, stop under the burst, exit into strength, gate everything '
+        + 'out of a quiet consolidation. Bonde enters on the burst day itself, with his stop at that day’s low. This build '
+        + 'reads the finished day after the close, so it enters the next session through a buy stop at the burst close, '
+        + 'with the burst day’s low, or the bar’s midpoint, standing in as the stop. Exit into strength, gate everything '
         + 'by breadth, and repeat hundreds of times a year.',
       facts: ['universe: US-listed common stocks with a session close of at least ' + usd(N('universe.min_price'))
         + '; broad healthcare and domicile screening warnings are flags, never exclusions or stock-specific risk assessments',
       'under ' + usd(N('plan.low_price_band_usd')) + ' a burst runs up to ' + g(N('plan.low_price_target_high_pct'))
         + '%; over ' + usd(N('plan.high_price_band_usd')) + ' he measures it in dollars, '
         + usd(N('plan.high_price_target_low_usd')) + '–' + usd(N('plan.high_price_target_high_usd'))],
-      who: 'the thesis B; the price floor and the flags P' },
+      who: 'the thesis B; entering the next session is a route he describes and this build selected, its buy stop at the '
+        + 'close and its stand-in stop P; the price floor and the flags P' },
     { id: 'leg', label: 'L and Y · the leg', module: 'quality', reveal: LEG.end + 1, marks: ['leg'], days: 0,
       title: 'L and Y · the leg before the base',
       text: 'The move into the base went in a line: an efficiency ratio of at least ' + g(N('quality.min_er'))
@@ -142,111 +147,151 @@
       title: 'C · the base',
       text: N('quality.base_min') + '–' + N('quality.base_max') + ' sessions, at most ' + N('quality.max_breakdowns')
         + ' ' + FOUR + ' breakdown, giving back no more than ' + share(N('quality.max_giveback')) + ' of the leg, its daily ranges no wider than '
-        + g(N('quality.max_tightness')) + '× the norm before it. A+ needs no breakdown, no burst inside it, giveback under '
-        + share(N('quality.a_plus_max_giveback')) + ', ranges under ' + g(N('quality.a_plus_max_tightness'))
+        + g(N('quality.max_tightness')) + '× the norm before it. A+ needs no breakdown, no burst inside it, giveback of at most '
+        + share(N('quality.a_plus_max_giveback')) + ', ranges of at most ' + g(N('quality.a_plus_max_tightness'))
         + '×, and volume under both the leg’s and the ' + N('quality.volume_avg_sessions')
-        + '-session average: a base that dried up.',
+        + '-session average: a base that dried up. Lower volume is asked only for A+.',
       facts: ['here: ' + X.base_sessions + ' sessions, ' + X.breakdowns + ' breakdowns, ' + X.bursts_in_base + ' bursts inside, giveback '
         + share(X.giveback) + ', ranges ' + X.tightness + '× the norm, volume ' + X.base_volume_vs_leg + '× the leg’s'],
       who: N('quality.base_min') + '–' + N('quality.base_max') + ' B (2014); ≤ ' + N('quality.max_breakdowns')
-        + ' B (2LYNCH); the third P (one webinar port); tightness P; dry volume B (2016)' },
+        + ' later Bonde (2LYNCH, 2020); where the base and the leg begin, the giveback and tightness ratios and the A+ '
+        + 'volume test P: this build’s own reading, with no primary source for the numbers' },
     { id: 'quiet', label: '2 and N · the day before', module: 'quality', reveal: BURST, marks: ['base', 'quiet'], days: 0,
       title: '2 and N · the day before',
       text: 'Not up two days in a row before the burst: at most ' + N('quality.max_up_run') + ' day over +' + g(N('quality.up_day_pct'))
         + '% since the last negative close (a smaller up day is flat), and ' + N('quality.veto_up_days')
-        + ' rising closes in a row of any size is a veto. The day before is negative, or its range is under '
-        + g(N('quality.narrow_range_pct')) + '% of its close; A+ wants both, with the range under its '
-        + N('quality.narrow_norm_sessions') + '-session median.',
+        + ' or more rising closes in a row, of any size, is a veto. The day before is negative, or its range is under '
+        + g(N('quality.narrow_range_pct')) + '% of its close; A+ wants a negative day whose range is under the median of the '
+        + N('quality.narrow_norm_sessions') + ' sessions before it.',
       facts: ['here: ' + X.up_run + ' counted up days, ' + X.up_closes + ' rising closes; the day before ' + pct(X.prior_day_pct)
         + ' with a ' + X.prior_range_pct + '% range'],
-      who: '2 B (2LYNCH); the three-up veto B and V; ' + g(N('quality.narrow_range_pct')) + '% V; the median P' },
+      who: '2 B (2LYNCH); the three-up veto B and V, counting a rise of any size P; ' + g(N('quality.narrow_range_pct'))
+        + '% V; the median P' },
     { id: 'signal', label: 'the signal', module: 'scans', reveal: BURST + 1, marks: ['burst'], days: 0,
       title: 'The signal · the scan fires',
       text: 'The ' + FOUR + ' burst scan: a close at least ' + g(N('scans.burst_ratio')) + '× the previous close, on more volume than the '
         + 'previous session and at least ' + num(N('scans.min_volume')) + ' shares. The Dollar scan is a second door: a close at least '
         + usd(N('scans.dollar_move')) + ' over the same day’s open on more than ' + num(N('scans.min_volume'))
-        + ' shares, which can admit a day under +' + FOUR + '. On the bar itself: H, the close in the top '
+        + ' shares, which can find a day under +' + FOUR + '. Being found is not being admitted: see the admission rule '
+        + 'below. On the bar itself: H, the close in the top '
         + share(1 - N('quality.min_close_pos')) + ' of the range and above the open (A+: the top '
-        + share(1 - N('quality.a_plus_close_pos')) + '); RE, a range wider than any of the prior ' + N('quality.re_window')
-        + ' sessions (A+: ' + N('quality.re_window_long') + '); VOL, above yesterday’s (A+: one of the top '
+        + share(1 - N('quality.a_plus_close_pos')) + '); RE, a range at least as wide as the widest of the prior '
+        + N('quality.re_window') + ' sessions (A+: ' + N('quality.re_window_long') + '); VOL, above yesterday’s, and for a '
+        + 'base longer than ' + N('quality.cv_base_sessions') + ' sessions at least ' + g(N('quality.cv_min_volume'))
+        + '× the average of the ' + N('quality.volume_avg_sessions') + ' sessions before (A+: one of the top '
         + N('quality.a_plus_max_volume_rank') + ' of the last ' + N('quality.volume_rank_sessions')
-        + '). A or A+ needs 2 and H to pass outright.',
+        + '). RE and VOL add nothing to the score. A or A+ needs 2 and H to pass outright.',
       facts: ['here: ' + pct(X.gain_pct) + ' on ' + X.volume_vs_prior + '× yesterday’s volume; closed ' + share(X.close_pos)
         + ' of the way up its range; ' + X.vs_prior_5 + '× the widest of the prior ' + N('quality.re_window')
         + '; volume rank ' + X.volume_rank_60 + ' of ' + N('quality.volume_rank_sessions'),
       'score ' + X.score.toFixed(1) + ' of 10 with ' + X.a_plus_letters + ' checks at their A+ standard: ' + X.grade
         + ' (A+ from ' + BANDS['A+'].toFixed(1) + ' with at least ' + N('quality.min_a_plus_letters')
-        + ', A from ' + BANDS.A.toFixed(1) + '; the chart reader may only lower a grade)'],
-      who: 'both scans PRIMARY (' + FOUR + ' May 2015, Dollar July 2017); H and RE V; the outright rule and the weights P' },
+        + ', A from ' + BANDS.A.toFixed(1) + '; the chart reader may only lower a grade, and a burst gets a ticket '
+        + 'only after an accepted chart review)',
+      'admission: a name the ' + FOUR + ' scan found can go on to a plan and a chart read; a name only the Dollar scan found '
+        + 'can only when its day also passed RE and VOL. Otherwise it keeps its grade as research, with no ticket and no chart read'],
+      who: 'both scans PRIMARY (' + FOUR + ' May 2015, Dollar July 2017); the admission rule P (this build’s, November 2026); '
+        + 'H V; RE B; the long-base volume rule E; the outright rule, the weights and the chart reader P' },
     { id: 'breadth', label: 'Market Monitor', module: 'breadth', reveal: BURST + 1, marks: ['burst'], days: 0,
       title: 'Market Monitor · the gate',
-      text: 'Before any plan is written the market is read from Bonde’s Telechart counts over the measured universe: '
-        + 'names up and down ' + FOUR + ' on the day, up ' + g(N('breadth.quarter_move_pct')) + '% in a quarter, up '
-        + g(N('breadth.month_move_pct')) + '% and ' + g(N('breadth.month_big_move_pct')) + '% in a month. The ' + LONG
-        + ' ratio of ' + FOUR + ' ups to ' + FOUR + ' downs sets the regime, and the regime sets the size or refuses the night.',
-      facts: [{ chip: ['green', 'good'], text: LONG + ' ratio at or over ' + g(N('breadth.yellow_ratio_10d')) + ': full size' },
-        { chip: ['yellow', 'warn'], text: 'under ' + g(N('breadth.yellow_ratio_10d')) + ', or more than ' + N('breadth.up50_month_hot')
-          + ' names up ' + g(N('breadth.month_big_move_pct')) + '% in a month: half size, A+ only' },
-        { chip: ['red', 'danger'], text: LONG + ' ratio under ' + g(N('breadth.red_ratio_10d')) + ', ' + num(N('breadth.down4_alarm'))
-          + '+ names down ' + FOUR + ' today, or a ' + SHORT + ' ratio under ' + g(N('breadth.red_ratio_5d'))
-          + ' with more down than up: no new longs, no plans' },
-        'counts are scaled to the measured universe against his ' + num(N('breadth.reference_universe'))],
-      who: 'the formulas B; the thresholds B, scaled to this universe P' },
+      text: 'Before any plan is written the market is read from Bonde’s Telechart counts over the stocks measured that '
+        + 'night: names up and down ' + FOUR + ' on the day, up ' + g(N('breadth.quarter_move_pct')) + '% in a quarter, up '
+        + g(N('breadth.month_move_pct')) + '% and ' + g(N('breadth.month_big_move_pct')) + '% in a month. Five rules set the '
+        + 'regime, three red and two yellow, and the regime sets the size or refuses the night. The ' + LONG + ' and ' + SHORT
+        + ' ratios are the sum of ' + FOUR + ' ups over the sum of ' + FOUR + ' downs. The two count thresholds are his '
+        + 'readings over about ' + num(N('breadth.reference_universe')) + ' stocks, so each is scaled before it is compared: '
+        + 'threshold × stocks measured that night ÷ ' + num(N('breadth.reference_universe')) + '. The ratios are never scaled.',
+      facts: [{ chip: ['green', 'good'], text: 'none of the five rules below fires (a ' + LONG + ' ratio at or over '
+          + g(N('breadth.yellow_ratio_10d')) + ' alone is not enough): full size, A+ and A' },
+        { chip: ['yellow', 'warn'], text: LONG + ' ratio under ' + g(N('breadth.yellow_ratio_10d')) + '; or more names up '
+          + g(N('breadth.month_big_move_pct')) + '% in a month than his ' + N('breadth.up50_month_hot')
+          + ', scaled: half size, A+ only' },
+        { chip: ['red', 'danger'], text: LONG + ' ratio under ' + g(N('breadth.red_ratio_10d')) + '; or names down ' + FOUR
+          + ' today at or over his ' + num(N('breadth.down4_alarm')) + ', scaled; or a ' + SHORT + ' ratio under '
+          + g(N('breadth.red_ratio_5d')) + ' with more names down ' + FOUR + ' than up today: no new longs, no plans for bursts' },
+        'each night’s record carries the scaled thresholds it compared against',
+        'the gate is this build’s reading of his Market Monitor; whether it improves outcomes is not established (see Record)'],
+      who: 'the Telechart formulas B; the ' + num(N('breadth.down4_alarm')) + ', ' + N('breadth.up50_month_hot') + ' and '
+        + g(N('breadth.yellow_ratio_10d')) + ' readings his, as the field guide quotes them; the scaling, firing the '
+        + num(N('breadth.down4_alarm')) + ' on a single day, the two red ratio rules, the sizes and A+ only on yellow P' },
     { id: 'plan', label: 'the plan', module: 'plan', reveal: BURST + 1, marks: ['plan'], days: 0,
       title: 'The plan · written before the open',
-      text: 'A buy stop-limit for the next open: the buy stop at the burst close, ' + usd(X.trigger) + ', and its limit the lower of '
+      text: 'A buy stop-limit for the next session: the buy stop at the burst close, ' + usd(X.trigger) + ', and its limit the lower of '
         + 'the close +' + g(N('plan.entry_above_pct')) + '% and the highest price at which the stop is still inside his '
         + g(N('plan.max_stop_pct')) + '% line — here ' + usd(X.limit) + '. The stop is the burst day’s low, else the bar’s '
-        + 'midpoint, attached the moment the buy fills; a burst whose stop no limit above the trigger can keep inside '
-        + g(N('plan.max_stop_pct')) + '% is withheld, the setup kept. Risk ' + g(N('plan.default_risk_pct'))
-        + '% of equity: shares = risk ÷ (limit − stop), never more than ' + g(N('plan.default_max_position_pct'))
-        + '% of equity, at most ' + N('plan.default_max_open_positions') + ' open plans.',
+        + 'midpoint: a stand-in for his entry-day low, which replaces it at the close of day ' + N('plan.entry_day')
+        + ' when it is higher. The ticket writes it as a sell stop attached to the buy; a burst whose stop no limit above '
+        + 'the trigger can keep inside ' + g(N('plan.max_stop_pct')) + '% is withheld, the setup kept. Risk '
+        + g(N('plan.default_risk_pct')) + '% of equity before reductions: shares = risk ÷ (limit − stop), never more than '
+        + g(N('plan.default_max_position_pct')) + '% of equity, at most ' + N('plan.default_max_open_positions')
+        + ' open plans, bursts and setting-up tickets sharing the slots and the cash.',
       facts: ['here: stop ' + usd(X.stop) + ', ' + X.stop_pct + '% under the limit — wider than his ideal '
         + g(N('plan.ideal_stop_pct')) + '%, so the ' + usd(riskUsd) + ' risk is halved to ' + usd(X.budget_usd) + ': '
         + X.shares + ' shares at the limit, ' + usd(X.position_usd),
+      'the limit is set from the stop, so a burst ticket’s stop sits between his ' + g(N('plan.ideal_stop_pct'))
+        + '% ideal and his ' + g(N('plan.max_stop_pct')) + '% line, close to the line, and every burst ticket is halved this way',
       'skip an open under ' + usd(X.skip_below) + ' (−' + g(N('plan.entry_below_pct')) + '%, the burst failing) or over '
         + usd(X.day2_spent_above) + ' (+' + g(N('plan.entry_above_pct')) + '%, day 2 already spent); the entry is the first '
         + N('plan.entry_window_minutes') + ' minutes'],
-      who: 'the stop and the sizing B; the ' + g(N('plan.max_stop_pct')) + '% line B; the limit rule, the halving and the zone P' },
+      who: 'the sizing and the ' + g(N('plan.max_stop_pct')) + '% line B; his stop is the entry day’s low B, the burst-day low '
+        + 'and the midpoint before it stand-ins P; the limit rule, the halving and the zone P' },
     { id: 'fill', label: 'day ' + N('plan.entry_day'), module: 'record', reveal: BURST + 2, marks: ['plan', 'fill', 'half', 'stop'], days: 1,
       title: 'Day ' + N('plan.entry_day') + ' · filled at the open',
       text: 'An open at or over the buy stop and at or under the limit fills at the open: the one fill a daily bar can establish. '
         + 'If the price reaches +' + g(N('plan.sell_half_pct')) + '% on the entry day or the next, sell half and raise the stop to '
         + cents(N('plan.trail_cents')) + '–' + cents(N('plan.trail_cents_max')) + ' cents under that day’s high. A close '
         + g(N('plan.abnormal_day_pct')) + '% or more over the entry is an abnormal day: take partial profit and hold the stop '
-        + 'under its high. A gap of ' + g(N('plan.gap_exit_pct')) + '% or more at an open after entry: sell at the open.',
+        + 'under its high. A gap of ' + g(N('plan.gap_exit_pct')) + '% or more at an open after entry: sell at the open. '
+        + 'At the close of day ' + N('plan.entry_day') + ' the stop rises to the entry day’s low when that is higher.',
       facts: ['here: filled at the open, ' + usd(X.fill) + '; the high ' + usd(X.day1_high) + ' reached +' + g(N('plan.sell_half_pct'))
         + '% (' + usd(X.sell_half_price) + '): ' + X.sell_half_shares + ' of ' + X.shares + ' sold, the stop raised to '
-        + usd(X.stop_after_day1)],
-      who: 'the exits B (2018); the fill rule P' },
+        + usd(X.stop_after_day1),
+      'the stop in the model: each bar is read open first, then the low against the stop, then the high, then the close. '
+        + 'A later open at or under the stop is out at that open, which can be well under the stop; a low at or under the '
+        + 'stop is out at the stop price, even when the same bar’s high reached a sale level',
+      'the sales in the model: the +' + g(N('plan.sell_half_pct')) + '% rule uses ' + cents(N('plan.trail_cents'))
+        + ' cents and applies until day ' + N('plan.sell_half_day') + '’s close has sold a half; an abnormal close books no '
+        + 'sale and only raises the stop to ' + cents(N('plan.trail_cents')) + ' cents under that day’s high',
+      'the model’s fill at the open assumes the buy stop-limit was already resting at the broker before the open. '
+        + 'Fidelity’s stated rule is that a buy stop is entered above the current price, so while the stock trades at or '
+        + 'over the buy stop this order cannot be entered as written'],
+      who: 'the exits B (2018); the entry-day low is his stop B; the fill rule and the order a bar is read in P' },
     { id: 'third', label: 'day ' + N('plan.sell_half_day'), module: 'plan', reveal: BURST + 4, marks: ['half', 'stop'], days: 3,
       title: 'Day ' + N('plan.sell_half_day') + ' · the close',
-      text: 'If half is still held at day ' + N('plan.sell_half_day') + '’s close, sell at least half then, in whole shares. A close '
-        + 'at or under the entry on day ' + N('plan.no_progress_day') + ' is no follow-through: out entirely. From day '
-        + N('plan.trail_from_day') + ' the stop trails each day’s low and never moves down. There is no break-even move before day '
-        + N('plan.no_breakeven_before_day') + '.',
+      text: 'If no half has been sold by day ' + N('plan.sell_half_day') + '’s close, sell at least half then, in whole shares. A close '
+        + 'at or under the entry on day ' + N('plan.no_progress_day') + ' is no follow-through: out entirely. From the close of day '
+        + N('plan.trail_from_day') + ' the stop trails each day’s low and never moves down. The plan also prints a third-party '
+        + 'caution against moving the stop to break-even before day ' + N('plan.no_breakeven_before_day')
+        + ' just because the day after entry is green; the model moves no stop for it, and the raises above can still lift '
+        + 'the stop over the entry sooner, as they did here.',
       facts: ['here: half was sold on day ' + N('plan.entry_day') + ', so day ' + N('plan.sell_half_day') + ' sells nothing; the stop trails to ' + usd(X.stop_day3)],
-      who: 'the exits B; the trail P (a reading of “after 3rd day keep moving stop to low of day”); no break-even E' },
+      who: 'the exits B; the trail P (a reading of “after 3rd day keep moving stop to low of day”); the break-even caution E: '
+        + 'theStrat Lab’s backtest of a different setup, the episodic pivot, carried over by this build and not measured on bursts' },
     { id: 'trail', label: 'd' + trailDays, module: 'plan', reveal: BARS.length, marks: ['half', 'stop', 'exit'], days: 5,
       title: 'D' + trailDays + ' · trail, then out',
       text: 'The stop follows each day’s low. Day ' + N('plan.final_exit_day') + ' is the exit, at the close, whatever the price is '
         + 'doing. Two hazards halve the size and never veto: a burst day of ' + g(N('plan.gain_ceiling_pct'))
-        + '% or more, and a close ' + g(N('plan.extension_hazard_pct')) + '% over its ' + N('plan.extension_sessions')
-        + '-session average.',
+        + '% or more, and a close more than ' + g(N('plan.extension_hazard_pct')) + '% over its ' + N('plan.extension_sessions')
+        + '-session average; both together still halve it once. Under a red market an open plan’s instruction adds: sell '
+        + 'into any strength, do not add. The model moves no stop and books no sale for that.',
       facts: ['here: the stop trails to ' + usd(X.stop_day4) + ', then ' + usd(X.stop_day5) + '; the remaining ' + X.exit_shares
         + ' sold at the day-' + X.settled_day + ' close, ' + usd(X.exit_price)],
       who: 'the hold B; the ' + g(N('plan.gain_ceiling_pct')) + '% hazard E (the one event study’s worst cell); the extension hazard P' },
     { id: 'record', label: 'the record', module: 'record', reveal: BARS.length, marks: ['fill', 'sale', 'exit', 'stop', 'r'], days: 5,
       title: 'The record',
-      text: 'Every published plan is replayed from daily bars alone, as a model: a fill is booked only at the next open, inside '
-        + 'the ticket. A trigger crossed after the open, an open past the limit or under the skip line that could still have '
-        + 'filled, or a fill-day low under the stop is uncertain — no fill, no R, counted by reason. One R is the fill minus '
+      text: 'Every published plan is replayed as a model. A daily bar books a fill only at the next open, at or over the '
+        + 'trigger and at or under the limit. A first day that opened under the trigger and reached it later is read again '
+        + 'from that session’s one-minute bars: the first minute of the first ' + N('plan.entry_window_minutes')
+        + ' minutes whose high reaches the trigger fills at the trigger, or at that minute’s open when it opened over it; '
+        + 'none means not filled, and a crossing minute that cannot be ordered against the limit or the stop stays uncertain. Without usable minute bars such a day is uncertain, and so is an '
+        + 'open past the limit or under the skip line that could still have filled later: no fill, no R, counted by reason. '
+        + 'One R is the fill minus '
         + 'the published stop, on the whole position; every sale is weighted by the shares it sold; everything settles by day '
         + N('plan.final_exit_day') + '. Rates are printed only from ' + N('record.scorecard_min_plans') + ' settled plans.',
       facts: ['here: one R = ' + usd(X.fill) + ' − ' + usd(X.stop) + ' = ' + usd(X.one_r) + ' on ' + X.shares + ' shares; '
         + X.sell_half_shares + ' sold at ' + usd(X.sell_half_price) + ' and ' + X.exit_shares + ' at ' + usd(X.exit_price) + ': '
         + (X.r > 0 ? '+' : '') + X.r.toFixed(2) + 'R, settled on day ' + X.settled_day],
-      who: 'the replay P; the hold B' }
+      who: 'the replay and the minute-bar rule P; the hold B' }
   ];
 
   // the stop in force at the close of day k (k = 0: the published stop)
