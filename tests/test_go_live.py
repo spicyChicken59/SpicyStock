@@ -138,6 +138,13 @@ def test_the_gate_is_paper_until_every_condition_holds(monkeypatch, tmp_path):
     assert build(previous=prior, rows=rows[1:])["reasons"] == ["settled_forward_plans"]
     moved = build(previous=prior, rows=rows, rules={"plan": {"x": 2}, "universe": {"identity": "u1"}})
     assert moved["strategy"]["since"] == "2026-11-18" and moved["reasons"] == ["settled_forward_plans"]
+    # only settled plans picked on or after the standing rules count: an
+    # uncertain or still-open plan, or one picked before them, does not
+    padded = rows[1:] + [{"bucket": "uncertain", "picked": "2026-10-15"}, {"bucket": "open", "picked": "2026-10-16"},
+                         {"bucket": "settled", "picked": "2026-09-30"}]
+    held = build(previous=prior, rows=padded)
+    assert held["reasons"] == ["settled_forward_plans"]
+    assert next(c for c in held["criteria"] if c["key"] == "settled_forward_plans")["have"] == gl.MIN_SETTLED_FORWARD - 1
 
 
 @pytest.mark.parametrize("value", [
