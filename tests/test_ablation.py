@@ -323,3 +323,12 @@ def test_a_variant_whose_rows_do_not_add_up_is_refused():
 def test_the_admitted_band_tells_a_plus_from_a_and_both_from_the_rest():
     assert [ab.admitted_band(g) for g in ("A+", "A", "B", "C", "skip", None)] == ["A+", "A", None, None, None, None]
     assert set(pipeline.TRADE_GRADES) == {"A+", "A"}
+
+
+def test_a_night_whose_light_does_not_read_again_refuses_the_ablation():
+    nights = {"aaaaaaaa": {"session": "2026-11-02", "light": "red", "read_again": "red", "unscaled": "red"},
+              "bbbbbbbb": {"session": "2026-11-03", "light": "yellow", "read_again": None, "unscaled": None}}
+    assert ab.agreeing(nights) is nights
+    nights["cccccccc"] = {"session": "2026-11-04", "light": "yellow", "read_again": "red", "unscaled": "red"}
+    with pytest.raises(ab.AblationError, match="disagrees with the recorded light for cccccccc"):
+        ab.agreeing(nights)

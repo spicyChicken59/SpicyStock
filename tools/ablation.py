@@ -176,6 +176,16 @@ def nights_of(publications: list[dict]) -> dict:
     return out
 
 
+def agreeing(nights: dict) -> dict:
+    """The nights, when the light read again from each record's own inputs is
+    its recorded light wherever it could be read; a disagreement refuses the
+    ablation, since a variant of a gate this tool cannot reproduce compares nothing."""
+    disagree = sorted(k for k, n in nights.items() if n["read_again"] not in (None, n["light"]))
+    if disagree:
+        raise AblationError("the regime read again disagrees with the recorded light for " + ", ".join(disagree))
+    return nights
+
+
 def summary_of(rows: list[dict], spec: dict) -> dict:
     s = so._stratum_summary(rows, spec)
     settled = s["settled"]
@@ -230,10 +240,7 @@ def build(entries: list[dict] | None = None) -> dict:
         entries = cmp.population(spec["ref"], base)
     study_spec = cmp.spec_of({**base, "cost_bps_per_side": spec["metrics"]["cost_bps_per_side"]}, entries)
     publications = so.load_publications(study_spec)
-    nights = nights_of(publications)
-    disagree = sorted(k for k, n in nights.items() if n["read_again"] not in (None, n["light"]))
-    if disagree:
-        raise AblationError("the regime read again disagrees with the recorded light for " + ", ".join(disagree))
+    nights = agreeing(nights_of(publications))
     bursts = {(p["commit"][:8], b["ticker"]): b for p in so.first_publications(publications)
               for b in p["data"].get("bursts", [])}
     base_rows = run_study(publications, study_spec)["rows"]
