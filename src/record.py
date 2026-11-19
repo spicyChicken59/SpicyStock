@@ -23,8 +23,10 @@ What a daily bar can and cannot establish is the whole fill rule
 the trigger and at or under the limit: the fill is the open, inside the
 plan's window. It CANNOT say when a day that opened under the trigger
 crossed it, whether an open past the limit or under the skip line later
-filled the resting order, or whether a fill-day low under the stop came
-before or after the fill. Those are ``UNCERTAIN`` with a reason code from
+filled the resting order, or, for a day that crossed the trigger after
+the open, whether its low under the stop came before or after the fill. A
+fill at the open whose day then reaches the stop is booked at exactly the
+stop. The others are ``UNCERTAIN`` with a reason code from
 ``UNCERTAIN_REASONS``: no fill is booked, no R is scored, the plan is not
 read as held, not held, or freed, and the scorecard counts it by reason.
 
@@ -99,9 +101,10 @@ SCORECARD_NOTE = ("from bars alone, a model and not a brokerage record: a daily 
                   "after the open is read again from that session's retained minute bars, which book a fill in "
                   f"the {plan.ENTRY_WINDOW} at the trigger (or the crossing minute's open over it), none after "
                   "it, and leave a crossing minute that cannot order the fill against the limit or the stop "
-                  "uncertain; without those minutes such a day, an open past the limit or under the skip line "
-                  "that could still have filled, and a fill-day low under the stop are uncertain, counted here "
-                  "and in no rate; the published stop "
+                  "uncertain; without those minutes such a day, whether or not its low also reached the stop, "
+                  "and an open past the limit or under the skip line that could still have filled are "
+                  "uncertain, counted here and in no rate; a fill at the open whose day then reaches the stop "
+                  "is booked at exactly the stop; the published stop "
                   "is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by "
                   f"day {plan.FINAL_EXIT_DAY}")
 

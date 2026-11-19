@@ -11,9 +11,9 @@
 
 - Measured session: 2026-09-10 (open); plans are for **2026-09-11**, entry window 2026-09-11T09:30:00-04:00 to 2026-09-11T10:00:00-04:00 (America/New_York), full session closes 2026-09-11T16:00:00-04:00.
 - Published 2026-09-10T22:30:00+00:00 (evening, FIXTURE full); rules version `1e6167eba764`.
-- Canonical record `data.json`: 334,735 bytes, SHA-256 `1db3eb571190b8ae87f5f3d625f1f1d155dda9ce2371adff5d2dbc18fba2a500`.
+- Canonical record `data.json`: 334,832 bytes, SHA-256 `910e44ae6702319168ce70c6e4728bd5547431c823f7ce970ca63aa78ec1d12c`.
 - `picks.json`: 43,332 bytes, SHA-256 `f082413c2b817d5cfb1a9c381778babaf4b7c20220d27d3d3bea7fe786fb807f`.
-- This file renders `brief.json` (72,559 bytes, SHA-256 `819629ce3b3c3cd74cb1c892ec0bb7976e960445dd396bb1af94cfcf7c4b3cd0`).
+- This file renders `brief.json` (72,656 bytes, SHA-256 `5b87349be581badf0ea556c78338659d87c9d3af2911d6d9b64721add16ee7c5`).
 - Page https://spicychicken59.github.io/SpicyStock/ · record https://spicychicken59.github.io/SpicyStock/data.json · brief https://spicychicken59.github.io/SpicyStock/brief.json and https://spicychicken59.github.io/SpicyStock/brief.md.
 
 ## 2. Service state
@@ -202,7 +202,7 @@ Open MODEL plans walked on daily (and retained minute) bars; not holdings.
 
 - Scorecard: 48 plans in 60 sessions (2026-06-15 to 2026-09-10): 20 settled (5 wins, 15 losses, 0 even), 2 open, 1 pending, 12 uncertain, 13 not filled, 0 unmeasured; sum of R -1.75.
 - Readable as a rate: **yes** (needs 20 settled); win rate 0.25, average R -0.09, median R -0.15. These are model plans walked on bars, not trades, and no edge is established.
-- How it is counted: from bars alone, a model and not a brokerage record: a daily bar books a fill only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open is read again from that session's retained minute bars, which book a fill in the first 30 minutes at the trigger (or the crossing minute's open over it), none after it, and leave a crossing minute that cannot order the fill against the limit or the stop uncertain; without those minutes such a day, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by day 5
+- How it is counted: from bars alone, a model and not a brokerage record: a daily bar books a fill only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open is read again from that session's retained minute bars, which book a fill in the first 30 minutes at the trigger (or the crossing minute's open over it), none after it, and leave a crossing minute that cannot order the fill against the limit or the stop uncertain; without those minutes such a day, whether or not its low also reached the stop, and an open past the limit or under the skip line that could still have filled are uncertain, counted here and in no rate; a fill at the open whose day then reaches the stop is booked at exactly the stop; the published stop is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by day 5
 - Model-record block: not computed (computed only inside an evening run, from that run's fetched bars).
 - Pick ledger (picks.json): 48 picks over 25 distinct tickers; repeated: NBIS x3, SMCI x3, ANET x2, CRDO x2, DELL x2, ELF x2, FIX x2, GLW x2, HOOD x2, IONQ x2, JBL x2, KTOS x2, LITE x2, MU x2, ONTO x2, PLTR x2, QTWO x2, RKLB x2, TOST x2, UBER x2, VRT x2; by kind burst 48; by regime at the pick green 48; picks in the scorecard window 48 against 48 plans counted. A pick is one published model ticket; the same stock listed on several nights is several picks, and each counts as its own plan in the scorecard. Picks made under different archived accounts are sized differently; a pick carries its shares, not the account it was sized for.
 

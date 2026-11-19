@@ -367,15 +367,16 @@ highest fill it permits (`plan.burst_plan()`, `plan.anticipation_plan()`,
 withheld with its setup kept; a daily bar establishes a fill only at the
 next open inside the ticket (`record.fill()`, `record.KNOWN_FILL`), and a
 trigger crossed after the open, an open past the limit or under the skip
-line that could still have filled, or a fill-day low under the stop is
-`uncertain` with a reason, walked nowhere, scored nowhere, counted by
+line that could still have filled, or a day that crossed the trigger after
+the open with its low under the stop, is `uncertain` with a reason (a fill at
+the open whose day then reaches the stop is booked at exactly the stop), walked nowhere, scored nowhere, counted by
 reason and still holding its model slot; every sale in `plan.follow()` is
 whole shares with `shares` and `remaining` on the event, a position that
 reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6567 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6568 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
