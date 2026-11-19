@@ -15707,7 +15707,9 @@ filled positions file; any trading edge.
 
 **Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` from `main` after
 PR 4. `sec_flags` and `cross_check` are archived, so `rules_version` moves
-and every cascaded generator was regenerated; `orders.json` is version 2.
+and every cascaded generator was regenerated; `orders.json` is version 3: each
+ticket carries a fifth check, `cross_check`, and the reasons
+`sec_unknown`, `cross_check_failed` and `cross_check_unknown` are new.
 The published record, picks, receipts, history, evidence and ledger are
 untouched.
 
@@ -15774,9 +15776,8 @@ item. A note silenced ACVA forever; it lapses now. The comparison rounded
 before it compared, so 0.5004% passed; it compares unrounded. And a merge
 that moves `orders.VERSION` would have left the committed `orders.json`
 failing the publication gate, the committed-handoff test and the morning
-step until the evening rewrote it: an earlier version's files are held to
-their binding alone (`orders.earlier_version()`), and the morning derives no
-go/cancel file from one.
+step until the evening rewrote it: that rule landed in PR 4, the first PR to
+move the version, and this one moves it again.
 
 **Not claimable:** a live SEC read or IEX comparison on a ticket night (the
 first such evening after the merge); the owner's word on the volume basis;

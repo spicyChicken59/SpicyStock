@@ -1,9 +1,9 @@
 {
  "applicable_session": "2026-09-11",
- "content_sha256": "f6a5ca63da7a529ff241b8094cd35518707f90c7cc2541e1d331bbfb48ac1ecd",
+ "content_sha256": "0f7a430278e99bc4db903f5a12e07baa7d47ecb14afb7238296ccb41d5133a36",
  "kind": "positions",
  "mode": "paper",
- "orders_sha256": "38af98da3f5c1578cfccca2aaa00b47d6b1bf0bad055f51819a1b32abab6a859",
+ "orders_sha256": "f4fccad687ef4af0fe88ac461f91056415eadc65c216b1acc55676c54165c9e0",
  "positions": [
   {
    "broker": {
@@ -33,5 +33,5 @@
  "privacy": "a filled copy holds the owner's real orders and fills: keep it private and never commit it to the public repository",
  "schema": "docs/operations/orders-schema.json#/$defs/positions",
  "session": "2026-09-10",
- "version": 2
+ "version": 3
 }

@@ -59,7 +59,7 @@ if str(ROOT) not in sys.path:
 
 from src import schema_check  # noqa: E402  (stdlib only: the publication gate imports this module)
 
-VERSION = 2
+VERSION = 3
 FILE = "orders.json"
 MORNING_FILE = "orders-morning.json"
 POSITIONS_FILE = "positions-template.json"
