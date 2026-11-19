@@ -11,9 +11,9 @@
 
 - Measured session: 2026-09-10 (open); plans are for **2026-09-11**, entry window 2026-09-11T09:30:00-04:00 to 2026-09-11T10:00:00-04:00 (America/New_York), full session closes 2026-09-11T16:00:00-04:00.
 - Published 2026-09-10T22:30:00+00:00 (evening, FIXTURE full); rules version `7d29c2846abd`.
-- Canonical record `data.json`: 341,420 bytes, SHA-256 `f9c5151527a7437883fc24334fc5db75aefe59edd4f3c810e8a741ddcc5bb14d`.
+- Canonical record `data.json`: 341,532 bytes, SHA-256 `c884e304518e3e00fb57fed59f81a5c71b4c67a9e4dd5bac4dfd780efb3c0e16`.
 - `picks.json`: 43,332 bytes, SHA-256 `1427fe7847168a5fde0bc185f205e7b0979632fcd1bb4501f213b35921639bbb`.
-- This file renders `brief.json` (72,494 bytes, SHA-256 `7cbe99dc885769ad2d1111c737ca3bacb57227b8e2b057d7a20849a8a0bdfccc`).
+- This file renders `brief.json` (72,494 bytes, SHA-256 `035653583039a56b6d1099f07938cedbd08e0e93be60b5d6a1b385dbaf1e63e8`).
 - Page https://spicychicken59.github.io/SpicyStock/ · record https://spicychicken59.github.io/SpicyStock/data.json · brief https://spicychicken59.github.io/SpicyStock/brief.json and https://spicychicken59.github.io/SpicyStock/brief.md.
 
 ## 2. Service state

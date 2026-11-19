@@ -14469,9 +14469,17 @@
   "breadth_revisions": {
    "previous_session": null,
    "compared": 0,
+   "not_retained": 29,
    "differ_count": 0,
    "differ": [],
-   "sentence": "There is no earlier publication's breadth history to compare."
+   "published": {
+    "2026-09-10": {
+     "up4": 5,
+     "down4": 0,
+     "ratio_10d": 2.75
+    }
+   },
+   "sentence": "There is no earlier publication's breadth to compare."
   },
   "real_vs_model": {
    "status": "private",
@@ -14481,7 +14489,7 @@
    "48 tickets in the scorecard's window are 48 distinct setups.",
    "By model account: $10,000 at 0.5% risk, 1 ticket from 2026-09-10 through 2026-09-10, 0 settled, no R yet. No model account is recorded for 47 more tickets.",
    "The 18 stopped tickets booked at the stop sum to -2.13R; read at that session's close, -1.74R; at its low, -4.67R.",
-   "There is no earlier publication's breadth history to compare.",
+   "There is no earlier publication's breadth to compare.",
    "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
   ]
  },

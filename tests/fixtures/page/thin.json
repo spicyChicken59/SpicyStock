@@ -12950,132 +12950,16 @@
   },
   "breadth_revisions": {
    "previous_session": "2026-09-09",
-   "compared": 29,
-   "differ_count": 27,
+   "compared": 1,
+   "not_retained": 28,
+   "differ_count": 1,
    "differ": [
     {
-     "session": "2026-07-30",
+     "session": "2026-09-09",
      "published": {
-      "up4": 1,
-      "down4": 1,
-      "ratio_10d": 0.83
-     },
-     "revised": {
-      "up4": 0,
-      "down4": 0,
-      "ratio_10d": 0.83
-     }
-    },
-    {
-     "session": "2026-07-31",
-     "published": {
-      "up4": 1,
-      "down4": 0,
-      "ratio_10d": 1.0
-     },
-     "revised": {
-      "up4": 1,
-      "down4": 1,
-      "ratio_10d": 0.83
-     }
-    },
-    {
-     "session": "2026-08-03",
-     "published": {
-      "up4": 1,
-      "down4": 1,
-      "ratio_10d": 1.0
-     },
-     "revised": {
-      "up4": 1,
-      "down4": 0,
-      "ratio_10d": 1.0
-     }
-    },
-    {
-     "session": "2026-08-04",
-     "published": {
-      "up4": 0,
-      "down4": 0,
-      "ratio_10d": 1.2
-     },
-     "revised": {
-      "up4": 1,
-      "down4": 1,
-      "ratio_10d": 1.0
-     }
-    },
-    {
-     "session": "2026-08-05",
-     "published": {
-      "up4": 0,
-      "down4": 1,
-      "ratio_10d": 0.83
-     },
-     "revised": {
-      "up4": 0,
-      "down4": 0,
-      "ratio_10d": 1.2
-     }
-    },
-    {
-     "session": "2026-08-06",
-     "published": {
-      "up4": 1,
-      "down4": 1,
-      "ratio_10d": 0.83
-     },
-     "revised": {
-      "up4": 0,
-      "down4": 1,
-      "ratio_10d": 0.83
-     }
-    },
-    {
-     "session": "2026-08-07",
-     "published": {
-      "up4": 1,
-      "down4": 0,
-      "ratio_10d": 0.83
-     },
-     "revised": {
-      "up4": 1,
-      "down4": 1,
-      "ratio_10d": 0.83
-     }
-    },
-    {
-     "session": "2026-08-10",
-     "published": {
-      "up4": 1,
-      "down4": 1,
-      "ratio_10d": 1.0
-     },
-     "revised": {
-      "up4": 1,
-      "down4": 0,
-      "ratio_10d": 0.83
-     }
-    },
-    {
-     "session": "2026-08-11",
-     "published": {
-      "up4": 1,
-      "down4": 0,
-      "ratio_10d": 1.4
-     },
-     "revised": {
-      "up4": 1,
-      "down4": 1,
-      "ratio_10d": 1.0
-     }
-    },
-    {
-     "session": "2026-08-12",
-     "published": {
-      "up4": 0,
-      "down4": 1,
-      "ratio_10d": 1.17
+      "up4": 5,
+      "down4": 19,
+      "ratio_10d": 0.48
      },
      "revised": {
       "up4": 1,
@@ -13084,7 +12968,19 @@
      }
     }
    ],
-   "sentence": "Of the 29 earlier sessions this record and the 2026-09-09 publication both carry, 27 read differently tonight than when published: 2026-07-30 up4 1 to 0, down4 1 to 0; 2026-07-31 down4 0 to 1, ratio_10d 1.0 to 0.83; 2026-08-03 down4 1 to 0; 2026-08-04 up4 0 to 1, down4 0 to 1, ratio_10d 1.2 to 1.0; 2026-08-05 down4 1 to 0, ratio_10d 0.83 to 1.2; 2026-08-06 up4 1 to 0; 2026-08-07 down4 0 to 1; 2026-08-10 down4 1 to 0, ratio_10d 1.0 to 0.83; 2026-08-11 down4 0 to 1, ratio_10d 1.4 to 1.0; 2026-08-12 up4 0 to 1, down4 1 to 0, ratio_10d 1.17 to 1.4; and 17 more."
+   "published": {
+    "2026-09-09": {
+     "up4": 5,
+     "down4": 19,
+     "ratio_10d": 0.48
+    },
+    "2026-09-10": {
+     "up4": 5,
+     "down4": 19,
+     "ratio_10d": 0.48
+    }
+   },
+   "sentence": "Of the 1 session whose first publication's breadth this record carries, 1 reads differently tonight than that night published, newest first: 2026-09-09 up4 5 to 1, down4 19 to 0, ratio_10d 0.48 to 1.4. 28 other sessions in this record's history were first published before these figures were retained."
   },
   "real_vs_model": {
    "status": "private",
@@ -13092,7 +12988,7 @@
   },
   "sentences": [
    "0 tickets in the scorecard's window are 0 distinct setups.",
-   "Of the 29 earlier sessions this record and the 2026-09-09 publication both carry, 27 read differently tonight than when published: 2026-07-30 up4 1 to 0, down4 1 to 0; 2026-07-31 down4 0 to 1, ratio_10d 1.0 to 0.83; 2026-08-03 down4 1 to 0; 2026-08-04 up4 0 to 1, down4 0 to 1, ratio_10d 1.2 to 1.0; 2026-08-05 down4 1 to 0, ratio_10d 0.83 to 1.2; 2026-08-06 up4 1 to 0; 2026-08-07 down4 0 to 1; 2026-08-10 down4 1 to 0, ratio_10d 1.0 to 0.83; 2026-08-11 down4 0 to 1, ratio_10d 1.4 to 1.0; 2026-08-12 up4 0 to 1, down4 1 to 0, ratio_10d 1.17 to 1.4; and 17 more.",
+   "Of the 1 session whose first publication's breadth this record carries, 1 reads differently tonight than that night published, newest first: 2026-09-09 up4 5 to 1, down4 19 to 0, ratio_10d 0.48 to 1.4. 28 other sessions in this record's history were first published before these figures were retained.",
    "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
   ]
  },

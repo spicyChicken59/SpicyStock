@@ -15,9 +15,13 @@ Real R is the model's convention applied to the real trade: the per-share
 risk is the average fill less the protective stop the ticket planned, and
 each exit is weighted by its shares (``record.r_multiple()``'s rule). It is
 given only for a position whose exits account for every filled share; an
-open one is said to be open. Fees are reported beside, never folded into R.
-The two Rs are never added: the model's walk is daily bars from the trigger,
-the real trade is whatever was actually filled.
+open one is said to be open, and one whose exits outnumber its fills, or that
+exits with no fill, is named inconsistent and given no R. Fees are reported
+beside, never folded into R. The two Rs are never added: the model's walk is
+daily bars from the fill it books (``record.replay()``), the real trade is
+whatever was actually filled. A position whose planned stop is not the
+model's for the same ticket, or whose ticket id is not ``session:kind:symbol``,
+is named rather than joined.
 
     python tools/positions_compare.py --positions ~/private/positions-2026-11-20.json --docs docs
 """
@@ -26,6 +30,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -35,7 +40,8 @@ if str(ROOT) not in sys.path:
 
 from src import orders  # noqa: E402
 
-CLOSED, OPEN, NOT_FILLED = "closed", "open", "not_filled"
+CLOSED, OPEN, NOT_FILLED, INCONSISTENT = "closed", "open", "not_filled", "inconsistent"
+TICKET_ID = re.compile(r"^(\d{4}-\d{2}-\d{2}):(burst|anticipation):([A-Z0-9][A-Z0-9.\-]*)$")
 
 
 def _avg(rows: list[dict]) -> tuple[int, float | None]:
@@ -50,6 +56,9 @@ def real(position: dict) -> dict:
     stop = position["planned"]["protective_stop"]
     out = {"filled": filled, "exited": exited, "average_fill": None if fill is None else round(fill, 4),
            "fees_usd": position.get("fees_usd"), "r": None, "usd": None}
+    if exited > filled:
+        return {**out, "state": INCONSISTENT,
+                "detail": f"{exited} shares exited of {filled} filled" if filled else f"{exited} shares exited with no fill"}
     if not filled:
         return {**out, "state": NOT_FILLED}
     if exited != filled:
@@ -65,25 +74,40 @@ def compare(positions: dict, model_block: dict) -> list[dict]:
     by_key = {(p["ticker"], p["kind"], p["picked"]): p for p in model_block.get("plans") or []}
     out = []
     for position in positions["positions"]:
-        session, kind, symbol = position["ticket_id"].split(":", 2)
+        found = TICKET_ID.match(position["ticket_id"])
+        if found is None:
+            out.append({"ticket_id": position["ticket_id"], "symbol": position.get("symbol"),
+                        "status": position["status"], "real": real(position), "model": None,
+                        "refused": "its ticket id is not session:kind:symbol"})
+            continue
+        session, kind, symbol = found.groups()
         model = by_key.get((symbol, kind, session))
+        planned = position["planned"]["protective_stop"]
+        refused = None
+        if model is not None and model.get("stop") is not None and model["stop"] != planned:
+            refused = (f"its planned stop {planned} is not the model's {model['stop']} for the same ticket: "
+                       "a different plan, not the same ticket")
         out.append({"ticket_id": position["ticket_id"], "symbol": symbol, "status": position["status"],
-                    "real": real(position),
-                    "model": ({"bucket": model["bucket"], "r": model["r"], "status": model["status"]}
-                              if model else None)})
+                    "real": real(position), "refused": refused,
+                    "model": ({"bucket": model["bucket"], "r": model["r"], "status": model["status"],
+                               "stop": model.get("stop")} if model and refused is None else None)})
     return out
 
 
-def lines(rows: list[dict]) -> list[str]:
+def lines(rows: list[dict], model_status: str | None = None) -> list[str]:
     said = []
+    if model_status not in (None, "computed"):
+        said.append(f"The model record is {model_status.replace('_', ' ')}: its rows below are not reconciled.")
     for row in rows:
         r = row["real"]
         real_words = ({CLOSED: f"real {r['r']:+.2f}R (${r['usd']:,.2f} before fees)" if r["r"] is not None
                        else "real R not given: the fill was at or under the planned stop",
                        OPEN: f"real open: {r['exited']} of {r['filled']} filled shares exited",
-                       NOT_FILLED: "real not filled"}[r["state"]])
+                       NOT_FILLED: "real not filled",
+                       INCONSISTENT: f"real inconsistent: {r.get('detail')}, so no R"}[r["state"]])
         m = row["model"]
-        model_words = ("model ticket not in the published window" if m is None else
+        model_words = (f"not compared: {row['refused']}" if row.get("refused") else
+                       "model ticket not in the published window" if m is None else
                        f"model {m['bucket']}" + (f" {m['r']:+.2f}R" if m["r"] is not None else ""))
         said.append(f"{row['ticket_id']}: {real_words}; {model_words}.")
     return said
@@ -102,8 +126,9 @@ def main(argv=None) -> int:
         print("refused: the positions file does not meet its schema: " + "; ".join(found[:5]), file=sys.stderr)
         return 2
     from src import model_record
-    rows = compare(value, model_record.offline(args.docs))
-    for line in lines(rows):
+    block = model_record.offline(args.docs)
+    rows = compare(value, block)
+    for line in lines(rows, block.get("status")):
         print(line)
     if args.json is not None:
         if args.json.resolve().is_relative_to(ROOT):

@@ -5,14 +5,18 @@ here. This block says what those counts do not: how many distinct setups the
 tickets are (a setup issued again on a later night is one setup), which model
 account each ticket was sized against, what the stopped tickets read at the
 session's close and at its low beside the stop they were booked at
-(``model_record``), and which of the earlier sessions' breadth figures this
-record computes differently from the publication before it. Real trades are
+(``model_record``), and which sessions' breadth figures this record computes
+differently from the figures that session's own first publication carried.
+Each record carries those first-published figures forward (``published``),
+seeded from the publication before it, so a session is held to what its own
+night printed and never to a later re-reading. Real trades are
 not public: what the owner's own fills say against the model is read on his
 computer from a private copy of ``docs/positions-template.json``
 (``tools/positions_compare.py``).
 
 The page, the mail and ``orders.json`` print the block's own sentences.
-``faults()`` holds its shape under rules that write it.
+``faults()`` holds its shape under rules that write it, and re-derives its
+sentences from its own figures.
 """
 from __future__ import annotations
 
@@ -43,6 +47,10 @@ def _num(value) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
+def _int(value) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
 def _history(record: dict) -> dict:
     out = {}
     for row in _list(_dict(_dict(record).get("breadth")).get("history")):
@@ -55,35 +63,73 @@ def _r(value: float | None) -> str:
     return "not given" if value is None else f"{value:+.2f}R"
 
 
-def breadth_revisions(previous: dict | None, data: dict) -> dict:
-    """The sessions both records' breadth histories carry, and those whose
-    figures this record computes differently from the one before it."""
-    previous = _dict(previous)
+def _published(previous: dict) -> dict:
+    """Each session's breadth as its own first publication carried it: the map
+    the publication before this one carried forward, then that publication's
+    own session as it printed it (its history's own last row), the earlier
+    entry winning."""
+    carried = _dict(_dict(_dict(previous.get("scorecard_reading")).get("breadth_revisions")).get("published"))
+    out = {d: {f: v.get(f) for f in REVISION_FIELDS} for d, v in carried.items()
+           if isinstance(d, str) and isinstance(v, dict)}
     session = _dict(previous.get("run")).get("session")
-    then, now = _history(previous), _history(data)
-    shared = sorted(set(then) & set(now))
-    differ = [{"session": d, "published": then[d], "revised": now[d]} for d in shared if then[d] != now[d]]
-    if not previous or not then:
-        sentence = "There is no earlier publication's breadth history to compare."
-    elif not differ:
-        sentence = (f"The {len(shared)} earlier sessions this record and the {session} publication both carry read "
-                    "the same breadth figures in each.")
-    else:
-        named = "; ".join(
-            f"{r['session']} " + ", ".join(f"{f} {r['published'][f]} to {r['revised'][f]}"
-                                           for f in REVISION_FIELDS if r["published"][f] != r["revised"][f])
-            for r in differ[:MAX_REVISIONS])
-        sentence = (f"Of the {len(shared)} earlier sessions this record and the {session} publication both carry, "
-                    f"{len(differ)} read differently tonight than when published: {named}"
-                    + (f"; and {len(differ) - MAX_REVISIONS} more" if len(differ) > MAX_REVISIONS else "") + ".")
-    return {"previous_session": session, "compared": len(shared), "differ_count": len(differ),
-            "differ": differ[:MAX_REVISIONS], "sentence": sentence}
+    own = _history(previous).get(session)
+    if isinstance(session, str) and own is not None:
+        out.setdefault(session, own)
+    return out
+
+
+def revision_sentence(rev: dict) -> str:
+    """The block's breadth sentence, from its own figures alone."""
+    if rev.get("previous_session") is None:
+        return "There is no earlier publication's breadth to compare."
+    held = (f"Of the {rev['compared']} session{'' if rev['compared'] == 1 else 's'} whose first publication's "
+            "breadth this record carries")
+    tail = (f" {rev['not_retained']} other session{'' if rev['not_retained'] == 1 else 's'} in this record's history "
+            f"{'was' if rev['not_retained'] == 1 else 'were'} first published before these figures were retained."
+            if rev["not_retained"] else "")
+    if not rev["differ_count"]:
+        return f"{held}, none reads differently tonight.{tail}"
+    named = "; ".join(f"{r['session']} " + ", ".join(f"{f} {r['published'][f]} to {r['revised'][f]}"
+                                                     for f in REVISION_FIELDS if r["published"][f] != r["revised"][f])
+                      for r in rev["differ"])
+    more = rev["differ_count"] - len(rev["differ"])
+    return (f"{held}, {rev['differ_count']} read{'s' if rev['differ_count'] == 1 else ''} differently tonight than "
+            f"that night published, newest first: {named}" + (f"; and {more} more" if more else "") + f".{tail}")
+
+
+def breadth_revisions(previous: dict | None, data: dict) -> dict:
+    """The sessions whose figures this record computes differently from the
+    figures their own first publication carried, newest first, and the map of
+    first-published figures carried forward for the next record (bounded to
+    this record's own history)."""
+    previous = _dict(previous)
+    now = _history(data)
+    published = _published(previous) if previous else {}
+    compared = sorted((d for d in published if d in now), reverse=True)
+    differ = [{"session": d, "published": published[d], "revised": now[d]} for d in compared
+              if published[d] != now[d]]
+    session = _dict(data.get("run")).get("session")
+    carry = {d: published[d] for d in published if d in now}
+    if isinstance(session, str) and session in now:
+        carry.setdefault(session, now[session])
+    rev = {"previous_session": _dict(previous.get("run")).get("session") if previous else None,
+           "compared": len(compared), "not_retained": sum(1 for d in now if d not in published and d != session),
+           "differ_count": len(differ), "differ": differ[:MAX_REVISIONS],
+           "published": dict(sorted(carry.items()))}
+    rev["sentence"] = revision_sentence(rev)
+    return rev
 
 
 def model_summary(block: dict | None) -> dict:
     """The model-record block's own figures that the scorecard does not print."""
     block = _dict(block)
     status = block.get("status") if block.get("status") in STATUSES else NOT_COMPUTED
+    tickets, setups = block.get("tickets"), block.get("distinct_setups")
+    if status == COMPUTED and not (_int(tickets) and _int(setups) and 0 <= setups <= tickets):
+        # a block that says computed but cannot be counted is never quoted: it is read as unreconciled,
+        # so the reading costs the night nothing and says nothing its figures do not
+        return {"status": UNRECONCILED, "reason": "the model record's ticket and setup counts cannot be read",
+                "sentences": []}
     if status != COMPUTED:
         return {"status": status, "reason": block.get("reason") or "the model record was not computed",
                 "sentences": [s for s in _list(block.get("sentences")) if isinstance(s, str)][:3]}
@@ -106,17 +152,33 @@ def model_summary(block: dict | None) -> dict:
 
 def stop_sentence(summary: dict) -> str | None:
     stops = _dict(summary.get("stops"))
-    if summary.get("status") != COMPUTED or not stops.get("count"):
+    count, unexamined = stops.get("count") or 0, stops.get("unexamined") or 0
+    if summary.get("status") != COMPUTED or not (count or unexamined):
         return None
     sums = _dict(stops.get("sum_r"))
-    return (f"The {stops['count']} stopped ticket{'' if stops['count'] == 1 else 's'} booked at the stop "
-            f"{'sums' if stops['count'] == 1 else 'sum'} to {_r(sums.get('booked'))}; read at that session's close, "
+    if unexamined:
+        return (f"{count + unexamined} settled ticket{'' if count + unexamined == 1 else 's'} ended on a stop; "
+                f"{unexamined} of them ended on a stop whose bars this record does not carry, so the stop is not "
+                "read again at the session's close and low, and no sum of the three readings is given.")
+    if any(sums.get(n) is None for n in STOP_NAMES):
+        return (f"{count} settled ticket{'' if count == 1 else 's'} ended on a stop; not every one could be read "
+                "at the session's close and low, so no sum of the three readings is given.")
+    return (f"The {count} stopped ticket{'' if count == 1 else 's'} booked at the stop "
+            f"{'sums' if count == 1 else 'sum'} to {_r(sums.get('booked'))}; read at that session's close, "
             f"{_r(sums.get('at_close'))}; at its low, {_r(sums.get('at_low'))}.")
 
 
 def build(model_block: dict | None, previous: dict | None, data: dict) -> dict:
     model = model_summary(model_block)
     revisions = breadth_revisions(previous, data)
+    return {"version": VERSION, "status": model["status"], "model_record": model,
+            "breadth_revisions": revisions, "real_vs_model": {"status": "private", "sentence": REAL_VS_MODEL},
+            "sentences": sentences_of(model, revisions)}
+
+
+def sentences_of(model: dict, revisions: dict) -> list[str]:
+    """The block's sentences from its own model summary and breadth revisions:
+    ``build()`` writes them and ``faults()`` re-derives them."""
     sentences = []
     if model["status"] == COMPUTED and _num(model.get("tickets")):
         sentences.append(f"{model['tickets']} ticket{'' if model['tickets'] == 1 else 's'} in the scorecard's window "
@@ -140,9 +202,7 @@ def build(model_block: dict | None, previous: dict | None, data: dict) -> dict:
         sentences.append(f"The model record is {model['status'].replace('_', ' ')}: {model['reason']}.")
     sentences.append(revisions["sentence"])
     sentences.append(REAL_VS_MODEL)
-    return {"version": VERSION, "status": model["status"], "model_record": model,
-            "breadth_revisions": revisions, "real_vs_model": {"status": "private", "sentence": REAL_VS_MODEL},
-            "sentences": sentences}
+    return sentences
 
 
 def faults(data: dict) -> list[str]:
@@ -168,4 +228,21 @@ def faults(data: dict) -> list[str]:
         out.append("scorecard_reading model_record does not carry the block's status")
     if _dict(block.get("real_vs_model")).get("sentence") != REAL_VS_MODEL:
         out.append("scorecard_reading real_vs_model is not this code's sentence")
+    if out:
+        return out
+    rev, model = revisions, block["model_record"]
+    if not (isinstance(rev.get("differ_count"), int) and isinstance(rev.get("compared"), int)
+            and isinstance(rev.get("not_retained"), int) and isinstance(rev.get("published"), dict)
+            and rev["compared"] >= rev["differ_count"] >= len(rev["differ"])
+            and len(rev["differ"]) == min(rev["differ_count"], MAX_REVISIONS)):
+        return ["scorecard_reading breadth_revisions does not count its own sessions"]
+    if model.get("status") == COMPUTED and not (
+            _int(model.get("tickets")) and _int(model.get("distinct_setups"))
+            and 0 <= model["distinct_setups"] <= model["tickets"]):
+        return ["scorecard_reading model_record does not count its tickets and setups"]
+    try:
+        if revision_sentence(rev) != rev["sentence"] or sentences_of(model, rev) != block["sentences"]:
+            out.append("scorecard_reading sentences are not its own figures'")
+    except (KeyError, TypeError, ValueError, AttributeError):
+        out.append("scorecard_reading figures cannot be read to say its sentences")
     return out

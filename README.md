@@ -2560,9 +2560,13 @@ sentences verbatim:
 - **the stopped tickets read three ways**: as booked at the stop, at that
   session's close and at its low (`model_record.stop_bounds()`), because a
   stop touched inside a session is booked at exactly the stop;
-- **published against revised breadth**: the earlier sessions whose up 4%,
-  down 4% or 10-session ratio this record computes differently from the
-  publication before it, named;
+- **published against revised breadth**: the sessions whose up 4%, down 4%
+  or 10-session ratio this record computes differently from the figures that
+  session's own first publication carried, named newest first. Each record
+  carries those first-published figures forward
+  (`scorecard_reading.breadth_revisions.published`), so a session is held to
+  what its own night printed, never to a later re-reading; a session first
+  published before the figures were retained is counted, not compared;
 - **real against model**: real trades are not public. An execution agent
   fills a private copy of `docs/positions-template.json`, and
   `tools/positions_compare.py --positions <file> --docs docs` reads it beside
@@ -2574,7 +2578,11 @@ sentences verbatim:
 A model record that cannot be computed is said so in the block and never fails
 the night. The validator asks for the block only under rules that archive
 `pipeline.scorecard_reading_version`, so a record from before it is read as it
-was written.
+was written, and it re-derives the block's sentences from the block's own
+figures, so a sentence that says other than its figures is refused. Real
+against model stays private (`real_vs_model.status` is `private`): the record
+never reads a positions file, so the page, the mail and `orders.json` carry
+only the sentence that says where it is read.
 
 ### The analyst's instructions
 

@@ -8,7 +8,7 @@
   "risk_pct": 0.5,
   "slots_used": 4
  },
- "content_sha256": "78f62fca298d868e4740dbd7497648dd9dbdc726c8057e2e2f82d089cd9e829f",
+ "content_sha256": "8e5c36f4bb909a295f433f9b110c35971c5ffaa3f2ee540f966866618c0b8db5",
  "entry_window": {
   "cutoff_at": "2026-09-11T10:00:00-04:00",
   "opens_at": "2026-09-11T09:30:00-04:00",
@@ -89,7 +89,7 @@
    "48 tickets in the scorecard's window are 48 distinct setups.",
    "By model account: $10,000 at 0.5% risk, 1 ticket from 2026-09-10 through 2026-09-10, 0 settled, no R yet. No model account is recorded for 47 more tickets.",
    "The 18 stopped tickets booked at the stop sum to -2.13R; read at that session's close, -1.74R; at its low, -4.67R.",
-   "There is no earlier publication's breadth history to compare.",
+   "There is no earlier publication's breadth to compare.",
    "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
   ],
   "settled": 20,
@@ -104,7 +104,7 @@
  "source": {
   "applicable_session": "2026-09-11",
   "context_sha256": "ac165fc12bc20deada3d009832ebe926a076002391dea950a6d35da2dc299683",
-  "data_sha256": "f9c5151527a7437883fc24334fc5db75aefe59edd4f3c810e8a741ddcc5bb14d",
+  "data_sha256": "c884e304518e3e00fb57fed59f81a5c71b4c67a9e4dd5bac4dfd780efb3c0e16",
   "dry_run": false,
   "fixture": true,
   "picks_sha256": "1427fe7847168a5fde0bc185f205e7b0979632fcd1bb4501f213b35921639bbb",
