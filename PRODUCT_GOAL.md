@@ -40,7 +40,9 @@ the place a trade is decided. The layers:
 2. **An outside analyst** (a bot such as Grok or Muse, run by Mo) takes the
    brief, researches the candidates, looks at Mo's Fidelity account, sizes
    and recommends, and keeps the trade ledger. Its instructions are
-   `docs/analyst/prompt.md`.
+   `docs/analyst/prompt.md`, with `docs/analyst/bootstrap.md` (the short
+   note a bot is given first) and `docs/analyst/README.md` (the owner's
+   guide).
 3. **Mo** decides and places every order.
 
 What follows from it for this repository: product work is now measured by

@@ -2415,6 +2415,26 @@ after it writes the first one. After the page fixtures are regenerated,
 regenerate the brief's golden pair last (`python tests/fixtures/brief/generate.py`;
 CI runs it with `--check`).
 
+### The analyst's instructions
+
+`docs/analyst/prompt.md` is the standing instruction file for the outside
+analyst: the three layers and the hard limits, what SpicyStock has and has not
+shown, the freshness check, the method as a rule sheet, how to read the brief,
+the decision tiers, the research checklist, sizing for a cash account, Fidelity
+order entry by price state, managing an open position, the message templates
+and the ledger. `docs/analyst/bootstrap.md` is a note of under 2,000 characters
+that tells a bot to fetch it, and `docs/analyst/README.md` tells the owner how
+to use both. `tests/test_analyst_prompt.py` holds every strategy number the
+prompt states to its module constant, its URLs to `report.PAGE_URL`, the page's
+`REPO` and the morning endpoint, the brief's section names, field names and
+bounds to `src/brief.py` and the golden brief, the freshness states to
+`src/freshness.py`, the morning receipt's fields to the collector, and all three
+files to carrying no email address, no account number, no owner's name and no
+dollar figure that is not the model's or inside a labelled synthetic example.
+The files are public: the owner's profile block in the prompt is filled in
+privately, never in the repository. The dated figures in section 2 of the
+prompt are as of 19 November 2026; the bot is told to prefer the live brief.
+
 ### Service watch
 
 GitHub starts this repository's scheduled runs hours after their slots, and
@@ -2895,6 +2915,7 @@ docs/           index.html · app.js · app.css · app-reading.js · app-method.
                 stop-research.json · stop-research/ (registered comparison and immutable cohorts)
                 research-outcomes.json · research-outcomes/ (dated conditional follow-through snapshots)
                 brief.json · brief.md (the analyst's daily brief, derived each evening and bound to data.json and picks.json by SHA-256; written by the first evening run after this change)
+                analyst/ (prompt.md · bootstrap.md · README.md: the outside analyst's standing instructions, the short note that tells a bot to fetch them, and the owner's guide; public, no account data; held to the modules by tests/test_analyst_prompt.py)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)
                 historical-validation/ (the study's case files -- each case's archive context and evidence, byte for byte, under the digests the study recorded; frozen by tools/freeze_validation_cases.py because the archive below prunes, and held by its --check)
                 history/ (recovery) · evidence/ (deduplicated source objects)
