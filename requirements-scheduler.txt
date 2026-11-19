@@ -1,0 +1,4 @@
+# The on-time dispatcher's one dependency (deploy/scheduler/Dockerfile): the
+# XNYS calendar src/sessions.py reads. Installed with -c constraints.txt, which
+# pins the versions under it to the evening's own.
+exchange_calendars==4.13.2

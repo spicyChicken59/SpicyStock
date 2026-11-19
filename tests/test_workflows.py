@@ -329,7 +329,7 @@ def test_the_evening_job_can_write_and_runs_alone():
     wf = load("evening.yml")
     assert wf["permissions"] == {"contents": "write", "actions": "read"}
     assert wf["concurrency"] == {"group": "evening-scan", "cancel-in-progress": False}
-    checkout = steps(wf, 'scan')['actions/checkout@v4']
+    checkout = steps(wf, 'scan')['actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1']
     assert checkout['with']['ref'] == '${{ github.ref }}'
 
 
@@ -421,7 +421,7 @@ def test_morning_collector_cannot_write_and_has_no_delivery_credentials():
     assert 'permissions' not in collect
     assert "inputs.dry_run == true" in collect['if']
     current = steps(wf, 'collect')
-    assert current['actions/checkout@v4']['with'] == {'ref': '${{ github.ref }}', 'persist-credentials': False}
+    assert current['actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1']['with'] == {'ref': '${{ github.ref }}', 'persist-credentials': False}
     step = current['Collect a bound morning observation']
     assert step['if'] == "steps.guard.outputs.go == 'true'"
     assert step['env']['SCAN_SEND_EMAIL'] == 'false'
@@ -439,7 +439,7 @@ def test_morning_persistence_is_main_only_never_rehearsal_and_uses_current_run_a
     assert "inputs.dry_run == false" in job['if'] and "github.event_name == 'schedule'" in job['if']
     assert 'inputs.probe_sources != true' in job['if']
     current = steps(wf, 'persist')
-    assert current['actions/checkout@v4']['with']['ref'] == 'main'
+    assert current['actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1']['with']['ref'] == 'main'
     artifact = current['actions/download-artifact@v4']['with']
     assert artifact == {'name': 'morning-${{ github.run_id }}-${{ github.run_attempt }}',
                         'path': '${{ runner.temp }}/morning-observation'}
@@ -498,7 +498,7 @@ def test_source_recovery_runs_on_its_own_schedule_credentials_and_artifact_path(
     from src import source_recovery
     assert source_recovery.MAX_COLLECTION_SECONDS < collect['timeout-minutes'] * 60
     current = steps(wf, 'collect')
-    assert current['actions/checkout@v4']['with'] == {'ref': '${{ github.ref }}', 'persist-credentials': False}
+    assert current['actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1']['with'] == {'ref': '${{ github.ref }}', 'persist-credentials': False}
     step = current['Collect a bound source recovery']
     assert step['id'] == 'recovery' and 'if' not in step and 'continue-on-error' not in step
     assert step['env']['SCAN_SEND_EMAIL'] == 'false'
@@ -515,7 +515,7 @@ def test_source_recovery_runs_on_its_own_schedule_credentials_and_artifact_path(
     assert persist['needs'] == 'collect' and persist['permissions'] == {'contents': 'write'}
     assert persist['if'] == "${{ !cancelled() && needs.collect.outputs.ready == 'true' }}"
     written = steps(wf, 'persist')
-    assert written['actions/checkout@v4']['with'] == {'ref': 'main'}
+    assert written['actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1']['with'] == {'ref': 'main'}
     download = written["Download only this run's source recovery"]
     publish = written['Publish only against the unchanged record, ledger entry and prior recovery']
     assert download['with'] == {'name': 'source-recovery-${{ github.run_id }}-${{ github.run_attempt }}',
@@ -574,7 +574,7 @@ def test_issuer_readonly_collection_and_main_only_writer_are_separate():
     wf = load('issuer-evidence.yml')
     collect = wf['jobs']['collect']; persist = wf['jobs']['persist']
     current = steps(wf, 'collect')
-    assert current['actions/checkout@v4']['with']['persist-credentials'] is False
+    assert current['actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1']['with']['persist-credentials'] is False
     assert 'inputs.dry_run == true' in collect['if']
     assert 'head_repository.full_name == github.repository' in collect['if']
     guard = current['Guard the trigger and daily collection budget']
@@ -589,7 +589,7 @@ def test_issuer_readonly_collection_and_main_only_writer_are_separate():
     assert "github.ref == 'refs/heads/main'" in persist['if']
     assert "github.event_name == 'workflow_run' || inputs.dry_run == false" in persist['if']
     writer = steps(wf, 'persist')
-    assert writer['actions/checkout@v4']['with'] == {'ref': 'main'}
+    assert writer['actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1']['with'] == {'ref': 'main'}
     assert writer['actions/download-artifact@v4']['with']['name'] == 'issuer-evidence-${{ github.run_id }}-${{ github.run_attempt }}'
     assert writer['Publish only against unchanged main source and receipt']['run'] == \
         'python -m tools.publish_issuer_evidence publish --input "$RUNNER_TEMP/issuer-candidate"'
@@ -661,8 +661,8 @@ def test_ci_runs_the_suite_the_fixture_check_the_chart_check_and_the_page_smoke(
 
 
 def test_the_evening_and_the_tests_run_the_same_python():
-    assert steps(load("evening.yml"), "scan")["actions/setup-python@v5"]["with"]["python-version"] == \
-        steps(load("tests.yml"), "pytest")["actions/setup-python@v5"]["with"]["python-version"]
+    assert steps(load("evening.yml"), "scan")["actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97"]["with"]["python-version"] == \
+        steps(load("tests.yml"), "pytest")["actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97"]["with"]["python-version"]
 
 
 # ---------------------------------------------------------- publish -----
@@ -689,7 +689,7 @@ def test_the_service_watch_reads_main_mails_through_the_evenings_transport_and_w
     job = wf['jobs']['watch']
     assert job['if'] == "github.ref == 'refs/heads/main'" and 'permissions' not in job
     named = steps(wf, 'watch')
-    assert named['actions/checkout@v4']['with'] == {'ref': 'main', 'persist-credentials': False}
+    assert named['actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1']['with'] == {'ref': 'main', 'persist-credentials': False}
     assert named['Install dependencies']['run'] == 'pip install -r requirements.txt -c constraints.txt'
     step = named['Watch the evening publication and the morning check']
     assert step['run'] == 'python tools/service_watch.py --docs docs $WATCH_MAIL_FLAG'

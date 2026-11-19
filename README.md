@@ -2525,7 +2525,7 @@ prompt are as of 19 November 2026; the bot is told to prefer the live brief.
 
 GitHub starts this repository's scheduled runs hours after their slots, and
 until 19 November 2026 nothing said so when a night had not arrived.
-`tools/service_watch.py` asks two questions of the files on disk and a clock:
+`tools/service_watch.py` asks three questions of the files on disk and a clock:
 
 - **Evening.** Has the session after the one `data.json` covers been published?
   The answer is `src/freshness.py`'s. It is flagged only when the publication is
@@ -2538,10 +2538,16 @@ until 19 November 2026 nothing said so when a night had not arrived.
   no `missing` of its own, because the record still names the first, so the
   watch also counts the sessions that have completed since the record
   (`sessions_behind`) and judges the newest of them by the same two bounds.
-- **Morning.** Once the entry window has closed: did a morning check bound to
-  this record's bytes land inside its collection window? Flagged, for 12
-  hours, only when the record published a ticket; a night with nothing to quote
-  is reported and never flagged. A receipt whose status says it quoted nothing
+- **Start.** Did the evening run that wrote the record start within 60
+  minutes of its primary slot (6:16 PM ET), read off the record's own
+  `run.delivery.after_primary_minutes`? The on-time dispatcher (below) starts
+  it at 6:20 PM ET, so a start more than 60 minutes late is GitHub's own cron,
+  the backup. Flagged for 14 hours after the run started.
+- **Morning.** From 8:45 AM CT on the applicable session (`MORNING_DUE_CT`):
+  did a morning check bound to this record's bytes land inside its collection
+  window? Flagged, for 12 hours after it was due, on every session, ticket or
+  not: the dispatcher starts the check at 8:20 AM CT, so one that is not there
+  by 8:45 is the service's, whatever the night published. A receipt whose status says it quoted nothing
   (`provider_unavailable`, `inapplicable`) has not landed. A check that landed
   is said with when it ran and what it priced: every real ticket morning from
   3 to 16 November 2026 reads "generated before the entry window opened, and 0
@@ -2570,8 +2576,26 @@ more than one session is unpublished it names the first missed one beside
 that, and says the newest can still be published by a dispatch with
 **only_if_unpublished** ticked while its own limit is ahead (such a dispatch
 does nothing before the session's primary slot, 6:16 PM ET). The same
-two answers are printed for anything else with a clock:
+answers are printed for anything else with a clock:
 `python tools/service_watch.py --docs docs`.
+
+### On-time starts
+
+`tools/dispatch_schedule.py` starts the runs GitHub's scheduler starts hours
+late, by `workflow_dispatch`, on XNYS sessions only (`src/sessions.py`):
+`evening.yml` at 18:20, 19:20, 20:20 and 21:20 America/New_York with
+**only_if_unpublished** ticked, so the four starts publish the newest session
+once; `morning.yml` at 08:20 America/Chicago; `service-watch.yml` at 06:00,
+08:45 and 11:00 America/Chicago. A slot is due for 30 minutes from its
+instant, and before it asks for a run it reads the workflow's dispatched runs
+created since the slot, so a repeat tick, a restart or a second copy starts
+nothing twice. It holds one credential, `GITHUB_TOKEN`, a fine-grained token
+with Actions read and write on this repository alone, and logs the workflow,
+the slot, the run id and an HTTP status, never a token or a body. It runs as
+its own Railway service (`deploy/scheduler/Dockerfile`,
+`deploy/scheduler/railway.json`); deploying it is the owner's step, in
+`docs/operations/external-scheduler.md`. GitHub's crons stay in every
+workflow as the backup.
 
 ## One-time setup
 
@@ -3050,13 +3074,15 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots (the ones each record's rules archived, else the current policy's) by the landing commit's time with the record's own clock beside it, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
                 recovery_rehearsal.py (a rehearsal, not a reading: run_evening() through the suite's doubles over one synthetic market, one injected failure a night -- the bars endpoint, every frame stale, the reader's credit, the reader's transport, the mail -- with the evening workflow's own guard executed before and after each night under a frozen clock; the exit codes, what was published, whether the previous publication's bytes survived, how often each boundary was asked and what the guard decided; --check runs it again and holds its two files; calls no provider and changes nothing)
                 schedule_reliability.py (a reading of GitHub's scheduler, not the service: the public Actions listing of scheduled runs, each placed at its cron slot, the minutes from slot to creation per workflow, cron and week, expected slots with no run, the first run more than an hour late, and push runs on main as the contrast; --fetch is its only network path and --check holds its two files to the committed snapshot; changes nothing)
-                service_watch.py (a watch, not a reading: the record on disk and a clock -- is the session after it published, late near its recovery limit or missing, and did a morning check for this record land inside its collection window; mails through the evening's transport only with --mail and only on an alert; exit 0, 1 an alert, 2 a record that cannot answer)
+                dispatch_schedule.py (the on-time dispatcher: a workflow_dispatch of evening.yml, morning.yml and service-watch.yml at their slots on XNYS sessions, idempotent against GitHub's own runs listing; one fine-grained GITHUB_TOKEN; plan needs none)
+                service_watch.py (a watch, not a reading: the record on disk and a clock -- is the session after it published, late near its recovery limit or missing, did its evening run start more than an hour after its primary slot, and did a morning check for this record land by 8:45 AM CT inside its collection window; mails through the evening's transport only with --mail and only on an alert; exit 0, 1 an alert, 2 a record that cannot answer)
                 stale_inputs.py (a reading of the stale stocks across nights: each session's newest publication's named stock-sessions joined to every later follow-up reading and source-recovery row, each in one class -- would have been listed, scanned and not listed, under the $3 policy, a later bar read for its volume only against the 4%, breakdown and $ scans' floor, a later bar whose volume could not be read, no later bar; --check holds its two files; establishes no cause, changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
                 page_text_cases.mjs (the page smoke's page-text suite: the page's own words for vetoes, Method, Market, the stock detail, a known deal and the Record view, held to the record and the modules; `--only page-text`, or one part such as `page-text:market`)
                 first_trade_cases.mjs (the page smoke's first-trade rehearsal: one journey from refused cash to a downloaded private backup; SCSTOCK_FIRST_TRADE_WRITE=1 writes tests/fixtures/first-trade/)
                 private_results_parity.mjs (the page's own verdicts, from app-handoff.js run in a vm, on a corpus of private backups, written gzipped beside the rehearsal's backup; --check in CI)
                 private_results.py (a reader of the owner's private backup: each reported result re-derived by the page's rules, traced to its publication by SHA-256 and frozen plan, the model's replay beside it and never added; writes nothing but an explicit --json)
+deploy/         scheduler/ (the dispatcher's own Railway service: Dockerfile and railway.json; requirements-scheduler.txt beside the root)
 .github/        evening.yml · intraday.yml · morning.yml · source-recovery.yml · issuer-evidence.yml · service-watch.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```
 

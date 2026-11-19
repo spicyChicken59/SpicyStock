@@ -4,7 +4,8 @@ GitHub starts this repository's scheduled runs hours after their slots (the
 13 October 2026 schedule reading, and every night since), and until now
 nothing said so when a night had not arrived: a publication that never came
 looked exactly like one that was late. This asks two questions of the files
-on disk and a clock, and answers each in one word and one sentence:
+on disk and a clock, and answers each in one word and one sentence (a third,
+``start``, is below):
 
 ``evening``
     Has the session after the one ``docs/data.json`` covers been published?
@@ -17,16 +18,26 @@ on disk and a clock, and answers each in one word and one sentence:
     not: every first publication from 22 September to 6 November 2026
     landed after both slots (the 7 November service reading).
 
+``start``
+    Did the evening run that wrote the record start within
+    ``LATE_START_MINUTES`` of its primary slot? Read off the record's own
+    ``run.delivery.after_primary_minutes`` (the run's start clock against
+    6:16 PM ET). The on-time dispatcher (``tools/dispatch_schedule.py``)
+    starts it at 6:20 PM ET; a start an hour late means the dispatcher did
+    not, and GitHub's own cron, the backup, did. Flagged for
+    ``LATE_START_ALERT_HOURS`` after the run started.
+
 ``morning``
-    Once the entry window the record names has closed: did a morning check
-    for THIS record land inside its collection window? Read off
+    From ``MORNING_DUE_CT`` (8:45 AM Chicago) on the applicable session: did
+    a morning check for THIS record land inside its collection window? The
+    dispatcher starts it at 8:20 AM CT, so a check not there by 8:45 is
+    worth a person's attention whether or not the record published a ticket.
+    Read off
     ``docs/morning.json``: its binding to the record's bytes, its own
     generation instant and status, and how many of its ticket rows carried
     a recent price. A check that landed before the entry window opened and
     quoted nothing is said in those words and is not an alert: it is what a
-    dispatch at 8:21 AM CT gives every morning. A record that published no
-    ticket has nothing to quote, so its missing check is reported and never
-    alerted.
+    dispatch at 8:20 AM CT gives every morning.
 
 It reads two files and decides nothing about them. It calls no provider, and
 it mails only with ``--mail``, through the evening's own transport
@@ -46,8 +57,9 @@ import hashlib
 import html
 import json
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -73,11 +85,26 @@ ALERT_WITHIN_HOURS = 6
 MISSING_ALERT_HOURS = 12
 #: The same bound for a morning check that did not land.
 MORNING_ALERT_HOURS = 12
+#: A morning check is judged from this local time on the applicable session:
+#: the dispatcher starts it at 8:20 AM CT (tools/dispatch_schedule.SLOTS), and
+#: a run lands in about 90 seconds.
+MORNING_DUE_CT = "08:45"
+CHICAGO = ZoneInfo("America/Chicago")
+#: An evening run that started more than this many minutes after its primary
+#: slot (6:16 PM ET) was not started by the dispatcher, whose first evening slot
+#: is 6:20 PM ET; GitHub's own cron created every such run of 2 to 18 November
+#: 2026 3.56 to 7.99 hours late.
+LATE_START_MINUTES = 60
+#: Flagged for this long after the late run started: the 6:00 AM CT watch the
+#: next morning is about twelve hours after a 6:20 PM ET start.
+LATE_START_ALERT_HOURS = 14
 
 # evening judgements
 OK, LATE_NEAR_LIMIT, MISSING, UNKNOWN = "ok", "late_near_limit", "missing", "unknown"
 # morning judgements
 NOT_DUE, LANDED, NOT_LANDED = "not_due", "landed", "not_landed"
+# start judgements
+ON_TIME, LATE_START = "on_time", "late_start"
 
 EXIT_OK, EXIT_ALERT, EXIT_UNKNOWN = 0, 1, 2
 
@@ -95,12 +122,16 @@ UNREADABLE_SUBJECT = "SpicyStock watch: the record on main could not be read"
 #: ``provider_unavailable`` and ``inapplicable`` (``src/morning.STATUSES``) quoted nothing and say so themselves.
 RAN_STATUSES = ("observed", "partial", "no_tickets")
 RECENT = "recent"
-MORNING_HINT = ("The morning check is started from outside GitHub's scheduler (the owner's own dispatch of morning.yml). "
-                "Look at that trigger's last run.")
+MORNING_HINT = ("The morning check is started from outside GitHub's scheduler, by the on-time dispatcher "
+                "(tools/dispatch_schedule.py) at 8:20 AM CT. Read its log for that morning, and morning.yml's runs.")
 LATE_ITSELF = ("This watch runs on GitHub's scheduler, which starts scheduled runs hours late, so it may itself have "
                "run late: read the clock it names.")
 SUBJECT_EVENING = "SpicyStock watch: {session} is not published"
 SUBJECT_MORNING = "SpicyStock watch: no morning check landed for {session}"
+SUBJECT_START = "SpicyStock watch: the {session} evening run started late"
+START_HINT = ("The on-time dispatcher (tools/dispatch_schedule.py, docs/operations/external-scheduler.md) starts the "
+              "evening at 6:20 PM ET. A start this late is GitHub's own cron, the backup: read the dispatcher's log for "
+              "that evening.")
 
 
 class Unreadable(ValueError):
@@ -244,6 +275,39 @@ def evening(record: dict, now: datetime) -> dict:
     return out
 
 
+def start(record: dict, now: datetime) -> dict:
+    """Whether the evening run that wrote the record started within
+    LATE_START_MINUTES of its primary slot, off the record's own delivery block."""
+    run = record.get("run") if isinstance(record.get("run"), dict) else {}
+    delivery = run.get("delivery") if isinstance(run.get("delivery"), dict) else {}
+    minutes, slot = delivery.get("after_primary_minutes"), _instant(delivery.get("primary_slot_at"))
+    out = {"session": delivery.get("session"), "primary_slot_at": delivery.get("primary_slot_at"),
+           "after_primary_minutes": None, "judgement": UNKNOWN, "sentence": None, "alert": False, "action": None}
+    if isinstance(minutes, bool) or not isinstance(minutes, (int, float)) or slot is None:
+        out["sentence"] = "The record carries no delivery block to say when its run started."
+        return out
+    out["after_primary_minutes"] = minutes
+    if minutes <= LATE_START_MINUTES:
+        out["judgement"] = ON_TIME
+        out["sentence"] = (f"The {out['session']} evening run started {minutes:g} minutes after its primary slot "
+                           f"({delivery['primary_slot_at']}).")
+        return out
+    out["judgement"] = LATE_START
+    out["sentence"] = (f"The {out['session']} evening run started {minutes:g} minutes after its primary slot "
+                       f"({delivery['primary_slot_at']}), more than {LATE_START_MINUTES} minutes late.")
+    out["alert"] = now - (slot + timedelta(minutes=minutes)) < timedelta(hours=LATE_START_ALERT_HOURS)
+    out["action"] = START_HINT if out["alert"] else None
+    return out
+
+
+def morning_due(session: str | None) -> datetime | None:
+    """MORNING_DUE_CT on the applicable session, in Chicago."""
+    try:
+        return datetime.combine(date.fromisoformat(session), time.fromisoformat(MORNING_DUE_CT), tzinfo=CHICAGO)
+    except (TypeError, ValueError):
+        return None
+
+
 def _measured(record: dict):
     run = record.get("run") if isinstance(record.get("run"), dict) else {}
     return run.get("session")
@@ -251,7 +315,7 @@ def _measured(record: dict):
 
 def morning(record: dict, record_raw: bytes, receipt: dict | None, receipt_problem: str | None, now: datetime) -> dict:
     """Whether a morning check for this record landed inside its collection
-    window, once that window has closed."""
+    window, from MORNING_DUE_CT on the applicable session."""
     window = freshness.morning_window(record)
     session = window.get("applicable_session")
     tickets = ticket_count(record)
@@ -259,13 +323,15 @@ def morning(record: dict, record_raw: bytes, receipt: dict | None, receipt_probl
            "window_cutoff_at": window.get("window_cutoff_at"), "tickets": tickets,
            "judgement": UNKNOWN, "sentence": None, "alert": False, "action": None, "receipt": None}
     start, cutoff = _instant(window.get("collection_starts_at")), _instant(window.get("window_cutoff_at"))
-    if window.get("unknown") or start is None or cutoff is None:
+    due = morning_due(session)
+    if window.get("unknown") or start is None or cutoff is None or due is None:
         out["sentence"] = f"The morning check cannot be judged: {window.get('unknown') or 'the record gives no entry window'}."
         return out
-    if now < cutoff:
+    out["due_at"] = due.isoformat()
+    if now < due:
         out["judgement"] = NOT_DUE
-        out["sentence"] = (f"The entry window for {session} closes at {window['window_cutoff_at']}; a morning check is "
-                           "judged after that.")
+        out["sentence"] = (f"A morning check for {session} is started at 8:20 AM CT and judged from {due.isoformat()}; "
+                           "this watch's clock is before that.")
         return out
     wanted = hashlib.sha256(record_raw).hexdigest()
     problem = receipt_problem
@@ -322,9 +388,10 @@ def morning(record: dict, record_raw: bytes, receipt: dict | None, receipt_probl
     out["judgement"] = NOT_LANDED
     counted = ("the record does not say how many tickets it published" if tickets is None
                else f"the record published {tickets} ticket{'' if tickets == 1 else 's'}")
-    out["sentence"] = f"No morning check for {session} landed inside its collection window: {problem}; {counted}."
-    # a record with no ticket has nothing to quote: reported, never alerted
-    out["alert"] = bool(tickets) and now - cutoff < timedelta(hours=MORNING_ALERT_HOURS)
+    out["sentence"] = (f"No morning check for {session} landed by {due.isoformat()} inside its collection window: "
+                       f"{problem}; {counted}.")
+    # every session's morning check is the service's, ticket or not: flagged for MORNING_ALERT_HOURS after it was due
+    out["alert"] = now - due < timedelta(hours=MORNING_ALERT_HOURS)
     out["action"] = MORNING_HINT if out["alert"] else None
     return out
 
@@ -342,12 +409,13 @@ def watch(docs: Path, now: datetime) -> dict:
         receipt_problem = str(exc)
     first = evening(record, now)
     second = morning(record, record_raw, receipt, receipt_problem, now)
+    third = start(record, now)
+    alert = first["alert"] or second["alert"] or third["alert"]
     return {"version": VERSION, "clock": now.astimezone(timezone.utc).isoformat(),
             "record_sha256": hashlib.sha256(record_raw).hexdigest(),
-            "evening": first, "morning": second,
-            "alert": first["alert"] or second["alert"],
-            "exit_code": (EXIT_ALERT if first["alert"] or second["alert"]
-                          else EXIT_UNKNOWN if first["judgement"] == UNKNOWN else EXIT_OK)}
+            "evening": first, "morning": second, "start": third,
+            "alert": alert,
+            "exit_code": (EXIT_ALERT if alert else EXIT_UNKNOWN if first["judgement"] == UNKNOWN else EXIT_OK)}
 
 
 def lines(result: dict) -> list[str]:
@@ -360,6 +428,11 @@ def lines(result: dict) -> list[str]:
     out.append(f"Morning: {second['judgement']}. {second['sentence']}")
     if second["action"]:
         out.append(f"  {second['action']}")
+    third = result.get("start") or {}
+    if third:
+        out.append(f"Start: {third['judgement']}. {third['sentence']}")
+        if third["action"]:
+            out.append(f"  {third['action']}")
     out.append("Alert." if result["alert"] else "Nothing to flag.")
     return out
 
@@ -368,7 +441,9 @@ def messages(result: dict) -> list[tuple[str, str]]:
     """(subject, HTML body) for each alert the result carries; none otherwise."""
     out = []
     for block, subject, session in ((result["evening"], SUBJECT_EVENING, result["evening"]["next_session"]),
-                                    (result["morning"], SUBJECT_MORNING, result["morning"]["applicable_session"])):
+                                    (result["morning"], SUBJECT_MORNING, result["morning"]["applicable_session"]),
+                                    (result.get("start") or {"alert": False}, SUBJECT_START,
+                                     (result.get("start") or {}).get("session"))):
         if not block["alert"]:
             continue
         paragraphs = [block["sentence"], block["action"], f"Watch clock: {result['clock']}. {LATE_ITSELF}"]
