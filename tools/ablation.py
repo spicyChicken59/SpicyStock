@@ -179,8 +179,15 @@ def nights_of(publications: list[dict]) -> dict:
 def summary_of(rows: list[dict], spec: dict) -> dict:
     s = so._stratum_summary(rows, spec)
     settled = s["settled"]
-    return {"admitted": len(rows), "tickets": sum(1 for r in rows if r["ticket"] is not None),
-            "withheld": sum(1 for r in rows if r["bucket"] == so.NO_TICKET),
+    tickets = sum(1 for r in rows if r["ticket"] is not None)
+    withheld = sum(1 for r in rows if r["bucket"] == so.NO_TICKET)
+    # admitted rows the study built no walkable ticket for and did not withhold:
+    # a plan whose bars do not match the record's (basis_mismatch) or none it could build
+    not_walked = dict(sorted(Counter(r["bucket"] for r in rows
+                                     if r["ticket"] is None and r["bucket"] != so.NO_TICKET).items()))
+    if tickets + withheld + sum(not_walked.values()) != len(rows):
+        raise AblationError("a variant's admitted rows are not its tickets, withheld and unwalked rows")
+    return {"admitted": len(rows), "tickets": tickets, "withheld": withheld, "not_walked": not_walked,
             "buckets": {k: v for k, v in s["buckets"].items() if v},
             "uncertain_by_reason": dict(sorted(Counter(r.get("uncertainty") or "unnamed" for r in rows
                                                        if r["bucket"] == record.UNCERTAIN).items())),
@@ -191,10 +198,36 @@ def summary_of(rows: list[dict], spec: dict) -> dict:
             "costs_per_side_bps": s["costs_per_side_bps"]}
 
 
-def build() -> dict:
+def admitted_band(grade) -> str | None:
+    """Which admitted band a grade sits in: A+, the rest of the trade grades, or none."""
+    return grade if grade in pipeline.TRADE_GRADES else None
+
+
+def regrade(bursts) -> tuple[list[dict], int, int]:
+    """The unvetoed rows, how many the checklist's own weights grade as recorded
+    (all of them, or the tool refuses: a variant read off grades this tool
+    cannot reproduce would compare nothing), and how many equal weights move
+    across an admitted band."""
+    regraded = [b for b in bursts if not b.get("vetoes")]
+    same = sum(1 for b in regraded
+               if quality_grade(b["quality"]["checks"], b["quality"].get("a_plus_count"), b.get("vetoes"),
+                                quality.WEIGHTS) == b.get("grade_mechanical"))
+    if same != len(regraded):
+        raise AblationError(f"the checklist's own weights reproduce {same} of {len(regraded)} recorded grades")
+    band_changes = sum(1 for b in regraded
+                       if admitted_band(equal_weight_grade(b)) != admitted_band(b.get("grade_mechanical")))
+    return regraded, same, band_changes
+
+
+def build(entries: list[dict] | None = None) -> dict:
+    """The ablation over the population ``cmp.population()`` walks from the
+    spec's pinned ref, or over ``entries`` (the population a committed file
+    records, for a checkout whose history is shallow): each entry is still
+    held to the blob it names when its record is read."""
     spec = load_spec()
     base = json.loads((ROOT / spec["base_spec"]).read_text())
-    entries = cmp.population(spec["ref"], base)
+    if entries is None:
+        entries = cmp.population(spec["ref"], base)
     study_spec = cmp.spec_of({**base, "cost_bps_per_side": spec["metrics"]["cost_bps_per_side"]}, entries)
     publications = so.load_publications(study_spec)
     nights = nights_of(publications)
@@ -211,10 +244,7 @@ def build() -> dict:
         chosen = [r for r in rows if admits("production" if variant == "stop_burst_low_only" else variant,
                                             bursts[(r["publication"], r["ticker"])], nights[r["publication"]])]
         out[variant] = summary_of(chosen, study_spec)
-    regraded = [b for b in bursts.values() if not b.get("vetoes")]
-    same = sum(1 for b in regraded
-               if quality_grade(b["quality"]["checks"], b["quality"].get("a_plus_count"), b.get("vetoes"),
-                                quality.WEIGHTS) == b.get("grade_mechanical"))
+    regraded, same, band_changes = regrade(bursts.values())
     lights = Counter(n["light"] for n in nights.values())
     unscaled = Counter(n["unscaled"] for n in nights.values())
     return {"version": VERSION, "spec": SPEC.relative_to(ROOT).as_posix(), "spec_sha256": SPEC_SHA256,
@@ -228,7 +258,9 @@ def build() -> dict:
                                   "no_inputs": sum(n["read_again"] is None for n in nights.values())},
             "grades_read_again": {"rows": len(regraded), "reproduced": same,
                                   "changed_by_equal_weights": sum(1 for b in regraded
-                                                                  if equal_weight_grade(b) != b.get("grade_mechanical"))},
+                                                                  if equal_weight_grade(b) != b.get("grade_mechanical")),
+                                  "admitted_band_changes_by_equal_weights": band_changes},
+            "population": [{k: e[k] for k in ("commit", "session", "blob")} for e in entries],
             "equal_weight": EQUAL_WEIGHTS["L"],
             "min_settled_for_a_rate": record.SCORECARD_MIN_PLANS,
             "variants": out}
@@ -274,21 +306,31 @@ def render(result: dict) -> str:
         f"The checklist's own weights reproduce {result['grades_read_again']['reproduced']:,} of "
         f"{result['grades_read_again']['rows']:,} unvetoed rows' recorded grades; equal weights give each scored "
         f"letter {result['equal_weight']:g} points and change "
-        f"{result['grades_read_again']['changed_by_equal_weights']:,} of those grades.",
+        f"{result['grades_read_again']['changed_by_equal_weights']:,} of those grades, "
+        f"{result['grades_read_again']['admitted_band_changes_by_equal_weights']:,} of them across an admitted band "
+        f"(A+, or A against the rest)"
+        + (": the weight change moves only grades no light admits, so `equal_checklist_weights` admits what "
+           "production admits." if not result['grades_read_again']['admitted_band_changes_by_equal_weights'] else "."),
         "",
-        "| variant | admitted | tickets | withheld | settled | win rate | mean R | median R | mean of night means | 95% night interval | uncertain |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|",
+        "| variant | admitted | tickets | withheld | not walked | settled | win rate | mean R | median R | mean of night means | 95% night interval | uncertain |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|",
     ]
     for key in VARIANTS:
         s = v[key]
         st = s["settled"]
         nb = s["night_bootstrap"]
-        lines.append(f"| `{key}` | {s['admitted']:,} | {s['tickets']:,} | {s['withheld']:,} | {st['n']:,} | "
-                     f"{'—' if s['win_rate'] is None else format(s['win_rate'], '.3f')} | {_r(st['mean_r'])} | "
-                     f"{_r(st['median_r'])} | {_r(nb['mean_of_night_means'] if nb else None)} | {_interval(nb)} | "
-                     f"{s['buckets'].get(record.UNCERTAIN, 0):,} |")
+        rate = s["readable"]          # under the floor the counts stand and no rate is printed
+        lines.append(f"| `{key}` | {s['admitted']:,} | {s['tickets']:,} | {s['withheld']:,} | "
+                     f"{sum(s['not_walked'].values()):,} | {st['n']:,} | "
+                     f"{'—' if not rate or s['win_rate'] is None else format(s['win_rate'], '.3f')} | "
+                     f"{_r(st['mean_r']) if rate else '—'} | {_r(st['median_r']) if rate else '—'} | "
+                     f"{_r(nb['mean_of_night_means'] if nb else None) if rate else '—'} | "
+                     f"{_interval(nb) if rate else '—'} | {s['buckets'].get(record.UNCERTAIN, 0):,} |")
     lines += ["", f"A rate is read only at {result['min_settled_for_a_rate']} settled tickets or more "
-              "(`record.SCORECARD_MIN_PLANS`); an interval that includes zero establishes no sign.", "",
+              "(`record.SCORECARD_MIN_PLANS`): under it the table prints the counts and a dash for every rate. "
+              "An interval that includes zero establishes no sign. *Not walked* counts admitted rows the study "
+              "built no walkable ticket for and did not withhold (a plan whose bars are not the record's, "
+              "`basis_mismatch`), so admitted is tickets, withheld and not walked.", "",
               "## Each variant", ""]
     for key in VARIANTS:
         s = v[key]
@@ -298,8 +340,8 @@ def render(result: dict) -> str:
         buckets = ", ".join(f"{k} {s['buckets'][k]:,}" for k in so.BUCKETS if k in s["buckets"])
         lines += [f"**`{key}`** — {change[key]}.", "",
                   f"Buckets: {buckets}. Uncertain by reason: {reasons}. Settled: {s['settled']['wins']:,} wins, "
-                  f"{s['settled']['losses']:,} losses, {s['settled']['breakeven']:,} even; mean R after costs: {costs}."
-                  + ("" if s["readable"] else " Under the floor: no rate is read."), ""]
+                  f"{s['settled']['losses']:,} losses, {s['settled']['breakeven']:,} even"
+                  + (f"; mean R after costs: {costs}." if s["readable"] else ". Under the floor: no rate is read."), ""]
     lines += ["## What it does not establish", "",
               "An edge for any variant, or a reason to adopt one. The reader, which lowers most A-band names on a live "
               "night, is not run; GREEN nights are few or none in this population; and every population here was "

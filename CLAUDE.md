@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6892 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6898 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15816,5 +15816,25 @@ partial letter scored at full weight (no case had a partial scored letter)
 and the readable floor made strict (the test read the committed file, which
 a mutant of the tool cannot move). Both have their tests now and die; the
 control survives.
+
+**The review, worked.** The stack's review returned six PR 6 findings, each
+reproduced before it was touched. The one that mattered: nothing re-derived
+`ablation.json` in CI, so a change to the gates, the study or the modules
+they read left the file and its report stale and every test green; and the
+grades read again were counted, not required. `ablation.json` records its
+population now, `tests/test_ablation.py` runs the tool over it (fetching the
+commits by whole id on CI's shallow checkout, and walking the population
+from the pinned ref where the history is there), and the tool refuses when
+the checklist's own weights do not reproduce every recorded grade. The
+equal-weights variant cannot differ from production by the arithmetic alone
+(every pass, partial and fail combination falls in the same admitted band
+under both weightings): the file counts the band changes (0 of 576 moved
+grades) and the report says so. The table printed rates under the floor
+(`stop_burst_low_only`'s +0.620 among them); it prints dashes there now.
+`tickets` and `withheld` did not sum to `admitted` (a plan the study could
+not walk, `basis_mismatch`); a *not walked* column closes it and the tool
+refuses a variant that does not add up. The index test held its dates to a
+literal, and the summary's win rate and withheld count to nothing: each is
+held now. No production or variant figure moved.
 
 **Not claimable:** any edge, for production or a variant.

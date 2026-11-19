@@ -2,17 +2,23 @@
 and the code each gate stands on.
 
 The tool's own run reads 55 publications out of git and takes half a
-minute; these tests do not run it. They hold the committed ``ablation.json``
-to the tool's encoding, the committed report to the tool's rendering of that
-file (so no figure in it is typed by hand), the spec to its pinned digest,
-and each variant's gate and the two re-readings (the light from a record's
-own inputs, the grade from its own checks) to the modules they stand on."""
+minute. One test runs it over the population the committed file records,
+fetching those commits by whole id when the checkout is shallow (CI's), and
+holds both committed files to what it writes; when the history is there it
+also walks the population from the pinned ref. The rest hold the committed
+``ablation.json`` to the tool's encoding, the report to the tool's rendering
+of that file (so no figure in it is typed by hand), the spec to its pinned
+digest, and each variant's gate and the two re-readings (the light from a
+record's own inputs, the grade from its own checks) to the modules they
+stand on."""
 from __future__ import annotations
 
 import copy
 import hashlib
 import json
 import re
+import subprocess
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -52,7 +58,8 @@ def test_the_report_prints_each_variants_figures_from_the_file():
     for key in ab.VARIANTS:
         v = DATA["variants"][key]
         row = next(line for line in text.splitlines() if line.startswith(f"| `{key}` |"))
-        assert f"| {v['admitted']:,} | {v['tickets']:,} | {v['withheld']:,} | {v['settled']['n']:,} |" in row
+        assert (f"| {v['admitted']:,} | {v['tickets']:,} | {v['withheld']:,} | {sum(v['not_walked'].values()):,} | "
+                f"{v['settled']['n']:,} |") in row
         assert (v["readable"] is False) == (" Under the floor: no rate is read." in text.split(f"**`{key}`**")[1].split("**`")[0])
         assert v["readable"] == (v["settled"]["n"] >= DATA["min_settled_for_a_rate"])
 
@@ -172,8 +179,9 @@ def test_the_index_and_the_readme_name_the_ablation_with_the_files_figures():
     index = " ".join((ROOT / "docs" / "input-truthfulness" / "README.md").read_text().split())
     p = DATA["variants"]["production"]
     assert "[19 November 2026: the pre-registered ablation](2026-11-19-ablation.md)" in index
-    assert (f"over {DATA['publications']} publications ({DATA['nights']} sessions, 11 September to 18 November)"
-            in index)
+    first, newest = (date.fromisoformat(DATA[k]) for k in ("first_session", "newest_session"))
+    assert (f"over {DATA['publications']} publications ({DATA['nights']} sessions, "
+            f"{first.day} {first:%B} to {newest.day} {newest:%B})" in index)
     assert f"production admits {p['admitted']} rows, {p['settled']['n']} of them settled" in index
     readable = [k for k in ab.VARIANTS if DATA["variants"][k]["readable"]]
     assert f"Only {len(readable)} variants reach {DATA['min_settled_for_a_rate']} settled tickets" in index
@@ -203,4 +211,101 @@ def test_a_variant_reads_a_rate_from_the_scorecards_own_floor(settled, readable)
     rows = [{"bucket": "settled", "r": 1.0 if i % 2 else -1.0, "session": f"2026-11-{1 + i % 9:02d}",
              "ticker": f"T{i}", "ticket": {}, "filled": True, "uncertainty": None,
              "cost_r": {"0": 1.0, "5": 0.9, "20": 0.8}} for i in range(settled)]
-    assert ab.summary_of(rows, spec)["readable"] is readable
+    out = ab.summary_of(rows, spec)
+    assert out["readable"] is readable
+    wins = sum(1 for r in rows if r["r"] > 0)
+    assert (out["admitted"], out["tickets"], out["withheld"], out["not_walked"]) == (settled, settled, 0, {})
+    assert out["win_rate"] == round(wins / settled, 3) and out["settled"]["wins"] == wins
+
+
+def test_a_summary_counts_its_withheld_unwalked_and_uncertain_rows_and_refuses_one_that_does_not_add_up():
+    spec = {"cost_bps_per_side": [0, 5, 20], "bootstrap": {"reps": 50, "seed": 7}}
+    base = {"session": "2026-11-02", "r": None, "filled": False, "cost_r": {}, "uncertainty": None}
+    rows = [{**base, "ticker": "W", "bucket": so.NO_TICKET, "ticket": None},
+            {**base, "ticker": "M", "bucket": "basis_mismatch", "ticket": None},
+            {**base, "ticker": "U", "bucket": "uncertain", "ticket": {}, "uncertainty": "trigger_timing"},
+            {**base, "ticker": "V", "bucket": "uncertain", "ticket": {}, "uncertainty": None},
+            {**base, "ticker": "S", "bucket": "settled", "ticket": {}, "r": -1.0, "filled": True,
+             "cost_r": {"0": -1.0, "5": -1.05, "20": -1.2}}]
+    out = ab.summary_of(rows, spec)
+    assert (out["admitted"], out["tickets"], out["withheld"]) == (5, 3, 1)
+    assert out["not_walked"] == {"basis_mismatch": 1}
+    assert out["uncertain_by_reason"] == {"trigger_timing": 1, "unnamed": 1}
+    assert out["win_rate"] == 0.0 and out["readable"] is False
+
+
+def test_the_files_figures_add_up_in_every_variant():
+    for key, v in DATA["variants"].items():
+        assert v["admitted"] == v["tickets"] + v["withheld"] + sum(v["not_walked"].values()), key
+        n = v["settled"]["n"]
+        assert v["win_rate"] == (round(v["settled"]["wins"] / n, 3) if n else None), key
+        assert v["settled"]["wins"] + v["settled"]["losses"] + v["settled"]["breakeven"] == n, key
+
+
+def test_the_table_prints_no_rate_for_a_variant_under_the_floor():
+    text = ab.REPORT.read_text()
+    for key in ab.VARIANTS:
+        v = DATA["variants"][key]
+        cells = [c.strip() for c in next(line for line in text.splitlines()
+                                         if line.startswith(f"| `{key}` |")).strip("|").split("|")]
+        rates = cells[6:11]
+        assert (all(c == "—" for c in rates)) is (not v["readable"]), (key, rates)
+        assert f"{sum(v['not_walked'].values()):,}" == cells[4]
+        section = text.split(f"**`{key}`**")[1].split("**`")[0]
+        assert ("mean R after costs" in section) is v["readable"], key
+
+
+def test_equal_weights_never_move_a_grade_across_an_admitted_band_by_the_arithmetic_alone():
+    """Every pass, partial and fail combination of the six scored letters, at
+    each A+ tally: the checklist's weights and equal weights put it in the same
+    admitted band, so the variant admits what production admits on any night."""
+    from itertools import product
+    letters = list(quality.WEIGHTS)
+    moved = 0
+    for states in product(("pass", "partial", "fail"), repeat=len(letters)):
+        checks = [{"letter": l, "passed": s == "pass", "partial": s == "partial"} for l, s in zip(letters, states)]
+        for a_plus in (3, 4, 8):
+            if ab.admitted_band(ab.quality_grade(checks, a_plus, [], quality.WEIGHTS)) != \
+                    ab.admitted_band(ab.quality_grade(checks, a_plus, [], ab.EQUAL_WEIGHTS)):
+                moved += 1
+    assert moved == 0 == DATA["grades_read_again"]["admitted_band_changes_by_equal_weights"]
+    assert DATA["grades_read_again"]["changed_by_equal_weights"] > 0
+    assert "moves only grades no light admits" in ab.REPORT.read_text()
+
+
+def test_a_grade_the_checklists_own_weights_do_not_reproduce_refuses_the_ablation():
+    good = burst()
+    assert ab.regrade([good])[1:] == (1, 0)
+    with pytest.raises(ab.AblationError, match="reproduce 1 of 2 recorded grades"):
+        ab.regrade([good, {**burst(), "grade_mechanical": "C"}])
+    assert ab.regrade([{**burst(), "vetoes": ["L"], "grade_mechanical": "C"}])[1:] == (0, 0)
+
+
+def _present(commit: str) -> bool:
+    return subprocess.run(["git", "cat-file", "-e", f"{commit}^{{commit}}"], cwd=ROOT, capture_output=True).returncode == 0
+
+
+def test_the_committed_ablation_is_what_the_tool_writes_over_its_recorded_population():
+    """The tool run again, as CI's fixture checks run their generators: a change
+    to admits(), the study, the gates or the modules they read moves this.
+    A shallow checkout carries only its tip, so the recorded commits are fetched
+    by whole id, exactly those and once; when they cannot be had this fails
+    with the reason and is never skipped."""
+    population = DATA["population"]
+    assert len(population) == DATA["publications"] and all(len(e["commit"]) == 40 for e in population)
+    missing = [e["commit"] for e in population if not _present(e["commit"])]
+    if missing:
+        done = subprocess.run(["git", "fetch", "--quiet", "--no-tags", "--depth=1", "origin", *missing],
+                              cwd=ROOT, capture_output=True, text=True)
+        assert done.returncode == 0 and all(_present(c) for c in missing), \
+            f"{len(missing)} commits the ablation records are not in this checkout and could not be fetched: {done.stderr.strip()}"
+    shallow = subprocess.run(["git", "rev-parse", "--is-shallow-repository"], cwd=ROOT,
+                             capture_output=True, text=True).stdout.strip() == "true"
+    result = ab.build(population)
+    assert ab.encoded(result) == ab.OUT.read_text()
+    assert ab.render(result) == ab.REPORT.read_text()
+    if not shallow and _present(SPEC["ref"]):
+        from tools import burst_trigger_comparison as cmp
+        base = json.loads((ROOT / SPEC["base_spec"]).read_text())
+        walked = [{k: e[k] for k in ("commit", "session", "blob")} for e in cmp.population(SPEC["ref"], base)]
+        assert walked == population
