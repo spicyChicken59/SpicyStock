@@ -1,6 +1,6 @@
 {
  "applicable_session": "2026-09-11",
- "content_sha256": "e54473d2ab4c7177de8ea8aca2eeb95f64a99c009e377e4b201c523c3961a127",
+ "content_sha256": "f9f737cc019a49d40405a7c5b3fced9f2ec9355cda82de662261a93396bd248d",
  "data_sha256": "9e34f06249d04c55a2480695a29d6e4dfaa620f16fe1de0041883f47784bc44f",
  "kind": "orders_morning",
  "mode": "paper",
@@ -9,7 +9,7 @@
  "morning_sha256": "98dab9750096f86d932222b4c2c0fcb5109add5b17e53aa8d1b547f581f2f3a2",
  "morning_status": "provider_unavailable",
  "observation_run_id": "synthetic-outage",
- "orders_sha256": "13d6c86da83a0af375e9e9b836dfaa1611eb9004b72005dd5862efad18e526be",
+ "orders_sha256": "a14efc0d34370b3275c6ee827b89cfa8f7e8e7b97bf52202e6ca2e39d0709fa0",
  "schema": "docs/operations/orders-schema.json#/$defs/orders_morning",
  "session": "2026-09-10",
  "summary": {
@@ -35,13 +35,14 @@
    },
    "reasons": [
     "night_not_allowed",
+    "ticket_not_go",
     "stale_data"
    ],
    "symbol": "AAPL",
    "ticket_id": "2026-09-10:burst:AAPL",
-   "ticket_sha256": "429d0af0464f2c225f9612dc64b055e7bca5aa8b29b3684dab21344d3178422f",
+   "ticket_sha256": "216e1e575e6d56fda416b2190b2dc336b9aea70cbab399176b99ffa546506cf7",
    "valid_until": "2026-09-11T10:00:00-04:00"
   }
  ],
- "version": 2
+ "version": 3
 }

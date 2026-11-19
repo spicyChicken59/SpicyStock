@@ -200,7 +200,7 @@ def night(data: dict) -> dict:
 def test_the_light_the_status_and_the_publication_time_each_give_their_reason():
     full = json.loads(page("full"))
     checks = night(full)
-    assert [c["status"] for c in checks.values()] == ["pass", "pass", "pass", "not_evaluated", "pass"]
+    assert [c["status"] for c in checks.values()] == ["pass", "pass", "pass", "pass", "pass"]
     red = night(json.loads(page("red")))
     assert (red["light"]["status"], red["light"]["reason"]) == ("fail", "light_red")
     degraded = night(json.loads(page("degraded")))
@@ -233,8 +233,15 @@ def test_the_account_check_reads_the_records_slots_and_commitments():
 
 def test_the_cross_check_is_not_evaluated_until_it_is_run_and_so_trade_is_not_allowed():
     doc = built("next")
-    assert doc["summary"]["go"] == 2
-    assert night_reasons(doc) == ["cross_check_not_run"] and doc["trade_allowed"] is False
+    # NVDA's filings read clear and both feeds agree; COIL is in no SEC mapping, so it is held
+    assert [(t["symbol"], t["status"], t["reasons"]) for t in doc["tickets"]] == [
+        ("NVDA", "go", []), ("COIL", "human_review", ["sec_unknown"])]
+    assert night_reasons(doc) == [] and doc["trade_allowed"] is True
+    data = json.loads(page("next"))
+    del data["run"]["cross_check"]
+    older = orders.build(json.dumps(data).encode())
+    assert night_reasons(older) == ["cross_check_not_run"] and older["trade_allowed"] is False
+    assert {t["status"] for t in older["tickets"]} == {"human_review"}
 
 
 def night_reasons(doc: dict) -> list:
@@ -279,8 +286,8 @@ def test_each_ticket_check_gives_its_reason_and_its_status():
     assert risky["status"] == "blocked" and "risk_budget" in risky["reasons"]
 
     def flag(row, d):
-        d["run"]["earnings"]["rows"].append({"stage": admitted["kind"], "ticker": admitted["ticker"],
-                                             "items": {"status": "material", "sentence": "item 1.01"}})
+        own = next(r for r in d["run"]["earnings"]["rows"] if r["ticker"] == admitted["ticker"])
+        own["items"] = {"status": "material", "sentence": "item 1.01"}
     held = ticket_after(flag)
     assert (held["status"], held["reasons"]) == ("human_review", ["sec_flag"])
 
@@ -302,12 +309,14 @@ def golden_orders() -> bytes:
     return orders.encode(orders.build(PUBLICATION))
 
 
+# the pinned morning publication predates the cross-check, so its one ticket is
+# held for review (cross_check_not_run) and every morning reads it as not go
 @pytest.mark.parametrize("receipt, decision, reasons", [
-    ("observed", "cancel", ["night_not_allowed", "trigger_crossed"]),
-    ("halted", "cancel", ["night_not_allowed", "halted", "trigger_crossed"]),
-    ("corporate-excluded", "cancel", ["night_not_allowed", "news_or_sec_flag", "trigger_crossed"]),
-    ("outage", "cancel", ["night_not_allowed", "stale_data"]),
-    ("no-tickets", "cancel", ["night_not_allowed", "no_morning_check"]),
+    ("observed", "cancel", ["night_not_allowed", "ticket_not_go", "trigger_crossed"]),
+    ("halted", "cancel", ["night_not_allowed", "ticket_not_go", "halted", "trigger_crossed"]),
+    ("corporate-excluded", "cancel", ["night_not_allowed", "ticket_not_go", "news_or_sec_flag", "trigger_crossed"]),
+    ("outage", "cancel", ["night_not_allowed", "ticket_not_go", "stale_data"]),
+    ("no-tickets", "cancel", ["night_not_allowed", "ticket_not_go", "no_morning_check"]),
 ])
 def test_each_committed_morning_receipt_gives_its_cancel_reasons(receipt, decision, reasons):
     raw = golden_orders()
@@ -330,8 +339,15 @@ def passing_night(doc: dict) -> dict:
 
 
 def allowed_orders() -> tuple[bytes, dict]:
-    """The golden orders with every night check passed, sealed again."""
-    doc = passing_night(json.loads(golden_orders()))
+    """The golden orders with every night check and every ticket check passed, sealed again:
+    the morning's own rules can then be read alone. The pinned publication predates the
+    cross-check, so its one ticket is held for review until its checks are passed here."""
+    doc = json.loads(golden_orders())
+    assert [t["reasons"] for t in doc["tickets"]] == [["cross_check_not_run"]]
+    doc["tickets"] = [orders.sealed({**{k: v for k, v in t.items() if k != "content_sha256"},
+                                     "checks": [{**c, "status": "pass", "reason": None} for c in t["checks"]],
+                                     "status": "go", "reasons": []}) for t in doc["tickets"]]
+    doc = passing_night(doc)
     assert doc["trade_allowed"] is True
     return resealed(doc), doc
 
@@ -363,15 +379,19 @@ def test_a_stale_price_cancels_and_a_missing_row_is_not_checked():
 
 def test_a_ticket_orders_json_did_not_mark_go_never_goes_in_the_morning():
     raw, doc = allowed_orders()
-    for check, failed, reason in (("sec_flags", "sec_flag", "news_or_sec_flag"),
-                                  ("position_cap", "position_cap", "ticket_not_go")):
+    for check, check_status, failed, reason in (
+            ("sec_flags", "fail", "sec_flag", "news_or_sec_flag"),
+            ("sec_flags", "fail", "sec_unknown", "news_or_sec_flag"),
+            ("cross_check", "not_evaluated", "cross_check_unknown", "ticket_not_go"),
+            ("cross_check", "fail", "cross_check_failed", "ticket_not_go"),
+            ("event_registry", "fail", "event_blocked", "ticket_not_go")):
         forged = copy.deepcopy(doc)
         ticket = forged["tickets"][0]
-        ticket["checks"] = [{**c, "status": "fail", "reason": failed} if c["key"] == check else c
+        ticket["checks"] = [{**c, "status": check_status, "reason": failed} if c["key"] == check else c
                             for c in ticket["checks"]]
         ticket["reasons"] = [failed]
         ticket["status"] = orders.ticket_status([failed])
-        forged["tickets"][0] = orders.sealed(ticket)
+        forged["tickets"][0] = orders.sealed({k: v for k, v in ticket.items() if k != "content_sha256"})
         forged = passing_night(forged)
         assert forged["trade_allowed"] is False         # the night has no go ticket left
         forged_raw = resealed(forged)
@@ -379,6 +399,7 @@ def test_a_ticket_orders_json_did_not_mark_go_never_goes_in_the_morning():
         receipt["rows"][0]["price_checks"] = {"trade": "below_trigger", "ask": "below_trigger"}
         out = orders.build_morning(forged_raw, json.dumps(receipt).encode())
         assert out["tickets"][0]["decision"] == "cancel" and reason in out["tickets"][0]["reasons"]
+        assert ({"news_or_sec_flag", "ticket_not_go"} - {reason}).isdisjoint(out["tickets"][0]["reasons"])
 
 
 def test_with_the_record_a_tampered_receipt_or_unbound_orders_are_refused():
@@ -575,9 +596,14 @@ def decided(raw: bytes, receipt: bytes) -> tuple:
 
 
 def anticipation_orders() -> tuple[bytes, dict, dict]:
+    # the fixture's run carries no SEC read and no cross-check of its own, so its ticket is
+    # held for review until its checks are passed here, as allowed_orders() passes them
     doc = json.loads(orders.encode(orders.build(page("notrade"))))
-    ticket = next(t for t in doc["tickets"] if t["setup_type"] == "anticipation")
+    doc["tickets"] = [orders.sealed({**{k: v for k, v in t.items() if k != "content_sha256"},
+                                     "checks": [{**c, "status": "pass", "reason": None} for c in t["checks"]],
+                                     "status": "go", "reasons": []}) for t in doc["tickets"]]
     doc = passing_night(doc)
+    ticket = next(t for t in doc["tickets"] if t["setup_type"] == "anticipation")
     assert ticket["status"] == "go" and doc["trade_allowed"] is True
     return resealed(doc), doc, ticket
 

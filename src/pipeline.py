@@ -22,6 +22,7 @@ from src import history, breadth, charts, clock, discovery, grader, market_data,
 from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
 from src import universe, reader_coverage, followup
 from src import watchlist, allocation, event_risk, review_selection, funnel, delivery, intraday, earnings_risk, admission
+from src import sec_flags, cross_check
 from src import scorecard_reading
 
 log = logging.getLogger("spicystock.pipeline")
@@ -690,7 +691,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, discovery.RULES, admission.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, funnel.RULES, intraday.RULES, earnings_risk.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, admission.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, funnel.RULES, intraday.RULES, earnings_risk.RULES, sec_flags.RULES, cross_check.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.session_min_price": universe.MIN_PRICE,
@@ -979,6 +980,16 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         log.info("Earnings: %s", run_block["earnings"]["sentence"])
         for row in run_block["earnings"]["rows"]:
             log.info("Earnings %s %s: %s", row["stage"], row["ticker"], row["sentence"])
+        # the tickets' and listed setups' recent merger, tender and current-report
+        # filings, flagged for a person's review in orders.json: never a refusal
+        # here, never a clearance (src/sec_flags.py)
+        run_block["sec_flags"] = sec_flags.safe_collect(sec_flags.names_of(tickets, lists.get("top", [])),
+                                                        session.isoformat(), **clock_kw)
+        log.info("SEC flags: %s", run_block["sec_flags"]["sentence"])
+        # each ticket's signal-day bar read again from the iex feed; a ticket
+        # whose two readings differ is blocked in orders.json (src/cross_check.py)
+        run_block["cross_check"] = cross_check.safe_collect(client, tickets, frames, session)
+        log.info("Cross-check: %s", run_block["cross_check"]["sentence"])
         if not closed and not dry_run:
             picks = [pick_of(b["plan"], "burst", b["grade"], b["score"]) for b in bursts if b["ticker"] in trades]
             picks += [pick_of(row["plan"], "anticipation", "watch", row.get("ti65"))

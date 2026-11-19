@@ -7,7 +7,7 @@ event never becomes tradable merely because its review date has passed.
 from __future__ import annotations
 
 from copy import deepcopy
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import hashlib
 import json
 from pathlib import Path
@@ -101,7 +101,38 @@ def validate_registry(registry):
             resolution_day = _source(event.get("resolution"))
             if not start < end or not resolution_day <= end <= checked:
                 raise ValueError("event-risk ending requires a dated, reviewed resolution")
+        if "review_note" in event:
+            note = event["review_note"]
+            if not isinstance(note, dict) or set(note) != {"noted_on", "text"}:
+                raise ValueError("event-risk review note must be an object of noted_on and text")
+            _text(note.get("text"), "review_note")
+            if not due < _day(note.get("noted_on")) <= reviewed:
+                raise ValueError("event-risk review note must be dated after the review it answers")
     return registry
+
+
+#: (P) a review note answers for this many calendar days after it is written; past them the
+#: entry is due again, so a note never silences an entry for good
+REVIEW_NOTE_DAYS = 14
+
+
+def lapsed_reviews(registry, today):
+    """The unresolved entries whose review date has passed with no note in force.
+
+    A note is written after an overdue review and says why the entry stands as
+    it is; it never clears a stock (``classify()`` still withholds an overdue
+    entry), and it answers for ``REVIEW_NOTE_DAYS`` after its ``noted_on``:
+    past that, the entry is due again until it is reviewed, resolved or noted
+    anew. ``today`` is the caller's date: ``tools/check_event_reviews.py``
+    passes the real one, so CI goes red the day after a review or a note lapses."""
+    registry = validate_registry(registry)
+    day = _day(today)
+
+    def answered(event):
+        note = event.get("review_note")
+        return note is not None and day <= _day(note["noted_on"]) + timedelta(days=REVIEW_NOTE_DAYS)
+    return [event["symbol"] for event in registry["events"]
+            if event.get("active_until") is None and _day(event["review_due"]) < day and not answered(event)]
 
 
 def registry_digest(registry):
@@ -143,6 +174,9 @@ and reports uncertainty; it is never an automatic clearance.
         if event.get("active_until") is not None and evaluated >= _day(event["active_until"]):
             continue
         matched = deepcopy(event)
+        # the note is the registry's own record of an overdue review: a match
+        # carries the event as a classification reads it, and the note clears nothing
+        matched.pop("review_note", None)
         matched["sources"] = [source for source in matched["sources"]
                               if _day(source["published_on"]) <= evaluated]
         matched["evidence_as_of"] = max(source["published_on"] for source in matched["sources"])

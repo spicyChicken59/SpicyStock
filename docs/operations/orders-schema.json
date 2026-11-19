@@ -9,7 +9,7 @@
    "const": "docs/operations/orders-schema.json"
   },
   "version": {
-   "const": 2
+   "const": 3
   },
   "kind": {
    "const": "orders"
@@ -429,7 +429,9 @@
     "reason": {
      "enum": [
       "account_limit",
+      "cross_check_failed",
       "cross_check_not_run",
+      "cross_check_unknown",
       "data_degraded",
       "event_blocked",
       "late_publish",
@@ -440,6 +442,7 @@
       "publication_time_unknown",
       "risk_budget",
       "sec_flag",
+      "sec_unknown",
       null
      ]
     },
@@ -467,7 +470,9 @@
     "code": {
      "enum": [
       "account_limit",
+      "cross_check_failed",
       "cross_check_not_run",
+      "cross_check_unknown",
       "data_degraded",
       "event_blocked",
       "late_publish",
@@ -477,7 +482,8 @@
       "position_cap",
       "publication_time_unknown",
       "risk_budget",
-      "sec_flag"
+      "sec_flag",
+      "sec_unknown"
      ]
     }
    },
@@ -704,8 +710,8 @@
     },
     "checks": {
      "type": "array",
-     "minItems": 4,
-     "maxItems": 4,
+     "minItems": 5,
+     "maxItems": 5,
      "items": {
       "$ref": "#/$defs/ticket_check"
      }
@@ -722,7 +728,9 @@
      "items": {
       "enum": [
        "account_limit",
+       "cross_check_failed",
        "cross_check_not_run",
+       "cross_check_unknown",
        "data_degraded",
        "event_blocked",
        "late_publish",
@@ -732,7 +740,8 @@
        "position_cap",
        "publication_time_unknown",
        "risk_budget",
-       "sec_flag"
+       "sec_flag",
+       "sec_unknown"
       ]
      }
     },
@@ -1021,7 +1030,7 @@
      "const": "docs/operations/orders-schema.json#/$defs/orders_morning"
     },
     "version": {
-     "const": 2
+     "const": 3
     },
     "kind": {
      "const": "orders_morning"
@@ -1257,7 +1266,7 @@
      "const": "docs/operations/orders-schema.json#/$defs/positions"
     },
     "version": {
-     "const": 2
+     "const": 3
     },
     "kind": {
      "const": "positions"
@@ -1527,6 +1536,7 @@
      "enum": [
       "event_registry",
       "sec_flags",
+      "cross_check",
       "position_cap",
       "risk_budget"
      ]
@@ -1541,7 +1551,9 @@
     "reason": {
      "enum": [
       "account_limit",
+      "cross_check_failed",
       "cross_check_not_run",
+      "cross_check_unknown",
       "data_degraded",
       "event_blocked",
       "late_publish",
@@ -1552,6 +1564,7 @@
       "publication_time_unknown",
       "risk_budget",
       "sec_flag",
+      "sec_unknown",
       null
      ]
     },

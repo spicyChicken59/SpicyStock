@@ -347,7 +347,8 @@ def test_candidate_publication_plans_grades_and_rules_are_identical(
             retained(rep)
     assert len(captured) == 2 and captured[0] == captured[1]
     assert captured[0][0]["bursts"][0]["grade"] == "A+" and captured[0][0]["trades"] == ["AAA"]
-    assert outcomes[0] == outcomes[1] and outcomes[1][2:4] == (1, 1)
+    # one scan request and the cross-check's one on the iex feed; one chart read
+    assert outcomes[0] == outcomes[1] and outcomes[1][2:4] == (2, 1)
     assert rep.published, rep.failure
     assert outcomes[1][0] == 0 and set(outcomes[1][4]) >= {"data.json", "picks.json"}
 

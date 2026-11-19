@@ -8,7 +8,7 @@
   "risk_pct": 0.5,
   "slots_used": 4
  },
- "content_sha256": "c4b43e5dd09a390c063d7adc7c962081ad21acf730b3d337b46f86ce50d3c9b2",
+ "content_sha256": "3eb147f8d90f4dc930a06693122ca21f9ee2e88d79abd552ff6672929aeffa18",
  "entry_window": {
   "cutoff_at": "2026-09-11T10:00:00-04:00",
   "opens_at": "2026-09-11T09:30:00-04:00",
@@ -43,10 +43,10 @@
    "status": "pass"
   },
   {
-   "detail": null,
+   "detail": "Each ticket's signal-day bar was read again from the iex feed: prices within 0.5% and each feed's volume against its own previous session within 10%. 1 of 1 agree.",
    "key": "cross_check",
-   "reason": "cross_check_not_run",
-   "status": "not_evaluated"
+   "reason": null,
+   "status": "pass"
   },
   {
    "detail": "4 of 4 slots; $2,268.86 committed and reserved of $10,000.00",
@@ -56,10 +56,6 @@
   }
  ],
  "reasons": [
-  {
-   "code": "cross_check_not_run",
-   "scope": "night"
-  },
   {
    "code": "sec_flag",
    "scope": "AAPL"
@@ -103,13 +99,13 @@
  },
  "source": {
   "applicable_session": "2026-09-11",
-  "context_sha256": "ac165fc12bc20deada3d009832ebe926a076002391dea950a6d35da2dc299683",
-  "data_sha256": "c884e304518e3e00fb57fed59f81a5c71b4c67a9e4dd5bac4dfd780efb3c0e16",
+  "context_sha256": "33d632df2f38a534d5271017e39c873204f981b6848b2c8144fe92d51b1a0f03",
+  "data_sha256": "4bb317736955e4b4449cd51cc721c1d2659f6742f6bbc499e21521624b8bd969",
   "dry_run": false,
   "fixture": true,
-  "picks_sha256": "1427fe7847168a5fde0bc185f205e7b0979632fcd1bb4501f213b35921639bbb",
+  "picks_sha256": "6b4f64fc76dd8350d8e6b72f02bf572606200080109af89bebfd6b26f5cb953c",
   "published_at": "2026-09-10T22:30:00+00:00",
-  "rules_version": "7d29c2846abd",
+  "rules_version": "bde327cb5640",
   "run_id": null,
   "session": "2026-09-10"
  },
@@ -136,6 +132,12 @@
      "status": "fail"
     },
     {
+     "detail": null,
+     "key": "cross_check",
+     "reason": null,
+     "status": "pass"
+    },
+    {
      "detail": "$505.88 at the limit against a $2,500.00 cap",
      "key": "position_cap",
      "reason": null,
@@ -148,7 +150,7 @@
      "status": "pass"
     }
    ],
-   "content_sha256": "60487858f30af70a1f1995764234a9eb8cd680f393fb99349eea8eba376410c3",
+   "content_sha256": "5cf4374cf6384fc7295ae8868564a081c9789c194331d70af5ba97d50926fd81",
    "entry": {
     "cancel_if_unfilled_at": "2026-09-11T10:00:00-04:00",
     "limit_price": 126.47,
@@ -163,8 +165,8 @@
     "valid_until": "2026-09-11T10:00:00-04:00"
    },
    "evidence": {
-    "evidence_id": "0e5235d9e4cd67c4d3f2e6a4b41ed2549f7645774f3c46555bb3ff1cb32777a4",
-    "plan_sha256": "77d898e143644c9f12c0cfce19d88eed35d0ef48bee750dcb49e7df830133464"
+    "evidence_id": "ed867605207c0688a9711fd13a1886c09178fd242127c1d9868cf617ada16eb0",
+    "plan_sha256": "08a8f474c99587f085faadc5c6120ec7b9d6f176c5fc208ac7a26946df22b96c"
    },
    "exit_plan": {
     "entry_basis": "average_fill_price",
@@ -464,7 +466,7 @@
     "risk_budget_usd": 25.0,
     "risk_usd": 20.2
    },
-   "rules_version": "7d29c2846abd",
+   "rules_version": "bde327cb5640",
    "session": "2026-09-10",
    "setup_type": "burst",
    "shares": 4,
@@ -474,5 +476,5 @@
   }
  ],
  "trade_allowed": false,
- "version": 2
+ "version": 3
 }

@@ -1477,9 +1477,16 @@ archived, and a record from before the block is asked for none. The run:
   [review manifest](release-evidence/2026-11-19-event-review/manifest.json);
   none of them added a source. ACV Auctions, whose acquisition a search excerpt
   says Copart completed on 16 October, stays listed and blocked until a captured
-  source resolves it. A review date says someone looked that day and how; it
+  source resolves it; its entry carries a `review_note`, dated after its review
+  fell due, saying so. A review date says someone looked that day and how; it
   does not establish that a deal is still pending today. The daily brief and
-  the Method view state how old the review is.
+  the Method view state how old the review is. CI runs
+  `tools/check_event_reviews.py` on the real New York date
+  (`event_risk.lapsed_reviews()`): the day after an unresolved entry's review
+  falls due, it is red until the entry is reviewed again or carries a
+  `review_note` dated after the due date. It is the one check whose answer
+  moves with the calendar, on purpose. A note never clears a stock, and a
+  classification carries no note.
 - **record** — the picks go to `docs/picks.json`; the open plans and the
   scorecard are computed from it and the bars. Suggested shares are model
   sizing, never shares bought. New plans carry a versioned evidence reference.
@@ -2534,6 +2541,30 @@ reads, each a function of committed bytes and no clock:
   Derived on the spot from `main`'s own `orders.json`, receipt and record, and
   committed alone.
 
+Two reads stand behind each ticket's checks. **`run.sec_flags`**
+(`src/sec_flags.py`) reads each ticket's and each listed setup's SEC filing
+list, the earnings warning's own transport and bounds, and names every
+tender offer, response, merger proxy (SC TO-T, SC TO-T/A, SC 14D9, SC 14D9/A, DEFM14A, DEFM14A/A, PREM14A, PREM14A/A)
+and every 8-K carrying item 1.01, 2.01, 3.01 or 5.01 filed
+in the 30 days before the signal session or since it; a flag, or a name SEC
+could not be read for, holds that ticket for a person's review and refuses
+nothing on the record itself. **`run.cross_check`** (`src/cross_check.py`)
+reads each ticket's signal-day bar again from Alpaca's iex feed, at most 20
+tickets, in one batch retried once on failure: an open, high, low or close
+more than 0.5% from the sip bar, or a volume reading more than 10% off,
+compared unrounded, blocks the ticket in `orders.json`; a ticket iex has no
+bar for, a bar with a value that is not a finite number, or a previous session
+the two feeds do not both carry as the XNYS session before the signal, is
+held for review. IEX is one exchange, so its daily volume is a few percent of
+the consolidated tape's and an absolute comparison would fail every ticket;
+each feed's signal-day volume is read against its own previous session, and
+the two ratios are compared (`cross_check.VOLUME_BASIS`, a departure from the
+program's literal volume rule that the owner's decision should confirm). Both
+are archived in the rules (`sec_flags`, `cross_check`), held by
+`report.validate()` under the rules that write them (a cross-check row's
+result re-derived from its own differences, a flag's filing held to the
+window and the listed forms), and never fail a night.
+
 The schema of all three is `docs/operations/orders-schema.json`, checked by
 `src/schema_check.py`; the publication gate holds each file to the committed
 record, to that schema and to its own checks (a file whose `trade_allowed`,
@@ -3130,6 +3161,8 @@ src/            history.py (public recovery and coverage)
                 freshness.py (what a record says about the next publication: the next session, its completion, the two slots and the recovery limit; state() answers newest, not_due, pending, late or missing for a reader's own clock; standard library only)
                 scorecard_reading.py (the scorecard read honestly: distinct setups, model accounts, the stopped tickets at the stop, the close and the low, breadth revisions; copied from the model record, never moving the scorecard's numbers)
                 orders.py (the execution handoff: orders.json and its positions template each night, and the morning's go/cancel file, from committed bytes and no clock) · schema_check.py (the JSON Schema subset the handoff's schema uses; any other keyword is refused)
+                sec_flags.py (each ticket's and listed setup's recent tender-offer, merger-proxy and deal 8-K filings, named by form and item; a flag that holds a ticket for review in orders.json, never a refusal or a clearance)
+                cross_check.py (each ticket's signal-day bar read again from the iex feed; prices within 0.5% and the two feeds' volume ratios within 10%, or the ticket is blocked in orders.json)
                 brief.py (the analyst's daily brief: brief.json and brief.md, a function of the record's bytes, the pick ledger's bytes and the run's model-record block; no clock, no network)
                 model_record.py (a reading of the model's own record for the daily brief: tickets against distinct setups, the model account each ticket was sized against, a stop booked at the stop beside its close and its low; held to the scorecard's rows, changes nothing; python -m src.model_record --docs docs)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · morning_service.py · morning_service_worker.py · morning_service_journal.py · morning_service_report.py · morning_host.py · morning_host_wsgi.py · reader.py · issuer_evidence.py
@@ -3171,6 +3204,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 page_text_cases.mjs (the page smoke's page-text suite: the page's own words for vetoes, Method, Market, the stock detail, a known deal and the Record view, held to the record and the modules; `--only page-text`, or one part such as `page-text:market`)
                 first_trade_cases.mjs (the page smoke's first-trade rehearsal: one journey from refused cash to a downloaded private backup; SCSTOCK_FIRST_TRADE_WRITE=1 writes tests/fixtures/first-trade/)
                 private_results_parity.mjs (the page's own verdicts, from app-handoff.js run in a vm, on a corpus of private backups, written gzipped beside the rehearsal's backup; --check in CI)
+                check_event_reviews.py (refuses an event registry whose unresolved entry's review has lapsed without a review_note, on the real New York date; CI runs it)
                 positions_compare.py (a reader of a filled private positions file: each position's real R beside the model's R for the same ticket, never added; writes nothing but an explicit --json outside the repository)
                 private_results.py (a reader of the owner's private backup: each reported result re-derived by the page's rules, traced to its publication by SHA-256 and frozen plan, the model's replay beside it and never added; writes nothing but an explicit --json)
 deploy/         scheduler/ (the dispatcher's own Railway service: Dockerfile and railway.json; requirements-scheduler.txt beside the root)

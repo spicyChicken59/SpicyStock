@@ -280,7 +280,13 @@ def test_published_and_recovered_basis_matches_every_sdk_request(market, claude,
     basis = data['run']['input_basis']
     assert basis['adjustment'] == 'split'
     assert all(r.adjustment is Adjustment.SPLIT and r.adjustment.value == basis['adjustment'] for r in fake_alpaca.bar_requests)
-    assert all(r.feed.value == basis['feed'] for r in fake_alpaca.bar_requests)
+    # every scan request is on the published feed; the one other is the cross-check's, on iex, for the tickets
+    from src import cross_check
+    scan = [r for r in fake_alpaca.bar_requests if r.feed.value != cross_check.FEED]
+    other = [r for r in fake_alpaca.bar_requests if r.feed.value == cross_check.FEED]
+    assert scan and all(r.feed.value == basis['feed'] for r in scan)
+    assert [sorted(r.symbol_or_symbols) for r in other] == (
+        [sorted({row['ticker'] for row in data['run']['cross_check']['rows']})] if data['run']['cross_check']['rows'] else [])
     contexts = list((docs / 'history').glob('*/record.json'))
     assert len(contexts) == 1
     assert json.loads(contexts[0].read_text())['run']['input_basis'] == basis

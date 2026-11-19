@@ -50,6 +50,8 @@ def test_a_clean_night_publishes_two_tickets_and_the_retry_slot_is_then_refused(
     assert pub["reads"] == {"requested": 2, "done": 2, "verdict": "complete",
                             "causes": {"refused": 0, "format": 0, "account": 0, "credit": 0, "request": 0, "transport": 0}}
     assert n["calls"]["reader_calls"] == 2 and n["calls"]["bars_requests"] == 1 and n["calls"]["mails"] == 1
+    # the night's tickets are read again from the iex feed in one request of their own
+    assert n["calls"]["cross_check_requests"] == 1 and n["publication"] is not None
     assert n["calls"]["mail_subjects"][0].startswith("Trade next session. 2 A-quality bursts.")
     assert n["previous"] == {"publication": None, "outcome": "none"} and n["files_changed"] > 0
     assert n["publication_identity"]["data_json_without_clock_fields"] and n["publication_identity"]["picks_json"]
@@ -62,7 +64,8 @@ def test_labor_day_fetches_asks_writes_and_mails_nothing(result):
     n = night(result, "holiday")
     assert n["run"]["status"] == "no_session" and n["run"]["skipped"] == "no_session" and n["run"]["exit_code"] == 0
     assert n["run"]["published"] is False and n["run"]["calendar_outcome"] == "no_session"
-    assert n["calls"] == {"bars_requests": 0, "minute_requests": 0, "reader_calls": 0, "mails": 0, "mail_subjects": []}
+    assert n["calls"] == {"bars_requests": 0, "minute_requests": 0, "cross_check_requests": 0, "reader_calls": 0,
+                          "mails": 0, "mail_subjects": []}
     assert n["files_changed"] == 0 and n["previous"]["outcome"] == "preserved"
     assert n["previous"]["publication"] == night(result, "clean")["publication_identity"]
     for d in n["guard"]:

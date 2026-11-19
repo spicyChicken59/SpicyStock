@@ -153,7 +153,11 @@ CONTRACT: dict[str, str] = {
            "(8-K item 2.02) a year back and read against the plan's hold window: an estimate and never an "
            "announced date, a warning and never a refusal, and a ticket SEC did not answer for says unknown; "
            "under version 2 each row also keeps the ticket's recent SEC current reports (8-K) and names the "
-           "item codes they carry, a material item (1.01, 1.03, 2.01, 3.01, 5.01) by its heading and filing.",
+           "item codes they carry, a material item (1.01, 1.03, 2.01, 3.01, 5.01) by its heading and filing. "
+           "run.sec_flags names each ticket's and listed setup's recent merger, tender-offer and deal filings "
+           "by form and item code, a flag that holds the ticket for a person's review in orders.json and never "
+           "a refusal or a clearance; run.cross_check reads each ticket's signal-day bar again from the iex "
+           "feed, and a ticket whose two readings differ past the archived tolerances is blocked in orders.json.",
     "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
     "account": "The configured sizing assumptions every plan below was computed from: equity, risk per "
                "trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
@@ -730,8 +734,10 @@ def validate(data: dict) -> None:
     faults.extend(funnel.faults(data))
     faults.extend(intraday.record_faults(data))
     faults.extend(earnings_risk.record_faults(data))
-    from src import scorecard_reading
+    from src import scorecard_reading, sec_flags, cross_check
     faults.extend(scorecard_reading.faults(data))
+    faults.extend(sec_flags.faults(data))
+    faults.extend(cross_check.faults(data))
     verdict = _get(data, "breadth", "regime", "verdict")
     if verdict is not None and verdict not in REGIMES:
         faults.append(f"breadth.regime.verdict {verdict!r} is not one of {REGIMES}")
