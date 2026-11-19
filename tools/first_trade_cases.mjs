@@ -97,7 +97,7 @@ export async function checkFirstTrade({ browser, base, open, check, eq, shotsDir
       let clip = 'rehearsal sentinel';
       for (let i = 0; i < 100 && clip === 'rehearsal sentinel'; i++) { clip = await page.evaluate(() => navigator.clipboard.readText()); if (clip === 'rehearsal sentinel') await page.waitForTimeout(50); }
       check(name + ': the copy reached the clipboard, so the checks below read it', clip !== 'rehearsal sentinel', clip.slice(0, 80));
-      check(name + ': the readback copied names the draft and submits nothing', /BUY 1 AAPL · STOP LIMIT · trigger \$62\.10 · limit \$63\.22/.test(clip) && /STOP \$60\.70/.test(clip) && /places no order/.test(clip), clip.slice(0, 200));
+      check(name + ': the readback copied names the draft and submits nothing', /BUY 1 AAPL · STOP LIMIT · trigger \$62\.16 · limit \$63\.22/.test(clip) && /STOP \$60\.70/.test(clip) && /places no order/.test(clip), clip.slice(0, 200));
       eq(name + ': the readback copied is the printed readback, and carries none of Fidelity\'s part-fill rule', clip, await page.locator('[data-handoff-text]').textContent());
       await page.locator('[data-handoff-report] > summary').click();
       const reporting = requests.length;

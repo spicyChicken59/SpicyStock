@@ -673,7 +673,10 @@ def plan_rules_match(data: dict, plan) -> list:
     bad = []
     for name, value in plan.RULES.items():
         family, _, leaf = name.partition(".")
-        if json.dumps(_dict(rules.get(family)).get(leaf), sort_keys=True) != json.dumps(value, sort_keys=True):
+        archived = _dict(rules.get(family)).get(leaf)
+        if name == "plan.burst_trigger_rule" and plan.replayable_burst_trigger_rule(archived):
+            continue                                      # the planner rebuilds either trigger rule
+        if json.dumps(archived, sort_keys=True) != json.dumps(value, sort_keys=True):
             bad.append(name)
     return bad
 
@@ -688,7 +691,8 @@ def derived_plan(row: dict, data: dict, modules, account, multiplier, mismatched
                             open_=row["open"], prev_close=row["prev_close"], gain_pct=row.get("gain_pct") or 0.0,
                             account=account, size_multiplier=multiplier,
                             scan="dollar" if row.get("scan") == "dollar" else "4pct",
-                            extension_pct=row.get("extension_pct"))
+                            extension_pct=row.get("extension_pct"),
+                            trigger_rule=plan.archived_burst_trigger_rule(data.get("rules")))
         registry = _dict(_dict(data.get("rules")).get("event_risk")).get("registry")
         if registry is not None:
             p = event_risk.apply(p, row["ticker"], data["run"]["session"], registry=registry)

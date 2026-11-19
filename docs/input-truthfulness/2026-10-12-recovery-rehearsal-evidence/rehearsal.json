@@ -98,8 +98,8 @@
     ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "d649abaab2b0f012cf7e6791ff1d778b59f18b32242b94afbc0c2b12afff34ee",
-    "picks_json": "5ee49f342984fd63054baa42eae41fce92f598c20272bc9ceb26870b4eb3d28d"
+    "data_json_without_clock_fields": "5d2f7fc9091518da3da2cf5dfc67ee6a68bf4d79e91aa5c6dfb89f70624f5e2f",
+    "picks_json": "793014fcbf04c0b7f372547b1b07a17283e13908fa8b67c543f5406445389ecb"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -165,8 +165,8 @@
    "previous": {
     "outcome": "preserved",
     "publication": {
-     "data_json_without_clock_fields": "d649abaab2b0f012cf7e6791ff1d778b59f18b32242b94afbc0c2b12afff34ee",
-     "picks_json": "5ee49f342984fd63054baa42eae41fce92f598c20272bc9ceb26870b4eb3d28d"
+     "data_json_without_clock_fields": "5d2f7fc9091518da3da2cf5dfc67ee6a68bf4d79e91aa5c6dfb89f70624f5e2f",
+     "picks_json": "793014fcbf04c0b7f372547b1b07a17283e13908fa8b67c543f5406445389ecb"
     }
    },
    "publication": null,
@@ -245,8 +245,8 @@
    "previous": {
     "outcome": "preserved",
     "publication": {
-     "data_json_without_clock_fields": "d649abaab2b0f012cf7e6791ff1d778b59f18b32242b94afbc0c2b12afff34ee",
-     "picks_json": "5ee49f342984fd63054baa42eae41fce92f598c20272bc9ceb26870b4eb3d28d"
+     "data_json_without_clock_fields": "5d2f7fc9091518da3da2cf5dfc67ee6a68bf4d79e91aa5c6dfb89f70624f5e2f",
+     "picks_json": "793014fcbf04c0b7f372547b1b07a17283e13908fa8b67c543f5406445389ecb"
     }
    },
    "publication": null,
@@ -281,10 +281,10 @@
    "calls": {
     "bars_requests": 1,
     "mail_subjects": [
-     "Nothing qualifies. Keep cash. \u00b7 2026-09-08"
+     "Trade next session. 2 A-quality bursts. \u00b7 2026-09-08"
     ],
     "mails": 1,
-    "minute_requests": 1,
+    "minute_requests": 0,
     "reader_calls": 2
    },
    "clock": "2026-09-09T00:30:00+00:00",
@@ -325,32 +325,32 @@
    ],
    "injected": "nothing injected",
    "minute_requests_bound": {
-    "asked": 2,
-    "maximum": 2,
+    "asked": 0,
+    "maximum": 0,
     "within": true
    },
    "name": "provider_recovered_at_retry",
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "d649abaab2b0f012cf7e6791ff1d778b59f18b32242b94afbc0c2b12afff34ee",
-     "picks_json": "5ee49f342984fd63054baa42eae41fce92f598c20272bc9ceb26870b4eb3d28d"
+     "data_json_without_clock_fields": "5d2f7fc9091518da3da2cf5dfc67ee6a68bf4d79e91aa5c6dfb89f70624f5e2f",
+     "picks_json": "793014fcbf04c0b7f372547b1b07a17283e13908fa8b67c543f5406445389ecb"
     }
    },
    "publication": {
     "anticipation_tickets": 1,
-    "cover": "Nothing qualifies. Keep cash.",
+    "cover": "Trade next session. 2 A-quality bursts.",
     "email": "delivered",
     "intraday": {
-     "asked": 2,
+     "asked": 0,
      "fetched": 0,
      "retained": 0,
      "stored": 0,
-     "wanted": 2
+     "wanted": 0
     },
     "problems": [],
     "published_at": "2026-09-09T00:30:00+00:00",
-    "reaction_tickets": 0,
+    "reaction_tickets": 2,
     "reader_usage": {
      "calls": 2,
      "candidates": 2,
@@ -382,11 +382,14 @@
     "regime": "green",
     "session": "2026-09-08",
     "status": "ok",
-    "trades": []
+    "trades": [
+     "AAA",
+     "AAB"
+    ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "063620feee32a1742200c77b5d450fe08be345c7cfedc7c855e891f3f6f67ed6",
-    "picks_json": "cce2f16aeb9b2878f93a65a8cc0e7b8aa99c05f3c666490fb8c12f4b1b2d5b42"
+    "data_json_without_clock_fields": "694152cb973d4c07bc992c13bebec5fb7e521a1bd5b2fc924c3c80bf8bcc4ee2",
+    "picks_json": "d65a38b16d6e3c09c95291db4f1c44be73dfa899fa08c44caadb3a3551a0a86a"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -454,8 +457,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "063620feee32a1742200c77b5d450fe08be345c7cfedc7c855e891f3f6f67ed6",
-     "picks_json": "cce2f16aeb9b2878f93a65a8cc0e7b8aa99c05f3c666490fb8c12f4b1b2d5b42"
+     "data_json_without_clock_fields": "694152cb973d4c07bc992c13bebec5fb7e521a1bd5b2fc924c3c80bf8bcc4ee2",
+     "picks_json": "d65a38b16d6e3c09c95291db4f1c44be73dfa899fa08c44caadb3a3551a0a86a"
     }
    },
    "publication": {
@@ -508,8 +511,8 @@
     "trades": []
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "8a5da3e9e0c3e2787e26723eb8c594178cb64b1bfec29c47dced23c2debe3a78",
-    "picks_json": "a83d40a1853c8e02f39f611592560c21c94b03b300388ec5eba4903089b6523c"
+    "data_json_without_clock_fields": "156cc31a2cd7aae5bdbc280b32a7147449a720ca53353e21edab33132d877324",
+    "picks_json": "b8a89c00ba5e8be91889f13ec2ddac43b629a82fef9de0b2bea90d8f1e1a97dc"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -579,8 +582,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "8a5da3e9e0c3e2787e26723eb8c594178cb64b1bfec29c47dced23c2debe3a78",
-     "picks_json": "a83d40a1853c8e02f39f611592560c21c94b03b300388ec5eba4903089b6523c"
+     "data_json_without_clock_fields": "156cc31a2cd7aae5bdbc280b32a7147449a720ca53353e21edab33132d877324",
+     "picks_json": "b8a89c00ba5e8be91889f13ec2ddac43b629a82fef9de0b2bea90d8f1e1a97dc"
     }
    },
    "publication": {
@@ -633,8 +636,8 @@
     "trades": []
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "5e53306c8a2643cc8143fe0790b9418c83490e82cb0108960e5707703da09145",
-    "picks_json": "1586d1e25efc98cd7b66057aeaa84e9b569be781f2784f3ce9364fea51603f74"
+    "data_json_without_clock_fields": "76601889579938ad0a49921f139cc44ec8e5323f6b95ff88fe0174d16cde706f",
+    "picks_json": "fd180a1d2b088d9740df745e77eb0a53d9c4d05589d31289ea29b0c057763523"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -702,8 +705,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "5e53306c8a2643cc8143fe0790b9418c83490e82cb0108960e5707703da09145",
-     "picks_json": "1586d1e25efc98cd7b66057aeaa84e9b569be781f2784f3ce9364fea51603f74"
+     "data_json_without_clock_fields": "76601889579938ad0a49921f139cc44ec8e5323f6b95ff88fe0174d16cde706f",
+     "picks_json": "fd180a1d2b088d9740df745e77eb0a53d9c4d05589d31289ea29b0c057763523"
     }
    },
    "publication": {
@@ -759,8 +762,8 @@
     ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "85b9b8969a776d51061843b6ef20125e7ee9bbc83cfc02d96591a8db018a01b0",
-    "picks_json": "5426e853fcbb7c1da32ef8316c1c32f346c74d86537c37ed8d9c16ea9399f2c6"
+    "data_json_without_clock_fields": "6c5ec920f6d93802f0a8e56313a97aeadd18fa8d399ada1a4c6463b68c48dda7",
+    "picks_json": "46e4adad7b25e2506025b814f1afba83ac93e8e301c2087843630cb87088f55d"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -838,8 +841,8 @@
    "previous": {
     "outcome": "preserved",
     "publication": {
-     "data_json_without_clock_fields": "85b9b8969a776d51061843b6ef20125e7ee9bbc83cfc02d96591a8db018a01b0",
-     "picks_json": "5426e853fcbb7c1da32ef8316c1c32f346c74d86537c37ed8d9c16ea9399f2c6"
+     "data_json_without_clock_fields": "6c5ec920f6d93802f0a8e56313a97aeadd18fa8d399ada1a4c6463b68c48dda7",
+     "picks_json": "46e4adad7b25e2506025b814f1afba83ac93e8e301c2087843630cb87088f55d"
     }
    },
    "publication": null,
@@ -910,8 +913,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "85b9b8969a776d51061843b6ef20125e7ee9bbc83cfc02d96591a8db018a01b0",
-     "picks_json": "5426e853fcbb7c1da32ef8316c1c32f346c74d86537c37ed8d9c16ea9399f2c6"
+     "data_json_without_clock_fields": "6c5ec920f6d93802f0a8e56313a97aeadd18fa8d399ada1a4c6463b68c48dda7",
+     "picks_json": "46e4adad7b25e2506025b814f1afba83ac93e8e301c2087843630cb87088f55d"
     }
    },
    "publication": {
@@ -965,8 +968,8 @@
     ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "fc91edf0d01e2aa25b26305502552d32d827933f3aa09be0a0a706b477a78f9b",
-    "picks_json": "6aaf372fe865e89b84ada6815b5761ada52a6f6569e654196bd6c98534f0c45e"
+    "data_json_without_clock_fields": "a901570e4ec0d6fd2deabd1e46c8f5e2592752c95e391d7b39ea1d1cfbf1a5b5",
+    "picks_json": "8c288a296c6e343399e5930215a564b58f643b90578b1aa3d2e3d4c80c7866c1"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -1071,7 +1074,7 @@
    "holiday": 0,
    "next_session_after_a_missed_night": 0,
    "provider_outage": 0,
-   "provider_recovered_at_retry": 1,
+   "provider_recovered_at_retry": 0,
    "reader_credit": 0,
    "reader_transport": 0,
    "stale_feed": 0

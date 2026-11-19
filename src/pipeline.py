@@ -591,7 +591,8 @@ def _make_plans(bursts, account, regime, open_count, session, *, require_reader)
         plan_inputs = dict(ticker=b["ticker"], close=b["close"], low=b["low"], high=b["high"],
                            open_=b["open"], prev_close=b["prev_close"], gain_pct=b["gain_pct"] or 0.0,
                            account=account.to_dict(), size_multiplier=multiplier,
-                           scan="dollar" if b["scan"] == "dollar" else "4pct", extension_pct=b.get("extension_pct"))
+                           scan="dollar" if b["scan"] == "dollar" else "4pct", extension_pct=b.get("extension_pct"),
+                           trigger_rule=plan.BURST_TRIGGER_RULE)
         try:
             p = plan.burst_plan(**{**plan_inputs, "account": account})
         except ValueError as exc:

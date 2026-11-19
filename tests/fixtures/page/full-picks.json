@@ -2026,16 +2026,16 @@
   {
    "evidence_ref": {
     "version": 1,
-    "id": "17aa0f45b0fdd9e781ac96aebe1a7c9e6b064fb509a21c666751396fda143f51",
-    "context_sha256": "792bf46fc6dd87127a4bddffd6df793f77341241664430ea5713b20c9b8b4b38",
-    "plan_sha256": "353a4909b79e4a6c293f0b42ea86ecf9974606bfb9dac63176fd5767c7f073de",
-    "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
+    "id": "0d6e682b1223b8ad88c34b1ca1927f8bd1668e1f424e9a441176bb507d0bd179",
+    "context_sha256": "5df70b515889325bbef26e451483be934e339d69d24319358a1f611646e4e56c",
+    "plan_sha256": "77d898e143644c9f12c0cfce19d88eed35d0ef48bee750dcb49e7df830133464",
+    "pick_sha256": "d61b9dc9c4f9b326d6040cc11ede22947c65e15fe7434f1f82c6bec390bf6ae5"
    },
    "ticker": "AAPL",
    "kind": "burst",
    "grade": "A+",
    "score": 10.0,
-   "entry_ref": 124.21,
+   "entry_ref": 124.33,
    "entry_low": 121.73,
    "entry_high": 126.47,
    "day2_spent_above": 129.18,
@@ -2058,7 +2058,7 @@
     "action": "buy",
     "quantity": 4,
     "order_type": "stop_limit",
-    "stop_price": 124.21,
+    "stop_price": 124.33,
     "limit_price": 126.47,
     "time_in_force": "day",
     "conditional": "one_triggers_the_other",

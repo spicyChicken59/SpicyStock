@@ -191,7 +191,8 @@ def replay(data):
                 preview = plan.burst_plan(ticker=row["ticker"], close=row["close"], low=row["low"], high=row["high"],
                     open_=row["open"], prev_close=row["prev_close"], gain_pct=row["gain_pct"] or 0.0,
                     account=account, size_multiplier=float(regime["size_multiplier"]),
-                    scan="dollar" if row["scan"] == "dollar" else "4pct", extension_pct=row.get("extension_pct"))
+                    scan="dollar" if row["scan"] == "dollar" else "4pct", extension_pct=row.get("extension_pct"),
+                    trigger_rule=plan.archived_burst_trigger_rule(data["rules"]))
             except ValueError:
                 pass
             else:

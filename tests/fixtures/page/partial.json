@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "1e6167eba764"
+  "rules_version": "583191ddb160"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -953,7 +953,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "22fc0bb383eb2beabdb953ac6f785e12db34355b359df34fbdcc252df206e76a"
+   "context_sha256": "5b7e3700223a2b4fc5a2bc788cbae8aa789936b304243ef0cf1aad4bf7aa28e3"
   },
   "earnings": {
    "version": 2,
@@ -1195,6 +1195,7 @@
    "gap_ok_pct": 2.0,
    "stop_lookback_sessions": 3,
    "open_entry_top_n": 2,
+   "burst_trigger_rule": "close_plus_cushion",
    "pdt_equity_usd": 25000.0,
    "pdt_max_day_trades": 3,
    "pdt_window_days": 5,
@@ -2183,7 +2184,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "1e6167eba764"
+  "replay_rules_version": "583191ddb160"
  },
  "observations": {
   "as_of": "2026-09-10",

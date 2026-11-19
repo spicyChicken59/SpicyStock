@@ -399,6 +399,10 @@ def _check_plan(data, row, e, compatible=True):
             "account": {k: data["account"][k] for k in ACCOUNT_FIELDS},
             "size_multiplier": float(data["breadth"]["regime"]["size_multiplier"]),
             "scan": "dollar" if row["scan"] == "dollar" else "4pct", "extension_pct": row.get("extension_pct")}
+        if "burst_trigger_rule" in data["rules"].get("plan", {}):
+            # a record made under the archived rule seals it with every ticket;
+            # one made before it seals none and is replayed under the close
+            expected_inputs["trigger_rule"] = plan.archived_burst_trigger_rule(data["rules"])
         _same(args, expected_inputs, "plan inputs differ from source candidate/account/regime")
         if compatible:
             args["account"] = plan.Account(**args["account"])
@@ -520,6 +524,8 @@ archive. Integrity-only callers explicitly disable the source replay requirement
                 archived = data["rules"].get(family, {}).get(name)
                 if key == "grading.reader_request_version" and replayable_request_version(archived):
                     continue  # the grader rebuilds a request of that version byte for byte
+                if key == "plan.burst_trigger_rule" and plan.replayable_burst_trigger_rule(archived):
+                    continue  # the planner rebuilds a burst ticket under either trigger rule
                 if digest(archived) != digest(value):
                     mismatches.append(key)
         selection_supported = False

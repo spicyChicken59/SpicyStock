@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "1e6167eba764"
+  "rules_version": "583191ddb160"
  },
  "cover": {
   "h1": "Trade next session. 1 A-quality burst.",
@@ -953,7 +953,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea"
+   "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb"
   },
   "earnings": {
    "version": 2,
@@ -1314,6 +1314,7 @@
    "gap_ok_pct": 2.0,
    "stop_lookback_sessions": 3,
    "open_entry_top_n": 2,
+   "burst_trigger_rule": "close_plus_cushion",
    "pdt_equity_usd": 25000.0,
    "pdt_max_day_trades": 3,
    "pdt_window_days": 5,
@@ -2358,10 +2359,13 @@
     "action": "buy_at_open",
     "eligible": true,
     "reason": null,
-    "entry_ref": 124.21,
+    "entry_ref": 124.33,
     "entry_low": 121.73,
     "entry_high": 126.47,
     "limit": 126.47,
+    "trigger_rule": "close_plus_cushion",
+    "trigger_cushion": 0.12,
+    "trigger_note": "the buy stop $124.33 is the $124.21 close plus $0.12, the larger of $0.02 and 0.1% of the close",
     "limit_basis": "stop_line",
     "limit_narrowed": true,
     "limit_note": "the ticket's limit is $126.47: the $129.18 day-2 ceiling (the close +4%) narrowed to the highest price at which the bar's midpoint $121.42 is still inside his 4% line",
@@ -2514,13 +2518,13 @@
       "price": null
      }
     ],
-    "order_line": "Buy 4 AAPL stop-limit: stop $124.21 limit $126.47, day · OTO sell 4 AAPL stop-loss $121.42 GTC",
+    "order_line": "Buy 4 AAPL stop-limit: stop $124.33 limit $126.47, day · OTO sell 4 AAPL stop-loss $121.42 GTC",
     "order_json": {
      "symbol": "AAPL",
      "action": "buy",
      "quantity": 4,
      "order_type": "stop_limit",
-     "stop_price": 124.21,
+     "stop_price": 124.33,
      "limit_price": 126.47,
      "time_in_force": "day",
      "conditional": "one_triggers_the_other",
@@ -2532,11 +2536,11 @@
       "time_in_force": "gtc"
      }
     },
-    "order_readback": "Buy 4 AAPL stop limit 124.21 / 126.47 day, one-triggers-the-other sell 4 AAPL stop loss 121.42 GTC",
+    "order_readback": "Buy 4 AAPL stop limit 124.33 / 126.47 day, one-triggers-the-other sell 4 AAPL stop loss 121.42 GTC",
     "order_terms": [
      "A day order rests until the close unless you cancel it. The plan's entry is the first 30 minutes: if it has not filled by then, cancel it yourself; SpicyStock places and cancels nothing.",
      "An open above the $126.47 limit does not fill at the open, but the resting order stays live and can fill on a pullback under $126.47 later in the day: cancel it rather than let it.",
-     "An open under $121.73 is the burst failing: do not place the order, or cancel it; the buy stop at $124.21 would still trigger if the price recovered.",
+     "An open under $121.73 is the burst failing: do not place the order, or cancel it; the buy stop at $124.33 would still trigger if the price recovered.",
      "The sell stop at $121.42 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill."
     ],
     "burst": {
@@ -2620,10 +2624,10 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "a779391d2932168f8544fdcc1788f13c02cb3d452dbad58da5ff9b75c4f6428d",
-     "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea",
-     "plan_sha256": "646447b6f48fa4601f429b4ff5e188edb6d10de26222141639687bae8e8abf7a",
-     "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
+     "id": "a16a61051ef58872caa80c497c8d5163e9b763b60f0d6a336fb8c9659b108ef4",
+     "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb",
+     "plan_sha256": "9fcbe2774ea2cd3048ca7d9e3958178dce95252144b3506d6db4807da36b7b1b",
+     "pick_sha256": "d61b9dc9c4f9b326d6040cc11ede22947c65e15fe7434f1f82c6bec390bf6ae5"
     }
    },
    "review_selection": {
@@ -2722,13 +2726,14 @@
       },
       "size_multiplier": 1.0,
       "scan": "4pct",
-      "extension_pct": 5.2
+      "extension_pct": 5.2,
+      "trigger_rule": "close_plus_cushion"
      },
      "regime_sha256": "0ccd9945d3681e7f9f470d51fcb5ccf7c80396177cde619476c349ea9e071317",
      "session": "2026-09-04",
-     "output_sha256": "646447b6f48fa4601f429b4ff5e188edb6d10de26222141639687bae8e8abf7a",
+     "output_sha256": "9fcbe2774ea2cd3048ca7d9e3958178dce95252144b3506d6db4807da36b7b1b",
      "error": null,
-     "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
+     "pick_sha256": "d61b9dc9c4f9b326d6040cc11ede22947c65e15fe7434f1f82c6bec390bf6ae5"
     },
     "reader_input": {
      "metrics_sha256": "7cd32dd36a3610cbfc41c1e83ce86cdb6051bddc89a68289e86332e14d72999a",
@@ -2753,8 +2758,8 @@
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2026-09-04",
-    "rules_version": "1e6167eba764",
-    "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea",
+    "rules_version": "583191ddb160",
+    "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -2767,7 +2772,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "a779391d2932168f8544fdcc1788f13c02cb3d452dbad58da5ff9b75c4f6428d"
+    "id": "a16a61051ef58872caa80c497c8d5163e9b763b60f0d6a336fb8c9659b108ef4"
    },
    "series": [
     {
@@ -3967,10 +3972,13 @@
     "action": "refused",
     "eligible": true,
     "reason": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out",
-    "entry_ref": 123.27,
+    "entry_ref": 123.39,
     "entry_low": 120.8,
     "entry_high": 128.2,
     "limit": 128.2,
+    "trigger_rule": "close_plus_cushion",
+    "trigger_cushion": 0.12,
+    "trigger_note": "the buy stop $123.39 is the $123.27 close plus $0.12, the larger of $0.02 and 0.1% of the close",
     "limit_basis": "outer_ceiling",
     "limit_narrowed": false,
     "limit_note": "the ticket's limit is $128.20, the day-2 ceiling itself (the close +4%): the stop is inside his 4% line there",
@@ -4207,10 +4215,10 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "849a79c62da248e6742f1f20d938a010ee1d2a1ebada46444f3b9995f93545ba",
-     "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea",
-     "plan_sha256": "4857a80156dd89323deeea07c27f4ecbfc61db15b87ba492ef0b3c30ade0320d",
-     "pick_sha256": "8791448fea08a08339f01fec5d7b8f9dc3048b3c461320b8e5ad2b011c0b29b5"
+     "id": "0def084e133f86ac9a8735155672142608c9f5bbf3520ac25cd875041d211deb",
+     "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb",
+     "plan_sha256": "edd44f4671320f4b96f9f02c30255ef28c6e43ff55e930520284f2687ad15220",
+     "pick_sha256": "8f933e430b6a79aff8f452ac9bbc59a6679dbaf6883ad89404037c73b9baf1f1"
     }
    },
    "review_selection": {
@@ -4309,13 +4317,14 @@
       },
       "size_multiplier": 1.0,
       "scan": "4pct",
-      "extension_pct": 4.9
+      "extension_pct": 4.9,
+      "trigger_rule": "close_plus_cushion"
      },
      "regime_sha256": "0ccd9945d3681e7f9f470d51fcb5ccf7c80396177cde619476c349ea9e071317",
      "session": "2026-09-04",
-     "output_sha256": "4857a80156dd89323deeea07c27f4ecbfc61db15b87ba492ef0b3c30ade0320d",
+     "output_sha256": "edd44f4671320f4b96f9f02c30255ef28c6e43ff55e930520284f2687ad15220",
      "error": null,
-     "pick_sha256": "8791448fea08a08339f01fec5d7b8f9dc3048b3c461320b8e5ad2b011c0b29b5"
+     "pick_sha256": "8f933e430b6a79aff8f452ac9bbc59a6679dbaf6883ad89404037c73b9baf1f1"
     },
     "reader_input": {
      "metrics_sha256": "a887fd742941fa785374eeecb8586fd815c9f2f140ee81f559208bdf4c6c487c",
@@ -4340,8 +4349,8 @@
     "kind": "burst",
     "ticker": "AMD",
     "session": "2026-09-04",
-    "rules_version": "1e6167eba764",
-    "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea",
+    "rules_version": "583191ddb160",
+    "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -4354,7 +4363,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out"
     },
-    "id": "849a79c62da248e6742f1f20d938a010ee1d2a1ebada46444f3b9995f93545ba"
+    "id": "0def084e133f86ac9a8735155672142608c9f5bbf3520ac25cd875041d211deb"
    },
    "series": [
     {
@@ -5522,10 +5531,13 @@
     "action": "refused",
     "eligible": true,
     "reason": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out",
-    "entry_ref": 126.88,
+    "entry_ref": 127.01,
     "entry_low": 124.34,
     "entry_high": 128.12,
     "limit": 128.12,
+    "trigger_rule": "close_plus_cushion",
+    "trigger_cushion": 0.13,
+    "trigger_note": "the buy stop $127.01 is the $126.88 close plus $0.13, the larger of $0.02 and 0.1% of the close",
     "limit_basis": "stop_line",
     "limit_narrowed": true,
     "limit_note": "the ticket's limit is $128.12: the $131.96 day-2 ceiling (the close +4%) narrowed to the highest price at which the burst day's low $123.00 is still inside his 4% line",
@@ -5763,10 +5775,10 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "515548a0b548481817543cf756e36e0a991e7f35d8a7d9ed96fcf0c9f81220b0",
-     "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea",
-     "plan_sha256": "b8cfdf5457db0106e11bb4491ad998a11180e44d3b70a19146a932b61411935f",
-     "pick_sha256": "9e72b4c052e89621468bcd96ecd0f750df8860cf900623561da6e4ba30bc9b7a"
+     "id": "64c1af00716eb679aa6aab2e66a4b873958d71f7892af7466719bf5b12077a6b",
+     "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb",
+     "plan_sha256": "e0b8d5130365ecbc428e58686bcfa798471d0939604e6c3f1e3a45d16bdbfce2",
+     "pick_sha256": "606e21507ad145e565718b380744ff94e50a216ea481cbae138a7e7b98676d04"
     }
    },
    "review_selection": {
@@ -5865,13 +5877,14 @@
       },
       "size_multiplier": 1.0,
       "scan": "4pct",
-      "extension_pct": 6.8
+      "extension_pct": 6.8,
+      "trigger_rule": "close_plus_cushion"
      },
      "regime_sha256": "0ccd9945d3681e7f9f470d51fcb5ccf7c80396177cde619476c349ea9e071317",
      "session": "2026-09-04",
-     "output_sha256": "b8cfdf5457db0106e11bb4491ad998a11180e44d3b70a19146a932b61411935f",
+     "output_sha256": "e0b8d5130365ecbc428e58686bcfa798471d0939604e6c3f1e3a45d16bdbfce2",
      "error": null,
-     "pick_sha256": "9e72b4c052e89621468bcd96ecd0f750df8860cf900623561da6e4ba30bc9b7a"
+     "pick_sha256": "606e21507ad145e565718b380744ff94e50a216ea481cbae138a7e7b98676d04"
     },
     "reader_input": {
      "metrics_sha256": "bac8b5b274bfbedbd030c16cc55be64d2d6c3bd83c7eb32a3967fd2c1643f6af",
@@ -5896,8 +5909,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-04",
-    "rules_version": "1e6167eba764",
-    "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea",
+    "rules_version": "583191ddb160",
+    "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -5910,7 +5923,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out"
     },
-    "id": "515548a0b548481817543cf756e36e0a991e7f35d8a7d9ed96fcf0c9f81220b0"
+    "id": "64c1af00716eb679aa6aab2e66a4b873958d71f7892af7466719bf5b12077a6b"
    },
    "series": [
     {
@@ -7117,11 +7130,14 @@
     "scan": "4pct",
     "action": "refused",
     "eligible": false,
-    "reason": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not",
-    "entry_ref": 124.21,
+    "reason": "ticket withheld: no limit above the $124.33 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not",
+    "entry_ref": 124.33,
     "entry_low": 121.73,
     "entry_high": 129.18,
     "limit": 129.18,
+    "trigger_rule": "close_plus_cushion",
+    "trigger_cushion": 0.12,
+    "trigger_note": "the buy stop $124.33 is the $124.21 close plus $0.12, the larger of $0.02 and 0.1% of the close",
     "limit_basis": "outer_ceiling",
     "limit_narrowed": false,
     "limit_note": "no ticket: the $129.18 day-2 ceiling (the close +4%) is the outer extension threshold, not a limit this setup can be bought at",
@@ -7359,10 +7375,10 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "9a9722aa1b53e6144ad2f94c15cb234eea786e56422e11cceabcb8a811ba298f",
-     "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea",
-     "plan_sha256": "049ff065c452d7f9b4bb89333a58108ed5eb997aff4fed5394180e7cede172cc",
-     "pick_sha256": "2cd8ba442340b9e81c517f18affaceb6a5c62b97d88cb26325ef13ee328ae974"
+     "id": "6df4bc7dbcf8e14b22ffbe34daace6afddab2a8a2f8e44fa93761c564b54c03a",
+     "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb",
+     "plan_sha256": "8039b0ecab700323813eed5f809c3d2127985b845f32a60ad5c6ede61d5cfd8c",
+     "pick_sha256": "620d81c9b78501afc48631af3164fe79bef1c9ae32af158fc4167efaaa4e5149"
     }
    },
    "review_selection": {
@@ -7463,13 +7479,14 @@
       },
       "size_multiplier": 1.0,
       "scan": "4pct",
-      "extension_pct": 5.2
+      "extension_pct": 5.2,
+      "trigger_rule": "close_plus_cushion"
      },
      "regime_sha256": "0ccd9945d3681e7f9f470d51fcb5ccf7c80396177cde619476c349ea9e071317",
      "session": "2026-09-04",
-     "output_sha256": "049ff065c452d7f9b4bb89333a58108ed5eb997aff4fed5394180e7cede172cc",
+     "output_sha256": "8039b0ecab700323813eed5f809c3d2127985b845f32a60ad5c6ede61d5cfd8c",
      "error": null,
-     "pick_sha256": "2cd8ba442340b9e81c517f18affaceb6a5c62b97d88cb26325ef13ee328ae974"
+     "pick_sha256": "620d81c9b78501afc48631af3164fe79bef1c9ae32af158fc4167efaaa4e5149"
     },
     "reader_input": {
      "metrics_sha256": "b1b0ab2346371dd1066eb868c0f87a1af7ceebfeb58fc2ce4330452dbaa82933",
@@ -7496,8 +7513,8 @@
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2026-09-04",
-    "rules_version": "1e6167eba764",
-    "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea",
+    "rules_version": "583191ddb160",
+    "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -7508,9 +7525,9 @@
      ],
      "ticket": false,
      "reason": "withheld",
-     "detail": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
+     "detail": "ticket withheld: no limit above the $124.33 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
     },
-    "id": "9a9722aa1b53e6144ad2f94c15cb234eea786e56422e11cceabcb8a811ba298f"
+    "id": "6df4bc7dbcf8e14b22ffbe34daace6afddab2a8a2f8e44fa93761c564b54c03a"
    },
    "series": [
     {
@@ -8755,8 +8772,8 @@
     "kind": "burst",
     "ticker": "MSFT",
     "session": "2026-09-04",
-    "rules_version": "1e6167eba764",
-    "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea",
+    "rules_version": "583191ddb160",
+    "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -8769,7 +8786,7 @@
      "reason": "route_not_admitted",
      "detail": null
     },
-    "id": "cb1691ef41a30d7be44009e392b227784e00b82cfb7d40b41b739095b8a44d58"
+    "id": "cf4d1011167fc3d0daf62bdf848554b4e035306996b3e4137c7d68e1762dd10c"
    },
    "series": [
     {
@@ -10015,8 +10032,8 @@
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2026-09-04",
-    "rules_version": "1e6167eba764",
-    "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea",
+    "rules_version": "583191ddb160",
+    "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -10029,7 +10046,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "54d3e6a55999b7b7c6cfec4014d0733fdd1e11a3e14efd5b1716a3551af6be4d"
+    "id": "50c780f008f6fe8a47dd8507e2269b5fc8da2e35b7bce4bd893bcc6184981c84"
    },
    "series": [
     {
@@ -11277,8 +11294,8 @@
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2026-09-04",
-    "rules_version": "1e6167eba764",
-    "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea",
+    "rules_version": "583191ddb160",
+    "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "green",
@@ -11291,7 +11308,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "1638819620c32b447913946f91be96a6e875bda7e7c47e7523f694c842ce5c89"
+    "id": "22d788414b32b2093b342cb2682e60b6fd5861ffcd7cb9c90a021cb0be611583"
    },
    "series": [
     {
@@ -12317,7 +12334,7 @@
     "ticker": "TSLA",
     "setup_kind": "burst",
     "kind": "withheld",
-    "reason": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
+    "reason": "ticket withheld: no limit above the $124.33 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
    },
    {
     "ticker": "AMD",
@@ -12609,8 +12626,8 @@
      },
      "evidence_ref": {
       "version": 1,
-      "id": "2974170c445c14538d2f79264588f5a3980a123bff224c658cbad8595f478a4b",
-      "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea",
+      "id": "0519dd7ace7b0c0c4615754ef234ed9d90b275d5e68914c7fcffe405aac3927d",
+      "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb",
       "plan_sha256": "27589c55fd9d20c6dc4c60b8d0cca9750b9891cfeb050e8a59f60d3aff4ec9af",
       "pick_sha256": "ee35be7c2467fd384e7258f64381c37bd2af9327638a86cc7de6a77583f2f2d5"
      }
@@ -13618,8 +13635,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2026-09-04",
-     "rules_version": "1e6167eba764",
-     "context_sha256": "4a97c3a30f6159ea35ee70991c433b3100677ef0853a430c047983e325015cea",
+     "rules_version": "583191ddb160",
+     "context_sha256": "ee92591ee2f217b01a0564f3707e44e1291578c0843b45081b0b6c4fb66251cb",
      "gate": {
       "regime": "green",
       "final_grade": "watch",
@@ -13628,7 +13645,7 @@
       "reason": "no_order",
       "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take COIL only if a plan above is not held or stops out"
      },
-     "id": "2974170c445c14538d2f79264588f5a3980a123bff224c658cbad8595f478a4b"
+     "id": "0519dd7ace7b0c0c4615754ef234ed9d90b275d5e68914c7fcffe405aac3927d"
     }
    }
   ],
@@ -13881,7 +13898,7 @@
    "expected_session": "2026-09-04",
    "evaluated_session": "2026-09-04"
   },
-  "replay_rules_version": "1e6167eba764"
+  "replay_rules_version": "583191ddb160"
  },
  "observations": {
   "as_of": "2026-09-04",
@@ -14120,60 +14137,60 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-04:1e6167eba764": {
+   "burst:AAPL:2026-09-04:583191ddb160": {
     "ticker": "AAPL",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-04:1e6167eba764": {
+   "burst:AMD:2026-09-04:583191ddb160": {
     "ticker": "AMD",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-04:1e6167eba764": {
+   "burst:NVDA:2026-09-04:583191ddb160": {
     "ticker": "NVDA",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-04:1e6167eba764": {
+   "burst:TSLA:2026-09-04:583191ddb160": {
     "ticker": "TSLA",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:MSFT:2026-09-04:1e6167eba764": {
+   "burst:MSFT:2026-09-04:583191ddb160": {
     "ticker": "MSFT",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-04:1e6167eba764": {
+   "burst:PLUG:2026-09-04:583191ddb160": {
     "ticker": "PLUG",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-04:1e6167eba764": {
+   "burst:DLLR:2026-09-04:583191ddb160": {
     "ticker": "DLLR",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-04:1e6167eba764": {
+   "anticipation:COIL:2026-09-04:583191ddb160": {
     "ticker": "COIL",
     "session": "2026-09-04",
     "kind": "anticipation",
-    "rules_version": "1e6167eba764",
+    "rules_version": "583191ddb160",
     "coverage": "observed"
    }
   },

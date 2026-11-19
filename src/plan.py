@@ -166,6 +166,20 @@ STOP_LOOKBACK_SESSIONS = 3
 #: reading of his KOD trade), not the whole list.
 OPEN_ENTRY_TOP_N = 2
 
+# --- the burst entry -------------------------------------------------------
+#: (P) how a burst ticket's buy stop is set. ``close`` is the rule every
+#: record made before ``plan.burst_trigger_rule`` was archived was made
+#: under: the buy stop AT the burst close. ``close_plus_cushion`` is the
+#: owner's decision of 19 November 2026: the close plus the anticipation
+#: ticket's own cushion, ``trigger_cushion()``, so the buy stop sits above
+#: the last trade when it is entered before the open (Fidelity's stated rule
+#: takes a buy stop only above the current market price:
+#: ``knowledge/broker-fidelity.md``). Both stay replayable: a record is read
+#: under the rule it archived, and one that archived none under ``close``.
+BURST_TRIGGER_RULES = ("close", "close_plus_cushion")
+LEGACY_BURST_TRIGGER_RULE = "close"
+BURST_TRIGGER_RULE = "close_plus_cushion"
+
 # --- account constraints the page states (regulation and broker) -----------
 #: (R) FINRA's pattern-day-trader count, as Fidelity may still apply it: a
 #: margin account under this equity ...
@@ -248,6 +262,7 @@ RULES: dict[str, Any] = {
     "plan.gap_ok_pct": GAP_OK_PCT,
     "plan.stop_lookback_sessions": STOP_LOOKBACK_SESSIONS,
     "plan.open_entry_top_n": OPEN_ENTRY_TOP_N,
+    "plan.burst_trigger_rule": BURST_TRIGGER_RULE,
     "plan.pdt_equity_usd": PDT_EQUITY_USD,
     "plan.pdt_max_day_trades": PDT_MAX_DAY_TRADES,
     "plan.pdt_window_days": PDT_WINDOW_DAYS,
@@ -780,7 +795,66 @@ def stop_line_ceiling(stop: float) -> float:
     return _floor_cents(_price(stop, "stop") / (1 - MAX_STOP_PCT / 100))
 
 
-def burst_limit(close: float, low: float, high: float) -> dict[str, Any]:
+def trigger_cushion(close: float) -> float:
+    """The cents a buy stop sits over its reference price: the larger of
+    ``TRIGGER_CENTS`` and ``TRIGGER_FRACTION`` of the close, in cents. One
+    cushion, read by the anticipation ticket over its box and by the burst
+    ticket over its close under ``close_plus_cushion``."""
+    return max(TRIGGER_CENTS, _money(TRIGGER_FRACTION * _price(close, "close")))
+
+
+def archived_burst_trigger_rule(rules: Mapping[str, Any] | None) -> str:
+    """The burst trigger rule a record's archived rules name: its
+    ``plan.burst_trigger_rule``, or ``close`` for a record made before the
+    rule was archived. A rule this module does not implement is a refusal,
+    never a guess."""
+    plan_rules = (rules or {}).get("plan") if isinstance(rules, Mapping) else None
+    archived = plan_rules.get("burst_trigger_rule") if isinstance(plan_rules, Mapping) else None
+    if archived is None:
+        return LEGACY_BURST_TRIGGER_RULE
+    if archived not in BURST_TRIGGER_RULES:
+        raise ValueError(f"unknown burst trigger rule {archived!r}")
+    return archived
+
+
+def replayable_burst_trigger_rule(archived: Any) -> bool:
+    """Whether this module rebuilds a burst ticket under an archived
+    ``plan.burst_trigger_rule``: absent (a record from before the rule, read
+    under ``close``) or one of ``BURST_TRIGGER_RULES``."""
+    return archived is None or (isinstance(archived, str) and archived in BURST_TRIGGER_RULES)
+
+
+def archived_rules_differ(archived_plan: Any) -> list[str]:
+    """The ``plan.<name>`` rules a record's archived ``rules.plan`` family does
+    not carry as this module does, with a replayable
+    ``plan.burst_trigger_rule`` exempt (this module rebuilds either rule). An
+    empty list is a family this module reproduces."""
+    family = archived_plan if isinstance(archived_plan, Mapping) else {}
+    bad = []
+    for key, value in RULES.items():
+        name = key.partition(".")[2]
+        if key == "plan.burst_trigger_rule" and replayable_burst_trigger_rule(family.get(name)):
+            continue
+        if name not in family or family[name] != value:
+            bad.append(key)
+    bad.extend(f"plan.{name}" for name in family if f"plan.{name}" not in RULES)
+    return bad
+
+
+def burst_trigger(close: float, rule: str = LEGACY_BURST_TRIGGER_RULE) -> float:
+    """The burst ticket's buy stop under ``rule``: the close itself
+    (``close``), or the close plus ``trigger_cushion()``
+    (``close_plus_cushion``)."""
+    close = _price(close, "close")
+    if rule == LEGACY_BURST_TRIGGER_RULE:
+        return close
+    if rule == "close_plus_cushion":
+        return _money(close + trigger_cushion(close))
+    raise ValueError(f"unknown burst trigger rule {rule!r}")
+
+
+def burst_limit(close: float, low: float, high: float,
+                trigger_rule: str = LEGACY_BURST_TRIGGER_RULE) -> dict[str, Any]:
     """The burst ticket's executable limit, or the refusal.
 
     The outer ceiling is unchanged -- the close plus ``ENTRY_ABOVE_PCT``, the
@@ -802,7 +876,7 @@ def burst_limit(close: float, low: float, high: float) -> dict[str, Any]:
     False.
     """
     close, low, high = _price(close, "close"), _price(low, "low"), _price(high, "high")
-    trigger = close
+    trigger = burst_trigger(close, trigger_rule)
     outer = _at_pct(close, ENTRY_ABOVE_PCT)
     tried: list[dict[str, Any]] = []
     for basis, stop in stop_candidates(low, high):
@@ -900,15 +974,23 @@ def _sizing_block(sizing: Sizing, stop: float) -> dict[str, Any]:
 def burst_plan(*, ticker: str, close: float, low: float, high: float, open_: float,
                prev_close: float, gain_pct: float, account: Account,
                size_multiplier: float = 1.0, scan: str = "4pct",
-               extension_pct: float | None = None) -> dict[str, Any]:
+               extension_pct: float | None = None,
+               trigger_rule: str = LEGACY_BURST_TRIGGER_RULE) -> dict[str, Any]:
     """The plan for entering yesterday's burst at tomorrow's open (B: "You
     can also use it for end of the day scanning and enter next day", taking
     only the ones that are "not extended").
 
-    The order is a buy stop-limit with the stop AT the burst close. Four
+    The order is a buy stop-limit whose buy stop ``trigger_rule`` sets
+    (``burst_trigger()``): AT the burst close under ``close``, the rule every
+    record before ``plan.burst_trigger_rule`` was made under, and the close
+    plus ``trigger_cushion()`` under ``close_plus_cushion``, the production
+    rule (``BURST_TRIGGER_RULE``). The default is the legacy rule so a
+    reader of an older record, or the frozen signal-outcome study, keeps its
+    meaning; the evening names the rule it uses, and a record is replayed
+    under the rule it archived (``archived_burst_trigger_rule()``). Four
     prices this plan keeps apart, because they are four rules:
 
-    * ``entry_ref`` -- the TRIGGER, the buy stop at the burst close.
+    * ``entry_ref`` -- the TRIGGER, the buy stop.
     * ``limit`` (and ``entry_high``, the top of the zone it can fill in) --
       the ticket's EXECUTABLE LIMIT, from ``burst_limit()``: the outer
       ceiling narrowed to the highest price at which the structural stop is
@@ -938,16 +1020,17 @@ def burst_plan(*, ticker: str, close: float, low: float, high: float, open_: flo
         raise ValueError(f"{ticker}: open {open_} and close {close} must sit inside the bar "
                          f"{low}-{high}")
 
-    entry_ref = close                                   # the buy stop: the trigger
+    trigger = burst_trigger(close, trigger_rule)        # the buy stop
+    entry_ref = trigger
     entry_low = _at_pct(close, -ENTRY_BELOW_PCT)
     # the OUTER extension threshold, and never the ticket's limit: over this
     # price his day-2 follow-through is already spent
     day2_spent_above = _at_pct(close, ENTRY_ABOVE_PCT)
     extended_above = _at_pct(close, SKIP_GAP_PCT)
-    ticket = burst_limit(close, low, high)
+    ticket = burst_limit(close, low, high, trigger_rule)
     limit = ticket["limit"]                             # the highest fill the ticket permits
     entry_high = limit                                  # the top of the zone it can fill in
-    stop_block = burst_stop(limit, low, high, trigger=close)
+    stop_block = burst_stop(limit, low, high, trigger=trigger)
     stop = stop_block["stop"]
     eligible = ticket["admitted"]
     if eligible and (stop_block["stop_basis"] != ticket["stop_basis"] or stop != ticket["stop"]):
@@ -958,12 +1041,14 @@ def burst_plan(*, ticker: str, close: float, low: float, high: float, open_: flo
                          f"{_usd(ticket['stop'])} but the cascade reaches {stop_block['stop_basis']} "
                          f"{_usd(stop)} there")
     # an indicative entry never above the price the ticket can actually fill at
-    planned_entry = min(_at_pct(close, ASSUMED_SLIPPAGE_PCT), limit)
+    # and never under the buy stop, which a fill cannot be (the same price as
+    # before under ``close``, where the limit is over the close)
+    planned_entry = max(trigger, min(_at_pct(close, ASSUMED_SLIPPAGE_PCT), limit))
     planned_entry_capped = planned_entry < _at_pct(close, ASSUMED_SLIPPAGE_PCT)
     reason = None if eligible else (
-        f"ticket withheld: no limit above the {_usd(close)} buy stop keeps a stop inside his "
+        f"ticket withheld: no limit above the {_usd(trigger)} buy stop keeps a stop inside his "
         f"{MAX_STOP_PCT:g}% line \u2014 "
-        + "; ".join(ticket_candidate_words(c, close) for c in ticket["tried"])
+        + "; ".join(ticket_candidate_words(c, trigger) for c in ticket["tried"])
         + "; the setup stands, the ticket does not")
     limit_note = (
         f"the ticket's limit is {_usd(limit)}: the {_usd(day2_spent_above)} day-2 ceiling "
@@ -998,13 +1083,21 @@ def burst_plan(*, ticker: str, close: float, low: float, high: float, open_: flo
         flags.append("position_capped")
     if sizing.note:
         notes.append(sizing.note)
-    orders = (fidelity_orders(ticker, sizing.shares, trigger=close, limit=limit, stop=stop, skip_below=entry_low)
+    orders = (fidelity_orders(ticker, sizing.shares, trigger=trigger, limit=limit, stop=stop, skip_below=entry_low)
               if action == "buy_at_open" else dict(NO_ORDER))
+    # the rule and its cushion ride on a ticket made under the production
+    # rule; a legacy-rule plan keeps the exact shape every older record has
+    trigger_fields = ({} if trigger_rule == LEGACY_BURST_TRIGGER_RULE else
+                      {"trigger_rule": trigger_rule, "trigger_cushion": _money(trigger - close),
+                       "trigger_note": (f"the buy stop {_usd(trigger)} is the {_usd(close)} close plus "
+                                        f"{_usd(trigger - close)}, the larger of {_usd(TRIGGER_CENTS)} and "
+                                        f"{TRIGGER_FRACTION * 100:g}% of the close")})
 
     return {
         "ticker": ticker, "kind": "burst", "scan": scan, "action": action,
         "eligible": eligible, "reason": reason,
         "entry_ref": entry_ref, "entry_low": entry_low, "entry_high": entry_high, "limit": limit,
+        **trigger_fields,
         "limit_basis": ticket["limit_basis"], "limit_narrowed": ticket["narrowed"], "limit_note": limit_note,
         "day2_spent_above": day2_spent_above, "day2_spent_pct": ENTRY_ABOVE_PCT,
         "ticket_refusal": ticket["refusal"],
@@ -1081,7 +1174,7 @@ def _anticipation_plan(*, ticker: str, close: float, box_high: float, box_low: f
     if max(lows) > box_high:
         raise ValueError(f"{ticker}: a low {max(lows)} above box_high {box_high} is not a consolidation")
 
-    cushion = max(TRIGGER_CENTS, _money(TRIGGER_FRACTION * close))
+    cushion = trigger_cushion(close)
     trigger = _money(box_high + cushion)
     limit = _at_pct(trigger, TRIGGER_LIMIT_PCT)
     stop_primary, stop_alt = min(lows), lows[-1]

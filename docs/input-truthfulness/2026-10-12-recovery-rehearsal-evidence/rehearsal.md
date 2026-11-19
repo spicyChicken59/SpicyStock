@@ -9,7 +9,7 @@ Policy `recovery_rehearsal_v1` (version 1). `pipeline.run_evening()` through the
 | clean | 2026-09-04 | 2026-09-04T22:30 | nothing injected | 0 | ok | yes, 2026-09-04 (ok, mail delivered) | none | 1 (≤ 2) | 0 (≤ 0) | 2 (≤ 4) | 1 |
 | holiday | — | 2026-09-07T22:30 | nothing injected | 0 | no_session | no | preserved | 0 (≤ 2) | 0 (≤ 8) | 0 (≤ 0) | 0 |
 | provider_outage | 2026-09-08 | 2026-09-08T22:30 | the Alpaca double raises ConnectionError('no route to host') on every bars request | 1 | failed | no | preserved | 2 (≤ 2) | 0 (≤ 8) | 0 (≤ 0) | 1 |
-| provider_recovered_at_retry | 2026-09-08 | 2026-09-09T00:30 | nothing injected | 0 | ok | yes, 2026-09-08 (ok, mail delivered) | replaced | 1 (≤ 2) | 1 (≤ 2) | 2 (≤ 4) | 1 |
+| provider_recovered_at_retry | 2026-09-08 | 2026-09-09T00:30 | nothing injected | 0 | ok | yes, 2026-09-08 (ok, mail delivered) | replaced | 1 (≤ 2) | 0 (≤ 0) | 2 (≤ 4) | 1 |
 | reader_credit | 2026-09-09 | 2026-09-09T22:30 | the Anthropic double raises the provider's empty-balance error on every call | 2 | degraded | yes, 2026-09-09 (degraded, mail delivered) | replaced | 1 (≤ 2) | 0 (≤ 0) | 1 (≤ 4) | 1 |
 | reader_transport | 2026-09-10 | 2026-09-10T22:30 | the Anthropic double raises RuntimeError('upstream connect error or disconnect/reset before headers') on every call | 2 | degraded | yes, 2026-09-10 (degraded, mail delivered) | replaced | 1 (≤ 2) | 0 (≤ 0) | 4 (≤ 4) | 1 |
 | email_failed | 2026-09-11 | 2026-09-11T22:30 | the Resend double raises RuntimeError('Resend refused the request') on every send | 3 | degraded | yes, 2026-09-11 (degraded, mail failed) | replaced | 1 (≤ 2) | 0 (≤ 0) | 2 (≤ 4) | 0 |
@@ -31,7 +31,7 @@ Policy `recovery_rehearsal_v1` (version 1). `pipeline.run_evening()` through the
 - guard after: the retry slot (2026-09-09T00:20, `16 0 * * 2-6`): go=true, session 2026-09-08 — Scheduled session 2026-09-08; nominal slot 2026-09-09T00:16:00+00:00
 - guard after: the next session's open, with nothing recovered (2026-09-09T13:30, `16 0 * * 2-6`): go=false — 2026-09-08 recovery expired at the next session open
 
-**provider_recovered_at_retry** — the retry slot, 8:30 PM ET the same evening: the provider answers again. Exit 0, status `ok`. Published 2026-09-08 (ok; reads 2 of 2, verdict complete; 0 reaction and 1 anticipation ticket(s); cover "Nothing qualifies. Keep cash."). Mailed: 'Nothing qualifies. Keep cash. · 2026-09-08'. 17 file(s) under docs changed.
+**provider_recovered_at_retry** — the retry slot, 8:30 PM ET the same evening: the provider answers again. Exit 0, status `ok`. Published 2026-09-08 (ok; reads 2 of 2, verdict complete; 2 reaction and 1 anticipation ticket(s); cover "Trade next session. 2 A-quality bursts."). Mailed: 'Trade next session. 2 A-quality bursts. · 2026-09-08'. 17 file(s) under docs changed.
 - guard before: the retry slot (2026-09-09T00:20, `16 0 * * 2-6`): go=true, session 2026-09-08 — Scheduled session 2026-09-08; nominal slot 2026-09-09T00:16:00+00:00
 - guard after: the retry slot again (2026-09-09T01:00, `16 0 * * 2-6`): go=false — 2026-09-08 is already published
 - guard after: a delayed primary event for the same evening (2026-09-09T00:40, `16 22 * * 1-5`): go=false — 2026-09-08 is already published
@@ -64,7 +64,7 @@ Policy `recovery_rehearsal_v1` (version 1). `pipeline.run_evening()` through the
 - Sessions published: 2026-09-04, 2026-09-08, 2026-09-09, 2026-09-10, 2026-09-11, 2026-09-15.
 - The previous publication's files survived every night that published nothing: yes.
 - Bars requests within batches × 2 attempts every night: yes; by night: clean 1, holiday 0, provider_outage 2, provider_recovered_at_retry 1, reader_credit 1, reader_transport 1, email_failed 1, stale_feed 1, next_session_after_a_missed_night 1.
-- Minute-bar requests within the plans each night asked for: yes; by night: clean 0, holiday 0, provider_outage 0, provider_recovered_at_retry 1, reader_credit 0, reader_transport 0, email_failed 0, stale_feed 0, next_session_after_a_missed_night 0.
+- Minute-bar requests within the plans each night asked for: yes; by night: clean 0, holiday 0, provider_outage 0, provider_recovered_at_retry 0, reader_credit 0, reader_transport 0, email_failed 0, stale_feed 0, next_session_after_a_missed_night 0.
 - Reader calls within names × 2 attempts every night: yes; by night: clean 2, holiday 0, provider_outage 0, provider_recovered_at_retry 2, reader_credit 1, reader_transport 4, email_failed 2, stale_feed 0, next_session_after_a_missed_night 2.
 - Guard decisions: 10 permitted, 7 refused as already published, 1 refused because a newer session was published, 2 refused as expired at the next open, 2 refused as not a session, 0 other.
 - Scheduled slots the guard would have admitted after a publication: 0 (duplicate work). After a failure, before the next open: 2 (recovery).

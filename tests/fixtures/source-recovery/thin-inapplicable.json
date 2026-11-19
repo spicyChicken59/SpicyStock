@@ -6,15 +6,15 @@
   "previous_observation_sha256": null,
   "dry_run": true,
   "publication": {
-    "data_sha256": "b928c551d3489b852e2c67eae0bcfebab771b7dee55d875d0475bcd967aff366",
-    "context_sha256": "fbed69031b4aa8e994565621d3cea28a49244c545dda05154caec280b5e89af4",
+    "data_sha256": "9c34ddd289f4cacbe69c57fad4ae3901510a6affa7a34532b8bda69c0ebfaef5",
+    "context_sha256": "f5a989d0cc93c8cdf4d1d40e92139e585c3040b25836fe4d97dd435706ea47b7",
     "run_id": null,
-    "rules_version": "bb98d7d1c166",
+    "rules_version": "dbc2dd4a92da",
     "measured_session": "2026-09-10",
     "applicable_session": "2026-09-11",
     "published_at": "2026-09-10T22:30:00+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "6224f4605d8bc87fa84ed94e4135dce22b4f0620e47939c096ebbcee684b35ae"
+    "reader_sha256": "1821724a6c6cc96670d33313c5610904991611687e0c678af11117cf92a1cf7c"
   },
   "frozen": {
     "session": "2026-09-10",
@@ -29,7 +29,7 @@
     "universe_size": 100,
     "intended_identity": "e5bc4085eaa4130b",
     "coverage_sha256": "b1c923dca9a30bd6724990f1ebeeaf0f41d2a0e1ed2646d5759ff24665a20a29",
-    "rules_version": "bb98d7d1c166"
+    "rules_version": "dbc2dd4a92da"
   },
   "window": {
     "next_session": "2026-09-11",
