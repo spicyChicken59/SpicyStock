@@ -17,17 +17,30 @@ Beside the numbers: the URLs are the repository's own, the brief's section
 names are the fourteen the brief writes, the bootstrap note stays under its
 bound, and nothing in the three public files is an email address, an account
 number, the owner's name or a dollar figure that is not the model's or a
-labelled synthetic example."""
+labelled synthetic example.
+
+A sentence can also be wrong with every number in it right: two steps in the
+wrong order, "or" where the code asks "and", "the limit" for "the trigger",
+"down" for "up". The last part of this file holds those by execution: it runs
+the rule's own function on cases built to decide the word, reads what the code
+did, and only then says which sentence the prompt must carry."""
 from __future__ import annotations
 
+import copy
 import datetime as dt
+import functools
 import importlib
+import itertools
+import json
 import re
 from pathlib import Path
+from unittest import mock
 from zoneinfo import ZoneInfo
 
-from src import (breadth, delivery, grader, morning, pipeline, plan, quality, reader_coverage, record,
-                 report, review_selection, scans, sessions, timing, universe, watchlist)
+import pytest
+
+from src import (admission, breadth, delivery, event_risk, funnel, grader, intraday, morning, pipeline, plan, quality,
+                 reader_coverage, record, report, review_selection, scans, sessions, timing, universe, watchlist)
 
 ROOT = Path(__file__).resolve().parent.parent
 ANALYST = ROOT / "docs" / "analyst"
@@ -772,3 +785,863 @@ def test_the_privacy_check_names_what_it_refuses():
     assert not privacy_problems("Worked example, SYNTHETIC: settled cash of $12,345.67 in an account labelled Roth.")
     assert not privacy_problems(f"The model account has been {usd(max(model_dollars()))} since November.")
     assert not privacy_problems("Ask for settled cash before every buy. The session of 2026-11-04 was the first.")
+
+
+# ============================================ the rule sheet, by execution ==
+# Every hold below is a function of the prompt's text that returns what it
+# finds wrong, so the same hold can be run over an edited copy: the last test
+# makes each edit a reviewer showed the file once survived and requires the
+# hold that names the rule, and no other, to report it.
+PAGE_FIXTURES = ROOT / "tests" / "fixtures" / "page"
+
+
+def lacking(text: str, *phrases: str) -> list[str]:
+    """The sentences a text does not carry, its line wraps collapsed."""
+    flat = prose(text)
+    return [f"not stated: {phrase}" for phrase in phrases if phrase not in flat]
+
+
+def cents(low: float, high: float) -> list[float]:
+    """Every price from low to high, a cent apart."""
+    return [number / 100 for number in range(round(low * 100), round(high * 100) + 1)]
+
+
+def ordered(decided) -> set[tuple[str, str]]:
+    """Every (earlier, later) pair a set of decisions settles, one decision following from two others included."""
+    before = set(decided)
+    while True:
+        more = {(a, d) for a, b in before for c, d in before if b == c} - before
+        if not more:
+            assert not any(a == b for a, b in before), "the decisions contradict each other"
+            return before
+        before |= more
+
+
+# ------------------------------------------------- 5.15: the exit ladder ---
+FILL, STOP_AT, HELD = 100.0, 96.0, 10
+#: Days 1 and 2 of a walk on which nothing happens but the day-1 stop raise
+#: (to 99.50), a day 3 that only sells its half at the close and trails, and
+#: a day 4 that only trails. (open, high, low, close)
+QUIET_DAYS = ((100.0, 101.0, 99.5, 100.5), (100.5, 102.0, 100.0, 101.0))
+HALF_AT_CLOSE, TRAILED = (101.0, 103.0, 100.5, 102.0), (102.0, 104.0, 101.5, 103.0)
+#: Two steps of the ladder and the sessions that set them against each other:
+#: on the LAST session the condition of each is met (`step_is_due()` checks
+#: it), so which one `plan.follow()` books first is the walk's own order and
+#: no third rule's. The order of each pair here means nothing; it is derived.
+LADDER_CASES = (
+    ("expired", "stopped_at_open", (*QUIET_DAYS, HALF_AT_CLOSE, TRAILED, (103.0, 105.0, 102.5, 104.0),
+                                    (95.0, 96.0, 94.0, 95.5))),
+    # day 1 runs +30%: the half is sold and the stop is 25 cents under 130. Day 2 opens over the
+    # +20% gap level and under that stop.
+    ("stopped_at_open", "gap_exit", ((100.0, 130.0, 99.5, 128.0), (125.0, 126.0, 124.0, 125.5))),
+    ("gap_exit", "stopped", ((121.0, 122.0, 95.0, 121.5),)),
+    ("stopped", "sell_half_at_level", ((100.0, 109.0, 95.5, 100.0),)),
+    ("sell_half_at_level", "abnormal_day", ((100.0, 112.0, 99.5, 111.0),)),
+    # a narrow day over +10%: its low is over "the high minus 25 cents", so the stop can still rise to it
+    ("abnormal_day", "stop_raised_to_entry_low", ((111.0, 111.1, 110.95, 111.05),)),
+    ("abnormal_day", "stop_trailed", (*QUIET_DAYS, (111.0, 111.1, 110.95, 111.05))),
+    ("abnormal_day", "day5_exit", (*QUIET_DAYS, HALF_AT_CLOSE, TRAILED, (104.0, 112.0, 103.0, 111.0))),
+    ("sell_half_at_level", "no_progress", (*QUIET_DAYS, (100.5, 108.5, 99.6, 99.8))),
+    ("sell_half_at_level", "sell_half_at_close", (*QUIET_DAYS, (101.0, 108.5, 100.5, 105.0))),
+    ("no_progress", "sell_half_at_close", (*QUIET_DAYS, (100.5, 101.0, 99.6, 99.9))),
+    ("no_progress", "stop_trailed", (*QUIET_DAYS, (100.5, 101.0, 99.6, 99.9))),
+    ("sell_half_at_close", "stop_trailed", (*QUIET_DAYS, HALF_AT_CLOSE)),
+    ("stop_trailed", "day5_exit", (*QUIET_DAYS, HALF_AT_CLOSE, TRAILED, (103.0, 105.0, 102.5, 104.0))),
+)
+
+
+def ladder_words() -> dict[str, str]:
+    """Everything plan.follow() can book on one session, each by the words its
+    row of the 5.15 table starts with."""
+    return {
+        "expired": f"After day {plan.FINAL_EXIT_DAY} the plan is over.",
+        "stopped_at_open": "The open is at or under the stop:",
+        "gap_exit": f"The open is +{g(plan.GAP_EXIT_PCT)}% or more over the fill:",
+        "stopped": "The low is at or under the stop:",
+        "sell_half_at_level": f"The high is +{g(plan.SELL_HALF_PCT)}% or more over the fill and no half has been sold:",
+        "abnormal_day": f"The close is +{g(plan.ABNORMAL_DAY_PCT)}% or more over the fill:",
+        "no_progress": f"At the close of day {plan.NO_PROGRESS_DAY}, if the close is at or under the fill:",
+        "sell_half_at_close": f"At the close of day {plan.SELL_HALF_DAY}, if no half has been sold:",
+        "stop_raised_to_entry_low": f"At the close of day {plan.ENTRY_DAY}, the stop rises",
+        "stop_trailed": f"From the close of day {plan.TRAIL_FROM_DAY}, the stop rises",
+        "day5_exit": f"At the close of day {plan.FINAL_EXIT_DAY}: out.",
+    }
+
+
+def walk(days, shares: int = HELD) -> dict:
+    """plan.follow() from a fill at 100 with the stop at 96, over hand-built sessions."""
+    pick = {"ticker": "AAA", "date": "2026-09-01", "kind": "burst", "entry_ref": FILL, "stop": STOP_AT,
+            "shares": shares}
+    return plan.follow(pick, [{"date": f"day {number}", "o": o, "h": h, "l": low, "c": c}
+                              for number, (o, h, low, c) in enumerate(days, 1)])
+
+
+def step_is_due(step: str, days) -> bool:
+    """Whether a step's condition, as its row of the table states it, is met
+    on the last of these sessions, against the stop and the half sale the walk
+    carried INTO that session."""
+    before, level = walk(days[:-1]), plan.exit_levels(FILL)
+    day, (o, h, low, c) = len(days), days[-1]
+    stop, sold = before["current_stop"], before["half_sold"]
+    return {
+        "expired": day > plan.FINAL_EXIT_DAY,
+        "stopped_at_open": o <= stop,
+        "gap_exit": o >= level["gap_exit"],
+        "stopped": low <= stop,
+        "sell_half_at_level": h >= level["sell_half"] and not sold,
+        "abnormal_day": c >= level["abnormal"],
+        "no_progress": day == plan.NO_PROGRESS_DAY and c <= FILL,
+        "sell_half_at_close": day == plan.SELL_HALF_DAY and not sold,
+        "stop_raised_to_entry_low": day == plan.ENTRY_DAY and low > stop,
+        "stop_trailed": day >= plan.TRAIL_FROM_DAY and low > stop,
+        "day5_exit": day == plan.FINAL_EXIT_DAY,
+    }[step]
+
+
+def booked(days) -> list[str]:
+    """What the walk did on the LAST of these sessions, in the order it did
+    it: its events there by name, a half sale told apart by its price (the
+    level's, or that day's close), and `expired` for a session it booked
+    nothing on because the plan was over."""
+    result, close = walk(days), days[-1][3]
+    assert close != max(days[-1][0], plan.exit_levels(FILL)["sell_half"]), "a half at the level would read as one at the close"
+    steps = [("sell_half_at_close" if event["price"] == close else "sell_half_at_level")
+             if event["event"] == "sell_half" else event["event"]
+             for event in result["events"] if event["day"] == len(days)]
+    return steps or (["expired"] if result["status"] == "expired" else [])
+
+
+@functools.lru_cache(maxsize=None)
+def ladder_decisions() -> tuple[tuple[str, str], ...]:
+    """(first, second) for every pair of steps a session can set against each
+    other: the one the walk applied first, and the one it applied after it or,
+    the position being over by then, never."""
+    decided = []
+    for a, b, days in LADDER_CASES:
+        assert {a, b} <= set(ladder_words()) and step_is_due(a, days) and step_is_due(b, days), (a, b)
+        applied = [step for step in booked(days) if step in (a, b)]
+        assert applied and len(applied) == len(set(applied)), (a, b, booked(days))
+        decided.append((applied[0], b if applied[0] == a else a))
+    return tuple(decided)
+
+
+def ladder_table(text: str) -> dict[str, int]:
+    """The place of each step in the table of section 5.15: its rows numbered
+    from 1 with no gap, every row one step of the walk and every step one row."""
+    rows = re.findall(r"^\| (\d+) \| (.+) \| [A-Z] \|$", between("### 5.15 ", "\n### ", text), flags=re.M)
+    assert [int(number) for number, _ in rows] == list(range(1, len(rows) + 1)), "the table's rows are not numbered 1, 2, 3"
+    words, order = ladder_words(), {}
+    for number, step in rows:
+        named = [key for key, start in words.items() if step.startswith(start)]
+        assert len(named) == 1 and named[0] not in order, f"row {number} is not one step of the walk: {step}"
+        order[named[0]] = int(number)
+    assert set(order) == set(words), f"no row for {sorted(set(words) - set(order))}"
+    return order
+
+
+def ladder_list(text: str) -> dict[str, tuple[int, int]]:
+    """Section 11.3 gives the same order as a list: each step's item, and its
+    place inside the item (the last item names four rules of the close in one
+    sentence). Steps the list names together share a place."""
+    items = re.findall(r"^(\d+)\. (.+?)(?=^\d+\. |\Z)", between("### 11.3 ", "\n### ", text), flags=re.M | re.S)
+    assert [int(number) for number, _ in items] == list(range(1, len(items) + 1)), "the list is not numbered 1, 2, 3"
+    assert plan.NO_PROGRESS_DAY == plan.SELL_HALF_DAY, "the list says 'the day-3 rules' of both"
+    raises = f"the stop raises of day {plan.ENTRY_DAY} and of day {plan.TRAIL_FROM_DAY} onward"
+    words = {
+        "stopped_at_open": "The open is at or under the stop:",
+        "gap_exit": "The open is at or over the gap-exit level:",
+        "stopped": "The price falls to the stop:",
+        "sell_half_at_level": "The price reaches the sell-half level:",
+        "abnormal_day": "the abnormal-close rule",
+        "no_progress": f"the day-{plan.NO_PROGRESS_DAY} rules", "sell_half_at_close": f"the day-{plan.SELL_HALF_DAY} rules",
+        "stop_raised_to_entry_low": raises, "stop_trailed": raises,
+        "day5_exit": f"the day-{plan.FINAL_EXIT_DAY} exit",
+    }
+    place = {}
+    for step, phrase in words.items():
+        found = [(int(number), prose(item).index(phrase)) for number, item in items if phrase in prose(item)]
+        assert len(found) == 1, f"the list names {phrase!r} {len(found)} times"
+        place[step] = found[0]
+    return place
+
+
+def ladder_problems(text: str = PROMPT_RAW) -> list[str]:
+    try:
+        table, listed = ladder_table(text), ladder_list(text)
+    except AssertionError as exc:
+        return [f"the exit ladder cannot be read: {exc}"]
+    problems = []
+    for first, second in ladder_decisions():
+        if table[first] > table[second]:
+            problems.append(f"5.15 lists step {table[second]} ({second}) before step {table[first]} ({first}); "
+                            f"the walk applies {first} first")
+        if first in listed and second in listed and listed[first] > listed[second]:
+            problems.append(f"11.3 puts {second} before {first}; the walk applies {first} first")
+    return problems
+
+
+def test_the_exit_ladder_is_listed_in_the_order_the_walk_applies_it():
+    """Fourteen sessions on which two steps are both due, each walked through
+    plan.follow(): the step it books first must be the earlier row of 5.15,
+    and the earlier item of 11.3's list.
+
+    Of the 55 pairs of steps the decisions settle 49. The six they leave are
+    pairs no session can set against each other, so the walk has no order
+    between them for this test to read and the table may list them either
+    way: the +10% close against either day-3 rule (a close is not both +10%
+    and at or under the fill, and a +10% day has sold its half at the +8%
+    level before the close), and the day-1 stop raise against each rule of
+    day 3 and day 5 (another day). Three of the six are neighbours in the
+    table as it stands: rows 6 and 7, 8 and 9, 9 and 10."""
+    assert not ladder_problems(), ladder_problems()
+    decided, steps = ordered(ladder_decisions()), sorted(ladder_words())
+    assert len(set(ladder_decisions())) == len(LADDER_CASES)
+    unsettled = {frozenset(pair) for pair in itertools.combinations(steps, 2)
+                 if pair not in decided and pair[::-1] not in decided}
+    first_day_raise = "stop_raised_to_entry_low"
+    assert unsettled == {frozenset(pair) for pair in (
+        ("abnormal_day", "no_progress"), ("abnormal_day", "sell_half_at_close"),
+        (first_day_raise, "no_progress"), (first_day_raise, "sell_half_at_close"),
+        (first_day_raise, "stop_trailed"), (first_day_raise, "day5_exit"))}
+    # why those six are never due together, each from the plan's own numbers
+    assert plan.exit_levels(FILL)["abnormal"] > FILL and plan.ABNORMAL_DAY_PCT >= plan.SELL_HALF_PCT
+    assert plan.ENTRY_DAY < min(plan.NO_PROGRESS_DAY, plan.SELL_HALF_DAY, plan.TRAIL_FROM_DAY, plan.FINAL_EXIT_DAY)
+    # what two of the rows add in words is what the walk did
+    gap_down = walk(((95.0, 95.5, 94.0, 95.2),))
+    assert gap_down["status"] == "stopped" and gap_down["exit_price"] == 95.0 < STOP_AT
+    assert not lacking(PROMPT_RAW, "out at that open, which can be well under the stop.")
+    both = walk(((100.0, 109.0, 95.5, 100.0),))
+    assert both["exit_price"] == STOP_AT and not both["half_sold"]
+    assert not lacking(PROMPT_RAW, "out at the stop price. The stop wins even if the same day's high reached a sale level.",
+                       "In the model the stop wins even if the same day also reached the sell-half level")
+
+
+# ------------------------------------------------- 11.2: the half ----------
+def half_problems(text: str = PROMPT_RAW) -> list[str]:
+    """The half plan.follow() sells at the +8% level, at 1, 2, 3 and 5 shares,
+    against the two ways of rounding the table could name."""
+    sizes, sold = (1, 2, 3, 5), {}
+    for size in sizes:
+        result = walk(((100.0, 109.0, 99.5, 105.0),), shares=size)     # day 1: the high reaches +8% and nothing else
+        (sale,) = [event for event in result["events"] if event["event"] == "sell_half"]
+        assert sale["shares"] + sale["remaining"] == size
+        sold[size] = sale["shares"]
+    inner = [word for word, part in (("down", lambda n: n // 2), ("up", lambda n: -(-n // 2)))
+             if all(n - part(n) == sold[n] for n in sizes)]
+    outer = [word for word, part in (("down", lambda n: n // 2), ("up", lambda n: -(-n // 2)))
+             if all(part(n) == sold[n] for n in sizes)]
+    assert len(inner) == 1 and len(outer) == 1, sold
+    whole = "With 1 share, \"half\" is the whole position." if sold[1] == 1 else "With 1 share, no half is sold."
+    return lacking(
+        text,
+        f"| The half | N minus (N divided by 2, rounded {inner[0]}) | Half rounded {outer[0]} to a whole share. {whole} |",
+        f"sell half (rounded {outer[0]} to whole shares)")
+
+
+def test_the_half_is_the_walks_own_at_one_two_three_and_five_shares():
+    assert not half_problems(), half_problems()
+    assert [walk(((100.0, 109.0, 99.5, 105.0),), shares=n)["sold"] for n in (1, 2, 3, 5)] == [1, 1, 2, 3]
+    assert walk(((100.0, 109.0, 99.5, 105.0),), shares=1)["status"] == "exit"       # nothing is left to trail
+
+
+# ------------------------------------------------- 5.9: the gates ----------
+#: The gates of section 5.9, each by the words its line starts with.
+GATE_WORDS = {
+    "grade": "Its final grade is in the band the light admits.",
+    "veto": "It has no veto.",
+    "route": "It is admitted.",
+    "review": "Its chart review was accepted.",
+    "ticket_rule": "The ticket rule can write a ticket",
+    "event": "The event registry does not block it",
+    "allocation": "The allocation has a free slot and the cash",
+}
+#: The four gates the funnel names by its own group of stages.
+FUNNEL_GATES = ("grade", "veto", "route", "review")
+BAND = tuple(pipeline.TRADE_GRADES)
+
+
+def candidate_row(*failing: str) -> dict:
+    """A reaction candidate as the funnel reads one: in the band, no veto,
+    admitted, its review accepted, its plan a ticket -- except at the gates
+    named."""
+    assert set(failing) <= set(FUNNEL_GATES), failing
+    grade = next(grade for grade in grader.GRADES if grade not in BAND) if "grade" in failing else BAND[0]
+    row = {
+        "ticker": "AAA", "scan": admission.DOLLAR_ROUTE if "route" in failing else admission.BURST_ROUTES[0],
+        "grade_mechanical": grade, "grade": grade,
+        "vetoes": [sorted(quality.VETO_NAMES)[0]] if "veto" in failing else [],
+        "quality": {"checks": [{"letter": letter, "passed": "route" not in failing}
+                               for letter, _ in admission.DOLLAR_CHECKS]},
+        "review_selection": {"selected": True, "blockers": []},
+        "claude": ({"source": grader.SOURCE_FALLBACK, "grade": grade, "error": "RuntimeError: scripted"}
+                   if "review" in failing else {"source": grader.SOURCE_CLAUDE, "grade": grade, "error": None}),
+        "plan": {"kind": "burst", "eligible": True, "action": plan.ORDER_ACTIONS[0],
+                 "allocation": {"admitted": True, "reason": None}},
+    }
+    row["admission"] = admission.block(row)
+    return row
+
+
+def funnel_gate(row: dict, band=BAND) -> str:
+    """The gate the funnel says a row stopped at (the group of its terminal stage)."""
+    return funnel.GROUPS[funnel.reaction_stage(row, band, {}, [])]
+
+
+def planner_asks(*, reviewed: bool) -> list[str]:
+    """The later gates in the order pipeline._make_plans() asks them of the
+    `full` fixture night's ticket: the ticket rule (plan.burst_plan), the
+    event registry (event_risk.apply), the allocation (plan.cash_budget)."""
+    data = json.loads((PAGE_FIXTURES / "full.json").read_text())
+    row = copy.deepcopy(next(burst for burst in data["bursts"] if burst["ticker"] in data["trades"]))
+    assert reader_coverage.accepted(row) and admission.admitted(row) and not row["vetoes"] and row["grade"] in BAND
+    if not reviewed:
+        row["claude"] = {**row["claude"], "source": grader.SOURCE_FALLBACK, "error": "RuntimeError: scripted"}
+    asked = []
+
+    def recording(name, function):
+        def asks(*args, **kwargs):
+            asked.append(name)
+            return function(*args, **kwargs)
+        return asks
+    session = dt.date.fromisoformat(data["run"]["session"])
+    with mock.patch.object(plan, "burst_plan", recording("ticket_rule", plan.burst_plan)), \
+            mock.patch.object(event_risk, "apply", recording("event", event_risk.apply)), \
+            mock.patch.object(plan, "cash_budget", recording("allocation", plan.cash_budget)):
+        pipeline._make_plans([row], plan.Account(), data["breadth"]["regime"], 0, session, require_reader=True)
+    return asked
+
+
+@functools.lru_cache(maxsize=None)
+def gate_decisions() -> tuple[tuple[str, str], ...]:
+    """(first, second) for the gates, read two ways. The first four off the
+    funnel: a row that fails exactly two of them is named for one, and that
+    one is asked first. The last three, and the review against them, off the
+    planner itself: the order it calls them in, and whether it calls the
+    ticket rule at all for a row whose review was not accepted. (The funnel
+    cannot order the last three: it names a plan the ticket rule withheld AND
+    the registry blocks `event`, though the planner asks the ticket rule
+    first; this hold reads the planner.)"""
+    assert funnel_gate(candidate_row()) == "ticket"
+    assert [funnel_gate(candidate_row(gate)) for gate in FUNNEL_GATES] == list(FUNNEL_GATES)
+    decided = []
+    for a, b in itertools.combinations(FUNNEL_GATES, 2):
+        named = funnel_gate(candidate_row(a, b))
+        assert named in (a, b), (a, b, named)
+        decided.append((named, b if named == a else a))
+    asked = planner_asks(reviewed=True)
+    assert sorted(asked) == ["allocation", "event", "ticket_rule"], asked
+    decided += list(itertools.combinations(asked, 2))
+    unreviewed = planner_asks(reviewed=False)
+    decided += [(("review", later) if later not in unreviewed else (later, "review")) for later in ("ticket_rule", "event")]
+    return tuple(decided)
+
+
+def gate_list(text: str) -> dict[str, int]:
+    gates = numbered(between("### 5.9 ", "\n### ", text), r"^(\d+)\. (.+)$")
+    order = {}
+    for number, gate in enumerate(gates, 1):
+        named = [key for key, start in GATE_WORDS.items() if gate.startswith(start)]
+        assert len(named) == 1 and named[0] not in order, f"gate {number} is not one of the run's: {gate}"
+        order[named[0]] = number
+    assert set(order) == set(GATE_WORDS), f"no gate for {sorted(set(GATE_WORDS) - set(order))}"
+    return order
+
+
+def gate_problems(text: str = PROMPT_RAW) -> list[str]:
+    from src import brief
+
+    try:
+        order = gate_list(text)
+    except AssertionError as exc:
+        return [f"the gates of 5.9 cannot be read: {exc}"]
+    problems = [f"5.9 lists gate {order[second]} ({second}) before gate {order[first]} ({first}); the run asks "
+                f"{first} first" for first, second in gate_decisions() if order[first] > order[second]]
+    # a RED night admits no grade: the one gate that reads the light stops every row, whatever else it fails
+    red = reader_coverage.admitted("red", pipeline.TRADE_GRADES, pipeline.YELLOW_GRADES)
+    assert red == () and funnel.reaction_stage(candidate_row("veto", "route", "review"), red, {}, []) == "market"
+    problems += lacking(text, f"On a RED night every candidate stops at gate {order['grade']}.")
+    # the brief's would_pass block re-derives the gates between the light and the ticket rule
+    again = {"no_veto": "veto", "admission": "route", "reader_accepted": "review"}
+    assert set(again) <= set(brief.would_pass(candidate_row(), list(BAND), list(pipeline.YELLOW_GRADES), admission))
+    numbers = sorted(order[gate] for gate in again.values())
+    if numbers != list(range(numbers[0], numbers[0] + len(numbers))):
+        problems.append(f"the gates the brief works out again are not neighbours in 5.9: {numbers}")
+    return problems + lacking(text, f"The brief works out gates {numbers[0]} to {numbers[-1]} again for each row "
+                                    "(`would_pass`)")
+
+
+def test_the_gates_of_a_burst_are_listed_in_the_order_the_run_asks_them():
+    assert not gate_problems(), gate_problems()
+    assert planner_asks(reviewed=True) == ["ticket_rule", "event", "allocation"]
+    assert "ticket_rule" not in planner_asks(reviewed=False), "an unreviewed burst never reaches the ticket rule"
+    # the decisions leave no two of the seven gates unordered
+    gates = len(GATE_WORDS)
+    assert len(ordered(gate_decisions())) == gates * (gates - 1) // 2
+
+
+# ------------------------------------------------- 5.14: the fill ----------
+#: A burst ticket whose five lines are five prices two dollars apart.
+TICKET_LINES = {"stop": 96.0, "skip-below line": 98.0, "trigger": 100.0, "limit": 102.0, "day-2 line": 104.0}
+SIGNALLED, ENTERED = "2026-09-01", "2026-09-02"
+
+
+def burst_ticket() -> dict:
+    lines = TICKET_LINES
+    return {"ticker": "AAA", "date": SIGNALLED, "kind": "burst", "entry_ref": lines["trigger"],
+            "entry_low": lines["skip-below line"], "entry_high": lines["limit"],
+            "day2_spent_above": lines["day-2 line"], "stop": lines["stop"], "shares": 10}
+
+
+def line_at(price: float) -> str:
+    """The one line of the ticket that sits at a price."""
+    named = [name for name, value in TICKET_LINES.items() if value == price]
+    assert len(named) == 1, f"{price} is none of the ticket's lines"
+    return named[0]
+
+
+def first_day(o: float, h: float | None = None, low: float | None = None, c: float | None = None) -> dict:
+    """The entry session's daily bar; a price left out is the open."""
+    return {"date": ENTERED, "o": o, "h": o if h is None else h, "l": o if low is None else low,
+            "c": o if c is None else c}
+
+
+def minutes_of(*rows) -> dict:
+    """The entry session's retained minute object from (offset, o, h, l, c) rows, built as a run builds one."""
+    pick = burst_ticket()
+    opens, _, _ = sessions.hours(intraday.entry_session(pick))
+    return intraday.build(pick, [(opens + dt.timedelta(minutes=offset), o, h, low, c) for offset, o, h, low, c in rows])
+
+
+@functools.lru_cache(maxsize=None)
+def fill_readings() -> dict:
+    """Which line of the ticket each fill rule turns on, read off
+    record.fill(), record.replay() and intraday.resolve() by moving one price
+    a cent at a time across all five lines."""
+    pick, lines = burst_ticket(), TICKET_LINES
+    floor, top = min(lines.values()) - 1, max(lines.values()) + 1
+    # a first day that prints only its open: which opens fill, and at what price
+    opens = {o: record.fill(pick, first_day(o)) for o in cents(floor, top)}
+    filled = [o for o, (status, *_) in opens.items() if status == "filled"]
+    assert filled == cents(filled[0], filled[-1]) and all(opens[o][1] == o for o in filled), "one band, each at its open"
+    assert all(opens[o][0] == record.NOT_FILLED for o in opens if o not in filled)
+    # an open under the band: how high the day must go before it stops being "not filled"
+    under = round(filled[0] - 0.5, 2)
+    reach = next(h for h in cents(under, top) if record.fill(pick, first_day(under, h=h))[0] != record.NOT_FILLED)
+    # an open over the band and under the day-2 line: how far back it must trade before it stops being "not filled"
+    over = round(filled[-1] + 0.5, 2)
+    assert over < lines["day-2 line"]
+    back = next(low for low in reversed(cents(floor, over))
+                if record.fill(pick, first_day(over, low=low))[0] != record.NOT_FILLED)
+    # an open under the band on a day that reaches it later: from which open up the minute bars are asked
+    later = {o: record.fill(pick, first_day(o, h=filled[0] + 0.5, c=filled[0])) for o in cents(floor, filled[0] - 0.01)}
+    assert all(status == record.UNCERTAIN for status, *_ in later.values())
+    asked = [o for o, (*_, reason) in later.items() if reason in intraday.RESOLVABLE]
+    assert asked == cents(asked[0], filled[0] - 0.01), "the opens the minutes are asked about run up to the band"
+    # the same two days read again with their minutes: one is decided, one stays uncertain
+    quiet, crossing, after = (0, 99.0, 99.4, 98.9, 99.2), (12, 99.2, 100.3, 99.1, 100.2), (40, 100.2, 100.5, 100.0, 100.2)
+    decided_day = first_day(99.0, h=100.5, low=98.9, c=100.2)
+    assert record.replay(pick, [decided_day])["status"] == record.UNCERTAIN
+    decided = record.replay(pick, [decided_day], minutes=minutes_of(quiet, crossing, after))
+    skipped_day = first_day(97.5, h=100.5, low=97.4, c=100.2)
+    skipped = record.replay(pick, [skipped_day], minutes=minutes_of((0, 97.5, 98.0, 97.4, 97.9),
+                                                                    (12, 97.9, 100.3, 97.8, 100.2), after))
+    assert decided["status"] in plan.HELD_STATUSES and decided.get("minute_evidence")
+    assert skipped["status"] == record.UNCERTAIN and not skipped.get("minute_evidence")
+    assert record.r_multiple(skipped, pick["stop"]) is None and skipped["exit_price"] is None    # no fill, no result
+    # the minute rule itself: how high the window's minute must go to fill, at what price, and how long the window is
+    levels = record.ticket_levels(pick)
+
+    def minute(high: float, offset: int = 12):
+        """A minute that opens at 99.20 and reaches `high`, on a day that runs to 103.90 an hour later."""
+        day = first_day(99.0, h=103.9, low=98.9, c=103.5)
+        return intraday.resolve(levels, minutes_of(quiet, (offset, 99.2, high, 99.1, 99.3), (60, 99.3, 103.9, 99.2, 103.5)), day)
+    highs = {high: minute(high) for high in cents(lines["trigger"] - 0.2, lines["trigger"] + 0.2)}
+    crossed = [high for high, (status, *_) in highs.items() if status == intraday.FILLED]
+    assert crossed == cents(crossed[0], lines["trigger"] + 0.2) and all(
+        status == intraday.NOT_FILLED for high, (status, *_) in highs.items() if high not in crossed)
+    prices = {price for high in crossed for price in [highs[high][1]]}
+    assert len(prices) == 1, "a minute that opened under the trigger fills at one price however high it went"
+    window = next(offset for offset in range(1, 2 * plan.ENTRY_WINDOW_MINUTES)
+                  if minute(lines["trigger"] + 0.2, offset)[0] != intraday.FILLED)
+    assert minute(lines["trigger"] + 0.2, window)[0] == intraday.NOT_FILLED
+    return {"low": line_at(filled[0]), "high": line_at(filled[-1]), "reach": line_at(reach), "back": line_at(back),
+            "asked_from": line_at(asked[0]), "minute_reach": line_at(crossed[0]), "minute_price": line_at(prices.pop()),
+            "window": window, "decided_at": decided["entry_ref"]}
+
+
+def fill_problems(text: str = PROMPT_RAW) -> list[str]:
+    read = fill_readings()
+    assert read["back"] == read["high"], "the sentence says 'trades back to it' of the line the band ends at"
+    assert read["decided_at"] == TICKET_LINES[read["minute_price"]]
+    return lacking(
+        text,
+        f"The first day opens at or over the {read['low']} and at or under the {read['high']}: **filled at the open**.",
+        f"The first day never reaches the {read['reach']}, or opens over the {read['high']} and never trades back to "
+        "it: **not filled**.",
+        f"The first day opens under the {read['low']} (but not under the {read['asked_from']}) and reaches it later: "
+        "the day's one-minute bars decide.",
+        f"An open under the {read['asked_from']} that later recovers is uncertain, whatever the minutes show.",
+        f"The first minute of the first {read['window']} minutes whose high reaches the {read['minute_reach']} fills "
+        f"at the {read['minute_price']}.",
+        "If no minute in the window does, it is not filled, however far the stock goes later.",
+        "Anything the bars cannot put in order is **uncertain**: no fill, no result, counted apart.",
+        # section 2.2 says the same of the open, calling the trigger the buy stop
+        f"it opened at or over the buy stop and at or under the {read['high']}, which is the case the model books as "
+        "\"filled at the open\"")
+
+
+def test_a_ticket_fills_where_the_fill_rule_and_the_minute_rule_put_it():
+    assert not fill_problems(), fill_problems()
+    read = fill_readings()
+    assert read["window"] == plan.ENTRY_WINDOW_MINUTES
+    # five lines, three of them named by the readings and two (the stop, the day-2 line) by none: the
+    # sweep crossed every one, so a rule that turned on either would have named it
+    assert {read[k] for k in ("low", "high", "reach", "back", "asked_from", "minute_reach", "minute_price")} == {
+        "trigger", "limit", "skip-below line"}
+
+
+# ------------------------------------------------- 5.7: admission ----------
+def admission_problems(text: str = PROMPT_RAW) -> list[str]:
+    """admission.block() over the four ways a dollar-only day's two expansion
+    checks can come out, and over the 4% scan's routes with neither passed."""
+    letters = [letter for letter, _ in admission.DOLLAR_CHECKS]
+
+    def admitted(route: str, *passed: str) -> bool:
+        row = {"scan": route, "quality": {"checks": [{"letter": letter, "passed": letter in passed}
+                                                      for letter in letters]}}
+        return admission.block(row)["admitted"]
+    assert len(letters) == 2 and all(admitted(route) for route in admission.BURST_ROUTES)
+    one = [admitted(admission.DOLLAR_ROUTE, letter) for letter in letters]
+    assert admitted(admission.DOLLAR_ROUTE, *letters) and not admitted(admission.DOLLAR_ROUTE) and len(set(one)) == 1
+    needs = f"{letters[0]} or {letters[1]} passed." if one[0] else f"{letters[0]} and {letters[1]} both passed."
+    routes = " or ".join(f"`{route}`" for route in admission.BURST_ROUTES)
+    return lacking(text, f"A candidate the 4% scan found (route {routes}) is admitted.",
+                   f"A candidate only the dollar scan found is admitted only when {needs}")
+
+
+def test_a_dollar_only_candidate_is_admitted_as_the_admission_block_admits_it():
+    assert not admission_problems(), admission_problems()
+
+
+# ------------------------------------------------- 5.8: the chart reader ---
+def reader_problems(text: str = PROMPT_RAW) -> list[str]:
+    """grader.final_grade(), the one adjustment the run applies to a reader's
+    reply, over every mechanical grade and every grade a reply can name."""
+    rank = grader.GRADES.index                                  # best first
+    finals = {(mechanical, returned): grader.final_grade(mechanical, returned)
+              for mechanical in grader.GRADES for returned in grader.GRADES}
+    confirms = all(finals[grade, grade] == grade for grade in grader.GRADES)
+    lowers = any(rank(final) > rank(mechanical) for (mechanical, _), final in finals.items())
+    raises = any(rank(final) < rank(mechanical) for (mechanical, _), final in finals.items())
+    assert confirms and lowers, finals
+    return lacking(text, "The reader may confirm a grade or lower it. "
+                         + ("It may raise one." if raises else "It can never raise one."))
+
+
+def test_the_chart_reader_can_lower_a_grade_and_never_raise_one():
+    assert not reader_problems(), reader_problems()
+    best, worst = grader.GRADES[0], grader.GRADES[-1]
+    assert grader.final_grade(worst, best) == worst and grader.final_grade(best, worst) == worst
+
+
+# ------------------------------------------------- 5.6: letter H -----------
+SHARES_OF_A_RANGE = {2: "half", 3: "third", 4: "quarter", 5: "fifth", 10: "tenth"}
+
+
+def letter_h_problems(text: str = PROMPT_RAW) -> list[str]:
+    """The H row of the checklist table, from quality.MIN_CLOSE_POS (the
+    phrase also stands in the owner's own rubric, which is his and not held)."""
+    parts = 1 / (1 - quality.MIN_CLOSE_POS)
+    assert abs(parts - round(parts)) < 1e-9 and round(parts) in SHARES_OF_A_RANGE, quality.MIN_CLOSE_POS
+    row = (f"| H | {g(quality.WEIGHTS['H'])} | the burst closed near its high: above its open and in the top "
+           f"{SHARES_OF_A_RANGE[round(parts)]} of the day's range |")
+    return lacking(between("### 5.6 ", "\n### ", text), row)
+
+
+def test_letter_h_states_the_checklists_own_share_of_the_range():
+    assert not letter_h_problems(), letter_h_problems()
+
+
+# ------------------------------------------------- 10.6: the gapped open ---
+def gap_problems(text: str = PROMPT_RAW) -> list[str]:
+    """The gap line plan.anticipation_plan() writes on a ticket, as a
+    percentage of its last close."""
+    p = plan.anticipation_plan(ticker="AAA", close=50.0, box_high=50.2, box_low=49.0, lows_last3=[49.2, 49.5, 49.4],
+                               account=plan.Account())
+    pct = round(100 * (p["gap_ok_above"] / p["close"] - 1), 6)
+    assert pct == plan.GAP_OK_PCT and f"more than {g(pct)}% above" in p["gap_rule"]
+    problems = lacking(between("### 10.6 ", "\n### ", text),
+                       f"If the stock opened more than {g(pct)}% above its last close, the plan asks for a catalyst "
+                       "check first")
+    stated_gaps = {float(found) for found in re.findall(r"more than (\d+(?:\.\d+)?)% above (?:its|the) last close",
+                                                        prose(text))}
+    return problems + ([] if stated_gaps == {pct} else [f"a gapped open is stated as {sorted(stated_gaps)}%, not {g(pct)}%"])
+
+
+def test_a_gapped_open_is_the_anticipation_plans_own_line():
+    assert not gap_problems(), gap_problems()
+
+
+# ------------------------------------------------- 10.3 to 10.6: price states
+@functools.lru_cache(maxsize=None)
+def published_tickets(kind: str) -> tuple[dict, ...]:
+    """Every published ticket of one kind in the page fixtures, as the morning
+    collector binds it: its levels (morning.admitted_rows) and its last close."""
+    found = []
+    for variant in ("full", "next", "notrade"):
+        data = json.loads((PAGE_FIXTURES / f"{variant}.json").read_text())
+        rows = {("burst", row["ticker"]): row for row in data["bursts"]}
+        rows.update({("anticipation", row["ticker"]): row for row in data["watchlist"]["top"]})
+        for ticket in morning.admitted_rows(data):
+            if ticket["kind"] == kind:
+                row = rows[kind, ticket["ticker"]]
+                found.append({**ticket["levels"], "last close": row["close"] if kind == "burst" else row["plan"]["close"]})
+    assert found, kind
+    return tuple(found)
+
+
+def ticket_lines(levels: dict, kind: str) -> dict[str, float]:
+    """A ticket's lines by the names sections 10.3 to 10.6 give them."""
+    lines = {"stop": levels["stop"], "trigger": levels["trigger"], "limit": levels["limit"]}
+    if kind == "burst":
+        lines.update({"skip-below line": levels["entry_low"], "day-2 line": levels["day2_spent_above"]})
+    return lines
+
+
+def where_test(where: str, lines: dict[str, float]):
+    """A "Where the price is" cell as a test of a price: clauses joined by
+    ", " or " and " must all hold, alternatives by ", or " any one. "up to" a
+    line does not say whether the line itself is in, so the test takes
+    `strict`: without the line when True, with it when False."""
+    def line(name: str) -> float:
+        if name not in lines:
+            raise ValueError(f"this ticket has no {name!r} (in {where!r})")
+        return lines[name]
+
+    def clause(text: str):
+        for pattern, test in (
+                (r"from the (.+) through the (.+)", lambda price, strict, low, high: low <= price <= high),
+                (r"at or under the (.+)", lambda price, strict, at: price <= at),
+                (r"at or over the (.+)", lambda price, strict, at: price >= at),
+                (r"up to the (.+)", lambda price, strict, at: price < at if strict else price <= at),
+                (r"under the (.+)", lambda price, strict, at: price < at),
+                (r"over the (.+)", lambda price, strict, at: price > at)):
+            match = re.fullmatch(pattern, text)
+            if match:
+                at = [line(name) for name in match.groups()]
+                return lambda price, strict: test(price, strict, *at)
+        raise ValueError(f"cannot read {text!r} (in {where!r})")
+    plain = re.sub(r"\s*\([^)]*\)", "", where)
+    parts = [[clause(text) for text in re.split(r", | and ", part)] for part in plain.split(", or ")]
+    return lambda price, strict: any(all(test(price, strict) for test in part) for part in parts)
+
+
+def state_table(heading: str, text: str) -> list[tuple[tuple[str, ...], str]]:
+    """(the state words, where the price is) for each row of a section's state table."""
+    rows = []
+    for line in between(heading, "\n### ", text).splitlines():
+        if line.startswith("| `"):
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            rows.append((tuple(re.findall(r"`(\w+)`", cells[0])), cells[1]))
+    return rows
+
+
+def state_table_problems(heading: str, kind: str, text: str = PROMPT_RAW) -> list[str]:
+    """Each row against morning.price_state(), a cent at a time across every
+    line of every published fixture ticket of the kind: a price the row
+    describes must be in one of the row's states, every price must be
+    described by exactly one row (or, on a line a row runs "up to", by the
+    row the state belongs to), and every state a row names must be reached
+    inside that row on some ticket."""
+    rows = state_table(heading, text)
+    if not rows:
+        return [f"{heading}: no state table"]
+    problems, reached, given = [], set(), set()
+    for levels in published_tickets(kind):
+        lines = ticket_lines(levels, kind)
+        try:
+            tests = [where_test(where, lines) for _, where in rows]
+        except ValueError as exc:
+            return [f"{heading}: {exc}"]
+        for price in cents(min(lines.values()) - 1, max(lines.values()) + 1):
+            state = morning.price_state(price, levels, "recent")
+            given.add(state)
+            strict = [index for index, test in enumerate(tests) if test(price, True)]
+            loose = [index for index, test in enumerate(tests) if test(price, False)]
+            claimed = strict or loose
+            right = [index for index in claimed if state in rows[index][0]]
+            if len(strict) > 1 or not right or (strict and right != strict):
+                problems.append(f"{heading}: a price of {price:.2f} is `{state}` on a ticket with {lines}; the table "
+                                f"puts it under {[rows[index][0] for index in claimed] or 'no row'}")
+            reached.update((index, state) for index in right)
+    problems += [f"{heading}: no ticket's price in the row \"{where}\" is `{state}`"
+                 for index, (states, where) in enumerate(rows) for state in states if (index, state) not in reached]
+    named = {state for states, _ in rows for state in states}
+    if named != given:
+        problems.append(f"{heading}: the table names {sorted(named)}; these tickets' prices are in {sorted(given)}")
+    return problems[:6]
+
+
+def burst_state_problems(text: str = PROMPT_RAW) -> list[str]:
+    return state_table_problems("### 10.4 ", "burst", text)
+
+
+def anticipation_state_problems(text: str = PROMPT_RAW) -> list[str]:
+    return state_table_problems("### 10.6 ", "anticipation", text)
+
+
+def state_sentence_problems(text: str = PROMPT_RAW) -> list[str]:
+    """What 10.3 and 10.6 say in sentences about the lines and the states,
+    from the same tickets."""
+    bursts, coils = published_tickets("burst"), published_tickets("anticipation")
+    usual = [levels for levels in bursts if levels["stop"] < levels["entry_low"]]
+    over = [levels for levels in bursts if levels["stop"] >= levels["entry_low"]]
+    assert usual and over, "the fixtures carry a burst ticket of each shape"
+    orders = {tuple(sorted(ticket_lines(levels, "burst"), key=ticket_lines(levels, "burst").get)) for levels in usual}
+    assert len(orders) == 1 and all(levels["trigger"] == levels["last close"] for levels in bursts)
+    run = ", ".join("trigger (the last close)" if name == "trigger" else name for name in orders.pop())
+    phrases = [f"For a burst ticket the lines usually run, low to high: {run}."]
+    for levels in over:                 # the stop at or over the skip-below line
+        prices = cents(levels["entry_low"] - 1, levels["trigger"])
+        states = {price: morning.price_state(price, levels, "recent") for price in prices}
+        at_stop, just_over = states[levels["stop"]], states[round(levels["stop"] + 0.01, 2)]
+        assert {state for price, state in states.items() if price <= levels["stop"]} == {at_stop}
+        assert {state for price, state in states.items() if levels["stop"] < price < levels["trigger"]} == {just_over}
+        absent = sorted(set(morning.PRICE_STATES) - {"unknown"} - {
+            morning.price_state(price, levels, "recent")
+            for price in cents(levels["stop"] - 5, levels["day2_spent_above"] + 5)})
+        assert len(absent) == 1, absent
+        phrases.append(f"Then no price is `{absent[0]}`: a price at or under the stop is `{at_stop}`, and "
+                       f"`{just_over}` starts just over the stop.")
+    for levels in coils:
+        assert levels["entry_low"] == levels["trigger"] and levels["day2_spent_above"] is None
+        assert levels["limit"] == round(levels["trigger"] * (1 + plan.TRIGGER_LIMIT_PCT / 100), 2)
+        named = {**ticket_lines(levels, "anticipation"), "last close": levels["last close"]}
+        phrases.append(f"Its lines run: {', '.join(sorted(named, key=named.get))} (the trigger plus "
+                       f"{g(plan.TRIGGER_LIMIT_PCT)}%). It has no skip-below line and no day-2 line. Its trigger is "
+                       "above the last close")
+    no_price = {morning.price_state(None, bursts[0], "recent"), morning.price_state(bursts[0]["trigger"], bursts[0], "stale")}
+    assert len(no_price) == 1
+    phrases.append(f"The state `{no_price.pop()}` means no recent price was read")
+    return lacking(text, *phrases)
+
+
+def test_the_burst_state_table_is_what_price_state_gives():
+    assert not burst_state_problems(), burst_state_problems()
+    assert {state for states, _ in state_table("### 10.4 ", PROMPT_RAW) for state in states} == \
+        set(morning.PRICE_STATES) - {"unknown"}
+
+
+def test_the_anticipation_state_table_is_what_price_state_gives():
+    assert not anticipation_state_problems(), anticipation_state_problems()
+    # the state a burst ticket has under its trigger is one an anticipation ticket never has
+    assert "below_trigger" not in {state for states, _ in state_table("### 10.6 ", PROMPT_RAW) for state in states}
+
+
+def test_the_sentences_about_the_lines_and_the_states_are_the_tickets_own():
+    assert not state_sentence_problems(), state_sentence_problems()
+
+
+# ------------------------------------------------- the holds can fail ------
+HOLDS = (ladder_problems, half_problems, gate_problems, fill_problems, admission_problems, reader_problems,
+         letter_h_problems, gap_problems, burst_state_problems, anticipation_state_problems, state_sentence_problems)
+
+
+def replaced(old: str, new: str):
+    def edit(text: str) -> str:
+        assert text.count(old) == 1, old
+        return text.replace(old, new)
+    return edit
+
+
+def exchanged(heading: str, pattern: str, first: int, second: int):
+    """The text with the bodies of two numbered rows or items of one section
+    exchanged, their numbers left where they were."""
+    def edit(text: str) -> str:
+        section = between(heading, "\n### ", text)
+        found = {int(match[1]): match for match in re.finditer(pattern, section, flags=re.M)}
+        a, b = found[first], found[second]
+        swapped = (section[:a.start(2)] + b[2] + section[a.end(2):b.start(2)] + a[2] + section[b.end(2):])
+        assert swapped != section
+        return text.replace(section, swapped)
+    return edit
+
+
+TABLE_ROW, LIST_ITEM = r"^\| (\d+) \| (.+) \|$", r"^(\d+)\. (.+(?:\n   .+)*)$"
+#: Edits to the prompt that left every test green before these holds, and the
+#: hold that must name each. A reviewer made nine by execution: steps 4 and 5
+#: of the ladder and gates 3 and 4 exchanged, the two 5.14 phrases, "RE or
+#: VOL", "rounded up", "may raise", "top quarter", 3%, and the `below_trigger`
+#: row of 10.4. The others are the same sentence where the file says it
+#: again, and the neighbouring rows and items.
+EDITS = {
+    "5.15: steps 4 and 5 exchanged, the half sold before the stop": (
+        exchanged("### 5.15 ", TABLE_ROW, 4, 5), ladder_problems),
+    "5.9: gates 3 and 4 exchanged, the review before the admission": (
+        exchanged("### 5.9 ", LIST_ITEM, 3, 4), gate_problems),
+    "5.14: a minute's fill at the limit": (
+        replaced("high reaches the trigger fills at the trigger.", "high reaches the trigger fills at the limit."),
+        fill_problems),
+    "5.14: an open fills up to the day-2 line": (
+        replaced("opens at or over the trigger and at or under the limit:",
+                 "opens at or over the trigger and at or under the day-2 line:"), fill_problems),
+    "2.2: an open fills up to the day-2 line": (
+        replaced("and at or under the limit, which is the case", "and at or under the day-2 line, which is the case"),
+        fill_problems),
+    "5.7: RE or VOL": (
+        replaced("is admitted only when RE and VOL\n  both passed.", "is admitted only when RE or VOL\n  passed."),
+        admission_problems),
+    "11.2: the half rounded up twice": (
+        replaced("N minus (N divided by 2, rounded down)", "N minus (N divided by 2, rounded up)"), half_problems),
+    "5.8: the reader may raise a grade": (replaced("It can never raise one.", "It may raise one."), reader_problems),
+    "5.6: H in the top quarter": (
+        replaced("above its open and in the top fifth of the day's range |",
+                 "above its open and in the top quarter of the day's range |"), letter_h_problems),
+    "10.6: gapped at 3%": (
+        replaced("opened more than 2% above its last close", "opened more than 3% above its last close"),
+        gap_problems),
+    "10.4: below_trigger without the stop": (
+        replaced("| `below_trigger` | over the stop and at or over the skip-below line, up to the trigger |",
+                 "| `below_trigger` | at or over the skip-below line, up to the trigger |"), burst_state_problems),
+    "10.4: below_trigger from over the skip-below line": (
+        replaced("| `below_trigger` | over the stop and at or over the skip-below line, up to the trigger |",
+                 "| `below_trigger` | over the stop and over the skip-below line, up to the trigger |"),
+        burst_state_problems),
+    "10.4: the below_trigger row named below_entry_floor": (
+        replaced("| `below_trigger` | over the stop and", "| `below_entry_floor` | over the stop and"),
+        burst_state_problems),
+    "10.4: above_limit from over the trigger": (
+        replaced("| `above_limit` | over the limit, up to the day-2 line |",
+                 "| `above_limit` | over the trigger, up to the day-2 line |"), burst_state_problems),
+    "10.6: below_entry_floor from the stop": (
+        replaced("| `below_entry_floor` | over the stop, under the trigger (the usual state) |",
+                 "| `below_entry_floor` | at or over the stop, under the trigger (the usual state) |"),
+        anticipation_state_problems),
+    "10.3: below_trigger from the skip-below line when the stop is over it": (
+        replaced("`below_trigger` starts just over the stop.", "`below_trigger` starts at the skip-below line."),
+        state_sentence_problems),
+    "11.3: items 3 and 4 exchanged, the half sale before the stop": (
+        exchanged("### 11.3 ", LIST_ITEM, 3, 4), ladder_problems),
+    "5.15: steps 2 and 3 exchanged, the gap exit before a stop at the open": (
+        exchanged("### 5.15 ", TABLE_ROW, 2, 3), ladder_problems),
+    "5.15: steps 7 and 8 exchanged, the day-3 half before the no-progress exit": (
+        exchanged("### 5.15 ", TABLE_ROW, 7, 8), ladder_problems),
+    "5.9: gates 5 and 6 exchanged, the registry before the ticket rule": (
+        exchanged("### 5.9 ", LIST_ITEM, 5, 6), gate_problems),
+}
+
+
+@pytest.mark.parametrize("edit", list(EDITS))
+def test_an_edit_that_once_passed_is_named_by_the_hold_of_its_rule(edit):
+    change, hold = EDITS[edit]
+    edited = change(PROMPT_RAW)
+    assert edited != PROMPT_RAW and not hold(PROMPT_RAW)
+    assert hold(edited), edit
+    # and by that hold alone: no other hold fires on an edit that is not its rule's
+    assert not [other.__name__ for other in HOLDS if other is not hold and other(edited)]
+
+
+def test_an_edit_no_hold_names_passes_every_hold():
+    """The control: a sentence none of the holds reads, reworded."""
+    edited = replaced("Read the four prices this way:", "Read the four prices like this:")(PROMPT_RAW)
+    assert not [hold.__name__ for hold in HOLDS if hold(edited)]
