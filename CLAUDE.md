@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 6759 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 6775 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -15624,3 +15624,40 @@ mutation pass, 20 mutants over these rules and a control: all 20 die.
 **Not claimable:** the first nightly `orders.json` (the first evening run
 after the merge writes it); that an execution agent reads it; any trading
 edge.
+
+## Checkpoint, 19 Nov 2026 -- PR #223 accepted; the scorecard read honestly beside its own numbers (PR 4)
+
+**PR #223, accepted.** Merged on green CI; the first evening after it writes
+the first nightly `docs/orders.json`.
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` from `main` after
+#223. `record.scorecard()`'s numbers do not move; the published record,
+picks, receipts, history, evidence and ledger are untouched.
+`pipeline.scorecard_reading_version` is archived, so `rules_version` moves
+and the page fixtures and every cascaded generator were regenerated.
+
+**What it adds.** `scorecard_reading` (`src/scorecard_reading.py`, composed
+by `pipeline.read_scorecard()` after `report.build()`), printed verbatim by
+the Record view, the mail and `orders.json`'s `scorecard`: the tickets
+against their distinct setups (`model_record.setups()`), the tickets by the
+model account each was sized against (`model_record.eras()`), the stopped
+tickets as booked, at that session's close and at its low
+(`model_record.stop_bounds()`), the earlier sessions whose breadth this
+record computes differently from the publication before it, and real against
+model, which reads `not_recorded` here: `tools/positions_compare.py` reads a
+filled private copy of `docs/positions-template.json` on the owner's
+computer, each position's real R beside the model's, never added. A model
+record that cannot be computed is said so and never fails the night. The
+publication ceiling counts the block once a night (`NIGHTLY`).
+
+**The full suite found what the focused runs had not:** the block spread per
+burst pushed the ceiling's projection past its bound, and the brief's test
+heard only one of the two readers that warn when the model record cannot be
+computed. Both fixed.
+
+**Mutation pass**, each mutant in a detached worktree judged by
+`tests/test_scorecard_reading.py`: 14 mutants, all dead; the control
+survives.
+
+**Not claimable:** a real-against-model reading, which needs the owner's
+filled positions file; any trading edge.
