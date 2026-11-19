@@ -15977,7 +15977,12 @@ each of `live_ready`'s two conditions, the pipeline's morning binding and
 the page's live state each have their case. `.env.example` names the two
 trigger variables. **Recorded, not fixed:** a hand dispatch with
 `only_if_unpublished` ticked counts as automatic; the record cannot tell it
-from the dispatcher's, and the guide says so.
+from the dispatcher's, and the guide says so. A second mutation pass over the
+review's rules, 22 mutants and a control: all 22 die in the test naming
+their rule. One mutant of mine first survived for being weak (it stringified
+the reasons, which still refuses them); the real revert, an unfiltered
+`set(reasons)`, raises on a non-string reason and dies. The control
+survives.
 
 **Not claimable:** a live-ready night, which needs the owner's protocol
 record, ten on-time sessions from the first one this gate counts, and twenty
