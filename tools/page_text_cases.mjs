@@ -521,7 +521,7 @@ async function recordView({ browser, base, open, check, eq, full, shotsDir }) {
       // the scorecard read honestly: the record's own sentences, verbatim, in order
       const reading = await page.locator('#record-card [data-scorecard-reading-sentence]').allTextContents();
       eq(`${where}: the scorecard reading prints the record's own sentences`, reading, full.scorecard_reading.sentences);
-      eq(`${where}: and carries the block's status`, await page.locator('#record-card [data-scorecard-reading]').getAttribute('data-scorecard-reading'), full.scorecard_reading.status);
+      eq(`${where}: and carries the block's status`, await page.evaluate(() => { const n = document.querySelector('#record-card [data-scorecard-reading]'); return n ? n.getAttribute('data-scorecard-reading') : null; }), full.scorecard_reading.status);
       check(`${where}: nothing scrolls sideways`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
       if (shotsDir) {
         await mkdir(shotsDir, { recursive: true });
@@ -550,8 +550,8 @@ async function recordView({ browser, base, open, check, eq, full, shotsDir }) {
     const { page, context } = await open(browser, base, rr.url, NOW, 1280, { beforeLoad: rr.beforeLoad, reducedMotion: 'reduce' });
     try {
       await toView(page, 'record');
-      eq(`record ${name}: the reading's state`, await page.locator('#record-card [data-scorecard-reading]').getAttribute('data-scorecard-reading'), state);
-      check(`record ${name}: says so in its own words`, (await first(page, '#record-card [data-scorecard-reading] .sc-note')).startsWith(words), await first(page, '#record-card [data-scorecard-reading] .sc-note'));
+      eq(`record ${name}: the reading's state`, await page.evaluate(() => { const n = document.querySelector('#record-card [data-scorecard-reading]'); return n ? n.getAttribute('data-scorecard-reading') : null; }), state);
+      check(`record ${name}: says so in its own words`, ((await page.locator('#record-card [data-scorecard-reading] .sc-note').allTextContents())[0] || '').startsWith(words), await page.locator('#record-card [data-scorecard-reading] .sc-note').allTextContents());
       eq(`record ${name}: and prints no sentence of a reading`, await page.locator('#record-card [data-scorecard-reading-sentence]').count(), 0);
     } finally { await context.close(); }
   }

@@ -90,6 +90,8 @@ def test_more_revisions_than_the_bound_are_counted_not_named():
     out = sr.breadth_revisions(before, after)
     assert out["differ_count"] > sr.MAX_REVISIONS and len(out["differ"]) == sr.MAX_REVISIONS
     assert f"; and {out['differ_count'] - sr.MAX_REVISIONS} more." in out["sentence"]
+    import re
+    assert len(re.findall(r"\d{4}-\d{2}-\d{2} (?:up4|down4|ratio_10d) ", out["sentence"])) == sr.MAX_REVISIONS
 
 
 # ----------------------------------------------------------- the validator --
