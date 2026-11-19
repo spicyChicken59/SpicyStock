@@ -2581,19 +2581,25 @@ fixtures; `generate.py --check` runs in CI.
 
 ### The strategy page
 
-`docs/strategy.html` is the strategy as the code and the installed record
-state it (`src/strategy_page.py`, written by `pipeline.publish_strategy()`
-after the handoff each night): the market light's five rules with the
-night's scaled thresholds and values, the two discovery scans and the
-admission gate, the checklist's weights, bands, gate letters and vetoes,
-the ticket's buy stop, limit, stop and sizing, every rule of
-`plan.EXIT_RULES` with its source mark (the one third-party rule attributed
-to the backtest its own text names), and the night's candidate funnel.
-The module types no number of its own: every figure is a constant or a
-record field, and a test reads its source to say so. CI runs
-`tools/build_strategy_page.py --check`, so a change to a constant the page
-prints cannot land without the page; the publication gate serves it as
-committed. A night that cannot write it removes it.
+`docs/strategy.html` is the strategy as the installed record's rules state
+it (`src/strategy_page.py`, written by `pipeline.publish_strategy()` after the
+handoff each night, linked from the Method view): the market light's five
+rules with the night's scaled thresholds and values, the two discovery scans
+and the admission gate, the checklist's weights, bands, gate letters and
+vetoes (the linearity veto's two conditions, and a leg too short to measure
+being none), the chart-reader requirement, the burst ticket (the buy-stop rule
+the record was made under, the limit, the stop, the size with its two hazards,
+the entry window and the skip lines) and the setting-up ticket, every rule of
+`plan.EXIT_RULES` with its source mark and the order the model's walk
+(`plan.follow()`) applies them in, and the night's candidate funnel. Every
+rule is read from the record's archived `rules`; where the record archives
+none the code's constant is printed and named, and a code constant that has
+moved since the record is named with both values, so a merge is never
+attributed to an older record. The module types no number of its own: no
+digit in its text and no number literal but an index and its unit, which a
+test reads its source to say. CI runs `tools/build_strategy_page.py --check`;
+the publication gate holds the page's own record digest to the committed
+`data.json`. A night that cannot write it removes it.
 
 ### The scorecard, read honestly
 
@@ -3176,7 +3182,7 @@ src/            history.py (public recovery and coverage)
                 delivery.py (where a publication fell against the evening workflow's own slots and the next open; the record archives it, the page and the service-health reading read it)
                 freshness.py (what a record says about the next publication: the next session, its completion, the two slots and the recovery limit; state() answers newest, not_due, pending, late or missing for a reader's own clock; standard library only)
                 scorecard_reading.py (the scorecard read honestly: distinct setups, model accounts, the stopped tickets at the stop, the close and the low, breadth revisions; copied from the model record, never moving the scorecard's numbers)
-                strategy_page.py (strategy.html: the strategy as the code and the installed record state it; every figure a constant or a record field)
+                strategy_page.py (strategy.html: the strategy as the installed record's rules state it; every figure a rule the record archived, or a named code constant where it archives none)
                 orders.py (the execution handoff: orders.json and its positions template each night, and the morning's go/cancel file, from committed bytes and no clock) · schema_check.py (the JSON Schema subset the handoff's schema uses; any other keyword is refused)
                 sec_flags.py (each ticket's and listed setup's recent tender-offer, merger-proxy and deal 8-K filings, named by form and item; a flag that holds a ticket for review in orders.json, never a refusal or a clearance)
                 cross_check.py (each ticket's signal-day bar read again from the iex feed; prices within 0.5% and the two feeds' volume ratios within 10%, or the ticket is blocked in orders.json)

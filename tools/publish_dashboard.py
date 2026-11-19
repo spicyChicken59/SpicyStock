@@ -191,14 +191,26 @@ def brief_files(root: Path) -> tuple[str, ...]:
 
 
 def strategy_files(root: Path) -> tuple[str, ...]:
-    """``strategy.html``, served as committed. The evening writes it from the
-    record and CI's ``tools/build_strategy_page.py --check`` holds it to the
-    code; here it is only refused as a link and otherwise verified like every
-    other public file, so the gate needs nothing but the standard library."""
+    """``strategy.html``, held to the committed record. The evening writes it
+    from the record and CI's ``tools/build_strategy_page.py --check`` holds it
+    to the code; nightly commits run no CI, so here the page's own meta must
+    name the committed ``data.json``'s SHA-256, or the site would serve the
+    strategy beside another night's record. Standard library only."""
+    import hashlib
+    import re
     path = root / 'docs' / 'strategy.html'
     if path.is_symlink():
         raise RuntimeError('The strategy page is a symlink.')
-    return ('strategy.html',) if path.exists() else ()
+    if not path.exists():
+        return ()
+    if not path.is_file():
+        raise RuntimeError('The strategy page is not a file.')
+    page = path.read_text(encoding='utf-8', errors='replace')
+    named = re.search(r'<meta name="spicystock-strategy" content="version [^;"]+; record sha256 ([0-9a-f]{64})">', page)
+    record = hashlib.sha256((root / 'docs' / 'data.json').read_bytes()).hexdigest()
+    if not named or named.group(1) != record:
+        raise RuntimeError('The strategy page is not bound to the committed data.json.')
+    return ('strategy.html',)
 
 
 def orders_files(root: Path) -> tuple[str, ...]:
