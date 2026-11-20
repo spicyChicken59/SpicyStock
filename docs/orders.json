@@ -1,0 +1,131 @@
+{
+ "account": {
+  "committed_usd": 0.0,
+  "equity": 30000.0,
+  "max_open_positions": 4,
+  "max_position_pct": 25.0,
+  "reserved_usd": 0.0,
+  "risk_pct": 0.5,
+  "slots_used": 0
+ },
+ "content_sha256": "b0b50b9c8f9502c22cd235283fe9e3e2170dece2d039a1dd25f3048bf0ad345a",
+ "entry_window": {
+  "cutoff_at": "2026-11-20T10:00:00-05:00",
+  "opens_at": "2026-11-20T09:30:00-05:00",
+  "prepare_by": "2026-11-20T09:28:00-05:00",
+  "timezone": "America/New_York"
+ },
+ "kind": "orders",
+ "live_ready": {
+  "reasons": [
+   "go_live_gate_not_evaluated"
+  ],
+  "value": false
+ },
+ "mode": "paper",
+ "night_checks": [
+  {
+   "detail": "red",
+   "key": "light",
+   "reason": "light_red",
+   "status": "fail"
+  },
+  {
+   "detail": "ok",
+   "key": "data",
+   "reason": null,
+   "status": "pass"
+  },
+  {
+   "detail": "2026-11-20T04:00:14.014358+00:00",
+   "key": "publication_time",
+   "reason": null,
+   "status": "pass"
+  },
+  {
+   "detail": "No ticket to cross-check.",
+   "key": "cross_check",
+   "reason": null,
+   "status": "pass"
+  },
+  {
+   "detail": "0 of 4 slots; $0.00 committed and reserved of $30,000.00",
+   "key": "account",
+   "reason": null,
+   "status": "pass"
+  }
+ ],
+ "reasons": [
+  {
+   "code": "light_red",
+   "scope": "night"
+  },
+  {
+   "code": "no_tickets",
+   "scope": "night"
+  }
+ ],
+ "schema": "docs/operations/orders-schema.json",
+ "scorecard": {
+  "breadth_revisions": 1,
+  "distinct_setups": 17,
+  "eras": [
+   {
+    "label": "$10,000 at 0.5% risk",
+    "settled": 1,
+    "sum_r": 0.41,
+    "tickets": 2
+   },
+   {
+    "label": "$2,000 at 0.5% risk",
+    "settled": 1,
+    "sum_r": 3.02,
+    "tickets": 8
+   },
+   {
+    "label": "$30,000 at 0.5% risk",
+    "settled": 3,
+    "sum_r": -3.0,
+    "tickets": 12
+   }
+  ],
+  "plans": 22,
+  "real_vs_model": "private",
+  "sentences": [
+   "22 tickets in the scorecard's window are 17 distinct setups.",
+   "By model account: $10,000 at 0.5% risk, 2 tickets from 2026-10-08 through 2026-10-08, 1 settled, +0.41R; $2,000 at 0.5% risk, 8 tickets from 2026-10-09 through 2026-11-02, 1 settled, +3.02R; $30,000 at 0.5% risk, 12 tickets from 2026-11-04 through 2026-11-13, 3 settled, -3.00R.",
+   "The 3 stopped tickets booked at the stop sum to -3.00R; read at that session's close, -4.66R; at its low, -5.78R.",
+   "Of the 1 session whose first publication's breadth this record carries, 1 reads differently tonight than that night published, newest first: 2026-11-18 down4 174 to 172, ratio_10d 0.61 to 0.62. 28 other sessions in this record's history were first published before these figures were retained.",
+   "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
+  ],
+  "settled": 5,
+  "status": "computed",
+  "stops_sum_r": {
+   "at_close": -4.66,
+   "at_low": -5.78,
+   "booked": -3.0
+  },
+  "tickets": 22
+ },
+ "source": {
+  "applicable_session": "2026-11-20",
+  "context_sha256": "6f647e17851a3908cecf1e4365e466b8bac6d41902bc3ebb6c8a1586d9c3bd85",
+  "data_sha256": "17e059ec7cc72c9d150c680963f711dc041db0997814f5242a9f509bd441004e",
+  "dry_run": false,
+  "fixture": false,
+  "picks_sha256": "7f232ab84aca7c3438f70c8110325660b3a40a339fb12f30d502883089b146b0",
+  "published_at": "2026-11-20T04:00:14.014358+00:00",
+  "rules_version": "518224f3816e",
+  "run_id": "44671377500",
+  "session": "2026-11-19"
+ },
+ "summary": {
+  "blocked": 0,
+  "go": 0,
+  "human_review": 0,
+  "tickets": 0
+ },
+ "tickets": [],
+ "trade_allowed": false,
+ "version": 3
+}

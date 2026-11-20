@@ -1,0 +1,12 @@
+{
+ "applicable_session": "2026-11-20",
+ "content_sha256": "063602226c71447615550198b68aeb310d65d1542f2c757a2df29b4a96657ffa",
+ "kind": "positions",
+ "mode": "paper",
+ "orders_sha256": "6f124643225c69916c67eb7e7b4a2c89c750ab87da1d87be258b689299f520cc",
+ "positions": [],
+ "privacy": "a filled copy holds the owner's real orders and fills: keep it private and never commit it to the public repository",
+ "schema": "docs/operations/orders-schema.json#/$defs/positions",
+ "session": "2026-11-19",
+ "version": 3
+}
