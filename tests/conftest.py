@@ -31,6 +31,14 @@ from tests.synthetic import make_ohlcv, seed_for  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
+def _pinned_go_live_protocol(monkeypatch):
+    """The go-live gate reads the owner's protocol record; the suite reads a
+    pinned, unpassed copy, so the owner recording the sitting moves no test."""
+    from src import go_live
+    monkeypatch.setattr(go_live, "PROTOCOL_FILE", go_live.PINNED_PROTOCOL_FILE)
+
+
+@pytest.fixture(autouse=True)
 def _isolated_cwd(monkeypatch, tmp_path):
     """Run every test inside its own tmp_path.
 

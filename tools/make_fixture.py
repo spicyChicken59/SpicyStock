@@ -66,6 +66,10 @@ sys.path.insert(0, str(ROOT))
 import pandas as pd  # noqa: E402
 
 from src import sessions as exchange_sessions, charts, earnings_risk, market_data, pipeline, plan, record, scans  # noqa: E402
+from src import go_live  # noqa: E402
+
+# the owner's protocol record moves no fixture: the generator reads the pinned, unpassed copy
+go_live.PROTOCOL_FILE = go_live.PINNED_PROTOCOL_FILE
 from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient, FakeSec  # noqa: E402
 from tests.synthetic import make_ohlcv  # noqa: E402
 from tests.test_quality import burst_bar, frame as qframe, ideal_bars, quiet as quiet_bar  # noqa: E402
@@ -553,6 +557,7 @@ def run_variant(variant: str, docs: Path) -> dict:
     # not a fact about the market
     data["run"]["elapsed_seconds"] = 0.0
     data["run"]["fetch_seconds"] = 0.0
+    data["run"]["finish_seconds"] = 0.0
     return data
 
 

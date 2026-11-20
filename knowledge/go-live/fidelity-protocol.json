@@ -1,0 +1,8 @@
+{
+ "version": 1,
+ "protocol": "knowledge/broker-fidelity-protocol.md",
+ "passed": false,
+ "recorded_on": null,
+ "recorded_by": null,
+ "note": "The owner sets passed to true, recorded_on to the date of the sitting and recorded_by to \"owner\" once every step of the protocol has been run at Fidelity and passed. Nothing in this repository sets it. Record no account number, balance, order id or other private detail here: this file is public."
+}

@@ -5,6 +5,7 @@ publishing (the record is on disk; only delivery failed)."""
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import math
@@ -22,7 +23,7 @@ from src import history, breadth, charts, clock, discovery, grader, market_data,
 from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
 from src import universe, reader_coverage, followup
 from src import watchlist, allocation, event_risk, review_selection, funnel, delivery, intraday, earnings_risk, admission
-from src import sec_flags, cross_check
+from src import sec_flags, cross_check, go_live
 from src import scorecard_reading
 
 log = logging.getLogger("spicystock.pipeline")
@@ -124,6 +125,8 @@ class RunReport:
     published: bool = False
     failed: bool = False
     failure: str | None = None
+    #: the monotonic clock at the run's start, for the finish stamped at the record's final write
+    started: float | None = None
 
     input_coverage: dict = field(default_factory=dict)
     input_diagnostic: dict = field(default_factory=lambda: {"status": "not_attempted", "path": None})
@@ -691,7 +694,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, discovery.RULES, admission.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, funnel.RULES, intraday.RULES, earnings_risk.RULES, sec_flags.RULES, cross_check.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, admission.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, funnel.RULES, intraday.RULES, earnings_risk.RULES, sec_flags.RULES, cross_check.RULES, go_live.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.session_min_price": universe.MIN_PRICE,
@@ -714,6 +717,27 @@ def _strip_private(b: dict) -> dict:
     return {k: v for k, v in b.items() if not k.startswith("_")}
 
 
+def previous_digest(docs: Path) -> str | None:
+    """The SHA-256 of the record on disk before this run replaces it: the
+    binding a morning file for that publication carries."""
+    try:
+        return hashlib.sha256((docs / DATA_FILE).read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
+def read_go_live(docs: Path, session: str, rules: dict, previous: dict, previous_sha256, rows: list,
+                 published_at: str | None = None, opens_at: str | None = None) -> dict:
+    """``run.go_live``; a morning file that cannot be read is no morning file."""
+    try:
+        morning = json.loads((docs / "morning.json").read_text())
+    except (OSError, ValueError, RecursionError):
+        morning = None
+    return go_live.build(session=session, rules=rules, previous=previous, previous_sha256=previous_sha256,
+                         morning=morning if isinstance(morning, dict) else None, scorecard_rows=rows,
+                         published_at=published_at, opens_at=opens_at)
+
+
 def load_previous(docs: Path) -> dict:
     """Last night's record, for the reliability row it carries -- unless it
     is the committed fixture, whose nights never happened."""
@@ -733,6 +757,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
     report carries the exit code."""
     rep = RunReport()
     started = time.monotonic()
+    rep.started = started
     rep.stage = "preflight"
     clock_pinned = now is not None
     now = now or datetime.now(timezone.utc)
@@ -754,6 +779,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
     preflight("evening", dry_run)
     account = plan.Account.from_env()
     previous = load_previous(docs)
+    previous_sha256 = previous_digest(docs) if previous else None
     docs.mkdir(parents=True, exist_ok=True)
     generated = (now or datetime.now(timezone.utc)).isoformat()
     try:
@@ -944,6 +970,9 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             "email": "skipped", "published_at": generated,
             "run_id": os.environ.get("GITHUB_RUN_ID_FOR_RECORD") or None,
             "elapsed_seconds": elapsed, "fetch_seconds": round(fetch_seconds, 1),
+            # the run's finish, stamped at the record's final write after delivery (restamp());
+            # the record first installed, and one whose restamp was refused, carries none
+            "finish_seconds": None,
             "rules_version": RULES_VERSION_NOTE, "type": "evening",
             "timing": plan_timing(session, expected, closed),
             "calendar": sessions.publication(session),
@@ -1002,6 +1031,13 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         scorecard = record.scorecard(rec, frames, session.isoformat(), input_basis=run_block["input_basis"],
                                      replay_rules_version=report.rules_version(rules_block), problem=record_problem,
                                      minutes=minutes)
+        # how this run was started, and the go-live gate over the sessions
+        # before it (src/go_live.py): paper only until every condition holds
+        run_block["trigger"] = go_live.trigger_from(os.environ)
+        run_block["go_live"] = read_go_live(docs, session.isoformat(), rules_block, previous, previous_sha256,
+                                            record.scorecard_rows(rec, frames, session.isoformat(), minutes=minutes),
+                                            published_at=generated, opens_at=run_block["timing"].get("opens_at"))
+        log.info("Go-live: %s", run_block["go_live"]["sentence"])
 
         rep.stage = "publish"
         miss = report.closest_miss([_strip_private(b) for b in bursts], trades, beyond_cap)
@@ -1307,6 +1343,10 @@ def restamp(data: dict, rep: RunReport, closed: bool) -> None:
     degraded night clean."""
     data["run"]["status"] = run_status(rep, closed)
     data["run"]["problems"] = list(rep.problems)
+    if rep.started is not None:
+        # seconds from the run's start to this final write: what the go-live gate reads as the
+        # finish (src/go_live.py); elapsed_seconds stops where the run block is first composed
+        data["run"]["finish_seconds"] = round(time.monotonic() - rep.started, 1)
     run = data["run"]
     key = run.get("expected_session") if run.get("session_state") == "closed" else run.get("session")
     for night in data.get("nights", []):

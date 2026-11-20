@@ -298,10 +298,15 @@ def test_the_full_fixtures_ticket_is_held_for_review_by_its_material_8k_item():
     assert {"scope": "AAPL", "code": "sec_flag"} in doc["reasons"]
 
 
-def test_the_mode_is_paper_and_live_ready_is_not_yet_evaluated():
-    doc = built()
+def test_the_mode_is_paper_while_the_records_gate_names_an_unmet_condition():
+    # the fixture records its own go-live gate, which the owner has not passed;
+    # a record from before the gate (the pinned publication) cannot be read live
+    doc, data = built(), json.loads(page("full"))
     assert doc["mode"] == orders.MODE == "paper"
-    assert doc["live_ready"] == {"value": False, "reasons": [orders.LIVE_READY_REASON]}
+    assert doc["live_ready"] == {"value": False, "reasons": data["run"]["go_live"]["reasons"]}
+    assert "fidelity_protocol" in doc["live_ready"]["reasons"]
+    old = orders.build(PUBLICATION)
+    assert old["mode"] == "paper" and old["live_ready"] == {"value": False, "reasons": [orders.LIVE_READY_REASON]}
 
 
 # ------------------------------------------------------------- the morning --

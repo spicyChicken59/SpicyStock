@@ -8,7 +8,7 @@
   "risk_pct": 0.5,
   "slots_used": 4
  },
- "content_sha256": "923536b33bef5b99865149d87040da76cfbbb72fd80e061a2a4dd26113855987",
+ "content_sha256": "82474762d1b271abfc9e4e8a49262fa9e72b66aa97f1562b53429a4e887f817a",
  "entry_window": {
   "cutoff_at": "2026-09-11T10:00:00-04:00",
   "opens_at": "2026-09-11T09:30:00-04:00",
@@ -461,5 +461,5 @@
   }
  ],
  "trade_allowed": false,
- "version": 3
+ "version": 4
 }

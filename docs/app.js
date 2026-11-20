@@ -5533,6 +5533,7 @@
     method.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-booking': '', text: 'No fees, spread, slippage, tax or actual execution are measured. A stop first reached inside a session is booked at exactly the stop price, so a stop on the fill day is always exactly minus one R whatever that day’s low or close; only a session that opens at or under the stop is booked at its open. R is counted per ticket whatever its size, and whole-share sales make it depend on the share count (a one-share ticket sells whole at its half-sale), so a sum of R is not a sum of dollars. An expired unfilled order is not filled; an ended walk without reconciled sales remains unscored. R = 0 after the recorded two-decimal rounding is breakeven.' }));
     card.appendChild(method);
     card.appendChild(scorecardReading(data));
+    card.appendChild(goLiveBlock(data));
     // fourteen nights of reliability, from nights[]: ok, degraded, closed, missing
     const nights = {}; (data.nights || []).forEach((x) => { if (x && x.session) nights[x.session] = x; });
     const end = (data.run || {}).expected_session || (data.run || {}).session;
@@ -5573,6 +5574,33 @@
     }
     box.setAttribute('data-scorecard-reading', String(block.status || ''));
     sentences.forEach((s) => box.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-reading-sentence': '', text: s })));
+    return box;
+  }
+  // The go-live gate the record computed (src/go_live.py): live or paper, and
+  // each condition with what it has against what it needs, in its own words.
+  function goLiveBlock(data) {
+    const block = ((data && data.run) || {}).go_live;
+    const box = el('section', { 'class': 'ss-go-live', 'data-go-live': '', 'aria-label': 'The go-live gate' },
+      [el('div', { 'class': 'sc-eyebrow', style: 'margin-top:16px', text: 'the go-live gate' })]);
+    const criteria = block && Array.isArray(block.criteria) ? block.criteria.filter((c) => c && typeof c.key === 'string') : null;
+    if (!block) {
+      box.setAttribute('data-go-live', 'absent');
+      box.appendChild(el('p', { 'class': 'sc-note', text: 'This record is from before the go-live gate: its orders.json is paper only.' }));
+      return box;
+    }
+    if (!criteria || !criteria.length || typeof block.sentence !== 'string') {
+      box.setAttribute('data-go-live', 'unreadable');
+      box.appendChild(el('p', { 'class': 'sc-note', text: 'This record’s go-live gate could not be read: treat its orders.json as paper only.' }));
+      return box;
+    }
+    // live as orders.json reads the same block: ready, no reason left, every criterion met
+    const live = block.ready === true && Array.isArray(block.reasons) && block.reasons.length === 0 && criteria.every((c) => c.met === true);
+    box.setAttribute('data-go-live', live ? 'live' : 'paper');
+    box.appendChild(el('p', { 'class': 'sc-note', 'data-go-live-sentence': '', text: block.sentence }));
+    const list = el('ul', { 'class': 'sc-note' });
+    criteria.forEach((c) => list.appendChild(el('li', { 'data-go-live-criterion': c.key,
+      text: c.key.replace(/_/g, ' ') + ': ' + (c.met === true ? 'met' : 'not met') + (typeof c.detail === 'string' && c.detail ? ' (' + c.detail + ')' : '') })));
+    box.appendChild(list);
     return box;
   }
   function renderRecordView(data) {

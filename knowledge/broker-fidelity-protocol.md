@@ -141,6 +141,10 @@ note's unconfirmed list. What each answer decides:
 - **U18** decides how the sell-half at +8% is worked.
 - **U12 and U14** decide how strictly the settled-cash rules of Part 3 bind.
 
+Completing the sitting is not passing it. Which answers count as a pass for
+the go-live gate, and where the owner records one, is in
+[`docs/operations/go-live.md`](../docs/operations/go-live.md).
+
 ## Part 2. Order entry by price state
 
 The state words are the ones the morning receipt prints for a ticket

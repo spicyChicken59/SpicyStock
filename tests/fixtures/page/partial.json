@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "bde327cb5640"
+  "rules_version": "795e33f0209f"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -352,6 +352,7 @@
   "run_id": null,
   "elapsed_seconds": 0.0,
   "fetch_seconds": 0.0,
+  "finish_seconds": 0.0,
   "rules_version": "v2.0",
   "type": "evening",
   "timing": {
@@ -953,7 +954,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "084eb087be90b1a67f2f36a9f8f0704721476dfa3bb6d342bf9287028c15e0dd"
+   "context_sha256": "2d99414f666dc4a67ba23efc0f5bc40a4474d7de21236a2c2182507e77306b9e"
   },
   "earnings": {
    "version": 2,
@@ -1004,6 +1005,58 @@
    "rows": [],
    "status": "not_applicable",
    "sentence": "No ticket to cross-check."
+  },
+  "trigger": {
+   "event": null,
+   "only_if_unpublished": null
+  },
+  "go_live": {
+   "version": 1,
+   "ready": false,
+   "criteria": [
+    {
+     "key": "fidelity_protocol",
+     "met": false,
+     "have": null,
+     "need": null,
+     "detail": "not recorded as passed by the owner"
+    },
+    {
+     "key": "on_time_sessions",
+     "met": false,
+     "have": 0,
+     "need": 10,
+     "detail": "0 consecutive of 10"
+    },
+    {
+     "key": "settled_forward_plans",
+     "met": false,
+     "have": 0,
+     "need": 20,
+     "detail": "0 settled since 2026-09-10 of 20"
+    },
+    {
+     "key": "ablation_report",
+     "met": true,
+     "have": null,
+     "need": null,
+     "detail": "docs/input-truthfulness/2026-11-19-ablation/ablation.json"
+    }
+   ],
+   "reasons": [
+    "fidelity_protocol",
+    "on_time_sessions",
+    "settled_forward_plans"
+   ],
+   "strategy": {
+    "digest": "4fe97a8dc8f1ca9e645b272e543e2fa8af7d99cfccdedd58ac096dcb0343c6f5",
+    "since": "2026-09-10",
+    "newest": "2026-09-10",
+    "forward": true,
+    "not_forward": []
+   },
+   "ledger": [],
+   "sentence": "Paper only: fidelity protocol not met (not recorded as passed by the owner); on time sessions not met (0 consecutive of 10); settled forward plans not met (0 settled since 2026-09-10 of 20)."
   },
   "sanitised": {
    "replaced": 0,
@@ -1662,6 +1715,13 @@
    "volume_basis": "ratio_to_prior_session",
    "max_names": 20
   },
+  "go_live": {
+   "version": 1,
+   "on_time_sessions": 10,
+   "publish_by_et": "19:00",
+   "morning_due_ct": "08:45",
+   "min_settled_forward": 20
+  },
   "pipeline": {
    "max_reads": 12,
    "fetch_budget_seconds": 900,
@@ -2255,7 +2315,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "bde327cb5640"
+  "replay_rules_version": "795e33f0209f"
  },
  "observations": {
   "as_of": "2026-09-10",

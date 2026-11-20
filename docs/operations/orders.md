@@ -37,8 +37,12 @@ Any JSON Schema validator reads it; the repository checks its own files with
    The checker also refuses a file whose `trade_allowed`, `reasons`, ticket
    statuses, summary or mode are not what its own checks give.
 4. **Read the mode.** `mode` is `paper` and `live_ready.value` is false until
-   the go-live gate (`docs/operations/go-live.md`, once written) says
-   otherwise. A paper ticket is a rehearsal: it is never an order to place.
+   the record's go-live gate holds ([`go-live.md`](go-live.md)); then `mode`
+   is `live` and `live_ready.reasons` is empty. A paper ticket is a
+   rehearsal: it is never an order to place. `live_ready.reasons` names each
+   condition not met, in the words `go-live.md` lists; `live` says the
+   owner's conditions for trusting the file hold, and `trade_allowed` and
+   each ticket's `status` still decide the night.
 5. **Read the version.** The schema names one `version`. A merge that moves
    it leaves the files on `main` as the earlier code wrote them until the next
    evening rewrites them; such a file is still bound to its record, but it is

@@ -47,6 +47,10 @@ import pandas as pd  # noqa: E402
 import yaml  # noqa: E402
 
 from src import charts, cross_check, earnings_risk, funnel, grader, intraday, market_data, pipeline  # noqa: E402
+from src import go_live  # noqa: E402
+
+# the owner's protocol record moves no fixture: the generator reads the pinned, unpassed copy
+go_live.PROTOCOL_FILE = go_live.PINNED_PROTOCOL_FILE
 from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient, FakeResend, FakeSec  # noqa: E402
 from tests.synthetic import make_ohlcv  # noqa: E402
 from tests.test_quality import frame as qframe, ideal_bars  # noqa: E402
@@ -69,7 +73,7 @@ RETRY_CRON = "16 0 * * 2-6"
 #: between), then drops it: two attempts a batch is the fetch's own bound
 BARS_ATTEMPTS_PER_BATCH = 2
 #: the clock fields a record carries that are wall-clock facts, not market facts
-CLOCK_FIELDS = ("elapsed_seconds", "fetch_seconds")
+CLOCK_FIELDS = ("elapsed_seconds", "fetch_seconds", "finish_seconds")
 #: how the empty balance and a dead transport announce themselves; the first
 #: text is what the provider answered on 6 October 2026 (grader.FATAL_CREDIT_MARKERS)
 CREDIT_ERROR = ("Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', "

@@ -184,6 +184,9 @@ jobs:
           SCAN_SESSION_DATE: ${{ steps.guard.outputs.session }}
           DRY_RUN_FLAG: ${{ inputs.dry_run == true && '--dry-run' || '' }}
           GITHUB_RUN_ID_FOR_RECORD: ${{ github.run_id }}
+          # how the run was started, archived as run.trigger for the go-live gate
+          SCAN_TRIGGER_EVENT: ${{ github.event_name }}
+          SCAN_TRIGGER_ONLY_IF_UNPUBLISHED: ${{ inputs.only_if_unpublished == true && 'true' || 'false' }}
         # The exit code is captured here and raised at the end of the job, so
         # that "Persist the run" can keep a DEGRADED (2) or FAILED-AFTER-
         # PUBLISH (3) record: both wrote a complete docs/data.json.

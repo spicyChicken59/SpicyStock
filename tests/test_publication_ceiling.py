@@ -68,7 +68,7 @@ BASELINE = {"burst": (4, 28641), "funnel_row": (6, 203), "signal": (7, 1027), "b
 #: measured. Each is carried once, in the record and the projection, and is taken out of the
 #: record's rest, which would otherwise spread it over every burst of the design point. A block
 #: that grows with the candidates does not belong here.
-NIGHTLY = (("scorecard_reading",), ("run", "sec_flags"), ("run", "cross_check"))
+NIGHTLY = (("scorecard_reading",), ("run", "sec_flags"), ("run", "cross_check"), ("run", "go_live"), ("run", "trigger"))
 BASELINE_COMMIT = "3ee0e427ecb42a972715736cd893e74ab8bedfaa"
 BASELINE_BLOB = "579481ffe341f904568bc38d237cdf179d567269"
 #: The components whose total is a whole record's rest: their growth is spread over its bursts.

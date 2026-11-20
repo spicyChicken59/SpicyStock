@@ -1,0 +1,8 @@
+{
+ "version": 1,
+ "protocol": "knowledge/broker-fidelity-protocol.md",
+ "passed": false,
+ "recorded_on": null,
+ "recorded_by": null,
+ "note": "A pinned, unpassed copy of the owner's record for the tests and the fixture generators: the committed knowledge/go-live/fidelity-protocol.json is the owner's to set, and setting it must move no fixture. This file is public."
+}

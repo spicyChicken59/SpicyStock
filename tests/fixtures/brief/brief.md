@@ -10,10 +10,10 @@
 ## 1. Identity and binding
 
 - Measured session: 2026-09-10 (open); plans are for **2026-09-11**, entry window 2026-09-11T09:30:00-04:00 to 2026-09-11T10:00:00-04:00 (America/New_York), full session closes 2026-09-11T16:00:00-04:00.
-- Published 2026-09-10T22:30:00+00:00 (evening, FIXTURE full); rules version `bde327cb5640`.
-- Canonical record `data.json`: 344,969 bytes, SHA-256 `4bb317736955e4b4449cd51cc721c1d2659f6742f6bbc499e21521624b8bd969`.
-- `picks.json`: 43,332 bytes, SHA-256 `6b4f64fc76dd8350d8e6b72f02bf572606200080109af89bebfd6b26f5cb953c`.
-- This file renders `brief.json` (72,494 bytes, SHA-256 `79de249b958b015dae5032fbb6bef47bb3c4cabab430d305a96f11e3df36645f`).
+- Published 2026-09-10T22:30:00+00:00 (evening, FIXTURE full); rules version `795e33f0209f`.
+- Canonical record `data.json`: 346,437 bytes, SHA-256 `a81ccb3205a19dec2cdeeb04b6c1280496ce946caef5692d89ffb9d4f15a8634`.
+- `picks.json`: 43,332 bytes, SHA-256 `d21a77a64adfde6e9b8acf3ecf78bba879ab0b6ffeec271d3dd512f3e0042b55`.
+- This file renders `brief.json` (72,494 bytes, SHA-256 `c5514f37a20cbbf2acfc8c2a500e8db652e4beaee193ac40b5bde33c56d4f391`).
 - Page https://spicychicken59.github.io/SpicyStock/ · record https://spicychicken59.github.io/SpicyStock/data.json · brief https://spicychicken59.github.io/SpicyStock/brief.json and https://spicychicken59.github.io/SpicyStock/brief.md.
 
 ## 2. Service state
@@ -261,7 +261,7 @@ Open MODEL plans walked on daily (and retained minute) bars; not holdings.
 
 ## 12. Rules
 
-- Rules digest `bde327cb5640`; without the universe membership identity `162c9ca723ea` (membership identity `1b97e33400ee217a`): the record's digest nests the universe membership identity, so it moves on any night the selection's membership moves; `digest_without_membership` is the same digest with that identity removed, and moves only when an archived rule changes.
+- Rules digest `795e33f0209f`; without the universe membership identity `4ba4434239c5` (membership identity `1b97e33400ee217a`): the record's digest nests the universe membership identity, so it moves on any night the selection's membership moves; `digest_without_membership` is the same digest with that identity removed, and moves only when an archived rule changes.
 - pipeline: trade_grades ["A+", "A"], yellow_grades ["A+"], max_reads 12, reader_policy "accepted_required_v1", reader_refusal_fraction 0.25, reader_refusal_min 1, stale_tolerance_fraction 0.01, stale_sessions_max 5, min_coverage_fraction 0.5
 - plan: entry_below_pct 2.0, entry_above_pct 4.0, skip_gap_pct 8.0, entry_window_minutes 30, assumed_slippage_pct 1.0, limit_rule "stop_constrained", sizing_basis "order_limit", max_stop_pct 4.0, ideal_stop_pct 2.0, stop_risk_multiplier 0.5, gain_ceiling_pct 15.0, extension_hazard_pct 20.0, hazard_multiplier 0.5, sell_half_pct 8.0, abnormal_day_pct 10.0, gap_exit_pct 20.0, sell_half_day 3, no_progress_day 3, trail_from_day 3, final_exit_day 5, allocation_policy "combined_stages_reserved_principal_v1"
 - admission: version 1, policy "burst_route_or_dollar_expansion_v1"

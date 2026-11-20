@@ -59,7 +59,7 @@ if str(ROOT) not in sys.path:
 
 from src import schema_check  # noqa: E402  (stdlib only: the publication gate imports this module)
 
-VERSION = 3
+VERSION = 4
 FILE = "orders.json"
 MORNING_FILE = "orders-morning.json"
 POSITIONS_FILE = "positions-template.json"
@@ -72,6 +72,8 @@ MAX_SOURCE_BYTES = 48 * 1024 * 1024
 
 #: until the go-live gate says otherwise, every file here is paper only
 MODE = "paper"
+LIVE = "live"
+#: a record from before the gate (``run.go_live``) never makes the file live
 LIVE_READY_REASON = "go_live_gate_not_evaluated"
 ENTRY_TYPE = "buy_stop_limit"
 STOP_TYPE = "sell_stop"
@@ -443,10 +445,11 @@ def build(canonical_raw: bytes, picks_raw: bytes | None = None) -> dict:
         reasons.append({"scope": "night", "code": "no_tickets"})
     reasons += [{"scope": t["symbol"], "code": code} for t in tickets for code in t["reasons"]]
     allowed = all(c["status"] == PASS for c in night) and any(t["status"] == GO for t in tickets)
+    live = live_ready(data)
     budget, account = _dict(data.get("cash_budget")), _dict(data.get("account"))
     return sealed({
         "schema": "docs/operations/orders-schema.json", "version": VERSION, "kind": "orders",
-        "mode": MODE, "live_ready": {"value": False, "reasons": [LIVE_READY_REASON]},
+        "mode": LIVE if live["value"] else MODE, "live_ready": live,
         "source": {"data_sha256": hashlib.sha256(canonical_raw).hexdigest(),
                    "picks_sha256": hashlib.sha256(picks_raw).hexdigest() if picks_raw is not None else None,
                    "rules_version": binding["rules_version"], "context_sha256": binding["context_sha256"],
@@ -470,6 +473,20 @@ def build(canonical_raw: bytes, picks_raw: bytes | None = None) -> dict:
                     "blocked": sum(t["status"] == BLOCKED for t in tickets)},
         "scorecard": scorecard(data),
     })
+
+
+def live_ready(data: dict) -> dict:
+    """``run.go_live`` as the file states it: live only when the record's own
+    gate says every condition holds (``src/go_live.py``); a record without the
+    gate, or with one this file cannot read, is paper only."""
+    from src import go_live
+    block = _dict(_dict(data.get("run")).get("go_live"))
+    reasons = block.get("reasons")
+    if block.get("version") != go_live.VERSION or not isinstance(reasons, list) \
+            or not all(isinstance(r, str) for r in reasons) or not set(reasons) <= set(go_live.CRITERIA):
+        return {"value": False, "reasons": [LIVE_READY_REASON]}
+    ready = block.get("ready") is True and not reasons
+    return {"value": ready, "reasons": [] if ready else (list(reasons) or [LIVE_READY_REASON])}
 
 
 def scorecard(data: dict) -> dict:
@@ -795,6 +812,10 @@ def check(docs) -> list[str]:
     if earlier_version(orders_raw) is not None:
         if _binding(orders_raw, "data_sha256") != data_sha:
             out.append("orders.json is not bound to data.json")
+        earlier = json.loads(orders_raw)
+        if earlier.get("mode") != "paper" or _dict(earlier.get("live_ready")).get("value") is not False:
+            # no earlier version could be live: the gate arrived with this one
+            out.append("orders.json written under an earlier version is not paper")
         for name in (POSITIONS_FILE, MORNING_FILE):
             if (docs / name).exists() and \
                     _binding((docs / name).read_bytes(), "orders_sha256") != hashlib.sha256(orders_raw).hexdigest():
@@ -804,6 +825,17 @@ def check(docs) -> list[str]:
         orders = validate(orders_raw)
         if orders["source"]["data_sha256"] != data_sha:
             out.append("orders.json is not bound to data.json")
+        else:
+            data = json.loads((docs / DATA_FILE).read_bytes())
+            if orders["live_ready"] != live_ready(data):
+                # the mode follows live_ready (consistency()); live_ready follows the record's own gate
+                out.append("orders.json's live_ready is not the committed record's gate")
+            elif orders["live_ready"]["value"] is True:
+                # a live file is held to the two conditions committed files can show again
+                from src import go_live
+                session = _dict(data.get("run")).get("session")
+                if not (go_live.protocol(session if isinstance(session, str) else "")["passed"] and go_live.ablation()):
+                    out.append("orders.json is live while the committed protocol record or ablation does not hold")
     except (OSError, ValueError) as exc:
         return [f"orders.json: {exc}"]
     for name, kind in ((POSITIONS_FILE, "positions"), (MORNING_FILE, "orders_morning")):

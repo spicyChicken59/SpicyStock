@@ -9,7 +9,7 @@
    "const": "docs/operations/orders-schema.json"
   },
   "version": {
-   "const": 3
+   "const": 4
   },
   "kind": {
    "const": "orders"
@@ -29,7 +29,13 @@
     "reasons": {
      "type": "array",
      "items": {
-      "type": "string"
+      "enum": [
+       "fidelity_protocol",
+       "on_time_sessions",
+       "settled_forward_plans",
+       "ablation_report",
+       "go_live_gate_not_evaluated"
+      ]
      }
     }
    },
@@ -1030,7 +1036,7 @@
      "const": "docs/operations/orders-schema.json#/$defs/orders_morning"
     },
     "version": {
-     "const": 3
+     "const": 4
     },
     "kind": {
      "const": "orders_morning"
@@ -1266,7 +1272,7 @@
      "const": "docs/operations/orders-schema.json#/$defs/positions"
     },
     "version": {
-     "const": 3
+     "const": 4
     },
     "kind": {
      "const": "positions"

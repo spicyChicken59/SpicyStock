@@ -1234,7 +1234,8 @@ def test_the_tolerance_moves_the_status_and_no_decision(wide, claude, fake_resen
         data = plain(json.loads(json.dumps(data)))
         for key in ('app', 'rules', 'generated', 'nights'):
             data.pop(key)
-        for key in ('status', 'problems', 'input_tolerance', 'elapsed_seconds', 'published_at', 'fetch_seconds'):
+        for key in ('status', 'problems', 'input_tolerance', 'elapsed_seconds', 'published_at', 'fetch_seconds',
+                    'finish_seconds'):          # the run's finish is a wall clock, like the two beside it
             data['run'].pop(key)
         # what the reads cost is accounting, not a decision: the second run of the
         # double reads the cached prefix the first run wrote, as the API would
@@ -1242,6 +1243,8 @@ def test_the_tolerance_moves_the_status_and_no_decision(wide, claude, fake_resen
         for b in data['bursts']:
             b.pop('reader_usage', None)
         data['cover'].pop('dek')
+        # the go-live gate's strategy digest is a digest of the rules, popped above
+        data['run']['go_live']['strategy'].pop('digest')
         # observations are keyed by signal identity, which carries the rules digest
         data['observations']['signals'] = sorted(data['observations']['signals'].values(), key=json.dumps)
         return data
