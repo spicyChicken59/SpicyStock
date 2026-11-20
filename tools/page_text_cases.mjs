@@ -613,7 +613,8 @@ async function recordView({ browser, base, open, check, eq, full, shotsDir }) {
   for (const [name, mutate] of [
     ['gate-ready-with-a-reason', (g) => { g.ready = true; g.criteria.forEach((c) => { c.met = true; }); g.reasons = ['fidelity_protocol']; }],
     ['gate-ready-with-no-reasons-list', (g) => { g.ready = true; g.criteria.forEach((c) => { c.met = true; }); g.reasons = null; }],
-    ['gate-ready-with-an-unmet-criterion', (g) => { g.ready = true; g.reasons = []; g.criteria.forEach((c, i) => { c.met = i !== 1; }); }]]) {
+    ['gate-ready-with-an-unmet-criterion', (g) => { g.ready = true; g.reasons = []; g.criteria.forEach((c, i) => { c.met = i !== 1; }); }],
+    ['gate-ready-a-word-and-all-else-met', (g) => { g.ready = 'yes'; g.reasons = []; g.criteria.forEach((c) => { c.met = true; }); }]]) {
     const d = clone(full); mutate(d.run.go_live);
     const rg = routed('record-' + name, d);
     const { page, context, errors } = await open(browser, base, rg.url, NOW, 1280, { beforeLoad: rg.beforeLoad, reducedMotion: 'reduce' });

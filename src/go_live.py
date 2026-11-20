@@ -74,6 +74,8 @@ PUBLISHED_STATUSES = ("ok", "degraded")
 PROTOCOL_NAME = "knowledge/broker-fidelity-protocol.md"
 PROTOCOL_RECORD_VERSION = 1
 ABLATION_VERSION = "ablation-v1"
+#: what the on-time condition's detail adds on a publication that is not itself forward
+NOT_FORWARD_DETAIL = ": this publication was not forward"
 #: the rules a strategy digest leaves out: the night's universe membership moves every night, and
 #: the event registry (its entries, review dates and notes, and its digest) is reviewed on a calendar
 NON_STRATEGY_RULES = (("universe", "identity"), ("event_risk", "registry"), ("event_risk", "registry_sha256"))
@@ -308,12 +310,14 @@ def build(*, session: str, rules: dict, previous: dict, previous_sha256: str | N
     not_forward = not_forward_of(standing, session, is_forward)
     settled = sum(1 for r in scorecard_rows if isinstance(r, dict) and r.get("bucket") == "settled"
                   and isinstance(r.get("picked"), str) and r["picked"] >= since and r["picked"] not in not_forward)
-    held = consecutive(ledger, session)
+    # a publication that is not itself forward (a backfill, or a run made at or after the open its
+    # plans are for) is never live: its run of on-time sessions reads zero, whatever the ledger holds
+    held = consecutive(ledger, session) if is_forward else 0
     fid = protocol(session)
     criteria = [
         {"key": "fidelity_protocol", "met": fid["passed"], "have": fid["recorded_on"], "need": None, "detail": fid["detail"]},
         {"key": "on_time_sessions", "met": held >= ON_TIME_SESSIONS, "have": held, "need": ON_TIME_SESSIONS,
-         "detail": f"{held} consecutive of {ON_TIME_SESSIONS}"},
+         "detail": f"{held} consecutive of {ON_TIME_SESSIONS}" + ("" if is_forward else NOT_FORWARD_DETAIL)},
         {"key": "settled_forward_plans", "met": settled >= MIN_SETTLED_FORWARD, "have": settled,
          "need": MIN_SETTLED_FORWARD, "detail": f"{settled} settled since {since} of {MIN_SETTLED_FORWARD}"},
         {"key": "ablation_report", "met": ablation(), "have": None, "need": None,
@@ -324,7 +328,7 @@ def build(*, session: str, rules: dict, previous: dict, previous_sha256: str | N
              "reasons": [c["key"] for c in criteria if not c["met"]],
              "strategy": {"digest": digest, "since": since,
                           "newest": max(d for d in (session, newest) if d is not None),
-                          "not_forward": not_forward},
+                          "forward": is_forward, "not_forward": not_forward},
              "ledger": ledger}
     block["sentence"] = sentence(block)
     return block
@@ -359,7 +363,7 @@ def faults(data: dict) -> list[str]:
     standing = block.get("strategy")
     if not (isinstance(standing, dict) and isinstance(standing.get("digest"), str)
             and _day(standing.get("since")) is not None and _day(standing.get("newest")) is not None
-            and isinstance(standing.get("not_forward"), list)
+            and isinstance(standing.get("forward"), bool) and isinstance(standing.get("not_forward"), list)
             and all(_day(d) is not None for d in standing["not_forward"])
             and standing["not_forward"] == sorted(set(standing["not_forward"]))
             and len(standing["not_forward"]) <= NOT_FORWARD_MAX):
@@ -382,6 +386,10 @@ def faults(data: dict) -> list[str]:
     ledger = [r for r in block["ledger"] if isinstance(r, dict) and _day(r.get("session")) is not None]
     if len(ledger) != len(block["ledger"]) or _day(session) is None:
         out.append("run.go_live ledger rows are not readable")
-    elif by_key["on_time_sessions"].get("have") != consecutive(ledger, session):
+    elif by_key["on_time_sessions"].get("have") != (
+            consecutive(ledger, session) if _dict(block.get("strategy")).get("forward") is True else 0):
         out.append("run.go_live on_time_sessions is not the run its own ledger ends on before tonight")
+    if isinstance(standing, dict) and standing.get("forward") is False and _day(session) is not None \
+            and session not in (standing.get("not_forward") if isinstance(standing.get("not_forward"), list) else []):
+        out.append("run.go_live names a publication that is not forward without keeping its session")
     return out

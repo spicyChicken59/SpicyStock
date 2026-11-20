@@ -1261,6 +1261,7 @@
     "digest": "4fe97a8dc8f1ca9e645b272e543e2fa8af7d99cfccdedd58ac096dcb0343c6f5",
     "since": "2026-09-10",
     "newest": "2026-09-11",
+    "forward": true,
     "not_forward": []
    },
    "ledger": [

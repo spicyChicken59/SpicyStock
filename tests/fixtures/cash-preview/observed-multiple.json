@@ -7,7 +7,7 @@
   "previous_observation_sha256": null,
   "dry_run": false,
   "publication": {
-    "data_sha256": "faf8e8c2454ce5b3856ef3157478a61f545e7d077290937b2fd18cb6f57cdfb8",
+    "data_sha256": "9a460717f54984373ea85b90deba73a1f12e21c2475b124dc989c5681f154e5a",
     "context_sha256": "12e0ee0ad8fe1868cb52094b8d63a502add78377b97e4ffc144e842740c34669",
     "run_id": "synthetic-cash-preview-multiple",
     "rules_version": "795e33f0209f",
@@ -15,7 +15,7 @@
     "applicable_session": "2026-09-11",
     "published_at": "2026-09-10T22:30:00+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "eb2ce280d3d63135478d31efa4cbc924a61f2f8efc4fd03e60eb7c1187c3a7c4"
+    "reader_sha256": "3fadd2732df784db871c715f4bbeea57c6f2c563c90c3fc49652e671d8a27ccc"
   },
   "policy": {
     "version": 1,

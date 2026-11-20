@@ -2606,7 +2606,8 @@ conditions:
   and the event registry, so a registry review does not restart the count
   and any other archived rule does. A backfill, and a run made at or after
   the open its plans are for, are not forward: their sessions are kept in
-  `run.go_live.strategy.not_forward` and their picks never count.
+  `run.go_live.strategy.not_forward` and their picks never count. A record
+  that is not itself a forward publication never reads live.
 - **The ablation.** Its results are committed, computed under the committed
   spec they name.
 

@@ -124,6 +124,10 @@ after that open, write their picks after the fact:
 
 The retry slot's re-run of the same session the same evening is forward.
 
+A publication that is not itself forward never reads live: that night its
+`on_time_sessions` count is zero, whatever the ledger holds, and the
+condition's detail says so.
+
 **What is counted.** One for each settled ticket, as the scorecard counts
 them: a setup ticketed on more than one night is one plan a ticket. A plan that leaves the
 scorecard's window leaves the count, so the condition can go from met to

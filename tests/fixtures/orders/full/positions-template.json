@@ -1,9 +1,9 @@
 {
  "applicable_session": "2026-09-11",
- "content_sha256": "c452b061abd81d6610006cca07920f95ae407fb35e95c790251d50393e7d35bb",
+ "content_sha256": "ffe4a0f3ab7d29d52cbbe6b8d8c5aa4b597cf651663e80c2fa049ba340b47cf8",
  "kind": "positions",
  "mode": "paper",
- "orders_sha256": "acff0452958ff7a16355885ef249f895c83dc5ca5651975e6226c67d42f5936b",
+ "orders_sha256": "474502c4a84cdd8251a18a34029bf86350b4ebd615a2351d6cd90b55fd8140c5",
  "positions": [
   {
    "broker": {
