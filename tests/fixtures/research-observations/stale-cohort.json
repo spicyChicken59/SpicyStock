@@ -18,9 +18,9 @@
     "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
   },
   "cohort": {
-    "receipt_sha256": "642d5d8ef25e6a07fa8d9798d23973f11cc10367356bca156acff3b3c83915d4",
-    "bundle_sha256": "5d238871a343d7e230b76751453c3f67248d423bcafb44e5cc3a7c9bf54778f5",
-    "bundle_path": "stop-research/5d238871a343d7e230b76751453c3f67248d423bcafb44e5cc3a7c9bf54778f5.json",
+    "receipt_sha256": "18c2c67226834705dfd6a6cf1152431bc8aad992be24f18fe88d26e3334241fd",
+    "bundle_sha256": "56a6bfaa8a4ea16d4a008ce878f6e7517fb3287f2ddba97356f3c55d0c21bd84",
+    "bundle_path": "stop-research/56a6bfaa8a4ea16d4a008ce878f6e7517fb3287f2ddba97356f3c55d0c21bd84.json",
     "bundle_bytes": 8610,
     "policy_id": "anticipation_stop_width_4_to_5_v1",
     "generated_at": "2026-10-10T12:00:00+00:00",

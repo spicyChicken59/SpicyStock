@@ -557,6 +557,7 @@ def run_variant(variant: str, docs: Path) -> dict:
     # not a fact about the market
     data["run"]["elapsed_seconds"] = 0.0
     data["run"]["fetch_seconds"] = 0.0
+    data["run"]["finish_seconds"] = 0.0
     return data
 
 

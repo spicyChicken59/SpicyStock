@@ -7,7 +7,7 @@
   "previous_observation_sha256": null,
   "dry_run": false,
   "publication": {
-    "data_sha256": "e0bff3a3a98fff226195a015c874e8a36b450c208e1bd157e7297be5cc6a33f3",
+    "data_sha256": "6e4abfcc04f08adde5aa26089398ab368edae5c9e12970c2a94a83f54ccdff13",
     "context_sha256": "471af3fa8e4c79becfb2c62142eeb586036ab57e40c5f87acf550cb763fbed1d",
     "run_id": "synthetic-stop-research-outside",
     "rules_version": "795e33f0209f",
@@ -15,12 +15,12 @@
     "applicable_session": "2026-09-11",
     "published_at": "2026-09-10T22:30:00+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "a6ee639f1af54724f798aade7437bcde4982a3e43fd7978a41fa84c8d6816265"
+    "reader_sha256": "1cc2398c26ee89faf9f0ddedd6452f40131d63648ad251994b21096938e33fa0"
   },
   "cohort": {
-    "receipt_sha256": "cf849f572f930881198eb80eec76d369930ed1aea3e38c473e1fe455f646f0f0",
-    "bundle_sha256": "a40bc536c3885112ccc4f76ed3e002858093c3ffbd265f60bb72278bb9a9e220",
-    "bundle_path": "stop-research/a40bc536c3885112ccc4f76ed3e002858093c3ffbd265f60bb72278bb9a9e220.json",
+    "receipt_sha256": "936c7536ced79e3e47145f5c62e4e74c2f8029f3f7360bc62d64ac1d686c06ab",
+    "bundle_sha256": "899983c6f2abae61d3c8b99cf524f823e7f00c042471985f979651749e0ee30c",
+    "bundle_path": "stop-research/899983c6f2abae61d3c8b99cf524f823e7f00c042471985f979651749e0ee30c.json",
     "bundle_bytes": 2258,
     "policy_id": "anticipation_stop_width_4_to_5_v1",
     "generated_at": "2026-10-10T12:00:00+00:00",

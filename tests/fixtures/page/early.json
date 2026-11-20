@@ -352,6 +352,7 @@
   "run_id": null,
   "elapsed_seconds": 0.0,
   "fetch_seconds": 0.0,
+  "finish_seconds": 0.0,
   "rules_version": "v2.0",
   "type": "evening",
   "timing": {
@@ -1188,7 +1189,9 @@
    ],
    "strategy": {
     "digest": "4fe97a8dc8f1ca9e645b272e543e2fa8af7d99cfccdedd58ac096dcb0343c6f5",
-    "since": "2024-11-27"
+    "since": "2024-11-27",
+    "newest": "2024-11-27",
+    "not_forward": []
    },
    "ledger": [],
    "sentence": "Paper only: fidelity protocol not met (not recorded as passed by the owner); on time sessions not met (0 consecutive of 10); settled forward plans not met (0 settled since 2024-11-27 of 20)."

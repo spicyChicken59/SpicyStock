@@ -609,6 +609,20 @@ async function recordView({ browser, base, open, check, eq, full, shotsDir }) {
       eq('record gate-truthy: no page errors', errors, []);
     } finally { await context.close(); }
   }
+  // live as orders.json reads the block: a ready gate that still names a reason, or an unmet criterion, is paper
+  for (const [name, mutate] of [
+    ['gate-ready-with-a-reason', (g) => { g.ready = true; g.criteria.forEach((c) => { c.met = true; }); g.reasons = ['fidelity_protocol']; }],
+    ['gate-ready-with-no-reasons-list', (g) => { g.ready = true; g.criteria.forEach((c) => { c.met = true; }); g.reasons = null; }],
+    ['gate-ready-with-an-unmet-criterion', (g) => { g.ready = true; g.reasons = []; g.criteria.forEach((c, i) => { c.met = i !== 1; }); }]]) {
+    const d = clone(full); mutate(d.run.go_live);
+    const rg = routed('record-' + name, d);
+    const { page, context, errors } = await open(browser, base, rg.url, NOW, 1280, { beforeLoad: rg.beforeLoad, reducedMotion: 'reduce' });
+    try {
+      await toView(page, 'record');
+      eq(`record ${name}: the gate is paper`, await page.evaluate(() => { const n = document.querySelector('#record-card [data-go-live]'); return n ? n.getAttribute('data-go-live') : null; }), 'paper');
+      eq(`record ${name}: no page errors`, errors, []);
+    } finally { await context.close(); }
+  }
   // a record from before the minute-bar rule names no minute bars
   const older = clone(full); delete older.rules.record.intraday_fill;
   const r = routed('record-older', older);

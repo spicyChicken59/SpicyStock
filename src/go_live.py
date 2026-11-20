@@ -1,32 +1,40 @@
 """The go-live gate (``run.go_live``): whether an execution agent may treat
 ``orders.json`` as live rather than paper.
 
-It is true only when all four criteria hold, each read from committed bytes:
+It is true only when all four criteria hold:
 
 * ``fidelity_protocol``: the owner has recorded the one-sitting Fidelity
-  protocol (``knowledge/broker-fidelity-protocol.md``) as passed in
-  ``knowledge/go-live/fidelity-protocol.json``. Nothing here can pass it.
+  protocol (``PROTOCOL_NAME``) as passed in
+  ``knowledge/go-live/fidelity-protocol.json``, dated no later than
+  tonight's session. Nothing here can pass it.
 * ``on_time_sessions``: the ``ON_TIME_SESSIONS`` XNYS sessions up to the one
   before tonight's, consecutive and with none missing before tonight, were
-  each published by ``PUBLISH_BY_ET`` on the session's own date (measured at
-  the run's finish: its start clock plus its own elapsed seconds, the record
-  installed then and committed a few minutes later), started automatically (a
-  scheduled run, or the external dispatcher's ``only_if_unpublished``
-  dispatch; a hand-run publish does not count) and had a morning check bound
-  to that publication that ran (``MORNING_RAN``, not a rehearsal) inside its
-  collection window and by ``MORNING_DUE_CT`` on the session its plans were
-  for. The ledger closes a session the evening after, when its morning file
-  exists, and starts with the first record that archives how its run was
-  started (``run.trigger``).
+  each published by ``PUBLISH_BY_ET`` on the session's own date, started
+  automatically and checked by a morning check that ran.
+  The publication clock is the run's finish: its start clock plus
+  ``run.finish_seconds``, stamped at the record's final write after delivery
+  (``pipeline.restamp()``); the commit follows within seconds.
+  Automatic is a scheduled run, or the external dispatcher's
+  ``only_if_unpublished`` dispatch; a hand-run publish does not count.
+  The morning check is the newest receipt on main the evening after: bound
+  to that publication, a status of ``MORNING_RAN``, not a rehearsal, inside
+  its collection window and by ``MORNING_DUE_CT`` on the session its plans
+  were for. How that check was started is not read.
+  The ledger closes a session the evening after, from a real publication
+  only (``PUBLISHED_STATUSES``, not a rehearsal). Its first row is the last
+  record made before ``run.trigger``, which is not counted.
 * ``settled_forward_plans``: at least ``MIN_SETTLED_FORWARD`` model plans
   settled in the scorecard's window, each picked on or after the session
-  from which the strategy's rules have stood unchanged (the rules digest
-  without ``NON_STRATEGY_RULES``: the nightly universe membership and the
-  event registry's entries and review dates, which are data the run reads,
-  not strategy rules). A change first seen on a backfill of an older session
-  stands from the session after the newest one already published, so a
-  backfill's picks are never forward plans.
-* ``ablation_report``: the pre-registered ablation's results are committed.
+  from which the archived rules have stood unchanged, and each from a
+  forward publication. The digest leaves out only ``NON_STRATEGY_RULES``
+  (the nightly universe membership and the event registry), so any other
+  archived rule restarts the count. A publication is forward when it is of a
+  session no older than the newest already published and was made before
+  the open its plans are for; a backfill's session, or a late run's, is kept
+  in ``strategy.not_forward`` and its picks never count. The count is the
+  night's own walk of the pick ledger over that night's bars.
+* ``ablation_report``: the pre-registered ablation's results are committed,
+  under the committed spec they name.
 
 Until it is true, ``orders.json`` is paper only. It recommends nothing and
 places nothing; it says whether the owner's own conditions for trusting the
@@ -56,6 +64,16 @@ MORNING_DUE_CT = "08:45"
 MIN_SETTLED_FORWARD = 20
 #: the ledger keeps this many closed sessions
 LEDGER_MAX = 30
+#: the sessions kept whose publication was not forward (a backfill, or a run at or after the open
+#: its plans were for): more than the scorecard's window, so no row it can still read is forgotten
+NOT_FORWARD_MAX = 120
+#: a record counts as a publication under the evening guard's own definition: not a rehearsal,
+#: and a status the guard reads as published
+PUBLISHED_STATUSES = ("ok", "degraded")
+#: the protocol the owner's record must name, and the record's own version
+PROTOCOL_NAME = "knowledge/broker-fidelity-protocol.md"
+PROTOCOL_RECORD_VERSION = 1
+ABLATION_VERSION = "ablation-v1"
 #: the rules a strategy digest leaves out: the night's universe membership moves every night, and
 #: the event registry (its entries, review dates and notes, and its digest) is reviewed on a calendar
 NON_STRATEGY_RULES = (("universe", "identity"), ("event_risk", "registry"), ("event_risk", "registry_sha256"))
@@ -134,9 +152,11 @@ def close_session(previous: dict, previous_sha256: str | None, morning: dict | N
     session, published = run.get("session"), _instant(run.get("published_at"))
     if _day(session) is None or previous.get("fixture"):
         return None
+    if run.get("dry_run") is not False or run.get("status") not in PUBLISHED_STATUSES:
+        return None                                 # a rehearsal, or a night that published nothing new
     from src import freshness
     on_time = None
-    elapsed = run.get("elapsed_seconds")
+    elapsed = run.get("finish_seconds")
     if published is not None and isinstance(elapsed, (int, float)) and not isinstance(elapsed, bool) and elapsed >= 0:
         try:
             local = (published + timedelta(seconds=elapsed)).astimezone(NEW_YORK)
@@ -193,59 +213,103 @@ def consecutive(ledger: list[dict], session: str | None = None) -> int:
     return n
 
 
-def first_forward_session(session: str, published: str | None) -> str:
-    """The session from which a change of the strategy's rules stands: tonight's,
-    or, when tonight is a backfill of a session older than the newest one
-    already published, the session after that one, so a backfill's picks (made
-    after the fact) never count as forward plans."""
+def newest_published(previous: dict, standing: dict) -> str | None:
+    """The newest session any record in the chain has published: the record on
+    disk's own, or the newest its gate remembers (after a backfill the record
+    on disk is the older one)."""
+    days = [d for d in (_dict(previous.get("run")).get("session"), standing.get("newest")) if _day(d) is not None]
+    return max(days) if days else None
+
+
+def forward(session: str, newest: str | None, published_at: str | None, opens_at: str | None) -> bool:
+    """Whether tonight's publication is forward: of a session no older than the
+    newest already published, and made before the open its plans are for. A
+    backfill, and a run at or after that open, writes picks after the fact;
+    a run whose own clock or open cannot be read is not shown to be forward."""
+    made, opens = _instant(published_at), _instant(opens_at)
+    if made is None or opens is None or made >= opens:
+        return False
+    return newest is None or session >= newest
+
+
+def first_forward_session(session: str, newest: str | None, is_forward: bool) -> str:
+    """The session from which a change of the strategy's rules stands: tonight's
+    when tonight's publication is forward, else the session after the newest
+    one published (tonight's included), so picks written after the fact never
+    count as forward plans."""
     from src import sessions
-    newest = _day(published)
-    if newest is not None and published >= session:
-        return sessions.next_sessions(newest, 1)[0].isoformat()
-    return session
+    if is_forward:
+        return session
+    last = max(d for d in (session, newest) if _day(d) is not None)
+    return sessions.next_sessions(date.fromisoformat(last), 1)[0].isoformat()
 
 
-def protocol() -> dict:
-    """The owner's record of the Fidelity protocol, or an unpassed one."""
+def protocol(session: str | None = None) -> dict:
+    """The owner's record of the Fidelity protocol, or an unpassed one. It
+    passes only as this record's own version, naming the protocol, recorded by
+    the owner on a date that is not after tonight's session."""
     try:
         value = json.loads(PROTOCOL_FILE.read_text())
-    except (OSError, ValueError):
+    except (OSError, ValueError, RecursionError):
         value = None
     if not isinstance(value, dict):
         return {"passed": False, "recorded_on": None, "detail": "no readable record of the protocol"}
-    try:
-        recorded = date.fromisoformat(value["recorded_on"]).isoformat() if isinstance(value.get("recorded_on"), str) else None
-    except ValueError:
-        recorded = None
-    passed = value.get("passed") is True and recorded is not None and value.get("recorded_by") == "owner"
-    return {"passed": passed, "recorded_on": recorded,
+    recorded = _day(value.get("recorded_on"))
+    tonight = _day(session)
+    passed = (value.get("passed") is True and value.get("recorded_by") == "owner"
+              and value.get("version") == PROTOCOL_RECORD_VERSION and type(value.get("version")) is int
+              and value.get("protocol") == PROTOCOL_NAME
+              and recorded is not None and (session is None or (tonight is not None and recorded <= tonight)))
+    return {"passed": passed, "recorded_on": recorded.isoformat() if recorded else None,
             "detail": "recorded as passed by the owner" if passed else "not recorded as passed by the owner"}
 
 
 def ablation() -> bool:
+    """The pre-registered ablation is committed: its results name this
+    version, carry variants, and name a spec whose committed bytes are the
+    ones they were computed under."""
     try:
         value = json.loads(ABLATION_FILE.read_text())
-    except (OSError, ValueError):
+        if not isinstance(value, dict) or value.get("version") != ABLATION_VERSION:
+            return False
+        spec = value.get("spec")
+        if not isinstance(spec, str) or not isinstance(value.get("variants"), dict) or not value["variants"]:
+            return False
+        path = (ROOT / spec).resolve()
+        if ROOT not in path.parents:
+            return False
+        return hashlib.sha256(path.read_bytes()).hexdigest() == value.get("spec_sha256")
+    except (OSError, ValueError, RecursionError):
         return False
-    return isinstance(value, dict) and value.get("version") == "ablation-v1"
+
+
+def not_forward_of(standing: dict, session: str, is_forward: bool) -> list[str]:
+    kept = standing.get("not_forward")
+    days = {d for d in (kept if isinstance(kept, list) else []) if _day(d) is not None}
+    if not is_forward:
+        days.add(session)
+    return sorted(days)[-NOT_FORWARD_MAX:]
 
 
 def build(*, session: str, rules: dict, previous: dict, previous_sha256: str | None, morning: dict | None,
-          scorecard_rows: list[dict]) -> dict:
+          scorecard_rows: list[dict], published_at: str | None = None, opens_at: str | None = None) -> dict:
     """``run.go_live`` for one evening."""
     previous_block = _dict(_dict(previous.get("run")).get("go_live"))
     entry = None if _dict(previous.get("run")).get("session") == session else close_session(previous, previous_sha256, morning)
     ledger = ledger_of(previous_block, entry)
     digest = strategy_digest(rules)
     standing = _dict(previous_block.get("strategy"))
-    if standing.get("digest") == digest and isinstance(standing.get("since"), str):
+    newest = newest_published(previous, standing)
+    is_forward = forward(session, newest, published_at, opens_at)
+    if standing.get("digest") == digest and _day(standing.get("since")) is not None:
         since = standing["since"]
     else:
-        since = first_forward_session(session, _dict(previous.get("run")).get("session"))
+        since = first_forward_session(session, newest, is_forward)
+    not_forward = not_forward_of(standing, session, is_forward)
     settled = sum(1 for r in scorecard_rows if isinstance(r, dict) and r.get("bucket") == "settled"
-                  and isinstance(r.get("picked"), str) and r["picked"] >= since)
+                  and isinstance(r.get("picked"), str) and r["picked"] >= since and r["picked"] not in not_forward)
     held = consecutive(ledger, session)
-    fid = protocol()
+    fid = protocol(session)
     criteria = [
         {"key": "fidelity_protocol", "met": fid["passed"], "have": fid["recorded_on"], "need": None, "detail": fid["detail"]},
         {"key": "on_time_sessions", "met": held >= ON_TIME_SESSIONS, "have": held, "need": ON_TIME_SESSIONS,
@@ -258,7 +322,10 @@ def build(*, session: str, rules: dict, previous: dict, previous_sha256: str | N
     ready = all(c["met"] for c in criteria)
     block = {"version": VERSION, "ready": ready, "criteria": criteria,
              "reasons": [c["key"] for c in criteria if not c["met"]],
-             "strategy": {"digest": digest, "since": since}, "ledger": ledger}
+             "strategy": {"digest": digest, "since": since,
+                          "newest": max(d for d in (session, newest) if d is not None),
+                          "not_forward": not_forward},
+             "ledger": ledger}
     block["sentence"] = sentence(block)
     return block
 
@@ -289,6 +356,16 @@ def faults(data: dict) -> list[str]:
     if not isinstance(block.get("ledger"), list) or not isinstance(block.get("sentence"), str):
         out.append("run.go_live ledger or sentence is not readable")
         return out
+    standing = block.get("strategy")
+    if not (isinstance(standing, dict) and isinstance(standing.get("digest"), str)
+            and _day(standing.get("since")) is not None and _day(standing.get("newest")) is not None
+            and isinstance(standing.get("not_forward"), list)
+            and all(_day(d) is not None for d in standing["not_forward"])
+            and standing["not_forward"] == sorted(set(standing["not_forward"]))
+            and len(standing["not_forward"]) <= NOT_FORWARD_MAX):
+        out.append("run.go_live strategy is not readable")
+    elif standing["digest"] != strategy_digest(_dict(data.get("rules"))):
+        out.append("run.go_live strategy digest is not the record's own rules'")
     by_key = {c["key"]: c for c in crit}
     for key, need in (("on_time_sessions", _dict(archived).get("on_time_sessions")),
                       ("settled_forward_plans", _dict(archived).get("min_settled_forward"))):
@@ -296,6 +373,11 @@ def faults(data: dict) -> list[str]:
         have = c.get("have")
         if not (type(have) is int and type(need) is int and c.get("need") == need) or c.get("met") is not (have >= need):
             out.append(f"run.go_live {key} is not its count against the archived need")
+    # every forward plan is one of the scorecard's settled plans: the count is the night's own walk of
+    # the pick ledger over that night's bars, which the record summarises and does not carry
+    total, forward_have = _dict(data.get("scorecard")).get("settled"), by_key["settled_forward_plans"].get("have")
+    if type(total) is int and type(forward_have) is int and forward_have > total:
+        out.append("run.go_live settled_forward_plans is more than the scorecard's settled plans")
     session = _dict(data.get("run")).get("session")
     ledger = [r for r in block["ledger"] if isinstance(r, dict) and _day(r.get("session")) is not None]
     if len(ledger) != len(block["ledger"]) or _day(session) is None:

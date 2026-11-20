@@ -73,7 +73,7 @@ RETRY_CRON = "16 0 * * 2-6"
 #: between), then drops it: two attempts a batch is the fetch's own bound
 BARS_ATTEMPTS_PER_BATCH = 2
 #: the clock fields a record carries that are wall-clock facts, not market facts
-CLOCK_FIELDS = ("elapsed_seconds", "fetch_seconds")
+CLOCK_FIELDS = ("elapsed_seconds", "fetch_seconds", "finish_seconds")
 #: how the empty balance and a dead transport announce themselves; the first
 #: text is what the provider answered on 6 October 2026 (grader.FATAL_CREDIT_MARKERS)
 CREDIT_ERROR = ("Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', "

@@ -812,6 +812,10 @@ def check(docs) -> list[str]:
     if earlier_version(orders_raw) is not None:
         if _binding(orders_raw, "data_sha256") != data_sha:
             out.append("orders.json is not bound to data.json")
+        earlier = json.loads(orders_raw)
+        if earlier.get("mode") != "paper" or _dict(earlier.get("live_ready")).get("value") is not False:
+            # no earlier version could be live: the gate arrived with this one
+            out.append("orders.json written under an earlier version is not paper")
         for name in (POSITIONS_FILE, MORNING_FILE):
             if (docs / name).exists() and \
                     _binding((docs / name).read_bytes(), "orders_sha256") != hashlib.sha256(orders_raw).hexdigest():
@@ -821,9 +825,17 @@ def check(docs) -> list[str]:
         orders = validate(orders_raw)
         if orders["source"]["data_sha256"] != data_sha:
             out.append("orders.json is not bound to data.json")
-        elif orders["live_ready"] != live_ready(json.loads((docs / DATA_FILE).read_bytes())):
-            # the mode follows live_ready (consistency()); live_ready follows the record's own gate
-            out.append("orders.json's live_ready is not the committed record's gate")
+        else:
+            data = json.loads((docs / DATA_FILE).read_bytes())
+            if orders["live_ready"] != live_ready(data):
+                # the mode follows live_ready (consistency()); live_ready follows the record's own gate
+                out.append("orders.json's live_ready is not the committed record's gate")
+            elif orders["live_ready"]["value"] is True:
+                # a live file is held to the two conditions committed files can show again
+                from src import go_live
+                session = _dict(data.get("run")).get("session")
+                if not (go_live.protocol(session if isinstance(session, str) else "")["passed"] and go_live.ablation()):
+                    out.append("orders.json is live while the committed protocol record or ablation does not hold")
     except (OSError, ValueError) as exc:
         return [f"orders.json: {exc}"]
     for name, kind in ((POSITIONS_FILE, "positions"), (MORNING_FILE, "orders_morning")):

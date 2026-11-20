@@ -25,9 +25,25 @@ def page(name: str) -> dict:
     return json.loads((PAGE / f"{name}.json").read_text())
 
 
+def record(name: str) -> dict:
+    """The fixture as the pipeline's record: without the label report.validate() refuses."""
+    data = page(name)
+    data.pop("fixture", None)
+    return data
+
+
+def owner_record(**changes) -> dict:
+    """The owner's record of a passed sitting, as the committed file's shape asks for it."""
+    return {"version": 1, "protocol": "knowledge/broker-fidelity-protocol.md", "passed": True,
+            "recorded_on": "2026-11-18", "recorded_by": "owner", "note": "", **changes}
+
+
 def previous_record(session="2026-11-17", published="2026-11-17T22:20:00+00:00", event="schedule",
-                    flag=None, applicable="2026-11-18", elapsed=180.0, opens="14:30:00+00:00") -> dict:
-    return {"run": {"session": session, "published_at": published, "elapsed_seconds": elapsed,
+                    flag=None, applicable="2026-11-18", elapsed=180.0, opens="14:30:00+00:00",
+                    dry_run=False, status="ok") -> dict:
+    # elapsed is the run's finish: seconds from its start to the record's final write
+    return {"run": {"session": session, "published_at": published, "finish_seconds": elapsed,
+                    "elapsed_seconds": 0.0, "dry_run": dry_run, "status": status,
                     "trigger": {"event": event, "only_if_unpublished": flag},
                     "timing": {"applicable_session": applicable, "opens_at": f"{applicable}T{opens}",
                                "cutoff_at": f"{applicable}T15:00:00+00:00" if opens.startswith("14") else f"{applicable}T14:00:00+00:00"}}}
@@ -117,10 +133,18 @@ def test_the_ledger_replaces_a_session_closed_twice_and_keeps_the_newest():
 
 
 # ---------------------------------------------------------- the conditions --
-def build(session="2026-11-18", previous=None, rows=(), rules=None, morning=None, sha=SHA, **monkey):
+def evening_clock(session: str) -> dict:
+    """An evening run's own clock: started 5:20 PM ET on its session, its plans for the next one."""
+    from src import sessions
+    applicable = sessions.next_sessions(date.fromisoformat(session), 1)[0].isoformat()
+    return {"published_at": f"{session}T22:20:00+00:00", "opens_at": f"{applicable}T14:30:00+00:00"}
+
+
+def build(session="2026-11-18", previous=None, rows=(), rules=None, morning=None, sha=SHA, **clock):
     return gl.build(session=session, rules=rules or {"plan": {"x": 1}, "universe": {"identity": "u1"}},
                     previous=previous if previous is not None else previous_record(), previous_sha256=sha,
-                    morning=morning if morning is not None else morning_for(SHA), scorecard_rows=list(rows))
+                    morning=morning if morning is not None else morning_for(SHA), scorecard_rows=list(rows),
+                    **{**evening_clock(session), **clock})
 
 
 def test_the_gate_is_paper_until_every_condition_holds(monkeypatch, tmp_path):
@@ -129,7 +153,7 @@ def test_the_gate_is_paper_until_every_condition_holds(monkeypatch, tmp_path):
     assert {c["key"]: c["met"] for c in block["criteria"]}["ablation_report"] is True
     assert block["sentence"].startswith("Paper only: fidelity protocol not met")
     passed = tmp_path / "protocol.json"
-    passed.write_text(json.dumps({"passed": True, "recorded_on": "2026-11-20", "recorded_by": "owner"}))
+    passed.write_text(json.dumps(owner_record()))
     monkeypatch.setattr(gl, "PROTOCOL_FILE", passed)
     ledger = [counted(d) for d in ("2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06", "2026-11-09",
                                    "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-16")]
@@ -154,16 +178,30 @@ def test_the_gate_is_paper_until_every_condition_holds(monkeypatch, tmp_path):
     assert next(c for c in held["criteria"] if c["key"] == "settled_forward_plans")["have"] == gl.MIN_SETTLED_FORWARD - 1
 
 
-@pytest.mark.parametrize("value", [
-    {"passed": True, "recorded_on": "2026-11-20", "recorded_by": "someone"},
-    {"passed": True, "recorded_on": None, "recorded_by": "owner"},
-    {"passed": "yes", "recorded_on": "2026-11-20", "recorded_by": "owner"},
+@pytest.mark.parametrize("change", [
+    {"recorded_by": "someone"},
+    {"recorded_on": None},
+    {"recorded_on": "the 18th"},
+    {"recorded_on": "2026-11-19"},                  # dated after tonight's session
+    {"passed": "yes"},
+    {"version": 2}, {"version": True}, {"version": 1.0},
+    {"protocol": "knowledge/another-protocol.md"},
 ])
-def test_only_the_owners_dated_record_passes_the_protocol(monkeypatch, tmp_path, value):
+def test_only_the_owners_dated_record_of_this_protocol_passes(monkeypatch, tmp_path, change):
     path = tmp_path / "p.json"
-    path.write_text(json.dumps(value))
     monkeypatch.setattr(gl, "PROTOCOL_FILE", path)
-    assert gl.protocol()["passed"] is False
+    path.write_text(json.dumps(owner_record()))
+    assert gl.protocol("2026-11-18") == {"passed": True, "recorded_on": "2026-11-18",
+                                         "detail": "recorded as passed by the owner"}
+    path.write_text(json.dumps(owner_record(**change)))
+    assert gl.protocol("2026-11-18")["passed"] is False
+    assert gl.protocol("tonight")["passed"] is False            # a session that is no date bounds nothing
+
+
+def test_the_owners_record_is_held_to_the_committed_files_own_words():
+    committed = json.loads((ROOT / "knowledge" / "go-live" / "fidelity-protocol.json").read_text())
+    assert committed["version"] == gl.PROTOCOL_RECORD_VERSION and committed["protocol"] == gl.PROTOCOL_NAME
+    assert (ROOT / gl.PROTOCOL_NAME).is_file()
 
 
 def test_the_committed_protocol_record_names_nothing_private_and_the_suite_reads_a_pinned_copy():
@@ -219,8 +257,9 @@ def test_the_morning_due_time_is_the_service_watchs():
 
 # --------------------------------------------------- record, orders, page --
 def test_the_evening_writes_the_block_and_the_validator_holds_it():
-    data = page("full")
+    data = record("full")
     block = data["run"]["go_live"]
+    report.validate(data)                                   # as the pipeline wrote it, the record validates
     assert data["rules"]["go_live"]["on_time_sessions"] == gl.ON_TIME_SESSIONS and gl.faults(data) == []
     assert block["ready"] is False and block["reasons"] == ["fidelity_protocol", "on_time_sessions", "settled_forward_plans"]
     for change, words in ((lambda d: d["run"].pop("go_live"), "missing"),
@@ -230,7 +269,7 @@ def test_the_evening_writes_the_block_and_the_validator_holds_it():
         forged = copy.deepcopy(data)
         change(forged)
         assert any(words in f for f in gl.faults(forged)), words
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="run.go_live"):
             report.validate(forged)
     older = copy.deepcopy(data)
     del older["rules"]["go_live"]
@@ -360,9 +399,11 @@ def test_a_rule_change_first_seen_on_a_backfill_stands_from_after_the_newest_pub
     assert next(c for c in backfill["criteria"] if c["key"] == "settled_forward_plans")["have"] == 1
     forward = build(session="2026-11-18", previous=prior, rows=rows, rules={"plan": {"x": 2}})
     assert forward["strategy"]["since"] == "2026-11-18"
-    assert gl.first_forward_session("2026-11-18", "2026-11-17") == "2026-11-18"
-    assert gl.first_forward_session("2026-11-17", "2026-11-17") == "2026-11-18"     # a revision is not forward
-    assert gl.first_forward_session("2026-11-18", None) == "2026-11-18"
+    assert gl.first_forward_session("2026-11-18", "2026-11-17", True) == "2026-11-18"
+    assert gl.first_forward_session("2026-11-17", "2026-11-17", False) == "2026-11-18"     # a late revision is not forward
+    assert gl.first_forward_session("2026-11-06", "2026-11-17", False) == "2026-11-18"
+    assert gl.first_forward_session("2026-11-18", None, True) == "2026-11-18"
+    assert gl.first_forward_session("2026-11-18", None, False) == "2026-11-19"
 
 
 @pytest.mark.parametrize("raw", ["[]", '"passed"', "3", '{"passed": true, "recorded_on": "a date", "recorded_by": "owner"}'])
@@ -520,7 +561,8 @@ def test_the_run_never_raises_over_a_ledger_or_a_session_it_cannot_read():
     assert gl.consecutive(rows, "tonight") == 0
     assert gl.consecutive(rows + [{"session": "soon", "counted": True}]) == 0
     assert gl.consecutive([{"session": "2026-11-16", "counted": "yes"}]) == 0      # counted is a bool
-    assert gl.first_forward_session("2026-11-18", "soon") == "2026-11-18"
+    assert gl.newest_published({"run": {"session": "soon"}}, {"newest": 5}) is None
+    assert gl.newest_published({"run": {"session": "2026-11-17"}}, {"newest": "soon"}) == "2026-11-17"
     block = build(previous={"run": {"session": "soon", "go_live": {"ledger": [{"session": "x", "counted": True}],
                                                                     "strategy": "standing"}}})
     assert block["ledger"] == [] and block["strategy"]["since"] == "2026-11-18"
@@ -565,13 +607,14 @@ def _gate(data):
     ("row date", lambda b, c: b["ledger"].append({"session": "soon", "counted": True}), "ledger rows are not readable"),
 ])
 def test_the_validator_names_each_forged_part_of_the_gate(name, change, words):
-    data = page("next")                                       # its ledger has a row
+    data = record("next")                                     # its ledger has a row
     assert gl.faults(data) == [] and data["run"]["go_live"]["ledger"]
+    report.validate(data)
     forged = copy.deepcopy(data)
     change(*_gate(forged))
     found = gl.faults(forged)
     assert any(f == "run.go_live " + words for f in found), (name, found)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="run.go_live " + words):
         report.validate(forged)
 
 
@@ -673,3 +716,297 @@ def test_the_evening_records_how_it_was_started_and_the_next_night_closes_it(mar
     assert (row["session"], row["automatic"], row["on_time"]) == (first["run"]["session"], True, True)
     assert row["morning_on_time"] is False and row["counted"] is False           # no morning file was written
     assert gl.faults(second) == []
+    # both nights were forward: made the evening of their session, before the next open
+    assert first["run"]["go_live"]["strategy"] == {**first["run"]["go_live"]["strategy"], "since": "2026-09-10",
+                                                   "newest": "2026-09-10", "not_forward": []}
+    assert second["run"]["go_live"]["strategy"] == {**second["run"]["go_live"]["strategy"], "since": "2026-09-10",
+                                                    "newest": "2026-09-11", "not_forward": []}
+
+
+# ------------------------------------------- the third review's findings, held --
+def test_the_finish_is_the_final_write_and_not_the_scans_own_clock():
+    # the scan's clock says seven sharp; the record's final write came four minutes later
+    prev = previous_record(published="2026-11-17T23:57:00+00:00", elapsed=240.0)
+    prev["run"]["elapsed_seconds"] = 180.0
+    entry = gl.close_session(prev, SHA, morning_for(SHA))
+    assert entry["on_time"] is False and entry["counted"] is False
+    # a record with no finish stamped (first installed, its restamp refused) is not shown on time
+    del prev["run"]["finish_seconds"]
+    assert gl.close_session(prev, SHA, morning_for(SHA))["on_time"] is None
+
+
+def test_the_evening_stamps_its_finish_at_the_records_final_write(market, claude, fake_resend, tmp_path, monkeypatch):  # noqa: F811
+    from datetime import datetime, timezone
+    from types import SimpleNamespace
+    from src import pipeline
+    clock = {"t": 1000.0}
+    monkeypatch.setattr(pipeline, "time", SimpleNamespace(monotonic=lambda: clock["t"]))
+    install = pipeline.provenance.publish_bundle
+    first_installed = {}
+
+    def slow_install(data, *args, **kwargs):
+        out = install(data, *args, **kwargs)
+        first_installed["finish"] = json.loads((tmp_path / "docs" / "data.json").read_text())["run"]["finish_seconds"]
+        clock["t"] += 240.0                                   # the install, the mail and the restamp take four minutes
+        return out
+    monkeypatch.setattr(pipeline.provenance, "publish_bundle", slow_install)
+    monkeypatch.setenv("SCAN_TRIGGER_EVENT", "schedule")
+    # started 6:57 PM ET: the scan's own clock stops inside seven, the final write lands after it
+    rep, first, docs = evening(tmp_path, market, now=datetime(2026, 9, 10, 22, 57, tzinfo=timezone.utc))
+    assert rep.exit_code() == 0, rep.problems
+    assert first_installed == {"finish": None}                # the record first installed carries no finish
+    assert first["run"]["elapsed_seconds"] == 0.0 and first["run"]["finish_seconds"] == 240.0
+    rep, second, docs = evening(tmp_path, market, now=datetime(2026, 9, 11, 22, 30, tzinfo=timezone.utc))
+    assert rep.exit_code() == 0, rep.problems
+    row = second["run"]["go_live"]["ledger"][-1]
+    assert (row["session"], row["on_time"], row["counted"]) == ("2026-09-10", False, False)
+
+
+@pytest.mark.parametrize("change", [{"dry_run": True}, {"dry_run": None}, {"status": "failed"}, {"status": "closed"},
+                                    {"status": None}])
+def test_a_rehearsal_or_a_night_that_published_nothing_new_closes_no_session(change):
+    assert gl.close_session(previous_record(**change), SHA, morning_for(SHA)) is None
+    assert build(previous=previous_record(**change))["ledger"] == []
+    for status in gl.PUBLISHED_STATUSES:
+        assert gl.close_session(previous_record(status=status), SHA, morning_for(SHA))["counted"] is True
+    guard = (ROOT / ".github" / "workflows" / "evening.yml").read_text()
+    # the evening guard's own definition of an already-published session
+    assert all(f'"{status}"' in guard or f"'{status}'" in guard for status in gl.PUBLISHED_STATUSES)
+
+
+OPEN, BEFORE, AFTER = "2026-11-19T14:30:00+00:00", "2026-11-18T22:20:00+00:00", "2026-11-19T14:30:00+00:00"
+
+
+@pytest.mark.parametrize("session, newest, made, opens, want", [
+    ("2026-11-18", "2026-11-17", BEFORE, OPEN, True),       # tonight's session, before the open its plans are for
+    ("2026-11-18", "2026-11-18", BEFORE, OPEN, True),       # the retry slot's re-run of the same session
+    ("2026-11-18", None, BEFORE, OPEN, True),               # the first record of a chain
+    ("2026-11-06", "2026-11-17", BEFORE, OPEN, False),      # a backfill of an older session
+    ("2026-11-18", "2026-11-17", AFTER, OPEN, False),       # made at the open: after the fact
+    ("2026-11-18", "2026-11-17", None, OPEN, False),        # a clock it cannot read
+    ("2026-11-18", "2026-11-17", BEFORE, None, False),
+    ("2026-11-18", "2026-11-17", BEFORE, "soon", False),
+])
+def test_a_publication_is_forward_only_of_a_new_session_before_its_open(session, newest, made, opens, want):
+    assert gl.forward(session, newest, made, opens) is want
+
+
+def settled_have(block):
+    return next(c for c in block["criteria"] if c["key"] == "settled_forward_plans")["have"]
+
+
+def chained(block, session):
+    """The record a night leaves on disk, as the next night reads it."""
+    return {"run": {**previous_record(session=session)["run"], "go_live": block}}
+
+
+def test_a_backfills_picks_are_never_forward_plans_whatever_the_rules_did():
+    rules = {"plan": {"x": 1}, "universe": {"identity": "u1"}}
+    prior = prior_with([], since="2026-10-01", session="2026-11-17", digest_rules=rules)
+    rows = [{"bucket": "settled", "picked": d} for d in ("2026-11-06", "2026-11-10", "2026-11-17", "2026-11-18")]
+    # a hand backfill of 6 November, made days later under unchanged rules
+    backfill = build(session="2026-11-06", previous=prior, rows=rows, rules=rules,
+                     published_at="2026-11-18T16:00:00+00:00", opens_at="2026-11-09T14:30:00+00:00")
+    assert backfill["strategy"] == {"digest": gl.strategy_digest(rules), "since": "2026-10-01",
+                                    "newest": "2026-11-17", "not_forward": ["2026-11-06"]}
+    assert settled_have(backfill) == 3                        # every row but the backfill's own pick
+    # the next evening reads the backfill's record on disk and still knows the newest session
+    after = build(session="2026-11-18", previous=chained(backfill, "2026-11-06"), rows=rows, rules=rules)
+    assert after["strategy"]["newest"] == "2026-11-18" and after["strategy"]["not_forward"] == ["2026-11-06"]
+    assert after["strategy"]["since"] == "2026-10-01" and settled_have(after) == 3
+    # a rule change first seen on a second backfill stands from after the newest session, not the backfill's own
+    second = build(session="2026-11-10", previous=chained(backfill, "2026-11-06"), rows=rows, rules={"plan": {"x": 2}},
+                   published_at="2026-11-18T17:00:00+00:00", opens_at="2026-11-11T14:30:00+00:00")
+    assert second["strategy"]["since"] == "2026-11-18" and second["strategy"]["not_forward"] == ["2026-11-06", "2026-11-10"]
+    assert settled_have(second) == 1
+
+
+def test_a_run_made_at_or_after_the_open_its_plans_are_for_is_not_forward():
+    rules = {"plan": {"x": 1}, "universe": {"identity": "u1"}}
+    prior = prior_with([], since="2026-10-01", session="2026-11-17", digest_rules=rules)
+    rows = [{"bucket": "settled", "picked": "2026-11-17"}, {"bucket": "settled", "picked": "2026-11-14"}]
+    late = build(session="2026-11-17", previous=prior, rows=rows, rules=rules,
+                 published_at="2026-11-18T14:30:00+00:00", opens_at="2026-11-18T14:30:00+00:00")
+    assert late["strategy"]["not_forward"] == ["2026-11-17"] and settled_have(late) == 1
+    # under changed rules such a run's own session is not the standing one either
+    moved = build(session="2026-11-17", previous=prior, rows=rows, rules={"plan": {"x": 2}},
+                  published_at="2026-11-18T16:00:00+00:00", opens_at="2026-11-18T14:30:00+00:00")
+    assert moved["strategy"]["since"] == "2026-11-18" and settled_have(moved) == 0
+    # the retry slot's re-run the same evening is forward, and marks nothing
+    retry = build(session="2026-11-17", previous=prior, rows=rows, rules=rules,
+                  published_at="2026-11-18T01:20:00+00:00", opens_at="2026-11-18T14:30:00+00:00")
+    assert retry["strategy"]["not_forward"] == [] and settled_have(retry) == 2
+
+
+def test_the_sessions_not_forward_are_sorted_bounded_and_read_as_dates():
+    from src import sessions
+    days, day = [], date(2026, 11, 17)
+    for _ in range(gl.NOT_FORWARD_MAX + 3):
+        day = sessions.previous_session(day)
+        days.append(day.isoformat())
+    kept = gl.not_forward_of({"not_forward": days + ["soon", 5, None]}, "2026-11-18", True)
+    assert kept == sorted(days)[-gl.NOT_FORWARD_MAX:]
+    assert gl.not_forward_of({"not_forward": "2026-11-17"}, "2026-11-18", False) == ["2026-11-18"]
+    assert gl.not_forward_of({}, "2026-11-18", True) == []
+    from src import record as rec
+    assert gl.NOT_FORWARD_MAX >= rec.SCORECARD_SESSIONS       # no row the scorecard still reads is forgotten
+
+
+@pytest.mark.parametrize("name", ["protocol", "ablation", "morning"])
+def test_a_file_nested_past_the_decoders_depth_is_unread_and_never_raises(monkeypatch, tmp_path, name):
+    deep = tmp_path / "deep.json"
+    deep.write_text("[" * 200000 + "]" * 200000)
+    with pytest.raises(RecursionError):
+        json.loads(deep.read_text())
+    if name == "protocol":
+        monkeypatch.setattr(gl, "PROTOCOL_FILE", deep)
+        assert gl.protocol("2026-11-18")["passed"] is False
+    elif name == "ablation":
+        monkeypatch.setattr(gl, "ABLATION_FILE", deep)
+        assert gl.ablation() is False
+    else:
+        from src import pipeline
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "morning.json").write_bytes(deep.read_bytes())
+        block = pipeline.read_go_live(docs, "2026-11-18", {"plan": {"x": 1}}, previous_record(), SHA, [],
+                                      **evening_clock("2026-11-18"))
+        assert block["ledger"][-1]["morning_on_time"] is False
+
+
+def test_the_ablation_counts_only_as_results_computed_under_its_committed_spec(monkeypatch, tmp_path):
+    committed = json.loads(gl.ABLATION_FILE.read_text())
+    assert gl.ablation() is True and committed["version"] == gl.ABLATION_VERSION
+    path = tmp_path / "ablation.json"
+    monkeypatch.setattr(gl, "ABLATION_FILE", path)
+    path.write_text(json.dumps(committed))
+    assert gl.ablation() is True
+    for change in ({"version": "ablation-v2"}, {"variants": {}}, {"variants": None}, {"spec": None},
+                   {"spec": "docs/nowhere.json"}, {"spec_sha256": "0" * 64}, {"spec": "../outside.json"}):
+        path.write_text(json.dumps({**committed, **change}))
+        assert gl.ablation() is False, change
+    path.write_text(json.dumps({"version": gl.ABLATION_VERSION}))      # a file with nothing but its version
+    assert gl.ablation() is False
+    # a spec outside the repository is not the committed one, whatever its bytes
+    repo = tmp_path / "repo"
+    (repo / "docs").mkdir(parents=True)
+    spec = (ROOT / committed["spec"]).read_bytes()
+    (repo / "docs" / "spec.json").write_bytes(spec)
+    (tmp_path / "outside.json").write_bytes(spec)
+    monkeypatch.setattr(gl, "ROOT", repo)
+    path.write_text(json.dumps({**committed, "spec": "docs/spec.json"}))
+    assert gl.ablation() is True
+    path.write_text(json.dumps({**committed, "spec": "../outside.json"}))
+    assert gl.ablation() is False
+
+
+def test_report_validate_asks_the_gates_own_validator():
+    data = record("next")
+    report.validate(data)                                              # the record as the pipeline wrote it validates
+    forged = copy.deepcopy(data)
+    forged["run"]["go_live"]["sentence"] = 5
+    with pytest.raises(ValueError, match="run.go_live ledger or sentence is not readable"):
+        report.validate(forged)
+
+
+@pytest.mark.parametrize("name, change, words", [
+    ("since", lambda s: s.update(since="soon"), "strategy is not readable"),
+    ("newest", lambda s: s.pop("newest"), "strategy is not readable"),
+    ("not_forward", lambda s: s.update(not_forward=["2026-09-10", "2026-09-09"]), "strategy is not readable"),
+    ("not_forward dates", lambda s: s.update(not_forward=["soon"]), "strategy is not readable"),
+    ("not_forward list", lambda s: s.update(not_forward=None), "strategy is not readable"),
+    ("digest", lambda s: s.update(digest="0" * 64), "strategy digest is not the record's own rules'"),
+])
+def test_the_validator_holds_the_standing_rules_block(name, change, words):
+    data = record("next")
+    assert gl.faults(data) == []
+    change(data["run"]["go_live"]["strategy"])
+    assert gl.faults(data) == ["run.go_live " + words], name
+    whole = record("next")
+    whole["run"]["go_live"]["strategy"] = "standing"
+    assert gl.faults(whole) == ["run.go_live strategy is not readable"]
+
+
+def test_the_schemas_live_ready_reasons_are_the_gates_criteria_and_the_unread_gate():
+    schema = json.loads((ROOT / "docs" / "operations" / "orders-schema.json").read_text())
+    reasons = schema["properties"]["live_ready"]["properties"]["reasons"]["items"]["enum"]
+    assert reasons == list(gl.CRITERIA) + [orders.LIVE_READY_REASON]
+    assert set(gl.REASONS) == set(gl.CRITERIA)
+
+
+def _live(data):
+    block = data["run"]["go_live"]
+    block.update(ready=True, reasons=[])
+    for c in block["criteria"]:
+        c["met"] = True
+    return data
+
+
+def test_a_live_handoff_is_refused_while_the_committed_protocol_record_is_not_passed(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "data.json").write_text(json.dumps(_live(page("full"))))
+    orders.write_publication(docs)
+    assert json.loads((docs / "orders.json").read_text())["mode"] == "live"
+    # the record and the file agree, and the committed protocol record (the suite's pinned copy) is unpassed
+    assert orders.check(docs) == ["orders.json is live while the committed protocol record or ablation does not hold"]
+    passed = tmp_path / "protocol.json"
+    passed.write_text(json.dumps(owner_record(recorded_on=page("full")["run"]["session"])))
+    monkeypatch.setattr(gl, "PROTOCOL_FILE", passed)
+    assert orders.check(docs) == []
+    monkeypatch.setattr(gl, "ABLATION_FILE", tmp_path / "nowhere.json")
+    assert orders.check(docs) == ["orders.json is live while the committed protocol record or ablation does not hold"]
+
+
+def test_a_handoff_written_under_an_earlier_version_is_paper_or_refused(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    raw = json.dumps(page("full")).encode()
+    (docs / "data.json").write_bytes(raw)
+    earlier = {"version": orders.VERSION - 1, "mode": "paper", "live_ready": {"value": False, "reasons": []},
+               "source": {"data_sha256": hashlib.sha256(raw).hexdigest()}}
+    (docs / "orders.json").write_text(json.dumps(earlier))
+    assert orders.check(docs) == []
+    for change in ({"mode": "live"}, {"live_ready": {"value": True, "reasons": []}}, {"live_ready": None}):
+        (docs / "orders.json").write_text(json.dumps({**earlier, **change}))
+        assert orders.check(docs) == ["orders.json written under an earlier version is not paper"], change
+
+
+def test_the_forward_count_is_never_more_than_the_scorecards_settled_plans():
+    data = record("next")
+    have = _gate(data)[1]["settled_forward_plans"]["have"]
+    assert have >= 1 and gl.faults(data) == []
+    data["scorecard"]["settled"] = have                       # every settled plan a forward one: still the record's
+    assert gl.faults(data) == []
+    data["scorecard"]["settled"] = have - 1
+    assert gl.faults(data) == ["run.go_live settled_forward_plans is more than the scorecard's settled plans"]
+
+
+@pytest.mark.parametrize("unmet", gl.CRITERIA)
+def test_a_handoff_is_written_and_meets_its_schema_with_any_one_condition_unmet(unmet):
+    data = _live(page("full"))
+    block = data["run"]["go_live"]
+    next(c for c in block["criteria"] if c["key"] == unmet)["met"] = False
+    block.update(ready=False, reasons=[unmet])
+    doc = orders.build(json.dumps(data).encode())
+    assert doc["mode"] == "paper" and doc["live_ready"] == {"value": False, "reasons": [unmet]}
+    assert orders.problems(doc) == []
+    assert unmet in gl.REASONS and gl.REASONS[unmet]
+
+
+def test_the_guide_lists_each_reason_in_the_gates_own_words_and_names_what_the_gate_reads():
+    note = (ROOT / "docs" / "operations" / "go-live.md").read_text()
+    flat = " ".join(note.split())
+    for code in gl.CRITERIA:
+        assert f"| `{code}` | {gl.REASONS[code]} |" in note, code
+    assert f"| `{orders.LIVE_READY_REASON}` |" in note
+    for name in ("`go_live.PUBLISHED_STATUSES`", "`run.finish_seconds`", "`run.elapsed_seconds` is not the finish",
+                 "`not_forward`", "How the morning check was started is not read at all",
+                 "the gate judges the newest receipt, not the first"):
+        assert name in flat, name
+    readme = " ".join((ROOT / "README.md").read_text().split())
+    assert "`run.finish_seconds`" in readme and "`run.go_live.strategy.not_forward`" in readme
+    agent = " ".join((ROOT / "docs" / "operations" / "orders.md").read_text().split())
+    assert "once written" not in agent and "[`go-live.md`](go-live.md)" in agent
+    protocol = (ROOT / gl.PROTOCOL_NAME).read_text()
+    assert "docs/operations/go-live.md" in protocol and "Completing the sitting is not passing it." in protocol

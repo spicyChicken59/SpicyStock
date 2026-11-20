@@ -5593,7 +5593,9 @@
       box.appendChild(el('p', { 'class': 'sc-note', text: 'This record’s go-live gate could not be read: treat its orders.json as paper only.' }));
       return box;
     }
-    box.setAttribute('data-go-live', block.ready === true ? 'live' : 'paper');
+    // live as orders.json reads the same block: ready, no reason left, every criterion met
+    const live = block.ready === true && Array.isArray(block.reasons) && block.reasons.length === 0 && criteria.every((c) => c.met === true);
+    box.setAttribute('data-go-live', live ? 'live' : 'paper');
     box.appendChild(el('p', { 'class': 'sc-note', 'data-go-live-sentence': '', text: block.sentence }));
     const list = el('ul', { 'class': 'sc-note' });
     criteria.forEach((c) => list.appendChild(el('li', { 'data-go-live-criterion': c.key,
