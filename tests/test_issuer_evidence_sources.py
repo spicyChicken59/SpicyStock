@@ -215,7 +215,7 @@ def test_producer_binds_original_ticket_and_archived_anchor_without_event_reclas
     data = json.loads(canonical)
     assert not data.get("fixture")
     assert data["run"]["run_id"] == "synthetic-issuer-evidence"
-    assert data["run"]["elapsed_seconds"] == data["run"]["fetch_seconds"] == 0.0
+    assert data["run"]["elapsed_seconds"] == data["run"]["fetch_seconds"] == data["run"]["finish_seconds"] == 0.0
     original = next(row for row in data["watchlist"]["top"] if row["ticker"] == "ZIM")
     candidate = next(row for row in produced["bundle"]["candidates"] if row["ticker"] == "ZIM")
     assert candidate["admission"] == "known_event_excluded"

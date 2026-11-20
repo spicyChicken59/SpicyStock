@@ -821,7 +821,7 @@ def test_the_next_evening_is_unchanged_by_a_committed_receipt(tmp_path, mocked_b
         # receipt cannot touch: the wall clock, and the prompt cache, which the
         # first call writes and the second reads (the input SUM is held equal).
         record = deepcopy(record)
-        for clock_fact in ("elapsed_seconds", "fetch_seconds"):
+        for clock_fact in ("elapsed_seconds", "fetch_seconds", "finish_seconds"):
             record["run"].pop(clock_fact)
         blocks = [record["run"]["reader_usage"]] + [b["reader_usage"] for b in record["bursts"] if b.get("reader_usage")]
         for block in blocks:

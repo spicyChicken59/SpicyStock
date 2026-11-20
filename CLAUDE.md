@@ -15913,25 +15913,33 @@ reasons are the gate's criteria). The published record, picks, receipts,
 history, evidence and ledger are untouched.
 
 **The gate** (`src/go_live.py`, `run.go_live`; the owner's guide
-`docs/operations/go-live.md`). `live_ready` is true only when all four hold,
-each read from committed bytes:
+`docs/operations/go-live.md`). `live_ready` is true only when all four hold.
+This is the gate as it stands after both reviews below:
 - `fidelity_protocol`: `knowledge/go-live/fidelity-protocol.json` records
-  the one-sitting protocol as passed by the owner. It is committed unpassed;
-  nothing here can pass it, and it must hold nothing private.
+  the one-sitting protocol as passed by the owner, dated no later than
+  tonight's session. It is committed unpassed; nothing here can pass it, and
+  it must hold nothing private. The guide says which answers of the sitting
+  count as a pass.
 - `on_time_sessions`: the newest `go_live.ON_TIME_SESSIONS` consecutive XNYS
-  sessions were each published by `go_live.PUBLISH_BY_ET` New York time on
-  the session's own date, started automatically (a scheduled run, or the
-  dispatcher's `only_if_unpublished` dispatch; `run.trigger` archives how
-  the evening was started), and checked by a morning file bound to that
-  publication by `go_live.MORNING_DUE_CT` Chicago time. A session is closed
-  the evening after, when its morning file exists; the ledger starts with
-  the first record that archives its trigger, so it starts at zero, and the
-  run must end on the session before tonight's.
+  sessions, ending on the one before tonight's, each:
+  - published by `go_live.PUBLISH_BY_ET` New York time on the session's own
+    date, read at the run's finish (`run.finish_seconds`, stamped at the
+    record's final write);
+  - started automatically: a scheduled run, or the dispatcher's
+    `only_if_unpublished` dispatch (`run.trigger` archives it);
+  - checked by a morning check that ran, bound to that publication, inside
+    its window and by `go_live.MORNING_DUE_CT` Chicago time.
+
+  A session is closed the evening after, from a real publication only. The
+  first row is the last record made before `run.trigger`, not counted, so
+  the count starts at zero.
 - `settled_forward_plans`: at least `go_live.MIN_SETTLED_FORWARD` model plans
-  settled in the scorecard's window, each picked on or after the session from
-  which the strategy's rules have stood unchanged (the rules digest without
-  the nightly universe membership).
-- `ablation_report`: the pre-registered ablation's results are committed.
+  settled in the scorecard's window, each picked since the archived rules
+  last changed and each from a forward publication. The digest leaves out
+  `go_live.NON_STRATEGY_RULES` only: the nightly universe membership and the
+  event registry.
+- `ablation_report`: the pre-registered ablation's results are committed,
+  under the committed spec they name.
 Until it is true `orders.json`'s `mode` is `paper` and `live_ready.reasons`
 names each unmet condition. The Record view prints the gate's sentence and
 each condition.
@@ -15949,9 +15957,9 @@ mutant dies. The control survives.
 step without adding it to the workflow test's list of that step's commands;
 the list names it now.
 
-**The review, worked.** The stack's review returned 22 PR 8 findings, two
-high, each reproduced before it was touched. The high one, found by three
-lenses: the streak was never measured against tonight, so after a run of
+**The review, worked.** The stack's review returned 22 PR 8 findings, each
+reproduced before it was touched. The high one, found by three lenses: the
+streak was never measured against tonight, so after a run of
 missed sessions (which leave no row) ten counted sessions ending weeks ago
 still read met, and `orders.json` could have gone live on the first evening
 after an outage. `consecutive(ledger, session)` requires the run to end on
@@ -15983,6 +15991,89 @@ their rule. One mutant of mine first survived for being weak (it stringified
 the reasons, which still refuses them); the real revert, an unfiltered
 `set(reasons)`, raises on a non-string reason and dies. The control
 survives.
+
+**A second review by execution, and a mutation run it left behind.**
+
+*How it ran.* The first launch (four lenses) died whole on the session's
+usage limit. Its tests lens had finished most of a mutation run before it
+died: 49 judged, 31 of them alive beside its control. A reviewer that died
+is not a refutation, so its results were read here and each survivor closed
+with a case. A relaunch of the other
+three lenses finished: 19 agents, none errored. It returned 31 findings (13
+fail-open, 12 words, 6 transition); two skeptics judged each of the 8 medium
+ones and all 16 verdicts upheld them. Every finding was reproduced here
+before it was touched.
+
+*The defects, each fixed:*
+- **The 7 PM line read the scan's clock.** `run.elapsed_seconds` stops before
+  the SEC reads, the cross-check and the install; over 55 real publications
+  the commit landed 0.4 to 179.7 seconds after it (run again here). The run now
+  stamps `run.finish_seconds` in `restamp()`, at the record's final write,
+  and the gate reads that. A record with none is not shown on time.
+- **A backfill's picks counted as forward plans** whenever the rules had not
+  changed on that run, and so did those of a run made at or after the open
+  its plans were for. `run.go_live.strategy` now keeps the newest session
+  published, whether tonight's publication is forward, and the sessions that
+  were not (`not_forward`). No pick dated one of those counts. A rule change
+  first seen on such a run stands from the session after the newest one.
+- **A late hand re-run still read live** when the ledger's run stood (the
+  handoff failed closed on its late publication). A record that is not itself
+  a forward publication reads zero on-time sessions now.
+- **A rehearsal record closed a counted session**, and so did one whose
+  status the evening guard does not read as published.
+- **Four shapes raised out of the gate after the paid calls:** an elapsed
+  time no clock can hold, a ledger row or a session that is no date, and a
+  file nested past the decoder's depth.
+- **The protocol record passed** with a future date or another protocol's
+  name, and the ablation on its version alone.
+- **`orders.check()` accepted** a live file written under an earlier version,
+  and a live file over an unpassed committed protocol record.
+- **The page showed `live`** on `ready` alone, where `orders.json` reads the
+  same block as paper.
+- **A test that could not fail:** `report.validate()`'s call to the gate's
+  validator was asserted over a fixture the validator refuses for its label.
+
+*The words.* The guide defines what a passed sitting is (the protocol defined
+none), says what restarts the count (every archived rule but the three left
+out, a reporting version among them), that the ledger's first row is the
+last record before the gate, and lists the five `live_ready` reasons.
+
+*Recorded, not fixed (the guide says each):*
+- a hand dispatch with `only_if_unpublished` ticked counts as automatic;
+- how a morning check was started is not read at all, so a hand-started one
+  inside its window counts;
+- the gate judges the newest morning receipt on `main`, so a later run after
+  the due time, or after the window, replaces an on-time one and ends the
+  run;
+- a hand revision of a counted session closes it as not counted.
+
+*Mutation passes over these*, each mutant in its own worktree, judged by the
+whole test files that name its rule:
+- the dead reviewer's 50 mutants and 9 more over the fixes: all 59 dead
+  after the cases were added; both controls survive;
+- 99 over the review's rules: 96 died at once. **Three survived, each a
+  missing case:** a `ready` that is a word beside met criteria on the page,
+  the protocol record read against tonight's session, and a `not_forward`
+  that is no list. All three die now;
+- 6 over the forward-publication rule: all dead; the control survives.
+
+*Transition, checked by the review by execution:* files written by the code
+on `main` today (no `run.trigger`, `orders.json` version 3) are read by this
+code as paper and bound; the first evening under it writes an uncounted
+first row and version 4. Run again here on the final code: the gate over
+all 93 retained records raises nothing, counts none and reads none live.
+
+*Measured after the second review* (this sandbox, Python 3.12):
+- the full suite at `8f35b383`: 7,023 passed, 34 environment-gated skips and
+  one failure. The failure was a test that compares two evenings with their
+  wall clocks set aside and did not know the new one; a second such
+  comparison passed only because both runs' finish rounded alike. Both set
+  `finish_seconds` aside now, and the seven touched test files pass (783);
+- every fixture generator's `--check` current after the cascade, with the
+  strategy page and the ablation;
+- the whole page smoke with `--shots`: 19,179 of 19,191. The twelve failures
+  are the wait-explanation scroll checks at 390 and 320 px, which fail
+  identically on the base in this sandbox and pass on CI's page job.
 
 **Not claimable:** a live-ready night, which needs the owner's protocol
 record, ten on-time sessions from the first one this gate counts, and twenty
