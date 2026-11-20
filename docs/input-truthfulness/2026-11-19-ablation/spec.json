@@ -1,0 +1,33 @@
+{
+ "schema": "ablation-spec-v1",
+ "title": "Six rule changes, each read against the production mechanics over the retained publications",
+ "frozen_at": "2026-11-19",
+ "ref": "595ed02a809e969fc53ec12110a1f5fccfa9de07",
+ "base_spec": "docs/input-truthfulness/2026-11-07-signal-outcomes-spec-extended.json",
+ "purpose": "Analysis only. It changes no rule, no threshold, no record and no ticket, and nothing it finds is adopted by it: a change is a separate decision of the owner's, made in a change of its own.",
+ "freeze_rule": "This file is committed before the tool that reads it has written any result. No variant, metric, population or reading rule below may change after it is committed; a change starts a new dated spec.",
+ "population": {
+  "publications": "the base spec's publications, then every commit on the pinned ref's first parent that changed docs/data.json after the base spec's newest, each held to the blob it carries (tools/burst_trigger_comparison.population); a commit whose record is not a real schema-2 publication is skipped",
+  "signals": "every row of bursts[] in the first publication of each session, by run.published_at; a later publication of the same session is a revision that contributes bars and no signals",
+  "walk": "the frozen signal-outcome study's own walk, unchanged (tools/signal_outcomes.study): its bar gathering, its basis check, record.replay over record.OPEN_PLAN_SESSIONS sessions, record.r_multiple against the published stop"
+ },
+ "production": {
+  "definition": "the mechanics as they stand at the pinned ref, applied to every night alike: the night's recorded market light admits pipeline.TRADE_GRADES on green, pipeline.YELLOW_GRADES on yellow and nothing on red; no veto; the discovery admission (src/admission.py) re-derived from each row's scan and checks; the ticket plan.burst_plan under plan.BURST_TRIGGER_RULE with both stop candidates (plan.stop_candidates); the grade the row's mechanical checklist recorded",
+  "not_applied": "the chart reader is not run (a final grade is never read), and the slot cap, the cash budget, the event registry and the size multiplier are not applied: every admitted row stands on its own, sized at the study's ungated multiplier, as in the frozen study"
+ },
+ "variants": [
+  {"key": "production", "change": "none"},
+  {"key": "no_regime_gate", "change": "every night admits pipeline.TRADE_GRADES, whatever its light"},
+  {"key": "yellow_admits_a", "change": "a yellow night admits pipeline.TRADE_GRADES, as a green night does"},
+  {"key": "unscaled_thresholds", "change": "the light is read again from the record's own breadth inputs with the two count thresholds unscaled (the archived rules.breadth down4_alarm and up50_month_hot, Bonde's counts over his reference universe) in place of the scaled ones; the three ratio thresholds are unchanged"},
+  {"key": "admission_off", "change": "a dollar-only row without a range-expansion, higher-volume day is admitted as a burst-route row is"},
+  {"key": "stop_burst_low_only", "change": "the stop cascade keeps only the burst day's low (plan.stop_candidates without half_range); a ticket the low cannot carry inside the 4% line is withheld"},
+  {"key": "equal_checklist_weights", "change": "the grade is read again from the row's recorded checks with each of the six scored letters weighted equally (ten points over six letters), a partial half, by quality.grade_of with the row's own A+ tally, vetoes and gate letters"}
+ ],
+ "metrics": {
+  "per_variant": ["admitted rows", "tickets (admitted rows with a plan)", "withheld (admitted rows the plan refused)", "every bucket the study assigns", "uncertain tickets by their uncertainty reason", "settled: count, wins, losses, breakeven, win rate (wins over settled), sum, mean and median R", "the mean of per-night mean R with a night-block bootstrap 95% interval", "R after a per-side cost of 0, 5 and 20 basis points on the fill and every sale"],
+  "bootstrap": "the base spec's reps and seed",
+  "cost_bps_per_side": [0, 5, 20]
+ },
+ "reading_rule": "No rate is read under record.SCORECARD_MIN_PLANS settled tickets in a variant. A variant's interval that includes zero establishes no sign. No variant is promoted: the reader is not run, every night was read with its later bars already public, and the populations overlap, so the differences between variants are not independent tests. Nothing is tuned in response to these numbers."
+}

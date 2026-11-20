@@ -1,0 +1,695 @@
+{
+ "equal_weight": 1.6667,
+ "first_session": "2026-09-11",
+ "grades_read_again": {
+  "admitted_band_changes_by_equal_weights": 0,
+  "changed_by_equal_weights": 576,
+  "reproduced": 14712,
+  "rows": 14712
+ },
+ "lights": {
+  "red": 36,
+  "yellow": 13
+ },
+ "lights_unscaled": {
+  "red": 35,
+  "yellow": 14
+ },
+ "min_settled_for_a_rate": 20,
+ "newest_session": "2026-11-18",
+ "nights": 49,
+ "population": [
+  {
+   "blob": "edc98bc7a41d07a4950ad800b341ce5a4de2bd30",
+   "commit": "7380a97605c7f16eb902421486c491a95b957cd7",
+   "session": "2026-09-11"
+  },
+  {
+   "blob": "2c5ec387654d2cea9d85b1230e91b4c7c0efb534",
+   "commit": "ece47f1e34ab4b795a79be7674355409ce5aaf8e",
+   "session": "2026-09-11"
+  },
+  {
+   "blob": "a89ab122d7e0160df6a63c30957668447ace1103",
+   "commit": "fbaed5cdc43a84755f61840ba9e1fc74379c797d",
+   "session": "2026-09-14"
+  },
+  {
+   "blob": "abf693417b8308a68d6e1dfcbfd53ced16b6f8c4",
+   "commit": "442db489342660d7588d16dcc18e6c126187c1e6",
+   "session": "2026-09-15"
+  },
+  {
+   "blob": "9dfc2d51aef7d0adf723428931c61cc83824fa71",
+   "commit": "580805487b22006c6f2fa35490c3edc8a5760d73",
+   "session": "2026-09-16"
+  },
+  {
+   "blob": "7e65097a70affd800bace72b2d088c8197053c47",
+   "commit": "ebcdea34464b9090e7734ca543be8733d39fc20a",
+   "session": "2026-09-17"
+  },
+  {
+   "blob": "bf36144ea45d7c74eee724d2557964e5e8e0bfc5",
+   "commit": "8387ccedae22fbf30ddebdb6f52e1e42326a7ec5",
+   "session": "2026-09-18"
+  },
+  {
+   "blob": "23cb5ab864e9e9de79fe33dabea898b9bef1e375",
+   "commit": "25eb5b2688a3ba1ceecc01083a7cb6046cc62aea",
+   "session": "2026-09-21"
+  },
+  {
+   "blob": "6c5bd2f713eef2a787d129d6c9ddc6f409387be7",
+   "commit": "49e2724c94b60963d914d55a2bf98598ac6507ad",
+   "session": "2026-09-21"
+  },
+  {
+   "blob": "d9ac3a89ca2a572128143f287180afad040f5672",
+   "commit": "e2dee988ad5d36876b7c73090502720e995c65f4",
+   "session": "2026-09-22"
+  },
+  {
+   "blob": "97c89e46546e42aff4b07a5dade1ef551f4d4e4f",
+   "commit": "6ff292d7971570d809a2bdd4d476a1f88d3c4234",
+   "session": "2026-09-23"
+  },
+  {
+   "blob": "332b99ffac36b3b723de58197ce853e1ecd96b20",
+   "commit": "6822dddd14d0a541083e7caaecca9c945b451af2",
+   "session": "2026-09-24"
+  },
+  {
+   "blob": "6fce465edd51badead8ad0c38b111819ee69c884",
+   "commit": "8be007f68deaa417b85a512d2e16a37899d27011",
+   "session": "2026-09-25"
+  },
+  {
+   "blob": "8d569933ebab8838699faff339bc1a18dde0dfa8",
+   "commit": "786ade7013a0c55d172d89118322b19a056fa8a6",
+   "session": "2026-09-28"
+  },
+  {
+   "blob": "39ec172c5fb049f3cd55b7be794d06ad5c7ccbdd",
+   "commit": "6284cb9787c11929eaedf1a263cf463ab4ae4928",
+   "session": "2026-09-29"
+  },
+  {
+   "blob": "e31cfe5fd388a2b054a8afb16dfbe4f8da8ac93d",
+   "commit": "a900236900be6e531cc3c0c0e9b0547269861ec8",
+   "session": "2026-09-30"
+  },
+  {
+   "blob": "d6095ca5d92ed5a056eab820bb73323fb04f5b67",
+   "commit": "a930ca0fb9d4e283253cf79dd32097a2dec89e8c",
+   "session": "2026-10-01"
+  },
+  {
+   "blob": "bb2edad5522c137030ec93d286c1aebfedde73de",
+   "commit": "58e0f38430ae82249db435ff397477bd2221106e",
+   "session": "2026-10-02"
+  },
+  {
+   "blob": "1064e69b27bf3f6fceed1594a1a1b0387eb021bb",
+   "commit": "178956b46bc50d8998636e9b4bc785ce3687c84a",
+   "session": "2026-10-05"
+  },
+  {
+   "blob": "8eca61e4ef1582feace6e915538b7f8009b1194c",
+   "commit": "b0c6b60e5fb3415a81781e59c0d4f3e16ed16ff6",
+   "session": "2026-10-06"
+  },
+  {
+   "blob": "b4f6f615f35a1eef22fc73d8ab9ae961c71c9068",
+   "commit": "a8f9a36f8c07b12e82b55de943cc3fbea2f80bad",
+   "session": "2026-10-07"
+  },
+  {
+   "blob": "7b6bd909b9ef9a8efd459433a4e4db0fd01cb897",
+   "commit": "1e1ffe9ca890913d4c5502e44c824f851be149dc",
+   "session": "2026-10-08"
+  },
+  {
+   "blob": "687e44d07e833de860edf0338db8dee09a1b195e",
+   "commit": "e67f8cba8774789b8deb0c106b21537b66f37a35",
+   "session": "2026-10-08"
+  },
+  {
+   "blob": "353088402c6588916d0c9a87ae0f08c7d401f605",
+   "commit": "62bce72ddf45596d735f72b2ea20808a25cd3f0b",
+   "session": "2026-10-09"
+  },
+  {
+   "blob": "476344ac8c7b47d9d2f674edc93b0722cf09d9ee",
+   "commit": "dcb12a0b20f2d41900c4235c30efa76a40285c0b",
+   "session": "2026-10-09"
+  },
+  {
+   "blob": "58211b2d32343a2caf811d2d1af906acbef942ca",
+   "commit": "43dcb8d7c6eb0d63c1825198aa161fc4d4caec80",
+   "session": "2026-10-09"
+  },
+  {
+   "blob": "e3fc4bfecc1c559bc70b70d39cd0f7aedb214dec",
+   "commit": "9936e971394e5165b3f0e7ad26a439fd16961c59",
+   "session": "2026-10-12"
+  },
+  {
+   "blob": "e284b1932e60b768a711675206ee37caa2f5d189",
+   "commit": "8772006f5a82e21d3a22c6551fc2f0a6b38b6134",
+   "session": "2026-10-13"
+  },
+  {
+   "blob": "0c0d28383470e464fffd73846d67a69e7f0716a9",
+   "commit": "16032f05e13536cac5c4e0995ff0f16053dcd0b3",
+   "session": "2026-10-14"
+  },
+  {
+   "blob": "9ee84836b071fa90ba0f0f13b8e4fa42c83bdb49",
+   "commit": "0f95141450c579e86f4de657c23849217dc57cc4",
+   "session": "2026-10-15"
+  },
+  {
+   "blob": "58dda9fa6095ece69995e96e9ec8117f11096c78",
+   "commit": "7a1a9e49822578d71d2bd960bbe2aace06af63f1",
+   "session": "2026-10-16"
+  },
+  {
+   "blob": "c6b9d4977c7c58dfd4ea0646ffe55247fe5e4be5",
+   "commit": "a34a2978021bcb2fd0239799b1987f6ffe1cb52a",
+   "session": "2026-10-19"
+  },
+  {
+   "blob": "9b9d141c673afed54f7a18390dc28971cc0b9633",
+   "commit": "d179f2062902b248b61eab7956c3682bc6b63d68",
+   "session": "2026-10-19"
+  },
+  {
+   "blob": "7dffe2264e87c22858d237ac4161017d0b87c445",
+   "commit": "0d8494fca679819291dca3cc4d5c7236edaea6f5",
+   "session": "2026-10-20"
+  },
+  {
+   "blob": "0919320478fe86186426656e349ac25e5faa2a6a",
+   "commit": "2eb0e0bedad29ecd458eb8c7cef97dbb645d7eed",
+   "session": "2026-10-21"
+  },
+  {
+   "blob": "5fbc06804566f84a79dd1ff67d541240ccfc61a8",
+   "commit": "fb70e70638a3488bf7fbe61c7c54012c48eb1b96",
+   "session": "2026-10-22"
+  },
+  {
+   "blob": "fede17ad718cd0acdd6f22d2939bd8ca4b69abee",
+   "commit": "cd239b206a109a4faa7f6c29560d3d1c2d1f3478",
+   "session": "2026-10-23"
+  },
+  {
+   "blob": "26e414d56c45d2db282bbb84220bf98a0d6d33f0",
+   "commit": "adaf1b1a192e1e8e67523ebe214dd9f14a7b4a55",
+   "session": "2026-10-26"
+  },
+  {
+   "blob": "1f6ec2a0428864a6332c8e16c5fda1cc70d50704",
+   "commit": "36ce7ef92621432155dc03691dbbb50356d76310",
+   "session": "2026-10-27"
+  },
+  {
+   "blob": "090584c8b7d50815ef44f449d1a52660f249699f",
+   "commit": "dbb8358cd6c691209f1580ec6d765cd308a56fc7",
+   "session": "2026-10-28"
+  },
+  {
+   "blob": "cdf644a1f6fc5026ce04a5096743575525b6e0e6",
+   "commit": "cd6418f191d5720a5f4704d7e81be58f0571ed58",
+   "session": "2026-10-29"
+  },
+  {
+   "blob": "22e3474b85df3e1f060d7b2c8dace56989e3f320",
+   "commit": "e4063d25f58135942fbfb8a05a62c11f5299e634",
+   "session": "2026-10-30"
+  },
+  {
+   "blob": "f16c598fe38b2d8140eef090f6ca167b34de9e44",
+   "commit": "3cd890ec53f3fe5c5e1324648cef27ab669359c7",
+   "session": "2026-11-02"
+  },
+  {
+   "blob": "f97817ed0e6065b5cbc54a5f3b43d8608813effa",
+   "commit": "ef855d6df59014c2aaddf767c2b2def7ca75a1fe",
+   "session": "2026-11-03"
+  },
+  {
+   "blob": "c0e8734a78c5365f9ff50363e32472570f06e6e9",
+   "commit": "a0d9172e0a1a8077f0fc954349fe99c713d5feae",
+   "session": "2026-11-04"
+  },
+  {
+   "blob": "59f0e7ba48ae8cbf7514b130f1a8fa1a873c32db",
+   "commit": "29d9474faf987a8c15beaf7026637eb14a507476",
+   "session": "2026-11-05"
+  },
+  {
+   "blob": "9be90c1af2e155c08cabf1f0f63d404b39c4d704",
+   "commit": "f1feb6361dbef35dfeff819b12ce2f4acca17370",
+   "session": "2026-11-06"
+  },
+  {
+   "blob": "01a7f1ea5161600807c0cb53820a6913b4cfac40",
+   "commit": "6331513e49738ed3594b6ef6363659b9b1a785ec",
+   "session": "2026-11-09"
+  },
+  {
+   "blob": "ade8051552448835322dc27217d712893981eb53",
+   "commit": "f34cfb79dd205a04ffb1496ef1f59c31aefa3903",
+   "session": "2026-11-10"
+  },
+  {
+   "blob": "9c070f2de4d942abb9dcda5659fdbea91af55f9c",
+   "commit": "ca642303187641ae19f6f99197b5a90d2efe8bf7",
+   "session": "2026-11-11"
+  },
+  {
+   "blob": "d779c75a3ad83b147ec37b87d4b13a811269875d",
+   "commit": "014cf6b9de9bed5e7d47a7efd1870c2d641a1af6",
+   "session": "2026-11-12"
+  },
+  {
+   "blob": "50963ca8b6d3c47e69dab834c447bbe2b9658444",
+   "commit": "3a27d70cff6cc01167e33911dc7eadc683494375",
+   "session": "2026-11-13"
+  },
+  {
+   "blob": "ef1a5c0fb00f7d0e1c92125b014f06a3e2d96fa6",
+   "commit": "5b2736b8c78fd0220f65edf3d84bce1e55b0603c",
+   "session": "2026-11-16"
+  },
+  {
+   "blob": "19a22b35c930d5c395bd2342f031982a4f3d30f5",
+   "commit": "041e7a83f7e236c3361cc2dab1f38765dcdae01a",
+   "session": "2026-11-17"
+  },
+  {
+   "blob": "9331be24d2837330c8c2d9f3ed015722830417dc",
+   "commit": "35dc2cc087e67802e9b49dcc3666b4235b9f3db8",
+   "session": "2026-11-18"
+  }
+ ],
+ "publications": 55,
+ "ref": "595ed02a809e969fc53ec12110a1f5fccfa9de07",
+ "regime_read_again": {
+  "agree": 49,
+  "nights": 49,
+  "no_inputs": 0
+ },
+ "rows": 24699,
+ "spec": "docs/input-truthfulness/2026-11-19-ablation/spec.json",
+ "spec_sha256": "92711a426c241bf1c1580d069d5e3fddb7b0048aed1599726714069ff68db694",
+ "variants": {
+  "admission_off": {
+   "admitted": 51,
+   "buckets": {
+    "no_ticket": 11,
+    "not_filled": 7,
+    "settled": 21,
+    "uncertain": 12
+   },
+   "costs_per_side_bps": {
+    "0": {
+     "mean_r": -0.38,
+     "n": 21,
+     "sum_r": -7.98
+    },
+    "20": {
+     "mean_r": -0.515,
+     "n": 21,
+     "sum_r": -10.82
+    },
+    "5": {
+     "mean_r": -0.415,
+     "n": 21,
+     "sum_r": -8.72
+    }
+   },
+   "night_bootstrap": {
+    "ci95": [
+     -1.491,
+     0.241
+    ],
+    "mean_of_night_means": -0.574,
+    "nights": 7,
+    "reps": 2000,
+    "seed": 20261002
+   },
+   "not_walked": {},
+   "readable": true,
+   "settled": {
+    "breakeven": 1,
+    "losses": 15,
+    "mean_r": -0.38,
+    "median_r": -0.47,
+    "n": 21,
+    "sum_r": -7.98,
+    "wins": 5
+   },
+   "tickets": 40,
+   "uncertain_by_reason": {
+    "open_above_limit": 4,
+    "stop_sequence": 3,
+    "trigger_timing": 5
+   },
+   "win_rate": 0.238,
+   "withheld": 11
+  },
+  "equal_checklist_weights": {
+   "admitted": 20,
+   "buckets": {
+    "no_ticket": 1,
+    "not_filled": 4,
+    "settled": 9,
+    "uncertain": 6
+   },
+   "costs_per_side_bps": {
+    "0": {
+     "mean_r": -0.427,
+     "n": 9,
+     "sum_r": -3.84
+    },
+    "20": {
+     "mean_r": -0.547,
+     "n": 9,
+     "sum_r": -4.92
+    },
+    "5": {
+     "mean_r": -0.458,
+     "n": 9,
+     "sum_r": -4.12
+    }
+   },
+   "night_bootstrap": {
+    "ci95": [
+     -0.697,
+     0.535
+    ],
+    "mean_of_night_means": -0.081,
+    "nights": 4,
+    "reps": 2000,
+    "seed": 20261002
+   },
+   "not_walked": {},
+   "readable": false,
+   "settled": {
+    "breakeven": 0,
+    "losses": 7,
+    "mean_r": -0.427,
+    "median_r": -0.85,
+    "n": 9,
+    "sum_r": -3.84,
+    "wins": 2
+   },
+   "tickets": 19,
+   "uncertain_by_reason": {
+    "open_above_limit": 4,
+    "stop_sequence": 1,
+    "trigger_timing": 1
+   },
+   "win_rate": 0.222,
+   "withheld": 1
+  },
+  "no_regime_gate": {
+   "admitted": 1133,
+   "buckets": {
+    "basis_mismatch": 17,
+    "no_ticket": 302,
+    "not_filled": 154,
+    "pending": 47,
+    "settled": 240,
+    "uncertain": 372,
+    "unmeasured": 1
+   },
+   "costs_per_side_bps": {
+    "0": {
+     "mean_r": -0.328,
+     "n": 240,
+     "sum_r": -78.68
+    },
+    "20": {
+     "mean_r": -0.459,
+     "n": 240,
+     "sum_r": -110.13
+    },
+    "5": {
+     "mean_r": -0.361,
+     "n": 240,
+     "sum_r": -86.74
+    }
+   },
+   "night_bootstrap": {
+    "ci95": [
+     -0.289,
+     0.179
+    ],
+    "mean_of_night_means": -0.062,
+    "nights": 40,
+    "reps": 2000,
+    "seed": 20261002
+   },
+   "not_walked": {
+    "basis_mismatch": 17
+   },
+   "readable": true,
+   "settled": {
+    "breakeven": 4,
+    "losses": 183,
+    "mean_r": -0.328,
+    "median_r": -0.79,
+    "n": 240,
+    "sum_r": -78.68,
+    "wins": 53
+   },
+   "tickets": 814,
+   "uncertain_by_reason": {
+    "open_above_limit": 115,
+    "open_below_skip": 8,
+    "stop_sequence": 86,
+    "trigger_timing": 163
+   },
+   "win_rate": 0.221,
+   "withheld": 302
+  },
+  "production": {
+   "admitted": 20,
+   "buckets": {
+    "no_ticket": 1,
+    "not_filled": 4,
+    "settled": 9,
+    "uncertain": 6
+   },
+   "costs_per_side_bps": {
+    "0": {
+     "mean_r": -0.427,
+     "n": 9,
+     "sum_r": -3.84
+    },
+    "20": {
+     "mean_r": -0.547,
+     "n": 9,
+     "sum_r": -4.92
+    },
+    "5": {
+     "mean_r": -0.458,
+     "n": 9,
+     "sum_r": -4.12
+    }
+   },
+   "night_bootstrap": {
+    "ci95": [
+     -0.697,
+     0.535
+    ],
+    "mean_of_night_means": -0.081,
+    "nights": 4,
+    "reps": 2000,
+    "seed": 20261002
+   },
+   "not_walked": {},
+   "readable": false,
+   "settled": {
+    "breakeven": 0,
+    "losses": 7,
+    "mean_r": -0.427,
+    "median_r": -0.85,
+    "n": 9,
+    "sum_r": -3.84,
+    "wins": 2
+   },
+   "tickets": 19,
+   "uncertain_by_reason": {
+    "open_above_limit": 4,
+    "stop_sequence": 1,
+    "trigger_timing": 1
+   },
+   "win_rate": 0.222,
+   "withheld": 1
+  },
+  "stop_burst_low_only": {
+   "admitted": 20,
+   "buckets": {
+    "no_ticket": 13,
+    "not_filled": 3,
+    "settled": 2,
+    "uncertain": 2
+   },
+   "costs_per_side_bps": {
+    "0": {
+     "mean_r": 0.62,
+     "n": 2,
+     "sum_r": 1.24
+    },
+    "20": {
+     "mean_r": 0.51,
+     "n": 2,
+     "sum_r": 1.02
+    },
+    "5": {
+     "mean_r": 0.59,
+     "n": 2,
+     "sum_r": 1.18
+    }
+   },
+   "night_bootstrap": null,
+   "not_walked": {},
+   "readable": false,
+   "settled": {
+    "breakeven": 0,
+    "losses": 1,
+    "mean_r": 0.62,
+    "median_r": 0.62,
+    "n": 2,
+    "sum_r": 1.24,
+    "wins": 1
+   },
+   "tickets": 7,
+   "uncertain_by_reason": {
+    "open_above_limit": 2
+   },
+   "win_rate": 0.5,
+   "withheld": 13
+  },
+  "unscaled_thresholds": {
+   "admitted": 22,
+   "buckets": {
+    "no_ticket": 1,
+    "not_filled": 6,
+    "settled": 9,
+    "uncertain": 6
+   },
+   "costs_per_side_bps": {
+    "0": {
+     "mean_r": -0.427,
+     "n": 9,
+     "sum_r": -3.84
+    },
+    "20": {
+     "mean_r": -0.547,
+     "n": 9,
+     "sum_r": -4.92
+    },
+    "5": {
+     "mean_r": -0.458,
+     "n": 9,
+     "sum_r": -4.12
+    }
+   },
+   "night_bootstrap": {
+    "ci95": [
+     -0.697,
+     0.535
+    ],
+    "mean_of_night_means": -0.081,
+    "nights": 4,
+    "reps": 2000,
+    "seed": 20261002
+   },
+   "not_walked": {},
+   "readable": false,
+   "settled": {
+    "breakeven": 0,
+    "losses": 7,
+    "mean_r": -0.427,
+    "median_r": -0.85,
+    "n": 9,
+    "sum_r": -3.84,
+    "wins": 2
+   },
+   "tickets": 21,
+   "uncertain_by_reason": {
+    "open_above_limit": 4,
+    "stop_sequence": 1,
+    "trigger_timing": 1
+   },
+   "win_rate": 0.222,
+   "withheld": 1
+  },
+  "yellow_admits_a": {
+   "admitted": 447,
+   "buckets": {
+    "basis_mismatch": 1,
+    "no_ticket": 86,
+    "not_filled": 67,
+    "settled": 126,
+    "uncertain": 167
+   },
+   "costs_per_side_bps": {
+    "0": {
+     "mean_r": -0.574,
+     "n": 126,
+     "sum_r": -72.28
+    },
+    "20": {
+     "mean_r": -0.705,
+     "n": 126,
+     "sum_r": -88.82
+    },
+    "5": {
+     "mean_r": -0.607,
+     "n": 126,
+     "sum_r": -76.51
+    }
+   },
+   "night_bootstrap": {
+    "ci95": [
+     -0.526,
+     0.355
+    ],
+    "mean_of_night_means": -0.114,
+    "nights": 13,
+    "reps": 2000,
+    "seed": 20261002
+   },
+   "not_walked": {
+    "basis_mismatch": 1
+   },
+   "readable": true,
+   "settled": {
+    "breakeven": 1,
+    "losses": 108,
+    "mean_r": -0.574,
+    "median_r": -1.0,
+    "n": 126,
+    "sum_r": -72.28,
+    "wins": 17
+   },
+   "tickets": 360,
+   "uncertain_by_reason": {
+    "open_above_limit": 75,
+    "open_below_skip": 5,
+    "stop_sequence": 38,
+    "trigger_timing": 49
+   },
+   "win_rate": 0.135,
+   "withheld": 86
+  }
+ },
+ "version": "ablation-v1"
+}

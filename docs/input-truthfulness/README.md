@@ -1,5 +1,16 @@
 # Input truthfulness milestone
 
+[19 November 2026: the pre-registered ablation](2026-11-19-ablation.md)
+reads six rule changes against the production mechanics, each its one change
+(no regime gate, a yellow night admitting A, unscaled breadth thresholds, the
+discovery admission off, the stop at the burst day's low only, equal checklist
+weights), over 55 publications (49 sessions, 11 September to 18 November) with
+the frozen study's walk. The spec was committed before any result. The reader is
+not run and no slot cap applies; production admits 20 rows, 9 of them settled.
+Only 3 variants reach 20 settled tickets (`no_regime_gate`, `yellow_admits_a`, `admission_off`),
+and every one of their night intervals includes zero. Analysis only: nothing is
+adopted.
+
 [19 November 2026: the burst trigger rule, read both ways](2026-11-19-burst-trigger-comparison.md)
 runs the frozen signal-outcome study's own walk twice over 55 publications (49
 sessions, 11 September to 18 November), every burst ticket built once with
