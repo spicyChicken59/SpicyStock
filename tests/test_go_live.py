@@ -512,6 +512,7 @@ def test_the_ledger_is_sorted_keeps_the_newest_and_drops_what_it_cannot_read():
                        {"session": "soon", "counted": True}, "2026-11-16", None]}
     assert gl.ledger_of(junk, None) == [counted("2026-11-17")]
     assert gl.ledger_of({"ledger": "2026-11-17"}, None) == [] and gl.ledger_of(None, None) == []
+    assert gl.ledger_of({"ledger": 5}, None) == [] and gl.ledger_of({"ledger": {"session": "2026-11-17"}}, None) == []
 
 
 def test_the_run_never_raises_over_a_ledger_or_a_session_it_cannot_read():
