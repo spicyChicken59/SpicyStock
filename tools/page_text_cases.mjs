@@ -565,7 +565,9 @@ async function recordView({ browser, base, open, check, eq, full, shotsDir }) {
   // a record from before the gate is paper only, and one whose gate cannot be read says that
   for (const [name, mutate, state, words] of [
     ['gate-absent', (d) => { delete d.run.go_live; }, 'absent', 'This record is from before the go-live gate'],
-    ['gate-unreadable', (d) => { d.run.go_live.criteria = 'not a list'; }, 'unreadable', 'This record’s go-live gate could not be read']]) {
+    ['gate-unreadable', (d) => { d.run.go_live.criteria = 'not a list'; }, 'unreadable', 'This record’s go-live gate could not be read'],
+    ['gate-no-criteria', (d) => { d.run.go_live.criteria = []; }, 'unreadable', 'This record’s go-live gate could not be read'],
+    ['gate-no-sentence', (d) => { d.run.go_live.sentence = 5; }, 'unreadable', 'This record’s go-live gate could not be read']]) {
     const d = clone(full); mutate(d);
     const rg = routed('record-' + name, d);
     const { page, context } = await open(browser, base, rg.url, NOW, 1280, { beforeLoad: rg.beforeLoad, reducedMotion: 'reduce' });
@@ -588,6 +590,23 @@ async function recordView({ browser, base, open, check, eq, full, shotsDir }) {
       await toView(page, 'record');
       eq('record gate-live: the gate is shown live', await page.evaluate(() => { const n = document.querySelector('#record-card [data-go-live]'); return n ? n.getAttribute('data-go-live') : null; }), 'live');
       eq('record gate-live: and prints the record’s own sentence', await first(page, '#record-card [data-go-live-sentence]'), d.run.go_live.sentence);
+    } finally { await context.close(); }
+  }
+  // only true is ready and only true is met: a truthy word is neither, and a row that is no criterion is left out
+  {
+    const d = clone(full);
+    d.run.go_live.ready = 'yes';
+    d.run.go_live.criteria[1].met = 'yes';
+    d.run.go_live.criteria = [null, { met: true }].concat(d.run.go_live.criteria);
+    const rg = routed('record-gate-truthy', d);
+    const { page, context, errors } = await open(browser, base, rg.url, NOW, 1280, { beforeLoad: rg.beforeLoad, reducedMotion: 'reduce' });
+    try {
+      await toView(page, 'record');
+      eq('record gate-truthy: a ready that is not true is paper', await page.evaluate(() => { const n = document.querySelector('#record-card [data-go-live]'); return n ? n.getAttribute('data-go-live') : null; }), 'paper');
+      const crit = await page.locator('#record-card [data-go-live-criterion]').evaluateAll((nodes) => nodes.map((n) => [n.getAttribute('data-go-live-criterion'), n.textContent]));
+      eq('record gate-truthy: only the gate’s own criteria are listed', crit.map((c) => c[0]), full.run.go_live.criteria.map((c) => c.key));
+      check('record gate-truthy: a met that is not true is not met', (crit[1] || [])[1] && crit[1][1].startsWith(full.run.go_live.criteria[1].key.replace(/_/g, ' ') + ': not met'), crit[1]);
+      eq('record gate-truthy: no page errors', errors, []);
     } finally { await context.close(); }
   }
   // a record from before the minute-bar rule names no minute bars

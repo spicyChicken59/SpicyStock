@@ -86,6 +86,9 @@ def test_a_morning_file_that_is_late_missing_or_bound_elsewhere_ends_the_count(m
 
 def test_there_is_nothing_to_close_without_a_real_previous_publication():
     assert gl.close_session({}, None, None) is None
+    # a previous record whose session is no date closes nothing: a row the validator could not read
+    assert gl.close_session(previous_record(session="soon"), SHA, morning_for(SHA)) is None
+    assert gl.close_session(previous_record(session=20261117), SHA, morning_for(SHA)) is None
     assert gl.close_session({"fixture": "x", **previous_record()}, SHA, morning_for(SHA)) is None
 
 
@@ -434,3 +437,238 @@ def test_the_pipeline_binds_the_morning_file_to_the_record_it_replaces(tmp_path)
     # the evening reads the digest of the record on disk before it replaces it
     body = (ROOT / "src" / "pipeline.py").read_text().split("def run_evening", 1)[1]
     assert body.index("previous_sha256 = previous_digest(docs) if previous else None") < body.index("publish_bundle(")
+
+
+# ------------------------------------------ the second review's holes, closed --
+def test_an_unrecorded_trigger_is_unknown_and_any_other_event_is_not_automatic():
+    assert gl.automatic({}) is None and gl.automatic(None) is None and gl.automatic({"event": None}) is None
+    assert gl.automatic({"event": "push"}) is False
+    assert gl.automatic({"event": "workflow_dispatch", "only_if_unpublished": "true"}) is False    # the flag is a bool
+    entry = gl.close_session(previous_record(event=None), SHA, morning_for(SHA))
+    assert entry["automatic"] is None and entry["counted"] is False
+
+
+@pytest.mark.parametrize("elapsed", [-1.0, True, "180", float("nan"), float("inf"), 1e20])
+def test_an_elapsed_time_that_is_no_duration_gives_no_finish_and_never_raises(elapsed):
+    entry = gl.close_session(previous_record(elapsed=elapsed), SHA, morning_for(SHA))
+    assert entry["on_time"] is None and entry["counted"] is False
+
+
+def test_a_morning_check_counts_only_on_its_own_session_from_the_window_start_on():
+    from src import freshness
+    start = freshness.morning_window(previous_record())["collection_starts_at"]
+    assert start == "2026-11-18T14:00:00+00:00"
+    # exactly at the window's start it counts; the same clock time a day later does not
+    assert gl.close_session(previous_record(), SHA, morning_for(SHA, start))["morning_on_time"] is True
+    next_day = gl.close_session(previous_record(), SHA, morning_for(SHA, "2026-11-19T14:21:00+00:00"))
+    assert next_day["morning_on_time"] is False and next_day["counted"] is False
+    # exactly at the due time it counts
+    due = gl.close_session(previous_record(), SHA, morning_for(SHA, "2026-11-18T14:45:00+00:00"))
+    assert due["morning_on_time"] is True
+
+
+@pytest.mark.parametrize("dry_run", ["absent", None, "false", 0])
+def test_a_morning_receipt_that_does_not_say_it_was_no_rehearsal_is_not_counted(dry_run):
+    receipt = morning_for(SHA)
+    if dry_run == "absent":
+        del receipt["dry_run"]
+    else:
+        receipt["dry_run"] = dry_run
+    entry = gl.close_session(previous_record(), SHA, receipt)
+    assert entry["morning_on_time"] is False and entry["counted"] is False
+
+
+def test_a_receipt_bound_elsewhere_lends_the_ledger_neither_its_time_nor_its_status():
+    other = gl.close_session(previous_record(), SHA, morning_for("b" * 64))
+    assert (other["morning_generated_at"], other["morning_status"]) == (None, None)
+    # with no digest of the record it replaces, nothing is bound: None is no binding
+    unbound = {"publication": {}, "generated_at": "2026-11-18T14:21:00+00:00", "status": "no_tickets", "dry_run": False}
+    entry = gl.close_session(previous_record(), None, unbound)
+    assert (entry["morning_generated_at"], entry["morning_status"], entry["morning_on_time"]) == (None, None, False)
+    assert entry["counted"] is False
+
+
+def test_a_record_that_names_no_applicable_session_leaves_the_morning_unknown():
+    prev = previous_record()
+    del prev["run"]["timing"]["applicable_session"]
+    entry = gl.close_session(prev, SHA, morning_for(SHA))
+    assert entry["morning_on_time"] is None and entry["counted"] is False
+
+
+def test_the_ledger_is_sorted_keeps_the_newest_and_drops_what_it_cannot_read():
+    from src import sessions
+    days, day = [], date(2026, 11, 17)
+    for _ in range(gl.LEDGER_MAX + 5):
+        days.append(day.isoformat())
+        day = sessions.previous_session(day)
+    shuffled = days[1::2] + days[0::2]                                    # neither ascending nor descending
+    kept = gl.ledger_of({"ledger": [counted(d) for d in shuffled]}, None)
+    assert [r["session"] for r in kept] == sorted(days)[-gl.LEDGER_MAX:]
+    # an entry older than the rows it joins takes its own place
+    placed = gl.ledger_of({"ledger": [counted("2026-11-16"), counted("2026-11-17")]}, counted("2026-11-13"))
+    assert [r["session"] for r in placed] == ["2026-11-13", "2026-11-16", "2026-11-17"]
+    # rows that name no session, or no date, or are no rows, are dropped; a ledger that is no list is empty
+    junk = {"ledger": [counted("2026-11-17"), {"counted": True}, {"session": 5, "counted": True},
+                       {"session": "soon", "counted": True}, "2026-11-16", None]}
+    assert gl.ledger_of(junk, None) == [counted("2026-11-17")]
+    assert gl.ledger_of({"ledger": "2026-11-17"}, None) == [] and gl.ledger_of(None, None) == []
+
+
+def test_the_run_never_raises_over_a_ledger_or_a_session_it_cannot_read():
+    rows = [counted(d) for d in TEN]
+    assert gl.consecutive(rows, "tonight") == 0
+    assert gl.consecutive(rows + [{"session": "soon", "counted": True}]) == 0
+    assert gl.consecutive([{"session": "2026-11-16", "counted": "yes"}]) == 0      # counted is a bool
+    assert gl.first_forward_session("2026-11-18", "soon") == "2026-11-18"
+    block = build(previous={"run": {"session": "soon", "go_live": {"ledger": [{"session": "x", "counted": True}],
+                                                                    "strategy": "standing"}}})
+    assert block["ledger"] == [] and block["strategy"]["since"] == "2026-11-18"
+
+
+def test_a_standing_digest_without_its_session_is_read_again():
+    rules = {"plan": {"x": 1}, "universe": {"identity": "u1"}}
+    for since in (None, 5, ["2026-10-01"]):
+        prior = prior_with([], since=since, digest_rules=rules)
+        block = build(previous=prior, rows=[{"bucket": "settled", "picked": "2026-11-18"}], rules=rules)
+        assert block["strategy"]["since"] == "2026-11-18", since
+        assert next(c for c in block["criteria"] if c["key"] == "settled_forward_plans")["have"] == 1
+
+
+def test_the_sentence_names_each_unmet_condition_with_its_detail():
+    block = build()
+    unmet = [c for c in block["criteria"] if not c["met"]]
+    assert len(unmet) == 3
+    assert block["sentence"] == "Paper only: " + "; ".join(
+        f"{c['key'].replace('_', ' ')} not met ({c['detail']})" for c in unmet) + "."
+    # the previous session closed counted, and nothing has settled since tonight's rules
+    assert (f"(1 consecutive of {gl.ON_TIME_SESSIONS})" in block["sentence"]
+            and f"(0 settled since 2026-11-18 of {gl.MIN_SETTLED_FORWARD})" in block["sentence"])
+
+
+def _gate(data):
+    block = data["run"]["go_live"]
+    return block, {c["key"]: c for c in block["criteria"]}
+
+
+@pytest.mark.parametrize("name, change, words", [
+    ("version", lambda b, c: b.update(version=gl.VERSION + 1), "is missing or not this version"),
+    ("met", lambda b, c: c["on_time_sessions"].update(met=True), "on_time_sessions is not its count against the archived need"),
+    ("settled need", lambda b, c: c["settled_forward_plans"].update(need=1),
+     "settled_forward_plans is not its count against the archived need"),
+    ("settled met", lambda b, c: c["settled_forward_plans"].update(met=True),
+     "settled_forward_plans is not its count against the archived need"),
+    ("sentence", lambda b, c: b.update(sentence=5), "ledger or sentence is not readable"),
+    ("ledger", lambda b, c: b.update(ledger="2026-09-10"), "ledger or sentence is not readable"),
+    ("ledger none", lambda b, c: b.update(ledger=None), "ledger or sentence is not readable"),
+    ("row", lambda b, c: b["ledger"].append({"counted": True}), "ledger rows are not readable"),
+    ("row date", lambda b, c: b["ledger"].append({"session": "soon", "counted": True}), "ledger rows are not readable"),
+])
+def test_the_validator_names_each_forged_part_of_the_gate(name, change, words):
+    data = page("next")                                       # its ledger has a row
+    assert gl.faults(data) == [] and data["run"]["go_live"]["ledger"]
+    forged = copy.deepcopy(data)
+    change(*_gate(forged))
+    found = gl.faults(forged)
+    assert any(f == "run.go_live " + words for f in found), (name, found)
+    with pytest.raises(ValueError):
+        report.validate(forged)
+
+
+def test_the_validator_anchors_the_streak_to_the_records_own_session():
+    data = page("full")
+    block, crit = _gate(data)
+    block["ledger"] = [counted(d) for d in TEN]               # ten counted sessions ending 16 November
+    crit["on_time_sessions"].update(have=10, met=True)
+    block["reasons"] = [c["key"] for c in block["criteria"] if c["met"] is not True]
+    words = "run.go_live on_time_sessions is not the run its own ledger ends on before tonight"
+    data["run"]["session"] = "2026-11-17"                     # the session after the ledger's last: the run stands
+    assert gl.faults(data) == []
+    data["run"]["session"] = "2026-11-18"                     # a session was missed: the run is broken
+    assert gl.faults(data) == [words]
+    data["run"]["session"] = "tonight"
+    assert gl.faults(data) == ["run.go_live ledger rows are not readable"]
+
+
+def test_a_protocol_record_that_is_missing_or_no_file_is_unpassed_and_never_raises(monkeypatch, tmp_path):
+    for path in (tmp_path / "missing.json", tmp_path):                    # absent, and a directory
+        monkeypatch.setattr(gl, "PROTOCOL_FILE", path)
+        assert gl.protocol() == {"passed": False, "recorded_on": None, "detail": "no readable record of the protocol"}
+        monkeypatch.setattr(gl, "ABLATION_FILE", path)
+        assert gl.ablation() is False
+    binary = tmp_path / "p.json"
+    binary.write_bytes(b"\xff\xfe\x00")
+    monkeypatch.setattr(gl, "PROTOCOL_FILE", binary)
+    assert gl.protocol()["passed"] is False
+
+
+def test_the_production_gate_reads_the_owners_committed_record():
+    """The suite pins ``PROTOCOL_FILE`` to an unpassed copy, so the module's
+    own path is read here from a copy of the module nothing has patched."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("go_live_as_shipped", ROOT / "src" / "go_live.py")
+    shipped = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(shipped)
+    assert shipped.PROTOCOL_FILE == ROOT / "knowledge" / "go-live" / "fidelity-protocol.json"
+    assert shipped.PROTOCOL_FILE.is_file() and shipped.PINNED_PROTOCOL_FILE == gl.PINNED_PROTOCOL_FILE
+    assert shipped.ABLATION_FILE.is_file() and shipped.ablation() is True
+    note = (ROOT / "docs" / "operations" / "go-live.md").read_text()
+    assert "knowledge/go-live/fidelity-protocol.json" in note
+    # the evening itself reads the module's path and nothing pins it there
+    assert "PROTOCOL_FILE" not in (ROOT / "src" / "pipeline.py").read_text()
+
+
+@pytest.mark.parametrize("reasons", [{}, None, "fidelity_protocol", 0, [None]])
+def test_a_gate_whose_reasons_are_no_list_of_its_own_words_is_paper_and_says_it_was_not_read(reasons):
+    data = page("full")
+    for c in data["run"]["go_live"]["criteria"]:
+        c["met"] = True
+    data["run"]["go_live"].update(ready=True, reasons=reasons)
+    doc = orders.build(json.dumps(data).encode())
+    assert doc["mode"] == "paper" and doc["live_ready"] == {"value": False, "reasons": [orders.LIVE_READY_REASON]}
+
+
+def test_a_gate_that_is_not_ready_and_names_no_reason_still_names_one():
+    data = page("full")
+    data["run"]["go_live"].update(ready=False, reasons=[])
+    doc = orders.build(json.dumps(data).encode())
+    assert doc["live_ready"] == {"value": False, "reasons": [orders.LIVE_READY_REASON]} and doc["mode"] == "paper"
+    # a truthy ready that is not true is not ready
+    data["run"]["go_live"].update(ready=1, reasons=[])
+    assert orders.build(json.dumps(data).encode())["live_ready"]["value"] is False
+
+
+def test_the_next_nights_gate_counts_the_plan_that_settled_since_the_rules_stood():
+    data = page("next")
+    block, crit = _gate(data)
+    since = block["strategy"]["since"]
+    settled = [p["ticker"] for p in data["open_plans"]
+               if p.get("picked", "") >= since and p.get("status") in ("stopped", "exit")]
+    assert settled and crit["settled_forward_plans"]["have"] == len(settled)
+    assert crit["settled_forward_plans"]["have"] < data["scorecard"]["settled"]     # the seeded picks are older
+    assert crit["settled_forward_plans"]["detail"] == f"{len(settled)} settled since {since} of {gl.MIN_SETTLED_FORWARD}"
+    # and its ledger closed the night before, which no schedule started and no morning checked
+    assert [r["session"] for r in block["ledger"]] == [since]
+    assert block["ledger"][0]["counted"] is False and block["ledger"][0]["automatic"] is None
+
+
+from tests.test_pipeline import claude, evening, market  # noqa: E402,F401  (fixtures)
+
+
+def test_the_evening_records_how_it_was_started_and_the_next_night_closes_it(market, claude, fake_resend, tmp_path,  # noqa: F811
+                                                                             monkeypatch):
+    from datetime import datetime, timezone
+    monkeypatch.setenv("SCAN_TRIGGER_EVENT", "workflow_dispatch")
+    monkeypatch.setenv("SCAN_TRIGGER_ONLY_IF_UNPUBLISHED", "true")
+    rep, first, docs = evening(tmp_path, market)
+    assert rep.exit_code() == 0, rep.problems
+    assert first["run"]["trigger"] == {"event": "workflow_dispatch", "only_if_unpublished": True}
+    assert first["run"]["go_live"]["ledger"] == [] and gl.faults(first) == []
+    monkeypatch.setenv("SCAN_TRIGGER_EVENT", "schedule")
+    monkeypatch.setenv("SCAN_TRIGGER_ONLY_IF_UNPUBLISHED", "false")
+    rep, second, docs = evening(tmp_path, market, now=datetime(2026, 9, 11, 22, 30, tzinfo=timezone.utc))
+    assert rep.exit_code() == 0, rep.problems
+    assert second["run"]["trigger"] == {"event": "schedule", "only_if_unpublished": False}
+    row = second["run"]["go_live"]["ledger"][-1]
+    assert (row["session"], row["automatic"], row["on_time"]) == (first["run"]["session"], True, True)
+    assert row["morning_on_time"] is False and row["counted"] is False           # no morning file was written
+    assert gl.faults(second) == []

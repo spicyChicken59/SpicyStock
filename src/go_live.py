@@ -88,6 +88,16 @@ def _instant(value) -> datetime | None:
     return out if out.tzinfo else None
 
 
+def _day(value) -> date | None:
+    """An ISO date a row names, or None: a ledger read off disk is never trusted to parse."""
+    if not isinstance(value, str):
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
 def _clock(text: str) -> time:
     hour, minute = text.split(":")
     return time(int(hour), int(minute))
@@ -122,14 +132,18 @@ def close_session(previous: dict, previous_sha256: str | None, morning: dict | N
     real previous publication to close."""
     run = _dict(previous.get("run"))
     session, published = run.get("session"), _instant(run.get("published_at"))
-    if not isinstance(session, str) or previous.get("fixture"):
+    if _day(session) is None or previous.get("fixture"):
         return None
     from src import freshness
     on_time = None
     elapsed = run.get("elapsed_seconds")
     if published is not None and isinstance(elapsed, (int, float)) and not isinstance(elapsed, bool) and elapsed >= 0:
-        local = (published + timedelta(seconds=elapsed)).astimezone(NEW_YORK)
-        on_time = local.date().isoformat() == session and local.time() <= _clock(PUBLISH_BY_ET)
+        try:
+            local = (published + timedelta(seconds=elapsed)).astimezone(NEW_YORK)
+        except (OverflowError, ValueError):      # an elapsed time no clock can hold is no finish
+            local = None
+        if local is not None:
+            on_time = local.date().isoformat() == session and local.time() <= _clock(PUBLISH_BY_ET)
     applicable = _dict(run.get("timing")).get("applicable_session")
     receipt = _dict(morning)
     bound = previous_sha256 is not None and _dict(receipt.get("publication")).get("data_sha256") == previous_sha256
@@ -150,7 +164,8 @@ def close_session(previous: dict, previous_sha256: str | None, morning: dict | N
 
 
 def ledger_of(previous_block, entry: dict | None) -> list[dict]:
-    rows = [r for r in (_dict(previous_block).get("ledger") or []) if isinstance(r, dict) and isinstance(r.get("session"), str)]
+    kept = _dict(previous_block).get("ledger")
+    rows = [r for r in (kept if isinstance(kept, list) else []) if isinstance(r, dict) and _day(r.get("session")) is not None]
     if entry is not None:
         rows = [r for r in rows if r["session"] != entry["session"]] + [entry]
     return sorted(rows, key=lambda r: r["session"])[-LEDGER_MAX:]
@@ -165,12 +180,13 @@ def consecutive(ledger: list[dict], session: str | None = None) -> int:
     from src import sessions
     n, later = 0, None
     if session is not None:
-        if not ledger or ledger[-1].get("session") != sessions.previous_session(date.fromisoformat(session)).isoformat():
+        tonight = _day(session)
+        if tonight is None or not ledger or ledger[-1].get("session") != sessions.previous_session(tonight).isoformat():
             return 0
     for row in reversed(ledger):
-        if not row.get("counted"):
+        day = _day(row.get("session"))
+        if row.get("counted") is not True or day is None:
             break
-        day = date.fromisoformat(row["session"])
         if later is not None and sessions.next_sessions(day, 1)[0] != later:
             break
         n, later = n + 1, day
@@ -183,8 +199,9 @@ def first_forward_session(session: str, published: str | None) -> str:
     already published, the session after that one, so a backfill's picks (made
     after the fact) never count as forward plans."""
     from src import sessions
-    if isinstance(published, str) and published >= session:
-        return sessions.next_sessions(date.fromisoformat(published), 1)[0].isoformat()
+    newest = _day(published)
+    if newest is not None and published >= session:
+        return sessions.next_sessions(newest, 1)[0].isoformat()
     return session
 
 
@@ -280,8 +297,8 @@ def faults(data: dict) -> list[str]:
         if not (type(have) is int and type(need) is int and c.get("need") == need) or c.get("met") is not (have >= need):
             out.append(f"run.go_live {key} is not its count against the archived need")
     session = _dict(data.get("run")).get("session")
-    ledger = [r for r in block["ledger"] if isinstance(r, dict) and isinstance(r.get("session"), str)]
-    if len(ledger) != len(block["ledger"]) or not isinstance(session, str):
+    ledger = [r for r in block["ledger"] if isinstance(r, dict) and _day(r.get("session")) is not None]
+    if len(ledger) != len(block["ledger"]) or _day(session) is None:
         out.append("run.go_live ledger rows are not readable")
     elif by_key["on_time_sessions"].get("have") != consecutive(ledger, session):
         out.append("run.go_live on_time_sessions is not the run its own ledger ends on before tonight")
