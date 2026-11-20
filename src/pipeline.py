@@ -1145,6 +1145,7 @@ def finish_publication(rep: RunReport, docs: Path, data: dict, rec: dict, frames
     publish_research_outcomes(docs, rec)
     publish_brief(docs, data, rec, frames, minutes)
     publish_orders(docs)
+    publish_strategy(docs)
     if failure is not None:
         rep.fail(failure)
     if restamped is not None:
@@ -1239,6 +1240,23 @@ def publish_orders(docs: Path) -> None:
                 log.warning("Execution handoff: removed %s, bound to an earlier publication.", " and ".join(removed))
         except Exception as inner:  # noqa: BLE001 -- never fails the night
             log.warning("Execution handoff: the earlier files could not be removed (%s).", type(inner).__name__)
+
+
+def publish_strategy(docs: Path) -> None:
+    """``docs/strategy.html`` (``src/strategy_page.py``): the strategy as the
+    code and the installed record state it, written after the handoff. It
+    never fails the run; a page that cannot be written is removed, so the
+    site never serves the strategy beside an earlier night's values."""
+    from src import strategy_page
+    try:
+        strategy_page.write(docs)
+        log.info("Strategy page: %s written from the installed record.", strategy_page.FILE)
+    except Exception as exc:  # noqa: BLE001 -- optional derived companion only
+        log.warning("Strategy page unavailable (%s); evening record retained.", type(exc).__name__)
+        try:
+            (docs / strategy_page.FILE).unlink(missing_ok=True)
+        except OSError as inner:
+            log.warning("Strategy page: the earlier page could not be removed (%s).", type(inner).__name__)
 
 
 def publish_brief(docs: Path, data: dict, rec: dict, frames: dict, minutes) -> None:

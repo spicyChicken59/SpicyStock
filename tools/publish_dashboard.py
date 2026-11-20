@@ -190,6 +190,29 @@ def brief_files(root: Path) -> tuple[str, ...]:
     return (brief.JSON_FILE, brief.MD_FILE)
 
 
+def strategy_files(root: Path) -> tuple[str, ...]:
+    """``strategy.html``, held to the committed record. The evening writes it
+    from the record and CI's ``tools/build_strategy_page.py --check`` holds it
+    to the code; nightly commits run no CI, so here the page's own meta must
+    name the committed ``data.json``'s SHA-256, or the site would serve the
+    strategy beside another night's record. Standard library only."""
+    import hashlib
+    import re
+    path = root / 'docs' / 'strategy.html'
+    if path.is_symlink():
+        raise RuntimeError('The strategy page is a symlink.')
+    if not path.exists():
+        return ()
+    if not path.is_file():
+        raise RuntimeError('The strategy page is not a file.')
+    page = path.read_text(encoding='utf-8', errors='replace')
+    named = re.search(r'<meta name="spicystock-strategy" content="version [^;"]+; record sha256 ([0-9a-f]{64})">', page)
+    record = hashlib.sha256((root / 'docs' / 'data.json').read_bytes()).hexdigest()
+    if not named or named.group(1) != record:
+        raise RuntimeError('The strategy page is not bound to the committed data.json.')
+    return ('strategy.html',)
+
+
 def orders_files(root: Path) -> tuple[str, ...]:
     """The execution handoff, held to the committed record and its schema.
 
@@ -293,6 +316,7 @@ def public_files(root: Path) -> tuple[str, ...]:
     names.extend(name for name in research_outcomes_files(root) if name not in names)
     names.extend(name for name in brief_files(root) if name not in names)
     names.extend(name for name in orders_files(root) if name not in names)
+    names.extend(name for name in strategy_files(root) if name not in names)
     names.extend(name for name in study_case_files(root) if name not in names)
     return tuple(names)
 

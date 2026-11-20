@@ -651,7 +651,9 @@ def test_ci_runs_the_suite_the_fixture_check_the_chart_check_and_the_page_smoke(
         # the execution handoff over the `full` fixture and the morning receipts, after both
         'python tests/fixtures/orders/generate.py --check',
         # the study's frozen case files, held to the study's own digests
-        'python tools/freeze_validation_cases.py --check']
+        'python tools/freeze_validation_cases.py --check',
+        # the strategy page, held to what the code and the committed record write
+        'python tools/build_strategy_page.py --check']
     page = steps(wf, "page")["Open the page against every fixture and read it back"]["run"]
     assert "node tools/handoff_model_cases.mjs" in page
     assert "node tools/owner_model_cases.mjs" in page
