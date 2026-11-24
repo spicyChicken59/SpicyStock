@@ -1,89 +1,93 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-11-21T15:34:01.263090+00:00",
-  "generated_at": "2026-11-21T15:34:03.208896+00:00",
-  "observation_run_id": "44919807098",
-  "previous_observation_sha256": "10f8fa27b9332b375ca6c7fea0fdf40fba1724ca0546bfcc91bf0a5ee4aedbe9",
+  "collection_started_at": "2026-11-24T19:03:43.356670+00:00",
+  "generated_at": "2026-11-24T19:03:44.700411+00:00",
+  "observation_run_id": "45466073949",
+  "previous_observation_sha256": "69539b2588b03ba432fc9c07fd9359f46c73603aa8a10b68bc757c07aac1c81e",
   "dry_run": false,
   "publication": {
-    "data_sha256": "c88c9f246b47213be62584da1b7363a50e980a9d847ed9f2dc81467245eca6aa",
-    "context_sha256": "0c3416566aba2046f61ecf9b971bfe89357f5a0f4de8c734444563a5a3db9540",
-    "run_id": "44863821801",
-    "rules_version": "577dec8b74e4",
-    "measured_session": "2026-11-20",
-    "applicable_session": "2026-11-23",
-    "published_at": "2026-11-21T03:59:48.154369+00:00",
+    "data_sha256": "467fd1f29228a3cb54accf1054a102cee6e67799fbe87b3bc0a8bf76ddb399c2",
+    "context_sha256": "3e7d390b6352fd8ecc753742ccf37aabc2d782b50073ddb72f0f7d4e9798ccaa",
+    "run_id": "45344319258",
+    "rules_version": "d14cd717cd8a",
+    "measured_session": "2026-11-23",
+    "applicable_session": "2026-11-24",
+    "published_at": "2026-11-24T06:58:22.835349+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "2ed97c19ddf8f58d60f0b40abd3cf7a66a924a4f607497ee3db86b7b3031c7a0"
+    "reader_sha256": "6df0ea63e2e604c3fef4e01865fd3828de9177046901b8fec2f7a58d08bbe6c0"
   },
   "frozen": {
-    "session": "2026-11-20",
-    "expected_session": "2026-11-20",
+    "session": "2026-11-23",
+    "expected_session": "2026-11-23",
     "feed": "sip",
     "adjustment": "split",
     "timeframe": "1Day",
     "lookback_days": 260,
     "stale_names_max": 100,
-    "universe_identity": "29365a85f49efce6",
-    "universe_snapshot_sha256": "b5f58f4a8b1d43474c1b95c68d6ce79371416abbc8a261bcbffc09db5dec681f",
+    "universe_identity": "bafd18cdd2e28423",
+    "universe_snapshot_sha256": "238f545c73f9aec8764d92af5ed487e0d4b1326f00c3122826fb10bd0892c47e",
     "universe_size": 4753,
-    "intended_identity": "e58bca7101556b10",
-    "coverage_sha256": "40d2156a4116ad997ac62375ecef5ff94e2265aff3ca17826aaaeec4a2588296",
-    "rules_version": "577dec8b74e4"
+    "intended_identity": "12b425a47b059498",
+    "coverage_sha256": "ec518079152a867c6a72fe7449d23e5b4531e226df3413de050c79f160f8291e",
+    "rules_version": "d14cd717cd8a"
   },
   "window": {
-    "next_session": "2026-11-23",
-    "next_open_at": "2026-11-23T09:30:00-05:00",
-    "before_next_open": true
+    "next_session": "2026-11-24",
+    "next_open_at": "2026-11-24T09:30:00-05:00",
+    "before_next_open": false
   },
   "original": {
     "acceptance_status": "degraded",
     "intended_stocks": 4753,
-    "ready_stocks": 4736,
-    "fraction": 0.9964233115926783,
+    "ready_stocks": 4734,
+    "fraction": 0.9960025247212287,
     "complete_intended": false,
     "capacity_excluded": 0,
     "stale": 17,
     "stale_stocks": 17,
-    "tolerance_verdict": "tolerated",
-    "tolerance_reasons": [],
+    "tolerance_verdict": "not_tolerated",
+    "tolerance_reasons": [
+      "other_exceptions"
+    ],
     "gaps": {
       "stale": 17,
       "no_bars": 0,
       "dropped": 0,
       "unfetched_budget": 0,
       "unfetched_failure": 0,
-      "gapped": 0,
+      "gapped": 2,
       "unreadable": 0
     },
-    "run_status": "ok",
-    "problem_kinds": [],
+    "run_status": "degraded",
+    "problem_kinds": [
+      "coverage_thin"
+    ],
     "gate_read_run_status": false
   },
   "deficits": {
     "categories": {
       "stale": {
         "count": 17,
-        "identity": "1996864c7cefe30d",
+        "identity": "3849810b9eb50ac3",
         "named": true,
         "source": "record",
         "names": [
-          "ARKR",
-          "BEBE",
-          "BGM",
-          "BMHL",
           "CPBI",
           "DDC",
+          "DIT",
           "ELLO",
           "GSIW",
-          "IOR",
-          "ITP",
-          "LEGO",
+          "KELYB",
+          "LBTYB",
           "MAYS",
+          "MDRR",
           "NCEW",
+          "PBHC",
+          "PFX",
           "PHOE",
           "RDIB",
-          "TOPP",
+          "SORA",
+          "TRSG",
           "WLYB"
         ],
         "benchmark_in_population": false
@@ -121,11 +125,14 @@
         "benchmark_in_population": false
       },
       "gapped": {
-        "count": 0,
-        "identity": "e3b0c44298fc1c14",
+        "count": 2,
+        "identity": "1fe41d0b2755dfd9",
         "named": true,
-        "source": null,
-        "names": [],
+        "source": "ledger",
+        "names": [
+          "ITP",
+          "TOPP"
+        ],
         "benchmark_in_population": false
       },
       "unreadable": {
@@ -137,12 +144,12 @@
         "benchmark_in_population": false
       }
     },
-    "named_stocks": 17,
+    "named_stocks": 19,
     "unnamed_frames": 0,
     "ledger": {
-      "path": "quality-ledger/v1/c88c9f246b47213be62584da1b7363a50e980a9d847ed9f2dc81467245eca6aa.json.gz",
-      "sha256": "84c5b4176e8714e46d88f026c20b317af6565beade26785e15fb1be5bca813c7",
-      "used": false
+      "path": "quality-ledger/v1/467fd1f29228a3cb54accf1054a102cee6e67799fbe87b3bc0a8bf76ddb399c2.json.gz",
+      "sha256": "1de32466e3e5d2577d0d1859833b0cecc49c303f1b577ddd2da9ec9ee8a205d3",
+      "used": true
     }
   },
   "policy": {
@@ -167,225 +174,32 @@
     "benchmark_requested": false,
     "basis": "the publication's own feed, adjustment, session and lookback"
   },
-  "status": "partial",
-  "reason": null,
-  "requested": [
-    "ARKR",
-    "BEBE",
-    "BGM",
-    "BMHL",
-    "CPBI",
-    "DDC",
-    "ELLO",
-    "GSIW",
-    "IOR",
-    "ITP",
-    "LEGO",
-    "MAYS",
-    "NCEW",
-    "PHOE",
-    "RDIB",
-    "TOPP",
-    "WLYB"
-  ],
+  "status": "inapplicable",
+  "reason": "recovery_window_ended",
+  "requested": [],
   "source": {
     "provider": "Alpaca",
     "feed": "sip",
     "adjustment": "split",
     "timeframe": "1Day",
-    "status": "ok",
+    "status": "not_requested",
     "error_kind": null,
-    "checked_at": "2026-11-21T15:34:03.168552+00:00",
-    "batch_attempts": 1,
-    "symbols_requested": 17,
-    "window": {
-      "basis": "reconstructed_from_application_arguments_not_observed_wire_request",
-      "start": "2025-09-30T00:00:00+00:00",
-      "end": "2026-11-20T23:59:59+00:00"
-    }
+    "checked_at": null,
+    "batch_attempts": 0,
+    "symbols_requested": 0,
+    "window": null
   },
-  "rows": [
-    {
-      "ticker": "ARKR",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "BEBE",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "BGM",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "BMHL",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "CPBI",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "DDC",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "ELLO",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "GSIW",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "IOR",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "ITP",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "still_stale",
-      "ending": "2026-11-19",
-      "ready_fault": null,
-      "volume": null,
-      "flat": null
-    },
-    {
-      "ticker": "LEGO",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "MAYS",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "NCEW",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "PHOE",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "RDIB",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "TOPP",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "still_stale",
-      "ending": "2026-11-19",
-      "ready_fault": null,
-      "volume": null,
-      "flat": null
-    },
-    {
-      "ticker": "WLYB",
-      "category": "stale",
-      "original_ending": "2026-11-19",
-      "outcome": "recovered",
-      "ending": "2026-11-20",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    }
-  ],
+  "rows": [],
   "recovered": {
-    "requested": 17,
-    "arrived": 15,
-    "session_ready": 15,
+    "requested": 0,
+    "arrived": 0,
+    "session_ready": 0,
     "arrived_not_ready": 0,
-    "still_stale": 2,
+    "still_stale": 0,
     "still_missing": 0,
     "not_returned": 0,
-    "zero_volume": 15,
-    "flat": 15
+    "zero_volume": 0,
+    "flat": 0
   },
   "coverage": {
     "scan": "not_run",
@@ -407,5 +221,5 @@
     "scheduled_dispatch_is_best_effort",
     "prior_session_followup_is_separate"
   ],
-  "sentence": "Source recovery for the 2026-11-20 publication: its 17 stocks without a usable 2026-11-20 bar, named in full, were asked for again at 10:34 AM ET on Sat 21 Nov, before the 2026-11-23 open, in 1 call to the bars endpoint; 15 now carry a 2026-11-20 bar that passes the session rules (15 with zero volume); 2 still end before it (ITP, TOPP). The publication stays 4736 of 4753 intended stocks ready; its measurements, grades, plans and tickets are unchanged, and why a bar was absent is not established."
+  "sentence": "No source recovery for the 2026-11-23 publication at 2:03 PM ET on Tue 24 Nov: the next session opened before this check ran; nothing was fetched."
 }
