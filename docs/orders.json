@@ -8,11 +8,11 @@
   "risk_pct": 0.5,
   "slots_used": 0
  },
- "content_sha256": "64d27c555e81599b4c9c175ea3b872c97d01517837acbaafbfa33b684b1d8bb6",
+ "content_sha256": "3be8f6baa7255405c71f7e6470f820ea82c72324ac1e9f6bd0eae297ea383580",
  "entry_window": {
-  "cutoff_at": "2026-11-23T10:00:00-05:00",
-  "opens_at": "2026-11-23T09:30:00-05:00",
-  "prepare_by": "2026-11-23T09:28:00-05:00",
+  "cutoff_at": "2026-11-24T10:00:00-05:00",
+  "opens_at": "2026-11-24T09:30:00-05:00",
+  "prepare_by": "2026-11-24T09:28:00-05:00",
   "timezone": "America/New_York"
  },
  "kind": "orders",
@@ -33,13 +33,13 @@
    "status": "fail"
   },
   {
-   "detail": "ok",
+   "detail": "degraded",
    "key": "data",
-   "reason": null,
-   "status": "pass"
+   "reason": "data_degraded",
+   "status": "fail"
   },
   {
-   "detail": "2026-11-21T03:59:48.154369+00:00",
+   "detail": "2026-11-24T06:58:22.835349+00:00",
    "key": "publication_time",
    "reason": null,
    "status": "pass"
@@ -63,13 +63,17 @@
    "scope": "night"
   },
   {
+   "code": "data_degraded",
+   "scope": "night"
+  },
+  {
    "code": "no_tickets",
    "scope": "night"
   }
  ],
  "schema": "docs/operations/orders-schema.json",
  "scorecard": {
-  "breadth_revisions": 2,
+  "breadth_revisions": 3,
   "distinct_setups": 17,
   "eras": [
    {
@@ -97,7 +101,7 @@
    "22 tickets in the scorecard's window are 17 distinct setups.",
    "By model account: $10,000 at 0.5% risk, 2 tickets from 2026-10-08 through 2026-10-08, 1 settled, +0.41R; $2,000 at 0.5% risk, 8 tickets from 2026-10-09 through 2026-11-02, 1 settled, +3.02R; $30,000 at 0.5% risk, 12 tickets from 2026-11-04 through 2026-11-13, 3 settled, -3.00R.",
    "The 3 stopped tickets booked at the stop sum to -3.00R; read at that session's close, -4.66R; at its low, -5.78R.",
-   "Of the 2 sessions whose first publication's breadth this record carries, 2 read differently tonight than that night published, newest first: 2026-11-19 up4 48 to 43, down4 342 to 336; 2026-11-18 up4 164 to 159, down4 174 to 166, ratio_10d 0.61 to 0.62. 27 other sessions in this record's history were first published before these figures were retained.",
+   "Of the 3 sessions whose first publication's breadth this record carries, 3 read differently tonight than that night published, newest first: 2026-11-20 up4 28 to 29; 2026-11-19 up4 48 to 43, down4 342 to 340; 2026-11-18 up4 164 to 158, down4 174 to 167. 26 other sessions in this record's history were first published before these figures were retained.",
    "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
   ],
   "settled": 5,
@@ -110,16 +114,16 @@
   "tickets": 22
  },
  "source": {
-  "applicable_session": "2026-11-23",
-  "context_sha256": "0c3416566aba2046f61ecf9b971bfe89357f5a0f4de8c734444563a5a3db9540",
-  "data_sha256": "c88c9f246b47213be62584da1b7363a50e980a9d847ed9f2dc81467245eca6aa",
+  "applicable_session": "2026-11-24",
+  "context_sha256": "3e7d390b6352fd8ecc753742ccf37aabc2d782b50073ddb72f0f7d4e9798ccaa",
+  "data_sha256": "467fd1f29228a3cb54accf1054a102cee6e67799fbe87b3bc0a8bf76ddb399c2",
   "dry_run": false,
   "fixture": false,
   "picks_sha256": "7f232ab84aca7c3438f70c8110325660b3a40a339fb12f30d502883089b146b0",
-  "published_at": "2026-11-21T03:59:48.154369+00:00",
-  "rules_version": "577dec8b74e4",
-  "run_id": "44863821801",
-  "session": "2026-11-20"
+  "published_at": "2026-11-24T06:58:22.835349+00:00",
+  "rules_version": "d14cd717cd8a",
+  "run_id": "45344319258",
+  "session": "2026-11-23"
  },
  "summary": {
   "blocked": 0,
