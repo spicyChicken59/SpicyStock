@@ -2265,11 +2265,13 @@ def test_a_session_named_in_another_form_is_keyed_in_the_form_the_ledger_reads(r
     assert sw.canonical_key("scheduler:watch:not_started", sha) == "scheduler:watch:not_started"
     odd = copy.deepcopy(record)
     odd["run"]["session"] = "20260910"
+    odd["run"].pop("expected_session", None)
+    assert freshness.covers_through(odd) == "20260910"
     docs, ledger = docs_with(tmp_path, odd, handoff_files=False), tmp_path / "ledger.json"
     first = sw.watch(docs, ALERT - SECOND)
     keys = [a["key"] for a in first["alerts"]]
+    assert "handoff:unbound:2026-09-10" in keys and first["handoff"]["key"] == "handoff:unbound:2026-09-10"
     assert all(sw.KEY_PATTERN.fullmatch(key) for key in keys), keys
-    assert first["handoff"]["key"] in keys
     main_mail(docs, ALERT - timedelta(minutes=2), ledger)
     main_mail(docs, ALERT - SECOND, ledger)
     assert len(sent) == 1

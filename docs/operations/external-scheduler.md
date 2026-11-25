@@ -53,9 +53,12 @@ already makes a second start harmless.
   - a read of the workflow's dispatched runs created since the slot;
   - the dispatch itself, only when that read finds none.
 
-  One more read after a dispatch finds the run's id.
-- **What it logs:** the workflow, the slot, the run id GitHub listed, and,
-  when GitHub refuses a request, its HTTP status. It never logs a token, a
+  One more read after a dispatch finds the run's id, and the pre-open watch
+  slot reads the morning check's dispatched runs once a tick while it waits
+  (`WAIT_SECONDS`); no other slot asks about another workflow.
+- **What it logs:** the workflow, the slot, the run id GitHub listed, a slot
+  that waits and for what, and, when GitHub refuses a request, its HTTP
+  status. It never logs a token, a
   header or a response body.
 - **What it does not do:** it writes no file but an optional `--state`
   ledger, mails nothing, and reads nothing of the repository but the
@@ -89,6 +92,7 @@ This is the owner's step; nothing in the repository deploys it.
    prints one line per due slot:
    - `evening.yml@2026-11-20T18:20:00-05:00 dispatched: run 123456789`
    - `... already started: run 123456789`
+   - `service-watch.yml@2026-11-20T08:25:00-06:00 waits: morning.yml was dispatched at 2026-11-20T08:26:00-06:00, less than 180 seconds ago`
    - `... not started: dispatching evening.yml: HTTP 403`
 
 ## Checking it without Railway
