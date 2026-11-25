@@ -26,7 +26,7 @@ import json
 import re
 import subprocess
 import sys
-from datetime import date
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -1614,3 +1614,90 @@ def test_the_guide_lists_each_reason_in_the_gates_own_words_and_names_what_the_g
     assert "once written" not in agent and "[`go-live.md`](go-live.md)" in agent
     protocol = (ROOT / gl.PROTOCOL_NAME).read_text()
     assert "docs/operations/go-live.md" in protocol and "Completing the sitting is not passing it." in protocol
+
+
+# ------------------------------------------ what the validator re-derives ---
+@pytest.mark.parametrize("fact", ["on_time", "automatic", "morning_on_time"])
+def test_a_ledger_row_is_counted_only_when_its_own_three_facts_hold(fact):
+    data = _live(page("full"))
+    row = data["run"]["go_live"]["ledger"][3]
+    row[fact] = False                                 # the row still says counted
+    assert gl.faults(data) == [f"run.go_live ledger row {row['session']} is counted when its own facts do not give it"]
+    row[fact] = None
+    assert gl.faults(data) == [f"run.go_live ledger row {row['session']} is counted when its own facts do not give it"]
+    # and a row whose facts all hold is not counted when it says it is not: the run then reads short
+    row[fact] = True
+    assert gl.faults(data) == []
+    orders_doc = orders.build(json.dumps(data).encode())
+    assert orders_doc["mode"] == "live"
+
+
+def test_forward_is_the_records_own_session_and_clock_and_a_forged_forward_never_reads_live():
+    data = _live(page("full"))
+    run = data["run"]
+    words = "run.go_live publication is called forward when the record's own session and clock do not give it"
+    opens = datetime.fromisoformat(run["timing"]["opens_at"])
+    for published in ((opens - timedelta(seconds=1)).isoformat(), None):
+        forged = copy.deepcopy(data)
+        forged["run"]["published_at"] = published
+        assert (gl.faults(forged) == []) is (published is not None), published
+        if published is None:
+            assert words in gl.faults(forged)
+    for published in (opens.isoformat(), (opens + timedelta(hours=1)).isoformat()):
+        forged = copy.deepcopy(data)
+        forged["run"]["published_at"] = published          # made at or after the open its plans are for
+        assert gl.faults(forged) == [words], published
+        assert orders.build(json.dumps(forged).encode())["live_ready"] == {"value": False,
+                                                                          "reasons": [orders.LIVE_READY_REASON]}
+    forged = copy.deepcopy(data)
+    forged["run"]["timing"].pop("opens_at")
+    assert words in gl.faults(forged)
+    # a newer session already published: tonight's is a backfill, whatever the block says
+    forged = copy.deepcopy(data)
+    forged["run"]["go_live"]["publication"]["newest"] = "2026-09-11"
+    assert words in gl.faults(forged)
+
+
+def test_a_met_protocol_names_a_record_dated_on_or_before_tonight():
+    data = _live(page("full"))
+    crit = _gate(data)[1]["fidelity_protocol"]
+    words = "run.go_live fidelity_protocol is met without a record dated on or before tonight"
+    assert crit["have"] == data["run"]["session"] and gl.faults(data) == []
+    for have in ("2026-09-11", None, "soon", 20260910):
+        forged = copy.deepcopy(data)
+        _gate(forged)[1]["fidelity_protocol"]["have"] = have
+        assert gl.faults(forged) == [words], have
+    forged = copy.deepcopy(data)
+    _gate(forged)[1]["fidelity_protocol"]["have"] = "2026-01-02"
+    assert gl.faults(forged) == []
+
+
+@pytest.mark.parametrize("label, change", [
+    ("a row for tonight", lambda rows, s: rows.append({**rows[-1], "session": s})),
+    ("a row after tonight", lambda rows, s: rows.append({**rows[-1], "session": "2026-09-14"})),
+    ("two rows for one session", lambda rows, s: rows.insert(0, dict(rows[0]))),
+    ("rows out of order", lambda rows, s: rows.reverse()),
+])
+def test_the_ledger_is_one_row_a_session_oldest_first_each_before_tonight(label, change):
+    data = _live(page("full"))
+    change(data["run"]["go_live"]["ledger"], data["run"]["session"])
+    assert "run.go_live ledger is not one row a session, oldest first, each before tonight" in gl.faults(data), label
+
+
+def test_the_ledger_is_no_longer_than_the_gate_keeps():
+    data = _live(page("full"))
+    from src import sessions
+    rows, day = [], date.fromisoformat(data["run"]["session"])
+    for _ in range(gl.LEDGER_MAX + 1):
+        day = sessions.previous_session(day)
+        rows.append(counted(day.isoformat()))
+    block, crit = _gate(data)
+
+    def ledger(kept):
+        block["ledger"] = kept
+        crit["on_time_sessions"].update(have=len(kept), detail=f"{len(kept)} consecutive of {gl.ON_TIME_SESSIONS}")
+        block["sentence"] = gl.sentence(block)
+    ledger(sorted(rows, key=lambda r: r["session"]))
+    assert gl.faults(data) == ["run.go_live ledger is not one row a session, oldest first, each before tonight"]
+    ledger(block["ledger"][1:])
+    assert len(block["ledger"]) == gl.LEDGER_MAX and gl.faults(data) == []

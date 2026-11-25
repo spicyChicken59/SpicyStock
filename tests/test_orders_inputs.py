@@ -141,6 +141,20 @@ def test_the_count_is_every_kind_of_gap_not_the_stale_tail_alone():
     assert (thin["status"], thin["reason"]) == ("pass", None)
 
 
+@pytest.mark.parametrize("errors, unattempted", [(1, 0), (0, 2), (3, 1)])
+def test_a_night_on_which_not_every_measured_stock_was_scanned_and_checked_stops(errors, unattempted):
+    data = record()
+    coverage = data["run"]["coverage"]
+    assert coverage["acceptance"]["complete_evaluation"] is True and coverage["errors"] == 0
+    coverage.update(errors=errors, scan_unattempted=unattempted)
+    coverage["acceptance"]["complete_evaluation"] = False
+    check = night_check(data)
+    assert (check["status"], check["reason"]) == ("fail", "market_inputs_incomplete")
+    assert (f"not every measured stock was scanned and checked ({errors} scan or checklist errors, "
+            f"{unattempted} not attempted)") in check["detail"]
+    assert "scanned and checked" not in night_check(record())["detail"]
+
+
 def test_a_selection_cut_at_its_capacity_or_a_seed_fallback_stops_the_night():
     cut = record()
     cut["run"]["coverage"]["acceptance"]["capacity_excluded"] = 1
@@ -180,6 +194,12 @@ def test_a_selection_cut_at_its_capacity_or_a_seed_fallback_stops_the_night():
     ("no tolerance block", lambda d: d["run"].pop("input_tolerance")),
     ("a limit that is not the archived fraction's", lambda d: d["run"]["input_tolerance"].update(limit=3)),
     ("a limit that is a float", lambda d: d["run"]["input_tolerance"].update(limit=0.0)),
+    ("no word on whether every stock was scanned", lambda d: d["run"]["coverage"]["acceptance"].pop(
+        "complete_evaluation")),
+    ("a scan word that is not true or false", lambda d: d["run"]["coverage"]["acceptance"].update(
+        complete_evaluation=1)),
+    ("no scan error count", lambda d: d["run"]["coverage"].pop("errors")),
+    ("an unattempted count that is a float", lambda d: d["run"]["coverage"].update(scan_unattempted=0.0)),
 ])
 def test_what_cannot_be_read_is_not_complete(label, change):
     data = record()

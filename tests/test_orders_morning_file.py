@@ -644,3 +644,86 @@ def test_a_bound_receipt_that_checked_nothing_is_no_check_and_names_its_status(s
     # resealed as checked, the file is refused: a bound receipt that ran nothing is never a check
     forged = json.loads(checked_for(raw, doc))
     assert orders.problems(json.loads(reseal(forged, morning_status=status)), "orders_morning")
+
+
+# ------------------------------------------- orders.json's verdicts come first ---
+def test_an_earlier_versions_orders_json_is_never_read_by_the_rule():
+    earlier = json.loads(golden_orders())
+    earlier["version"] = orders.VERSION - 1
+    raw = orders.encode(orders.sealed(earlier))
+    want = {"mode": "paper", "cancel_all": True, "cancel_all_reason": "orders_earlier_version", "tickets": {}}
+    assert orders.entry_decisions(raw, None, datetime(2026, 9, 11, 13, 40, tzinfo=timezone.utc)) == want
+    # whatever morning file stands beside it
+    standing = orders.encode(orders.earlier_version_morning(raw))
+    assert orders.entry_decisions(raw, standing, datetime(2026, 9, 11, 13, 40, tzinfo=timezone.utc)) == want
+
+
+def test_a_morning_file_that_says_go_on_a_night_orders_json_does_not_allow_cancels_everything():
+    raw, doc = go_night()
+    # the same tickets on a night whose light is red: the ticket stays go on its own checks, the night stops it
+    red = copy.deepcopy(doc)
+    red["night_checks"][0].update(status="fail", reason="light_red")
+    red["trade_allowed"] = False
+    red["reasons"] = [{"scope": "night", "code": "light_red"}] + doc["reasons"]
+    red_raw = reseal(red)
+    assert orders.problems(json.loads(red_raw)) == [] and red["tickets"][0]["status"] == "go"
+    built = orders.build_morning(red_raw, receipt_for(red, red["tickets"][0]))
+    assert built["tickets"][0]["reasons"] == ["night_not_allowed"]
+    forged = reseal(with_go(built))                     # resealed to say go for it
+    assert orders.validate(forged, "orders_morning")["tickets"][0]["decision"] == "go"
+    out = orders.entry_decisions(red_raw, forged, before(red))
+    assert (out["cancel_all"], out["cancel_all_reason"]) == (True, "night_not_allowed")
+    assert decisions(red_raw, forged, before(red)) == {"NVDA": ("cancel", "night_not_allowed"),
+                                                       "COIL": ("cancel", "night_not_allowed")}
+
+
+def test_a_bound_file_names_the_receipt_it_was_bound_to():
+    raw, doc = go_night()
+    checked = json.loads(checked_for(raw, doc))
+    found = orders.problems(json.loads(reseal(checked, morning_sha256=None)), "orders_morning")
+    assert "a morning file bound to a receipt names that receipt's hash" in found
+
+
+@pytest.mark.parametrize("label, change, problem", [
+    ("the night's checks reordered", lambda d: d["night_checks"].reverse(), "night checks are not each"),
+    ("a night check given twice", lambda d: d["night_checks"].__setitem__(1, copy.deepcopy(d["night_checks"][0])),
+     "night checks are not each"),
+    ("a ticket's checks reordered", lambda d: d["tickets"][0]["checks"].reverse(), "its checks are not each"),
+])
+def test_orders_json_carries_each_check_once_in_order(label, change, problem):
+    raw, doc = go_night()
+    forged = copy.deepcopy(doc)
+    change(forged)
+    if label.startswith("a ticket"):
+        forged["tickets"][0] = orders.sealed({k: v for k, v in forged["tickets"][0].items() if k != "content_sha256"})
+    assert any(problem in f for f in orders.problems(json.loads(reseal(forged)))), label
+
+
+# ---------------------------------------------- the check over main's files ---
+def test_the_check_derives_the_morning_file_again_from_mains_orders_and_receipt(tmp_path):
+    docs = docs_with(tmp_path, "next")
+    orders.write_publication(docs)
+    raw = (docs / orders.FILE).read_bytes()
+    doc = json.loads(raw)
+    assert orders.check(docs) == []                                  # the evening's pending file
+    receipt = receipt_for(doc, doc["tickets"][0])
+    built = orders.build_morning(raw, receipt)
+    (docs / orders.MORNING_FILE).write_bytes(orders.encode(built))
+    # checked against a receipt main does not carry
+    assert orders.check(docs) == ["orders-morning.json is checked against a morning receipt main does not carry"]
+    (docs / orders.MORNING_RECEIPT).write_bytes(receipt)
+    assert orders.check(docs) == []
+    # the same receipt, a field of the file changed and the file resealed: not what main's files give
+    (docs / orders.MORNING_FILE).write_bytes(reseal(built, observation_run_id="run-2"))
+    assert orders.check(docs) == ["orders-morning.json is not what main's orders.json and morning receipt give"]
+    # a pending file resealed with another ticket order is not the evening's either
+    pending = orders.pending_morning(raw)
+    pending["tickets"].reverse()
+    (docs / orders.MORNING_FILE).write_bytes(reseal(pending))
+    assert orders.check(docs) == ["orders-morning.json is not what main's orders.json and morning receipt give"]
+    # a no_check file naming a receipt main no longer carries stands: it cancels everything
+    other = receipt_for(doc, doc["tickets"][0], generated_at="2026-09-11T13:20:00+00:00")
+    stale = json.loads(other)
+    stale["status"] = "inapplicable"
+    (docs / orders.MORNING_FILE).write_bytes(orders.encode(orders.build_morning(raw, json.dumps(stale).encode())))
+    assert orders.check(docs) == []
