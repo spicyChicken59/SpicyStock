@@ -353,14 +353,16 @@ def _commit_one(root: Path, tip: str, path: str, raw: bytes, message: bytes) -> 
     return git(root, 'push', 'origin', f'{commit}:refs/heads/main', check=False).returncode == 0
 
 
-def orders_check(data_raw: bytes, orders_raw: bytes | None, receipt_raw: bytes | None, run_id: str) -> str | None:
-    """Why main's files cannot give this run's go/cancel file, or None."""
+def orders_check(data_raw: bytes, orders_raw: bytes | None) -> str | None:
+    """Why main's files can give no go/cancel file at all, or None.
+
+    Only two states leave nothing to write: no ``orders.json``, and one bound
+    to another record (the evening removes such a file; an agent that reads
+    one finds it is not bound to ``data.json`` and enters nothing). Every
+    other state gives a file: decisions from a receipt bound to the record,
+    or every ticket cancelled."""
     if orders_raw is None:
         return 'no_orders_on_main'
-    if receipt_raw is None:
-        return 'no_morning_receipt_on_main'
-    if read_snapshot(receipt_raw).get('observation_run_id') != run_id:
-        return 'morning_receipt_not_this_run'
     try:
         source = json.loads(orders_raw).get('source', {})
         bound = isinstance(source, dict) and source.get('data_sha256') == hashlib.sha256(data_raw).hexdigest()
@@ -368,16 +370,45 @@ def orders_check(data_raw: bytes, orders_raw: bytes | None, receipt_raw: bytes |
         bound = False
     if not bound:
         return 'orders_not_bound_to_record'
-    from src import orders
-    if orders.earlier_version(orders_raw) is not None:
-        # written by the code before a version change: the next evening rewrites it
-        return 'orders_written_under_an_earlier_version'
     return None
 
 
-def publish_orders(root: Path, *, ref: str, run_id: str) -> str:
+def derive_orders_morning(data_raw: bytes, orders_raw: bytes, receipt_raw: bytes | None) -> bytes:
+    """The go/cancel file main's own files give: an ``orders.json`` an earlier
+    version wrote cancels every ticket; otherwise each ticket is read against
+    the newest morning receipt on main, whichever run wrote it, and every
+    ticket is cancelled when that receipt is not bound to the record."""
+    from src import orders
+    if orders.earlier_version(orders_raw) is not None:
+        raw = orders.encode(orders.earlier_version_morning(orders_raw))
+    else:
+        raw = orders.encode(orders.build_morning(orders_raw, receipt_raw, data_raw))
+    orders.validate(raw, 'orders_morning')
+    return raw
+
+
+def window_closed(data_raw: bytes, now: datetime) -> bool:
+    """Whether ``now`` is on the session the record's plans are for, at or
+    after its entry cutoff: the one moment a late slot may say that no check
+    ran inside the window."""
+    try:
+        timing = json.loads(data_raw)['run']['timing']
+        cutoff = instant(timing['cutoff_at'])
+        return (now.astimezone(sessions.MARKET_TZ).date().isoformat() == timing['applicable_session']
+                and now >= cutoff)
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
+def publish_orders(root: Path, *, ref: str, run_id: str, closing: bool = False,
+                   now: datetime | None = None) -> str:
     """``docs/orders-morning.json`` from main's own orders.json, morning
-    receipt and record, committed alone; nothing is read from the runner."""
+    receipt and record, committed alone; nothing is read from the runner.
+
+    ``closing`` is the scheduled slot that arrived after the entry window: it
+    writes the same file, and only once the window has ended on the session
+    the record's plans are for, so a morning with no check inside the window
+    ends as ``no_check`` on main and not as the evening's ``pending``."""
     from src import orders
     if ref != 'refs/heads/main':
         raise ValueError('morning_publication_requires_main')
@@ -387,13 +418,14 @@ def publish_orders(root: Path, *, ref: str, run_id: str) -> str:
         git(root, 'fetch', '--no-tags', 'origin', '+refs/heads/main:refs/remotes/origin/main')
         tip = git(root, 'rev-parse', 'refs/remotes/origin/main').stdout.decode().strip()
         data_raw = git(root, 'show', f'{tip}:{RECORD_PATH}').stdout
+        if closing and not window_closed(data_raw, now or datetime.now(timezone.utc)):
+            return 'window_not_closed'
         orders_raw = _tip_blob(root, tip, ORDERS_PATH, orders.MAX_BYTES, 'orders')
         receipt_raw = _tip_blob(root, tip, SNAPSHOT_PATH, MAX_SNAPSHOT_BYTES, 'morning_snapshot')
-        refusal = orders_check(data_raw, orders_raw, receipt_raw, run_id)
+        refusal = orders_check(data_raw, orders_raw)
         if refusal:
             return refusal
-        raw = orders.encode(orders.build_morning(orders_raw, receipt_raw, data_raw))
-        orders.validate(raw, 'orders_morning')
+        raw = derive_orders_morning(data_raw, orders_raw, receipt_raw)
         if _tip_blob(root, tip, ORDERS_MORNING_PATH, orders.MAX_BYTES, 'orders_morning') == raw:
             return 'unchanged'
         if _commit_one(root, tip, ORDERS_MORNING_PATH, raw, ORDERS_MESSAGE):
@@ -412,6 +444,8 @@ def main() -> int:
     commit.add_argument('--target', choices=sorted(TARGETS), default='morning')
     orders_cmd = commands.add_parser('orders', help="derive and publish docs/orders-morning.json from main")
     orders_cmd.add_argument('--root', type=Path, default=Path.cwd())
+    orders_cmd.add_argument('--window-closed', action='store_true',
+                            help="a slot that arrived after the entry window: publish only once it has ended")
     args = parser.parse_args()
     try:
         if args.command == 'guard':
@@ -420,10 +454,10 @@ def main() -> int:
                                         os.environ.get('MORNING_EVENT_SCHEDULE', ''))
             print(f'Morning guard: {reason}')
             with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
-                output.write(f'go={str(go).lower()}\n')
+                output.write(f'go={str(go).lower()}\nreason={reason}\n')
         elif args.command == 'orders':
             outcome = publish_orders(args.root, ref=os.environ.get('GITHUB_REF', ''),
-                                     run_id=os.environ.get('GITHUB_RUN_ID', ''))
+                                     run_id=os.environ.get('GITHUB_RUN_ID', ''), closing=args.window_closed)
             print(f'Orders morning publication: {outcome}')
         else:
             outcome = publish(args.root, snapshot_file(args.snapshot), target=args.target,

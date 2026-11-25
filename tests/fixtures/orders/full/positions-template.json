@@ -1,9 +1,9 @@
 {
  "applicable_session": "2026-09-11",
- "content_sha256": "751b09210728ec6b83219dc82489c7019e98c339eee7e3ff6d741159e861b353",
+ "content_sha256": "0f92b094a2f4163980fd14c10700634aa2d5bc3780476378b1ecaa1a3a33059c",
  "kind": "positions",
  "mode": "paper",
- "orders_sha256": "d6e71042a2ecc0522cfa88ed2036068bd43577a410681e3eda4a5fca0c872d41",
+ "orders_sha256": "0f9e76823df5f724df715640272594aedf96445e89dcad3f954112339b4335c4",
  "positions": [
   {
    "broker": {
@@ -27,11 +27,11 @@
    "submitted_shares": null,
    "symbol": "AAPL",
    "ticket_id": "2026-09-10:burst:AAPL",
-   "ticket_sha256": "f449d5f118b8293c66f5135806186c494ff2e57d21d8d480abc516d704818f21"
+   "ticket_sha256": "36d15134aee189f286cf1c2601842f37a35206fbbec1ca55a92b088e9fd75a49"
   }
  ],
  "privacy": "a filled copy holds the owner's real orders and fills: keep it private and never commit it to the public repository",
  "schema": "docs/operations/orders-schema.json#/$defs/positions",
  "session": "2026-09-10",
- "version": 5
+ "version": 6
 }

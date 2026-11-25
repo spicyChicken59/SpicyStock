@@ -9,7 +9,7 @@
    "const": "docs/operations/orders-schema.json"
   },
   "version": {
-   "const": 5
+   "const": 6
   },
   "kind": {
    "const": "orders"
@@ -90,6 +90,18 @@
     },
     "dry_run": {
      "type": "boolean"
+    },
+    "run_status": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "run_problems": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
     }
    },
    "required": [
@@ -102,6 +114,8 @@
     "published_at",
     "rules_version",
     "run_id",
+    "run_problems",
+    "run_status",
     "session"
    ],
    "additionalProperties": false
@@ -390,6 +404,42 @@
      }
     }
    }
+  },
+  "morning_rule": {
+   "type": "object",
+   "properties": {
+    "file": {
+     "const": "orders-morning.json"
+    },
+    "bound_by": {
+     "const": "orders_sha256"
+    },
+    "required_status": {
+     "const": "checked"
+    },
+    "required_decision": {
+     "const": "go"
+    },
+    "deadline_field": {
+     "const": "valid_until"
+    },
+    "otherwise": {
+     "const": "cancel"
+    },
+    "missing_or_unbound": {
+     "const": "cancel_all"
+    }
+   },
+   "required": [
+    "bound_by",
+    "deadline_field",
+    "file",
+    "missing_or_unbound",
+    "otherwise",
+    "required_decision",
+    "required_status"
+   ],
+   "additionalProperties": false
   }
  },
  "required": [
@@ -399,6 +449,7 @@
   "kind",
   "live_ready",
   "mode",
+  "morning_rule",
   "night_checks",
   "reasons",
   "schema",
@@ -417,7 +468,7 @@
     "key": {
      "enum": [
       "light",
-      "data",
+      "market_inputs",
       "publication_time",
       "cross_check",
       "account"
@@ -436,14 +487,19 @@
       "cross_check_failed",
       "cross_check_not_run",
       "cross_check_unknown",
-      "data_degraded",
       "event_blocked",
+      "inputs_exception",
+      "inputs_unknown",
       "late_publish",
       "light_red",
       "light_unknown",
+      "market_inputs_incomplete",
+      "market_inputs_unknown",
       "no_tickets",
       "position_cap",
       "publication_time_unknown",
+      "reader_chart_missing",
+      "reader_not_accepted",
       "risk_budget",
       "sec_flag",
       "sec_unknown",
@@ -477,14 +533,19 @@
       "cross_check_failed",
       "cross_check_not_run",
       "cross_check_unknown",
-      "data_degraded",
       "event_blocked",
+      "inputs_exception",
+      "inputs_unknown",
       "late_publish",
       "light_red",
       "light_unknown",
+      "market_inputs_incomplete",
+      "market_inputs_unknown",
       "no_tickets",
       "position_cap",
       "publication_time_unknown",
+      "reader_chart_missing",
+      "reader_not_accepted",
       "risk_budget",
       "sec_flag",
       "sec_unknown"
@@ -714,8 +775,8 @@
     },
     "checks": {
      "type": "array",
-     "minItems": 5,
-     "maxItems": 5,
+     "minItems": 7,
+     "maxItems": 7,
      "items": {
       "$ref": "#/$defs/ticket_check"
      }
@@ -735,14 +796,19 @@
        "cross_check_failed",
        "cross_check_not_run",
        "cross_check_unknown",
-       "data_degraded",
        "event_blocked",
+       "inputs_exception",
+       "inputs_unknown",
        "late_publish",
        "light_red",
        "light_unknown",
+       "market_inputs_incomplete",
+       "market_inputs_unknown",
        "no_tickets",
        "position_cap",
        "publication_time_unknown",
+       "reader_chart_missing",
+       "reader_not_accepted",
        "risk_budget",
        "sec_flag",
        "sec_unknown"
@@ -1034,7 +1100,7 @@
      "const": "docs/operations/orders-schema.json#/$defs/orders_morning"
     },
     "version": {
-     "const": 5
+     "const": 6
     },
     "kind": {
      "const": "orders_morning"
@@ -1126,10 +1192,30 @@
     "content_sha256": {
      "type": "string",
      "pattern": "^[0-9a-f]{64}$"
+    },
+    "status": {
+     "enum": [
+      "pending",
+      "checked",
+      "no_check"
+     ]
+    },
+    "cancel_all": {
+     "type": "boolean"
+    },
+    "cancel_all_reason": {
+     "enum": [
+      "morning_check_pending",
+      "no_morning_check",
+      "orders_earlier_version",
+      null
+     ]
     }
    },
    "required": [
     "applicable_session",
+    "cancel_all",
+    "cancel_all_reason",
     "content_sha256",
     "data_sha256",
     "kind",
@@ -1142,6 +1228,7 @@
     "orders_sha256",
     "schema",
     "session",
+    "status",
     "summary",
     "tickets",
     "version"
@@ -1183,10 +1270,12 @@
        "gap_below_floor",
        "halt_unknown",
        "halted",
+       "morning_check_pending",
        "news_or_sec_flag",
        "night_not_allowed",
        "no_morning_check",
        "not_checked",
+       "orders_earlier_version",
        "outside_entry_window",
        "price_unknown",
        "stale_data",
@@ -1270,7 +1359,7 @@
      "const": "docs/operations/orders-schema.json#/$defs/positions"
     },
     "version": {
-     "const": 5
+     "const": 6
     },
     "kind": {
      "const": "positions"
@@ -1541,6 +1630,8 @@
       "event_registry",
       "sec_flags",
       "cross_check",
+      "inputs",
+      "reader",
       "position_cap",
       "risk_budget"
      ]
@@ -1558,14 +1649,19 @@
       "cross_check_failed",
       "cross_check_not_run",
       "cross_check_unknown",
-      "data_degraded",
       "event_blocked",
+      "inputs_exception",
+      "inputs_unknown",
       "late_publish",
       "light_red",
       "light_unknown",
+      "market_inputs_incomplete",
+      "market_inputs_unknown",
       "no_tickets",
       "position_cap",
       "publication_time_unknown",
+      "reader_chart_missing",
+      "reader_not_accepted",
       "risk_budget",
       "sec_flag",
       "sec_unknown",

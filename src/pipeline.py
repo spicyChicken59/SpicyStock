@@ -1258,16 +1258,17 @@ def read_scorecard(rec: dict, frames: dict, minutes, data: dict, docs: Path, pre
 
 
 def publish_orders(docs: Path) -> None:
-    """The execution handoff (``src/orders.py``): ``orders.json`` and its
-    positions template, derived from the final installed record after the
+    """The execution handoff (``src/orders.py``): ``orders.json``, its
+    positions template and the morning file that cancels every ticket until a
+    morning check has run, derived from the final installed record after the
     brief. It never fails the run: a derivation that fails is one warning, and
     an ``orders.json`` bound to an earlier record is removed with it, so an
     execution agent finds no tickets rather than an earlier night's."""
     try:
         from src import orders
         result = orders.write_publication(docs)
-        log.info("Execution handoff: %s ticket(s); trade allowed %s; reasons %s.", result["tickets"],
-                 str(result["trade_allowed"]).lower(), ", ".join(result["reasons"]) or "none")
+        log.info("Execution handoff: %s ticket(s); trade allowed %s; reasons %s; morning file %s.", result["tickets"],
+                 str(result["trade_allowed"]).lower(), ", ".join(result["reasons"]) or "none", result["morning"])
     except Exception as exc:  # noqa: BLE001 -- optional derived companion only
         log.warning("Execution handoff unavailable (%s); evening record retained.", type(exc).__name__)
         try:

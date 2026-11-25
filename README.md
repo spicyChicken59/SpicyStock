@@ -2527,25 +2527,62 @@ reads, each a function of committed bytes and no clock:
   `plan.follow()`'s order, its risk in dollars and in R (the limit less the
   stop), the position cap and the risk budget checked again, its status
   (`go`, `human_review`, `blocked`) and a content hash. Beside them, the
-  night's five checks (`light`, `data`, `publication_time`, `cross_check`,
-  `account`), each `pass`, `fail` or `not_evaluated`, and `trade_allowed`:
-  true only when every night check passes and a ticket is `go`, with every
-  reason that kept it false. `mode` is `paper` and `live_ready` false until
-  the record's go-live gate holds (below). A night that cannot write it removes the
-  previous night's, so no earlier tickets read as tonight's.
+  night's five checks (`light`, `market_inputs`, `publication_time`,
+  `cross_check`, `account`), each `pass`, `fail` or `not_evaluated`, and
+  `trade_allowed`: true only when every night check passes and a ticket is
+  `go`, with every reason that kept it false. `mode` is `paper` and
+  `live_ready` false until the record's go-live gate holds (below). A night
+  that cannot write it removes the previous night's, so no earlier tickets
+  read as tonight's.
+
+  **Data quality is read where it applies, never off the run's status word**
+  (the owner's decision of 25 November 2026; before it one `degraded` status
+  stopped every ticket of the night). The night's `market_inputs` check reads
+  the record's own input ledger: it fails when more intended stocks were
+  without usable bars than the limit the record archived for its stale
+  tolerance (`inputs.stale_limit()`, applied here to every kind of gap), when
+  the selection was cut at its capacity, or when the stock directory failed
+  and the seed list stood in; it is `not_evaluated` when the ledger, the
+  archived limit, the status or a problem word is not one the file reads. The
+  light, the ranks and the slots rest on those inputs, so that check stops the
+  night. Everything else is read on the ticket it concerns. `inputs` fails
+  when the record names the ticket's stock among the stocks without a usable
+  session frame or among the frames held under an open model plan, passes
+  only when the row's own sealed source frame and its last two archived bars
+  are dated the session and the session before it, and is otherwise held for
+  a person (the ledger samples its lists, so a stock's absence from one is no
+  evidence). `reader` holds a burst ticket to an accepted chart review made
+  with its chart; a setting-up ticket is measured and never chart-read. A
+  refused chart review, a chart that did not render, a mail that failed, a
+  cached directory and a late follow-up bar stop no other ticket.
 - **`docs/positions-template.json`**, beside it: one blank position per
   ticket for the agent to fill with real orders, fills and exits in a private
   copy that is never committed here.
-- **`docs/orders-morning.json`**, from the morning's persist job
-  (`python -m tools.publish_morning orders`): each ticket re-read against the
-  receipt that run published, `go` or `cancel` with its reasons (the night not
-  allowed, no recent price, a halt or a halt source that could not say, the
-  receipt completed after the ticket's cutoff, the event registry, a retained
-  corporate exclusion or an SEC flag, a price over the limit, under the skip
-  line, or at or over the buy stop, or in a state the file does not know). A
-  setting-up ticket has no skip line, so under its trigger it stays `go`.
-  Derived on the spot from `main`'s own `orders.json`, receipt and record, and
-  committed alone.
+- **`docs/orders-morning.json`**, always beside `orders.json`. The evening
+  writes it with `orders.json`, `status` `pending`: every ticket `cancel`
+  (`morning_check_pending`), because no morning check has run for that record.
+  The morning's persist job (`python -m tools.publish_morning orders`)
+  replaces it: with a receipt on `main` bound to the record, `status`
+  `checked` and each ticket re-read against it, `go` or `cancel` with its
+  reasons (the night not allowed, no recent price, a halt or a halt source
+  that could not say, the receipt completed after the ticket's cutoff, the
+  event registry, a retained corporate exclusion or an SEC flag, a price over
+  the limit, under the skip line, or at or over the buy stop, or in a state
+  the file does not know); with none, `status` `no_check` and every ticket
+  `cancel` (`no_morning_check`). A setting-up ticket has no skip line, so
+  under its trigger it stays `go`. A scheduled morning slot that starts after
+  the entry window has ended collects nothing and still writes the file as
+  `main`'s own files give it (the workflow's `close` job, `--window-closed`),
+  so a morning with no check ends as `no_check` on `main`. `cancel_all` is
+  true unless the status is `checked`. Derived on the spot from `main`'s own
+  `orders.json`, receipt and record, and committed alone.
+
+  **The rule an execution agent applies** is stated in `orders.json` itself
+  (`morning_rule`, `orders.MORNING_RULE`): a ticket is entered only while
+  `orders-morning.json` is bound to that exact `orders.json`
+  (`orders_sha256`), its `status` is `checked`, the ticket's `decision` there
+  is `go`, and the clock is before the ticket's `valid_until`; anything else,
+  a missing file or one bound to other bytes included, cancels every ticket.
 
 Two reads stand behind each ticket's checks. **`run.sec_flags`**
 (`src/sec_flags.py`) reads each ticket's and each listed setup's SEC filing
@@ -2579,8 +2616,9 @@ and `tests/test_orders.py` re-derives a committed `docs/orders.json` from the
 committed record. A merge that moves `orders.VERSION` leaves the files on
 `main` as the earlier code wrote them until the next evening rewrites them:
 they keep their own version's meaning, the gate and that test hold them to
-their binding alone (`orders.earlier_version()`), and the morning step
-derives no go/cancel file from one (`orders_written_under_an_earlier_version`).
+their binding alone (`orders.earlier_version()`), and the morning step reads
+no ticket of one: it writes a go/cancel file bound to it that lists none and
+cancels every one (`orders_earlier_version`).
 The agent's guide is `docs/operations/orders.md`.
 `tests/fixtures/orders/` holds golden files over the page and morning
 fixtures; `generate.py --check` runs in CI.

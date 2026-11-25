@@ -6,7 +6,10 @@ execution agent can read.
 go/cancel file over the morning fixtures' own publication
 (``tests/fixtures/morning/full-publication.json``), one per committed morning
 receipt, each validated against that publication as the persist job
-validates it. ``--check`` holds every file to the code and runs in CI beside
+validates it; beside them the two files that cancel every ticket:
+``pending.json``, which the evening writes with ``orders.json``, and
+``no-check.json``, which a morning writes when no receipt on main is bound to
+the record. ``--check`` holds every file to the code and runs in CI beside
 the other fixture checks; regenerate this after the page and morning
 fixtures."""
 import argparse
@@ -36,6 +39,8 @@ def outputs() -> dict:
     for name in RECEIPTS:
         receipt = MORNING.joinpath(f"{name}.json").read_bytes()
         files[f"morning/{name}.json"] = orders.encode(orders.build_morning(base, receipt, publication))
+    files["morning/pending.json"] = orders.encode(orders.pending_morning(base))
+    files["morning/no-check.json"] = orders.encode(orders.build_morning(base, None, publication))
     for path, raw_out in files.items():
         kind = ("orders" if path.endswith(orders.FILE) else
                 "positions" if path.endswith(orders.POSITIONS_FILE) else "orders_morning")
