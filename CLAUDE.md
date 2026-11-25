@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 7160 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 7437 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -16184,3 +16184,98 @@ date is read off the record the fixture archives now, so the next review does
 not turn it red; the entry counts and the next due date stay spelled out. The
 suite passes 344 of 344 here. The browser smoke was not run locally before
 the first push; after a registry review it is part of the cascade.
+
+## Checkpoint, 25 Nov 2026 -- the go-live gate operational only, data quality per ticket, and a morning go/cancel file always on main (items 1, 2 and 7)
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` from `main` after
+#229 (PR A). Items 1, 2 and 7 of the owner's 25 November list, in one pull
+request because 7 and 2 share `orders.json`'s version. `go_live` moves to
+version 2 and `orders.json` to version 6, so `rules_version` moves and every
+cascaded generator was regenerated. The published record, picks, receipts,
+history, evidence and ledger are untouched; no run, mail, dispatch or
+provider call. The paused 8:21 CT routine stays paused.
+
+**Item 1: the gate is operational only.** Version 2 has two conditions: the
+owner's Fidelity protocol record and ten consecutive on-time sessions.
+`settled_forward_plans` and `ablation_report` are gone, and no condition
+reads an outcome. A record made under version 1 keeps its block and is held
+by version 1's frozen validator (`go_live._faults_v1()`); a version-1 block
+never makes `orders.json` live. The ledger's rows are the same under both
+versions, so the run carries across. The review then found that version 2's
+validator trusted what it should re-derive, and that `orders.live_ready()`
+read the block alone: a block edited to say ready made the handoff live. The
+validator now re-derives each ledger row's `counted` from its own three
+facts, `forward` from the record's own session and clock, a met protocol from
+its date, and the ledger's order; `live_ready()` reads a gate only under the
+version the record archived and only a block that validator accepts.
+
+**Item 2: data quality is read per ticket.** No decision reads the run's
+status word now. The night's `market_inputs` check reads the input ledger:
+it fails when more intended stocks were without usable bars than the
+record's archived tolerance limit, when the selection was cut at capacity,
+when the seed list stood in for the directory, or when not every measured
+stock was scanned and checked (`acceptance.complete_evaluation`). Each ticket
+gets `inputs` (named among the stale or held frames fails; its own sealed
+frame and last two bars dated the session and the one before passes; anything
+else is held for a person) and `reader` (a burst needs an accepted chart
+review made with its chart). Over the 36 retained publications the handoff
+could be built for, the rule removes the night-wide `data_degraded` stop on
+13 nights and opens or closes no ticket. All 20 real tickets keep their
+status and reasons. Every real publication carries
+`complete_evaluation` true, so the scan rule changes no real night.
+
+**Item 7: the morning file is always beside `orders.json`.** The evening
+writes `orders-morning.json` with `orders.json` as `pending` (every ticket
+cancelled). It keeps a file already bound to the same `orders.json` bytes,
+so a restamp does not erase a check. The morning's persist job writes
+`checked` from a receipt on `main` that is bound to the record and records a
+check that ran (`observed`, `partial` or `no_tickets`, the gate's own
+`MORNING_RAN`), else `no_check`. A bound receipt that checked nothing
+(`inapplicable`, `provider_unavailable`) is `no_check`, never `checked`. A
+scheduled slot that arrives after the entry window writes the same file
+through the workflow's new `close` job (`--window-closed`). It writes only
+between the cutoff and that session's 6:16 PM ET evening slot, so it does not
+race the evening. `orders.entry_decisions()` (`python -m src.orders decide`)
+is the rule an agent applies. `orders.json`'s own verdicts come first: an
+earlier version, a night it does not allow, and a ticket it did not mark
+`go` each cancel, so a morning file never widens what `orders.json` allows.
+`orders.check()`, run by the publication gate, requires the file and
+re-derives it from `main`'s `orders.json` and receipt.
+
+**Also.** `tools/capture_sec_document.py` and two `issuer-evidence.yml` inputs
+(`capture_url`, `capture_find`) capture one SEC Archives document's identity
+for a registry review. It is dispatch-only, writes nothing under `docs/`, and
+resolves nothing.
+
+**The review, worked.** A workflow by execution over the first tip: 25
+findings were upheld, and each was reproduced here before it was touched.
+- **The highs:** the forged gate block above, and a morning file that could say `go` for a
+  ticket `orders.json` held or blocked.
+- **The rest:**
+  - the morning file named a bound inapplicable receipt `checked`;
+  - a pending file could name a receipt;
+  - `check()` held the morning file to its schema alone;
+  - the scan-error rule;
+  - the fully named stale list read as sampled short;
+  - the closing window had no evening bound;
+  - the capture tool sliced excerpts by a case-folded index (`ß` folds to two characters) and made no output folder;
+  - the previous bar was never tested;
+  - the guide and the README overstated the rule.
+
+**Mutation pass**, each mutant in a detached worktree outside the repository,
+judged by the five handoff and gate test files: 22 mutants over the review's
+rules and a control. Eight died at once. **Fourteen survived, each a missing
+case**:
+- the earlier-version and red-night verdicts;
+- a bound file without its receipt's hash;
+- each check once in order;
+- the scan rule;
+- `live_ready()` trusting the block;
+- the check's re-derivation, twice;
+- the gate's counted rows, forward, the open's boundary, the protocol date, the ledger's order and a row for tonight.
+
+Each has its case now and all 22 die; the control survives.
+
+**Not claimable:** the first night under version 2 and orders version 6;
+the first morning file a morning run writes; that an execution agent applies
+the rule; any trading edge.

@@ -25,6 +25,16 @@ on:
         type: string
         required: false
         default: ""
+      capture_url:
+        description: "With probe_sec: one https://www.sec.gov/Archives/edgar/data/... document to fetch instead of the probe, for a review of the event registry. Its byte count, SHA-256 and bounded excerpts around the capture_find phrases are printed to the log; nothing is published, committed or resolved."
+        type: string
+        required: false
+        default: ""
+      capture_find:
+        description: "With capture_url: up to 6 phrases to look for in the document's text, separated by |."
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -85,19 +95,38 @@ jobs:
           python -m src.issuer_evidence --record docs/data.json --previous docs/issuer-evidence.json --output "$RUNNER_TEMP/issuer-output" --cache-dir "$RUNNER_TEMP/issuer-source-cache" --dry-run
           echo "ready=true" >> "$GITHUB_OUTPUT"
       - name: Probe SEC access from this runner
-        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sec == true
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sec == true && inputs.capture_url == ''
         env:
           SCAN_SEND_EMAIL: "false"
           PROBE_TICKERS: ${{ inputs.probe_tickers }}
         run: python -m tools.probe_sec_access --output "$RUNNER_TEMP/sec-probe.json" --tickers "$PROBE_TICKERS"
       - name: Retain the SEC diagnostic separately
-        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sec == true
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sec == true && inputs.capture_url == ''
         uses: actions/upload-artifact@v4
         with:
           name: sec-probe-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/sec-probe.json
           if-no-files-found: error
           retention-days: 14
+      # One SEC document's identity for a review of the event registry
+      # (tools/capture_sec_document.py): the URL and the phrases reach it through
+      # the environment, never spliced into the command; it resolves nothing.
+      - name: Capture one SEC document's identity
+        id: capture
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sec == true && inputs.capture_url != ''
+        env:
+          SCAN_SEND_EMAIL: "false"
+          CAPTURE_URL: ${{ inputs.capture_url }}
+          CAPTURE_FIND: ${{ inputs.capture_find }}
+        run: python -m tools.capture_sec_document --url "$CAPTURE_URL" --find "$CAPTURE_FIND" --output "$RUNNER_TEMP/sec-capture/capture.json" --save-bytes "$RUNNER_TEMP/sec-capture/document.bin"
+      - name: Retain the captured document separately
+        if: (success() || failure()) && steps.capture.conclusion != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sec-capture-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/sec-capture/
+          if-no-files-found: warn
+          retention-days: 30
       - name: Retain this run's validated public candidate
         if: steps.production.outputs.ready == 'true' || steps.rehearsal.outputs.ready == 'true'
         uses: actions/upload-artifact@v4

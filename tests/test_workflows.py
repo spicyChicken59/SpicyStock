@@ -563,9 +563,11 @@ def test_issuer_trigger_is_publication_bound_and_has_no_recursion_or_new_cron():
     assert on['workflow_run'] == {'workflows': [load('evening.yml')['name'], load('morning.yml')['name']],
                                   'types': ['completed'], 'branches': ['main']}
     assert on['workflow_dispatch']['inputs']['dry_run']['default'] is True
-    assert set(on['workflow_dispatch']['inputs']) == {'dry_run', 'probe_sec', 'probe_tickers'}
+    assert set(on['workflow_dispatch']['inputs']) == {'dry_run', 'probe_sec', 'probe_tickers', 'capture_url',
+                                                      'capture_find'}
     assert on['workflow_dispatch']['inputs']['probe_sec']['default'] is False
-    assert on['workflow_dispatch']['inputs']['probe_tickers']['default'] == ''
+    for name in ('probe_tickers', 'capture_url', 'capture_find'):
+        assert on['workflow_dispatch']['inputs'][name]['default'] == ''
     assert wf['concurrency'] == {'group': 'issuer-evidence', 'cancel-in-progress': False}
     assert wf['permissions'] == {'contents': 'read', 'actions': 'read'}
 
@@ -602,7 +604,7 @@ def test_sec_probe_is_opt_in_rehearsal_only_separately_retained_and_never_persis
     probe = current['Probe SEC access from this runner']
     artifact = current['Retain the SEC diagnostic separately']
     only = "github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sec == true"
-    assert probe['if'] == artifact['if'] == only
+    assert probe['if'] == artifact['if'] == only + " && inputs.capture_url == ''"
     # The named tickers reach the probe through the environment, never spliced
     # into the command, and the probe refuses anything but exchange tickers.
     assert probe['env'] == {'SCAN_SEND_EMAIL': 'false', 'PROBE_TICKERS': '${{ inputs.probe_tickers }}'}
@@ -618,6 +620,29 @@ def test_sec_probe_is_opt_in_rehearsal_only_separately_retained_and_never_persis
     assert 'inputs.probe_sec != true' in wf['jobs']['persist']['if']
     names = list(current)
     assert names.index('Guard the trigger and daily collection budget') < names.index('Probe SEC access from this runner')
+
+
+def test_sec_document_capture_is_a_probe_dispatch_that_publishes_and_resolves_nothing():
+    wf = load('issuer-evidence.yml')
+    current = steps(wf, 'collect')
+    capture = current["Capture one SEC document's identity"]
+    artifact = current['Retain the captured document separately']
+    # it rides the probe's own gate, so a production run, a collection and the writer never see it
+    assert capture['if'] == ("github.event_name == 'workflow_dispatch' && inputs.dry_run == true "
+                             "&& inputs.probe_sec == true && inputs.capture_url != ''")
+    assert 'inputs.probe_sec != true' in wf['jobs']['persist']['if']
+    assert 'inputs.probe_sec != true' in current['Collect issuer evidence (rehearsal)']['if']
+    # the URL and the phrases reach the tool through the environment, never spliced into the command
+    assert capture['env'] == {'SCAN_SEND_EMAIL': 'false', 'CAPTURE_URL': '${{ inputs.capture_url }}',
+                              'CAPTURE_FIND': '${{ inputs.capture_find }}'}
+    assert capture['run'] == ('python -m tools.capture_sec_document --url "$CAPTURE_URL" --find "$CAPTURE_FIND" '
+                              '--output "$RUNNER_TEMP/sec-capture/capture.json" '
+                              '--save-bytes "$RUNNER_TEMP/sec-capture/document.bin"')
+    assert '${{ inputs' not in capture['run']
+    assert artifact['with']['path'] == '${{ runner.temp }}/sec-capture/' and 'docs' not in artifact['with']['path']
+    assert artifact['if'] == "(success() || failure()) && steps.capture.conclusion != 'skipped'"
+    # a capture replaces the probe in that run: one of the two, never both
+    assert current['Probe SEC access from this runner']['if'].endswith("&& inputs.capture_url == ''")
 
 
 def test_issuer_cache_and_capture_retention_do_not_promote_untrusted_artifacts():

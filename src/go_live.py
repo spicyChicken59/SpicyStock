@@ -1,7 +1,9 @@
 """The go-live gate (``run.go_live``): whether an execution agent may treat
 ``orders.json`` as live rather than paper.
 
-It is true only when all four criteria hold:
+It is operational only (the owner's decision of 25 November 2026): it asks
+whether the broker was tested and whether the service runs on time, and
+nothing about how the strategy has done. It is true only when both hold:
 
 * ``fidelity_protocol``: the owner has recorded the one-sitting Fidelity
   protocol (``PROTOCOL_NAME``) as passed in
@@ -23,22 +25,20 @@ It is true only when all four criteria hold:
   The ledger closes a session the evening after, from a real publication
   only (``PUBLISHED_STATUSES``, not a rehearsal). Its first row is the last
   record made before ``run.trigger``, which is not counted.
-* ``settled_forward_plans``: at least ``MIN_SETTLED_FORWARD`` model plans
-  settled in the scorecard's window, each picked on or after the session
-  from which the archived rules have stood unchanged, and each from a
-  forward publication. The digest leaves out only ``NON_STRATEGY_RULES``
-  (the nightly universe membership and the event registry), so any other
-  archived rule restarts the count. A publication is forward when it is of a
-  session no older than the newest already published and was made before
-  the open its plans are for; a backfill's session, or a late run's, is kept
-  in ``strategy.not_forward`` and its picks never count. The count is the
-  night's own walk of the pick ledger over that night's bars.
-* ``ablation_report``: the pre-registered ablation's results are committed,
-  under the committed spec they name.
+  A publication that is not itself forward reads no on-time session, whatever
+  the ledger holds: it is forward when it is of a session no older than the
+  newest already published (``publication.newest``) and was made before the
+  open its plans are for, so a backfill or a late hand re-run is never live.
 
-Until it is true, ``orders.json`` is paper only. It recommends nothing and
-places nothing; it says whether the owner's own conditions for trusting the
-file have been met.
+No outcome is a condition and none may be added: not a settled-plan count, a
+win rate, an expectancy or a study. Version 1 of the gate (19 to 24 November
+2026) also asked for twenty settled plans under standing rules and the
+committed ablation; a record made under it is still read and held by version
+1's own validator (``_faults_v1()``), and nothing writes version 1 now.
+
+Until the gate is true, ``orders.json`` is paper only. It recommends nothing
+and places nothing; it says whether the owner's own conditions for trusting
+the file have been met.
 """
 from __future__ import annotations
 
@@ -48,50 +48,48 @@ import json
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-VERSION = 1
+VERSION = 2
 ROOT = Path(__file__).resolve().parents[1]
 PROTOCOL_FILE = ROOT / "knowledge" / "go-live" / "fidelity-protocol.json"
 #: the unpassed copy the tests and the fixture generators read, so the owner's record moves no fixture
 PINNED_PROTOCOL_FILE = ROOT / "tests" / "fixtures" / "go-live" / "fidelity-protocol.json"
-ABLATION_FILE = ROOT / "docs" / "input-truthfulness" / "2026-11-19-ablation" / "ablation.json"
 #: (owner's decision, 19 November 2026) the consecutive sessions the service must hold
 ON_TIME_SESSIONS = 10
 #: (owner's decision) a publication counts on time at or before this New York time on its session's date
 PUBLISH_BY_ET = "19:00"
 #: (owner's decision) the morning file is on time at or before this Chicago time on the applicable session
 MORNING_DUE_CT = "08:45"
-#: (owner's decision) the settled forward plans the gate needs under the standing rules
-MIN_SETTLED_FORWARD = 20
 #: the ledger keeps this many closed sessions
 LEDGER_MAX = 30
-#: the sessions kept whose publication was not forward (a backfill, or a run at or after the open
-#: its plans were for): more than the scorecard's window, so no row it can still read is forgotten
-NOT_FORWARD_MAX = 120
 #: a record counts as a publication under the evening guard's own definition: not a rehearsal,
 #: and a status the guard reads as published
 PUBLISHED_STATUSES = ("ok", "degraded")
 #: the protocol the owner's record must name, and the record's own version
 PROTOCOL_NAME = "knowledge/broker-fidelity-protocol.md"
 PROTOCOL_RECORD_VERSION = 1
-ABLATION_VERSION = "ablation-v1"
 #: what the on-time condition's detail adds on a publication that is not itself forward
 NOT_FORWARD_DETAIL = ": this publication was not forward"
-#: the rules a strategy digest leaves out: the night's universe membership moves every night, and
-#: the event registry (its entries, review dates and notes, and its digest) is reviewed on a calendar
-NON_STRATEGY_RULES = (("universe", "identity"), ("event_risk", "registry"), ("event_risk", "registry_sha256"))
 #: a morning check counts only when it ran: the statuses tools/service_watch.py reads as a check that ran
 MORNING_RAN = ("observed", "partial", "no_tickets")
-CRITERIA = ("fidelity_protocol", "on_time_sessions", "settled_forward_plans", "ablation_report")
+#: the gate's conditions by the version a record's rules archived; nothing writes version 1 now
+CRITERIA_BY_VERSION = {
+    1: ("fidelity_protocol", "on_time_sessions", "settled_forward_plans", "ablation_report"),
+    2: ("fidelity_protocol", "on_time_sessions"),
+}
+CRITERIA = CRITERIA_BY_VERSION[VERSION]
 REASONS = {
     "fidelity_protocol": "the owner has not recorded the Fidelity protocol as passed",
     "on_time_sessions": "fewer consecutive sessions than the gate needs were published and checked on time",
-    "settled_forward_plans": "fewer model plans than the gate needs have settled under the standing rules",
-    "ablation_report": "the pre-registered ablation's results are not committed",
 }
 NEW_YORK, CHICAGO = ZoneInfo("America/New_York"), ZoneInfo("America/Chicago")
 RULES = {"go_live.version": VERSION, "go_live.on_time_sessions": ON_TIME_SESSIONS,
-         "go_live.publish_by_et": PUBLISH_BY_ET, "go_live.morning_due_ct": MORNING_DUE_CT,
-         "go_live.min_settled_forward": MIN_SETTLED_FORWARD}
+         "go_live.publish_by_et": PUBLISH_BY_ET, "go_live.morning_due_ct": MORNING_DUE_CT}
+
+# Version 1 only, kept so a record made under it is still held by its own validator.
+#: the sessions a version-1 block kept whose publication was not forward
+NOT_FORWARD_MAX = 120
+#: the rules a version-1 strategy digest left out
+NON_STRATEGY_RULES = (("universe", "identity"), ("event_risk", "registry"), ("event_risk", "registry_sha256"))
 
 
 def _dict(value) -> dict:
@@ -124,7 +122,8 @@ def _clock(text: str) -> time:
 
 
 def strategy_digest(rules: dict) -> str:
-    """The rules digest without what is not a strategy rule (``NON_STRATEGY_RULES``)."""
+    """Version 1's rules digest without what was not a strategy rule
+    (``NON_STRATEGY_RULES``): read only to hold a version-1 block."""
     kept = {family: {k: v for k, v in block.items() if (family, k) not in NON_STRATEGY_RULES}
             for family, block in (rules or {}).items() if isinstance(block, dict)}
     return hashlib.sha256(json.dumps(kept, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
@@ -215,35 +214,33 @@ def consecutive(ledger: list[dict], session: str | None = None) -> int:
     return n
 
 
-def newest_published(previous: dict, standing: dict) -> str | None:
+def archived_version(rules) -> int | None:
+    """The gate version a record's rules archived; None when they archive no gate."""
+    family = _dict(rules).get("go_live")
+    version = _dict(family).get("version")
+    return version if type(version) is int else None
+
+
+def newest_published(previous: dict, previous_block: dict) -> str | None:
     """The newest session any record in the chain has published: the record on
     disk's own, or the newest its gate remembers (after a backfill the record
-    on disk is the older one)."""
-    days = [d for d in (_dict(previous.get("run")).get("session"), standing.get("newest")) if _day(d) is not None]
+    on disk is the older one). A version-1 block kept it under ``strategy``."""
+    kept = _dict(previous_block.get("publication")).get("newest")
+    if kept is None:
+        kept = _dict(previous_block.get("strategy")).get("newest")
+    days = [d for d in (_dict(previous.get("run")).get("session"), kept) if _day(d) is not None]
     return max(days) if days else None
 
 
 def forward(session: str, newest: str | None, published_at: str | None, opens_at: str | None) -> bool:
     """Whether tonight's publication is forward: of a session no older than the
     newest already published, and made before the open its plans are for. A
-    backfill, and a run at or after that open, writes picks after the fact;
-    a run whose own clock or open cannot be read is not shown to be forward."""
+    backfill, and a run at or after that open, publishes after the fact; a run
+    whose own clock or open cannot be read is not shown to be forward."""
     made, opens = _instant(published_at), _instant(opens_at)
     if made is None or opens is None or made >= opens:
         return False
     return newest is None or session >= newest
-
-
-def first_forward_session(session: str, newest: str | None, is_forward: bool) -> str:
-    """The session from which a change of the strategy's rules stands: tonight's
-    when tonight's publication is forward, else the session after the newest
-    one published (tonight's included), so picks written after the fact never
-    count as forward plans."""
-    from src import sessions
-    if is_forward:
-        return session
-    last = max(d for d in (session, newest) if _day(d) is not None)
-    return sessions.next_sessions(date.fromisoformat(last), 1)[0].isoformat()
 
 
 def protocol(session: str | None = None) -> dict:
@@ -266,50 +263,15 @@ def protocol(session: str | None = None) -> dict:
             "detail": "recorded as passed by the owner" if passed else "not recorded as passed by the owner"}
 
 
-def ablation() -> bool:
-    """The pre-registered ablation is committed: its results name this
-    version, carry variants, and name a spec whose committed bytes are the
-    ones they were computed under."""
-    try:
-        value = json.loads(ABLATION_FILE.read_text())
-        if not isinstance(value, dict) or value.get("version") != ABLATION_VERSION:
-            return False
-        spec = value.get("spec")
-        if not isinstance(spec, str) or not isinstance(value.get("variants"), dict) or not value["variants"]:
-            return False
-        path = (ROOT / spec).resolve()
-        if ROOT not in path.parents:
-            return False
-        return hashlib.sha256(path.read_bytes()).hexdigest() == value.get("spec_sha256")
-    except (OSError, ValueError, RecursionError):
-        return False
-
-
-def not_forward_of(standing: dict, session: str, is_forward: bool) -> list[str]:
-    kept = standing.get("not_forward")
-    days = {d for d in (kept if isinstance(kept, list) else []) if _day(d) is not None}
-    if not is_forward:
-        days.add(session)
-    return sorted(days)[-NOT_FORWARD_MAX:]
-
-
-def build(*, session: str, rules: dict, previous: dict, previous_sha256: str | None, morning: dict | None,
-          scorecard_rows: list[dict], published_at: str | None = None, opens_at: str | None = None) -> dict:
-    """``run.go_live`` for one evening."""
+def build(*, session: str, previous: dict, previous_sha256: str | None, morning: dict | None,
+          published_at: str | None = None, opens_at: str | None = None) -> dict:
+    """``run.go_live`` for one evening: the two operational conditions, the
+    ledger of closed sessions and whether tonight's publication is forward."""
     previous_block = _dict(_dict(previous.get("run")).get("go_live"))
     entry = None if _dict(previous.get("run")).get("session") == session else close_session(previous, previous_sha256, morning)
     ledger = ledger_of(previous_block, entry)
-    digest = strategy_digest(rules)
-    standing = _dict(previous_block.get("strategy"))
-    newest = newest_published(previous, standing)
+    newest = newest_published(previous, previous_block)
     is_forward = forward(session, newest, published_at, opens_at)
-    if standing.get("digest") == digest and _day(standing.get("since")) is not None:
-        since = standing["since"]
-    else:
-        since = first_forward_session(session, newest, is_forward)
-    not_forward = not_forward_of(standing, session, is_forward)
-    settled = sum(1 for r in scorecard_rows if isinstance(r, dict) and r.get("bucket") == "settled"
-                  and isinstance(r.get("picked"), str) and r["picked"] >= since and r["picked"] not in not_forward)
     # a publication that is not itself forward (a backfill, or a run made at or after the open its
     # plans are for) is never live: its run of on-time sessions reads zero, whatever the ledger holds
     held = consecutive(ledger, session) if is_forward else 0
@@ -318,39 +280,104 @@ def build(*, session: str, rules: dict, previous: dict, previous_sha256: str | N
         {"key": "fidelity_protocol", "met": fid["passed"], "have": fid["recorded_on"], "need": None, "detail": fid["detail"]},
         {"key": "on_time_sessions", "met": held >= ON_TIME_SESSIONS, "have": held, "need": ON_TIME_SESSIONS,
          "detail": f"{held} consecutive of {ON_TIME_SESSIONS}" + ("" if is_forward else NOT_FORWARD_DETAIL)},
-        {"key": "settled_forward_plans", "met": settled >= MIN_SETTLED_FORWARD, "have": settled,
-         "need": MIN_SETTLED_FORWARD, "detail": f"{settled} settled since {since} of {MIN_SETTLED_FORWARD}"},
-        {"key": "ablation_report", "met": ablation(), "have": None, "need": None,
-         "detail": ABLATION_FILE.relative_to(ROOT).as_posix()},
     ]
     ready = all(c["met"] for c in criteria)
     block = {"version": VERSION, "ready": ready, "criteria": criteria,
              "reasons": [c["key"] for c in criteria if not c["met"]],
-             "strategy": {"digest": digest, "since": since,
-                          "newest": max(d for d in (session, newest) if d is not None),
-                          "forward": is_forward, "not_forward": not_forward},
+             "publication": {"newest": max(d for d in (session, newest) if d is not None), "forward": is_forward},
              "ledger": ledger}
     block["sentence"] = sentence(block)
     return block
 
 
 def sentence(block: dict) -> str:
-    if block["ready"]:
+    # ``faults()`` asks this of a block read off disk, which may lack ``ready``: a missing one is not ready
+    if block.get("ready"):
         return "Live ready: every go-live condition holds; orders.json is no longer paper only."
     return ("Paper only: " + "; ".join(f"{c['key'].replace('_', ' ')} not met ({c['detail']})"
                                        for c in block["criteria"] if not c["met"]) + ".")
 
 
 def faults(data: dict) -> list[str]:
-    """The block's shape, under the rules that write it."""
+    """The block's shape, under the version of the gate its rules archived."""
     archived = _dict(data.get("rules")).get("go_live")
     block = _dict(data.get("run")).get("go_live")
     if archived is None:
         return [] if block is None else ["run.go_live present under rules that do not write it"]
-    if not isinstance(block, dict) or block.get("version") != VERSION:
+    version = archived_version(data.get("rules"))
+    if version == 1:
+        return _faults_v1(data, archived, block)
+    if version != VERSION:
+        return ["rules archive a go-live gate version this code does not know"]
+    if not isinstance(block, dict) or block.get("version") != VERSION or type(block.get("version")) is not int:
         return ["run.go_live is missing or not this version"]
     crit = block.get("criteria")
     if not isinstance(crit, list) or [c.get("key") if isinstance(c, dict) else None for c in crit] != list(CRITERIA):
+        return ["run.go_live criteria are not the gate's"]
+    out = []
+    if block.get("ready") is not all(c.get("met") is True for c in crit):
+        out.append("run.go_live ready is not its criteria's")
+    if block.get("reasons") != [c["key"] for c in crit if c.get("met") is not True]:
+        out.append("run.go_live reasons are not its unmet criteria")
+    if not isinstance(block.get("ledger"), list) or not isinstance(block.get("sentence"), str):
+        out.append("run.go_live ledger or sentence is not readable")
+        return out
+    if not all(isinstance(c.get("met"), bool) and isinstance(c.get("detail"), str) for c in crit):
+        out.append("run.go_live criteria are not readable")
+        return out
+    if block["sentence"] != sentence(block):
+        out.append("run.go_live sentence is not its criteria's")
+    session = _dict(data.get("run")).get("session")
+    publication = block.get("publication")
+    readable = (isinstance(publication, dict) and set(publication) == {"newest", "forward"}
+                and _day(publication.get("newest")) is not None and isinstance(publication.get("forward"), bool))
+    if not readable:
+        out.append("run.go_live publication is not readable")
+    elif _day(session) is not None and publication["newest"] < session:
+        out.append("run.go_live publication names a newest session older than the record's own")
+    elif publication["forward"] is True and _day(session) is not None:
+        # forward is re-derived from the record's own clock: of the newest session, made before the open
+        # its plans are for
+        run = _dict(data.get("run"))
+        made, opens = _instant(run.get("published_at")), _instant(_dict(run.get("timing")).get("opens_at"))
+        if publication["newest"] != session or made is None or opens is None or made >= opens:
+            out.append("run.go_live publication is called forward when the record's own session and clock "
+                       "do not give it")
+    fid = crit[list(CRITERIA).index("fidelity_protocol")]
+    if fid.get("met") is True:
+        recorded, tonight = _day(fid.get("have")), _day(session)
+        if recorded is None or tonight is None or recorded > tonight:
+            out.append("run.go_live fidelity_protocol is met without a record dated on or before tonight")
+    on_time = crit[list(CRITERIA).index("on_time_sessions")]
+    have, need = on_time.get("have"), _dict(archived).get("on_time_sessions")
+    if not (type(have) is int and type(need) is int and on_time.get("need") == need) or on_time.get("met") is not (have >= need):
+        out.append("run.go_live on_time_sessions is not its count against the archived need")
+    ledger = [r for r in block["ledger"] if isinstance(r, dict) and _day(r.get("session")) is not None]
+    if len(ledger) != len(block["ledger"]) or _day(session) is None:
+        out.append("run.go_live ledger rows are not readable")
+        return out
+    days = [r["session"] for r in ledger]
+    if days != sorted(set(days)) or len(days) > LEDGER_MAX or (days and days[-1] >= session):
+        out.append("run.go_live ledger is not one row a session, oldest first, each before tonight")
+    for row in ledger:
+        # each row's verdict is its own facts': a row is counted only when all three hold
+        if row.get("counted") is not (row.get("on_time") is True and row.get("automatic") is True
+                                       and row.get("morning_on_time") is True):
+            out.append(f"run.go_live ledger row {row['session']} is counted when its own facts do not give it")
+            break
+    if readable and have != (consecutive(ledger, session) if publication["forward"] is True else 0):
+        out.append("run.go_live on_time_sessions is not the run its own ledger ends on before tonight")
+    return out
+
+
+def _faults_v1(data: dict, archived, block) -> list[str]:
+    """Version 1's validator, as it stood: four criteria, the standing-rules
+    block and the settled count. Frozen; a record made under version 1 is
+    held to it and to nothing newer."""
+    if not isinstance(block, dict) or block.get("version") != 1:
+        return ["run.go_live is missing or not this version"]
+    crit = block.get("criteria")
+    if not isinstance(crit, list) or [c.get("key") if isinstance(c, dict) else None for c in crit] != list(CRITERIA_BY_VERSION[1]):
         return ["run.go_live criteria are not the gate's"]
     out = []
     if block.get("ready") is not all(c.get("met") is True for c in crit):

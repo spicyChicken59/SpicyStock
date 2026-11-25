@@ -203,8 +203,11 @@ def test_the_light_the_status_and_the_publication_time_each_give_their_reason():
     assert [c["status"] for c in checks.values()] == ["pass", "pass", "pass", "pass", "pass"]
     red = night(json.loads(page("red")))
     assert (red["light"]["status"], red["light"]["reason"]) == ("fail", "light_red")
-    degraded = night(json.loads(page("degraded")))
-    assert (degraded["data"]["status"], degraded["data"]["reason"]) == ("fail", "data_degraded")
+    # a night degraded only on its chart reader stops no ticket by itself: the run's status word is
+    # never the check, and the reader is read on the ticket it concerns (tests/test_orders_inputs.py)
+    degraded = json.loads(page("degraded"))
+    assert degraded["run"]["status"] == "degraded" and "data" not in night(degraded)
+    assert (night(degraded)["market_inputs"]["status"], night(degraded)["market_inputs"]["reason"]) == ("pass", None)
     late = copy.deepcopy(full)
     late["run"]["delivery"]["before_next_open"] = False
     assert (night(late)["publication_time"]["status"], night(late)["publication_time"]["reason"]) == \
@@ -320,7 +323,8 @@ def golden_orders() -> bytes:
     ("observed", "cancel", ["night_not_allowed", "ticket_not_go", "trigger_crossed"]),
     ("halted", "cancel", ["night_not_allowed", "ticket_not_go", "halted", "trigger_crossed"]),
     ("corporate-excluded", "cancel", ["night_not_allowed", "ticket_not_go", "news_or_sec_flag", "trigger_crossed"]),
-    ("outage", "cancel", ["night_not_allowed", "ticket_not_go", "stale_data"]),
+    # a provider outage quoted nothing: bound to the record, it is not a check that ran
+    ("outage", "cancel", ["night_not_allowed", "ticket_not_go", "no_morning_check"]),
     ("no-tickets", "cancel", ["night_not_allowed", "ticket_not_go", "no_morning_check"]),
 ])
 def test_each_committed_morning_receipt_gives_its_cancel_reasons(receipt, decision, reasons):
@@ -452,20 +456,23 @@ def docs_with(tmp_path: Path, name: str = "full") -> Path:
     return docs
 
 
-def test_the_evening_writes_both_files_bound_to_the_installed_record(tmp_path):
+def test_the_evening_writes_its_three_files_bound_to_the_installed_record(tmp_path):
     docs = docs_with(tmp_path)
     result = orders.write_publication(docs)
-    assert result["tickets"] == 1 and result["trade_allowed"] is False
+    assert result["tickets"] == 1 and result["trade_allowed"] is False and result["morning"] == "pending"
     assert orders.check(docs) == []
     doc = json.loads((docs / orders.FILE).read_bytes())
     assert doc["source"]["data_sha256"] == hashlib.sha256(page("full")).hexdigest()
+    assert sorted(p.name for p in docs.iterdir()) == sorted(
+        ["data.json", orders.FILE, orders.POSITIONS_FILE, orders.MORNING_FILE])
 
 
-def test_the_evening_removes_a_morning_file_bound_to_earlier_tickets(tmp_path):
+def test_the_evening_replaces_a_morning_file_bound_to_earlier_tickets_with_a_pending_one(tmp_path):
     docs = docs_with(tmp_path)
     (docs / orders.MORNING_FILE).write_text('{"orders_sha256": "' + "0" * 64 + '"}')
-    orders.write_publication(docs)
-    assert not (docs / orders.MORNING_FILE).exists()
+    assert orders.write_publication(docs)["morning"] == "pending"
+    orders_raw = (docs / orders.FILE).read_bytes()
+    assert (docs / orders.MORNING_FILE).read_bytes() == orders.encode(orders.pending_morning(orders_raw))
 
 
 def test_an_unbound_handoff_is_removed_and_a_bound_one_is_kept(tmp_path):
@@ -474,8 +481,8 @@ def test_an_unbound_handoff_is_removed_and_a_bound_one_is_kept(tmp_path):
     assert orders.discard_unbound(docs) == []
     (docs / "data.json").write_bytes(page("next"))
     assert orders.check(docs) == ["orders.json is not bound to data.json"]
-    assert orders.discard_unbound(docs) == [orders.FILE, orders.POSITIONS_FILE]
-    assert not (docs / orders.FILE).exists()
+    assert orders.discard_unbound(docs) == [orders.FILE, orders.POSITIONS_FILE, orders.MORNING_FILE]
+    assert not any((docs / n).exists() for n in (orders.FILE, orders.POSITIONS_FILE, orders.MORNING_FILE))
 
 
 def test_the_pipeline_derives_the_handoff_after_the_brief_and_never_fails_the_night(tmp_path, monkeypatch, caplog):
@@ -496,7 +503,11 @@ def test_the_publication_gate_holds_the_handoff_to_the_record(tmp_path):
     docs = docs_with(root)
     assert publish_dashboard.orders_files(root) == ()
     orders.write_publication(docs)
-    assert publish_dashboard.orders_files(root) == (orders.FILE, orders.POSITIONS_FILE)
+    assert publish_dashboard.orders_files(root) == (orders.FILE, orders.POSITIONS_FILE, orders.MORNING_FILE)
+    (docs / orders.MORNING_FILE).unlink()                       # no file to read a go from: the site is not served
+    with pytest.raises(RuntimeError, match="orders-morning.json is missing beside orders.json"):
+        publish_dashboard.orders_files(root)
+    orders.write_publication(docs)
     (docs / "data.json").write_bytes(page("next"))
     with pytest.raises(RuntimeError, match="execution handoff"):
         publish_dashboard.orders_files(root)
@@ -538,12 +549,13 @@ def test_the_morning_commits_only_its_go_cancel_file_and_a_repeat_changes_nothin
     assert publish_morning.publish_orders(root, ref="refs/heads/main", run_id="synthetic-observed") == "unchanged"
 
 
-@pytest.mark.parametrize("run_id, ref, outcome", [
-    ("another-run", "refs/heads/main", "morning_receipt_not_this_run"),
-])
-def test_the_morning_commit_refuses_a_receipt_another_run_published(handoff_repository, run_id, ref, outcome):
+def test_the_morning_commit_reads_mains_own_receipt_whichever_run_published_it(handoff_repository):
+    # the receipt on main is the evidence; which run is asking does not change what it says
     from tools import publish_morning
-    assert publish_morning.publish_orders(handoff_repository, ref=ref, run_id=run_id) == outcome
+    assert publish_morning.publish_orders(handoff_repository, ref="refs/heads/main", run_id="another-run") == \
+        "published"
+    committed = json.loads(git(handoff_repository, "show", "origin/main:docs/orders-morning.json"))
+    assert (committed["status"], committed["observation_run_id"]) == ("checked", "synthetic-observed")
 
 
 def test_the_morning_commit_needs_main_and_a_run(handoff_repository):
@@ -554,14 +566,11 @@ def test_the_morning_commit_needs_main_and_a_run(handoff_repository):
         publish_morning.publish_orders(handoff_repository, ref="refs/heads/main", run_id="")
 
 
-def test_the_morning_check_names_each_missing_file():
+def test_the_morning_check_refuses_only_what_leaves_nothing_to_write():
     from tools import publish_morning
-    receipt = (MORNING / "observed.json").read_bytes()
-    assert publish_morning.orders_check(PUBLICATION, None, receipt, "x") == "no_orders_on_main"
-    assert publish_morning.orders_check(PUBLICATION, golden_orders(), None, "x") == "no_morning_receipt_on_main"
-    assert publish_morning.orders_check(page("full"), golden_orders(), receipt, "synthetic-observed") == \
-        "orders_not_bound_to_record"
-    assert publish_morning.orders_check(PUBLICATION, golden_orders(), receipt, "synthetic-observed") is None
+    assert publish_morning.orders_check(PUBLICATION, None) == "no_orders_on_main"
+    assert publish_morning.orders_check(page("full"), golden_orders()) == "orders_not_bound_to_record"
+    assert publish_morning.orders_check(PUBLICATION, golden_orders()) is None
 
 
 def test_the_morning_workflow_publishes_the_go_cancel_after_the_receipt():
@@ -647,9 +656,12 @@ def test_a_halt_source_that_cannot_say_cancels_like_a_halt(halt, blocks, reasons
 
 
 def test_a_halt_outage_from_the_real_collector_cancels():
-    # the committed outage receipt with its prices moved under the trigger and its halt coverage gone
+    # the committed outage receipt with its prices moved under the trigger and its halt coverage gone: a
+    # receipt that quoted the ticket is partial, not provider_unavailable, which checks nothing
     raw, doc = allowed_orders()
     receipt = json.loads((MORNING / "outage.json").read_bytes())
+    assert decided(raw, json.dumps(receipt).encode()) == ("cancel", ["no_morning_check"])
+    receipt["status"] = "partial"
     row = receipt["rows"][0]
     row["trade"]["status"] = row["quote"]["status"] = "recent"
     row["price_checks"] = {"trade": "below_trigger", "ask": "below_trigger"}
@@ -727,8 +739,7 @@ def test_a_file_that_is_not_an_object_is_named_not_raised(raw, tmp_path):
     assert orders.check(docs) == ["orders.json: orders is not a JSON object"]
     assert orders.problems(json.loads(raw)) and all(isinstance(p, str) for p in orders.problems(json.loads(raw)))
     from tools import publish_morning
-    assert publish_morning.orders_check(page("full"), raw, b"{}", "run") in (
-        "orders_not_bound_to_record", "morning_receipt_not_this_run")
+    assert publish_morning.orders_check(page("full"), raw) == "orders_not_bound_to_record"
 
 
 def test_a_morning_file_that_does_not_carry_orders_modes_is_named(tmp_path):
@@ -805,11 +816,13 @@ def test_the_committed_handoff_is_what_this_code_writes_for_the_committed_record
     assert (docs / "positions-template.json").read_bytes() == \
         orders.encode(orders.positions_template(json.loads(orders_raw), orders_raw))
     morning_file = docs / "orders-morning.json"
-    if morning_file.exists():
-        committed = json.loads(morning_file.read_bytes())
-        receipt = (docs / "morning.json").read_bytes()
-        if committed["morning_sha256"] == hashlib.sha256(receipt).hexdigest():
-            assert morning_file.read_bytes() == orders.encode(orders.build_morning(orders_raw, receipt, data_raw))
+    assert morning_file.exists()                    # the evening writes it with orders.json
+    committed = json.loads(morning_file.read_bytes())
+    receipt = (docs / "morning.json").read_bytes() if (docs / "morning.json").exists() else None
+    if committed["status"] == orders.PENDING:
+        assert morning_file.read_bytes() == orders.encode(orders.pending_morning(orders_raw))
+    elif committed["morning_sha256"] == (hashlib.sha256(receipt).hexdigest() if receipt is not None else None):
+        assert morning_file.read_bytes() == orders.encode(orders.build_morning(orders_raw, receipt, data_raw))
 
 
 # --------------------------------------- files an earlier version wrote ---
@@ -826,6 +839,7 @@ def earlier_docs(tmp_path: Path) -> tuple[Path, bytes]:
     template = json.loads((docs / orders.POSITIONS_FILE).read_bytes())
     template.update(version=orders.VERSION - 1, orders_sha256=hashlib.sha256(raw).hexdigest())
     (docs / orders.POSITIONS_FILE).write_bytes(orders.encode(orders.sealed(template)))
+    (docs / orders.MORNING_FILE).unlink()           # this code's pending file, bound to the file just replaced
     return docs, raw
 
 
@@ -836,9 +850,14 @@ def test_a_handoff_an_earlier_version_wrote_is_held_to_its_binding_not_this_sche
         orders.validate(raw)
     assert orders.check(docs) == []
     from tools import publish_dashboard
+    # an earlier version's evening wrote no morning file, and none is asked of it
     assert publish_dashboard.orders_files(tmp_path) == (orders.FILE, orders.POSITIONS_FILE)
     (docs / orders.MORNING_FILE).write_text('{"version": 1, "orders_sha256": "' + "0" * 64 + '"}')
     assert orders.check(docs) == ["orders-morning.json is not bound to orders.json"]
+    # the morning after the merge this code writes its own cancel-all file, bound to that orders.json
+    (docs / orders.MORNING_FILE).write_bytes(orders.encode(orders.earlier_version_morning(raw)))
+    assert orders.check(docs) == []
+    assert publish_dashboard.orders_files(tmp_path) == (orders.FILE, orders.POSITIONS_FILE, orders.MORNING_FILE)
     (docs / orders.MORNING_FILE).unlink()
     (docs / "data.json").write_bytes(page("next"))
     assert orders.check(docs) == ["orders.json is not bound to data.json"]
@@ -852,30 +871,43 @@ def test_only_an_earlier_whole_version_is_read_as_one(version):
     assert orders.earlier_version(b"[1]") is None and orders.earlier_version(b"{") is None
 
 
-def test_the_morning_derives_nothing_from_an_earlier_versions_handoff(tmp_path, capsys):
+def test_the_morning_cancels_every_ticket_of_an_earlier_versions_handoff(tmp_path, capsys):
     docs, raw = earlier_docs(tmp_path)
     out = tmp_path / "orders-morning.json"
     assert orders.main(["morning", "--orders", str(docs / orders.FILE), "--data", str(docs / "data.json"),
                         "--output", str(out)]) == 0
-    assert not out.exists() and f"written under version {orders.VERSION - 1}" in capsys.readouterr().out
+    assert f"written under version {orders.VERSION - 1}" in capsys.readouterr().out
+    written = orders.validate(out.read_bytes(), "orders_morning")
+    assert out.read_bytes() == orders.encode(orders.earlier_version_morning(raw))
+    # no ticket of the earlier file is read, so none is listed and none can be go: every one is cancelled
+    assert (written["status"], written["cancel_all"], written["cancel_all_reason"], written["tickets"]) == \
+        ("no_check", True, "orders_earlier_version", [])
+    assert written["orders_sha256"] == hashlib.sha256(raw).hexdigest() and written["mode"] == "paper"
+    assert written["data_sha256"] == hashlib.sha256((docs / "data.json").read_bytes()).hexdigest()
     assert orders.main(["check", "--docs", str(docs)]) == 0
     assert "held to its binding alone" in capsys.readouterr().out
+    with pytest.raises(ValueError, match="not written under an earlier version"):
+        orders.earlier_version_morning((ROOT / "tests/fixtures/orders/full/orders.json").read_bytes())
 
 
-def test_the_morning_check_names_an_earlier_versions_handoff_once_the_receipt_is_this_runs():
+def test_the_morning_publisher_writes_the_cancel_all_file_for_an_earlier_versions_handoff():
     from tools import publish_morning
     receipt = (MORNING / "observed.json").read_bytes()
     doc = json.loads(golden_orders())
     doc["version"] = orders.VERSION - 1
-    assert publish_morning.orders_check(PUBLICATION, orders.encode(orders.sealed(doc)), receipt,
-                                        "synthetic-observed") == "orders_written_under_an_earlier_version"
+    earlier = orders.encode(orders.sealed(doc))
+    assert publish_morning.orders_check(PUBLICATION, earlier) is None
+    # the receipt is bound to the record and would give a decision; the earlier file is still not read
+    assert publish_morning.derive_orders_morning(PUBLICATION, earlier, receipt) == \
+        orders.encode(orders.earlier_version_morning(earlier))
+    assert publish_morning.derive_orders_morning(PUBLICATION, golden_orders(), receipt) == \
+        orders.encode(orders.build_morning(golden_orders(), receipt, PUBLICATION))
 
 
 def test_the_readme_and_the_guide_name_the_earlier_version_rule_as_the_code_spells_it():
     readme = " ".join((ROOT / "README.md").read_text().split())
     guide = " ".join((ROOT / "docs" / "operations" / "orders.md").read_text().split())
-    source = (ROOT / "tools" / "publish_morning.py").read_text()
     assert "(`orders.earlier_version()`)" in readme and hasattr(orders, "earlier_version")
-    assert "(`orders_written_under_an_earlier_version`)" in readme
-    assert "'orders_written_under_an_earlier_version'" in source
+    assert "(`orders_earlier_version`)" in readme and "orders_earlier_version" in orders.MORNING_REASONS
     assert "**Read the version.**" in guide and "nothing is entered from it" in guide
+    assert "`orders_earlier_version`" in guide

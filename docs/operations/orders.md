@@ -8,7 +8,7 @@ what it reads:
 |---|---|---|
 | `docs/orders.json` | the evening run (`src/orders.py`, `pipeline.publish_orders()`) | after the brief, each published night |
 | `docs/positions-template.json` | the evening run, beside `orders.json` | the same |
-| `docs/orders-morning.json` | the morning's persist job (`python -m tools.publish_morning orders`) | after the morning receipt lands |
+| `docs/orders-morning.json` | the evening run, with `orders.json` (every ticket cancelled, `pending`); then the morning (`python -m tools.publish_morning orders`) | with `orders.json`; again after the morning receipt lands, or after the entry window when no check ran |
 
 Their schema is `docs/operations/orders-schema.json` (JSON Schema, draft
 2020-12): `orders.json` is the root, `orders-morning.json` is
@@ -37,8 +37,9 @@ Any JSON Schema validator reads it; the repository checks its own files with
    The checker also refuses a file whose `trade_allowed`, `reasons`, ticket
    statuses, summary or mode are not what its own checks give.
 4. **Read the mode.** `mode` is `paper` and `live_ready.value` is false until
-   the record's go-live gate holds ([`go-live.md`](go-live.md)); then `mode`
-   is `live` and `live_ready.reasons` is empty. A paper ticket is a
+   the record's go-live gate holds ([`go-live.md`](go-live.md): the owner's
+   Fidelity protocol record and ten on-time sessions, and nothing about
+   results); then `mode` is `live` and `live_ready.reasons` is empty. A paper ticket is a
    rehearsal: it is never an order to place. `live_ready.reasons` names each
    condition not met, in the words `go-live.md` lists; `live` says the
    owner's conditions for trusting the file hold, and `trade_allowed` and
@@ -46,8 +47,26 @@ Any JSON Schema validator reads it; the repository checks its own files with
 5. **Read the version.** The schema names one `version`. A merge that moves
    it leaves the files on `main` as the earlier code wrote them until the next
    evening rewrites them; such a file is still bound to its record, but it is
-   not this schema's, no go/cancel file is derived from it, and nothing is
-   entered from it: wait for the evening's file of the schema's version.
+   not this schema's, no ticket of it is read, and nothing is entered from it:
+   the morning writes a go/cancel file bound to it that lists no ticket and
+   cancels every one (`cancel_all_reason` `orders_earlier_version`). Wait for
+   the evening's file of the schema's version.
+6. **Read `orders-morning.json` before any entry, and cancel everything
+   without it.** `orders.json` states the rule in `morning_rule`: a ticket is
+   entered only while `orders-morning.json` is bound to that exact
+   `orders.json` (`orders_sha256`), its `status` is `checked`, the ticket's
+   `decision` there is `go`, and the clock is before the ticket's
+   `valid_until`, and `orders.json` itself allows the night (`trade_allowed`)
+   and marked the ticket `go`: a morning file never widens what `orders.json`
+   allows. Every ticket is cancelled when `orders.json` does not allow the
+   night or was written under an earlier version, or the morning file is
+   missing, cannot be read, does not hold its hash, is bound to other bytes,
+   or says `pending` or `no_check`; one ticket is cancelled when
+   `orders.json` did not mark it `go`, or the morning file does not list it,
+   cancels it, or its `valid_until` has passed. `cancel_all` says the whole
+   file's half in one field: it is true unless the status is `checked`.
+   The evening writes the file with `orders.json`, so a missing one is a
+   fault and never a go.
 
 ## What `orders.json` says
 
@@ -76,12 +95,27 @@ Any JSON Schema validator reads it; the repository checks its own files with
     times that, beside the night's risk budget and the position cap;
   - `checks` and `status`: `go`; `human_review` when an SEC filing flag
     names the ticket (`run.sec_flags`, or a material 8-K item the earnings
-    warning read), when SEC could not be read for it, or when the
-    second-source cross-check could not be made for it; `blocked` when the
-    event registry refuses it, its iex signal-day bar differs from the
-    record's past the archived tolerance, or the position cap or the risk
-    budget is exceeded. Every reason is listed.
-- **`night_checks`**: the light, the run's status, whether the record was
+    warning read), when SEC could not be read for it, when the second-source
+    cross-check could not be made for it, when the record does not show the
+    ticket's own frame through the session and the session before it
+    (`inputs_unknown`), or when a burst's chart review was accepted without
+    its chart (`reader_chart_missing`); `blocked` when the event registry
+    refuses it, its iex signal-day bar differs from the record's past the
+    archived tolerance, the record names its stock among the stocks without
+    a usable session frame or among the frames held under an open model plan
+    (`inputs_exception`), a burst has no accepted chart review
+    (`reader_not_accepted`), or the position cap or the risk budget is
+    exceeded. Every reason is listed.
+
+    The `inputs` check passes only on the row's own facts: its sealed source
+    frame was evaluated at the run's session with the session before it, and
+    the last two bars the row archives are dated those two sessions and are
+    readable. The record's lists of stocks without usable bars are samples, so
+    a stock's absence from one is never read as evidence; the check's `detail`
+    names any list that was sampled short. A setting-up ticket's `reader`
+    check passes as not applicable: it is measured and never chart-read.
+- **`night_checks`**: the light; the market's inputs (below); whether the
+  record was
   published in time (the run's own clock, `run.published_at`, before the
   entry window's `prepare_by` instant and before the applicable session
   opened; the run's clock is set near its start, so this measures when the
@@ -89,6 +123,24 @@ Any JSON Schema validator reads it; the repository checks its own files with
   cross-check ran (`run.cross_check`; each ticket carries its own result),
   and the account's slots and commitments. Each is `pass`, `fail` or
   `not_evaluated`, with a reason code.
+
+  `market_inputs` is the one data check that stops a whole night, because the
+  light is computed over every stock that printed and each ticket was ranked
+  and given its slot among all of them. It reads the record's own input
+  ledger and never the run's status word: it fails
+  (`market_inputs_incomplete`) when more intended stocks were without usable
+  bars than the limit the record archived for its stale tolerance, when the
+  selection was cut at its capacity, when the stock directory failed and the
+  seed list stood in, or when not every measured stock was scanned and
+  checked (the ledger's `acceptance.complete_evaluation` false: a scan or
+  checklist error, or a scan not attempted, leaves a candidate unranked); it
+  is `not_evaluated` (`market_inputs_unknown`) when the ledger, the archived
+  limit, the run status or a problem word is not one this file reads. A run that is `degraded` for any other cause (a refused or
+  unreadable chart review, a chart that did not render, a mail that failed, a
+  cached directory, a late bar found by the follow-up) passes this check, and
+  that cause is read on the ticket it concerns or not at all.
+  `source.run_status` and `source.run_problems` carry the run's own words for
+  reference; no decision reads them.
 - **`trade_allowed`**: true only when every night check passes and at least
   one ticket is `go`. **`reasons`** lists every code that kept it false, for
   the night and for each ticket.
@@ -97,9 +149,24 @@ Every reason code and its meaning is `src/orders.REASONS`.
 
 ## What `orders-morning.json` says
 
-Each ticket re-read against the morning receipt on `main`
-(`docs/morning.json`): `go`, or `cancel` with every reason that applies
-(`src/orders.MORNING_REASONS`):
+It is always there beside `orders.json`, and its `status` says how it came
+to be:
+
+| `status` | written by | `cancel_all` | what it says |
+|---|---|---|---|
+| `pending` | the evening, with `orders.json` | true | no morning check has run for this record: every ticket `cancel` (`morning_check_pending`) |
+| `checked` | a morning run that found a receipt on `main` bound to the record and recording a check that ran (`observed`, `partial` or `no_tickets`) | false | each ticket `go` or `cancel` with its reasons, below |
+| `no_check` | a morning run that found no such receipt, or one that checked nothing (`inapplicable`: the window had ended or it was no session; `provider_unavailable`: no quote could be read) (`no_morning_check`), or an `orders.json` an earlier version wrote (`orders_earlier_version`) | true | every ticket `cancel` |
+
+A scheduled morning slot that starts after the entry window has ended
+collects nothing; it still writes this file as `main`'s own files give it, so
+a morning on which no check ran inside the window ends as `no_check`. A
+morning on which nothing ran at all leaves the evening's `pending` file,
+which cancels every ticket the same way.
+
+Under `checked`, each ticket is re-read against the morning receipt on `main`
+(`docs/morning.json`), whichever run published it: `go`, or `cancel` with
+every reason that applies (`src/orders.MORNING_REASONS`):
 
 - the night did not allow trading, or `orders.json` did not mark the ticket
   `go` (`news_or_sec_flag` when an SEC flag or an unread SEC filing list held
@@ -125,6 +192,31 @@ Each ticket re-read against the morning receipt on `main`
 It reads no clock of its own: the same `orders.json` and receipt always give
 the same bytes. A morning check made before the open usually finds no recent
 price, and says so as `stale_data`.
+
+## Applying the rule
+
+`python -m src.orders decide --docs <dir> [--now <instant with its offset>]`
+applies step 6 to the files in a directory and prints, for each ticket of
+`orders.json`, `go` or `cancel` with the first reason that applies
+(`src/orders.entry_decisions()`, `src/orders.ENTRY_REASONS`). It is the rule
+written once, for an agent to run or to port; it reads no account and places
+nothing, and under `mode` `paper` a `go` is a rehearsal's.
+
+| reason | every ticket? | when |
+|---|---|---|
+| `orders_earlier_version` | yes | `orders.json` was written under an earlier version of these rules: no ticket of it is read |
+| `night_not_allowed` | yes | `orders.json`'s `trade_allowed` is false |
+| `morning_file_missing` | yes | there is no `orders-morning.json` in the directory |
+| `morning_file_unreadable` | yes | it does not meet its schema, hold its hash or follow from its own fields |
+| `morning_file_unbound` | yes | its `orders_sha256` is not this `orders.json`'s |
+| `morning_not_checked` | yes | its `status` is `pending` or `no_check` |
+| `ticket_not_go` | this ticket | `orders.json` did not mark the ticket `go` (`human_review` or `blocked`) |
+| `ticket_not_listed` | this ticket | it does not list the ticket, or lists other bytes of it (`ticket_sha256`) |
+| `ticket_cancelled` | this ticket | its `decision` for the ticket is `cancel` |
+| `past_valid_until` | this ticket | the clock is at or after the ticket's `valid_until`, or cannot be compared with it |
+
+Binding `orders.json` to `data.json` (step 1) comes first and is not part of
+this command: run `python -m src.orders check --docs <dir>` for that.
 
 ## The positions template
 

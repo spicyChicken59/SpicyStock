@@ -216,11 +216,13 @@ def strategy_files(root: Path) -> tuple[str, ...]:
 def orders_files(root: Path) -> tuple[str, ...]:
     """The execution handoff, held to the committed record and its schema.
 
-    Absent, it names no files. Present, ``orders.json`` must meet its schema,
-    hold its own hash and be bound to the committed ``data.json``; the
-    positions template and the morning's go/cancel file, when present, must
-    meet theirs and be bound to that exact ``orders.json``. Tickets that read
-    as tonight's beside a newer record are the failure this exists to stop."""
+    Absent, it names no files. Present, ``orders.check()`` holds it:
+    ``orders.json`` must meet its schema, hold its own hash and be bound to the
+    committed ``data.json``; the morning's go/cancel file must be beside it,
+    bound to that exact ``orders.json`` and be what main's ``orders.json`` and
+    morning receipt give; the positions template, when present, must meet its
+    schema and be bound to it. Tickets that read as tonight's beside a newer
+    record are the failure this exists to stop."""
     docs = root / 'docs'
     from src import orders
     if not ((docs / orders.FILE).exists() or (docs / orders.FILE).is_symlink()):

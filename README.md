@@ -2024,6 +2024,20 @@ and QGEN read `observed_window` is for the next collection with them as
 candidates to show; it changes an index's coverage, not an issuer's status,
 and both left current reports unselected (4 and 9) when last collected.
 
+The same dispatch with **capture_url** set fetches one SEC Archives document
+instead of the probe (`tools/capture_sec_document.py`), for a review of the
+event registry: a registry entry ends only with a resolution that carries the
+SHA-256 of captured bytes, and a review made from a network that cannot reach
+sec.gov has none to give. It asks once, through the collector's own
+transport, and prints the URL, the outcome, the byte count, the SHA-256 and,
+for each of up to 6 phrases in **capture_find** (separated by `|`), how many
+times the document's own text carries it with at most 3 excerpts of 240
+characters either side. The exact bytes are kept as a 30-day artifact beside
+the result. It refuses any URL that is not a filing document the collector's
+transport fetches, before any request; it decides nothing, resolves nothing,
+writes nothing under `docs/` and is never persisted. The registry edit that
+cites it is a reviewed change of its own, with a dated manifest.
+
 `issuer-evidence.yml` follows an actual committed evening or morning publication;
 the guard identifies the parent by its exact workflow file path, then checks
 its repository, main branch and current publication binding. Dynamic run titles
@@ -2527,25 +2541,69 @@ reads, each a function of committed bytes and no clock:
   `plan.follow()`'s order, its risk in dollars and in R (the limit less the
   stop), the position cap and the risk budget checked again, its status
   (`go`, `human_review`, `blocked`) and a content hash. Beside them, the
-  night's five checks (`light`, `data`, `publication_time`, `cross_check`,
-  `account`), each `pass`, `fail` or `not_evaluated`, and `trade_allowed`:
-  true only when every night check passes and a ticket is `go`, with every
-  reason that kept it false. `mode` is `paper` and `live_ready` false until
-  the record's go-live gate holds (below). A night that cannot write it removes the
-  previous night's, so no earlier tickets read as tonight's.
+  night's five checks (`light`, `market_inputs`, `publication_time`,
+  `cross_check`, `account`), each `pass`, `fail` or `not_evaluated`, and
+  `trade_allowed`: true only when every night check passes and a ticket is
+  `go`, with every reason that kept it false. `mode` is `paper` and
+  `live_ready` false until the record's go-live gate holds (below). A night
+  that cannot write it removes the previous night's, so no earlier tickets
+  read as tonight's.
+
+  **Data quality is read where it applies, never off the run's status word**
+  (the owner's decision of 25 November 2026; before it one `degraded` status
+  stopped every ticket of the night). The night's `market_inputs` check reads
+  the record's own input ledger: it fails when more intended stocks were
+  without usable bars than the limit the record archived for its stale
+  tolerance (`inputs.stale_limit()`, applied here to every kind of gap), when
+  the selection was cut at its capacity, when the stock directory failed
+  and the seed list stood in, or when not every measured stock was scanned
+  and checked (`acceptance.complete_evaluation` false); it is
+  `not_evaluated` when the ledger, the archived limit, the status or a
+  problem word is not one the file reads. The
+  light, the ranks and the slots rest on those inputs, so that check stops the
+  night. Everything else is read on the ticket it concerns. `inputs` fails
+  when the record names the ticket's stock among the stocks without a usable
+  session frame or among the frames held under an open model plan, passes
+  only when the row's own sealed source frame and its last two archived bars
+  are dated the session and the session before it, and is otherwise held for
+  a person (the ledger samples its lists, so a stock's absence from one is no
+  evidence). `reader` holds a burst ticket to an accepted chart review made
+  with its chart; a setting-up ticket is measured and never chart-read. A
+  refused chart review, a chart that did not render, a mail that failed, a
+  cached directory and a late follow-up bar stop no other ticket.
 - **`docs/positions-template.json`**, beside it: one blank position per
   ticket for the agent to fill with real orders, fills and exits in a private
   copy that is never committed here.
-- **`docs/orders-morning.json`**, from the morning's persist job
-  (`python -m tools.publish_morning orders`): each ticket re-read against the
-  receipt that run published, `go` or `cancel` with its reasons (the night not
-  allowed, no recent price, a halt or a halt source that could not say, the
-  receipt completed after the ticket's cutoff, the event registry, a retained
-  corporate exclusion or an SEC flag, a price over the limit, under the skip
-  line, or at or over the buy stop, or in a state the file does not know). A
-  setting-up ticket has no skip line, so under its trigger it stays `go`.
-  Derived on the spot from `main`'s own `orders.json`, receipt and record, and
-  committed alone.
+- **`docs/orders-morning.json`**, always beside `orders.json`. The evening
+  writes it with `orders.json`, `status` `pending`: every ticket `cancel`
+  (`morning_check_pending`), because no morning check has run for that record.
+  The morning's persist job (`python -m tools.publish_morning orders`)
+  replaces it: with a receipt on `main` bound to the record that records a
+  check that ran (`observed`, `partial` or `no_tickets`), `status`
+  `checked` and each ticket re-read against it, `go` or `cancel` with its
+  reasons (the night not allowed, no recent price, a halt or a halt source
+  that could not say, the receipt completed after the ticket's cutoff, the
+  event registry, a retained corporate exclusion or an SEC flag, a price over
+  the limit, under the skip line, or at or over the buy stop, or in a state
+  the file does not know); with none, or one that checked nothing
+  (`inapplicable`, `provider_unavailable`), `status` `no_check` and every
+  ticket `cancel` (`no_morning_check`). A setting-up ticket has no skip line, so
+  under its trigger it stays `go`. A scheduled morning slot that starts after
+  the entry window has ended collects nothing and still writes the file as
+  `main`'s own files give it (the workflow's `close` job, `--window-closed`),
+  so a morning with no check ends as `no_check` on `main`. `cancel_all` is
+  true unless the status is `checked`. Derived on the spot from `main`'s own
+  `orders.json`, receipt and record, and committed alone.
+
+  **The rule an execution agent applies** is stated in `orders.json` itself
+  (`morning_rule`, `orders.MORNING_RULE`): a ticket is entered only while
+  `orders-morning.json` is bound to that exact `orders.json`
+  (`orders_sha256`), its `status` is `checked`, the ticket's `decision` there
+  is `go`, the clock is before the ticket's `valid_until`, and `orders.json`
+  itself allows the night and marked the ticket `go`; a missing file, one
+  bound to other bytes, or a night `orders.json` does not allow cancels every
+  ticket, and `python -m src.orders decide` applies the rule
+  (`orders.entry_decisions()`).
 
 Two reads stand behind each ticket's checks. **`run.sec_flags`**
 (`src/sec_flags.py`) reads each ticket's and each listed setup's SEC filing
@@ -2579,8 +2637,9 @@ and `tests/test_orders.py` re-derives a committed `docs/orders.json` from the
 committed record. A merge that moves `orders.VERSION` leaves the files on
 `main` as the earlier code wrote them until the next evening rewrites them:
 they keep their own version's meaning, the gate and that test hold them to
-their binding alone (`orders.earlier_version()`), and the morning step
-derives no go/cancel file from one (`orders_written_under_an_earlier_version`).
+their binding alone (`orders.earlier_version()`), and the morning step reads
+no ticket of one: it writes a go/cancel file bound to it that lists none and
+cancels every one (`orders_earlier_version`).
 The agent's guide is `docs/operations/orders.md`.
 `tests/fixtures/orders/` holds golden files over the page and morning
 fixtures; `generate.py --check` runs in CI.
@@ -2588,9 +2647,11 @@ fixtures; `generate.py --check` runs in CI.
 ### The go-live gate
 
 `orders.json` is paper only until the record's own gate says otherwise
-(`run.go_live`, `src/go_live.py`, computed each evening after the
-scorecard; its `mode` is then `live` and `live_ready.value` true). Four
-conditions:
+(`run.go_live`, `src/go_live.py`, computed each evening; its `mode` is then
+`live` and `live_ready.value` true). The gate is operational only (the
+owner's decision of 25 November 2026): it reads no outcome, and no
+settled-plan count, win rate, expectancy or study is to be made a condition.
+Two conditions:
 
 - **The Fidelity protocol.** The owner has recorded it as passed in
   `knowledge/go-live/fidelity-protocol.json`, dated no later than the
@@ -2605,24 +2666,24 @@ conditions:
   `run.trigger`) and checked by a morning check that ran, bound to that
   publication, inside its collection window and generated by 08:45 Chicago time.
   The gate reads the newest morning receipt on `main`, so a later run for
-  the same publication replaces an on-time one.
-- **Settled forward plans.** It needs at least 20 settled model plans in the scorecard's window,
-  each picked since the archived rules last changed and each from a forward
-  publication. The digest leaves out only the nightly universe membership
-  and the event registry, so a registry review does not restart the count
-  and any other archived rule does. A backfill, and a run made at or after
-  the open its plans are for, are not forward: their sessions are kept in
-  `run.go_live.strategy.not_forward` and their picks never count. A record
-  that is not itself a forward publication never reads live.
-- **The ablation.** Its results are committed, computed under the committed
-  spec they name.
+  the same publication replaces an on-time one. A record that is not itself
+  a forward publication (a backfill, or a run made at or after the open its
+  plans are for; `run.go_live.publication`) never reads live.
 
 The ledger closes each session the evening after it, and only a real
 publication (not a rehearsal, and a status the evening guard reads as
 published). Its first row is the last record made before the gate, not
 counted because it archives no `run.trigger`, so the count starts at zero.
 The Record view prints the gate. The publication check holds a live
-`orders.json` to the committed protocol record and ablation again.
+`orders.json` to the committed protocol record again.
+
+Version 1 of the gate (19 to 24 November 2026) also asked for twenty settled
+model plans under standing rules and for the committed ablation. A record
+made under it is still read and held by version 1's own validator
+(`go_live._faults_v1()`, over version 1's criteria in
+`go_live.CRITERIA_BY_VERSION`), and the handoff never reads such a block as
+live; nothing writes it now, and the ablation
+stays as research the gate does not read.
 
 Two things the gate cannot read: a hand dispatch with
 `only_if_unpublished` ticked, and how a morning check was started.
@@ -3231,7 +3292,7 @@ src/            history.py (public recovery and coverage)
                 delivery.py (where a publication fell against the evening workflow's own slots and the next open; the record archives it, the page and the service-health reading read it)
                 freshness.py (what a record says about the next publication: the next session, its completion, the two slots and the recovery limit; state() answers newest, not_due, pending, late or missing for a reader's own clock; standard library only)
                 scorecard_reading.py (the scorecard read honestly: distinct setups, model accounts, the stopped tickets at the stop, the close and the low, breadth revisions; copied from the model record, never moving the scorecard's numbers)
-                go_live.py (the go-live gate: four conditions, a ledger of closed sessions, the sessions whose publication was not forward, and whether orders.json is live or paper)
+                go_live.py (the go-live gate, operational only: the owner's Fidelity protocol record and ten on-time sessions, a ledger of closed sessions, whether tonight's publication is forward, and whether orders.json is live or paper)
                 strategy_page.py (strategy.html: the strategy as the installed record's rules state it; every figure a rule the record archived, or a named code constant where it archives none)
                 orders.py (the execution handoff: orders.json and its positions template each night, and the morning's go/cancel file, from committed bytes and no clock) · schema_check.py (the JSON Schema subset the handoff's schema uses; any other keyword is refused)
                 sec_flags.py (each ticket's and listed setup's recent tender-offer, merger-proxy and deal 8-K filings, named by form and item; a flag that holds a ticket for review in orders.json, never a refusal or a clearance)
@@ -3256,6 +3317,7 @@ knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose 
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/ · fixtures/brief/ (the brief's golden pair from the page fixture full; generate.py --check holds it) · fixtures/model-record/ (the 17 November 2026 record with its bars, frozen from git by its build.py; --check holds it)
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py · publish_morning.py · probe_morning_sources.py · sync_morning_service.py
                 probe_sec_access.py (a dispatch-only diagnostic: SEC requests for AAPL and ZIM, or up to four named tickers, through the issuer collector's transport, and the index rows its row rules refuse, printed to the log; never published)
+                capture_sec_document.py (dispatch-only: one SEC Archives document's byte count, SHA-256 and bounded excerpts through the same transport, for a review of the event registry; resolves nothing, never published)
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)
                 entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)
                 historical_backtest.py (offline: the run's own stages replayed over a recovered archive; reader not run; `--burst-trigger-rule` names the burst buy stop's rule)
