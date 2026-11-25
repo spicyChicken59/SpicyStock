@@ -932,6 +932,22 @@ def test_a_holidays_evening_crons_are_never_the_evening_runs_of_the_session_befo
     assert [sw.evening_cron_session(r) for r in runs[4:]] == ["2026-11-25", "2026-11-25"]
 
 
+def test_a_cron_its_guard_runs_for_the_session_before_is_no_run_of_the_next_ones_evening():
+    """Tuesday's retry cron created twenty hours late, after Wednesday completed: its guard reads Tuesday's
+    nominal slot and runs it for Tuesday (already published, so it does nothing). It is no run of Wednesday's
+    evening, which by 6:50 PM ET has none."""
+    record = synthetic_record(TUESDAY)
+    tuesday_retry = _cron_run(RETRY_EST, at("2026-11-25T21:30:00+00:00"), 4500)    # nominal 01:16 UTC on the 25th
+    assert sw.evening_cron_session(tuesday_retry) == "2026-11-24" and not sw.skipped_evening_cron(tuesday_retry)
+    out = sw.judge_evening(record, new_york(WEDNESDAY, sw.EVENING_STARTED_BY_ET), [tuesday_retry], None)
+    assert (out["session"], out["judgement"], out["key"]) == ("2026-11-25", sw.NOT_STARTED, "evening:not_started:2026-11-25")
+    assert out["runs"] == []
+    # Wednesday's own retry cron, as late, is Wednesday's: the backup's start
+    wednesday_retry = _cron_run(RETRY_EST, at("2026-11-26T05:30:00+00:00"), 4501)
+    out = sw.judge_evening(record, at("2026-11-26T06:00:00+00:00"), [tuesday_retry, wednesday_retry], None)
+    assert out["judgement"] == sw.STARTED_LATE and [r["id"] for r in out["runs"]] == [4501]
+
+
 #: Every weekday XNYS holiday from Thanksgiving 2026 to Christmas 2027, with the session before it.
 HOLIDAYS = [date(2026, 11, 26), date(2026, 12, 25), date(2027, 1, 1), date(2027, 1, 18), date(2027, 2, 15),
             date(2027, 3, 26), date(2027, 5, 31), date(2027, 6, 18), date(2027, 7, 5), date(2027, 9, 6),
