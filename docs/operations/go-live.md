@@ -1,11 +1,16 @@
 # The go-live gate
 
 `orders.json` is **paper only** until the record's own gate (`run.go_live`,
-`src/go_live.py`) says every condition below holds. Its `mode` is then
+`src/go_live.py`) says both conditions below hold. Its `mode` is then
 `live` and `live_ready.value` is true; until then `mode` is `paper` and
 `live_ready.reasons` names each condition not met. The Record view prints
 the gate's sentence and each condition, met or not. An execution agent
 reads `live_ready` and places nothing live while it is false.
+
+The gate is **operational only** (the owner's decision of 25 November 2026).
+It asks whether the broker was tested and whether the service runs on time.
+It asks nothing about how the strategy has done: no settled-plan count, win
+rate, expectancy or study is a condition, and none is to be added.
 
 The gate decides nothing about a trade. It says whether the owner's own
 conditions for trusting the nightly handoff have been met; every order is
@@ -17,14 +22,8 @@ still the owner's.
 |---|---|---|
 | `fidelity_protocol` | the owner has recorded the one-sitting protocol (`knowledge/broker-fidelity-protocol.md`) as passed | `knowledge/go-live/fidelity-protocol.json`, a committed file |
 | `on_time_sessions` | the consecutive XNYS sessions ending on the one before tonight's, as many as `go_live.ON_TIME_SESSIONS`, were each published by `go_live.PUBLISH_BY_ET` New York time on the session's own date, started automatically, and checked by a morning check that ran, bound to that publication, generated inside its collection window and by `go_live.MORNING_DUE_CT` Chicago time on the session its plans were for | the record's `run.go_live.ledger`, one row per closed session |
-| `settled_forward_plans` | at least `go_live.MIN_SETTLED_FORWARD` model plans in the scorecard's window have settled, each a forward plan picked on or after `run.go_live.strategy.since` | the night's own walk of the pick ledger over that night's bars (the scorecard's rows, which the record summarises and does not carry) |
-| `ablation_report` | the pre-registered ablation's results are committed, computed under the committed spec they name | `docs/input-truthfulness/2026-11-19-ablation/ablation.json` |
 
-The protocol record, the ledger and the ablation's results are read from
-committed bytes. The settled count is taken each evening from the bars that
-run fetched; the record keeps the
-count, and its validator holds it to no more than the scorecard's own
-settled total.
+The protocol record and the ledger are read from committed bytes.
 
 ### Published on time
 
@@ -94,44 +93,33 @@ The first row is the last record made before the gate, closed as not
 counted because it archives no `run.trigger`. The first session that can
 count is the first whose record archives it.
 
-### The standing rules, and forward plans
+### A forward publication
 
-`run.go_live.strategy` keeps a digest of the record's archived rules, the
-session those rules have stood since (`since`), the newest session any
-record has published (`newest`) and the sessions whose publication was not
-forward (`not_forward`).
+`run.go_live.publication` keeps the newest session any record has published
+(`newest`) and whether tonight's publication is forward (`forward`).
 
-**What restarts the count.** The digest covers every archived rule except
-those named in `go_live.NON_STRATEGY_RULES`: the night's universe
-membership, which moves every night, and the event registry's entries and
-its digest, which the CI review check makes the owner revisit on a
-calendar. A change to
-any other archived rule moves the digest and restarts the count. That
-includes rules that decide no ticket: a reporting block's version, the
-delivery slots, and this gate's own thresholds. So most merges that archive
-or move a rule restart the count. The model account's size and the chart
-reader's model are not archived rules, and a change to either does not.
-
-**What counts as forward.** A publication is forward when it is of a session
-no older than the newest already published, and was made before the open
-its plans are for. A backfill of an older session, and a run made at or
-after that open, write their picks after the fact:
-
-- their session is kept in `not_forward`, and no pick dated that session
-  counts, whatever the rules did;
-- a rule change first seen on such a run stands from the session after the
-  newest one published, not from the run's own session.
-
-The retry slot's re-run of the same session the same evening is forward.
+A publication is forward when it is of a session no older than the newest
+already published, and was made before the open its plans are for. A
+backfill of an older session, and a run made at or after that open, publish
+after the fact. The retry slot's re-run of the same session the same evening
+is forward.
 
 A publication that is not itself forward never reads live: that night its
 `on_time_sessions` count is zero, whatever the ledger holds, and the
 condition's detail says so.
 
-**What is counted.** One for each settled ticket, as the scorecard counts
-them: a setup ticketed on more than one night is one plan a ticket. A plan that leaves the
-scorecard's window leaves the count, so the condition can go from met to
-not met.
+### Version 1 of the gate
+
+From 19 to 24 November 2026 the gate had two more conditions:
+`settled_forward_plans` (twenty settled model plans under rules that had
+stood unchanged) and `ablation_report` (the committed ablation). The owner
+removed both on 25 November 2026. A record made under version 1 keeps its
+four-condition block, with its `strategy` block, and is still held by
+version 1's own validator; nothing writes version 1 now, and a version-1
+block never makes an `orders.json` live. The ledger's rows are the same
+under both versions, so the run of on-time sessions carries across the
+change. The ablation and its report stay in the repository as research; the
+gate does not read them.
 
 ## Recording the Fidelity protocol
 
@@ -172,9 +160,8 @@ does not pass. The file is public: record no account number, balance, order
 id or anything else private in it. Nothing in this repository sets it, and
 the next evening's record reads it.
 
-The publication check holds a live `orders.json` to this file and to the
-ablation's results again, so a file that says `live` while the committed
-record is not passed is refused.
+The publication check holds a live `orders.json` to this file again, so a
+file that says `live` while the committed record is not passed is refused.
 
 ## The reasons `live_ready` can name
 
@@ -182,14 +169,11 @@ record is not passed is refused.
 |---|---|
 | `fidelity_protocol` | the owner has not recorded the Fidelity protocol as passed |
 | `on_time_sessions` | fewer consecutive sessions than the gate needs were published and checked on time |
-| `settled_forward_plans` | fewer model plans than the gate needs have settled under the standing rules |
-| `ablation_report` | the pre-registered ablation's results are not committed |
 | `go_live_gate_not_evaluated` | the record carries no gate this file can read: a record from before the gate, or one whose gate block is not this version's |
 
 ## What it does not establish
 
 That the strategy has an edge, that a ticket will fill, or that Fidelity
-accepts a given order on a given morning. The ablation's results are a
-condition because they must be committed before money moves, not because
-any of them recommends a change; the settled count is a sample size, not a
-result.
+accepts a given order on a given morning. The gate is met by a tested broker
+and ten on-time sessions; it says nothing about results, and a live
+`orders.json` is no evidence of any.

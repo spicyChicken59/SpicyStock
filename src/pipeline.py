@@ -726,15 +726,16 @@ def previous_digest(docs: Path) -> str | None:
         return None
 
 
-def read_go_live(docs: Path, session: str, rules: dict, previous: dict, previous_sha256, rows: list,
+def read_go_live(docs: Path, session: str, previous: dict, previous_sha256,
                  published_at: str | None = None, opens_at: str | None = None) -> dict:
-    """``run.go_live``; a morning file that cannot be read is no morning file."""
+    """``run.go_live``; a morning file that cannot be read is no morning file.
+    The gate is operational only: it is given no rule and no scorecard row."""
     try:
         morning = json.loads((docs / "morning.json").read_text())
     except (OSError, ValueError, RecursionError):
         morning = None
-    return go_live.build(session=session, rules=rules, previous=previous, previous_sha256=previous_sha256,
-                         morning=morning if isinstance(morning, dict) else None, scorecard_rows=rows,
+    return go_live.build(session=session, previous=previous, previous_sha256=previous_sha256,
+                         morning=morning if isinstance(morning, dict) else None,
                          published_at=published_at, opens_at=opens_at)
 
 
@@ -1032,10 +1033,10 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                                      replay_rules_version=report.rules_version(rules_block), problem=record_problem,
                                      minutes=minutes)
         # how this run was started, and the go-live gate over the sessions
-        # before it (src/go_live.py): paper only until every condition holds
+        # before it (src/go_live.py): paper only until both of its operational
+        # conditions hold; it reads no outcome
         run_block["trigger"] = go_live.trigger_from(os.environ)
-        run_block["go_live"] = read_go_live(docs, session.isoformat(), rules_block, previous, previous_sha256,
-                                            record.scorecard_rows(rec, frames, session.isoformat(), minutes=minutes),
+        run_block["go_live"] = read_go_live(docs, session.isoformat(), previous, previous_sha256,
                                             published_at=generated, opens_at=run_block["timing"].get("opens_at"))
         log.info("Go-live: %s", run_block["go_live"]["sentence"])
 

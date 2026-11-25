@@ -59,7 +59,7 @@ if str(ROOT) not in sys.path:
 
 from src import schema_check  # noqa: E402  (stdlib only: the publication gate imports this module)
 
-VERSION = 4
+VERSION = 5
 FILE = "orders.json"
 MORNING_FILE = "orders-morning.json"
 POSITIONS_FILE = "positions-template.json"
@@ -814,7 +814,8 @@ def check(docs) -> list[str]:
             out.append("orders.json is not bound to data.json")
         earlier = json.loads(orders_raw)
         if earlier.get("mode") != "paper" or _dict(earlier.get("live_ready")).get("value") is not False:
-            # no earlier version could be live: the gate arrived with this one
+            # no file written under an earlier version was live: before version 4 there was no gate,
+            # and version 4's four conditions were never met
             out.append("orders.json written under an earlier version is not paper")
         for name in (POSITIONS_FILE, MORNING_FILE):
             if (docs / name).exists() and \
@@ -831,11 +832,11 @@ def check(docs) -> list[str]:
                 # the mode follows live_ready (consistency()); live_ready follows the record's own gate
                 out.append("orders.json's live_ready is not the committed record's gate")
             elif orders["live_ready"]["value"] is True:
-                # a live file is held to the two conditions committed files can show again
+                # a live file is held to the one condition a committed file can show again
                 from src import go_live
                 session = _dict(data.get("run")).get("session")
-                if not (go_live.protocol(session if isinstance(session, str) else "")["passed"] and go_live.ablation()):
-                    out.append("orders.json is live while the committed protocol record or ablation does not hold")
+                if not go_live.protocol(session if isinstance(session, str) else "")["passed"]:
+                    out.append("orders.json is live while the committed protocol record is not passed")
     except (OSError, ValueError) as exc:
         return [f"orders.json: {exc}"]
     for name, kind in ((POSITIONS_FILE, "positions"), (MORNING_FILE, "orders_morning")):

@@ -37,8 +37,9 @@ Any JSON Schema validator reads it; the repository checks its own files with
    The checker also refuses a file whose `trade_allowed`, `reasons`, ticket
    statuses, summary or mode are not what its own checks give.
 4. **Read the mode.** `mode` is `paper` and `live_ready.value` is false until
-   the record's go-live gate holds ([`go-live.md`](go-live.md)); then `mode`
-   is `live` and `live_ready.reasons` is empty. A paper ticket is a
+   the record's go-live gate holds ([`go-live.md`](go-live.md): the owner's
+   Fidelity protocol record and ten on-time sessions, and nothing about
+   results); then `mode` is `live` and `live_ready.reasons` is empty. A paper ticket is a
    rehearsal: it is never an order to place. `live_ready.reasons` names each
    condition not met, in the words `go-live.md` lists; `live` says the
    owner's conditions for trusting the file hold, and `trade_allowed` and
