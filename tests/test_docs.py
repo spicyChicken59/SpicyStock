@@ -1026,7 +1026,20 @@ def test_the_readme_quotes_the_service_watch_from_the_tool_and_its_workflow():
         assert f"`{word}`" in README, word
     assert (sw.EXIT_OK, sw.EXIT_ALERT, sw.EXIT_UNKNOWN, sw.EXIT_UNFINISHED) == (0, 1, 2, 3)
     assert ("it exits 0 with nothing to flag, 1 on an alert and 2 when the record cannot answer, whatever else it "
-            "flags; with `--mail` it exits 3 when the message it owed was refused twice") in README
+            "flags; it exits 3 when the run did not finish: with `--mail` the message it owed was refused twice, or "
+            "the ledger it changed could not be written, so the next run would mail again") in README
+    assert "`ledger=written` or `ledger=failed`" in README
+    assert "accepted and the ledger it changed was written" in README
+    # the listing's debounce, from the module's own numbers
+    assert (sw.LISTING_FAILURES_IN_A_ROW, sw.LISTING_CLEAR_HOURS) == (2, 24)
+    assert (f"when {sw.LISTING_FAILURES_IN_A_ROW} watch runs in a row could not read the listing "
+            "(`LISTING_FAILURES_IN_A_ROW`; the first is recorded and mails nothing)") in README
+    assert f"cleared only after {sw.LISTING_CLEAR_HOURS} hours with no listing failure (`LISTING_CLEAR_HOURS`)" in README
+    assert "`in_progress`" in README and sw.IN_PROGRESS == "in_progress"
+    assert "a watch run GitHub's own cron started, red or green, is read by no watch" in README
+    assert "a red run GitHub's cron started is read by no watch, and is seen only in Actions" in README
+    assert "with or without `--mail`, and never with a key its own reader refuses" in README
+    assert "is dropped alone and named in the run's output" in README
     assert "Its exit code follows the judgement, mailed or dropped as a repeat alike" in README
     assert "exits 2 too, and with `--mail` is mailed once per bytes and again weekly while those bytes stand" in README
     assert sw.MAIL_RETRY_SECONDS == 20 and "once more after 20 seconds (`MAIL_RETRY_SECONDS`)" in README
@@ -1051,7 +1064,15 @@ def test_the_readme_quotes_the_service_watch_from_the_tool_and_its_workflow():
     from tools import dispatch_schedule as ds
     morning = next(times for wf_name, _, _, times in ds.SLOTS if wf_name == "morning.yml")[0]
     assert _clock(datetime.combine(date(2026, 11, 20), time.fromisoformat(morning))) == "8:20 AM"
-    assert "the dispatcher starts the check at 8:20 AM CT" in README
+    assert "the on-time dispatcher, once it is deployed, starts the check at 8:20 AM CT" in README
+    # the pre-open watch's wait after a catch-up dispatch of the check, from the dispatcher's own numbers
+    assert ds.WAIT_SECONDS == 180 and "not dispatched until\n180 seconds (`WAIT_SECONDS`)" in README_RAW
+    open_at = datetime.combine(date(2026, 11, 20), time(8, 30))
+    catch_up, late = (datetime.combine(date(2026, 11, 20), time(8, m)) for m in (26, 28))
+    assert catch_up + timedelta(seconds=ds.WAIT_SECONDS) < open_at <= late + timedelta(seconds=ds.WAIT_SECONDS)
+    assert (f"a catch-up that starts the\ncheck at {_clock(catch_up)} CT starts the watch at "
+            f"{_clock(catch_up + timedelta(seconds=ds.WAIT_SECONDS)).removesuffix(' AM')}, and one at "
+            f"{_clock(late).removesuffix(' AM')} leaves the\nmorning to the 09:05 slot") in README_RAW
     # how late a backup cron may be and still land in the alert window before the open, per season
     coverage = _backup_coverage_hours([int(c.split()[1]) * 60 + int(c.split()[0]) for c in crons if c.endswith("* * *")],
                                       sw.ALERT_WITHIN_HOURS)
@@ -1103,6 +1124,12 @@ def test_the_operations_note_and_the_example_quote_the_watch_from_the_tool_and_i
     assert ("service-watch.yml", "America/Chicago", sw.MORNING_ALERT_CT) in ds.BEFORE_OPEN
     assert "08:25 America/Chicago slot, which is due only until the session's open" in note
     assert "`BEFORE_OPEN`" in note and "`WAITS_FOR`" in note
+    assert f"{ds.WAIT_SECONDS} seconds (`WAIT_SECONDS`) after the newest dispatch of the morning check" in note
+    assert "88 to 94 seconds (23 October 2026) and 97 to 103 seconds (4 November 2026)" in note
+    assert ds.WAIT_SECONDS > 103                                   # it covers the latest landing recorded
+    assert (f"{sw.LISTING_FAILURES_IN_A_ROW} watch runs in a row could not read it (`LISTING_FAILURES_IN_A_ROW`)"
+            in note and f"{sw.LISTING_CLEAR_HOURS} hours with no listing failure (`LISTING_CLEAR_HOURS`)" in note)
+    assert "a red run that GitHub's cron started is read by no watch, and is seen only in Actions" in note
     # the example names the workflow's own crons
     wf = yaml.safe_load((ROOT / ".github" / "workflows" / "service-watch.yml").read_text())
     crons = [c["cron"] for c in (wf.get("on") or wf.get(True))["schedule"]]

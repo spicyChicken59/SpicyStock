@@ -16,9 +16,13 @@ calendar the run reads (`src/sessions.py`).
 
 A slot is due from its instant for 30 minutes (`DUE_MINUTES`), except the
 watch's 08:25 America/Chicago slot, which is due only until the session's open
-and is never dispatched at or after it (`BEFORE_OPEN`). A watch slot due in the
-tick that dispatched the morning check waits for the next tick (`WAITS_FOR`):
-the watch is never started in the same tick as the check it judges. The
+and is never dispatched at or after it (`BEFORE_OPEN`). That watch is not
+dispatched until 180 seconds (`WAIT_SECONDS`) after the newest dispatch of the
+morning check it judges (`WAITS_FOR`), this tool's or anyone's: the check's
+receipts landed on `main` 88 to 94 seconds (23 October 2026) and 97 to 103
+seconds (4 November 2026) after its dispatch was created. A catch-up that
+starts the check at 08:26 starts the watch at 08:29; one at 08:28 leaves the
+morning to the 09:05 slot. The
 evening's four starts are one publication and three no-ops: the workflow's
 `only_if_unpublished` guard publishes the newest completed session once,
 from its primary slot (18:16 ET) on, only while it is unpublished and only
@@ -59,8 +63,12 @@ already makes a second start harmless.
 
 It is idempotent without a volume. A slot is done when GitHub lists a
 dispatched run of its workflow created since the slot, whether this tool
-asked for it or anyone did. A repeat tick, a restart or a second copy
-starts nothing twice, except two copies asking in the same second.
+asked for it or anyone did. `loop`, which the service runs, also holds its
+ledger in memory: each dispatch it made, and when, so one GitHub has not
+listed yet is not made again on the next tick and the pre-open watch still
+waits for it. A repeat tick, a restart or a second copy starts nothing twice,
+except two copies asking in the same second, or a restart before GitHub lists
+a dispatch the copy before it made.
 
 ## Setting it up on Railway
 
@@ -120,13 +128,25 @@ It reads the Actions run listing of `evening.yml`, `morning.yml` and its own
   start; anything else (the backup cron, a dispatch outside every slot) is
   said to be no dispatch in any of its slots;
 - `not_started`: for the evening, no run listed by 18:50 ET (an evening cron
-  whose guard skips it as not the active UTC slot is no run); for the watch, no
-  run dispatched in its own previous slot, or one dispatched there that ended
-  failed or cancelled, said after the fact by a later watch;
-- `failed`: every run of the evening ended without publishing;
+  whose guard skips it -- not the active UTC slot, or a weekday holiday's own
+  crons, whose nominal date is no session -- is no run, and one its guard runs
+  for another session is that session's); for the watch, no run dispatched in
+  its own previous slot, or one dispatched there that ended failed or
+  cancelled, said after the fact by a later watch. A watch run GitHub's cron
+  started, red or green, is read by no watch: a red one is seen only in
+  Actions;
+- `failed`: every run of the evening ended without publishing; a dispatch in a
+  first slot that ended without its work, beside a run that did not, is named
+  and makes the start `started_late`;
 - `unknown`: no token, or that workflow's listing could not be read. Without
   a token it is never an alert; with one, a listing that cannot be read is an
-  alert of its own, `scheduler:listing:unreadable`, standing.
+  alert of its own, `scheduler:listing:unreadable`, standing, raised only when
+  2 watch runs in a row could not read it (`LISTING_FAILURES_IN_A_ROW`) and
+  cleared only after 24 hours with no listing failure (`LISTING_CLEAR_HOURS`).
+
+While the listing shows the morning check's run still queued or in progress
+inside its collection window, a check whose receipt or go/cancel file is not
+on `main` yet is `in_progress`: no alert, and a later watch judges it.
 
 A `started_late` evening or morning, a watch slot with no dispatched run and a
 listing that cannot be read are standing conditions: each is mailed once,
@@ -150,8 +170,10 @@ the watch in turn says whether the dispatcher started the evening and the
 morning on time. It holds no mail credential and adds no account: a dispatcher
 that is itself down is seen only by the watch's scheduler answers, from
 GitHub's backup crons. A watch run that judged and mailed ends green; a red one
-did not finish (it crashed, or a message it owed was refused twice), and a later
-watch reads it as one that did not start.
+did not finish (it crashed, a message it owed was refused twice, or the ledger it
+changed could not be written). A later watch reads a red run as one that did not
+start only when this dispatcher started it in one of its slots; a red run that
+GitHub's cron started is read by no watch, and is seen only in Actions.
 
 ## Removing it
 

@@ -818,10 +818,11 @@ def test_the_service_watchs_ledger_is_a_main_only_cache_restored_before_and_save
 def test_the_service_watch_slots_land_where_its_judgements_can_answer():
     """The watch flags a late publication from the earlier of ``ALERT_WITHIN_HOURS`` before the next
     open and ten hours after the primary slot; on a weekday the first is the earlier. Actions starts
-    scheduled runs anywhere from on time to about eight hours late (3.56 to 7.99 hours for the evening
-    crons from 2 to 18 November 2026), so for every whole minute of delay up to the observed worst one
-    of the three daily slots must land inside the alert window before the open, in both seasons, and
-    the weekday slot must start after the entry window."""
+    scheduled runs anywhere from on time to hours late: the 13 October 2026 schedule reading's worst
+    delay is 504.9 minutes, 8.4 hours. So for every whole minute of delay up to it one of the four
+    daily slots (03:07, 05:07, 07:07 and 09:07 UTC) must land inside the alert window before the
+    open, in both seasons -- they cover up to 10.3 hours in daylight time and 11.3 in standard time --
+    and the weekday slot must start after the entry window."""
     from src import morning
     from tools import service_watch
 
@@ -830,6 +831,7 @@ def test_the_service_watch_slots_land_where_its_judgements_can_answer():
     minutes = [int(c.split()[1]) * 60 + int(c.split()[0]) for c in crons]
     *daily, afternoon = minutes
     assert all(c.endswith('* * *') for c in crons[:-1]) and crons[-1].endswith('1-5')
+    assert len(daily) == 4 and [f"{m // 60:02d}:{m % 60:02d}" for m in daily] == ["03:07", "05:07", "07:07", "09:07"]
     opens = (13 * 60 + 30, 14 * 60 + 30)                          # 9:30 AM ET in UTC, daylight and standard time
     alert = service_watch.ALERT_WITHIN_HOURS * 60
     # the worst delay the 13 October 2026 schedule reading recorded, read off its committed evidence (504.9 min)

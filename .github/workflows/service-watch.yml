@@ -6,14 +6,19 @@ name: Service watch
 # listing of evening.yml, morning.yml and this workflow. It calls no provider
 # and writes nothing to the repository. Each run mails its NEW alerts as one
 # message through the evening's own transport: the sent-alert ledger, kept in a
-# main-only Actions cache, holds the keys already mailed and when each standing
-# condition last cleared, so a repeat is dropped and a standing condition is
-# mailed again weekly, or at once when it returns after clearing.
+# main-only Actions cache, holds the keys already mailed, when each standing
+# condition last cleared and when the run listing last failed, so a repeat is
+# dropped, a standing condition is mailed again weekly or at once when it
+# returns after clearing, and a listing failure is mailed only when two watch
+# runs in a row had it.
 #
 # A run that judged and mailed is green: its judgement is in the job summary and
-# the watch step's outputs (exit_code, alerts, mail). Red means the watch did
-# not finish -- it crashed, or a message it owed was refused twice -- and the
-# next watch reads such a run as one that did not start.
+# the watch step's outputs (exit_code, alerts, mail, ledger). Red means the watch
+# did not finish -- it crashed, a message it owed was refused twice, or the
+# ledger it changed could not be written. Only a watch the dispatcher started in
+# one of its slots is judged by the next watch, which reads such a run that ended
+# red as one that did not start; a red run one of these crons started is read by
+# no watch, and is seen only here in Actions.
 #
 # The on-time dispatcher (tools/dispatch_schedule.py, on Railway) starts this
 # watch at its five slots on every session; these crons are the backup, and
@@ -78,7 +83,8 @@ jobs:
       - name: Watch the evening publication and the morning check
         id: watch
         # Its exit code is the judgement (0 nothing, 1 an alert, 2 a record that could not answer, 3 a message
-        # refused twice); the last step below decides the run's conclusion by whether the watch finished.
+        # refused twice or a ledger it could not write); the last step below decides the run's conclusion by
+        # whether the watch finished.
         continue-on-error: true
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
@@ -93,8 +99,9 @@ jobs:
         with:
           path: ${{ runner.temp }}/service-watch-ledger
           key: service-watch-ledger-v1-${{ github.run_id }}-${{ github.run_attempt }}
-      # The watch writes finished=true as its last act, once it has judged and every message it owed was
-      # accepted (or dropped as a repeat). Without it the run is red: the watch did not finish.
+      # The watch writes finished=true as its last act, once it has judged, every message it owed was
+      # accepted (or dropped as a repeat) and the ledger it changed was written. Without it the run is red: the
+      # watch did not finish.
       - name: The watch finished
         if: success() || failure()
         env:
