@@ -291,7 +291,8 @@ def build(*, session: str, previous: dict, previous_sha256: str | None, morning:
 
 
 def sentence(block: dict) -> str:
-    if block["ready"]:
+    # ``faults()`` asks this of a block read off disk, which may lack ``ready``: a missing one is not ready
+    if block.get("ready"):
         return "Live ready: every go-live condition holds; orders.json is no longer paper only."
     return ("Paper only: " + "; ".join(f"{c['key'].replace('_', ' ')} not met ({c['detail']})"
                                        for c in block["criteria"] if not c["met"]) + ".")
