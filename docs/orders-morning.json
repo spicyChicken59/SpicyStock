@@ -1,0 +1,25 @@
+{
+ "applicable_session": "2026-11-25",
+ "cancel_all": true,
+ "cancel_all_reason": "orders_earlier_version",
+ "content_sha256": "edb61487da0fe51c8526690c15276ff5c94fc556bb5b44384dedd9083833a12d",
+ "data_sha256": "c74f823525608f22e7464bcc725d6ba8116c847cdbf379e5568fae4ab835c914",
+ "kind": "orders_morning",
+ "mode": "paper",
+ "morning_bound": false,
+ "morning_generated_at": null,
+ "morning_sha256": null,
+ "morning_status": null,
+ "observation_run_id": null,
+ "orders_sha256": "ab2a4bf9a50793f0fbb05cc0df0c97c4d5390484c93a6c986ba4fcd68759b7e6",
+ "schema": "docs/operations/orders-schema.json#/$defs/orders_morning",
+ "session": "2026-11-24",
+ "status": "no_check",
+ "summary": {
+  "cancel": 0,
+  "go": 0,
+  "tickets": 0
+ },
+ "tickets": [],
+ "version": 6
+}
