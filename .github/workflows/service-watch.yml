@@ -4,24 +4,33 @@ name: Service watch
 # and did the scheduler run (tools/service_watch.py)? It reads the files on
 # main, a clock and, with this workflow's own read-only token, the Actions run
 # listing of evening.yml, morning.yml and this workflow. It calls no provider
-# and writes nothing to the repository. Each run mails each NEW alert through
-# the evening's own transport: the sent-alert ledger, kept in a main-only
-# Actions cache, holds the keys already mailed, so a repeat is dropped (and the
-# run stays green) and a standing condition is mailed again only weekly.
+# and writes nothing to the repository. Each run mails its NEW alerts as one
+# message through the evening's own transport: the sent-alert ledger, kept in a
+# main-only Actions cache, holds the keys already mailed and when each standing
+# condition last cleared, so a repeat is dropped and a standing condition is
+# mailed again weekly, or at once when it returns after clearing.
+#
+# A run that judged and mailed is green: its judgement is in the job summary and
+# the watch step's outputs (exit_code, alerts, mail). Red means the watch did
+# not finish -- it crashed, or a message it owed was refused twice -- and the
+# next watch reads such a run as one that did not start.
 #
 # The on-time dispatcher (tools/dispatch_schedule.py, on Railway) starts this
 # watch at its five slots on every session; these crons are the backup, and
-# Actions starts scheduled runs hours late. 05:07, 07:07 and 09:07 UTC are
-# placed so that one of them lands inside the hours before the next session's
-# open (13:30 UTC, 14:30 in winter) while the scheduler is up to 8.3 hours late
-# in daylight time and 9.3 in standard time, and 16:07 UTC on weekdays lands
-# after the entry window has closed. Nothing outside GitHub watches this watch:
-# the dispatcher, once deployed, is that clock.
+# Actions starts scheduled runs hours late. 03:07, 05:07, 07:07 and 09:07 UTC
+# are placed so that one of them lands inside the hours before the next
+# session's open (13:30 UTC, 14:30 in winter) while the scheduler is up to 10.3
+# hours late in daylight time and 11.3 in standard time, and 16:07 UTC on
+# weekdays lands after the entry window has closed. None of them can land in the
+# five minutes before the open in which the morning alert is due: with GitHub's
+# crons alone that alert arrives after the open. Nothing outside GitHub watches
+# this watch: the dispatcher, once deployed, is that clock.
 run-name: >-
   ${{ github.event_name == 'workflow_dispatch' && 'Service watch (manual)'
       || format('Service watch cron {0}', github.event.schedule) }}
 on:
   schedule:
+    - cron: "7 3 * * *"
     - cron: "7 5 * * *"
     - cron: "7 7 * * *"
     - cron: "7 9 * * *"
@@ -68,14 +77,15 @@ jobs:
           restore-keys: service-watch-ledger-v1-
       - name: Watch the evening publication and the morning check
         id: watch
+        # Its exit code is the judgement (0 nothing, 1 an alert, 2 a record that could not answer, 3 a message
+        # refused twice); the last step below decides the run's conclusion by whether the watch finished.
+        continue-on-error: true
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM: ${{ secrets.RESEND_FROM }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           GITHUB_TOKEN: ${{ github.token }}
           WATCH_MAIL_FLAG: ${{ (github.event_name != 'workflow_dispatch' || inputs.mail == true) && '--mail' || '' }}
-        # Exit 1 is an alert mailed now (or a mail that failed) and 2 a record
-        # that could not answer: both turn the run red. A dropped repeat is green.
         run: python tools/service_watch.py --docs docs $WATCH_MAIL_FLAG --ledger "$RUNNER_TEMP/service-watch-ledger/ledger.json"
       - name: Save the sent-alert ledger
         if: (success() || failure()) && steps.watch.outputs.ledger == 'written'
@@ -83,3 +93,13 @@ jobs:
         with:
           path: ${{ runner.temp }}/service-watch-ledger
           key: service-watch-ledger-v1-${{ github.run_id }}-${{ github.run_attempt }}
+      # The watch writes finished=true as its last act, once it has judged and every message it owed was
+      # accepted (or dropped as a repeat). Without it the run is red: the watch did not finish.
+      - name: The watch finished
+        if: success() || failure()
+        env:
+          WATCH_FINISHED: ${{ steps.watch.outputs.finished }}
+          WATCH_EXIT: ${{ steps.watch.outputs.exit_code }}
+        run: |
+          echo "The watch's exit code: ${WATCH_EXIT:-none}"
+          test "$WATCH_FINISHED" = "true"

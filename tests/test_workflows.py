@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import datetime as datetime_module
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -712,7 +713,8 @@ WATCH_STEP = 'Watch the evening publication and the morning check'
 
 def test_the_service_watch_reads_main_mails_through_the_evenings_transport_and_writes_nothing():
     wf = load('service-watch.yml')
-    assert [c['cron'] for c in triggers(wf)['schedule']] == ['7 5 * * *', '7 7 * * *', '7 9 * * *', '7 16 * * 1-5']
+    assert [c['cron'] for c in triggers(wf)['schedule']] == ['7 3 * * *', '7 5 * * *', '7 7 * * *', '7 9 * * *',
+                                                            '7 16 * * 1-5']
     mail = triggers(wf)['workflow_dispatch']['inputs']['mail']
     assert mail['type'] == 'boolean' and mail['default'] is True
     # it commits nothing and dispatches nothing: the run listing is read, never written
@@ -725,7 +727,7 @@ def test_the_service_watch_reads_main_mails_through_the_evenings_transport_and_w
     assert named['actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1']['with'] == {'ref': 'main', 'persist-credentials': False}
     assert named['Install dependencies']['run'] == 'pip install -r requirements.txt -c constraints.txt'
     step = named[WATCH_STEP]
-    assert step['id'] == 'watch'
+    assert step['id'] == 'watch' and step['continue-on-error'] is True     # the last step decides the conclusion
     assert step['run'] == ('python tools/service_watch.py --docs docs $WATCH_MAIL_FLAG '
                            '--ledger "$RUNNER_TEMP/service-watch-ledger/ledger.json"')
     env = step['env']
@@ -770,11 +772,34 @@ def test_the_run_names_the_watch_reads_are_the_ones_the_workflows_give_themselve
     assert (sw.EVENING_WORKFLOW, sw.MORNING_WORKFLOW, sw.WATCH_WORKFLOW) == tuple(names)
 
 
+FINISHED_STEP = 'The watch finished'
+
+
+def test_a_watch_run_is_red_only_when_the_watch_did_not_finish():
+    """The watch's exit code is its judgement, so the watch step continues on error; the last step reads the
+    output the watch writes as its last act (``finished=true``, only when it judged and every message it owed was
+    accepted) and fails the run without it. A crash writes no output at all, and is red."""
+    from tools import service_watch
+    wf = load('service-watch.yml')
+    order = [s.get('name') or s.get('uses') for s in wf['jobs']['watch']['steps']]
+    assert order[-1] == FINISHED_STEP and order.index(WATCH_STEP) < order.index(FINISHED_STEP)
+    step = steps(wf, 'watch')[FINISHED_STEP]
+    assert step['if'] == 'success() || failure()'
+    assert step['env']['WATCH_FINISHED'] == '${{ steps.watch.outputs.finished }}'
+    assert step['run'].strip().splitlines()[-1] == 'test "$WATCH_FINISHED" = "true"'
+    assert 'continue-on-error' not in step
+    # the output the step reads is the one the watch writes, and the code it echoes is the watch's own
+    import inspect
+    source = inspect.getsource(service_watch.github_report)
+    assert 'finished=true' in source and 'exit_code=' in source
+    assert step['env']['WATCH_EXIT'] == '${{ steps.watch.outputs.exit_code }}'
+
+
 def test_the_service_watchs_ledger_is_a_main_only_cache_restored_before_and_saved_after_it_mails():
     wf = load('service-watch.yml')
     order = [s.get('name') or s.get('uses') for s in wf['jobs']['watch']['steps']]
     restore, save = 'Restore the sent-alert ledger', 'Save the sent-alert ledger'
-    assert order.index(restore) < order.index(WATCH_STEP) < order.index(save) == len(order) - 1
+    assert order.index(restore) < order.index(WATCH_STEP) < order.index(save) == len(order) - 2
     named = steps(wf, 'watch')
     key = 'service-watch-ledger-v1-${{ github.run_id }}-${{ github.run_attempt }}'
     path = '${{ runner.temp }}/service-watch-ledger'
@@ -807,7 +832,11 @@ def test_the_service_watch_slots_land_where_its_judgements_can_answer():
     assert all(c.endswith('* * *') for c in crons[:-1]) and crons[-1].endswith('1-5')
     opens = (13 * 60 + 30, 14 * 60 + 30)                          # 9:30 AM ET in UTC, daylight and standard time
     alert = service_watch.ALERT_WITHIN_HOURS * 60
-    observed_worst = 8 * 60
+    # the worst delay the 13 October 2026 schedule reading recorded, read off its committed evidence (504.9 min)
+    reading = json.loads((ROOT / 'docs' / 'input-truthfulness' / '2026-10-13-schedule-reliability-evidence'
+                          / 'schedule-reliability.json').read_text())
+    observed_worst = math.ceil(reading['change']['since']['delay_minutes']['max'])
+    assert observed_worst == 505
     for open_at in opens:
         for delay in range(observed_worst + 1):
             assert any(open_at - alert <= slot + delay < open_at for slot in daily), (open_at, delay)
