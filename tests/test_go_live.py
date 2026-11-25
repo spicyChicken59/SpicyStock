@@ -154,7 +154,8 @@ def test_there_is_nothing_to_close_without_a_real_previous_publication():
 
 # ---------------------------------------------------------------- the ledger --
 def counted(session):
-    return {"session": session, "counted": True}
+    """A ledger row closed counted: on time, started automatically and checked by a morning run in time."""
+    return {"session": session, "on_time": True, "automatic": True, "morning_on_time": True, "counted": True}
 
 
 def test_the_run_of_counted_sessions_ends_at_a_gap_or_an_uncounted_session():
@@ -376,12 +377,47 @@ def test_the_evening_writes_the_block_and_the_validator_holds_it():
     assert gl.faults(older) == []
 
 
-def _live(data):
-    """The record with its gate forged ready: every condition met and no reason."""
+def _live(data, check=True):
+    """The record with its gate forged ready in a way its own validator accepts:
+    the protocol recorded before tonight, and a ledger of ten counted sessions
+    ending on the one before tonight's, each row's verdict its own facts'.
+    ``check=False`` forges a block the validator is not asked to accept (a
+    version-1 block under version 2's rules)."""
+    from src import sessions
+    session = data["run"]["session"]
+    day, rows = date.fromisoformat(session), []
+    for _ in range(gl.ON_TIME_SESSIONS):
+        day = sessions.previous_session(day)
+        rows.append({"session": day.isoformat(), "published_at": None, "on_time": True, "automatic": True,
+                     "applicable_session": None, "morning_generated_at": None, "morning_status": "observed",
+                     "morning_on_time": True, "counted": True})
     block = data["run"]["go_live"]
-    block.update(ready=True, reasons=[])
+    block.update(ready=True, reasons=[], ledger=sorted(rows, key=lambda r: r["session"]),
+                 publication={"newest": session, "forward": True})
     for c in block["criteria"]:
         c["met"] = True
+        if c["key"] == "fidelity_protocol":
+            c.update(have=session, detail="recorded as passed by the owner")
+        if c["key"] == "on_time_sessions":
+            c.update(have=gl.ON_TIME_SESSIONS, detail=f"{gl.ON_TIME_SESSIONS} consecutive of {gl.ON_TIME_SESSIONS}")
+    block["sentence"] = gl.sentence(block)
+    assert not check or gl.faults(data) == [], gl.faults(data)
+    return data
+
+
+def _unmet(data, key):
+    """A ready record with one condition made unmet the way the gate would find it: the protocol not
+    recorded, or the newest session of the run not counted (its morning check late)."""
+    block = data["run"]["go_live"]
+    crit = next(c for c in block["criteria"] if c["key"] == key)
+    if key == "fidelity_protocol":
+        crit.update(met=False, have=None, detail="not recorded as passed by the owner")
+    else:
+        block["ledger"][-1].update(morning_on_time=False, counted=False)
+        crit.update(met=False, have=0, detail=f"0 consecutive of {gl.ON_TIME_SESSIONS}")
+    block.update(ready=False, reasons=[c["key"] for c in block["criteria"] if c["met"] is not True])
+    block["sentence"] = gl.sentence(block)
+    assert gl.faults(data) == [], gl.faults(data)
     return data
 
 
@@ -416,7 +452,7 @@ def test_a_version_one_gate_block_never_makes_orders_json_live(name):
     # with only a reason version 2 also knows, it is still version 1's block
     data["run"]["go_live"]["reasons"] = ["fidelity_protocol"]
     assert orders.build(json.dumps(data).encode())["live_ready"] == unread
-    doc = orders.build(json.dumps(_live(data)).encode())
+    doc = orders.build(json.dumps(_live(data, check=False)).encode())
     assert doc["mode"] == "paper" and doc["live_ready"] == unread
     assert orders.LIVE_READY_REASON == "go_live_gate_not_evaluated"
 
@@ -1131,7 +1167,9 @@ def _paths(node, here=()):
 
 def _slim(data: dict) -> dict:
     """The parts of a record the gate's validator reads, and no more."""
-    return {"rules": data["rules"], "run": {"session": data["run"]["session"], "go_live": data["run"]["go_live"]},
+    return {"rules": data["rules"], "run": {"session": data["run"]["session"], "go_live": data["run"]["go_live"],
+                                            "published_at": data["run"]["published_at"],
+                                            "timing": {"opens_at": data["run"]["timing"]["opens_at"]}},
             "scorecard": {"settled": data["scorecard"]["settled"]}}
 
 
@@ -1497,10 +1535,7 @@ def test_a_handoff_written_under_an_earlier_version_is_paper_or_refused(tmp_path
 
 @pytest.mark.parametrize("unmet", gl.CRITERIA)
 def test_a_handoff_is_written_and_meets_its_schema_with_any_one_condition_unmet(unmet):
-    data = _live(page("full"))
-    block = data["run"]["go_live"]
-    next(c for c in block["criteria"] if c["key"] == unmet)["met"] = False
-    block.update(ready=False, reasons=[unmet])
+    data = _unmet(_live(page("full")), unmet)
     doc = orders.build(json.dumps(data).encode())
     assert doc["mode"] == "paper" and doc["live_ready"] == {"value": False, "reasons": [unmet]}
     assert orders.problems(doc) == []
@@ -1510,10 +1545,7 @@ def test_a_handoff_is_written_and_meets_its_schema_with_any_one_condition_unmet(
 @pytest.mark.parametrize("reason", gl.CRITERIA_BY_VERSION[1][2:])
 def test_a_handoff_that_names_a_condition_the_gate_no_longer_has_is_refused_by_its_schema(reason):
     assert reason in ("settled_forward_plans", "ablation_report")
-    data = _live(page("full"))
-    block = data["run"]["go_live"]
-    block["criteria"][0]["met"] = False
-    block.update(ready=False, reasons=["fidelity_protocol"])
+    data = _unmet(_live(page("full")), "fidelity_protocol")
     doc = orders.build(json.dumps(data).encode())
     assert doc["live_ready"] == {"value": False, "reasons": ["fidelity_protocol"]} and orders.problems(doc) == []
     # the same paper file naming a condition only version 1 had: the schema's list has no such word

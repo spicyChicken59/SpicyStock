@@ -335,6 +335,19 @@ def faults(data: dict) -> list[str]:
         out.append("run.go_live publication is not readable")
     elif _day(session) is not None and publication["newest"] < session:
         out.append("run.go_live publication names a newest session older than the record's own")
+    elif publication["forward"] is True and _day(session) is not None:
+        # forward is re-derived from the record's own clock: of the newest session, made before the open
+        # its plans are for
+        run = _dict(data.get("run"))
+        made, opens = _instant(run.get("published_at")), _instant(_dict(run.get("timing")).get("opens_at"))
+        if publication["newest"] != session or made is None or opens is None or made >= opens:
+            out.append("run.go_live publication is called forward when the record's own session and clock "
+                       "do not give it")
+    fid = crit[list(CRITERIA).index("fidelity_protocol")]
+    if fid.get("met") is True:
+        recorded, tonight = _day(fid.get("have")), _day(session)
+        if recorded is None or tonight is None or recorded > tonight:
+            out.append("run.go_live fidelity_protocol is met without a record dated on or before tonight")
     on_time = crit[list(CRITERIA).index("on_time_sessions")]
     have, need = on_time.get("have"), _dict(archived).get("on_time_sessions")
     if not (type(have) is int and type(need) is int and on_time.get("need") == need) or on_time.get("met") is not (have >= need):
@@ -342,7 +355,17 @@ def faults(data: dict) -> list[str]:
     ledger = [r for r in block["ledger"] if isinstance(r, dict) and _day(r.get("session")) is not None]
     if len(ledger) != len(block["ledger"]) or _day(session) is None:
         out.append("run.go_live ledger rows are not readable")
-    elif readable and have != (consecutive(ledger, session) if publication["forward"] is True else 0):
+        return out
+    days = [r["session"] for r in ledger]
+    if days != sorted(set(days)) or len(days) > LEDGER_MAX or (days and days[-1] >= session):
+        out.append("run.go_live ledger is not one row a session, oldest first, each before tonight")
+    for row in ledger:
+        # each row's verdict is its own facts': a row is counted only when all three hold
+        if row.get("counted") is not (row.get("on_time") is True and row.get("automatic") is True
+                                       and row.get("morning_on_time") is True):
+            out.append(f"run.go_live ledger row {row['session']} is counted when its own facts do not give it")
+            break
+    if readable and have != (consecutive(ledger, session) if publication["forward"] is True else 0):
         out.append("run.go_live on_time_sessions is not the run its own ledger ends on before tonight")
     return out
 

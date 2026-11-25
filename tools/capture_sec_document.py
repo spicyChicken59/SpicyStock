@@ -71,18 +71,16 @@ def archives_url(url):
 
 
 def finds(text, phrases):
-    """Each phrase's count in ``text`` (case folded) and excerpts around its first occurrences."""
+    """Each phrase's count in ``text`` (case ignored, occurrences not
+    overlapping) and excerpts around its first occurrences. The positions are
+    the text's own: a case-folded copy can be longer than the text (``ß``
+    folds to ``ss``), so it is never sliced by a folded index."""
     out = []
-    folded = text.casefold()
     for phrase in phrases:
-        needle = phrase.casefold()
-        starts, at = [], folded.find(needle)
-        while at != -1:
-            starts.append(at)
-            at = folded.find(needle, at + len(needle))
-        excerpts = [text[max(0, s - EXCERPT_SIDE_CHARS): s + len(needle) + EXCERPT_SIDE_CHARS]
-                    for s in starts[:MAX_EXCERPTS]]
-        out.append({"phrase": phrase, "count": len(starts), "excerpts": excerpts})
+        spans = [m.span() for m in re.finditer(re.escape(phrase), text, re.IGNORECASE)]
+        excerpts = [text[max(0, start - EXCERPT_SIDE_CHARS): end + EXCERPT_SIDE_CHARS]
+                    for start, end in spans[:MAX_EXCERPTS]]
+        out.append({"phrase": phrase, "count": len(spans), "excerpts": excerpts})
     return out
 
 
@@ -151,8 +149,11 @@ def write_capture(output: Path, result: dict, *, body=None, save_bytes: Path | N
         raise ValueError("capture would carry the contact address")
     # never replace an existing file: a capture is evidence of one request
     if save_bytes is not None and body is not None:
-        with _outside_docs(save_bytes).open("xb") as handle:
+        save_bytes = _outside_docs(save_bytes)
+        save_bytes.parent.mkdir(parents=True, exist_ok=True)
+        with save_bytes.open("xb") as handle:
             handle.write(body)
+    output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("x", encoding="utf-8") as handle:
         handle.write(payload)
     return payload

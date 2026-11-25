@@ -2555,9 +2555,11 @@ reads, each a function of committed bytes and no clock:
   the record's own input ledger: it fails when more intended stocks were
   without usable bars than the limit the record archived for its stale
   tolerance (`inputs.stale_limit()`, applied here to every kind of gap), when
-  the selection was cut at its capacity, or when the stock directory failed
-  and the seed list stood in; it is `not_evaluated` when the ledger, the
-  archived limit, the status or a problem word is not one the file reads. The
+  the selection was cut at its capacity, when the stock directory failed
+  and the seed list stood in, or when not every measured stock was scanned
+  and checked (`acceptance.complete_evaluation` false); it is
+  `not_evaluated` when the ledger, the archived limit, the status or a
+  problem word is not one the file reads. The
   light, the ranks and the slots rest on those inputs, so that check stops the
   night. Everything else is read on the ticket it concerns. `inputs` fails
   when the record names the ticket's stock among the stocks without a usable
@@ -2576,14 +2578,16 @@ reads, each a function of committed bytes and no clock:
   writes it with `orders.json`, `status` `pending`: every ticket `cancel`
   (`morning_check_pending`), because no morning check has run for that record.
   The morning's persist job (`python -m tools.publish_morning orders`)
-  replaces it: with a receipt on `main` bound to the record, `status`
+  replaces it: with a receipt on `main` bound to the record that records a
+  check that ran (`observed`, `partial` or `no_tickets`), `status`
   `checked` and each ticket re-read against it, `go` or `cancel` with its
   reasons (the night not allowed, no recent price, a halt or a halt source
   that could not say, the receipt completed after the ticket's cutoff, the
   event registry, a retained corporate exclusion or an SEC flag, a price over
   the limit, under the skip line, or at or over the buy stop, or in a state
-  the file does not know); with none, `status` `no_check` and every ticket
-  `cancel` (`no_morning_check`). A setting-up ticket has no skip line, so
+  the file does not know); with none, or one that checked nothing
+  (`inapplicable`, `provider_unavailable`), `status` `no_check` and every
+  ticket `cancel` (`no_morning_check`). A setting-up ticket has no skip line, so
   under its trigger it stays `go`. A scheduled morning slot that starts after
   the entry window has ended collects nothing and still writes the file as
   `main`'s own files give it (the workflow's `close` job, `--window-closed`),
@@ -2595,8 +2599,11 @@ reads, each a function of committed bytes and no clock:
   (`morning_rule`, `orders.MORNING_RULE`): a ticket is entered only while
   `orders-morning.json` is bound to that exact `orders.json`
   (`orders_sha256`), its `status` is `checked`, the ticket's `decision` there
-  is `go`, and the clock is before the ticket's `valid_until`; anything else,
-  a missing file or one bound to other bytes included, cancels every ticket.
+  is `go`, the clock is before the ticket's `valid_until`, and `orders.json`
+  itself allows the night and marked the ticket `go`; a missing file, one
+  bound to other bytes, or a night `orders.json` does not allow cancels every
+  ticket, and `python -m src.orders decide` applies the rule
+  (`orders.entry_decisions()`).
 
 Two reads stand behind each ticket's checks. **`run.sec_flags`**
 (`src/sec_flags.py`) reads each ticket's and each listed setup's SEC filing
@@ -2673,7 +2680,9 @@ The Record view prints the gate. The publication check holds a live
 Version 1 of the gate (19 to 24 November 2026) also asked for twenty settled
 model plans under standing rules and for the committed ablation. A record
 made under it is still read and held by version 1's own validator
-(`go_live.CRITERIA_BY_VERSION`); nothing writes it now, and the ablation
+(`go_live._faults_v1()`, over version 1's criteria in
+`go_live.CRITERIA_BY_VERSION`), and the handoff never reads such a block as
+live; nothing writes it now, and the ablation
 stays as research the gate does not read.
 
 Two things the gate cannot read: a hand dispatch with

@@ -56,10 +56,15 @@ Any JSON Schema validator reads it; the repository checks its own files with
    entered only while `orders-morning.json` is bound to that exact
    `orders.json` (`orders_sha256`), its `status` is `checked`, the ticket's
    `decision` there is `go`, and the clock is before the ticket's
-   `valid_until`. In every other case every ticket is cancelled: the file is
+   `valid_until`, and `orders.json` itself allows the night (`trade_allowed`)
+   and marked the ticket `go`: a morning file never widens what `orders.json`
+   allows. Every ticket is cancelled when `orders.json` does not allow the
+   night or was written under an earlier version, or the morning file is
    missing, cannot be read, does not hold its hash, is bound to other bytes,
-   says `pending` or `no_check`, or does not list the ticket. `cancel_all`
-   says the same in one field: it is true unless the status is `checked`.
+   or says `pending` or `no_check`; one ticket is cancelled when
+   `orders.json` did not mark it `go`, or the morning file does not list it,
+   cancels it, or its `valid_until` has passed. `cancel_all` says the whole
+   file's half in one field: it is true unless the status is `checked`.
    The evening writes the file with `orders.json`, so a missing one is a
    fault and never a go.
 
@@ -125,10 +130,12 @@ Any JSON Schema validator reads it; the repository checks its own files with
   ledger and never the run's status word: it fails
   (`market_inputs_incomplete`) when more intended stocks were without usable
   bars than the limit the record archived for its stale tolerance, when the
-  selection was cut at its capacity, or when the stock directory failed and
-  the seed list stood in; it is `not_evaluated` (`market_inputs_unknown`) when
-  the ledger, the archived limit, the run status or a problem word is not one
-  this file reads. A run that is `degraded` for any other cause (a refused or
+  selection was cut at its capacity, when the stock directory failed and the
+  seed list stood in, or when not every measured stock was scanned and
+  checked (the ledger's `acceptance.complete_evaluation` false: a scan or
+  checklist error, or a scan not attempted, leaves a candidate unranked); it
+  is `not_evaluated` (`market_inputs_unknown`) when the ledger, the archived
+  limit, the run status or a problem word is not one this file reads. A run that is `degraded` for any other cause (a refused or
   unreadable chart review, a chart that did not render, a mail that failed, a
   cached directory, a late bar found by the follow-up) passes this check, and
   that cause is read on the ticket it concerns or not at all.
@@ -148,8 +155,8 @@ to be:
 | `status` | written by | `cancel_all` | what it says |
 |---|---|---|---|
 | `pending` | the evening, with `orders.json` | true | no morning check has run for this record: every ticket `cancel` (`morning_check_pending`) |
-| `checked` | a morning run that found a receipt on `main` bound to the record | false | each ticket `go` or `cancel` with its reasons, below |
-| `no_check` | a morning run that found no such receipt (`no_morning_check`), or an `orders.json` an earlier version wrote (`orders_earlier_version`) | true | every ticket `cancel` |
+| `checked` | a morning run that found a receipt on `main` bound to the record and recording a check that ran (`observed`, `partial` or `no_tickets`) | false | each ticket `go` or `cancel` with its reasons, below |
+| `no_check` | a morning run that found no such receipt, or one that checked nothing (`inapplicable`: the window had ended or it was no session; `provider_unavailable`: no quote could be read) (`no_morning_check`), or an `orders.json` an earlier version wrote (`orders_earlier_version`) | true | every ticket `cancel` |
 
 A scheduled morning slot that starts after the entry window has ended
 collects nothing; it still writes this file as `main`'s own files give it, so
@@ -197,10 +204,13 @@ nothing, and under `mode` `paper` a `go` is a rehearsal's.
 
 | reason | every ticket? | when |
 |---|---|---|
+| `orders_earlier_version` | yes | `orders.json` was written under an earlier version of these rules: no ticket of it is read |
+| `night_not_allowed` | yes | `orders.json`'s `trade_allowed` is false |
 | `morning_file_missing` | yes | there is no `orders-morning.json` in the directory |
 | `morning_file_unreadable` | yes | it does not meet its schema, hold its hash or follow from its own fields |
 | `morning_file_unbound` | yes | its `orders_sha256` is not this `orders.json`'s |
 | `morning_not_checked` | yes | its `status` is `pending` or `no_check` |
+| `ticket_not_go` | this ticket | `orders.json` did not mark the ticket `go` (`human_review` or `blocked`) |
 | `ticket_not_listed` | this ticket | it does not list the ticket, or lists other bytes of it (`ticket_sha256`) |
 | `ticket_cancelled` | this ticket | its `decision` for the ticket is `cancel` |
 | `past_valid_until` | this ticket | the clock is at or after the ticket's `valid_until`, or cannot be compared with it |

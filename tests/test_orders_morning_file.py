@@ -111,7 +111,11 @@ def test_the_golden_files_carry_one_file_of_each_status():
     ("a pending file with no reason", {"cancel_all_reason": None}, "cancel_all and its reason"),
     ("a pending file with a no-check reason", {"cancel_all_reason": "no_morning_check"},
      "the cancel-all reason is not one this status gives"),
-    ("a pending file that claims a receipt", {"morning_bound": True}, "checked exactly when it is bound"),
+    ("a pending file that claims a receipt", {"morning_bound": True}, "a pending file names no morning receipt"),
+    ("a pending file that names a receipt's hash", {"morning_sha256": "0" * 64},
+     "a pending file names no morning receipt"),
+    ("a pending file that carries a receipt's status", {"morning_status": "observed"},
+     "bound to no receipt carries no receipt's fields"),
 ])
 def test_a_resealed_pending_file_that_says_more_than_pending_is_refused(label, change, problem):
     raw, _ = go_night()
@@ -206,7 +210,9 @@ def test_a_ticket_goes_only_under_a_checked_file_that_says_go_before_its_deadlin
     checked = checked_for(raw, doc)
     out = orders.entry_decisions(raw, checked, before(doc))
     assert (out["cancel_all"], out["cancel_all_reason"], out["mode"]) == (False, None, "paper")
-    assert decisions(raw, checked, before(doc)) == {"NVDA": ("go", None), "COIL": ("cancel", "ticket_cancelled")}
+    # COIL is held for review in orders.json: no morning file can make it go
+    assert doc["tickets"][1]["status"] != "go"
+    assert decisions(raw, checked, before(doc)) == {"NVDA": ("go", None), "COIL": ("cancel", "ticket_not_go")}
     assert set(out["tickets"]) == {t["id"] for t in doc["tickets"]}
 
 
@@ -241,7 +247,7 @@ def test_a_file_bound_to_other_orders_cancels_every_ticket():
     # and a checked file whose binding alone was changed to these orders does not list these tickets' bytes
     rebound = reseal(json.loads(theirs), orders_sha256=sha(raw))
     assert decisions(raw, rebound, before(doc)) == {"NVDA": ("cancel", "ticket_not_listed"),
-                                                    "COIL": ("cancel", "ticket_not_listed")}
+                                                    "COIL": ("cancel", "ticket_not_go")}
 
 
 def test_a_pending_or_no_check_file_cancels_every_ticket():
@@ -279,9 +285,10 @@ def test_the_deadline_is_the_tickets_own_valid_until_and_an_unreadable_clock_can
 
 def test_every_reason_the_rule_gives_is_named_and_orders_json_itself_must_be_valid():
     raw, doc = go_night()
-    assert set(orders.ENTRY_REASONS) == {"morning_file_missing", "morning_file_unreadable", "morning_file_unbound",
-                                         "morning_not_checked", "ticket_not_listed", "ticket_cancelled",
-                                         "past_valid_until"}
+    assert list(orders.ENTRY_REASONS) == ["orders_earlier_version", "night_not_allowed", "morning_file_missing",
+                                          "morning_file_unreadable", "morning_file_unbound", "morning_not_checked",
+                                          "ticket_not_go", "ticket_not_listed", "ticket_cancelled",
+                                          "past_valid_until"]
     with pytest.raises(ValueError):
         orders.entry_decisions(b"{}", None, before(doc))
 
@@ -311,8 +318,10 @@ def test_the_evening_keeps_its_own_records_morning_check_and_replaces_any_other(
     docs = docs_with(tmp_path, "next")
     assert orders.write_publication(docs)["morning"] == "pending"
     raw = (docs / orders.FILE).read_bytes()
-    checked = checked_for(raw, json.loads(raw))
+    receipt = receipt_for(json.loads(raw), json.loads(raw)["tickets"][0])
+    checked = orders.encode(orders.build_morning(raw, receipt))
     (docs / orders.MORNING_FILE).write_bytes(checked)
+    (docs / orders.MORNING_RECEIPT).write_bytes(receipt)             # the receipt it was checked against, on main
     # the same record installed again to the same bytes (a restamp, a retried step) keeps its check
     assert orders.write_publication(docs)["morning"] == "kept"
     assert (docs / orders.MORNING_FILE).read_bytes() == checked and orders.check(docs) == []
@@ -515,14 +524,19 @@ def test_a_record_whose_window_cannot_be_read_is_not_closed(raw):
     assert publish_morning.window_closed(raw, datetime(2026, 9, 11, 20, tzinfo=timezone.utc)) is False
 
 
-def test_the_window_closes_at_the_cutoff_on_the_applicable_sessions_new_york_date():
+def test_the_window_closes_at_the_cutoff_and_stays_closed_until_that_sessions_evening_slot():
+    from src import delivery
     at = cutoff()
     assert publish_morning.window_closed(PUBLICATION, at) is True
     assert publish_morning.window_closed(PUBLICATION, at - timedelta(microseconds=1)) is False
-    # 23:59 New York that day is closed; the next New York day is another session's morning
-    late = at.replace(hour=23, minute=59)
-    assert publish_morning.window_closed(PUBLICATION, late) is True
-    assert publish_morning.window_closed(PUBLICATION, late + timedelta(minutes=1)) is False
+    # a slot hours late is still closed, until the session's own evening slot: from 6:16 PM New York the
+    # evening publishes the next record and its own pending file, and a late morning slot does not race it
+    evening, _ = delivery.slots(at.astimezone(delivery.MARKET_TZ).date())
+    assert evening.astimezone(delivery.MARKET_TZ).strftime("%H:%M") == "18:16"
+    assert publish_morning.window_closed(PUBLICATION, evening - timedelta(microseconds=1)) is True
+    assert publish_morning.window_closed(PUBLICATION, evening) is False
+    # the next New York day is another session's morning
+    assert publish_morning.window_closed(PUBLICATION, at + timedelta(days=1)) is False
 
 
 @pytest.mark.parametrize("argv, closing", [(["orders"], False), (["orders", "--window-closed"], True)])
@@ -597,3 +611,36 @@ def test_the_guide_and_the_readme_state_the_rule_as_the_code_does():
     assert "`--window-closed`" in readme and "python -m src.orders decide" in guide
     for reason in orders.ENTRY_REASONS:
         assert f"`{reason}`" in guide, reason
+    # the guide's table lists the reasons in the order the rule asks them, each with its scope
+    raw = (ROOT / "docs" / "operations" / "orders.md").read_text().split("## Applying the rule", 1)[1]
+    rows = [[c.strip() for c in line.strip().strip("|").split("|")] for line in raw.splitlines()
+            if line.startswith("| `")]
+    assert [r[0] for r in rows] == [f"`{reason}`" for reason in orders.ENTRY_REASONS]
+    whole = {"orders_earlier_version", "night_not_allowed", "morning_file_missing", "morning_file_unreadable",
+             "morning_file_unbound", "morning_not_checked"}
+    assert {r[0].strip("`") for r in rows if r[1] == "yes"} == whole
+
+
+def test_the_morning_files_status_words_are_the_morning_receipts_and_the_gates_own():
+    from src import go_live, morning
+    # a check that ran is what the gate counts as a morning check; every status is the receipt's own
+    assert orders.MORNING_CHECKED_STATUSES == go_live.MORNING_RAN
+    assert orders.RECEIPT_STATUSES == morning.STATUSES
+    assert set(orders.RECEIPT_STATUSES) - set(orders.MORNING_CHECKED_STATUSES) == {"provider_unavailable",
+                                                                                   "inapplicable"}
+
+
+@pytest.mark.parametrize("status", ["inapplicable", "provider_unavailable"])
+def test_a_bound_receipt_that_checked_nothing_is_no_check_and_names_its_status(status):
+    raw, doc = go_night()
+    receipt = json.loads(receipt_for(doc, doc["tickets"][0]))
+    receipt["status"] = status
+    out = orders.build_morning(raw, json.dumps(receipt).encode())
+    assert orders.problems(out, "orders_morning") == []
+    assert (out["status"], out["cancel_all"], out["cancel_all_reason"]) == ("no_check", True, "no_morning_check")
+    # it was bound and is said to be, with the status that says why it checked nothing
+    assert (out["morning_bound"], out["morning_status"]) == (True, status)
+    assert all(t["decision"] == "cancel" and "no_morning_check" in t["reasons"] for t in out["tickets"])
+    # resealed as checked, the file is refused: a bound receipt that ran nothing is never a check
+    forged = json.loads(checked_for(raw, doc))
+    assert orders.problems(json.loads(reseal(forged, morning_status=status)), "orders_morning")

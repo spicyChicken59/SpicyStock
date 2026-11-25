@@ -323,7 +323,8 @@ def golden_orders() -> bytes:
     ("observed", "cancel", ["night_not_allowed", "ticket_not_go", "trigger_crossed"]),
     ("halted", "cancel", ["night_not_allowed", "ticket_not_go", "halted", "trigger_crossed"]),
     ("corporate-excluded", "cancel", ["night_not_allowed", "ticket_not_go", "news_or_sec_flag", "trigger_crossed"]),
-    ("outage", "cancel", ["night_not_allowed", "ticket_not_go", "stale_data"]),
+    # a provider outage quoted nothing: bound to the record, it is not a check that ran
+    ("outage", "cancel", ["night_not_allowed", "ticket_not_go", "no_morning_check"]),
     ("no-tickets", "cancel", ["night_not_allowed", "ticket_not_go", "no_morning_check"]),
 ])
 def test_each_committed_morning_receipt_gives_its_cancel_reasons(receipt, decision, reasons):
@@ -655,9 +656,12 @@ def test_a_halt_source_that_cannot_say_cancels_like_a_halt(halt, blocks, reasons
 
 
 def test_a_halt_outage_from_the_real_collector_cancels():
-    # the committed outage receipt with its prices moved under the trigger and its halt coverage gone
+    # the committed outage receipt with its prices moved under the trigger and its halt coverage gone: a
+    # receipt that quoted the ticket is partial, not provider_unavailable, which checks nothing
     raw, doc = allowed_orders()
     receipt = json.loads((MORNING / "outage.json").read_bytes())
+    assert decided(raw, json.dumps(receipt).encode()) == ("cancel", ["no_morning_check"])
+    receipt["status"] = "partial"
     row = receipt["rows"][0]
     row["trade"]["status"] = row["quote"]["status"] = "recent"
     row["price_checks"] = {"trade": "below_trigger", "ask": "below_trigger"}

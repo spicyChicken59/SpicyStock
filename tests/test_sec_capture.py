@@ -138,6 +138,36 @@ def test_phrases_are_split_on_the_bar_and_trimmed(text, phrases):
     assert capture.phrases_from(text) == phrases
 
 
+def test_exactly_the_bound_of_phrases_is_taken():
+    words = "|".join(f"phrase {i}" for i in range(capture.MAX_PHRASES))
+    assert capture.phrases_from(words) == tuple(f"phrase {i}" for i in range(capture.MAX_PHRASES))
+
+
+def test_an_excerpt_is_cut_at_the_texts_own_position_where_case_folding_changes_its_length():
+    # "ß" folds to "ss": positions in a folded copy run ahead of the text's, and an excerpt cut by them
+    # would start and end in the wrong place
+    text = "Straße " * 400 + "the merger was completed today" + " tail" * 200
+    [found] = capture.finds(text, ("completed",))
+    assert found["count"] == 1
+    at = text.index("completed")
+    assert found["excerpts"] == [text[at - capture.EXCERPT_SIDE_CHARS: at + len("completed") + capture.EXCERPT_SIDE_CHARS]]
+    assert "completed" in found["excerpts"][0]
+    # case is ignored and occurrences do not overlap
+    assert capture.finds("Completed COMPLETED completed", ("completed",))[0]["count"] == 3
+    assert capture.finds("aaaa", ("aaa",))[0]["count"] == 1
+
+
+def test_the_result_is_written_into_a_folder_that_does_not_exist_yet_outside_docs(tmp_path):
+    result, body, _ = run()
+    out, raw = tmp_path / "new" / "capture.json", tmp_path / "bytes" / "document.bin"
+    capture.write_capture(out, result, body=body, save_bytes=raw)
+    assert json.loads(out.read_text()) == result and raw.read_bytes() == BODY
+    # no folder is made under docs/: the docs refusal comes first
+    with pytest.raises(ValueError, match="public docs"):
+        capture.write_capture(capture.PUBLIC_ROOT / "never-made" / "capture.json", result)
+    assert not (capture.PUBLIC_ROOT / "never-made").exists()
+
+
 @pytest.mark.parametrize("text", [
     "ab", "x" * 81, "completed|Completed", "a|b|c|d|e|f|g".replace("a", "aaa").replace("b", "bbb"),
     "<script>", "completed; rm -rf", "one\ntwo", "quote\"d", "back\\slash",

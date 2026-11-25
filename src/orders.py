@@ -118,8 +118,9 @@ REASONS = {
     "light_red": "the market light is red: no new longs",
     "light_unknown": "the record names no market light",
     "market_inputs_incomplete": "more intended stocks were without usable bars than the record's own archived "
-                                "limit, the selection was cut at its capacity, or the stock directory was "
-                                "replaced by the seed list: the light, the ranks and the slots rest on them",
+                                "limit, the selection was cut at its capacity, the stock directory was "
+                                "replaced by the seed list, or not every measured stock was scanned and "
+                                "checked: the light, the ranks and the slots rest on them",
     "market_inputs_unknown": "the record's input ledger could not be read as this file reads it (no ledger, no "
                              "archived limit, a limit that is not the record's own, an unknown run status or "
                              "problem word): not known is not complete",
@@ -157,7 +158,8 @@ MORNING_REASONS = {
     "price_unknown": "a recent price could not be placed against the ticket's levels",
     "stale_data": "no recent price was observed for this ticket",
     "not_checked": "the morning receipt has no row for this ticket",
-    "no_morning_check": "the morning receipt on main is not bound to this record",
+    "no_morning_check": "no morning receipt on main is bound to this record and records a check that ran "
+                        "(observed, partial or no tickets)",
     "morning_check_pending": "no morning check has run for this record yet: the evening wrote this file",
     "orders_earlier_version": "orders.json was written under an earlier version of this file's rules, so no "
                               "ticket of it is read",
@@ -185,18 +187,28 @@ PENDING, CHECKED, NO_CHECK = "pending", "checked", "no_check"
 MORNING_STATUSES = (PENDING, CHECKED, NO_CHECK)
 #: the reason every ticket is cancelled under each status that is not a check
 CANCEL_ALL_REASONS = ("morning_check_pending", "no_morning_check", "orders_earlier_version")
+#: the morning receipt statuses that say a check ran (``go_live.MORNING_RAN``, held equal by a test): a bound
+#: receipt under any other status (``inapplicable``: the window had ended or it was not the session;
+#: ``provider_unavailable``: no quote could be read) checked nothing, and the file is ``no_check``
+MORNING_CHECKED_STATUSES = ("observed", "partial", "no_tickets")
+#: every status a morning receipt can carry (``morning.STATUSES``, held equal by a test)
+RECEIPT_STATUSES = ("observed", "partial", "provider_unavailable", "no_tickets", "inapplicable")
 #: the rule an execution agent applies to the morning file, as orders.json states it
 MORNING_RULE = {"file": MORNING_FILE, "bound_by": "orders_sha256", "required_status": CHECKED,
                 "required_decision": GO, "deadline_field": "valid_until", "otherwise": CANCEL,
                 "missing_or_unbound": "cancel_all"}
 #: why ``entry_decisions()`` cancels a ticket, in the order it asks
 ENTRY_REASONS = {
+    "orders_earlier_version": "orders.json was written under an earlier version of these rules: no ticket of it "
+                              "is read",
+    "night_not_allowed": "orders.json does not allow trading tonight (trade_allowed is false)",
     "morning_file_missing": "there is no orders-morning.json beside orders.json",
     "morning_file_unreadable": "orders-morning.json does not meet its schema, hold its hash or follow from its "
                                "own fields",
     "morning_file_unbound": "orders-morning.json is bound to other bytes than this orders.json",
     "morning_not_checked": "orders-morning.json says no morning check was made for these orders (pending or "
                            "no_check)",
+    "ticket_not_go": "orders.json did not mark this ticket go",
     "ticket_not_listed": "orders-morning.json does not list this ticket, or lists other bytes of it",
     "ticket_cancelled": "orders-morning.json cancels this ticket",
     "past_valid_until": "the clock is at or after the ticket's valid_until, or cannot be compared with it",
@@ -384,8 +396,11 @@ def _market_inputs(data: dict) -> tuple[str, str | None, str | None]:
     * fail when more intended stocks were without usable bars than the limit
       the record archived for its stale tolerance (the same count the run
       tolerates before it calls a night degraded on coverage, applied to every
-      kind of gap), when the selection was cut at its capacity, or when the
-      stock directory failed and the seed list stood in for it;
+      kind of gap), when the selection was cut at its capacity, when the stock
+      directory failed and the seed list stood in for it, or when not every
+      measured stock was scanned and checked (``acceptance.complete_evaluation``
+      false: a scan or checklist error, or a scan not attempted, leaves a
+      candidate unranked);
     * not evaluated when the ledger, the archived limit, the run status or a
       problem word is not one this file knows: not known is not complete.
 
@@ -407,6 +422,10 @@ def _market_inputs(data: dict) -> tuple[str, str | None, str | None]:
     if type(coverage.get("version")) is not int or not (_count(intended) and _count(ready) and _count(cut)) \
             or ready > intended:
         return NOT_EVALUATED, "market_inputs_unknown", "the record carries no input ledger this file reads"
+    evaluated = acceptance.get("complete_evaluation")
+    errors, unattempted = coverage.get("errors"), coverage.get("scan_unattempted")
+    if not isinstance(evaluated, bool) or not (_count(errors) and _count(unattempted)):
+        return NOT_EVALUATED, "market_inputs_unknown", "the record does not say whether every measured stock was scanned"
     if not _num(fraction) or not _count(tolerance.get("limit")):
         return NOT_EVALUATED, "market_inputs_unknown", "the record archives no limit for stocks without usable bars"
     limit = inputs.stale_limit(intended, fraction)
@@ -416,9 +435,11 @@ def _market_inputs(data: dict) -> tuple[str, str | None, str | None]:
     seed = "universe_cached" in words and _dict(run.get("universe")).get("source_kind") != CACHED_DIRECTORY
     detail = (f"{ready} of {intended} intended stocks had usable bars; {missing} without, against a limit of {limit}"
               + (f"; {cut} cut at the selection's capacity" if cut else "")
+              + (f"; not every measured stock was scanned and checked ({errors} scan or checklist errors, "
+                 f"{unattempted} not attempted)" if evaluated is not True else "")
               + ("; the stock directory failed and the seed list stood in" if seed else "")
               + f"; run status {status}" + (" (" + ", ".join(dict.fromkeys(words)) + ")" if words else ""))
-    if missing > limit or cut or seed:
+    if missing > limit or cut or seed or evaluated is not True:
         return FAIL, "market_inputs_incomplete", detail
     return PASS, None, detail
 
@@ -466,12 +487,17 @@ def _ticket_inputs(data: dict, row: dict) -> tuple[str, str | None, str | None]:
         elif key == "names" or (key == "first_sessions" and _first_sessions_named(tolerance)):
             # counted and not named past the record's bound: no evidence about any one stock
             short.append(f"input_tolerance.{key}")
+    names = tolerance.get("names")
+    # the tolerance names every stale stock when its list is as long as its count: the ledger's sampled copy
+    # of the same stocks is then no gap in the evidence
+    stale_named = isinstance(names, list) and _count(tolerance.get("stale_stocks")) and \
+        tolerance["stale_stocks"] == len(names)
     for key in EXCEPTION_LISTS:
         entry = _dict(_dict(coverage.get("reasons")).get(key))
         sample = _list(entry.get("sample"))
         if ticker in sample:
             named.append(f"coverage.{key}")
-        if _count(entry.get("count")) and entry["count"] > len(sample):
+        if _count(entry.get("count")) and entry["count"] > len(sample) and not (key == "stale" and stale_named):
             short.append(f"coverage.{key}")
     if named:
         return FAIL, "inputs_exception", "named in " + ", ".join(named)
@@ -693,6 +719,9 @@ def live_ready(data: dict) -> dict:
     from src import go_live
     block = _dict(_dict(data.get("run")).get("go_live"))
     reasons = block.get("reasons")
+    # read only under the gate the record's own rules archived, and only a block its validator accepts
+    if go_live.archived_version(data.get("rules")) != go_live.VERSION or go_live.faults(data):
+        return {"value": False, "reasons": [LIVE_READY_REASON]}
     if block.get("version") != go_live.VERSION or not isinstance(reasons, list) \
             or not all(isinstance(r, str) for r in reasons) or not set(reasons) <= set(go_live.CRITERIA):
         return {"value": False, "reasons": [LIVE_READY_REASON]}
@@ -757,10 +786,12 @@ def build_morning(orders_raw: bytes, receipt_raw: bytes | None, data_raw: bytes 
     With ``data_raw`` (the persist job passes main's record) the orders must be
     bound to it and a receipt bound to it must pass ``morning``'s own
     validation; without it the receipt is read as given."""
-    from src import morning
     orders = validate(orders_raw)
     receipt = json.loads(receipt_raw) if receipt_raw is not None else None
     if data_raw is not None:
+        # only here: the receipt is validated against the record (src.morning is not standard library, and
+        # check() re-derives a file through this function with no record, on the publication gate)
+        from src import morning
         _require(orders["source"]["data_sha256"] == hashlib.sha256(data_raw).hexdigest(),
                  "orders.json is not bound to the record given")
         if isinstance(receipt, dict) and _dict(receipt.get("publication")).get("data_sha256") == \
@@ -768,9 +799,11 @@ def build_morning(orders_raw: bytes, receipt_raw: bytes | None, data_raw: bytes 
             morning.validate_observation(receipt, data_raw)
     bound = (isinstance(receipt, dict)
              and _dict(receipt.get("publication")).get("data_sha256") == orders["source"]["data_sha256"])
+    # a bound receipt under a status that ran nothing (inapplicable, provider_unavailable) checked nothing
+    ran = bound and receipt.get("status") in MORNING_CHECKED_STATUSES
     by_key = {(r.get("kind"), r.get("ticker"), r.get("evidence_id"), r.get("plan_sha256")): r
-              for r in (_list(receipt.get("rows")) if bound else []) if isinstance(r, dict)}
-    generated = _instant(receipt.get("generated_at")) if bound else None
+              for r in (_list(receipt.get("rows")) if ran else []) if isinstance(r, dict)}
+    generated = _instant(receipt.get("generated_at")) if ran else None
     out = []
     for t in orders["tickets"]:
         reasons = []
@@ -781,7 +814,7 @@ def build_morning(orders_raw: bytes, receipt_raw: bytes | None, data_raw: bytes 
         row = by_key.get((t["setup_type"], t["symbol"], t["evidence"]["evidence_id"], t["evidence"]["plan_sha256"]))
         valid_until = _instant(t["entry"]["valid_until"])
         observed = None
-        if not bound:
+        if not ran:
             reasons.append("no_morning_check")
         else:
             if (receipt.get("entry_phase") not in ENTRY_PHASES or generated is None or valid_until is None
@@ -814,8 +847,8 @@ def build_morning(orders_raw: bytes, receipt_raw: bytes | None, data_raw: bytes 
         out.append({"ticket_id": t["id"], "ticket_sha256": t["content_sha256"], "symbol": t["symbol"],
                     "valid_until": t["entry"]["valid_until"],
                     "decision": CANCEL if reasons else GO, "reasons": reasons, "observed": observed})
-    return _morning_file(orders, orders_raw, out, status=CHECKED if bound else NO_CHECK,
-                         cancel_all_reason=None if bound else "no_morning_check",
+    return _morning_file(orders, orders_raw, out, status=CHECKED if ran else NO_CHECK,
+                         cancel_all_reason=None if ran else "no_morning_check",
                          receipt=receipt if bound else None, receipt_raw=receipt_raw)
 
 
@@ -831,7 +864,8 @@ def _morning_file(orders: dict, orders_raw: bytes, tickets: list, *, status: str
         "data_sha256": orders["source"]["data_sha256"],
         "morning_sha256": hashlib.sha256(receipt_raw).hexdigest() if receipt_raw is not None else None,
         "morning_bound": receipt is not None,
-        "morning_status": receipt.get("status") if receipt is not None else None,
+        "morning_status": receipt.get("status") if receipt is not None and receipt.get("status") in RECEIPT_STATUSES
+                          else None,
         "morning_generated_at": receipt.get("generated_at") if receipt is not None else None,
         "observation_run_id": receipt.get("observation_run_id") if receipt is not None else None,
         "session": orders["source"]["session"], "applicable_session": orders["source"]["applicable_session"],
@@ -875,17 +909,26 @@ def entry_decisions(orders_raw: bytes, morning_raw: bytes | None, now: datetime)
     ``ENTRY_REASONS`` otherwise. A missing, unreadable or unbound morning file
     cancels every ticket.
 
+    ``orders.json``'s own verdicts come first: an ``orders.json`` an earlier
+    version wrote is not read and cancels everything, a night it does not
+    allow cancels everything, and a ticket it did not mark ``go`` is cancelled
+    whatever the morning file says of it, so a morning file can never widen
+    what ``orders.json`` allows.
+
     This is the rule an execution agent applies, written once so that the
     agent, the owner and the tests read the same one. It decides nothing about
     the mode: a paper file's ``go`` is a rehearsal's. ``orders_raw`` itself
-    must be a valid ``orders.json`` (``validate()`` raises otherwise); binding
-    it to ``data.json`` is the reader's first step and ``check()``'s."""
+    must be a valid ``orders.json`` of this version or an earlier one
+    (``validate()`` raises otherwise); binding it to ``data.json`` is the
+    reader's first step and ``check()``'s."""
+    if earlier_version(orders_raw) is not None:
+        return {"mode": MODE, "cancel_all": True, "cancel_all_reason": "orders_earlier_version", "tickets": {}}
     orders = validate(orders_raw)
-    whole = None
+    whole = None if orders["trade_allowed"] is True else "night_not_allowed"
     morning = None
-    if morning_raw is None:
+    if whole is None and morning_raw is None:
         whole = "morning_file_missing"
-    else:
+    elif whole is None:
         try:
             morning = validate(morning_raw, "orders_morning")
         except (ValueError, RecursionError):
@@ -903,6 +946,8 @@ def entry_decisions(orders_raw: bytes, morning_raw: bytes | None, now: datetime)
         until = _instant(t["entry"]["valid_until"])
         if whole is not None:
             reason = whole
+        elif t["status"] != GO:
+            reason = "ticket_not_go"
         elif row is None or row["ticket_sha256"] != t["content_sha256"]:
             reason = "ticket_not_listed"
         elif row["decision"] != GO:
@@ -951,6 +996,11 @@ def consistency(value: dict, kind: str = "orders") -> list[str]:
     if kind == "orders":
         night = value["night_checks"]
         tickets = value["tickets"]
+        if [c["key"] for c in night] != list(NIGHT_CHECKS):
+            out.append("night checks are not each of the night's checks once, in order")
+        for t in tickets:
+            if [c["key"] for c in t["checks"]] != list(TICKET_CHECKS):
+                out.append(f"ticket {t['symbol']}: its checks are not each of a ticket's checks once, in order")
         for c in night:
             if (c["status"] == PASS) != (c["reason"] is None):
                 out.append(f"night check {c['key']}: a reason must be given exactly when it does not pass")
@@ -987,8 +1037,16 @@ def consistency(value: dict, kind: str = "orders") -> list[str]:
         checked = value["status"] == CHECKED
         if value["cancel_all"] is checked or (value["cancel_all_reason"] is None) is not checked:
             out.append("cancel_all and its reason are not what the status gives")
-        if value["morning_bound"] is not checked:
-            out.append("a morning file is checked exactly when it is bound to a morning receipt")
+        ran = value["morning_bound"] is True and value["morning_status"] in MORNING_CHECKED_STATUSES
+        if ran is not checked:
+            out.append("a morning file is checked exactly when it is bound to a morning receipt that ran")
+        if value["morning_bound"] is not True and any(value[k] is not None for k in (
+                "morning_status", "morning_generated_at", "observation_run_id")):
+            out.append("a morning file bound to no receipt carries no receipt's fields")
+        if value["morning_bound"] is True and value["morning_sha256"] is None:
+            out.append("a morning file bound to a receipt names that receipt's hash")
+        if value["status"] == PENDING and (value["morning_bound"] is not False or value["morning_sha256"] is not None):
+            out.append("a pending file names no morning receipt: the evening wrote it before any ran")
         if not checked:
             want = {PENDING: ("morning_check_pending",), NO_CHECK: ("no_morning_check", "orders_earlier_version")}
             if value["cancel_all_reason"] not in want[value["status"]]:
@@ -1054,7 +1112,7 @@ def write_publication(docs) -> dict:
     _require(not standing.is_symlink(), f"{MORNING_FILE} must not be a symlink")
     try:
         kept = validate(standing.read_bytes(), "orders_morning")["orders_sha256"] == hashlib.sha256(orders_raw).hexdigest()
-    except (OSError, ValueError):
+    except (OSError, ValueError, RecursionError):
         kept = False
     if not kept:
         pending_raw = encode(pending_morning(orders_raw))
@@ -1139,6 +1197,15 @@ def check(docs) -> list[str]:
             if (docs / name).exists() and \
                     _binding((docs / name).read_bytes(), "orders_sha256") != hashlib.sha256(orders_raw).hexdigest():
                 out.append(f"{name} is not bound to orders.json")
+        morning_path = docs / MORNING_FILE
+        if not out and morning_path.exists() and earlier_version(morning_path.read_bytes()) is None:
+            # this code's cancel-all file for an earlier version's orders.json, the only one it writes
+            try:
+                same = morning_path.read_bytes() == encode(earlier_version_morning(orders_raw))
+            except (ValueError, RecursionError):
+                same = False
+            if not same:
+                out.append(f"{MORNING_FILE} is not the file that cancels every ticket of an earlier version's orders.json")
         return out
     try:
         orders = validate(orders_raw)
@@ -1172,7 +1239,40 @@ def check(docs) -> list[str]:
             out.append(f"{name} is not bound to orders.json")
         elif value["mode"] != orders["mode"]:
             out.append(f"{name} does not carry orders.json's mode")
+        elif name == MORNING_FILE:
+            out += _morning_problems(docs, orders_raw, value)
     return out
+
+
+def _morning_problems(docs: Path, orders_raw: bytes, value: dict) -> list[str]:
+    """``orders-morning.json`` against what its status says made it: the
+    evening's pending file is ``pending_morning()``'s bytes; a checked file is
+    ``build_morning()``'s over the receipt on main it names, which must be the
+    one main carries; a no_check file naming main's receipt (or none, when main
+    carries none) is that function's bytes too. A no_check file naming a
+    receipt main no longer carries is let stand: it cancels every ticket, and
+    the next morning run replaces it. Re-derived without the record (the
+    receipt was validated against it when the file was written), so this reads
+    standard library only."""
+    raw = (docs / MORNING_FILE).read_bytes()
+    receipt_path = docs / MORNING_RECEIPT
+    try:
+        receipt_raw = receipt_path.read_bytes() if receipt_path.is_file() and not receipt_path.is_symlink() else None
+    except OSError:
+        receipt_raw = None
+    current = hashlib.sha256(receipt_raw).hexdigest() if receipt_raw is not None else None
+    try:
+        if value["status"] == PENDING:
+            want = encode(pending_morning(orders_raw))
+        elif value["morning_sha256"] == current:
+            want = encode(build_morning(orders_raw, receipt_raw))
+        elif value["status"] == CHECKED:
+            return [f"{MORNING_FILE} is checked against a morning receipt main does not carry"]
+        else:
+            return []
+    except (ValueError, RecursionError):
+        return [f"{MORNING_FILE} cannot be derived again from main's files"]
+    return [] if raw == want else [f"{MORNING_FILE} is not what main's orders.json and morning receipt give"]
 
 
 def main(argv=None) -> int:

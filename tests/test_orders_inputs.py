@@ -281,6 +281,27 @@ def test_a_sampled_list_is_never_evidence_for_a_stock_and_the_detail_says_which_
     assert "sampled short" in check_of(held, "inputs")["detail"]
 
 
+def test_the_ledgers_sampled_stale_list_is_no_gap_when_the_tolerance_names_every_stale_stock():
+    def named(row, d):
+        d["run"]["input_tolerance"].update(names=["AAA", "BBB", "CCC"], stale_stocks=3)
+        d["run"]["coverage"]["reasons"]["stale"] = {"count": 3, "identity": "0" * 16, "sample": ["AAA", "BBB"]}
+    own = check_of(ticket_of(record(), change=named), "inputs")
+    assert own["status"] == "pass" and "sampled short" not in own["detail"]
+
+    def counted_more(row, d):                      # the tolerance's list is shorter than its own count
+        named(row, d)
+        d["run"]["input_tolerance"]["stale_stocks"] = 4
+    assert own["detail"] != check_of(ticket_of(record(), change=counted_more), "inputs")["detail"]
+    assert check_of(ticket_of(record(), change=counted_more), "inputs")["detail"].endswith(
+        "sampled short, so no evidence either way: coverage.stale")
+
+    def other_list(row, d):                        # another list short of its count is still a gap
+        named(row, d)
+        d["run"]["coverage"]["reasons"]["gapped"] = {"count": 3, "identity": "0" * 16, "sample": ["DDD"]}
+    assert check_of(ticket_of(record(), change=other_list), "inputs")["detail"].endswith(
+        "sampled short, so no evidence either way: coverage.gapped")
+
+
 def test_a_tolerance_block_from_before_first_sessions_is_not_called_short_for_lacking_them():
     def older(row, d):
         d["run"]["input_tolerance"]["version"] = 2
@@ -295,6 +316,11 @@ def test_a_tolerance_block_from_before_first_sessions_is_not_called_short_for_la
 
 def bar(**changes):
     return lambda row, d: row["series"][-1].update(changes)
+
+
+def previous_bar(**changes):
+    """The bar of the session before: the second of the two the check reads."""
+    return lambda row, d: row["series"][-2].update(changes)
 
 
 @pytest.mark.parametrize("label, change, missing", [
@@ -317,6 +343,10 @@ def bar(**changes):
     ("a high under the close", bar(h=133.0), "last two archived bars"),
     ("a price that is a bool", bar(o=True), "last two archived bars"),
     ("a price that is text", bar(c="133.99"), "last two archived bars"),
+    ("a null close the session before", previous_bar(c=None), "last two archived bars"),
+    ("a high under the close the session before", previous_bar(h=0.5), "last two archived bars"),
+    ("a previous bar that is not an object", lambda row, d: row["series"].__setitem__(-2, None),
+     "last two archived bars"),
 ])
 def test_a_ticket_the_record_does_not_show_through_the_session_is_held_for_a_person(label, change, missing):
     ticket = ticket_of(record(), change=change)

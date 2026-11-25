@@ -13,7 +13,10 @@ the quality ledger's entry for it and the prior receipt.
 The same path publishes the morning's go/cancel file for the execution handoff
 (``orders``): one file, ``docs/orders-morning.json``, derived on the spot from
 the ``orders.json``, the morning receipt and the record on main
-(``src/orders.build_morning``), and only from a receipt this run published.
+(``src/orders.build_morning``), whichever run published that receipt: a check
+when it is bound to the record and ran, ``no_check`` otherwise. With
+``--window-closed`` (the workflow's ``close`` job) it writes the same file only
+between the entry cutoff and that session's evening slot.
 
 The same path publishes the dated research observation (``--target research``):
 one file, ``docs/research-observations.json``, validated against the current
@@ -389,14 +392,20 @@ def derive_orders_morning(data_raw: bytes, orders_raw: bytes, receipt_raw: bytes
 
 def window_closed(data_raw: bytes, now: datetime) -> bool:
     """Whether ``now`` is on the session the record's plans are for, at or
-    after its entry cutoff: the one moment a late slot may say that no check
-    ran inside the window."""
+    after its entry cutoff and before that session's own evening slot
+    (``delivery.EVENING_PRIMARY_ET``): the one stretch in which a late slot
+    may say that no check ran inside the window. From the evening slot on, the
+    evening run publishes the next record and its own ``pending`` file, and a
+    late morning slot does not race it."""
+    from src import delivery
     try:
         timing = json.loads(data_raw)['run']['timing']
         cutoff = instant(timing['cutoff_at'])
-        return (now.astimezone(sessions.MARKET_TZ).date().isoformat() == timing['applicable_session']
-                and now >= cutoff)
-    except (KeyError, TypeError, ValueError):
+        applicable = datetime.fromisoformat(timing['applicable_session']).date()
+        evening, _ = delivery.slots(applicable)
+        return (now.astimezone(sessions.MARKET_TZ).date() == applicable
+                and cutoff <= now < evening)
+    except (KeyError, TypeError, ValueError, AttributeError):
         return False
 
 

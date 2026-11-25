@@ -1,8 +1,8 @@
 {
  "applicable_session": "2026-09-11",
- "cancel_all": false,
- "cancel_all_reason": null,
- "content_sha256": "873d2488e4e87144baffba6ce49fda2d3b72b12bb68e042bc1b74ca292c7eeaf",
+ "cancel_all": true,
+ "cancel_all_reason": "no_morning_check",
+ "content_sha256": "28e3243f6bbdcf1b3405f3e79b397f8a2b0b15e215ca18ca8fad2980b69ec384",
  "data_sha256": "9e34f06249d04c55a2480695a29d6e4dfaa620f16fe1de0041883f47784bc44f",
  "kind": "orders_morning",
  "mode": "paper",
@@ -14,7 +14,7 @@
  "orders_sha256": "c93795a06652eb0b60c4e87efd8348cddeeb7eecb6f3f621001061cf4b100fa1",
  "schema": "docs/operations/orders-schema.json#/$defs/orders_morning",
  "session": "2026-09-10",
- "status": "checked",
+ "status": "no_check",
  "summary": {
   "cancel": 1,
   "go": 0,
@@ -23,23 +23,11 @@
  "tickets": [
   {
    "decision": "cancel",
-   "observed": {
-    "ask": null,
-    "bid": null,
-    "price_checks": {
-     "ask": "unknown",
-     "trade": "unknown"
-    },
-    "quote_at": null,
-    "quote_status": "unavailable",
-    "trade_at": null,
-    "trade_price": null,
-    "trade_status": "unavailable"
-   },
+   "observed": null,
    "reasons": [
     "night_not_allowed",
     "ticket_not_go",
-    "stale_data"
+    "no_morning_check"
    ],
    "symbol": "AAPL",
    "ticket_id": "2026-09-10:burst:AAPL",
