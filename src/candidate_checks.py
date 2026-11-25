@@ -11,9 +11,11 @@ bound are counted by role and get no row.
 
 Each row is built by the modules' own pure functions over the night's ONE SEC
 reader (``SecReader``: every URL asked once and its answer kept, the tickets
-read first, a deadline and the issuer transport's request budget over the
-whole night) and its ONE iex batch (``read_iex()``, retried once as every bars
-request is): the earnings estimate and the recent current reports
+read first, a deadline from its first request and the issuer transport's
+request budget over the whole night) and one iex batch of its own
+(``read_iex()`` over ``cross_symbols()``, retried once as every bars request
+is; the tickets' cross-check keeps its own request): the earnings estimate and
+the recent current reports
 (``earnings_risk.read_row()``), the merger, tender and deal filings
 (``sec_flags.read_name()``) and the signal-day bar read again
 (``cross_check.compare()``). A name with a row in ``run.earnings``,
@@ -146,7 +148,7 @@ def record_names(data: dict) -> list[dict]:
 
 
 def symbols(names: list[dict], max_names: int = MAX_NAMES) -> list[str]:
-    """The distinct tickers of the names that get a row: the night's one iex batch."""
+    """The distinct tickers of the names that get a row."""
     return sorted({n["ticker"] for n in names[:max_names]})
 
 
@@ -158,9 +160,11 @@ class SecReader:
     three read the same filing list and a ticket's two rows cannot disagree.
     ``made()`` is the requests it actually began (``earnings_risk.counted()``
     reads it): an answer it already held is not a request. A request is not
-    begun past ``deadline_seconds`` from the reader's start or past
+    begun past ``deadline_seconds`` from the reader's first request or past
     ``max_requests``; either is a named source error, never kept, so a later
-    name reads it as unknown, never clear."""
+    name reads it as unknown, never clear. The clock starts at the first
+    request, so work the evening does before it (the plans, the record) never
+    spends the SEC reads' time."""
 
     def __init__(self, fetch=None, *, now=None, deadline_seconds: float = DEADLINE_SECONDS,
                  max_requests: int = MAX_REQUESTS, monotonic=time.monotonic):
@@ -169,7 +173,7 @@ class SecReader:
         self.deadline_seconds = deadline_seconds
         self.max_requests = max_requests
         self._monotonic = monotonic
-        self.started = monotonic()
+        self.started = None
         self.requests = 0
         self.reused = 0
         self._kept: dict[str, tuple] = {}
@@ -194,7 +198,9 @@ class SecReader:
             if code is not None:
                 raise earnings_risk.SourceError(code)
             return body
-        if self._monotonic() - self.started >= self.deadline_seconds:
+        if self.started is None:
+            self.started = self._monotonic()
+        elif self._monotonic() - self.started >= self.deadline_seconds:
             raise earnings_risk.SourceError("time_budget")
         if self.requests >= self.max_requests:
             raise earnings_risk.SourceError("request_budget")
@@ -220,8 +226,18 @@ class SecReader:
 
 
 # ------------------------------------------------------- the iex batch ---
+def cross_symbols(data: dict) -> list[str]:
+    """The tickers the candidate checks ask the iex feed for: each name within
+    the bound that no ``run.cross_check`` row stands behind. A ticket's own
+    cross-check reads its own request, as it did before these checks, so a
+    candidate's ticker the provider refuses can never change a ticket's row."""
+    runs = _run_rows(data)
+    return sorted({n["ticker"] for n in record_names(data)[:MAX_NAMES]
+                   if (n["stage"], n["ticker"]) not in runs["cross_check"]})
+
+
 def read_iex(client, tickers, session: date) -> dict:
-    """The night's one iex batch for every distinct ticker, through
+    """The candidate checks' one iex batch for every distinct ticker, through
     ``market_data.download_bars()`` (one SDK call below its batch size,
     retried once). A batch that failed twice is dropped there, and its
     tickers are named here so they read ``iex_unavailable``, not ``no_iex_bar``;
@@ -242,21 +258,6 @@ def read_iex(client, tickers, session: date) -> dict:
         out["exception"] = exc
         out["attempts"] = getattr(getattr(exc, "download_stats", None), "batch_attempts", None) or 1
     return out
-
-
-def ticket_fetch(iex: dict):
-    """``cross_check.collect(fetch=...)``: the tickets' frames out of the night's
-    one batch, raising what the batch raised, so the block names it."""
-    def fetch(client, tickers, session):
-        if iex["exception"] is not None:
-            raise iex["exception"]
-        if set(tickers) & iex["dropped"]:
-            raise IexBatchFailed("the iex batch failed twice")
-        missing = sorted(set(tickers) - set(iex["requested"]))
-        if missing:   # a ticket outside the batch is asked for on its own, never assumed absent
-            return {**iex["frames"], **cross_check._fetch(client, missing, session)}
-        return iex["frames"]
-    return fetch
 
 
 def _cross(name: dict, iex, frames, session: date) -> dict:
@@ -321,15 +322,31 @@ def _lean(name: dict, er: dict, sr: dict, cross: dict) -> dict:
             "items": _items_part(er), "cross_check": _cross_part(cross)}
 
 
+def _readable(key: str, row: dict) -> bool:
+    """Whether a run.* row can be read into a candidate row; one that cannot is
+    not stood behind, and its own block's validator names it."""
+    try:
+        if key == "earnings":
+            _earnings_part(row, "ticket"), _items_part(row), _source_part(row)
+        elif key == "sec_flags":
+            _sec_part(row)
+        else:
+            _cross_part(row)
+        return isinstance(row.get("ticker"), str)
+    except (KeyError, TypeError, AttributeError, IndexError, ValueError):
+        return False
+
+
 def _run_rows(data: dict) -> dict:
-    """The rows the tickets' own blocks carry, by stage and ticker: the first of each."""
+    """The rows the tickets' own blocks carry, by stage and ticker: the first of
+    each that can be read (``_readable()``)."""
     run = _dict(data.get("run"))
     out = {}
     for key in ("earnings", "sec_flags", "cross_check"):
         rows = _dict(run.get(key)).get("rows")
         found: dict = {}
         for r in rows if isinstance(rows, list) else []:
-            if isinstance(r, dict):
+            if isinstance(r, dict) and _readable(key, r):
                 found.setdefault((r.get("stage"), r.get("ticker")), r)
         out[key] = found
     return out
@@ -472,12 +489,18 @@ def carried(previous_block, data: dict):
     return None
 
 
-def night(data: dict, *, reader=None, iex=None, frames=None, previous=None) -> dict:
+def night(data: dict, *, reader=None, iex=None, frames=None, previous=None, client=None) -> dict:
     """The evening's block: the previous one on a closed night when it still
-    holds, else the night's own collection; never a raise."""
+    holds, else the night's own collection; never a raise. Given ``client``
+    and no ``iex``, it reads the batch itself (``cross_symbols()``), and only
+    when it collects."""
     try:
         kept = carried(previous, data) if previous is not None else None
-        return kept if kept is not None else safe_collect(data, reader=reader, iex=iex, frames=frames)
+        if kept is not None:
+            return kept
+        if iex is None and client is not None:
+            iex = read_iex(client, cross_symbols(data), earnings_risk._day(data["run"]["session"]))
+        return safe_collect(data, reader=reader, iex=iex, frames=frames)
     except Exception:  # noqa: BLE001 -- a flag must never stop a publication
         return unread(data)
 
@@ -485,8 +508,10 @@ def night(data: dict, *, reader=None, iex=None, frames=None, previous=None) -> d
 # ------------------------------------------------------------ the words ---
 def _read(row: dict) -> dict:
     """Which of a row's three readings were made."""
+    # the earnings date is read only when its verdict says something: a filing list read in full that
+    # gives no date (a foreign issuer, a short history) leaves the date unknown, and unknown is never clear
     return {"sec": row["sec"]["state"] != sec_flags.UNKNOWN,
-            "earnings": row["earnings"]["reason"] in earnings_risk.ASSESSED_REASONS,
+            "earnings": row["earnings"]["verdict"] != "unknown",
             "cross_check": row["cross_check"]["result"] != cross_check.UNKNOWN}
 
 
@@ -660,6 +685,7 @@ def _row_faults(r, archived, days, since, flags_rules, cross_rules, runs) -> str
         if (not isinstance(f, dict) or not isinstance(f.get("filing_date"), str) or f["filing_date"] < since
                 or not (f.get("form") in (flags_rules.get("forms") or ())
                         or (isinstance(f.get("items"), list) and f["items"]
+                            and all(isinstance(i, str) for i in f["items"])
                             and set(f["items"]) <= set(flags_rules.get("items") or ())))):
             return f"candidate_checks a flagged filing for {name} is outside the window or of no listed form or item"
     # the earnings reading, its sentence re-derived from its own fields
@@ -682,6 +708,11 @@ def _row_faults(r, archived, days, since, flags_rules, cross_rules, runs) -> str
         return f"candidate_checks current-report items for {name}"
     if (earn["reason"] in earnings_risk.ASSESSED_REASONS) == (items["status"] == "not_checked"):
         return f"candidate_checks current-report items for {name} are not its earnings reading's"
+    # a reading SEC gave names the issuer it was read for, and a filing list read names its source
+    if sec["state"] != sec_flags.UNKNOWN and r["cik"] is None:
+        return f"candidate_checks SEC reading for {name} names no issuer"
+    if earn["reason"] in earnings_risk.ASSESSED_REASONS and (r["cik"] is None or src is None):
+        return f"candidate_checks earnings reading for {name} names no issuer or no source"
     # the cross-check reading, its result and reason re-derived from its differences
     if cross["result"] not in cross_check.RESULTS or (cross["result"] == cross_check.UNKNOWN) != (cross["differences"] is None):
         return f"candidate_checks cross-check for {name}"

@@ -262,10 +262,11 @@ def test_a_batch_that_fails_twice_is_iex_unavailable_on_every_row_never_no_bar(f
     words = "iex_unavailable (IexBatchFailed)"
     for name in names:
         assert CC._cross(name, got, sip_for(data, names), session)["reason"] == words
-    # the tickets' own block reads the same batch, and names it the same way
-    tickets = earnings_risk.tickets_of(data["bursts"], data["trades"], data["watchlist"]["top"])
-    block = cross_check.collect(None, tickets, sip_for(data, names), session, fetch=CC.ticket_fetch(got))
-    assert {r["reason"] for r in block["rows"]} == {words}
+    # the batch the evening asks for names no ticket: a ticket's cross-check keeps its own request
+    tickets = {r["ticker"] for r in data["run"]["cross_check"]["rows"]}
+    assert tickets and not tickets & set(CC.cross_symbols(data))
+    assert set(CC.cross_symbols(data)) == {n["ticker"] for n in names
+                                           if (n["stage"], n["ticker"]) not in CC._run_rows(data)["cross_check"]}
 
 
 def test_a_refused_batch_is_every_rows_with_its_type_and_a_name_outside_it_is_not_checked():
@@ -338,6 +339,7 @@ def flag_everything(real):
         for r in block["rows"]:
             if not any((r["stage"], r["ticker"]) in runs[k] for k in runs):
                 r = copy.deepcopy(r)
+                r["cik"] = r["cik"] or 1                        # a reading SEC gave names its issuer
                 r["sec"] = {"state": "flagged", "reason": None, "filings_count": 1,
                             "filings": [{"accession": "0000000001-26-000001", "filing_date": data["run"]["session"],
                                          "form": "SC TO-T", "items": []}]}
@@ -386,9 +388,13 @@ def test_the_night_reads_each_sec_url_once_and_its_ticket_rows_agree(night_marke
     assert alone and all(r["earnings"]["reason"] is None and r["sec"]["state"] == "clear"
                          and r["cross_check"]["result"] != "unknown" for r in alone)
     assert block["requests"]["sec"] == len(alone)
-    # one iex batch a night, shared with the tickets' own cross-check
+    # the tickets' cross-check keeps its own iex request, and the candidate checks ask for the rest in one
+    # batch of their own that names no ticket
     iex = [r for r in fake_alpaca.bar_requests if getattr(getattr(r, "feed", None), "value", None) == "iex"]
-    assert block["requests"]["iex"] == 1 and len(iex) == 1
+    tickets = {r["ticker"] for r in run["cross_check"]["rows"]}
+    assert block["requests"]["iex"] == 1 and len(iex) == 2
+    assert set(iex[0].symbol_or_symbols) == tickets
+    assert set(iex[1].symbol_or_symbols) == set(CC.cross_symbols(data)) and not tickets & set(CC.cross_symbols(data))
 
 
 # ------------------------------------------------------------- agreement ---
@@ -414,6 +420,7 @@ def test_a_listed_setups_sec_reading_is_held_to_its_run_sec_flags_row():
     data = page("full")
     listed = next(r for r in data["candidate_checks"]["rows"] if r["role"] == "listed")
     listed["sec"] = {"state": "clear", "reason": None, "filings": [], "filings_count": 0}
+    listed["cik"] = listed["cik"] or 1                  # an issuer named, so only the agreement rule is left
     assert f"candidate_checks sec for {listed['ticker']} is not its run.* row's" in CC.faults(data)
 
 
@@ -673,7 +680,8 @@ def test_the_readme_and_the_env_example_quote_the_modules_own_numbers():
     env = " ".join((ROOT / ".env.example").read_text().split())
     section = readme.split("### Candidate checks")[1].split("### ")[0]
     assert f"up to {CC.MAX_NAMES} names a night" in section and CC.POLICY == "flag_only" and "policy `flag_only`" in section
-    assert f"past {CC.DEADLINE_SECONDS} seconds from its start" in section
+    assert f"past {CC.DEADLINE_SECONDS} seconds from its first request" in section
+    assert "a candidate's ticker the provider refuses never changes a ticket's row or `orders.json`" in section
     assert f"or past the issuer transport's {CC.MAX_REQUESTS} requests for the night" in section
     assert CC.MAX_REQUESTS == issuer_evidence.MAX_REQUESTS
     assert f"bounded at {CC.MAX_BLOCK_BYTES} bytes" in section and CC.MAX_BLOCK_BYTES == 256 * 1024
@@ -682,7 +690,8 @@ def test_the_readme_and_the_env_example_quote_the_modules_own_numbers():
     roles = "every ticket, every listed setup, every burst the review selected, every burst"
     assert roles in section and CC.ROLES == ("ticket", "listed", "reviewed", "candidate", "also_quiet")
     assert "`iex_unavailable` on every row, never `no_iex_bar`" in section
-    assert f"up to {CC.MAX_NAMES} of the night's candidates" in env and f"within {CC.DEADLINE_SECONDS} seconds" in env
+    assert f"up to {CC.MAX_NAMES} of the night's candidates" in env
+    assert f"within {CC.DEADLINE_SECONDS} seconds of its first request" in env
     assert f"the transport's {CC.MAX_REQUESTS} requests" in env and "No new variable or credential" in env
 
 
@@ -733,3 +742,131 @@ def test_a_ceiling_carries_the_block_at_its_own_bound_never_at_the_fixtures_size
     assert len(CC._compact(red["candidate_checks"])) < CC.MAX_BLOCK_BYTES
     assert ("candidate_checks",) in ceiling.NIGHTLY
     assert ceiling.components(red)["nightly"][1] >= CC.MAX_BLOCK_BYTES
+
+
+# ---------------------------------------------------- the review's rules ---
+def test_a_candidate_whose_earnings_date_is_unknown_is_never_counted_as_read(fake_sec):
+    """A filing list read in full can still give no date (a foreign issuer, a history the reader could not
+    reach): the row is partial, and the sentence counts its earnings date among the unknown."""
+    data = page("full")
+    block = copy.deepcopy(data["candidate_checks"])
+    alone = next(r for r in block["rows"] if r["role"] == "reviewed")
+    for reason in ("foreign_issuer", "history_not_read"):
+        row = copy.deepcopy(alone)
+        row.update(cik=row["cik"] or 7, source=row["source"] or {"sha256": "0" * 64, "bytes": 1,
+                                                               "retrieved_at": NOW.isoformat()})
+        row["sec"] = {"state": "clear", "reason": None, "filings": [], "filings_count": 0}
+        row["cross_check"] = {"result": "pass", "reason": None,
+                              "differences": {"open": 0.0, "high": 0.0, "low": 0.0, "close": 0.0, "volume": 0.0}}
+        row["earnings"] = {**row["earnings"], "verdict": "unknown", "reason": reason}
+        assert row["earnings"]["reason"] in earnings_risk.ASSESSED_REASONS
+        assert CC._read(row) == {"sec": True, "earnings": False, "cross_check": True}
+        assert CC.status_of([row]) == "partial"
+        one = {**block, "rows": [row], "names": {"reviewed": 1}, "unchecked": {}, "shed": 0}
+        assert "Unknown, and unknown is never clear: the earnings date of 1." in CC.sentence(one, data), reason
+
+
+def test_a_candidates_ticker_the_provider_refuses_never_changes_a_tickets_cross_check(night_market, fake_resend,
+                                                                                      fake_alpaca, tmp_path,
+                                                                                      monkeypatch):
+    """The tickets' cross-check asks the iex feed on its own; the candidate checks' batch names no ticket.
+    A candidate-only ticker that makes the provider refuse its iex batch leaves every ticket's row, and
+    orders.json, as they were."""
+    from src import market_data
+    monkeypatch.setattr(market_data, "RETRY_WAIT_SECONDS", 0)
+    _, data, orders, _ = run_night(tmp_path, night_market, "plain")
+    tickets = {r["ticker"] for r in data["run"]["cross_check"]["rows"]}
+    alone = sorted(set(CC.cross_symbols(data)) - tickets)
+    assert tickets and alone
+    client_type = type(market_data.get_clients())
+    real = client_type.get_stock_bars
+
+    def refusing(self, request):            # the iex feed refuses any batch naming that candidate
+        if getattr(getattr(request, "feed", None), "value", None) == "iex" and \
+                alone[0] in (request.symbol_or_symbols or ()):
+            raise ConnectionError("the provider refuses this batch")
+        return real(self, request)
+    monkeypatch.setattr(client_type, "get_stock_bars", refusing)
+    _, refused, refused_orders, _ = run_night(tmp_path, night_market, "refused")
+    assert refused["run"]["cross_check"] == data["run"]["cross_check"]
+    assert decisions(refused, refused_orders) == decisions(data, orders)
+    rows = {r["ticker"]: r for r in refused["candidate_checks"]["rows"]}
+    assert rows[alone[0]]["cross_check"]["reason"].startswith("iex_unavailable")
+
+
+def test_the_sec_readers_deadline_runs_from_its_first_request_not_its_construction(fake_sec):
+    fake_sec.issuer("AAA", 1, "AAA Inc.", [], start="2024-01-02")
+    clock = {"t": 0.0}
+    reader = CC.SecReader(fake_sec, now=NOW, deadline_seconds=10, monotonic=lambda: clock["t"])
+    clock["t"] = 1000.0                                # the evening's plans and record took this long
+    reader(issuer_evidence.MAPPING_URL)               # the first request is never past the deadline
+    assert reader.started == 1000.0 and reader.made() == 1
+    clock["t"] = 1009.0
+    reader(earnings_risk.SUBMISSIONS_URL.format(cik=1))
+    clock["t"] = 1010.0                                # ten seconds after the first request
+    with pytest.raises(earnings_risk.SourceError, match="time_budget"):
+        reader(earnings_risk.SUBMISSIONS_URL.format(cik=2))
+    assert reader.made() == 2
+
+
+@pytest.mark.parametrize("change, words", [
+    (lambda r: r.update(cik=None, sec={"state": "clear", "reason": None, "filings": [], "filings_count": 0}),
+     "SEC reading for {t} names no issuer"),
+    (lambda r: r.update(source=None), "earnings reading for {t} names no issuer or no source"),
+    (lambda r: r.update(cik=None), "earnings reading for {t} names no issuer or no source"),
+])
+def test_a_reading_with_no_issuer_or_no_source_behind_it_is_refused(change, words):
+    data = page("full")
+    row = next(r for r in data["candidate_checks"]["rows"] if r["role"] == "reviewed")
+    assert row["earnings"]["reason"] in earnings_risk.ASSESSED_REASONS and row["cik"] and row["source"]
+    change(row)
+    if row["sec"]["state"] != "unknown" and row["cik"] is None and "SEC" not in words:
+        row["sec"] = {"state": "unknown", "reason": "not_checked", "filings": [], "filings_count": 0}
+    assert f"candidate_checks {words.format(t=row['ticker'])}" in CC.faults(data)
+
+
+def test_a_block_its_validator_refuses_falls_back_to_the_unread_block_with_its_requests_counted(fake_sec, monkeypatch):
+    data = page("full")
+    names = CC.record_names(data)
+    register(fake_sec, [n["ticker"] for n in names], data["run"]["session"])
+    real = CC.collect
+
+    def forged(data, **kwargs):
+        block = real(data, **kwargs)
+        block["shed"] = -1                              # a count the validator refuses
+        return block
+    monkeypatch.setattr(CC, "collect", forged)
+    reader = CC.SecReader(fake_sec, now=NOW)
+    block = CC.safe_collect(data, reader=reader, iex=iex_for(data, names), frames=sip_for(data, names))
+    assert CC.faults({**data, "candidate_checks": block}) == [] and block["shed"] == 0
+    assert block["requests"]["sec"] == reader.made() > 0
+    alone = [r for r in block["rows"] if r["role"] == "reviewed"]
+    assert alone and all(r["sec"]["reason"] == "not_checked" for r in alone)
+
+
+def test_the_iex_batch_asks_only_for_the_first_eighty_names_and_none_a_ticket_reads():
+    data = with_candidates(CC.MAX_NAMES + 7)
+    names = CC.record_names(data)
+    runs = CC._run_rows(data)
+    within = {n["ticker"] for n in names[:CC.MAX_NAMES] if (n["stage"], n["ticker"]) not in runs["cross_check"]}
+    assert len(names) > CC.MAX_NAMES and CC.cross_symbols(data) == sorted(within)
+    past = {n["ticker"] for n in names[CC.MAX_NAMES:]}
+    assert past and not past & set(CC.cross_symbols(data))
+
+
+@pytest.mark.parametrize("shape", [5, "x", [1], {"stage": "burst", "ticker": "AAPL"}])
+def test_a_run_row_a_reader_cannot_index_into_never_makes_the_evenings_block_raise(shape):
+    data = page("full")
+    data["run"]["earnings"]["rows"][0] = shape if not isinstance(shape, dict) else {**shape}
+    block = CC.night(data)
+    assert isinstance(block, dict) and block["rows"] and isinstance(block["sentence"], str)
+    assert isinstance(CC.unread(data), dict)
+
+
+def test_a_flagged_filing_whose_items_hold_an_object_is_named_and_never_raises():
+    data = page("full")
+    data["run"]["sec_flags"]["rows"][0].update(state="flagged", cik=1, filings=[
+        {"accession": "0000000001-26-000001", "filing_date": data["run"]["session"], "form": "8-K",
+         "items": [{"code": "1.01"}]}])
+    found = sec_flags.faults(data)
+    assert any("outside the window or of no listed form or item" in f for f in found), found

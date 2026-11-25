@@ -1222,7 +1222,7 @@ def events_block(data: dict, event_risk) -> dict:
     counts_words = (f"{total} listed rows ({listed['bursts']} bursts, {listed['setting_up']} setting up, "
                     f"{listed['also_quiet']} also quiet)")
     coverage_words = (f"A stock that is not in the registry has not been cleared: SpicyStock reads no company news, "
-                      f"and its earnings and SEC checks ran for {len(checked)} of the {len(names)} listed names "
+                      f"and its earnings and SEC checks have a row for {len(checked)} of the {len(names)} listed names "
                       + (f"(the tickets', and the candidate checks' flags for up to {cand.get('max_names')} names; "
                          "a check that could not read a name says unknown, never clear)." if cand
                          else "(they run for tickets only)."))

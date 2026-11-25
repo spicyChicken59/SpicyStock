@@ -1673,17 +1673,20 @@ the iex feed (the cross-check's own tolerances). A name a ticket's block
 already read carries that block's reading, and the validator holds the two
 equal.
 
-The night has ONE SEC reader and ONE iex batch. The reader asks each SEC URL
-once and keeps its answer, so the earnings warning, the SEC flags and the
-candidate checks read the same filing list and each block counts only the
-requests it made (an answer the reader already held is not one). The tickets
-are read first; the reader begins no request past 150 seconds from its start
-or past the issuer transport's 96 requests for the night, and a name past
-either is unknown with its reason, never clear: 80 names cost one mapping and
-one filing list each, plus an older file where one is needed. The iex batch is
-one request for every distinct name, retried once as every bars request is; a
-batch that failed twice reads `iex_unavailable` on every row, never
-`no_iex_bar`, and the tickets' own cross-check reads the same batch.
+The night has ONE SEC reader. It asks each SEC URL once and keeps its answer,
+so the earnings warning, the SEC flags and the candidate checks read the same
+filing list and each block counts only the requests it made (an answer the
+reader already held is not one). The tickets are read first; the reader begins
+no request past 150 seconds from its first request or past the issuer
+transport's 96 requests for the night, and a name past either is unknown with
+its reason, never clear: 80 names cost one mapping and one filing list each,
+plus an older file where one is needed. The candidate checks ask the iex feed
+in one batch of their own, after the record is composed, for every name no
+ticket's cross-check row stands behind (`candidate_checks.cross_symbols()`),
+retried once as every bars request is; a batch that failed twice reads
+`iex_unavailable` on every row, never `no_iex_bar`. The tickets' own
+cross-check keeps its own request, so a candidate's ticker the provider refuses
+never changes a ticket's row or `orders.json`.
 
 It is a flag and nothing else: it is read once the plans and the allocation are
 final, it changes no plan, ticket, funnel stage, cash budget or `orders.json`
@@ -3350,7 +3353,7 @@ src/            history.py (public recovery and coverage)
                 orders.py (the execution handoff: orders.json and its positions template each night, and the morning's go/cancel file, from committed bytes and no clock) · schema_check.py (the JSON Schema subset the handoff's schema uses; any other keyword is refused)
                 sec_flags.py (each ticket's and listed setup's recent tender-offer, merger-proxy and deal 8-K filings, named by form and item; a flag that holds a ticket for review in orders.json, never a refusal or a clearance)
                 cross_check.py (each ticket's signal-day bar read again from the iex feed; prices within 0.5% and the two feeds' volume ratios within 10%, or the ticket is blocked in orders.json)
-                candidate_checks.py (the night's candidates, up to 80, read against SEC filings, the earnings estimate and the iex feed through one shared SEC reader and one iex batch; flags for a reader, never a gate; unknown never clear)
+                candidate_checks.py (the night's candidates, up to 80, read against SEC filings, the earnings estimate and the iex feed through one shared SEC reader and an iex batch of their own; flags for a reader, never a gate; unknown never clear)
                 brief.py (the analyst's daily brief: brief.json and brief.md, a function of the record's bytes, the pick ledger's bytes and the run's model-record block; no clock, no network)
                 model_record.py (a reading of the model's own record for the daily brief: tickets against distinct setups, the model account each ticket was sized against, a stop booked at the stop beside its close and its low; held to the scorecard's rows, changes nothing; python -m src.model_record --docs docs)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · morning_service.py · morning_service_worker.py · morning_service_journal.py · morning_service_report.py · morning_host.py · morning_host_wsgi.py · reader.py · issuer_evidence.py

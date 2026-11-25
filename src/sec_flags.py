@@ -210,6 +210,7 @@ def faults(data: dict) -> list[str]:
     elif not isinstance(block.get("since"), str) or any(
             not isinstance(f, dict) or not isinstance(f.get("filing_date"), str) or f["filing_date"] < block["since"]
             or not (f.get("form") in block["forms"] or (isinstance(f.get("items"), list) and f["items"]
+                                                        and all(isinstance(i, str) for i in f["items"])
                                                         and set(f["items"]) <= set(block["items"])))
             for r in rows for f in r["filings"]):
         out.append("run.sec_flags a flagged filing is outside the window or of no listed form or item")
