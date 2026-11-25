@@ -791,8 +791,9 @@ def test_no_sec_request_begins_once_the_transport_has_downloaded_its_bound():
     reader("https://www.sec.gov/a")
     base.budget.bytes = issuer_evidence.MAX_DOWNLOAD_BYTES - 1
     reader("https://www.sec.gov/b")                                       # under the bound: it goes out
+    base.budget.bytes = issuer_evidence.MAX_DOWNLOAD_BYTES                # exactly at it
     with pytest.raises(earnings_risk.SourceError, match="size_limit"):
-        reader("https://www.sec.gov/c")                                    # at it: refused before it goes out
+        reader("https://www.sec.gov/c")                                    # refused before it goes out
     assert sent == ["https://www.sec.gov/a", "https://www.sec.gov/b"] and reader.made() == 2
 
 
