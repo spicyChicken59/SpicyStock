@@ -1179,14 +1179,19 @@ def _judge_record_run(record: dict, now: datetime, runs: list[dict] | None, reas
     created = _created(listed[0])
     alert = created is not None and now - created < timedelta(hours=LATE_START_ALERT_HOURS)
     at = _dispatch_slot(listed[0], dispatcher_evening_slots(session, _next_open(record, session))[1:])
+    # a dispatch in the first slot that ended without its work: the dispatcher did start it there, as judge_evening()
+    # says of the same night before it is published
+    unfinished = [r for r in runs if r.get("head_branch") == MAIN and _on_time(r, EVENING_DISPATCH_TITLE, first)
+                  and _without_work(r)]
+    ended = (f"; the dispatch in its first slot ended without its work: {_named(unfinished)}" if unfinished else "")
     if at is not None:
         sentence = (f"The run that wrote the {session} record was a dispatch in a later slot of the dispatcher's "
-                    f"({at.isoformat()}), not in its first slot's due window ({window}): {_named(listed)}.")
+                    f"({at.isoformat()}), not in its first slot's due window ({window}){ended}: {_named(listed)}.")
     else:
         sentence = (f"The run that wrote the {session} record was not a dispatch in any of the dispatcher's evening "
-                    f"slots; its first slot's due window was {window}: {_named(listed)}.")
-    out.update(judgement=STARTED_LATE, alert=alert,
-               action=(LATER_SLOT_HINT if at is not None else SCHEDULER_HINT) if alert else None,
+                    f"slots; its first slot's due window was {window}{ended}: {_named(listed)}.")
+    hint = FIRST_UNFINISHED_HINT if unfinished else LATER_SLOT_HINT if at is not None else SCHEDULER_HINT
+    out.update(judgement=STARTED_LATE, alert=alert, action=hint if alert else None,
                key=f"scheduler:evening:{STARTED_LATE}" if alert else None, sentence=sentence)
     return out
 

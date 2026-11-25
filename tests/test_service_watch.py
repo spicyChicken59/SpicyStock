@@ -892,6 +892,37 @@ def test_the_run_that_wrote_the_record_from_a_later_dispatcher_slot_is_named_so(
     assert out["action"] == (sw.LATER_SLOT_HINT if later else sw.SCHEDULER_HINT)
 
 
+def test_a_failed_first_slot_dispatch_recovered_by_a_later_start_is_said_so_after_the_publication(record):
+    """The dispatcher's 6:20 PM start ended failed and its 7:20 PM start published the record. Before the
+    publication judge_evening() names the failed start and gives its hint; after it, the run that wrote the record
+    is judged, and it says the same: the first start did start the evening, and ended without its work."""
+    failed = run(id=9000, created_at=RECORD_FIRST_SLOT + timedelta(seconds=3), conclusion="failure", **DISPATCH)
+    wrote = run(id=9001, created_at=RECORD_FIRST_SLOT + timedelta(hours=1, seconds=3), **DISPATCH)
+    out = sw.judge_evening(with_run_id(record), FRIDAY_MORNING, [failed, wrote], None)
+    assert (out["about"], out["judgement"], out["key"]) == ("record_run", sw.STARTED_LATE,
+                                                            "scheduler:evening:started_late")
+    assert out["action"] == sw.FIRST_UNFINISHED_HINT
+    assert out["sentence"] == (
+        "The run that wrote the 2026-09-10 record was a dispatch in a later slot of the dispatcher's "
+        "(2026-09-10T19:20:00-04:00), not in its first slot's due window (2026-09-10T18:20:00-04:00 to "
+        "2026-09-10T18:50:00-04:00); the dispatch in its first slot ended without its work: run 9000 (Evening "
+        "dispatch (only if unpublished), workflow_dispatch, created 2026-09-10T22:20:03Z, failure): run 9001 (Evening "
+        "dispatch (only if unpublished), workflow_dispatch, created 2026-09-10T23:20:03Z, success).")
+    # the backup cron wrote it after the failed first start: the same hint, the plain words for the run
+    cron = run(id=9001, created_at=datetime(2026, 9, 11, 3, 0, tzinfo=UTC))
+    out = sw.judge_evening(with_run_id(record), FRIDAY_MORNING, [failed, cron], None)
+    assert out["action"] == sw.FIRST_UNFINISHED_HINT and "was not a dispatch in any of the dispatcher's" in out["sentence"]
+    assert "the dispatch in its first slot ended without its work: run 9000" in out["sentence"]
+    # no failed first start, a first-slot dispatch on another branch, or one that did its work: the hints as before
+    for other in ([], [dict(failed, head_branch="other")], [dict(failed, conclusion="success", id=9002)],
+                  [dict(failed, created_at="2026-09-10T22:50:00Z")]):
+        out = sw.judge_evening(with_run_id(record), FRIDAY_MORNING, [*other, wrote], None)
+        assert out["action"] == sw.LATER_SLOT_HINT and "ended without its work" not in out["sentence"], other
+    # past the alert's fourteen hours nothing is flagged and no hint is given
+    late = sw.judge_evening(with_run_id(record), datetime(2026, 9, 11, 17, 0, tzinfo=UTC), [failed, cron], None)
+    assert (late["alert"], late["action"], late["key"]) == (False, None, None)
+
+
 def test_a_friday_record_written_by_the_saturday_recovery_start_is_the_dispatchers_later_start(record):
     friday = with_run_id(record)
     friday["run"]["session"] = "2026-09-11"
