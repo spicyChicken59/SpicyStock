@@ -15,16 +15,18 @@ and answers each in one word and one sentence:
     the earlier of ``ALERT_WITHIN_HOURS`` before its recovery limit (the next
     session's open) and ``NOT_PUBLISHED_AFTER_PRIMARY_HOURS`` after its primary
     slot is ``not_published`` -- on an ordinary night that is 3:30 AM ET, over
-    a weekend Saturday morning -- and from ``EVENING_PUBLISHED_BY_ET`` when the
-    run listing shows the on-time dispatcher started it; one absent past the
-    limit is ``missing``; a record more than one completed session behind is
-    judged by its newest session.
+    a weekend 4:16 AM ET on Saturday -- and from ``EVENING_PUBLISHED_BY_ET``
+    when the run listing shows a dispatch in the dispatcher's first evening
+    slot started it; one absent past the limit is ``missing``; a record more
+    than one completed session behind is judged by its newest session, by
+    that session's own deadline and missing window.
 
 ``start``
     Did the evening run that wrote the record start within
     ``LATE_START_MINUTES`` of its primary slot? Read off the record's own
     ``run.delivery.after_primary_minutes``; a start an hour late was not the
-    on-time dispatcher's (``tools/dispatch_schedule.py``, 6:20 PM ET).
+    dispatcher's first start (``tools/dispatch_schedule.py``, 6:20 PM ET): a
+    later start of the dispatcher's, GitHub's backup cron or a hand dispatch.
 
 ``morning``
     From ``MORNING_ALERT_CT`` (8:25 AM Chicago, five minutes before the 8:30
@@ -42,33 +44,48 @@ and answers each in one word and one sentence:
 ``scheduler``
     Did the scheduler run? Read off the Actions run listing of ``evening.yml``,
     ``morning.yml`` and this watch's own ``service-watch.yml`` (``GitHub.runs()``,
-    the workflow's read-only token): ``on_time`` (the on-time dispatcher's
-    ``workflow_dispatch``, by its run name, inside its due window),
-    ``started_late``, ``not_started``, ``failed`` or ``unknown``. The runs are tied
-    to the files by ``run.run_id`` and the receipt's ``observation_run_id``. The
-    watch reports a gap in its own previous slot after the fact. Without a token,
-    or with a listing that cannot be read whole, every scheduler answer is
-    ``unknown`` and the file answers still stand: ``unknown`` is never an alert.
+    the workflow's read-only token): ``on_time`` (a ``workflow_dispatch`` under the
+    dispatcher's run name inside its first slot's due window -- whoever asked
+    for it: the listing cannot tell the dispatcher's dispatch from one made by
+    hand), ``started_late``, ``not_started``, ``failed`` or ``unknown``. A later
+    slot of the dispatcher's is named as its own start and is still not on
+    time; an evening cron its guard skips as not the active UTC slot is no
+    evening run; a watch run that ended failed or cancelled did not start the
+    watch. The runs are tied to the files by ``run.run_id`` and the receipt's
+    ``observation_run_id``. The watch reports a gap in its own previous slot
+    after the fact. Without a token every answer that needs the listing is
+    ``unknown`` and nothing is mailed for it; with one, each workflow's listing
+    stands or falls alone, and a listing that cannot be read is an alert of its
+    own (``scheduler:listing:unreadable``). The file answers stand either way.
 
 Every alert has a key (``family:word:scope``). One about a session carries the
-session; a standing one about the scheduler carries none; an unreadable record
-carries the SHA-256 of its bytes (or ``absent``). The judgement word is part of
-the key, so a change of state mails once. With ``--ledger FILE`` the watch keeps
-the keys it has mailed and when, and mails a key it holds again only after
-``REPEAT_DAYS``; it holds keys and instants only, is written only after a mail
-was accepted, and reads as empty -- so every alert mails again -- when it is
+session; a standing one about the scheduler carries none; a record that cannot
+be read, or read but cannot answer the evening, carries the SHA-256 of its
+bytes (or ``absent``). The judgement word is part of the key, so a change of
+state mails once. With ``--ledger FILE`` the watch keeps the keys it has mailed
+and when, and the instant each standing key's condition last cleared: a key it
+holds is dropped as a repeat only while its condition has not cleared since it
+was mailed, and mailed again after ``REPEAT_DAYS`` while it stands. The ledger
+holds keys and instants only, is written only after a mail was accepted or a
+clear recorded, and reads as empty -- so every alert mails again -- when it is
 absent, corrupt, of another version or dated after the clock.
 
-It reads files and decides nothing about them. It calls no provider, and it
-mails only with ``--mail``, through the evening's own transport
-(``report.deliver``). A watch that runs on GitHub's scheduler is itself late by
-hours, so the same answers are printed for anything else with a clock:
-``python tools/service_watch.py --docs docs``. Nothing outside GitHub watches
-this watch: the on-time dispatcher on Railway, once deployed, is that clock.
+One run sends at most one message, naming every new alert in it; a refused
+send is tried once more after ``MAIL_RETRY_SECONDS``, and a message the
+transport refused twice is not remembered. It reads files and decides nothing
+about them. It calls no provider, and it mails only with ``--mail``, through
+the evening's own transport (``report.deliver``). A watch that runs on
+GitHub's scheduler is itself late by hours, so the same answers are printed
+for anything else with a clock: ``python tools/service_watch.py --docs docs``.
+Nothing outside GitHub watches this watch: the on-time dispatcher on Railway,
+once deployed, is that clock.
 
-Exit codes: 0 nothing to flag, 1 an alert, 2 the record could not answer. With
-``--mail``, 1 only when an alert was mailed now or its mail failed: a run whose
-every alert was dropped as a repeat exits 0.
+Exit codes follow the judgement, mailed or dropped as a repeat alike: 0
+nothing to flag, 1 an alert, 2 the record could not answer (whatever else it
+flags), and with ``--mail`` 3 when the message it owed was refused twice: the
+run did not finish. In a workflow (``GITHUB_OUTPUT`` set) it writes its exit
+code, its alerts and, as its last act, ``finished=true`` -- only when it judged
+and every message it owed was accepted -- and its lines to the job summary.
 """
 from __future__ import annotations
 
@@ -79,7 +96,7 @@ import json
 import os
 import re
 import sys
-import urllib.error
+import time as clock
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -107,13 +124,15 @@ MAX_MORNING_BYTES = 512 * 1024             # morning.MAX_OBSERVATION_BYTES; test
 ALERT_WITHIN_HOURS = 6
 #: ... or this many hours after its primary slot, whichever is earlier: on an
 #: ordinary night the limit rule is earlier (3:30 AM ET against 4:16 AM ET); over a
-#: weekend or a holiday this one is, so a missed Friday is said on Saturday morning
-#: and not six hours before Monday's open.
+#: weekend or a holiday this one is, so a missed Friday is not_published from 4:16 AM
+#: ET on Saturday and not six hours before Monday's open. On a closed day only
+#: GitHub's backup crons run the watch, hours late; the dispatcher's first watch to
+#: mail it is the next session's 6:00 AM CT slot.
 NOT_PUBLISHED_AFTER_PRIMARY_HOURS = 10
-#: When the run listing shows the on-time dispatcher started the session's evening,
-#: a publication still absent at this New York time is flagged as well: an on-time
-#: start publishes within minutes of 6:20 PM ET, and the dispatcher's last evening
-#: start is at 9:20 PM ET. The 9:50 PM ET watch slot mails it.
+#: When the run listing shows a dispatch in the dispatcher's first evening slot
+#: started the session's evening, a publication still absent at this New York time is
+#: flagged as well: an on-time start publishes within minutes of 6:20 PM ET, and the
+#: dispatcher's last evening start is at 9:20 PM ET. The 9:50 PM ET watch slot mails it.
 EVENING_PUBLISHED_BY_ET = "21:45"
 #: No evening run listed for a completed session by this New York time is
 #: ``not_started``: the dispatcher's first evening slot plus its due window
@@ -136,16 +155,21 @@ MORNING_ALERT_CT = "08:25"
 MORNING_DUE_CT = "08:45"
 CHICAGO = ZoneInfo("America/Chicago")
 #: An evening run that started more than this many minutes after its primary
-#: slot (6:16 PM ET) was not started by the dispatcher, whose first evening slot
-#: is 6:20 PM ET; GitHub's own cron created every such run of 2 to 18 November
-#: 2026 3.56 to 7.99 hours late.
+#: slot (6:16 PM ET) was not the dispatcher's first start, at 6:20 PM ET: a later
+#: start of the dispatcher's (7:20 PM ET on), GitHub's backup cron or a hand
+#: dispatch. GitHub's own cron created every such run of 2 to 18 November 2026
+#: 3.56 to 7.99 hours late.
 LATE_START_MINUTES = 60
 #: Flagged for this long after the late run started: the 6:00 AM CT watch the
 #: next morning is about twelve hours after a 6:20 PM ET start.
 LATE_START_ALERT_HOURS = 14
-#: With a ledger, a key already mailed is mailed again only after this many days:
-#: a standing condition is repeated weekly while it stands.
+#: With a ledger, a key already mailed is mailed again only after this many days,
+#: unless its condition cleared in between: a standing condition is repeated weekly
+#: while it stands, and mailed at once when it returns after clearing.
 REPEAT_DAYS = 7
+#: A message the transport refused is tried once more, this many seconds later, in
+#: the same run: the 8:25 AM CT watch is the one run before the 8:30 AM CT open.
+MAIL_RETRY_SECONDS = 20
 LEDGER_VERSION = 1
 #: A ledger larger than this is not read: it is not one this watch wrote.
 MAX_LEDGER_BYTES = 64 * 1024
@@ -161,8 +185,10 @@ NOT_DUE, LANDED, NOT_LANDED, NOT_CHECKED = "not_due", "landed", "not_landed", "n
 ON_TIME, STARTED_LATE, NOT_STARTED, FAILED = "on_time", "started_late", "not_started", "failed"
 # handoff judgements
 BOUND, UNBOUND = "bound", "unbound"
+# the run listing's judgement when a token was given and a listing it asked for failed
+UNREADABLE = "unreadable"
 
-EXIT_OK, EXIT_ALERT, EXIT_UNKNOWN = 0, 1, 2
+EXIT_OK, EXIT_ALERT, EXIT_UNKNOWN, EXIT_UNFINISHED = 0, 1, 2, 3
 
 EVENING_WORKFLOW, MORNING_WORKFLOW, WATCH_WORKFLOW = "evening.yml", "morning.yml", "service-watch.yml"
 #: The run names the three workflows give themselves (their ``run-name:``; tests hold them to the files).
@@ -175,13 +201,30 @@ MORNING_REHEARSAL_TITLE = "Morning rehearsal"
 WATCH_DISPATCH_TITLE = "Service watch (manual)"
 #: A completed run with one of these conclusions did not do its work.
 FAILED_CONCLUSIONS = ("failure", "cancelled", "timed_out", "startup_failure")
+SCHEDULE_EVENT = "schedule"
+#: The title a scheduled evening run gives itself: this, then the cron that fired (evening.yml's ``run-name:``).
+EVENING_CRON_PREFIX = "Evening cron "
+#: evening.yml's four crons, each with the UTC hour, the UTC offset and the UTC weekdays at which its guard
+#: takes it as the active slot (the guard's own table; tests hold the two equal). A scheduled run of any other
+#: cron, or of one of these at another offset or weekday, is skipped by the guard and does no evening's work.
+EVENING_CRONS = {
+    "16 22 * * 1-5": (22, "-0400", range(0, 5)),
+    "16 23 * * 1-5": (23, "-0500", range(0, 5)),
+    "16 0 * * 2-6": (0, "-0400", range(1, 6)),
+    "16 1 * * 2-6": (1, "-0500", range(1, 6)),
+}
 MAIN = "main"
 NO_TOKEN = f"no {ds.TOKEN_ENV} was given, so the Actions run listing was not read"
+#: What every on-time sentence says of who dispatched it: the listing names a run name, not the dispatcher.
+WHO = "the listing cannot tell the dispatcher's dispatch from one made by hand"
+# the run listing's own word in the result
+LISTING_READ, LISTING_FAILED, LISTING_NOT_ASKED = "read", "failed", "not_asked"
 
 #: An alert's key: ``family:word:scope``. A scheduler key carries no session.
 KEY_PATTERN = re.compile(r"(?:(?:evening|morning|handoff):[a-z_]+:(?:\d{4}-\d{2}-\d{2}|[0-9a-f]{64})"
-                         r"|scheduler:(?:evening|morning|watch):[a-z_]+"
-                         r"|record:unreadable:(?:[0-9a-f]{64}|absent))")
+                         r"|scheduler:(?:evening|morning|watch|listing):[a-z_]+"
+                         r"|record:unreadable:(?:[0-9a-f]{64}|absent)"
+                         r"|record:unknown:[0-9a-f]{64})")
 
 DISPATCH_HINT = ("Start it by hand: GitHub, Actions, Evening scan, Run workflow, branch main, with only_if_unpublished "
                  "ticked. From the session's primary slot (6:16 PM ET) on, it publishes the newest completed session "
@@ -195,12 +238,18 @@ BEHIND_HINT = ("More than one session has completed since the record on main. Re
 RUN_FAILED_HINT = ("Read the failed run's log (GitHub, Actions, Evening scan, the run named above) before starting it "
                    "again. " + DISPATCH_HINT)
 UNREADABLE_SUBJECT = "SpicyStock watch: the record on main could not be read"
+UNKNOWN_SUBJECT = "SpicyStock watch: the record on main cannot say whether its next session is published"
+UNKNOWN_HINT = ("The record on main carries no calendar or delivery block the watch can read the next session and "
+                "its limit from, so whether that session is published, late or missing is not known. Read the "
+                "Evening scan log of the run that wrote it.")
 #: What a morning receipt's status must be for the check to count as one that ran for the record's tickets.
 #: ``provider_unavailable`` and ``inapplicable`` (``src/morning.STATUSES``) quoted nothing and say so themselves.
 RAN_STATUSES = ("observed", "partial", "no_tickets")
 RECENT = "recent"
-MORNING_HINT = ("The morning check is started from outside GitHub's scheduler, by the on-time dispatcher "
-                "(tools/dispatch_schedule.py) at 8:20 AM CT. Read its log for that morning, and morning.yml's runs.")
+MORNING_HINT = ("The morning check is started from outside GitHub's scheduler by the on-time dispatcher "
+                "(tools/dispatch_schedule.py) at 8:20 AM CT, once it is deployed on Railway; until then, or while "
+                "it is down, GitHub's own cron starts it hours late, after the entry window. Read the dispatcher's "
+                "log for that morning, and morning.yml's runs.")
 NOT_CHECKED_HINT = ("The morning run writes orders-morning.json after its receipt lands (python -m tools.publish_morning "
                     "orders). Until it is checked for this orders.json an execution agent cancels every ticket: read "
                     "morning.yml's run for that morning.")
@@ -208,12 +257,22 @@ HANDOFF_HINT = ("The evening run writes orders.json, positions-template.json and
                 "(pipeline.publish_orders()), and removes them when it cannot write them. Read that night's Evening "
                 "scan log. Until a bound orders.json and orders-morning.json are on main an execution agent enters "
                 "nothing.")
+STANDING = (f"This is mailed once, again after {REPEAT_DAYS} days while it stands, and at once when it returns "
+            "after clearing.")
 SCHEDULER_HINT = ("The on-time dispatcher (tools/dispatch_schedule.py, docs/operations/external-scheduler.md) starts the "
                   "evening at 6:20 PM ET, the morning check at 8:20 AM CT and this watch at its slots, once it is "
                   "deployed on Railway; until then, or while it is down, GitHub's own crons start them hours late. "
-                  f"Read the dispatcher's log for that day. This is mailed once, and again after {REPEAT_DAYS} days "
-                  "while it stands.")
-START_HINT = SCHEDULER_HINT
+                  f"Read the dispatcher's log for that day. {STANDING}")
+LATER_SLOT_HINT = ("The dispatcher's first evening start (6:20 PM ET) did not start it, and a later one of its slots "
+                   "did: read the dispatcher's log for the first slot, and evening.yml's run for it. " + STANDING)
+START_HINT = ("The evening is started at 6:20 PM ET by the on-time dispatcher (tools/dispatch_schedule.py) once it is "
+              "deployed on Railway; a start more than an hour after the primary slot was a later start of the "
+              "dispatcher's, GitHub's backup cron (hours late) or a hand dispatch. Read the dispatcher's log for that "
+              f"evening, and evening.yml's run. {STANDING}")
+LISTING_HINT = ("The watch's token could not read the Actions run listing, so whether the scheduler started the "
+                "evening, the morning check and this watch is not known. Read this watch run's log, where each listing "
+                "that failed is named by its HTTP status or its error's type, and the workflow's permissions "
+                f"(actions: read). {STANDING}")
 LATE_ITSELF = ("This watch may itself have been started late by GitHub's scheduler, which starts scheduled runs hours "
                "late: read the clock it names.")
 SUBJECTS = {
@@ -224,9 +283,10 @@ SUBJECTS = {
     ("morning", NOT_LANDED): "SpicyStock watch: no morning check landed for {scope}",
     ("morning", NOT_CHECKED): "SpicyStock watch: orders-morning.json is not checked for {scope}",
     ("handoff", UNBOUND): "SpicyStock watch: the {scope} handoff files do not pass their check",
-    ("scheduler:evening", STARTED_LATE): "SpicyStock watch: the evening was not started by the on-time dispatcher",
-    ("scheduler:morning", STARTED_LATE): "SpicyStock watch: the morning check was not started by the on-time dispatcher",
+    ("scheduler:evening", STARTED_LATE): "SpicyStock watch: the evening was not started at its first slot",
+    ("scheduler:morning", STARTED_LATE): "SpicyStock watch: the morning check was not started at its slot",
     ("scheduler:watch", NOT_STARTED): "SpicyStock watch: the watch was not started at its slot",
+    ("scheduler:listing", UNREADABLE): "SpicyStock watch: the Actions run listing could not be read",
 }
 #: ``orders.check()``'s own sentences that name no path and quote nothing; any other is said by the file it names.
 HANDOFF_PHRASES = (
@@ -239,6 +299,10 @@ HANDOFF_PHRASES = (
     f"{orders.MORNING_FILE} is not bound to orders.json",
     f"{orders.POSITIONS_FILE} does not carry orders.json's mode",
     f"{orders.MORNING_FILE} does not carry orders.json's mode",
+    f"{orders.MORNING_FILE} is not the file that cancels every ticket of an earlier version's orders.json",
+    f"{orders.MORNING_FILE} is checked against a morning receipt main does not carry",
+    f"{orders.MORNING_FILE} cannot be derived again from main's files",
+    f"{orders.MORNING_FILE} is not what main's orders.json and morning receipt give",
 )
 HANDOFF_MISSING = "orders.json is missing"
 HANDOFF_UNCHECKABLE = "the handoff files could not be checked"
@@ -441,7 +505,8 @@ def dispatcher_slot(workflow: str, session: str | None, index: int = 0) -> datet
 def evening(record: dict, now: datetime, on_time_start: bool = False) -> dict:
     """The freshness answer for the session after the one the record covers,
     and whether its absence is worth an alert. ``on_time_start`` says the run
-    listing shows the on-time dispatcher started that session's evening."""
+    listing shows a dispatch in the dispatcher's first evening slot started that
+    session's evening."""
     expected = freshness.expected(record)
     answer = freshness.state(expected, now)
     session = expected.get("next_session")
@@ -495,8 +560,8 @@ def evening(record: dict, now: datetime, on_time_start: bool = False) -> dict:
                            f"session after it opens at {expected.get('recovery_until')}, {hours:g} hours after this "
                            "watch's clock; after that the scheduled service will not publish it.")
         if published_by is not None and now >= published_by and not (deadline is not None and now >= deadline):
-            out["sentence"] += (f" The on-time dispatcher started its evening, and it was still not on main at "
-                                f"{published_by.isoformat()}.")
+            out["sentence"] += (f" The run listing shows a dispatch in the dispatcher's first evening slot started its "
+                                f"evening, and it was still not on main at {published_by.isoformat()}.")
         out["alert"], out["key"] = True, f"evening:{NOT_PUBLISHED}:{session}"
         out["action"] = DISPATCH_HINT
     return out
@@ -716,22 +781,50 @@ def handoff(docs: Path, record: dict, record_raw: bytes) -> dict:
     return out
 
 
+
+
 # --------------------------------------------------------------- scheduler ---
 def _created(run: dict) -> datetime | None:
     return ds._created(run.get("created_at"))
 
 
-def _on_time(run: dict, title: str, slot: datetime | None) -> bool:
-    """A ``workflow_dispatch`` by the dispatcher's run name created inside the slot's due window."""
+def _on_time(run: dict, title: str, slot: datetime | None, end: datetime | None = None) -> bool:
+    """A ``workflow_dispatch`` by the dispatcher's run name created inside the slot's due window: until ``end``,
+    else ``DUE_MINUTES`` after the slot. Whoever asked for it: the listing names the run, not who dispatched it."""
     created = _created(run)
-    return (slot is not None and created is not None and run.get("event") == DISPATCH_EVENT
-            and run.get("display_title") == title
-            and slot <= created < slot + timedelta(minutes=ds.DUE_MINUTES))
+    if slot is None or created is None:
+        return False
+    end = end if end is not None else slot + timedelta(minutes=ds.DUE_MINUTES)
+    return run.get("event") == DISPATCH_EVENT and run.get("display_title") == title and slot <= created < end
+
+
+def _without_work(run: dict) -> bool:
+    return run.get("status") == "completed" and run.get("conclusion") in FAILED_CONCLUSIONS
 
 
 def _failed(runs: list[dict]) -> bool:
-    return bool(runs) and all(r.get("status") == "completed" and r.get("conclusion") in FAILED_CONCLUSIONS
-                              for r in runs)
+    return bool(runs) and all(_without_work(r) for r in runs)
+
+
+def skipped_evening_cron(run: dict) -> bool:
+    """A scheduled evening run its guard skips, which ends ``success`` and does no evening's work: a cron the
+    guard does not know, or one that was not the active UTC slot (``EVENING_CRONS``, the guard's own rule) at
+    the run's ``created_at``."""
+    title = run.get("display_title") or ""
+    if run.get("event") != SCHEDULE_EVENT or not title.startswith(EVENING_CRON_PREFIX):
+        return False
+    slot = EVENING_CRONS.get(title[len(EVENING_CRON_PREFIX):])
+    if slot is None:
+        return True
+    created = _created(run)
+    if created is None:
+        return False
+    hour, offset, weekdays = slot
+    fired = created.astimezone(timezone.utc)
+    nominal = fired.replace(hour=hour, minute=16, second=0, microsecond=0)
+    if nominal > fired:
+        nominal -= timedelta(days=1)
+    return nominal.weekday() not in weekdays or nominal.astimezone(ds.ET).strftime("%z") != offset
 
 
 def _summary(runs: list[dict]) -> list[dict]:
@@ -760,6 +853,36 @@ def evening_since(record: dict, now: datetime) -> datetime | None:
     return _instant(_dict(_dict(record.get("run")).get("delivery")).get("completion_at"))
 
 
+def dispatcher_evening_slots(session: str | None, until: datetime | None) -> list[datetime]:
+    """Every evening start the dispatcher makes that can publish ``session``, in order: its slots on that date and
+    then, on each later calendar day (``EVERY_DAY``: a weekend's or a holiday's recovery), each one before
+    ``until``, the open of the session after it. Only that date's when ``until`` is not known."""
+    try:
+        day = date.fromisoformat(session) if isinstance(session, str) else None
+    except ValueError:
+        return []
+    out: list[datetime] = []
+    for back in range(WATCH_LOOKBACK_DAYS + 1) if day is not None else ():
+        current = day + timedelta(days=back)
+        if back and (until is None or current > until.astimezone(ds.ET).date()):
+            break
+        try:
+            starts = [s.at for s in ds.slots_on(current) if s.workflow == EVENING_WORKFLOW]
+        except ValueError:
+            break
+        out += [at for at in starts if not back or at < until]
+    return out
+
+
+def _dispatch_slot(run: dict, slots: list[datetime]) -> datetime | None:
+    """The one of ``slots`` whose due window holds ``run``, a dispatch under the evening dispatcher's run name."""
+    return next((at for at in slots if _on_time(run, EVENING_DISPATCH_TITLE, at)), None)
+
+
+def _window(first: datetime | None) -> str:
+    return f"{_iso(first)} to {_iso(first + timedelta(minutes=ds.DUE_MINUTES)) if first else None}"
+
+
 def judge_evening(record: dict, now: datetime, runs: list[dict] | None, reason: str | None) -> dict:
     """The evening's scheduler answer: about the current unpublished session's runs, or, when the record covers
     the newest session due, about the run that wrote it (``run.run_id``)."""
@@ -782,10 +905,14 @@ def judge_evening(record: dict, now: datetime, runs: list[dict] | None, reason: 
             continue
         if title.startswith(EVENING_BACKFILL_PREFIX) and title[len(EVENING_BACKFILL_PREFIX):] != session:
             continue                                   # a backfill of another session is that session's
+        if skipped_evening_cron(r):
+            continue                                   # its guard skipped it: not the active UTC slot
         relevant.append(r)
     out["runs"] = _summary(relevant)
     on_time = [r for r in relevant if _on_time(r, EVENING_DISPATCH_TITLE, first)]
-    window = f"{target['first_slot_at']} to {_iso(first + timedelta(minutes=ds.DUE_MINUTES)) if first else None}"
+    later_slots = dispatcher_evening_slots(session, _instant(target["limit_at"]))[1:]
+    later = [(r, at) for r in relevant if (at := _dispatch_slot(r, later_slots)) is not None]
+    window = _window(first)
     if not relevant:
         if started_by is not None and now >= started_by:
             out.update(judgement=NOT_STARTED, alert=True, action=DISPATCH_HINT, key=f"evening:{NOT_STARTED}:{session}",
@@ -805,12 +932,26 @@ def judge_evening(record: dict, now: datetime, runs: list[dict] | None, reason: 
         return out
     if on_time:
         out.update(judgement=ON_TIME, on_time_run=on_time[0]["id"],
-                   sentence=f"The {session} evening was started on time by the dispatcher: {_named(on_time[:1])}.")
+                   sentence=(f"The {session} evening was started on time by a dispatch in the dispatcher's first "
+                             f"slot ({WHO}): {_named(on_time[:1])}."))
+        return out
+    if later:
+        run, at = later[0]
+        out.update(judgement=STARTED_LATE, alert=True, action=LATER_SLOT_HINT, key=f"scheduler:evening:{STARTED_LATE}",
+                   sentence=(f"The {session} evening was started by a dispatch in a later slot of the dispatcher's "
+                             f"({at.isoformat()}), not in its first slot's due window ({window}): {_named([run])}."))
         return out
     out.update(judgement=STARTED_LATE, alert=True, action=SCHEDULER_HINT, key=f"scheduler:evening:{STARTED_LATE}",
-               sentence=(f"The {session} evening was not started by the on-time dispatcher in its due window "
-                         f"({window}): the runs listed are {_named(relevant)}."))
+               sentence=(f"The {session} evening was not started by a dispatch in any of the dispatcher's slots; its "
+                         f"first slot's due window was {window}, and the runs listed are {_named(relevant)}."))
     return out
+
+
+def _next_open(record: dict, session) -> datetime | None:
+    """The open of the session after ``session``, off the record's own calendar."""
+    rows = _sessions(record) or []
+    later = [opens for name, _, opens in rows if isinstance(session, str) and name > session]
+    return later[0] if later else None
 
 
 def _judge_record_run(record: dict, now: datetime, runs: list[dict] | None, reason: str | None) -> dict:
@@ -832,17 +973,24 @@ def _judge_record_run(record: dict, now: datetime, runs: list[dict] | None, reas
         out["sentence"] = f"The run that wrote the {session} record (run {run_id}) is not in the listing since {since.isoformat()}."
         return out
     out["runs"] = _summary(listed)
-    window = f"{first.isoformat()} to {(first + timedelta(minutes=ds.DUE_MINUTES)).isoformat()}"
+    window = _window(first)
     if _on_time(listed[0], EVENING_DISPATCH_TITLE, first):
         out.update(judgement=ON_TIME, on_time_run=listed[0]["id"],
-                   sentence=f"The run that wrote the {session} record was the on-time dispatcher's: {_named(listed)}.")
+                   sentence=(f"The run that wrote the {session} record was a dispatch in the dispatcher's first "
+                             f"evening slot ({WHO}): {_named(listed)}."))
         return out
     created = _created(listed[0])
     alert = created is not None and now - created < timedelta(hours=LATE_START_ALERT_HOURS)
-    out.update(judgement=STARTED_LATE, alert=alert, action=SCHEDULER_HINT if alert else None,
-               key=f"scheduler:evening:{STARTED_LATE}" if alert else None,
-               sentence=(f"The run that wrote the {session} record was not the on-time dispatcher's start in its due "
-                         f"window ({window}): {_named(listed)}."))
+    at = _dispatch_slot(listed[0], dispatcher_evening_slots(session, _next_open(record, session))[1:])
+    if at is not None:
+        sentence = (f"The run that wrote the {session} record was a dispatch in a later slot of the dispatcher's "
+                    f"({at.isoformat()}), not in its first slot's due window ({window}): {_named(listed)}.")
+    else:
+        sentence = (f"The run that wrote the {session} record was not a dispatch in any of the dispatcher's evening "
+                    f"slots; its first slot's due window was {window}: {_named(listed)}.")
+    out.update(judgement=STARTED_LATE, alert=alert,
+               action=(LATER_SLOT_HINT if at is not None else SCHEDULER_HINT) if alert else None,
+               key=f"scheduler:evening:{STARTED_LATE}" if alert else None, sentence=sentence)
     return out
 
 
@@ -888,27 +1036,26 @@ def judge_morning(record: dict, receipt: dict | None, record_raw: bytes, now: da
         return out
     if on_time:
         out.update(judgement=ON_TIME, on_time_run=on_time[0]["id"],
-                   sentence=f"The {session} morning check was started on time by the dispatcher: "
+                   sentence=f"The {session} morning check was started on time by a dispatch in its slot ({WHO}): "
                             f"{_named(on_time[:1])}.{wrote}")
         return out
     alert = now - alert_at < timedelta(hours=MORNING_ALERT_HOURS)
     out.update(judgement=STARTED_LATE, alert=alert, action=SCHEDULER_HINT if alert else None,
                key=f"scheduler:morning:{STARTED_LATE}" if alert else None,
-               sentence=(f"The {session} morning check was not started by the on-time dispatcher in its due window "
+               sentence=(f"The {session} morning check was not started by a dispatch in its slot's due window "
                          f"({slot.isoformat()} to {end.isoformat()}): the runs listed are {_named(relevant)}.{wrote}"))
     return out
 
 
 def previous_watch_slot(now: datetime) -> datetime | None:
-    """The latest of the dispatcher's watch slots whose due window has closed by ``now``; None when there is
-    none in ``WATCH_LOOKBACK_DAYS``, or the calendar cannot say."""
+    """The latest of the dispatcher's watch slots whose due window (``Slot.end``) has closed by ``now``; None when
+    there is none in ``WATCH_LOOKBACK_DAYS``, or the calendar cannot say."""
     days = {(now - timedelta(days=back)).astimezone(zone).date()
             for back in range(WATCH_LOOKBACK_DAYS + 1) for zone in (ds.ET, ds.CT)}
     found = []
     try:
         for day in days:
-            found += [s.at for s in ds.slots_on(day) if s.workflow == WATCH_WORKFLOW
-                      and s.at + timedelta(minutes=ds.DUE_MINUTES) <= now]
+            found += [s.at for s in ds.slots_on(day) if s.workflow == WATCH_WORKFLOW and s.end <= now]
     except ValueError:
         return None
     return max(found) if found else None
@@ -918,7 +1065,8 @@ _UNSET = object()
 
 
 def judge_watch(now: datetime, runs: list[dict] | None, reason: str | None, previous=_UNSET) -> dict:
-    """Whether the on-time dispatcher started this watch at its own previous slot: said after the fact."""
+    """Whether a dispatch started this watch at its own previous slot and the run did its work: said after the
+    fact. A dispatched watch that ended failed or cancelled did not finish, and is not a start."""
     previous = previous_watch_slot(now) if previous is _UNSET else previous
     out = _block(WATCH_WORKFLOW, about="slot", slot_at=_iso(previous), on_time_run=None)
     if previous is None:
@@ -927,54 +1075,99 @@ def judge_watch(now: datetime, runs: list[dict] | None, reason: str | None, prev
     if runs is None:
         out["sentence"] = f"The watch's previous slot ({previous.isoformat()}) cannot be judged: {reason}."
         return out
-    end = previous + timedelta(minutes=ds.DUE_MINUTES)
+    try:
+        end = ds.slot_end(WATCH_WORKFLOW, previous)
+    except ValueError:
+        end = previous + timedelta(minutes=ds.DUE_MINUTES)
     in_window = [r for r in runs if r.get("head_branch") == MAIN and _created(r) is not None
                  and previous <= _created(r) < end]
     out["runs"] = _summary(in_window)
-    on_time = [r for r in in_window if _on_time(r, WATCH_DISPATCH_TITLE, previous)]
+    dispatched = [r for r in in_window if _on_time(r, WATCH_DISPATCH_TITLE, previous, end)]
+    on_time = [r for r in dispatched if not _without_work(r)]
     if on_time:
         out.update(judgement=ON_TIME, on_time_run=on_time[0]["id"],
-                   sentence=f"The watch's previous slot ({previous.isoformat()}) was started by the dispatcher: "
-                            f"{_named(on_time[:1])}.")
+                   sentence=f"The watch's previous slot ({previous.isoformat()}) was started by a dispatch in it "
+                            f"({WHO}): {_named(on_time[:1])}.")
         return out
+    if dispatched:
+        sentence = (f"The watch dispatched in its slot at {previous.isoformat()} did not finish: {_named(dispatched)}; "
+                    "a later watch says so after the fact.")
+    else:
+        sentence = (f"No watch was dispatched in its slot at {previous.isoformat()} (due until "
+                    f"{end.astimezone(previous.tzinfo).isoformat()}); a later watch says so after the fact.")
     out.update(judgement=NOT_STARTED, alert=True, action=SCHEDULER_HINT, key=f"scheduler:watch:{NOT_STARTED}",
-               sentence=(f"No watch was started by the on-time dispatcher in its slot at {previous.isoformat()} (the "
-                         f"{ds.DUE_MINUTES} minutes from it); a later watch says so after the fact."))
+               sentence=sentence)
     return out
 
 
-def _listing(github, workflow: str, since: datetime | None) -> tuple[list[dict] | None, str | None]:
+def _listing(github, workflow: str, since: datetime | None) -> tuple[list[dict] | None, str | None, bool]:
+    """(the runs, why there are none, whether GitHub was asked). Nothing the listing raises leaves here: a refused,
+    cut or garbled answer, or a fault in the transport, is that workflow's answer unknown with its reason."""
     if since is None:
-        return None, "the record gives no instant to list the runs from"
+        return None, "the record gives no instant to list the runs from", False
     if github is None:
-        return None, NO_TOKEN
+        return None, NO_TOKEN, False
     try:
-        return github.runs(workflow, since), None
+        return github.runs(workflow, since), None, True
     except ds.HTTPFailure as exc:
-        return None, f"the run listing answered HTTP {exc.status}"
+        return None, f"the run listing answered HTTP {exc.status}", True
     except ds.Incomplete:
-        return None, "the run listing could not be read whole"
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
-        return None, f"the run listing could not be read ({type(exc).__name__})"
+        return None, "the run listing could not be read whole", True
+    except Exception as exc:                           # any other fault of the transport: named by its type alone
+        return None, f"the run listing could not be read ({type(exc).__name__})", True
+
+
+def _listing_answer(github, calls: list[dict]) -> dict:
+    """The run listing's own answer: ``unreadable`` (an alert, standing) when a token was given and a listing it
+    asked for failed; ``read`` when every one asked was read; ``unknown`` with no token; ``not_asked`` when the
+    record gave no instant to ask from."""
+    asked = [c for c in calls if c["asked"]]
+    failed = [c for c in asked if not c["read"]]
+    out = {"judgement": UNKNOWN, "listing": UNKNOWN, "reason": NO_TOKEN, "calls": calls, "sentence": None,
+           "alert": False, "action": None, "key": None}
+    if github is None:
+        out["sentence"] = f"The Actions run listing was not read: {NO_TOKEN}."
+        return out
+    if failed:
+        named = "; ".join(f"{c['workflow']}: {c['reason']}" for c in failed)
+        out.update(judgement=UNREADABLE, listing=LISTING_FAILED, reason=named, alert=True, action=LISTING_HINT,
+                   key=f"scheduler:listing:{UNREADABLE}",
+                   sentence=(f"The Actions run listing could not be read for {len(failed)} of the {len(asked)} "
+                             f"workflows the watch asked about ({named}): their scheduler answers are unknown."))
+        return out
+    if asked:
+        out.update(judgement=LISTING_READ, listing=LISTING_READ, reason=None,
+                   sentence=f"The Actions run listing was read for {', '.join(c['workflow'] for c in asked)}.")
+        return out
+    why = "; ".join(sorted({c["reason"] for c in calls if c["reason"]})) or "nothing was due to be asked"
+    out.update(judgement=LISTING_NOT_ASKED, listing=LISTING_NOT_ASKED, reason=why,
+               sentence=f"The Actions run listing was not asked: {why}.")
+    return out
 
 
 def scheduler(record: dict, receipt: dict | None, record_raw: bytes, now: datetime, github=None) -> dict:
-    """The three scheduler answers. ``github`` is a ``tools/dispatch_schedule.GitHub`` (or a double); without one
-    every answer is ``unknown`` and nothing is asked."""
-    runs, why = _listing(github, EVENING_WORKFLOW, evening_since(record, now))
-    first = judge_evening(record, now, runs, why)
+    """The three scheduler answers and the listing's own. ``github`` is a ``tools/dispatch_schedule.GitHub`` (or
+    a double); without one every answer that needs the listing is ``unknown`` and nothing is asked."""
+    calls: list[dict] = []
+
+    def listing(workflow, since):
+        runs, why, asked = _listing(github, workflow, since)
+        calls.append({"workflow": workflow, "asked": asked, "read": runs is not None, "reason": why})
+        return runs, why
+
+    first = judge_evening(record, now, *listing(EVENING_WORKFLOW, evening_since(record, now)))
     window = freshness.morning_window(record)
     alert_at = morning_alert(window.get("applicable_session"))
     if alert_at is not None and now >= alert_at:
-        runs, why = _listing(github, MORNING_WORKFLOW, _instant(window.get("collection_starts_at")))
+        runs, why = listing(MORNING_WORKFLOW, _instant(window.get("collection_starts_at")))
     else:
         runs, why = None, None
     second = judge_morning(record, receipt, record_raw, now, runs, why)
     previous = previous_watch_slot(now)
-    runs, why = _listing(github, WATCH_WORKFLOW, previous) if previous is not None else (None, None)
+    runs, why = listing(WATCH_WORKFLOW, previous) if previous is not None else (None, None)
     third = judge_watch(now, runs, why, previous)
-    read = github is not None
-    return {"listing": "read" if read else UNKNOWN, "reason": None if read else NO_TOKEN,
+    answer = _listing_answer(github, calls)
+    return {"listing": answer["listing"], "reason": answer["reason"], "listing_answer": answer,
             "evening": first, "morning": second, "watch": third}
 
 
@@ -986,7 +1179,8 @@ def _alert(key: str, sentence: str, action: str | None, detail: str | None = Non
         subject = SUBJECTS[(f"scheduler:{name}", word)]
         scope = None
     elif family == "record":
-        subject, scope = UNREADABLE_SUBJECT, rest.split(":", 1)[1]
+        word, scope = rest.split(":", 1)
+        subject = UNKNOWN_SUBJECT if word == UNKNOWN else UNREADABLE_SUBJECT
     else:
         word, scope = rest.split(":", 1)
         subject = SUBJECTS[(family, word)].format(scope=scope)
@@ -1004,6 +1198,11 @@ def alerts_of(result: dict) -> list[dict]:
             out.append(_alert(block["key"], block["sentence"], block.get("action"), detail))
     sched = result.get("scheduler") or {}
     add(result["evening"])
+    if result["evening"].get("judgement") == UNKNOWN and result.get("record_sha256"):
+        # a record that cannot answer the evening question is said once per bytes: it is never green unsaid
+        add({"alert": True, "key": f"record:{UNKNOWN}:{result['record_sha256']}", "action": UNKNOWN_HINT,
+             "sentence": f"The record on main cannot say whether its next session is published: "
+                         f"{result['evening'].get('state_sentence')}"})
     add(sched.get("evening") or {})
     start_block = result.get("start") or {}
     record_run = sched.get("evening") or {}
@@ -1016,7 +1215,31 @@ def alerts_of(result: dict) -> list[dict]:
     add(morning_sched)
     add(result.get("handoff") or {})
     add(sched.get("watch") or {})
+    add(sched.get("listing_answer") or {})
     return out
+
+
+#: The standing keys and what clears each: the block that judges its condition answering that it does not hold.
+STANDING_KEYS = ("scheduler:evening:started_late", "scheduler:morning:started_late", "scheduler:watch:not_started",
+                 f"scheduler:listing:{UNREADABLE}")
+
+
+def clears_of(result: dict) -> list[str]:
+    """The standing keys whose condition this result judged and found not holding, and no alert of it raises: a
+    later return of one of them is a new condition, mailed at once."""
+    sched = result.get("scheduler") or {}
+    evening_sched = sched.get("evening") or {}
+    out = set()
+    if evening_sched.get("judgement") == ON_TIME or (
+            evening_sched.get("judgement") in (UNKNOWN, NOT_DUE) and (result.get("start") or {}).get("judgement") == ON_TIME):
+        out.add("scheduler:evening:started_late")
+    if (sched.get("morning") or {}).get("judgement") == ON_TIME:
+        out.add("scheduler:morning:started_late")
+    if (sched.get("watch") or {}).get("judgement") == ON_TIME:
+        out.add("scheduler:watch:not_started")
+    if sched.get("listing") == LISTING_READ:
+        out.add(f"scheduler:listing:{UNREADABLE}")
+    return sorted(out - {a["key"] for a in result.get("alerts") or []})
 
 
 def watch(docs: Path, now: datetime, github=None) -> dict:
@@ -1046,7 +1269,9 @@ def watch(docs: Path, now: datetime, github=None) -> dict:
               "evening": first, "morning": second, "start": third, "handoff": fourth, "scheduler": sched}
     result["alerts"] = alerts_of(result)
     result["alert"] = bool(result["alerts"])
-    result["exit_code"] = (EXIT_ALERT if result["alert"] else EXIT_UNKNOWN if first["judgement"] == UNKNOWN
+    result["clears"] = clears_of(result)
+    # the judgement decides the code, whatever is mailed: a record that cannot answer is 2 whatever else it flags
+    result["exit_code"] = (EXIT_UNKNOWN if first["judgement"] == UNKNOWN else EXIT_ALERT if result["alert"]
                            else EXIT_OK)
     return result
 
@@ -1067,87 +1292,159 @@ def lines(result: dict) -> list[str]:
     fourth = result.get("handoff") or {}
     if fourth:
         out.append(f"Handoff: {fourth['judgement']}. {fourth['sentence']}")
+    sched = result.get("scheduler") or {}
     for name in ("evening", "morning", "watch"):
-        block = (result.get("scheduler") or {}).get(name)
+        block = sched.get(name)
         if block:
             out.append(f"Scheduler {name}: {block['judgement']}. {block['sentence']}")
+    answer = sched.get("listing_answer")
+    if answer:
+        out.append(f"Scheduler listing: {answer['judgement']}. {answer['sentence']}")
     for entry in result.get("alerts") or []:
         out.append(f"Alert {entry['key']}: {entry['subject']}")
     out.append("Alert." if result["alert"] else "Nothing to flag.")
     return out
 
 
-def body(alert: dict, clock: str) -> str:
-    paragraphs = [alert["sentence"], alert["action"], alert.get("detail"), f"Watch clock: {clock}. {LATE_ITSELF}",
-                  f"Alert key: {alert['key']}. With its ledger the watch mails a key once, and again only after "
-                  f"{REPEAT_DAYS} days."]
+SUBJECT_PREFIX = "SpicyStock watch: "
+LEDGER_SENTENCE = (f"With its ledger the watch mails a key once, again only after {REPEAT_DAYS} days while it stands, "
+                   "and at once when a standing condition returns after clearing.")
+
+
+def _paragraphs(alert: dict) -> list[str]:
+    return [alert["sentence"], alert["action"], alert.get("detail"), f"Alert key: {alert['key']}."]
+
+
+def _html(paragraphs) -> str:
     return "".join(f"<p>{html.escape(text)}</p>" for text in paragraphs if text)
 
 
+def body(alert: dict, clock: str) -> str:
+    """One alert's message on its own: its sentence, action and key, then the watch's clock and the ledger rule."""
+    return _html(_paragraphs(alert) + [f"Watch clock: {clock}. {LATE_ITSELF}", LEDGER_SENTENCE])
+
+
+def digest(alerts: list[dict], clock: str) -> tuple[str, str]:
+    """The one message a run sends for its new alerts: (subject, HTML body). One alert is its own message; several
+    are one message with a part per alert, each under its own subject."""
+    if len(alerts) == 1:
+        return alerts[0]["subject"], body(alerts[0], clock)
+    first = alerts[0]["subject"].removeprefix(SUBJECT_PREFIX)
+    subject = f"{SUBJECT_PREFIX}{len(alerts)} alerts: {first}, and {len(alerts) - 1} more"
+    parts = "".join(f"<h3>{html.escape(a['subject'])}</h3>{_html(_paragraphs(a))}" for a in alerts)
+    return subject, parts + _html([f"Watch clock: {clock}. {LATE_ITSELF}", LEDGER_SENTENCE])
+
+
 def messages(result: dict) -> list[dict]:
-    """(key, subject, HTML body) for each alert the result carries; none otherwise."""
+    """(key, subject, HTML body) for each alert the result carries, as each would read on its own; a run sends
+    them as one message (``digest()``)."""
     return [{"key": a["key"], "subject": a["subject"], "body": body(a, result["clock"])} for a in result["alerts"]]
 
 
 # ------------------------------------------------------------------ ledger ---
-def read_ledger(path: Path | None, now: datetime) -> dict[str, datetime]:
-    """The keys mailed and when. Empty -- so every alert mails again -- when there is no ledger, or it is not a
-    regular file this watch wrote: too large, not JSON, another version, a key or an instant it cannot read, or
-    an instant after ``now``."""
+def _empty_ledger() -> dict:
+    return {"sent": {}, "cleared": {}}
+
+
+def read_ledger(path: Path | None, now: datetime) -> dict:
+    """The keys mailed and when, and when each one's condition last cleared: ``{"sent": {...}, "cleared": {...}}``.
+    Empty -- so every alert mails again -- when there is no ledger, or it is not a regular file this watch wrote:
+    too large, not JSON, another version, a key or an instant it cannot read, or an instant after ``now``."""
     if path is None:
-        return {}
+        return _empty_ledger()
     try:
         if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_LEDGER_BYTES:
-            return {}
+            return _empty_ledger()
         value = json.loads(path.read_bytes().decode("utf-8"))
     except (OSError, UnicodeDecodeError, ValueError, RecursionError):
-        return {}
-    if not isinstance(value, dict) or set(value) != {"version", "sent"} \
+        return _empty_ledger()
+    if not isinstance(value, dict) or set(value) != {"version", "sent", "cleared"} \
             or type(value["version"]) is not int or value["version"] != LEDGER_VERSION \
-            or not isinstance(value["sent"], dict):
-        return {}
-    out = {}
-    for key, at in value["sent"].items():
-        when = _instant(at)
-        if not isinstance(key, str) or not KEY_PATTERN.fullmatch(key) or when is None or when > now:
-            return {}
-        out[key] = when
+            or not isinstance(value["sent"], dict) or not isinstance(value["cleared"], dict):
+        return _empty_ledger()
+    out = _empty_ledger()
+    for part in ("sent", "cleared"):
+        for key, at in value[part].items():
+            when = _instant(at)
+            if not isinstance(key, str) or not KEY_PATTERN.fullmatch(key) or when is None or when > now:
+                return _empty_ledger()
+            out[part][key] = when
     return out
 
 
-def write_ledger(path: Path, sent: dict[str, datetime], now: datetime) -> None:
-    """The keys and instants alone, the ones older than ``REPEAT_DAYS`` dropped, written whole or not at all."""
-    keep = {key: at for key, at in sent.items() if now - at < timedelta(days=REPEAT_DAYS)}
+def write_ledger(path: Path, ledger: dict, now: datetime) -> None:
+    """The keys and instants alone, written whole or not at all: a key mailed more than ``REPEAT_DAYS`` ago is
+    dropped, and a clear is kept only beside the key it cleared."""
+    sent = {key: at for key, at in ledger["sent"].items() if now - at < timedelta(days=REPEAT_DAYS)}
+    cleared = {key: at for key, at in ledger["cleared"].items() if key in sent}
     payload = {"version": LEDGER_VERSION,
-               "sent": {key: keep[key].astimezone(timezone.utc).isoformat() for key in sorted(keep)}}
+               "sent": {key: sent[key].astimezone(timezone.utc).isoformat() for key in sorted(sent)},
+               "cleared": {key: cleared[key].astimezone(timezone.utc).isoformat() for key in sorted(cleared)}}
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
     temporary.write_text(json.dumps(payload, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     os.replace(temporary, path)
 
 
-def send(alerts: list[dict], now: datetime, ledger: Path | None, clock: str | None = None) -> dict:
-    """Mail each alert whose key the ledger does not hold from the last ``REPEAT_DAYS``, through the evening's
-    transport; remember a key only once its mail was accepted, and write the ledger only then."""
+def _wait(seconds: float) -> None:
+    clock.sleep(seconds)
+
+
+def repeat_of(key: str, ledger: dict, now: datetime) -> datetime | None:
+    """When ``key`` was mailed, if it is a repeat to drop: mailed within ``REPEAT_DAYS`` and its condition not
+    cleared since."""
+    before, cleared = ledger["sent"].get(key), ledger["cleared"].get(key)
+    if before is None or now - before >= timedelta(days=REPEAT_DAYS) or (cleared is not None and cleared > before):
+        return None
+    return before
+
+
+def send(alerts: list[dict], now: datetime, ledger: Path | None, clock: str | None = None,
+         cleared: list[str] | tuple = ()) -> dict:
+    """Mail every alert whose key is not a repeat (``repeat_of()``) in ONE message through the evening's transport,
+    trying a refused send once more after ``MAIL_RETRY_SECONDS``; remember the keys only once the message was
+    accepted, record the instant each of ``cleared`` cleared, and write the ledger only when either changed it."""
     clock = clock or now.astimezone(timezone.utc).isoformat()
-    sent = read_ledger(ledger, now)
-    outcome = {"mailed": [], "dropped": [], "failed": [], "ledger_written": False, "ledger_error": None}
+    held = read_ledger(ledger, now)
+    outcome = {"mailed": [], "dropped": [], "failed": [], "cleared": [], "attempts": 0, "ledger_written": False,
+               "ledger_error": None}
+    new = []
     for alert in alerts:
-        before = sent.get(alert["key"])
-        if before is not None and now - before < timedelta(days=REPEAT_DAYS):
+        before = repeat_of(alert["key"], held, now)
+        if before is not None:
             outcome["dropped"].append({"key": alert["key"], "mailed_at": before.astimezone(timezone.utc).isoformat()})
-            continue
+        else:
+            new.append(alert)
+    if new:
         from src import report  # the one send path; imported only when a message is owed
+        subject, text = digest(new, clock)
+        error = None
+        for attempt in range(2):
+            outcome["attempts"] += 1
+            try:
+                report.deliver(subject, text)
+                error = None
+                break
+            except Exception as exc:                   # a refused or failed send is tried once more, then not remembered
+                error = type(exc).__name__
+                if attempt == 0:
+                    _wait(MAIL_RETRY_SECONDS)
+        if error is not None:
+            outcome["failed"] = [{"key": alert["key"], "error": error} for alert in new]
+        else:
+            for alert in new:
+                held["sent"][alert["key"]] = now
+                held["cleared"].pop(alert["key"], None)
+                outcome["mailed"].append(alert["key"])
+    alerting = {alert["key"] for alert in alerts}
+    for key in cleared:
+        if key not in alerting and key in held["sent"] and not (
+                key in held["cleared"] and held["cleared"][key] > held["sent"][key]):
+            held["cleared"][key] = now
+            outcome["cleared"].append(key)
+    if (outcome["mailed"] or outcome["cleared"]) and ledger is not None:
         try:
-            report.deliver(alert["subject"], body(alert, clock))
-        except Exception as exc:                       # a refused or failed send is not remembered
-            outcome["failed"].append({"key": alert["key"], "error": type(exc).__name__})
-            continue
-        sent[alert["key"]] = now
-        outcome["mailed"].append(alert["key"])
-    if outcome["mailed"] and ledger is not None:
-        try:
-            write_ledger(ledger, sent, now)
+            write_ledger(ledger, held, now)
             outcome["ledger_written"] = True
         except OSError as exc:
             outcome["ledger_error"] = type(exc).__name__
@@ -1155,10 +1452,16 @@ def send(alerts: list[dict], now: datetime, ledger: Path | None, clock: str | No
 
 
 def outcome_lines(outcome: dict) -> list[str]:
-    out = [f"Mailed {key}." for key in outcome["mailed"]]
+    out = []
+    if outcome["mailed"]:
+        out.append(f"Mailed one message for {', '.join(outcome['mailed'])}"
+                   f"{' (after a refused first try)' if outcome['attempts'] > 1 else ''}.")
     out += [f"Not mailed again: {d['key']} was mailed at {d['mailed_at']}." for d in outcome["dropped"]]
-    out += [f"Mail failed for {f['key']} ({f['error']}); it is not remembered, so the next run mails it." for f in
-            outcome["failed"]]
+    if outcome["failed"]:
+        keys = ", ".join(f["key"] for f in outcome["failed"])
+        out.append(f"Mail failed twice for {keys} ({outcome['failed'][0]['error']}); it is not remembered, so the "
+                   "next run mails it. This run did not finish.")
+    out += [f"Cleared: {key}; its next return is mailed at once." for key in outcome["cleared"]]
     if outcome["ledger_error"]:
         out.append(f"The ledger could not be written ({outcome['ledger_error']}): the next run mails these again.")
     sent = len(outcome["mailed"])
@@ -1166,12 +1469,34 @@ def outcome_lines(outcome: dict) -> list[str]:
     return out
 
 
-def github_output(env, outcome: dict) -> None:
-    """Tell the workflow the ledger changed, so it saves it: ``ledger=written`` in ``$GITHUB_OUTPUT``."""
-    target = (env or {}).get("GITHUB_OUTPUT")
-    if target and outcome.get("ledger_written"):
+def _mail_word(outcome: dict | None) -> str:
+    if outcome is None:
+        return "not_asked"
+    for word in ("failed", "mailed", "dropped"):
+        if outcome[word]:
+            return word
+    return "none"
+
+
+def github_report(env, printed: list[str], alerts: list[dict], outcome: dict | None, code: int) -> None:
+    """In a workflow: the lines and the mail outcome in the job summary (``$GITHUB_STEP_SUMMARY``), and in
+    ``$GITHUB_OUTPUT`` the exit code, the alerts' keys, the mail outcome, ``ledger=written`` when the ledger
+    changed, and, as the last line, ``finished=true`` -- unless a message it owed was refused twice."""
+    env = env or {}
+    summary = env.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        text = printed + (outcome_lines(outcome) if outcome is not None else ["No mail was asked for."])
+        with open(summary, "a", encoding="utf-8") as handle:
+            handle.write("## Service watch\n\n```\n" + "\n".join(t.replace("`", "'") for t in text) + "\n```\n")
+    target = env.get("GITHUB_OUTPUT")
+    if target:
         with open(target, "a", encoding="utf-8") as handle:
-            handle.write("ledger=written\n")
+            handle.write(f"exit_code={code}\nalerts={','.join(alert['key'] for alert in alerts)}\n"
+                         f"mail={_mail_word(outcome)}\n")
+            if outcome is not None and outcome.get("ledger_written"):
+                handle.write("ledger=written\n")
+            if code != EXIT_UNFINISHED:
+                handle.write("finished=true\n")
 
 
 def github_from(env) -> ds.GitHub | None:
@@ -1187,9 +1512,11 @@ def main(argv: list[str] | None = None, env=None) -> int:
     parser.add_argument("--docs", type=Path, default=ROOT / "docs")
     parser.add_argument("--now", help="the clock to judge by, ISO-8601 with an offset (default: this machine's clock)")
     parser.add_argument("--json", action="store_true", help="print the result as JSON")
-    parser.add_argument("--mail", action="store_true", help="mail each alert through the evening's transport")
+    parser.add_argument("--mail", action="store_true", help="mail the run's new alerts, as one message, through the "
+                                                            "evening's transport")
     parser.add_argument("--ledger", type=Path, default=None,
-                        help="the sent-alert ledger: a key it holds is not mailed again for REPEAT_DAYS")
+                        help="the sent-alert ledger: a key it holds is not mailed again for REPEAT_DAYS unless it "
+                             "cleared in between")
     args = parser.parse_args(argv)
     now = _instant(args.now) if args.now else datetime.now(timezone.utc)
     if now is None:
@@ -1198,23 +1525,29 @@ def main(argv: list[str] | None = None, env=None) -> int:
     try:
         result = watch(args.docs, now, github_from(env))
     except Unreadable as exc:
-        print(f"Service watch: {exc}.", file=sys.stderr)
-        if not args.mail:
-            return EXIT_UNKNOWN
+        printed = [f"Service watch: {exc}."]
+        print(printed[0], file=sys.stderr)
         # the state in which the site itself can show no record: a person should hear of it, once per bytes
         alert = _alert(f"record:unreadable:{record_key(args.docs / DATA_FILE)}",
                        f"The record on main could not be read: {exc}.", None)
-        outcome = send([alert], now, args.ledger)
-        print("\n".join(outcome_lines(outcome)), file=sys.stderr)
-        github_output(env, outcome)
-        return EXIT_UNKNOWN if outcome["mailed"] or outcome["failed"] else EXIT_OK
-    print(json.dumps(result, indent=1, sort_keys=True) if args.json else "\n".join(lines(result)))
-    if not args.mail or not result["alert"]:
-        return result["exit_code"]
-    outcome = send(result["alerts"], now, args.ledger, result["clock"])
-    print("\n".join(outcome_lines(outcome)), file=sys.stderr)
-    github_output(env, outcome)
-    return EXIT_ALERT if outcome["mailed"] or outcome["failed"] else EXIT_OK
+        outcome, code = None, EXIT_UNKNOWN
+        if args.mail:
+            outcome = send([alert], now, args.ledger)
+            print("\n".join(outcome_lines(outcome)), file=sys.stderr)
+            code = EXIT_UNFINISHED if outcome["failed"] else EXIT_UNKNOWN
+        github_report(env, printed, [alert], outcome, code)
+        return code
+    printed = lines(result)
+    print(json.dumps(result, indent=1, sort_keys=True) if args.json else "\n".join(printed))
+    outcome, code = None, result["exit_code"]
+    if args.mail:
+        outcome = send(result["alerts"], now, args.ledger, result["clock"], cleared=result["clears"])
+        if any(outcome[name] for name in ("mailed", "dropped", "failed", "cleared")):
+            print("\n".join(outcome_lines(outcome)), file=sys.stderr)
+        if outcome["failed"]:
+            code = EXIT_UNFINISHED
+    github_report(env, printed, result["alerts"], outcome, code)
+    return code
 
 
 if __name__ == "__main__":
