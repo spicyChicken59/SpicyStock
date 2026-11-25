@@ -4,10 +4,11 @@ days; and that a tick starts each due slot once, repeats nothing, refuses to
 run without its token and names a refused request by its status alone."""
 from __future__ import annotations
 
+import http.client
 import json
 import logging
 import re
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -124,12 +125,76 @@ def test_a_half_day_keeps_every_slot():
     (at("2026-11-20", "21:50"), ["service-watch.yml@2026-11-20T21:50:00-05:00"]),
     (at("2026-11-20", "08:20", CT), ["morning.yml@2026-11-20T08:20:00-06:00"]),
     (at("2026-11-20", "08:25", CT), ["morning.yml@2026-11-20T08:20:00-06:00", "service-watch.yml@2026-11-20T08:25:00-06:00"]),
+    (at("2026-11-20", "08:29", CT), ["morning.yml@2026-11-20T08:20:00-06:00", "service-watch.yml@2026-11-20T08:25:00-06:00"]),
+    (at("2026-11-20", "08:30", CT), ["morning.yml@2026-11-20T08:20:00-06:00"]),        # the open: the watch is not due
+    (at("2026-11-20", "08:54", CT), []),
     (at("2026-11-20", "09:05", CT), ["service-watch.yml@2026-11-20T09:05:00-06:00"]),
     (at("2026-11-23", "00:05", CT), []),             # Monday just past midnight: Sunday's evening slots are over
     (at("2026-11-21", "18:21"), ["evening.yml@2026-11-21T18:20:00-05:00"]),      # Saturday: the recovery slot
 ])
 def test_a_slot_is_due_from_its_instant_for_the_due_window(now, expected):
     assert [s.key for s in ds.due(now)] == expected
+
+
+def test_the_pre_open_watch_slot_is_due_only_until_the_sessions_open():
+    """BEFORE_OPEN: the 8:25 AM CT watch is due until the 8:30 AM CT open, in both seasons and on a half day, and
+    every other slot keeps DUE_MINUTES."""
+    assert ds.BEFORE_OPEN == frozenset({("service-watch.yml", "America/Chicago", "08:25")})
+    for day in ("2026-11-20", "2026-07-15", "2026-11-27", "2027-03-15"):
+        opens = sessions.hours(date.fromisoformat(day))[0]
+        slots = ds.slots_on(date.fromisoformat(day))
+        (pre,) = [s for s in slots if s.workflow == "service-watch.yml" and s.at.strftime("%H:%M") == "08:25"]
+        assert pre.end == opens == at(day, "08:30", CT) and ds.slot_end("service-watch.yml", pre.at) == opens
+        assert pre.due(opens - timedelta(seconds=1)) and not pre.due(opens)
+        for other in slots:
+            if other is not pre:
+                assert other.end - other.at == timedelta(minutes=ds.DUE_MINUTES), other.key
+    # a time that is no slot of the workflow keeps the plain window
+    assert ds.slot_end("service-watch.yml", at("2026-11-20", "08:26", CT)) == at("2026-11-20", "08:56", CT)
+
+
+def test_the_watch_is_never_dispatched_in_the_tick_that_dispatched_the_morning_check():
+    gh = FakeGitHub()
+    gh.now = at("2026-11-20", "08:26", CT)                       # a catch-up tick: both are due
+    assert ds.tick(gh.now, gh) == ds.EXIT_OK
+    assert [c[1].split("/")[-2] for c in gh.calls if c[0] == "POST"] == ["morning.yml"]
+    gh.now = at("2026-11-20", "08:27", CT)                       # the next tick: the watch, before the open
+    assert ds.tick(gh.now, gh) == ds.EXIT_OK
+    assert [c[1].split("/")[-2] for c in gh.calls if c[0] == "POST"] == ["morning.yml", "service-watch.yml"]
+
+
+def test_a_catch_up_at_the_last_minute_before_the_open_leaves_the_watch_to_its_next_slot():
+    gh = FakeGitHub()
+    gh.now = at("2026-11-20", "08:29", CT)
+    assert ds.tick(gh.now, gh) == ds.EXIT_OK
+    gh.now = at("2026-11-20", "08:30", CT)                       # the open: never dispatched at or after it
+    assert ds.tick(gh.now, gh) == ds.EXIT_OK
+    assert [c[1].split("/")[-2] for c in gh.calls if c[0] == "POST"] == ["morning.yml"]
+
+
+def test_a_morning_check_someone_else_started_does_not_hold_the_watch_back():
+    gh = FakeGitHub()
+    gh.runs["morning.yml"] = [(at("2026-11-20", "08:21", CT), 777)]
+    gh.now = at("2026-11-20", "08:26", CT)
+    assert ds.tick(gh.now, gh) == ds.EXIT_OK
+    assert [c[1].split("/")[-2] for c in gh.calls if c[0] == "POST"] == ["service-watch.yml"]
+
+
+@pytest.mark.parametrize("raises", [http.client.IncompleteRead(b"cut"), http.client.BadStatusLine("garbled"),
+                                    http.client.RemoteDisconnected("closed"), ConnectionResetError(), TimeoutError()])
+def test_a_transport_fault_is_a_failed_slot_named_by_its_type_and_never_stops_the_tick(raises, caplog):
+    class Faulty(FakeGitHub):
+        def send(self, method, path, body=None):
+            if "/evening.yml/" in path:
+                raise raises
+            return super().send(method, path, body)
+    gh = Faulty()
+    gh.now = at("2026-11-20", "19:21")                           # the evening's second slot and the 7:00 PM watch
+    with caplog.at_level(logging.INFO, logger="spicystock.dispatch"):
+        assert ds.tick(gh.now, gh) == ds.EXIT_FAILED
+    assert f"evening.yml@2026-11-20T19:20:00-05:00 not started: {type(raises).__name__}" in caplog.text
+    assert [c[1].split("/")[-2] for c in gh.calls if c[0] == "POST"] == ["service-watch.yml"]   # the rest ran
+    assert TOKEN not in caplog.text
 
 
 def test_a_clock_without_an_offset_is_refused():
@@ -290,6 +355,12 @@ def test_the_run_listing_asks_for_main_since_an_instant_and_keeps_only_its_field
     {"total_count": 1, "workflow_runs": [listed(created_at="2026-11-20 14:20")]},
     {"total_count": 1, "workflow_runs": [listed(run_attempt=0)]},
     {"total_count": 1, "workflow_runs": [listed(conclusion=7)]},
+    {"total_count": 1, "workflow_runs": [listed(head_branch=7)]},
+    {"total_count": 1, "workflow_runs": [listed(display_title=None)]},
+    {"total_count": 1, "workflow_runs": [listed(event=None)]},
+    {"total_count": 1, "workflow_runs": [listed(status=3)]},
+    {"total_count": -1, "workflow_runs": []},
+    {"total_count": True, "workflow_runs": []},
     {"total_count": 1, "workflow_runs": ["a run"]},
     {"total_count": 1, "workflow_runs": {"id": 1}},
     [],

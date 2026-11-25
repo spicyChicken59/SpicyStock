@@ -21,7 +21,11 @@ calendar the run itself reads), and does nothing else:
 * ``service-watch.yml`` at 19:00 and 21:50 America/New_York and at 06:00,
   08:25 and 09:05 America/Chicago: after the evening's first start is due,
   after its last, before the open, five minutes after the morning check
-  (``tools/service_watch.MORNING_ALERT_CT``) and after the entry window.
+  (``tools/service_watch.MORNING_ALERT_CT``) and after the entry window. The
+  08:25 slot is due only until the session's open (``BEFORE_OPEN``), never
+  at or after it, and a watch slot due in the tick that dispatched the
+  morning check waits for the next tick (``WAITS_FOR``): the watch is never
+  started in the same tick as the check it judges.
 
 GitHub's own crons stay in each workflow as the backup; every workflow's
 guard already makes a second start harmless.
@@ -32,7 +36,8 @@ file but its optional ``--state`` ledger, mails nothing, and logs only the
 workflow, the slot, the run id GitHub gives the dispatch and an HTTP status;
 never a token, a header or a response body.
 
-Idempotent: a slot is due from its instant for ``DUE_MINUTES``, and before
+Idempotent: a slot is due from its instant for ``DUE_MINUTES`` (a
+``BEFORE_OPEN`` slot until the session's open), and before
 it asks for a run it reads the workflow's runs created since the slot by a
 dispatch (``event=workflow_dispatch``). One there -- this tool's on an earlier
 tick, or anyone's -- means the slot is done; with ``--state`` the ledger says
@@ -51,6 +56,7 @@ configuration is refused (no token, a clock without an offset).
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import logging
 import os
@@ -92,6 +98,13 @@ SLOTS: tuple[tuple[str, dict[str, str], ZoneInfo, tuple[str, ...]], ...] = (
 #: opens, and does nothing otherwise (``.github/workflows/evening.yml``): on a
 #: weekend or a holiday that is a missed session's one recovery before the open.
 EVERY_DAY = frozenset({"evening.yml"})
+#: Slots due only until the session's open, never at or after it: (workflow, zone, local time). The watch's
+#: 08:25 CT slot judges the morning check before the 8:30 CT open; a tick that reaches it later (a restart, a
+#: catch-up) leaves it to the 09:05 slot.
+BEFORE_OPEN = frozenset({("service-watch.yml", "America/Chicago", "08:25")})
+#: A slot of the first workflow due in the same tick as a fresh dispatch of the second waits for the next
+#: tick: the watch is never started in the tick that started the morning check it judges.
+WAITS_FOR = {"service-watch.yml": "morning.yml"}
 #: One page of the run listing ``GitHub.runs()`` reads. A page this full may not be
 #: all of it, so it is never read as complete.
 LIST_PAGE = 50
@@ -129,13 +142,19 @@ class Slot:
     workflow: str
     inputs: tuple[tuple[str, str], ...]
     at: datetime
+    #: where the due window ends: ``DUE_MINUTES`` after ``at`` unless the slot is in ``BEFORE_OPEN``
+    until: datetime | None = None
 
     @property
     def key(self) -> str:
         return f"{self.workflow}@{self.at.isoformat()}"
 
+    @property
+    def end(self) -> datetime:
+        return self.until if self.until is not None else self.at + timedelta(minutes=DUE_MINUTES)
+
     def due(self, now: datetime) -> bool:
-        return self.at <= now < self.at + timedelta(minutes=DUE_MINUTES)
+        return self.at <= now < self.end
 
 
 def _aware(now: datetime) -> datetime:
@@ -163,12 +182,25 @@ def slots_on(day: date) -> list[Slot]:
             continue
         for hhmm in times:
             local = datetime.combine(day, time.fromisoformat(hhmm), tzinfo=zone)
-            out.append(Slot(workflow, tuple(sorted(inputs.items())), local))
+            # a BEFORE_OPEN slot is due until the session opens; one at or after the open is never due
+            until = max(local, sessions.hours(day)[0]) if (workflow, zone.key, hhmm) in BEFORE_OPEN else None
+            out.append(Slot(workflow, tuple(sorted(inputs.items())), local, until))
     return sorted(out, key=lambda s: s.at)
 
 
+def slot_end(workflow: str, at: datetime) -> datetime:
+    """Where the due window of ``workflow``'s slot at ``at`` ends: its own ``Slot.end`` when ``at`` is one of its
+    slots, else ``DUE_MINUTES`` after it."""
+    at = _aware(at)
+    for zone in (ET, CT):
+        for slot in slots_on(at.astimezone(zone).date()):
+            if slot.workflow == workflow and slot.at == at:
+                return slot.end
+    return at + timedelta(minutes=DUE_MINUTES)
+
+
 def due(now: datetime) -> list[Slot]:
-    """The slots due at ``now``: their instant passed, by less than DUE_MINUTES."""
+    """The slots due at ``now``: their instant passed, and their due window (``Slot.end``) not yet."""
     now = _aware(now)
     days = {(now - timedelta(minutes=DUE_MINUTES)).astimezone(z).date() for z in (ET, CT)}
     days |= {now.astimezone(z).date() for z in (ET, CT)}
@@ -287,8 +319,12 @@ def tick(now: datetime, github: GitHub, state_path: Path | None = None) -> int:
     """Start every due slot not already started. Returns an exit code."""
     state = read_state(state_path)
     failed = False
+    dispatched: set[str] = set()                   # the workflows this tick dispatched
     for slot in due(now):
         if slot.key in state["started"]:
+            continue
+        if WAITS_FOR.get(slot.workflow) in dispatched:
+            log.info("%s waits a tick: %s was dispatched in this one", slot.key, WAITS_FOR[slot.workflow])
             continue
         try:
             existing = github.runs_since(slot)
@@ -297,13 +333,15 @@ def tick(now: datetime, github: GitHub, state_path: Path | None = None) -> int:
                 log.info("%s already started: run %s", slot.key, existing[0])
                 continue
             github.dispatch(slot)
+            dispatched.add(slot.workflow)
             started = github.runs_since(slot)
             state["started"][slot.key] = started[0] if started else None
             log.info("%s dispatched: run %s", slot.key, started[0] if started else "not yet listed")
         except HTTPFailure as exc:
             failed = True
             log.error("%s not started: %s", slot.key, exc)
-        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException) as exc:
+            # a transport fault (a refused connection, a cut or garbled answer) is named by its type alone
             failed = True
             log.error("%s not started: %s", slot.key, type(exc).__name__)
     write_state(state_path, state, now)
