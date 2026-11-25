@@ -46,7 +46,8 @@ class FakeGitHub(ds.GitHub):
             return 204, b""
         since = datetime.strptime(re.search(r"created=%3E%3D([^&]+)", path).group(1).replace("%3A", ":"),
                                   "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
-        listed = [{"id": i} for at, i in sorted(self.runs.get(workflow, []), reverse=True) if at >= since]
+        listed = [{"id": i, "created_at": at.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")}
+                  for at, i in sorted(self.runs.get(workflow, []), reverse=True) if at >= since]
         return 200, json.dumps({"workflow_runs": listed}).encode()
 
 
@@ -153,31 +154,109 @@ def test_the_pre_open_watch_slot_is_due_only_until_the_sessions_open():
     assert ds.slot_end("service-watch.yml", at("2026-11-20", "08:26", CT)) == at("2026-11-20", "08:56", CT)
 
 
-def test_the_watch_is_never_dispatched_in_the_tick_that_dispatched_the_morning_check():
-    gh = FakeGitHub()
-    gh.now = at("2026-11-20", "08:26", CT)                       # a catch-up tick: both are due
-    assert ds.tick(gh.now, gh) == ds.EXIT_OK
-    assert [c[1].split("/")[-2] for c in gh.calls if c[0] == "POST"] == ["morning.yml"]
-    gh.now = at("2026-11-20", "08:27", CT)                       # the next tick: the watch, before the open
-    assert ds.tick(gh.now, gh) == ds.EXIT_OK
-    assert [c[1].split("/")[-2] for c in gh.calls if c[0] == "POST"] == ["morning.yml", "service-watch.yml"]
+def posted(gh) -> list[tuple[str, str]]:
+    """(workflow, the fake's clock) of every dispatch the tool asked for, in order."""
+    return [(path.split("/")[-2], when) for (method, path, _), when in zip(gh.calls, gh.clocks) if method == "POST"]
 
 
-def test_a_catch_up_at_the_last_minute_before_the_open_leaves_the_watch_to_its_next_slot():
-    gh = FakeGitHub()
-    gh.now = at("2026-11-20", "08:29", CT)
-    assert ds.tick(gh.now, gh) == ds.EXIT_OK
-    gh.now = at("2026-11-20", "08:30", CT)                       # the open: never dispatched at or after it
-    assert ds.tick(gh.now, gh) == ds.EXIT_OK
-    assert [c[1].split("/")[-2] for c in gh.calls if c[0] == "POST"] == ["morning.yml"]
+class ClockedGitHub(FakeGitHub):
+    """FakeGitHub that remembers the clock each call was made at."""
+
+    def __init__(self, answers=None):
+        super().__init__(answers)
+        self.clocks: list[str] = []
+
+    def send(self, method, path, body=None):
+        self.clocks.append(self.now.astimezone(CT).strftime("%H:%M"))
+        return super().send(method, path, body)
 
 
-def test_a_morning_check_someone_else_started_does_not_hold_the_watch_back():
-    gh = FakeGitHub()
+def ticks(gh, start: str, end: str, state=None, day="2026-11-20"):
+    """A tick every minute from ``start`` to ``end`` (both inclusive, Chicago), as the loop runs them."""
+    minute = at(day, start, CT)
+    while minute <= at(day, end, CT):
+        gh.now = minute
+        assert ds.tick(minute, gh, state=state) == ds.EXIT_OK
+        minute += timedelta(minutes=1)
+
+
+def test_the_pre_open_watch_waits_wait_seconds_after_a_catch_up_morning_dispatch():
+    """A catch-up at 8:26: the check is dispatched then, and the watch WAIT_SECONDS later, before the open."""
+    assert ds.WAIT_SECONDS == 180 and ds.WAITS_FOR == {"service-watch.yml": "morning.yml"}
+    gh = ClockedGitHub()
+    ticks(gh, "08:26", "08:31", state=ds._fresh_state())
+    assert posted(gh) == [("morning.yml", "08:26"), ("service-watch.yml", "08:29")]
+
+
+def test_a_catch_up_that_leaves_less_than_wait_seconds_before_the_open_leaves_the_watch_to_its_next_slot():
+    """A catch-up at 8:28: three minutes after it is past the 8:30 open, and the watch is never dispatched at or
+    after the open: the 9:05 slot judges the morning."""
+    gh = ClockedGitHub()
+    ticks(gh, "08:28", "08:35", state=ds._fresh_state())
+    assert posted(gh) == [("morning.yml", "08:28")]
+    ticks(gh, "09:05", "09:06", state=ds._fresh_state())
+    assert posted(gh) == [("morning.yml", "08:28"), ("service-watch.yml", "09:05")]
+
+
+def test_the_wait_is_read_off_the_listing_when_the_ledger_does_not_hold_the_dispatch():
+    """A restart with no ledger: the morning dispatch the tool made is read off GitHub's listing, by its own
+    created_at; one whose instant cannot be read holds the watch back as if just made."""
+    gh = ClockedGitHub()
+    gh.runs["morning.yml"] = [(at("2026-11-20", "08:24", CT), 777)]          # anyone's dispatch, listed
+    ticks(gh, "08:25", "08:29")
+    assert posted(gh) == [("service-watch.yml", "08:27")]
+
+    class Undated(ClockedGitHub):
+        def send(self, method, path, body=None):
+            status, raw = super().send(method, path, body)
+            if method == "GET" and "/morning.yml/" in path:
+                answer = json.loads(raw)
+                for row in answer["workflow_runs"]:
+                    row.pop("created_at")
+                raw = json.dumps(answer).encode()
+            return status, raw
+    gh = Undated()
+    gh.runs["morning.yml"] = [(at("2026-11-20", "08:21", CT), 778)]
+    ticks(gh, "08:25", "08:31")
+    assert posted(gh) == []
+
+
+def test_a_morning_check_someone_else_started_on_time_does_not_hold_the_watch_back():
+    gh = ClockedGitHub()
     gh.runs["morning.yml"] = [(at("2026-11-20", "08:21", CT), 777)]
-    gh.now = at("2026-11-20", "08:26", CT)
-    assert ds.tick(gh.now, gh) == ds.EXIT_OK
-    assert [c[1].split("/")[-2] for c in gh.calls if c[0] == "POST"] == ["service-watch.yml"]
+    ticks(gh, "08:25", "08:26")
+    assert posted(gh) == [("service-watch.yml", "08:25")]
+
+
+def test_the_wait_asks_github_nothing_for_a_watch_slot_far_from_the_morning():
+    """The 9:05 AM CT and evening watch slots are past the morning slot's due window and the wait after it: they
+    ask GitHub nothing about the morning check."""
+    for when, zone in (("09:05", CT), ("19:00", ET), ("21:50", ET)):
+        gh = FakeGitHub()
+        gh.now = at("2026-11-20", when, zone)
+        assert ds.tick(gh.now, gh) == ds.EXIT_OK
+        assert not [path for _, path, _ in gh.calls if "/morning.yml/" in path], when
+
+
+def test_the_loop_keeps_its_ledger_in_memory_so_a_dispatch_not_yet_listed_is_not_made_twice():
+    """GitHub lists a dispatch minutes late: with the ledger the loop holds, the check is dispatched once and the
+    watch still waits WAIT_SECONDS after it; without one, each tick would read no run and dispatch again."""
+    class Lagging(ClockedGitHub):
+        def send(self, method, path, body=None):
+            status, raw = super().send(method, path, body)
+            if method == "GET" and self.now < at("2026-11-20", "08:40", CT):
+                raw = json.dumps({"workflow_runs": []}).encode()            # nothing listed yet
+            return status, raw
+    gh = Lagging()
+    memory = ds._fresh_state()
+    ticks(gh, "08:25", "08:31", state=memory)
+    assert posted(gh) == [("morning.yml", "08:25"), ("service-watch.yml", "08:28")]
+    assert set(memory["dispatched"]) == {"morning.yml@2026-11-20T08:20:00-06:00",
+                                         "service-watch.yml@2026-11-20T08:25:00-06:00"}
+    # the same lag without a ledger: the morning check is dispatched again on every tick, as it was before
+    gh = Lagging()
+    ticks(gh, "08:25", "08:27")
+    assert [w for w, _ in posted(gh)].count("morning.yml") == 3
 
 
 @pytest.mark.parametrize("raises", [http.client.IncompleteRead(b"cut"), http.client.BadStatusLine("garbled"),

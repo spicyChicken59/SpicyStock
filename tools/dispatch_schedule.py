@@ -23,9 +23,10 @@ calendar the run itself reads), and does nothing else:
   after its last, before the open, five minutes after the morning check
   (``tools/service_watch.MORNING_ALERT_CT``) and after the entry window. The
   08:25 slot is due only until the session's open (``BEFORE_OPEN``), never
-  at or after it, and a watch slot due in the tick that dispatched the
-  morning check waits for the next tick (``WAITS_FOR``): the watch is never
-  started in the same tick as the check it judges.
+  at or after it, and it is not dispatched until ``WAIT_SECONDS`` after the
+  newest dispatch of the morning check it judges (``WAITS_FOR``), this
+  tool's or anyone's: a catch-up that starts the check late starts the watch
+  late too, or leaves it to the 09:05 slot.
 
 GitHub's own crons stay in each workflow as the backup; every workflow's
 guard already makes a second start harmless.
@@ -40,14 +41,16 @@ Idempotent: a slot is due from its instant for ``DUE_MINUTES`` (a
 ``BEFORE_OPEN`` slot until the session's open), and before
 it asks for a run it reads the workflow's runs created since the slot by a
 dispatch (``event=workflow_dispatch``). One there -- this tool's on an earlier
-tick, or anyone's -- means the slot is done; with ``--state`` the ledger says
-so without asking GitHub again. A repeat tick, a restart and a second copy
-of the scheduler therefore start a slot's run at most once each, barring two
-copies asking in the same second.
+tick, or anyone's -- means the slot is done; the ledger (``--state``, or held
+in memory by ``loop`` when no file is given) says so without asking GitHub
+again, and so covers a dispatch GitHub has not listed yet. A repeat tick, a
+restart and a second copy of the scheduler therefore start a slot's run at
+most once each, barring two copies asking in the same second, or a restart
+before a dispatch it made is listed.
 
     python tools/dispatch_schedule.py plan --day 2026-11-20    # the day's slots, no network
     python tools/dispatch_schedule.py tick [--now ISO] [--state FILE]
-    python tools/dispatch_schedule.py loop [--state FILE]      # a tick every minute (Railway)
+    python tools/dispatch_schedule.py loop [--state FILE]      # a tick every minute (Railway), its ledger in memory
 
 Exit codes: 0 every due slot was started or was already started (or none
 was due); 1 a dispatch or a listing failed (named by its status); 2 the
@@ -102,9 +105,13 @@ EVERY_DAY = frozenset({"evening.yml"})
 #: 08:25 CT slot judges the morning check before the 8:30 CT open; a tick that reaches it later (a restart, a
 #: catch-up) leaves it to the 09:05 slot.
 BEFORE_OPEN = frozenset({("service-watch.yml", "America/Chicago", "08:25")})
-#: A slot of the first workflow due in the same tick as a fresh dispatch of the second waits for the next
-#: tick: the watch is never started in the tick that started the morning check it judges.
+#: A slot of the first workflow is not dispatched until ``WAIT_SECONDS`` after the newest dispatch of the second
+#: created since that workflow's latest slot on the same day: the watch judges the morning check it waits for.
 WAITS_FOR = {"service-watch.yml": "morning.yml"}
+#: The morning check's receipts landed on main 88 to 94 seconds (23 October 2026) and 97 to 103 seconds (4 November
+#: 2026) after its dispatch was created (CLAUDE.md), and the watch reads main at its checkout: three minutes covers
+#: them, with the watch's own start on top.
+WAIT_SECONDS = 180
 #: One page of the run listing ``GitHub.runs()`` reads. A page this full may not be
 #: all of it, so it is never read as complete.
 LIST_PAGE = 50
@@ -234,18 +241,24 @@ class GitHub:
         except urllib.error.HTTPError as exc:
             return exc.code, b""
 
-    def runs_since(self, slot: Slot) -> list[int]:
-        """The ids of the workflow's dispatched runs created at or after the slot."""
+    def dispatches_since(self, workflow: str, since: datetime) -> list[tuple[int, datetime | None]]:
+        """(id, ``created_at``) of the workflow's dispatched runs created at or after ``since``, newest first as
+        GitHub lists them; the instant is None when the answer does not carry one this can read."""
         query = urllib.parse.urlencode({"event": "workflow_dispatch", "per_page": 5,
-                                        "created": ">=" + slot.at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")})
-        status, raw = self.send("GET", f"/repos/{self.repository}/actions/workflows/{slot.workflow}/runs?{query}")
+                                        "created": ">=" + since.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")})
+        status, raw = self.send("GET", f"/repos/{self.repository}/actions/workflows/{workflow}/runs?{query}")
         if status != 200:
-            raise HTTPFailure(status, f"listing {slot.workflow} runs")
+            raise HTTPFailure(status, f"listing {workflow} runs")
         try:
             runs = json.loads(raw).get("workflow_runs") or []
-            return [int(r["id"]) for r in runs if isinstance(r, dict) and isinstance(r.get("id"), int)]
+            return [(int(r["id"]), _created(r.get("created_at"))) for r in runs
+                    if isinstance(r, dict) and isinstance(r.get("id"), int)]
         except (ValueError, AttributeError, TypeError):
-            raise HTTPFailure(status, f"listing {slot.workflow} runs (an unreadable answer)") from None
+            raise HTTPFailure(status, f"listing {workflow} runs (an unreadable answer)") from None
+
+    def runs_since(self, slot: Slot) -> list[int]:
+        """The ids of the workflow's dispatched runs created at or after the slot."""
+        return [run_id for run_id, _ in self.dispatches_since(slot.workflow, slot.at)]
 
     def runs(self, workflow: str, since: datetime) -> list[dict]:
         """The workflow's runs on ``REF`` created at or after ``since``, every event,
@@ -290,41 +303,79 @@ class GitHub:
 
 
 # ---------------------------------------------------------------- ledger ----
+def _fresh_state() -> dict:
+    """``started``: each slot's run id (None when not yet listed); ``dispatched``: when this tool dispatched it."""
+    return {"version": VERSION, "started": {}, "dispatched": {}}
+
+
 def read_state(path: Path | None) -> dict:
     if path is None or not path.exists():
-        return {"version": VERSION, "started": {}}
+        return _fresh_state()
     try:
         state = json.loads(path.read_text())
-        if state.get("version") == VERSION and isinstance(state.get("started"), dict):
+        if state.get("version") == VERSION and isinstance(state.get("started"), dict) \
+                and isinstance(state.get("dispatched", {}), dict):
+            state.setdefault("dispatched", {})
             return state
     except (OSError, ValueError, AttributeError):
         pass
     log.warning("dispatch ledger %s unreadable; starting from GitHub's own runs", path)
-    return {"version": VERSION, "started": {}}
+    return _fresh_state()
+
+
+def _slot_at(key: str) -> datetime | None:
+    try:
+        return _created(key.split("@", 1)[1])
+    except IndexError:
+        return None
+
+
+def _prune(state: dict, now: datetime) -> None:
+    keep = now - timedelta(days=7)                 # a week of slots is enough to answer any repeat
+    for part in ("started", "dispatched"):
+        state[part] = {k: v for k, v in state.get(part, {}).items()
+                       if (at := _slot_at(k)) is not None and at >= keep}
 
 
 def write_state(path: Path | None, state: dict, now: datetime) -> None:
+    _prune(state, now)
     if path is None:
         return
-    keep = now - timedelta(days=7)                 # a week of slots is enough to answer any repeat
-    state["started"] = {k: v for k, v in state["started"].items()
-                        if datetime.fromisoformat(k.split("@", 1)[1]) >= keep}
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(state, sort_keys=True, indent=1) + "\n")
     tmp.replace(path)
 
 
+def _waited_for(slot: Slot, now: datetime, github: GitHub, state: dict) -> datetime | None:
+    """The newest dispatch of the workflow ``slot`` waits for (``WAITS_FOR``), when it was created less than
+    ``WAIT_SECONDS`` before ``now``: this tool's own, from its ledger, or anyone's, from GitHub's listing, since
+    that workflow's slot on the same day, while that slot is due or was due less than ``WAIT_SECONDS`` ago. None
+    when there is nothing to wait for (and then GitHub is not asked)."""
+    upstream = WAITS_FOR.get(slot.workflow)
+    if upstream is None:
+        return None
+    wait = timedelta(seconds=WAIT_SECONDS)
+    earlier = [s for s in slots_on(slot.at.date()) if s.workflow == upstream and s.at <= now < s.end + wait]
+    if not earlier:
+        return None
+    latest = earlier[-1]
+    instants = [at for key in [s.key for s in earlier] if (at := _created(state["dispatched"].get(key))) is not None]
+    # a listed dispatch whose instant cannot be read is taken as just made: the watch waits rather than guesses
+    instants += [created if created is not None else now
+                 for _, created in github.dispatches_since(upstream, latest.at)]
+    newest = max(instants, default=None)
+    return newest if newest is not None and now - newest < wait else None
+
+
 # ------------------------------------------------------------------ tick ----
-def tick(now: datetime, github: GitHub, state_path: Path | None = None) -> int:
-    """Start every due slot not already started. Returns an exit code."""
-    state = read_state(state_path)
+def tick(now: datetime, github: GitHub, state_path: Path | None = None, state: dict | None = None) -> int:
+    """Start every due slot not already started. Returns an exit code. ``state`` is a ledger the caller holds in
+    memory (``loop`` without ``--state``); otherwise it is read from ``state_path`` and written back."""
+    state = read_state(state_path) if state is None else state
+    state.setdefault("dispatched", {})
     failed = False
-    dispatched: set[str] = set()                   # the workflows this tick dispatched
     for slot in due(now):
         if slot.key in state["started"]:
-            continue
-        if WAITS_FOR.get(slot.workflow) in dispatched:
-            log.info("%s waits a tick: %s was dispatched in this one", slot.key, WAITS_FOR[slot.workflow])
             continue
         try:
             existing = github.runs_since(slot)
@@ -332,8 +383,13 @@ def tick(now: datetime, github: GitHub, state_path: Path | None = None) -> int:
                 state["started"][slot.key] = existing[0]
                 log.info("%s already started: run %s", slot.key, existing[0])
                 continue
+            waited = _waited_for(slot, now, github, state)
+            if waited is not None:
+                log.info("%s waits: %s was dispatched at %s, less than %s seconds ago", slot.key,
+                         WAITS_FOR[slot.workflow], waited.isoformat(), WAIT_SECONDS)
+                continue
             github.dispatch(slot)
-            dispatched.add(slot.workflow)
+            state["dispatched"][slot.key] = now.isoformat()
             started = github.runs_since(slot)
             state["started"][slot.key] = started[0] if started else None
             log.info("%s dispatched: run %s", slot.key, started[0] if started else "not yet listed")
@@ -376,8 +432,10 @@ def main(argv=None, env=None) -> int:
         github = GitHub(token_from(env))
         if args.command == "tick":
             return tick(_aware(args.now or datetime.now(timezone.utc)), github, args.state)
+        # without a file the loop keeps its ledger in memory: a dispatch it made is known before GitHub lists it
+        memory = None if args.state is not None else _fresh_state()
         while True:                                   # pragma: no cover - the service's own loop
-            tick(datetime.now(timezone.utc), github, args.state)
+            tick(datetime.now(timezone.utc), github, args.state, memory)
             clock.sleep(TICK_SECONDS - datetime.now(timezone.utc).second % TICK_SECONDS)
     except Refused as exc:
         log.error("refused: %s", exc)
