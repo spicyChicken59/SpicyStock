@@ -1701,3 +1701,209 @@ def test_the_ledger_is_no_longer_than_the_gate_keeps():
     assert gl.faults(data) == ["run.go_live ledger is not one row a session, oldest first, each before tonight"]
     ledger(block["ledger"][1:])
     assert len(block["ledger"]) == gl.LEDGER_MAX and gl.faults(data) == []
+
+
+# ------------------------------------ the calendar a reader without the library has --
+def test_the_archived_schedule_gives_the_pinned_calendars_answer_wherever_it_reaches():
+    """The publication gate installs no package, so its validator reads the
+    record's own archived schedule. Inside the schedule each answer is the
+    pinned calendar's; where the session asked for lies outside it, or the day
+    itself does, the answer is None, never a guess."""
+    from src import sessions
+    data = page("full")
+    cal = gl.ArchivedCalendar(data)
+    schedule = data["run"]["calendar"]["schedule"]
+    start, through = date.fromisoformat(schedule["start"]), date.fromisoformat(schedule["through"])
+    days = [date.fromisoformat(r["session"]) for r in schedule["sessions"]]
+    assert cal.days == days and len(days) > 40 and (cal.start, cal.through) == (start, through)
+    said = unsaid = 0
+    day = start - timedelta(days=4)
+    while day <= through + timedelta(days=4):
+        before, after = sessions.previous_session(day), sessions.next_sessions(day, 1)[0]
+        inside = start <= day <= through
+        assert cal.previous(day) == (before if inside and before >= start else None), day
+        assert cal.next(day) == (after if inside and after <= through else None), day
+        said += (cal.previous(day) is not None) + (cal.next(day) is not None)
+        unsaid += (cal.previous(day) is None) + (cal.next(day) is None)
+        day += timedelta(days=1)
+    assert said > 2 * len(days) and unsaid >= 16      # weekends and holidays inside are answered too
+
+
+@pytest.mark.parametrize("change", [
+    lambda s: s.clear(),
+    lambda s: s.update(sessions="x"),
+    lambda s: s.update(sessions=[]),
+    lambda s: s.update(start=None),
+    lambda s: s.update(through="soon"),
+    lambda s: s["sessions"].reverse(),
+    lambda s: s["sessions"].append(dict(s["sessions"][-1])),
+    lambda s: s["sessions"].__setitem__(3, "2026-08-01"),
+    lambda s: s["sessions"].__setitem__(3, {"session": 20260801}),
+    lambda s: s.update(start=s["sessions"][2]["session"]),            # a session before the schedule's own start
+    lambda s: s.update(through=s["sessions"][-2]["session"]),         # one past its own end
+])
+def test_a_schedule_a_reader_cannot_hold_answers_nothing(change):
+    data = page("full")
+    change(data["run"]["calendar"]["schedule"])
+    cal = gl.ArchivedCalendar(data)
+    day = date.fromisoformat(data["run"]["session"])
+    assert cal.previous(day) is None and cal.next(day) is None and cal.days == []
+
+
+@pytest.mark.parametrize("data", [None, [], "x", {}, {"run": 5}, {"run": {"calendar": []}},
+                                  {"run": {"calendar": {"schedule": [1]}}}])
+def test_a_record_with_no_schedule_answers_nothing_and_never_raises(data):
+    cal = gl.ArchivedCalendar(data)
+    assert cal.previous(date(2026, 11, 17)) is None and cal.next(date(2026, 11, 17)) is None
+
+
+def schedule_from(start: str, through: str) -> dict:
+    """A record carrying only an archived schedule: every XNYS session from start through through."""
+    from src import sessions
+    day, last, rows = date.fromisoformat(start), date.fromisoformat(through), []
+    while day <= last:
+        if sessions.is_session(day):
+            rows.append({"session": day.isoformat()})
+        day += timedelta(days=1)
+    return {"run": {"calendar": {"schedule": {"start": start, "through": through, "sessions": rows}}}}
+
+
+def test_the_run_is_one_number_where_the_calendar_answers_and_bounds_where_it_cannot_say():
+    rows = [counted(d) for d in TEN]                                   # 3 to 16 November, ten sessions
+    assert gl.run_bounds(rows, "2026-11-17") == (10, 10) == gl.run_bounds(rows, "2026-11-17", gl.LibraryCalendar())
+    whole = gl.ArchivedCalendar(schedule_from("2026-10-01", "2026-12-31"))
+    assert gl.run_bounds(rows, "2026-11-17", whole) == (10, 10)       # a schedule that reaches every row: exact
+    assert gl.run_bounds(rows, "2026-11-18", whole) == (0, 0)         # the run does not end the session before
+    gapped = [r for r in rows if r["session"] != "2026-11-12"]
+    assert gl.run_bounds(gapped, "2026-11-17", whole) == (2, 2)       # a missed session inside it ends the run
+    # a schedule that starts on Saturday 7 November proves the six rows from the 9th on and cannot say
+    # whether the 6th was the session before the 9th: at least six, at most all ten
+    late = gl.ArchivedCalendar(schedule_from("2026-11-07", "2026-12-31"))
+    assert gl.run_bounds(rows, "2026-11-17", late) == (6, 10)
+    assert gl.run_bounds(gapped, "2026-11-17", late) == (2, 2)        # a gap it can see is still a gap
+    uncounted = [dict(r) for r in rows]
+    uncounted[1]["counted"] = False                                    # the 4th: the most is the eight rows after it
+    assert gl.run_bounds(uncounted, "2026-11-17", late) == (6, 8)
+    # tonight itself past the schedule: nothing is proved, and the most is every counted row at the end
+    early = gl.ArchivedCalendar(schedule_from("2026-10-01", "2026-11-13"))
+    assert gl.run_bounds(rows, "2026-11-17", early) == (0, 10)
+    assert gl.run_bounds(uncounted, "2026-11-17", early) == (0, 8)
+    none = gl.ArchivedCalendar({})
+    assert gl.run_bounds(rows, "2026-11-17", none) == (0, 10) and gl.run_bounds([], "2026-11-17", none) == (0, 0)
+    assert gl.run_bounds(rows, "soon", none) == (0, 0)
+    # and the evening's own count is the pinned calendar's, whatever a record archives
+    assert gl.consecutive(rows, "2026-11-17") == 10
+
+
+def without_the_library(monkeypatch):
+    """The validator as the publication gate runs it: the pinned calendar cannot be imported."""
+    import src
+    monkeypatch.setitem(sys.modules, "src.sessions", None)
+    monkeypatch.delattr(src, "sessions", raising=False)
+    with pytest.raises(ImportError):
+        from src import sessions  # noqa: F401
+
+
+def test_the_calendar_is_the_pinned_one_where_it_imports_and_the_records_where_it_does_not(monkeypatch):
+    data = page("full")
+    assert isinstance(gl.calendar_for(data), gl.LibraryCalendar)
+    without_the_library(monkeypatch)
+    cal = gl.calendar_for(data)
+    assert isinstance(cal, gl.ArchivedCalendar) and cal.days
+
+
+def test_the_validator_holds_the_run_with_the_standard_library_alone(monkeypatch):
+    live = _live(page("full"))                     # built under the pinned calendar: ten sessions, ready
+    without_the_library(monkeypatch)
+    assert gl.faults(live) == []                   # every row inside the archived schedule: the same answer
+    block, crit = _gate(live)
+    assert orders.live_ready(live) == {"value": True, "reasons": []}
+    # a count the ledger does not hold is refused there too, each forged so only the run rule can refuse
+    crit["on_time_sessions"].update(have=gl.ON_TIME_SESSIONS + 1,
+                                    detail=f"{gl.ON_TIME_SESSIONS + 1} consecutive of {gl.ON_TIME_SESSIONS}")
+    assert gl.faults(live) == ["run.go_live on_time_sessions is not the run its own ledger ends on before tonight"]
+    assert orders.live_ready(live)["value"] is False
+    gapped = _live_without_a_middle_row(monkeypatch)
+    assert gl.faults(gapped) == ["run.go_live on_time_sessions is not the run its own ledger ends on before tonight"]
+
+
+def _live_without_a_middle_row(monkeypatch):
+    """A ready record whose ledger misses one session in the middle of its run while its count still says ten."""
+    monkeypatch.undo()
+    data = _live(page("full"))
+    del data["run"]["go_live"]["ledger"][4]
+    without_the_library(monkeypatch)
+    return data
+
+
+def test_a_schedule_that_does_not_reach_the_ledger_bounds_the_count_and_refuses_nothing_it_cannot_see(monkeypatch):
+    live = _live(page("full"))
+    schedule = live["run"]["calendar"]["schedule"]
+    ledger = live["run"]["go_live"]["ledger"]
+    cut = ledger[4]["session"]                     # the schedule now starts at the fifth of the ten rows
+    schedule["start"] = cut
+    schedule["sessions"] = [r for r in schedule["sessions"] if r["session"] >= cut]
+    assert gl.faults(live) == []                   # the evening's own validator reads the pinned calendar
+    without_the_library(monkeypatch)
+    cal = gl.calendar_for(live)
+    assert gl.run_bounds(ledger, live["run"]["session"], cal) == (6, 10)
+    assert gl.faults(live) == []                   # ten is inside what the schedule can prove
+    block, crit = _gate(live)
+    for have, held in ((6, True), (8, True), (10, True), (5, False), (11, False)):
+        crit["on_time_sessions"].update(have=have, met=have >= gl.ON_TIME_SESSIONS,
+                                        detail=f"{have} consecutive of {gl.ON_TIME_SESSIONS}")
+        block.update(ready=all(c["met"] for c in block["criteria"]),
+                     reasons=[c["key"] for c in block["criteria"] if not c["met"]])
+        block["sentence"] = gl.sentence(block)
+        assert (gl.faults(live) == []) is held, (have, gl.faults(live))
+    # with no schedule at all nothing is proved: any count up to the counted rows at the ledger's end
+    del live["run"]["calendar"]
+    crit["on_time_sessions"].update(have=10, met=True, detail=f"10 consecutive of {gl.ON_TIME_SESSIONS}")
+    block.update(ready=True, reasons=[])
+    block["sentence"] = gl.sentence(block)
+    assert gl.faults(live) == []
+
+
+@pytest.mark.parametrize("variant", ["paper", "live", "unmet", "forged"])
+def test_the_gate_without_the_library_reads_live_ready_as_the_evening_wrote_it(variant, monkeypatch, tmp_path):
+    """The evening writes orders.json with the pinned calendar; the publication
+    gate checks it with the standard library alone. The two read the record's
+    gate the same way, so the gate never refuses a night the evening wrote."""
+    data = page("full")
+    if variant in ("live", "forged"):
+        data = _live(data)
+    if variant == "unmet":
+        data = _unmet(_live(data), "on_time_sessions")
+    if variant == "forged":
+        _gate(data)[1]["on_time_sessions"].update(have=gl.ON_TIME_SESSIONS + 3)
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "data.json").write_text(json.dumps(data))
+    orders.write_publication(docs)
+    evening = json.loads((docs / "orders.json").read_bytes())["live_ready"]
+    assert evening["value"] is (variant == "live")
+    code = """
+import sys, json
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+from tools.publish_dashboard import orders_files
+from src import orders
+try:
+    names = list(orders_files(Path(sys.argv[2])))
+except RuntimeError as refusal:
+    names = str(refusal)
+data = json.loads((Path(sys.argv[2]) / 'docs' / 'data.json').read_bytes())
+outside = sorted(m for m in sys.modules if m.split('.')[0] in ('exchange_calendars', 'pandas', 'numpy'))
+print(json.dumps([names, orders.live_ready(data), outside]))
+"""
+    done = subprocess.run([sys.executable, "-I", "-S", "-c", code, str(ROOT), str(tmp_path)],
+                          capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr
+    names, gate, outside = json.loads(done.stdout)
+    assert gate == evening and outside == []
+    if variant == "live":
+        # the gate got past the calendar to its next rule: the committed protocol record is not passed
+        assert names == ("The execution handoff does not match the committed publication: orders.json is live "
+                         "while the committed protocol record is not passed")
+    else:
+        assert names == [orders.FILE, orders.POSITIONS_FILE, orders.MORNING_FILE]
