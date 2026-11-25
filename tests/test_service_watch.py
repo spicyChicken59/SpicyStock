@@ -2176,6 +2176,24 @@ def test_a_slot_dispatch_still_unfinished_at_the_entry_cutoff_is_no_on_time_star
     assert failed["sentence"].startswith("Every morning run for 2026-09-11 listed on main ended without its work: ")
 
 
+@pytest.mark.parametrize("order", [(0, 1), (1, 0)], ids=["listed-oldest-first", "listed-newest-first"])
+def test_of_two_unfinished_runs_the_newest_is_the_one_named_and_the_one_that_holds(record, order):
+    """The slot's dispatch never left the queue and a second was made by hand: whichever way GitHub lists them, the
+    newest is the one whose age decides, and the one the alert names."""
+    raw = encode(record)
+    first = morning_run(created=MORNING_SLOT + 3 * SECOND, status="queued", conclusion=None)
+    second = morning_run(created=MORNING_SLOT + timedelta(minutes=7), id=8301, status="in_progress", conclusion=None)
+    listed = [(first, second)[i] for i in order]
+    # 8:27:40 AM CDT: the second is 40 seconds old and holds the answer
+    young = sw.judge_morning(record, None, raw, ALERT + timedelta(minutes=2, seconds=40), listed, None)
+    assert (young["running"], young["overdue"]) == (
+        {"id": 8301, "created_at": "2026-09-11T13:27:00Z", "status": "in_progress"}, None)
+    # 8:40 AM CDT: both are past the grace, and the newest is named
+    late = sw.judge_morning(record, None, raw, ALERT + timedelta(minutes=15), listed, None)
+    assert (late["running"], late["overdue"]) == (
+        None, {"id": 8301, "created_at": "2026-09-11T13:27:00Z", "status": "in_progress"})
+
+
 def test_a_run_that_finished_inside_the_grace_is_named_in_the_alert_it_does_not_hold(record, tmp_path):
     """The watch reads main, then the listing. A catch-up check that finished between the two is listed completed
     while this watch's copy of main may lack its receipt: the answer is not held, and its sentence says so."""
@@ -2327,6 +2345,14 @@ def test_a_morning_cron_its_guard_runs_for_another_session_is_that_sessions(guar
     sched = sw.judge_morning(record, None, raw, created + timedelta(seconds=40), [monday], None)
     assert (sched["judgement"], sched["runs"], sched["skipped"], sched["running"]) == (sw.NOT_STARTED, [], [], None)
     assert "did no morning's work" not in sched["sentence"]
+    # a cron its guard skips on another day (Monday's run of the other season's pair) is no skipped cron of
+    # Friday's morning either
+    other_pair = cron_run("20 14 * * 1-5", datetime(2026, 9, 14, 14, 21, tzinfo=UTC))
+    assert guard(raw, "schedule", "20 14 * * 1-5", datetime(2026, 9, 14, 14, 21, tzinfo=UTC)) == (
+        False, "inactive_schedule")
+    sched = sw.judge_morning(record, None, raw, datetime(2026, 9, 14, 14, 22, tzinfo=UTC), [other_pair], None)
+    assert (sched["judgement"], sched["runs"], sched["skipped"]) == (sw.NOT_STARTED, [], [])
+    assert "did no morning's work" not in sched["sentence"]
 
 
 def test_an_in_progress_run_that_later_fails_is_flagged_by_the_next_watch(record, tmp_path, monkeypatch):
@@ -2461,6 +2487,7 @@ def test_a_day_of_reads_clears_it_and_less_than_a_day_does_not(record, tmp_path,
     main_mail_with(docs, again + timedelta(hours=sw.LISTING_CLEAR_HOURS), ledger, Listing())
     held = json.loads(ledger.read_text())
     assert held["cleared"] == {sw.LISTING_KEY: (again + timedelta(hours=sw.LISTING_CLEAR_HOURS)).isoformat()}
+    assert held["failed_at"] == {}                # a last failure a day old holds back no clear, and is not kept
     # its return, two failures in a row, is mailed at once
     back = again + timedelta(hours=sw.LISTING_CLEAR_HOURS, minutes=30)
     main_mail_with(docs, back, ledger, failing())

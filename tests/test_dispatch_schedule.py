@@ -330,6 +330,29 @@ def test_the_watch_does_not_wait_for_a_check_whose_slot_is_over_or_already_start
     assert posted(gh) == [("service-watch.yml", "08:25")]
 
 
+def test_the_wait_after_a_dispatch_runs_wait_seconds_past_the_end_of_the_checks_slot(monkeypatch):
+    """A check dispatched in the last seconds of its slot is still waited for: a watch slot a minute after the
+    check's due window ended waits until WAIT_SECONDS after that dispatch."""
+    monkeypatch.setattr(ds, "SLOTS", (("morning.yml", {"dry_run": "false"}, CT, ("08:20",)),
+                                      ("service-watch.yml", {}, CT, ("08:51",))))
+    gh = ClockedGitHub()
+    gh.runs["morning.yml"] = [(at("2026-11-20", "08:49", CT) + timedelta(seconds=30), 777)]
+    ticks(gh, "08:51", "08:54", state=ds._fresh_state())
+    assert posted(gh) == [("service-watch.yml", "08:52")]           # 8:51:00 is 90 seconds after it, 8:52:00 is 150
+
+
+def test_the_ledger_keeps_a_week_of_slots():
+    now = at("2026-11-20", "18:21")
+    state = {"version": ds.VERSION,
+             "started": {"evening.yml@2026-11-13T18:20:00-05:00": 1, "evening.yml@2026-11-13T18:22:00-05:00": 2,
+                         "not a slot": 3},
+             "dispatched": {"evening.yml@2026-11-12T18:20:00-05:00": "2026-11-12T18:20:01-05:00",
+                            "evening.yml@2026-11-19T18:20:00-05:00": "2026-11-19T18:20:01-05:00"}}
+    ds.write_state(None, state, now)
+    assert state["started"] == {"evening.yml@2026-11-13T18:22:00-05:00": 2}       # a week and a minute old is dropped
+    assert state["dispatched"] == {"evening.yml@2026-11-19T18:20:00-05:00": "2026-11-19T18:20:01-05:00"}
+
+
 #: an ordinary Friday, the half day after Thanksgiving, and the sessions either side of both clock changes
 LAST_TICK_DAYS = ["2026-11-20", "2026-11-27", "2026-10-30", "2026-11-02", "2027-03-12", "2027-03-15"]
 

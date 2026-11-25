@@ -728,8 +728,9 @@ def _in_progress(out: dict, running: dict, what: str) -> dict:
 def _listed_words(overdue: dict | None, just_finished: dict | None, now: datetime, cutoff: datetime) -> str:
     """What a check that has not landed, or not been checked, says of the morning run the listing shows: one still
     queued or running that is late (``overdue``: its status, when it was created, and whether it can still land),
-    or one that finished less than ``IN_PROGRESS_GRACE_SECONDS`` after it was created (``just_finished``: this watch read
-    main before it read the listing, so that run's files may have reached main in between)."""
+    or one created less than ``IN_PROGRESS_GRACE_SECONDS`` before ``now`` that has already finished
+    (``just_finished``: this watch read main before it read the listing, so that run's files may have reached main
+    in between)."""
     if overdue is not None:
         named = (f" The run listing shows run {overdue.get('id')} still {overdue.get('status')}, created "
                  f"{overdue.get('created_at')}")
@@ -738,9 +739,9 @@ def _listed_words(overdue: dict | None, just_finished: dict | None, now: datetim
         return f"{named}: the entry window closed at {cutoff.isoformat()}, so it can no longer land inside it."
     if just_finished is not None:
         return (f" The run listing shows run {just_finished.get('id')} finished ({just_finished.get('conclusion')}), "
-                f"created {just_finished.get('created_at')}, less than {IN_PROGRESS_GRACE_SECONDS} seconds before this watch's "
-                "clock: this watch read main before it read the listing, so what that run wrote may have reached "
-                "main in between. Read main before acting on this.")
+                f"created {just_finished.get('created_at')}, less than {IN_PROGRESS_GRACE_SECONDS} seconds before "
+                "this watch's clock: this watch read main before it read the listing, so what that run wrote may "
+                "have reached main in between. Read main before acting on this.")
     return ""
 
 
