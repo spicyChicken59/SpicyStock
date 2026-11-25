@@ -192,26 +192,102 @@ def ledger_of(previous_block, entry: dict | None) -> list[dict]:
     return sorted(rows, key=lambda r: r["session"])[-LEDGER_MAX:]
 
 
-def consecutive(ledger: list[dict], session: str | None = None) -> int:
-    """The counted sessions at the ledger's end, each the XNYS session before
-    the next: a session not counted, or one missing between two, ends it.
-    Given tonight's ``session``, the run must end on the XNYS session before
-    it: a session never published before tonight leaves no row, so a run that
-    ends earlier is broken by it and counts nothing."""
-    from src import sessions
-    n, later = 0, None
+class LibraryCalendar:
+    """XNYS adjacency from the pinned calendar (``src.sessions``): the evening's own."""
+
+    def previous(self, day: date) -> date | None:
+        from src import sessions
+        return sessions.previous_session(day)
+
+    def next(self, day: date) -> date | None:
+        from src import sessions
+        return sessions.next_sessions(day, 1)[0]
+
+
+class ArchivedCalendar:
+    """XNYS adjacency from a record's own archived schedule
+    (``run.calendar.schedule``), for a reader with the standard library alone:
+    the publication gate installs no package. The schedule is every session
+    from its ``start`` through its ``through``, so inside it the answer is the
+    pinned calendar's own; outside it the answer is None, cannot say, never a
+    guess."""
+
+    def __init__(self, data):
+        schedule = _dict(_dict(_dict(_dict(data).get("run")).get("calendar")).get("schedule"))
+        rows = schedule.get("sessions")
+        days = [_day(r.get("session")) if isinstance(r, dict) else None for r in (rows if isinstance(rows, list) else [])]
+        start, through = _day(schedule.get("start")), _day(schedule.get("through"))
+        held = (start is not None and through is not None and days and None not in days
+                and days == sorted(set(days)) and start <= days[0] and days[-1] <= through)
+        self.start, self.through, self.days = (start, through, days) if held else (None, None, [])
+
+    def previous(self, day: date) -> date | None:
+        if self.start is None or not self.start <= day <= self.through:
+            return None
+        earlier = [d for d in self.days if d < day]
+        return earlier[-1] if earlier else None      # the session before lies before the schedule's start
+
+    def next(self, day: date) -> date | None:
+        if self.start is None or not self.start <= day <= self.through:
+            return None
+        later = [d for d in self.days if d > day]
+        return later[0] if later else None           # the session after lies past the schedule's end
+
+
+def calendar_for(data=None):
+    """The pinned calendar where it can be imported, else the record's own
+    archived schedule: the two agree wherever the schedule reaches."""
+    try:
+        from src import sessions  # noqa: F401 -- asked only whether the pinned calendar is installed
+    except ImportError:
+        return ArchivedCalendar(data)
+    return LibraryCalendar()
+
+
+def run_bounds(ledger: list[dict], session: str | None = None, calendar=None) -> tuple[int, int]:
+    """The least and the most counted sessions the ledger can end on: each the
+    XNYS session before the next, so a session not counted, or one missing
+    between two, ends the run. Given tonight's ``session``, the run must end on
+    the XNYS session before it: a session never published before tonight
+    leaves no row, so a run that ends earlier is broken by it and counts
+    nothing. Under a calendar that answers every date the two are one number.
+    Where it cannot say whether two rows are adjacent (an archived schedule
+    that does not reach them), the least is the run proved so far and the most
+    is every counted row still ahead."""
+    calendar = calendar if calendar is not None else LibraryCalendar()
+    trailing = 0
+    for row in reversed(ledger):
+        if row.get("counted") is not True or _day(row.get("session")) is None:
+            break
+        trailing += 1
     if session is not None:
         tonight = _day(session)
-        if tonight is None or not ledger or ledger[-1].get("session") != sessions.previous_session(tonight).isoformat():
-            return 0
+        if tonight is None or not ledger:
+            return 0, 0
+        before = calendar.previous(tonight)
+        if before is None:
+            return 0, trailing
+        if ledger[-1].get("session") != before.isoformat():
+            return 0, 0
+    n, later = 0, None
     for row in reversed(ledger):
         day = _day(row.get("session"))
         if row.get("counted") is not True or day is None:
             break
-        if later is not None and sessions.next_sessions(day, 1)[0] != later:
-            break
+        if later is not None:
+            after = calendar.next(day)
+            if after is None:
+                return n, trailing
+            if after != later:
+                break
         n, later = n + 1, day
-    return n
+    return n, n
+
+
+def consecutive(ledger: list[dict], session: str | None = None) -> int:
+    """The counted sessions at the ledger's end under the pinned calendar
+    (``run_bounds()``): what the evening writes."""
+    return run_bounds(ledger, session, LibraryCalendar())[0]
 
 
 def archived_version(rules) -> int | None:
@@ -365,7 +441,10 @@ def faults(data: dict) -> list[str]:
                                        and row.get("morning_on_time") is True):
             out.append(f"run.go_live ledger row {row['session']} is counted when its own facts do not give it")
             break
-    if readable and have != (consecutive(ledger, session) if publication["forward"] is True else 0):
+    # under the pinned calendar the bounds are one number; a reader with the standard library alone holds
+    # the count to what the record's own archived schedule can prove
+    least, most = run_bounds(ledger, session, calendar_for(data)) if readable and publication["forward"] is True else (0, 0)
+    if readable and not (type(have) is int and least <= have <= most):
         out.append("run.go_live on_time_sessions is not the run its own ledger ends on before tonight")
     return out
 
@@ -413,9 +492,12 @@ def _faults_v1(data: dict, archived, block) -> list[str]:
     ledger = [r for r in block["ledger"] if isinstance(r, dict) and _day(r.get("session")) is not None]
     if len(ledger) != len(block["ledger"]) or _day(session) is None:
         out.append("run.go_live ledger rows are not readable")
-    elif by_key["on_time_sessions"].get("have") != (
-            consecutive(ledger, session) if _dict(block.get("strategy")).get("forward") is True else 0):
-        out.append("run.go_live on_time_sessions is not the run its own ledger ends on before tonight")
+    else:
+        least, most = (run_bounds(ledger, session, calendar_for(data))
+                       if _dict(block.get("strategy")).get("forward") is True else (0, 0))
+        held = by_key["on_time_sessions"].get("have")
+        if not (type(held) is int and least <= held <= most):
+            out.append("run.go_live on_time_sessions is not the run its own ledger ends on before tonight")
     if isinstance(standing, dict) and standing.get("forward") is False and _day(session) is not None \
             and session not in (standing.get("not_forward") if isinstance(standing.get("not_forward"), list) else []):
         out.append("run.go_live names a publication that is not forward without keeping its session")
