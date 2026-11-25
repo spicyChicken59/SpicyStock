@@ -1974,10 +1974,10 @@ def test_a_morning_run_still_running_inside_its_window_is_in_progress_not_an_ale
     listing = Listing({"morning.yml": [morning_run(status=status, conclusion=None)]})
     now = ALERT + timedelta(minutes=2, seconds=20)                       # 8:27:20 AM CDT
     out = sw.watch(docs, now, github=listing)
-    assert out["scheduler"]["morning"]["running"] == {"id": 8300, "created_at": "2026-09-11T13:26:00Z",
-                                                      "status": status}
     block = out["morning"]
     assert (block["judgement"], block["alert"], block["key"], block["action"]) == (sw.IN_PROGRESS, False, None, None)
+    assert out["scheduler"]["morning"]["running"] == {"id": 8300, "created_at": "2026-09-11T13:26:00Z",
+                                                      "status": status}
     assert block["sentence"] == (f"A morning run for 2026-09-11 (run 8300, created 2026-09-11T13:26:00Z) is still "
                                  f"{status} inside its collection window, so its receipt may not be on main yet. No "
                                  "answer is given now: a later watch judges it.")
