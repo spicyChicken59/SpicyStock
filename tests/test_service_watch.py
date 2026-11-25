@@ -661,6 +661,19 @@ def test_every_sentence_orders_check_writes_is_passed_through_or_named_by_its_fi
             assert sw.handoff_phrase(text) == text and text in sw.HANDOFF_PHRASES, text
 
 
+def test_two_problems_of_one_file_are_one_phrase_and_a_new_sentence_is_said_by_its_file(record, tmp_path,
+                                                                                         monkeypatch):
+    """handoff()'s own two rules, whatever check() writes: a phrase is said once, and a sentence it has no phrase
+    for -- one a later check() might write -- is said by the file it begins with, never quoted."""
+    raw = encode(record)
+    docs = docs_with(tmp_path, record)
+    schema = f"{orders.MORNING_FILE} cannot be read or does not meet its schema"
+    monkeypatch.setattr(orders, "check", lambda docs: [f"{orders.MORNING_FILE}: one /path", f"{orders.MORNING_FILE}: two"])
+    assert sw.handoff(docs, record, raw)["problems"] == [schema]
+    monkeypatch.setattr(orders, "check", lambda docs: [f"{orders.MORNING_FILE} is something a later check says"])
+    assert sw.handoff(docs, record, raw)["problems"] == [schema]
+
+
 def test_a_check_that_raises_is_a_check_that_could_not_be_made(record, tmp_path, monkeypatch):
     docs = docs_with(tmp_path, record)
 
