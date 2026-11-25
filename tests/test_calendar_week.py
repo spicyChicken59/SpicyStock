@@ -460,6 +460,9 @@ def test_a_friday_that_was_never_published_is_flagged_on_saturday_morning_not_mo
     missing = watch(week, "friday-morning", limit.isoformat())
     assert missing["evening"]["judgement"] == sw.MISSING and missing["evening"]["alert"] is True
     assert missing["evening"]["key"] == "evening:missing:2026-11-27"
+    # the dispatcher starts no watch on a closed day: its first watch to mail it is Monday's 6:00 AM CT slot, and
+    # only GitHub's backup crons, hours late, can run one before that
+    assert first_watch_slot(at("2026-11-28T04:16:00-05:00")) == at("2026-11-30T06:00:00-06:00")
     # all weekend a guarded dispatch would still publish Friday; from Monday's open it will not
     code = guard_code
     root = week.states["friday-morning"]
@@ -788,9 +791,12 @@ def test_every_evening_alert_is_true_and_mailed_before_the_next_open(covers, ses
     slot = first_watch_slot(deadline)
     assert deadline <= slot < opens and sw.evening(record, slot)["key"] == out["key"]
     if after - session > timedelta(days=1):
-        # over a weekend or a holiday the alert is the morning after the evening, not hours before the next open
+        # over a weekend or a holiday the judgement is true the morning after the evening, not hours before the
+        # next open; only GitHub's backup crons run the watch on a closed day, and the dispatcher's first watch to
+        # mail it is the next session's 6:00 AM CT slot
         local = deadline.astimezone(sessions.MARKET_TZ)
         assert (local.date(), local.strftime("%H:%M")) == (session + timedelta(days=1), "04:16")
+        assert slot == chicago(after, "06:00")
     else:
         assert deadline == opens - timedelta(hours=sw.ALERT_WITHIN_HOURS)
 
@@ -803,6 +809,68 @@ def test_every_evening_alert_is_true_and_mailed_before_the_next_open(covers, ses
     # missing: at the open itself, never before it
     assert sw.evening(record, opens - ONE_SECOND)["judgement"] == sw.NOT_PUBLISHED
     assert sw.evening(record, opens)["key"] == f"evening:missing:{name}"
+
+
+class Listing:
+    """A double of the run listing: the runs given, filtered by ``since`` as GitHub filters."""
+
+    def __init__(self, runs=None):
+        self.runs_by = runs or {}
+
+    def runs(self, workflow, since):
+        return [r for r in self.runs_by.get(workflow, []) if ds._created(r["created_at"]) >= since]
+
+
+def dispatch(workflow_title: str, created: datetime, **fields) -> dict:
+    out = {"id": 4100, "event": "workflow_dispatch", "display_title": workflow_title,
+           "created_at": created.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "status": "completed",
+           "conclusion": "success", "head_branch": "main", "run_attempt": 1}
+    out.update(fields)
+    return out
+
+
+@pytest.mark.parametrize("covers,session,after", [s for s in SCENARIOS if s.id in (
+    "friday-half-day", "monday-after-1-november", "monday-after-14-march")])
+def test_the_scheduler_alerts_reach_the_watch_across_the_half_day_and_the_clock_changes(covers, session, after,
+                                                                                         tmp_path):
+    """The whole watch, with a run listing, over a record whose next session is the half day or a session either
+    side of a clock change: no evening run by 6:50 PM ET, an on-time dispatch unpublished at 9:45 PM ET, and no
+    morning run by 8:25 AM CT each reach the alerts."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / sw.DATA_FILE).write_text(json.dumps(synthetic_record(covers)))
+    name = str(session)
+    started_by = new_york(session, sw.EVENING_STARTED_BY_ET)
+    keys = [a["key"] for a in sw.watch(docs, started_by, github=Listing())["alerts"]]
+    assert f"evening:not_started:{name}" in keys
+    first = delivery.slots(session)[0] + timedelta(minutes=4)                    # the dispatcher's 6:20 start
+    on_time = Listing({"evening.yml": [dispatch(sw.EVENING_DISPATCH_TITLE, first)]})
+    published_by = new_york(session, sw.EVENING_PUBLISHED_BY_ET)
+    out = sw.watch(docs, published_by, github=on_time)
+    assert out["scheduler"]["evening"]["judgement"] == sw.ON_TIME
+    assert f"evening:not_published:{name}" in [a["key"] for a in out["alerts"]]
+    # the record's own morning (its plans are for the same session): nothing listed by 8:25 AM CT is the morning
+    # check not started, said beside the morning's own alert
+    out = sw.watch(docs, chicago(session, sw.MORNING_ALERT_CT), github=Listing())
+    assert out["scheduler"]["morning"]["judgement"] == sw.NOT_STARTED
+    (morning,) = [a for a in out["alerts"] if a["key"] == f"morning:not_landed:{name}"]
+    assert "No morning run" in morning["detail"]
+
+
+def test_an_off_season_evening_cron_in_standard_time_is_no_evening_run(tmp_path):
+    """In EST the EDT pair (16 22, 16 0) fires and its guard skips it: the 4 December session's evening is not
+    started, and a failed dispatch beside the skip is still failed."""
+    record = synthetic_record(date(2026, 12, 3))
+    skip = dispatch("Evening cron 16 22 * * 1-5", at("2026-12-04T22:16:30+00:00"), event="schedule", id=4201)
+    out = sw.judge_evening(record, at("2026-12-05T02:30:00+00:00"), [skip], None)
+    assert (out["judgement"], out["key"]) == (sw.NOT_STARTED, "evening:not_started:2026-12-04")
+    failed = dispatch(sw.EVENING_DISPATCH_TITLE, at("2026-12-04T23:20:30+00:00"), conclusion="failure")
+    out = sw.judge_evening(record, at("2026-12-05T02:30:00+00:00"), [skip, failed], None)
+    assert (out["judgement"], out["key"]) == (sw.FAILED, "evening:failed:2026-12-04")
+    # the active EST cron is a run: hours late, it is the backup's start
+    active = dispatch("Evening cron 16 23 * * 1-5", at("2026-12-05T03:30:00+00:00"), event="schedule", id=4202)
+    out = sw.judge_evening(record, at("2026-12-05T04:00:00+00:00"), [skip, active], None)
+    assert (out["judgement"], out["key"]) == (sw.STARTED_LATE, "scheduler:evening:started_late")
 
 
 @pytest.mark.parametrize("covers,session,after", SCENARIOS)
