@@ -8,7 +8,7 @@
   "risk_pct": 0.5,
   "slots_used": 4
  },
- "content_sha256": "29a68f44730cfafd78093c52f6b4eb15893ab8b512eca4c0c914f52385c86a31",
+ "content_sha256": "ffd6efcabd1576174d95641495904a25b68dc3e8afb9411362db54d14ceed401",
  "entry_window": {
   "cutoff_at": "2026-09-11T10:00:00-04:00",
   "opens_at": "2026-09-11T09:30:00-04:00",
@@ -19,8 +19,7 @@
  "live_ready": {
   "reasons": [
    "fidelity_protocol",
-   "on_time_sessions",
-   "settled_forward_plans"
+   "on_time_sessions"
   ],
   "value": false
  },
@@ -101,13 +100,13 @@
  },
  "source": {
   "applicable_session": "2026-09-11",
-  "context_sha256": "e5dbcd5efe0705a2ea10feec61b01c1af47dbbcedd6062a16c33212b46107800",
-  "data_sha256": "ae018af34bf91075960d5d633e330901e73641e98ed8569221b78df0dcb0f3dc",
+  "context_sha256": "d8edc226a768ea86001350b0b852edbd6a0ec2d6d39ed78ae3cd25741210198b",
+  "data_sha256": "44c4b75c20b929ce3a00fb968235cc4aa428ce3636514cd0867c33d0263b3c7b",
   "dry_run": false,
   "fixture": true,
-  "picks_sha256": "b2c0d0eb39d045c522b24337f0226ba5c589c8fa8ea79714a1f8df3b6b008597",
+  "picks_sha256": "82503bdf5b1821ab7c71cb5d6a50bf4f14a5286d5d8b5065b8a7731c9883f952",
   "published_at": "2026-09-10T22:30:00+00:00",
-  "rules_version": "5ebf755b1d7b",
+  "rules_version": "afb20aa72afc",
   "run_id": null,
   "session": "2026-09-10"
  },
@@ -152,7 +151,7 @@
      "status": "pass"
     }
    ],
-   "content_sha256": "5e8510190b71e92e987985939ea37f2efdf7c0abe10c6d56454a0d1e4f02646b",
+   "content_sha256": "f449d5f118b8293c66f5135806186c494ff2e57d21d8d480abc516d704818f21",
    "entry": {
     "cancel_if_unfilled_at": "2026-09-11T10:00:00-04:00",
     "limit_price": 126.47,
@@ -167,7 +166,7 @@
     "valid_until": "2026-09-11T10:00:00-04:00"
    },
    "evidence": {
-    "evidence_id": "3ee98f936ad2fb0938215b8371f1cb559c2a098cf26d155a64005a874a1829eb",
+    "evidence_id": "9658e8a71d1bad806720e453075bd51bde21ad489831b8c12f0ebf8ae41e41af",
     "plan_sha256": "c44e7f094a94a4b7287add31fafb8cad4455f0582c4bc2fcf2f3c2b6769f601c"
    },
    "exit_plan": {
@@ -468,7 +467,7 @@
     "risk_budget_usd": 25.0,
     "risk_usd": 20.2
    },
-   "rules_version": "5ebf755b1d7b",
+   "rules_version": "afb20aa72afc",
    "session": "2026-09-10",
    "setup_type": "burst",
    "shares": 4,
@@ -478,5 +477,5 @@
   }
  ],
  "trade_allowed": false,
- "version": 4
+ "version": 5
 }

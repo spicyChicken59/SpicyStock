@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "5ebf755b1d7b"
+  "rules_version": "afb20aa72afc"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -937,7 +937,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "c564c7919c5175d9d53cb09cdf3bd2b973dfeb116f838a874939895843e10631"
+   "context_sha256": "c888cd40d83f22709a8a4b7b31c37f3955daa8561dcd1a55c62dbd162105f2d4"
   },
   "earnings": {
    "version": 2,
@@ -994,7 +994,7 @@
    "only_if_unpublished": null
   },
   "go_live": {
-   "version": 1,
+   "version": 2,
    "ready": false,
    "criteria": [
     {
@@ -1010,36 +1010,18 @@
      "have": 0,
      "need": 10,
      "detail": "0 consecutive of 10"
-    },
-    {
-     "key": "settled_forward_plans",
-     "met": false,
-     "have": 0,
-     "need": 20,
-     "detail": "0 settled since 2026-09-10 of 20"
-    },
-    {
-     "key": "ablation_report",
-     "met": true,
-     "have": null,
-     "need": null,
-     "detail": "docs/input-truthfulness/2026-11-19-ablation/ablation.json"
     }
    ],
    "reasons": [
     "fidelity_protocol",
-    "on_time_sessions",
-    "settled_forward_plans"
+    "on_time_sessions"
    ],
-   "strategy": {
-    "digest": "4fe97a8dc8f1ca9e645b272e543e2fa8af7d99cfccdedd58ac096dcb0343c6f5",
-    "since": "2026-09-10",
+   "publication": {
     "newest": "2026-09-10",
-    "forward": true,
-    "not_forward": []
+    "forward": true
    },
    "ledger": [],
-   "sentence": "Paper only: fidelity protocol not met (not recorded as passed by the owner); on time sessions not met (0 consecutive of 10); settled forward plans not met (0 settled since 2026-09-10 of 20)."
+   "sentence": "Paper only: fidelity protocol not met (not recorded as passed by the owner); on time sessions not met (0 consecutive of 10)."
   },
   "sanitised": {
    "replaced": 0,
@@ -1699,11 +1681,10 @@
    "max_names": 20
   },
   "go_live": {
-   "version": 1,
+   "version": 2,
    "on_time_sessions": 10,
    "publish_by_et": "19:00",
-   "morning_due_ct": "08:45",
-   "min_settled_forward": 20
+   "morning_due_ct": "08:45"
   },
   "pipeline": {
    "max_reads": 12,
@@ -2319,7 +2300,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "5ebf755b1d7b"
+  "replay_rules_version": "afb20aa72afc"
  },
  "observations": {
   "as_of": "2026-09-10",
