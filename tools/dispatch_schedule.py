@@ -23,10 +23,12 @@ calendar the run itself reads), and does nothing else:
   after its last, before the open, five minutes after the morning check
   (``tools/service_watch.MORNING_ALERT_CT``) and after the entry window. The
   08:25 slot is due only until the session's open (``BEFORE_OPEN``), never
-  at or after it, and it is not dispatched until ``WAIT_SECONDS`` after the
-  newest dispatch of the morning check it judges (``WAITS_FOR``), this
-  tool's or anyone's: a catch-up that starts the check late starts the watch
-  late too, or leaves it to the 09:05 slot.
+  at or after it. It waits for the morning check it judges (``WAITS_FOR``):
+  while that check's slot is due and nothing has started it, and until
+  ``WAIT_SECONDS`` after its newest dispatch, this tool's or anyone's. It
+  never waits past the last tick before the open: at that tick it is
+  dispatched whatever the wait says, so a catch-up that starts the check
+  late starts the watch late too, and still before the open.
 
 GitHub's own crons stay in each workflow as the backup; every workflow's
 guard already makes a second start harmless.
@@ -105,14 +107,17 @@ EVERY_DAY = frozenset({"evening.yml"})
 #: 08:25 CT slot judges the morning check before the 8:30 CT open; a tick that reaches it later (a restart, a
 #: catch-up) leaves it to the 09:05 slot.
 BEFORE_OPEN = frozenset({("service-watch.yml", "America/Chicago", "08:25")})
-#: A slot of the first workflow is not dispatched until ``WAIT_SECONDS`` after the newest dispatch of the second
-#: created since that workflow's latest slot on the same day: the watch judges the morning check it waits for.
+#: A slot of the first workflow waits for the second, the watch for the morning check it judges: while that
+#: workflow's slot on the same day is due and nothing has started it (no dispatch listed and none in the ledger),
+#: and until ``WAIT_SECONDS`` after the newest dispatch of it created since that slot. It never waits past its own
+#: last tick (``last_tick()``): there it is dispatched whatever the wait says.
 WAITS_FOR = {"service-watch.yml": "morning.yml"}
 #: The morning check's receipts landed on main 88 to 94 seconds (23 October 2026) and 97 to 103 seconds (4 November
 #: 2026) after its dispatch was created (CLAUDE.md), and the watch reads main at its checkout: two and a half minutes
 #: covers the 103 with margin, the watch's own start on top. Ticks are on the minute and GitHub stamps a dispatch a
 #: few seconds after its tick, so the third tick after a catch-up dispatch clears the wait whenever the stamp is
-#: within 30 seconds of its tick: a catch-up at 8:26 AM CT starts the watch at 8:29, before the 8:30 open.
+#: within 30 seconds of its tick: a catch-up at 8:25 AM CT starts the watch at 8:28. A later one starts it at 8:29,
+#: the last tick before the 8:30 open, whatever is left of the wait.
 WAIT_SECONDS = 150
 #: One page of the run listing ``GitHub.runs()`` reads. A page this full may not be
 #: all of it, so it is never read as complete.
@@ -348,13 +353,21 @@ def write_state(path: Path | None, state: dict, now: datetime) -> None:
     tmp.replace(path)
 
 
-def _waited_for(slot: Slot, now: datetime, github: GitHub, state: dict) -> datetime | None:
-    """The newest dispatch of the workflow ``slot`` waits for (``WAITS_FOR``), when it was created less than
-    ``WAIT_SECONDS`` before ``now``: this tool's own, from its ledger, or anyone's, from GitHub's listing, since
-    that workflow's slot on the same day, while that slot is due or was due less than ``WAIT_SECONDS`` ago. None
-    when there is nothing to wait for (and then GitHub is not asked)."""
+def last_tick(slot: Slot, now: datetime) -> bool:
+    """Whether ``now`` is the slot's last tick: the next one, ``TICK_SECONDS`` later, is at or past the end of its
+    due window (for the pre-open watch, the session's open)."""
+    return now + timedelta(seconds=TICK_SECONDS) >= slot.end
+
+
+def _waits(slot: Slot, now: datetime, github: GitHub, state: dict) -> str | None:
+    """Why ``slot`` is not dispatched at this tick, or None when it is: it waits for the workflow it judges
+    (``WAITS_FOR``) while that workflow's slot on the same day is due and nothing has started it (no dispatch of
+    it listed since the slot, and none in this tool's ledger), and until ``WAIT_SECONDS`` after the newest dispatch
+    of it, this tool's own, from its ledger, or anyone's, from GitHub's listing. It never waits at its last tick
+    (``last_tick()``), and then GitHub is not asked; nor when that workflow has no slot near (due, or due less than
+    ``WAIT_SECONDS`` ago)."""
     upstream = WAITS_FOR.get(slot.workflow)
-    if upstream is None:
+    if upstream is None or last_tick(slot, now):
         return None
     wait = timedelta(seconds=WAIT_SECONDS)
     earlier = [s for s in slots_on(slot.at.date()) if s.workflow == upstream and s.at <= now < s.end + wait]
@@ -366,7 +379,13 @@ def _waited_for(slot: Slot, now: datetime, github: GitHub, state: dict) -> datet
     instants += [created if created is not None else now
                  for _, created in github.dispatches_since(upstream, latest.at)]
     newest = max(instants, default=None)
-    return newest if newest is not None and now - newest < wait else None
+    if newest is None:
+        if latest.due(now) and latest.key not in state["started"]:
+            return f"{upstream} is due since {latest.at.isoformat()} and has not been dispatched yet"
+        return None
+    if now - newest < wait:
+        return f"{upstream} was dispatched at {newest.isoformat()}, less than {WAIT_SECONDS} seconds ago"
+    return None
 
 
 # ------------------------------------------------------------------ tick ----
@@ -385,10 +404,9 @@ def tick(now: datetime, github: GitHub, state_path: Path | None = None, state: d
                 state["started"][slot.key] = existing[0]
                 log.info("%s already started: run %s", slot.key, existing[0])
                 continue
-            waited = _waited_for(slot, now, github, state)
-            if waited is not None:
-                log.info("%s waits: %s was dispatched at %s, less than %s seconds ago", slot.key,
-                         WAITS_FOR[slot.workflow], waited.isoformat(), WAIT_SECONDS)
+            why = _waits(slot, now, github, state)
+            if why is not None:
+                log.info("%s waits: %s", slot.key, why)
                 continue
             github.dispatch(slot)
             state["dispatched"][slot.key] = now.isoformat()

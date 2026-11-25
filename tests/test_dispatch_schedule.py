@@ -179,54 +179,196 @@ class ClockedGitHub(FakeGitHub):
             self.now = tick
 
 
-def ticks(gh, start: str, end: str, state=None, day="2026-11-20"):
-    """A tick every minute from ``start`` to ``end`` (both inclusive, Chicago), as the loop runs them."""
+def ticks(gh, start: str, end: str, state=None, day="2026-11-20", refused=False):
+    """A tick every minute from ``start`` to ``end`` (both inclusive, Chicago), as the loop runs them; ``refused``
+    when GitHub is set to refuse a request in them, and a tick may fail."""
     minute = at(day, start, CT)
     while minute <= at(day, end, CT):
         gh.now = minute
-        assert ds.tick(minute, gh, state=state) == ds.EXIT_OK
+        code = ds.tick(minute, gh, state=state)
+        assert code in ((ds.EXIT_OK, ds.EXIT_FAILED) if refused else (ds.EXIT_OK,))
         minute += timedelta(minutes=1)
 
 
+class Refusing(ClockedGitHub):
+    """ClockedGitHub that answers the dispatch of ``workflow`` with HTTP 502 until ``until`` (a Chicago HH:MM)."""
+
+    def __init__(self, until: str, workflow="morning.yml", day="2026-11-20", stamp=timedelta(0)):
+        super().__init__(stamp=stamp)
+        self.workflow, self.until = workflow, at(day, until, CT)
+
+    def send(self, method, path, body=None):
+        if method == "POST" and f"/{self.workflow}/" in path and self.now < self.until:
+            self.calls.append((method, path, body))
+            self.clocks.append(self.now.astimezone(CT).strftime("%H:%M"))
+            return 502, b""
+        return super().send(method, path, body)
+
+
+def dispatched(gh) -> list[tuple[str, str]]:
+    """(workflow, the Chicago minute) of every dispatch GitHub accepted, in order of creation."""
+    made = sorted((when, workflow) for workflow, runs in gh.runs.items() for when, _ in runs)
+    return [(workflow, when.astimezone(CT).strftime("%H:%M")) for when, workflow in made]
+
+
 def test_the_pre_open_watch_waits_wait_seconds_after_a_catch_up_morning_dispatch():
-    """A catch-up at 8:26: the check is dispatched then, and the watch WAIT_SECONDS later, before the open."""
+    """A catch-up at 8:25: the check is dispatched then, and the watch at the first tick WAIT_SECONDS later."""
     assert ds.WAIT_SECONDS == 150 and ds.WAITS_FOR == {"service-watch.yml": "morning.yml"}
     gh = ClockedGitHub()
-    ticks(gh, "08:26", "08:31", state=ds._fresh_state())
-    assert posted(gh) == [("morning.yml", "08:26"), ("service-watch.yml", "08:29")]
+    ticks(gh, "08:25", "08:31", state=ds._fresh_state())
+    assert posted(gh) == [("morning.yml", "08:25"), ("service-watch.yml", "08:28")]
 
 
 @pytest.mark.parametrize("state", [ds._fresh_state, lambda: None], ids=["ledger-in-memory", "no-ledger"])
 def test_a_catch_up_stamped_seven_seconds_after_its_tick_still_starts_the_watch_at_the_third_tick(state):
-    """The morning run's created_at is 8:26:07 AM CT, seven seconds after the 8:26 tick that dispatched it: at the
-    8:29:00 tick it is 173 seconds old, past WAIT_SECONDS, and the watch is dispatched before the open; at 8:28:00
-    it was 113 seconds old, and the watch waited."""
+    """The morning run's created_at is 8:25:07 AM CT, seven seconds after the 8:25 tick that dispatched it: at the
+    8:28:00 tick it is 173 seconds old, past WAIT_SECONDS, and the watch is dispatched; at 8:27:00 it was 113
+    seconds old, and the watch waited."""
     gh = ClockedGitHub(stamp=timedelta(seconds=7))
     memory = state()
-    ticks(gh, "08:26", "08:31", state=memory)
-    assert gh.runs["morning.yml"][0][0] == at("2026-11-20", "08:26", CT) + timedelta(seconds=7)
-    assert posted(gh) == [("morning.yml", "08:26"), ("service-watch.yml", "08:29")]
+    ticks(gh, "08:25", "08:31", state=memory)
+    assert gh.runs["morning.yml"][0][0] == at("2026-11-20", "08:25", CT) + timedelta(seconds=7)
+    assert posted(gh) == [("morning.yml", "08:25"), ("service-watch.yml", "08:28")]
 
 
-def test_a_catch_up_stamped_past_the_margin_defers_the_watch_to_the_open_and_so_to_its_next_slot():
-    """Stamped 8:26:40 AM CT, forty seconds after its tick: at 8:29:00 it is 140 seconds old and the watch waits;
-    8:30 is the open, where the pre-open slot is no longer due. The 9:05 slot judges the morning, as before."""
-    gh = ClockedGitHub(stamp=timedelta(seconds=40))
-    memory = ds._fresh_state()
-    ticks(gh, "08:26", "08:35", state=memory)
-    assert posted(gh) == [("morning.yml", "08:26")]
-    ticks(gh, "09:05", "09:06", state=memory)
-    assert posted(gh) == [("morning.yml", "08:26"), ("service-watch.yml", "09:05")]
-
-
-def test_a_catch_up_that_leaves_less_than_wait_seconds_before_the_open_leaves_the_watch_to_its_next_slot():
-    """A catch-up at 8:28: three minutes after it is past the 8:30 open, and the watch is never dispatched at or
-    after the open: the 9:05 slot judges the morning."""
+@pytest.mark.parametrize("seconds,minute", [(29, "08:27"), (30, "08:27"), (31, "08:28")])
+def test_the_wait_ends_at_exactly_wait_seconds(seconds, minute):
+    """A morning dispatch someone made at 8:24 and ``seconds``: one stamped 8:24:30 is exactly WAIT_SECONDS old at
+    the 8:27:00 tick, and the watch is dispatched there; a second later, it waits one tick more."""
     gh = ClockedGitHub()
-    ticks(gh, "08:28", "08:35", state=ds._fresh_state())
-    assert posted(gh) == [("morning.yml", "08:28")]
-    ticks(gh, "09:05", "09:06", state=ds._fresh_state())
-    assert posted(gh) == [("morning.yml", "08:28"), ("service-watch.yml", "09:05")]
+    gh.runs["morning.yml"] = [(at("2026-11-20", "08:24", CT) + timedelta(seconds=seconds), 777)]
+    ticks(gh, "08:25", "08:29")
+    assert posted(gh) == [("service-watch.yml", minute)]
+    assert at("2026-11-20", "08:27", CT) - gh.runs["morning.yml"][0][0] == timedelta(seconds=ds.WAIT_SECONDS + 30 - seconds)
+
+
+def test_the_last_tick_is_the_one_whose_next_is_at_or_past_the_slots_end():
+    (pre,) = [s for s in ds.slots_on(date(2026, 11, 20)) if s.key == "service-watch.yml@2026-11-20T08:25:00-06:00"]
+    opens = at("2026-11-20", "08:30", CT)
+    assert ds.TICK_SECONDS == 60 and pre.end == opens
+    assert not ds.last_tick(pre, opens - timedelta(seconds=61))
+    assert ds.last_tick(pre, opens - timedelta(seconds=60)) and ds.last_tick(pre, opens - timedelta(seconds=1))
+    # a slot with the plain due window: its last tick is its thirtieth minute
+    (after,) = [s for s in ds.slots_on(date(2026, 11, 20)) if s.key == "service-watch.yml@2026-11-20T09:05:00-06:00"]
+    assert not ds.last_tick(after, at("2026-11-20", "09:33", CT)) and ds.last_tick(after, at("2026-11-20", "09:34", CT))
+
+
+@pytest.mark.parametrize("until,expected", [
+    # refused at 8:20 to 8:22 and accepted at 8:23: the watch waits WAIT_SECONDS after it, to 8:26
+    ("08:23", [("morning.yml", "08:23"), ("service-watch.yml", "08:26")]),
+    # refused through 8:25: at 8:25 the check's slot is due and nothing has started it, so the watch waits for it,
+    # then for WAIT_SECONDS after it, and is dispatched at 8:29, the last tick before the open, whatever is left
+    ("08:26", [("morning.yml", "08:26"), ("service-watch.yml", "08:29")]),
+    ("08:27", [("morning.yml", "08:27"), ("service-watch.yml", "08:29")]),
+    ("08:28", [("morning.yml", "08:28"), ("service-watch.yml", "08:29")]),
+    # accepted at the last tick itself: the check first, then the watch, in one tick
+    ("08:29", [("morning.yml", "08:29"), ("service-watch.yml", "08:29")]),
+    # refused past the open: the watch goes at its last tick all the same, and judges a check that never started
+    ("08:40", [("service-watch.yml", "08:29"), ("morning.yml", "08:40")]),
+])
+def test_a_morning_dispatch_refused_for_several_ticks_holds_the_watch_back_until_its_last_tick(until, expected, caplog):
+    gh = Refusing(until)
+    with caplog.at_level(logging.INFO, logger="spicystock.dispatch"):
+        ticks(gh, "08:20", "08:45", state=ds._fresh_state(), refused=True)
+    assert dispatched(gh) == expected
+    assert [w for w, _ in dispatched(gh)].count("service-watch.yml") == 1            # once, never at or after the open
+    if until >= "08:26":
+        assert ("service-watch.yml@2026-11-20T08:25:00-06:00 waits: morning.yml is due since "
+                "2026-11-20T08:20:00-06:00 and has not been dispatched yet") in caplog.text
+    if until == "08:26":
+        assert ("service-watch.yml@2026-11-20T08:25:00-06:00 waits: morning.yml was dispatched at "
+                "2026-11-20T08:26:00-06:00, less than 150 seconds ago") in caplog.text
+    assert TOKEN not in caplog.text
+
+
+@pytest.mark.parametrize("back,stamp,watch", [
+    ("08:26", 40, "08:29"),          # stamped 8:26:40: 140 seconds old at 8:29:00, the last tick
+    ("08:27", 3, "08:29"),
+    ("08:28", 3, "08:29"),           # a catch-up at 8:28: the watch a minute later
+    ("08:29", 3, "08:29"),           # and at 8:29: both in the last tick
+])
+def test_a_catch_up_that_leaves_less_than_wait_seconds_before_the_open_starts_the_watch_at_its_last_tick(back, stamp,
+                                                                                                        watch):
+    """The dispatcher comes back at ``back``: the check is dispatched then, and the watch is never left to the 9:05
+    slot while a tick is made in its last minute."""
+    gh = ClockedGitHub(stamp=timedelta(seconds=stamp))
+    memory = ds._fresh_state()
+    ticks(gh, back, "08:35", state=memory)
+    assert posted(gh) == [("morning.yml", back), ("service-watch.yml", watch)]
+    ticks(gh, "09:05", "09:06", state=memory)
+    assert posted(gh)[2:] == [("service-watch.yml", "09:05")]
+
+
+def test_a_dispatcher_that_made_no_tick_in_the_pre_open_slot_leaves_it_unstarted():
+    """Back at 8:30, the open: the pre-open slot is no longer due and is never dispatched; the 9:05 slot is next."""
+    gh = ClockedGitHub()
+    memory = ds._fresh_state()
+    ticks(gh, "08:30", "09:06", state=memory)
+    assert posted(gh) == [("morning.yml", "08:30"), ("service-watch.yml", "09:05")]
+
+
+def test_the_watch_does_not_wait_for_a_check_whose_slot_is_over_or_already_started(monkeypatch):
+    """The wait for an unstarted check is while its slot is due: a watch slot after it does not wait for a check
+    nothing will start, and one whose check the ledger already holds as started does not wait on an empty listing."""
+    monkeypatch.setattr(ds, "SLOTS", (("morning.yml", {"dry_run": "false"}, CT, ("08:20",)),
+                                      ("service-watch.yml", {}, CT, ("08:51",))))
+    gh = ClockedGitHub()
+    ticks(gh, "08:51", "08:52", state=ds._fresh_state())            # 8:20 + 30 minutes is past: the check is not due
+    assert posted(gh) == [("service-watch.yml", "08:51")]
+    monkeypatch.undo()
+
+    class Unlisted(ClockedGitHub):
+        def send(self, method, path, body=None):
+            status, raw = super().send(method, path, body)
+            if method == "GET" and "/morning.yml/" in path:
+                raw = json.dumps({"workflow_runs": []}).encode()
+            return status, raw
+    gh = Unlisted()
+    memory = ds._fresh_state()
+    memory["started"]["morning.yml@2026-11-20T08:20:00-06:00"] = 777       # seen started on an earlier tick
+    ticks(gh, "08:25", "08:26", state=memory)
+    assert posted(gh) == [("service-watch.yml", "08:25")]
+
+
+#: an ordinary Friday, the half day after Thanksgiving, and the sessions either side of both clock changes
+LAST_TICK_DAYS = ["2026-11-20", "2026-11-27", "2026-10-30", "2026-11-02", "2027-03-12", "2027-03-15"]
+
+
+def listed_watch_runs(gh) -> list[dict]:
+    """The watch runs the fake holds, as ``GitHub.runs()`` would list them to the service watch."""
+    return [{"id": run_id, "event": "workflow_dispatch", "display_title": "Service watch (manual)",
+             "created_at": when.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "status": "completed",
+             "conclusion": "success", "head_branch": "main", "run_attempt": 1}
+            for when, run_id in gh.runs.get("service-watch.yml", [])]
+
+
+@pytest.mark.parametrize("day", LAST_TICK_DAYS)
+@pytest.mark.parametrize("back,started", [("08:28", True), ("08:29", True), ("08:30", False)])
+def test_a_watch_dispatched_at_its_last_tick_is_on_time_for_the_watch_that_judges_it(day, back, started):
+    """A catch-up at 8:28 or 8:29 AM CT: the pre-open watch is dispatched at 8:29, GitHub stamps it three seconds
+    later, and the 9:05 watch reads it as a dispatch in its slot, on every kind of day. With no tick before the
+    open there is no such run, and only then is the slot not started."""
+    from tools import service_watch as sw
+    assert sessions.is_session(date.fromisoformat(day))
+    opens = sessions.hours(date.fromisoformat(day))[0]
+    assert opens == at(day, "08:30", CT)                                   # 9:30 AM ET, in either season
+    gh = ClockedGitHub(stamp=timedelta(seconds=3))
+    ticks(gh, back, "08:35", state=ds._fresh_state(), day=day)
+    watches = [(w, m) for w, m in posted(gh) if w == "service-watch.yml"]
+    assert watches == ([("service-watch.yml", "08:29")] if started else [])
+    slot = at(day, "08:25", CT)
+    now = at(day, "09:07", CT)
+    assert sw.previous_watch_slot(at(day, "08:31", CT)) == slot
+    out = sw.judge_watch(at(day, "08:31", CT), listed_watch_runs(gh), None)
+    assert sw._instant(out["slot_at"]) == slot
+    if started:
+        assert gh.runs["service-watch.yml"][0][0] == at(day, "08:29", CT) + timedelta(seconds=3) < opens
+        assert (out["judgement"], out["key"], out["alert"]) == (sw.ON_TIME, None, False)
+        assert "scheduler:watch:not_started" in sw.clears_of({"scheduler": {"watch": out}, "alerts": []})
+    else:
+        assert (out["judgement"], out["key"], out["alert"]) == (sw.NOT_STARTED, "scheduler:watch:not_started", True)
+        assert f"No watch was dispatched in its slot at {slot.isoformat()}" in out["sentence"]
+    assert now > opens
 
 
 def test_the_wait_is_read_off_the_listing_when_the_ledger_does_not_hold_the_dispatch():
@@ -248,8 +390,10 @@ def test_the_wait_is_read_off_the_listing_when_the_ledger_does_not_hold_the_disp
             return status, raw
     gh = Undated()
     gh.runs["morning.yml"] = [(at("2026-11-20", "08:21", CT), 778)]
-    ticks(gh, "08:25", "08:31")
+    ticks(gh, "08:25", "08:28")
     assert posted(gh) == []
+    ticks(gh, "08:29", "08:31")                         # the last tick before the open does not wait
+    assert posted(gh) == [("service-watch.yml", "08:29")]
 
 
 def test_a_morning_check_someone_else_started_on_time_does_not_hold_the_watch_back():
