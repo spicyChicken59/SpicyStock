@@ -344,6 +344,15 @@ def test_the_evening_refuses_a_linked_morning_file(tmp_path):
     with pytest.raises(ValueError, match="must not be a symlink"):
         orders.write_publication(docs)
     assert (tmp_path / "elsewhere.json").read_text() == "{}" and not (docs / orders.FILE).exists()
+    # a link to a file that IS these orders' own check is refused too: it would otherwise be kept unread by the install
+    (docs / orders.MORNING_FILE).unlink()
+    orders.write_publication(docs)
+    raw = (docs / orders.FILE).read_bytes()
+    (tmp_path / "elsewhere.json").write_bytes(checked_for(raw, json.loads(raw)))
+    (docs / orders.MORNING_FILE).unlink()
+    (docs / orders.MORNING_FILE).symlink_to(tmp_path / "elsewhere.json")
+    with pytest.raises(ValueError, match="orders-morning.json must not be a symlink"):
+        orders.write_publication(docs)
 
 
 def test_the_check_names_a_missing_or_foreign_morning_file(tmp_path):
@@ -514,6 +523,23 @@ def test_the_window_closes_at_the_cutoff_on_the_applicable_sessions_new_york_dat
     late = at.replace(hour=23, minute=59)
     assert publish_morning.window_closed(PUBLICATION, late) is True
     assert publish_morning.window_closed(PUBLICATION, late + timedelta(minutes=1)) is False
+
+
+@pytest.mark.parametrize("argv, closing", [(["orders"], False), (["orders", "--window-closed"], True)])
+def test_the_command_passes_the_after_window_flag_to_the_publisher(argv, closing, monkeypatch, tmp_path, capsys):
+    seen = []
+
+    def publisher(root, **kwargs):
+        seen.append(kwargs)
+        return "window_not_closed" if kwargs["closing"] else "published"
+
+    monkeypatch.setattr(publish_morning, "publish_orders", publisher)
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
+    monkeypatch.setenv("GITHUB_RUN_ID", "77")
+    monkeypatch.setattr("sys.argv", ["publish_morning", *argv, "--root", str(tmp_path)])
+    assert publish_morning.main() == 0
+    assert seen == [{"ref": "refs/heads/main", "run_id": "77", "closing": closing}]
+    assert ("window_not_closed" if closing else "published") in capsys.readouterr().out
 
 
 # ----------------------------------------------------------- the workflow ---
