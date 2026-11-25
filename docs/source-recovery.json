@@ -1,92 +1,90 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-11-24T19:03:43.356670+00:00",
-  "generated_at": "2026-11-24T19:03:44.700411+00:00",
-  "observation_run_id": "45466073949",
-  "previous_observation_sha256": "69539b2588b03ba432fc9c07fd9359f46c73603aa8a10b68bc757c07aac1c81e",
+  "collection_started_at": "2026-11-25T18:09:38.784601+00:00",
+  "generated_at": "2026-11-25T18:09:40.835494+00:00",
+  "observation_run_id": "45672110750",
+  "previous_observation_sha256": "ed17607b88bcd26a6dad2a4923e1b1c2eaecf8ded284e66045b6c45884465bb6",
   "dry_run": false,
   "publication": {
-    "data_sha256": "467fd1f29228a3cb54accf1054a102cee6e67799fbe87b3bc0a8bf76ddb399c2",
-    "context_sha256": "3e7d390b6352fd8ecc753742ccf37aabc2d782b50073ddb72f0f7d4e9798ccaa",
-    "run_id": "45344319258",
-    "rules_version": "d14cd717cd8a",
-    "measured_session": "2026-11-23",
-    "applicable_session": "2026-11-24",
-    "published_at": "2026-11-24T06:58:22.835349+00:00",
+    "data_sha256": "c74f823525608f22e7464bcc725d6ba8116c847cdbf379e5568fae4ab835c914",
+    "context_sha256": "ab6a10444ce88d89df0d9a4562e9faa24a2e77fd319524f7530bda01f4525650",
+    "run_id": "45553627202",
+    "rules_version": "e40195855de3",
+    "measured_session": "2026-11-24",
+    "applicable_session": "2026-11-25",
+    "published_at": "2026-11-25T05:27:26.719515+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "6df0ea63e2e604c3fef4e01865fd3828de9177046901b8fec2f7a58d08bbe6c0"
+    "reader_sha256": "d4b3e5fd627ba5507d65c2f47d735a4c56a531e1adc3aa991171e2925cfdc542"
   },
   "frozen": {
-    "session": "2026-11-23",
-    "expected_session": "2026-11-23",
+    "session": "2026-11-24",
+    "expected_session": "2026-11-24",
     "feed": "sip",
     "adjustment": "split",
     "timeframe": "1Day",
     "lookback_days": 260,
     "stale_names_max": 100,
-    "universe_identity": "bafd18cdd2e28423",
-    "universe_snapshot_sha256": "238f545c73f9aec8764d92af5ed487e0d4b1326f00c3122826fb10bd0892c47e",
-    "universe_size": 4753,
-    "intended_identity": "12b425a47b059498",
-    "coverage_sha256": "ec518079152a867c6a72fe7449d23e5b4531e226df3413de050c79f160f8291e",
-    "rules_version": "d14cd717cd8a"
+    "universe_identity": "f53941531295d065",
+    "universe_snapshot_sha256": "89994272fc3ada5e567b1b42bc80c3e2c0a98316d54a39a8577c4e120f1839c2",
+    "universe_size": 4755,
+    "intended_identity": "ade23b792bc10690",
+    "coverage_sha256": "2277f71a3aee966faa5f93ff30625e3da8f86e3c27040f7cb98a42f9b9fa1709",
+    "rules_version": "e40195855de3"
   },
   "window": {
-    "next_session": "2026-11-24",
-    "next_open_at": "2026-11-24T09:30:00-05:00",
+    "next_session": "2026-11-25",
+    "next_open_at": "2026-11-25T09:30:00-05:00",
     "before_next_open": false
   },
   "original": {
     "acceptance_status": "degraded",
-    "intended_stocks": 4753,
-    "ready_stocks": 4734,
-    "fraction": 0.9960025247212287,
+    "intended_stocks": 4755,
+    "ready_stocks": 4736,
+    "fraction": 0.9960042060988433,
     "complete_intended": false,
     "capacity_excluded": 0,
-    "stale": 17,
-    "stale_stocks": 17,
-    "tolerance_verdict": "not_tolerated",
-    "tolerance_reasons": [
-      "other_exceptions"
-    ],
+    "stale": 19,
+    "stale_stocks": 19,
+    "tolerance_verdict": "tolerated",
+    "tolerance_reasons": [],
     "gaps": {
-      "stale": 17,
+      "stale": 19,
       "no_bars": 0,
       "dropped": 0,
       "unfetched_budget": 0,
       "unfetched_failure": 0,
-      "gapped": 2,
+      "gapped": 0,
       "unreadable": 0
     },
-    "run_status": "degraded",
-    "problem_kinds": [
-      "coverage_thin"
-    ],
+    "run_status": "ok",
+    "problem_kinds": [],
     "gate_read_run_status": false
   },
   "deficits": {
     "categories": {
       "stale": {
-        "count": 17,
-        "identity": "3849810b9eb50ac3",
+        "count": 19,
+        "identity": "376e1c9a87bf3503",
         "named": true,
         "source": "record",
         "names": [
-          "CPBI",
+          "ARKR",
+          "BEBE",
+          "BHM",
+          "CUB",
           "DDC",
-          "DIT",
-          "ELLO",
           "GSIW",
           "KELYB",
-          "LBTYB",
+          "KEQU",
+          "LUD",
           "MAYS",
-          "MDRR",
+          "MGRT",
           "NCEW",
           "PBHC",
           "PFX",
-          "PHOE",
-          "RDIB",
-          "SORA",
+          "RAND",
+          "SFBC",
+          "TOVX",
           "TRSG",
           "WLYB"
         ],
@@ -125,14 +123,11 @@
         "benchmark_in_population": false
       },
       "gapped": {
-        "count": 2,
-        "identity": "1fe41d0b2755dfd9",
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
         "named": true,
-        "source": "ledger",
-        "names": [
-          "ITP",
-          "TOPP"
-        ],
+        "source": null,
+        "names": [],
         "benchmark_in_population": false
       },
       "unreadable": {
@@ -147,9 +142,9 @@
     "named_stocks": 19,
     "unnamed_frames": 0,
     "ledger": {
-      "path": "quality-ledger/v1/467fd1f29228a3cb54accf1054a102cee6e67799fbe87b3bc0a8bf76ddb399c2.json.gz",
-      "sha256": "1de32466e3e5d2577d0d1859833b0cecc49c303f1b577ddd2da9ec9ee8a205d3",
-      "used": true
+      "path": "quality-ledger/v1/c74f823525608f22e7464bcc725d6ba8116c847cdbf379e5568fae4ab835c914.json.gz",
+      "sha256": "7578857f8ec4b8ec0080d2f07f688a0209c7ccfae4cb066a88d4e3dc1200b50a",
+      "used": false
     }
   },
   "policy": {
@@ -221,5 +216,5 @@
     "scheduled_dispatch_is_best_effort",
     "prior_session_followup_is_separate"
   ],
-  "sentence": "No source recovery for the 2026-11-23 publication at 2:03 PM ET on Tue 24 Nov: the next session opened before this check ran; nothing was fetched."
+  "sentence": "No source recovery for the 2026-11-24 publication at 1:09 PM ET on Wed 25 Nov: the next session opened before this check ran; nothing was fetched."
 }
