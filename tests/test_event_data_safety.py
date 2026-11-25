@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -328,14 +329,14 @@ def synthetic_registry() -> tuple[dict, dict, date]:
     return event_risk.validate_registry(reg), target, date.fromisoformat(target["review_due"])
 
 
-def test_the_acva_entry_stays_blocked_and_carries_its_review_note():
+def test_the_acva_entry_is_resolved_by_a_captured_source_and_classifies_with_no_note():
     acva = next(e for e in event_risk.REGISTRY["events"] if e["symbol"] == "ACVA")
-    note = acva["review_note"]
-    assert acva["review_due"] < note["noted_on"] <= event_risk.REGISTRY["reviewed_on"]
-    assert "page bytes not captured" in note["text"] and acva["active_until"] is None
+    assert acva["active_until"] == "2026-10-16" and "review_note" not in acva
+    assert re.fullmatch(r"[0-9a-f]{64}", acva["resolution"]["sha256"])
     match = event_risk.classify("ACVA", "2026-11-18")
-    assert match["blocked"] is True and match["status"] == "review_required"
-    assert "review_note" not in match["matches"][0]
+    assert match["blocked"] is False and match["status"] == "not_in_registry"
+    inside = event_risk.classify("ACVA", "2026-10-15")
+    assert inside["blocked"] is True and all("review_note" not in m for m in inside["matches"])
 
 
 def test_the_committed_registry_is_valid_and_lapses_nothing_on_its_own_review_date():

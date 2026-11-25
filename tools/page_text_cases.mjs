@@ -148,10 +148,11 @@ async function method({ browser, base, open, check, eq, full, shotsDir }) {
   }
   // the fixture's own line, spelled out once so the derivation above cannot agree with a wrong page by itself.
   // Only the review date is read off the record: it moves with every registry review (the fixtures archive the
-  // registry), and a literal there turned this check red on the review of 25 November 2026.
+  // registry), and a literal there turned this check red on the review of 25 November 2026. The next due date is
+  // ACVA's: resolved on 25 November 2026, its review is dated then and it stays in force at the fixture's session.
   const reviewedOn = full.rules.event_risk.registry.reviewed_on;
   check('the fixture archives the registry review date', /^\d{4}-\d{2}-\d{2}$/.test(reviewedOn) && reviewedOn > full.run.session);
-  eq('the fixture registry line, as a literal', registryWant(full), `Event registry: 7 known cash-acquisition entries, a manual list last reviewed ${reviewedOn} (after this session); none of the 3 in force at this session is past its review date (next due 2026-10-15). It is not a news screen: a stock that is not listed has not been cleared.`);
+  eq('the fixture registry line, as a literal', registryWant(full), `Event registry: 7 known cash-acquisition entries, a manual list last reviewed ${reviewedOn} (after this session); none of the 3 in force at this session is past its review date (next due 2026-11-25). It is not a news screen: a stock that is not listed has not been cleared.`);
 
   const shapes = [
     // a review a week before the session, two of three entries in force past their dates

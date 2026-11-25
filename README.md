@@ -1476,9 +1476,14 @@ archived, and a record from before the block is asked for none. The run:
   sec.gov nor issuer sites, and say so in the
   [review manifest](release-evidence/2026-11-19-event-review/manifest.json);
   none of them added a source. ACV Auctions, whose acquisition a search excerpt
-  says Copart completed on 16 October, stays listed and blocked until a captured
-  source resolves it; its entry carries a `review_note`, dated after its review
-  fell due, saying so. MG was reviewed again on 25 November 2026, the day its
+  says Copart completed on 16 October, stayed listed and blocked until a captured
+  source resolved it; its entry carried a `review_note`, dated after its review
+  fell due, saying so. On 25 November 2026 Copart's release was captured from a
+  runner that reaches sec.gov (`tools/capture_sec_document.py`, one request,
+  its digest in the job log), and the entry was resolved with it: its interval
+  ends on 16 October, the release's date, and it blocks no session after that
+  (the [ACVA manifest](release-evidence/2026-11-25-acva-resolution/manifest.json)
+  says how it was read). MG was reviewed again on 25 November 2026, the day its
   review fell due: search results for the company's 24 November release say
   its stockholders approved the merger that day and that it has not closed, so
   the entry stays listed and blocked; its next review is due 17 December. That
