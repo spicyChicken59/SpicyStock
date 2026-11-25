@@ -109,9 +109,11 @@ BEFORE_OPEN = frozenset({("service-watch.yml", "America/Chicago", "08:25")})
 #: created since that workflow's latest slot on the same day: the watch judges the morning check it waits for.
 WAITS_FOR = {"service-watch.yml": "morning.yml"}
 #: The morning check's receipts landed on main 88 to 94 seconds (23 October 2026) and 97 to 103 seconds (4 November
-#: 2026) after its dispatch was created (CLAUDE.md), and the watch reads main at its checkout: three minutes covers
-#: them, with the watch's own start on top.
-WAIT_SECONDS = 180
+#: 2026) after its dispatch was created (CLAUDE.md), and the watch reads main at its checkout: two and a half minutes
+#: covers the 103 with margin, the watch's own start on top. Ticks are on the minute and GitHub stamps a dispatch a
+#: few seconds after its tick, so the third tick after a catch-up dispatch clears the wait whenever the stamp is
+#: within 30 seconds of its tick: a catch-up at 8:26 AM CT starts the watch at 8:29, before the 8:30 open.
+WAIT_SECONDS = 150
 #: One page of the run listing ``GitHub.runs()`` reads. A page this full may not be
 #: all of it, so it is never read as complete.
 LIST_PAGE = 50

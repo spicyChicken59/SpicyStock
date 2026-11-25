@@ -1066,13 +1066,17 @@ def test_the_readme_quotes_the_service_watch_from_the_tool_and_its_workflow():
     assert _clock(datetime.combine(date(2026, 11, 20), time.fromisoformat(morning))) == "8:20 AM"
     assert "the on-time dispatcher, once it is deployed, starts the check at 8:20 AM CT" in README
     # the pre-open watch's wait after a catch-up dispatch of the check, from the dispatcher's own numbers
-    assert ds.WAIT_SECONDS == 180 and "not dispatched until\n180 seconds (`WAIT_SECONDS`)" in README_RAW
+    assert ds.WAIT_SECONDS == 150 and "not dispatched until\n150 seconds (`WAIT_SECONDS`)" in README_RAW
     open_at = datetime.combine(date(2026, 11, 20), time(8, 30))
     catch_up, late = (datetime.combine(date(2026, 11, 20), time(8, m)) for m in (26, 28))
-    assert catch_up + timedelta(seconds=ds.WAIT_SECONDS) < open_at <= late + timedelta(seconds=ds.WAIT_SECONDS)
+    # ticks are on the minute: the watch goes at the first tick the wait has passed, the stamp up to 30 s late
+    skew = timedelta(seconds=30)
+    first_tick = catch_up + timedelta(minutes=-(-(ds.WAIT_SECONDS + skew.seconds) // 60))
+    assert first_tick < open_at <= late + timedelta(seconds=ds.WAIT_SECONDS)
+    assert first_tick - (catch_up + skew) >= timedelta(seconds=ds.WAIT_SECONDS)
     assert (f"a catch-up that starts the\ncheck at {_clock(catch_up)} CT starts the watch at "
-            f"{_clock(catch_up + timedelta(seconds=ds.WAIT_SECONDS)).removesuffix(' AM')}, and one at "
-            f"{_clock(late).removesuffix(' AM')} leaves the\nmorning to the 09:05 slot") in README_RAW
+            f"{_clock(first_tick).removesuffix(' AM')} (GitHub stamping the dispatch up\nto 30 seconds after its "
+            f"tick), and one at {_clock(late).removesuffix(' AM')} leaves the\nmorning to the 09:05 slot") in README_RAW
     # how late a backup cron may be and still land in the alert window before the open, per season
     coverage = _backup_coverage_hours([int(c.split()[1]) * 60 + int(c.split()[0]) for c in crons if c.endswith("* * *")],
                                       sw.ALERT_WITHIN_HOURS)
@@ -1127,6 +1131,8 @@ def test_the_operations_note_and_the_example_quote_the_watch_from_the_tool_and_i
     assert f"{ds.WAIT_SECONDS} seconds (`WAIT_SECONDS`) after the newest dispatch of the morning check" in note
     assert "88 to 94 seconds (23 October 2026) and 97 to 103 seconds (4 November 2026)" in note
     assert ds.WAIT_SECONDS > 103                                   # it covers the latest landing recorded
+    assert "so 150 covers the 103 with margin" in note and f"{ds.WAIT_SECONDS} covers" in note
+    assert "while the stamp is within 30 seconds of its tick" in note
     assert (f"{sw.LISTING_FAILURES_IN_A_ROW} watch runs in a row could not read it (`LISTING_FAILURES_IN_A_ROW`)"
             in note and f"{sw.LISTING_CLEAR_HOURS} hours with no listing failure (`LISTING_CLEAR_HOURS`)" in note)
     assert "a red run that GitHub's cron started is read by no watch, and is seen only in Actions" in note

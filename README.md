@@ -3011,10 +3011,12 @@ session has not opened, so they are a missed Friday's (or an eve's) recovery
 and a no-op after a published one. A slot is due for 30 minutes from its
 instant; the watch's 08:25 America/Chicago slot is due only until the session's
 open and never at or after it (`BEFORE_OPEN`), and it is not dispatched until
-180 seconds (`WAIT_SECONDS`) after the newest dispatch of the morning check it
-judges (`WAITS_FOR`), its own or anyone's: the check's receipts have landed on
-`main` 88 to 103 seconds after its dispatch, so a catch-up that starts the
-check at 8:26 AM CT starts the watch at 8:29, and one at 8:28 leaves the
+150 seconds (`WAIT_SECONDS`) after the newest dispatch of the morning check it
+judges (`WAITS_FOR`), its own or anyone's, by that dispatch's own `created_at`:
+the check's receipts have landed on `main` 88 to 103 seconds after its
+dispatch, and ticks are on the minute, so a catch-up that starts the
+check at 8:26 AM CT starts the watch at 8:29 (GitHub stamping the dispatch up
+to 30 seconds after its tick), and one at 8:28 leaves the
 morning to the 09:05 slot. Before it asks for a run it reads the workflow's
 dispatched runs created since the slot, and its ledger (`--state`, or held in
 memory by `loop`, which is how the Railway service runs it) records each

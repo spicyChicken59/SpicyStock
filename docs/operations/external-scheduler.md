@@ -17,12 +17,16 @@ calendar the run reads (`src/sessions.py`).
 A slot is due from its instant for 30 minutes (`DUE_MINUTES`), except the
 watch's 08:25 America/Chicago slot, which is due only until the session's open
 and is never dispatched at or after it (`BEFORE_OPEN`). That watch is not
-dispatched until 180 seconds (`WAIT_SECONDS`) after the newest dispatch of the
-morning check it judges (`WAITS_FOR`), this tool's or anyone's: the check's
-receipts landed on `main` 88 to 94 seconds (23 October 2026) and 97 to 103
-seconds (4 November 2026) after its dispatch was created. A catch-up that
-starts the check at 08:26 starts the watch at 08:29; one at 08:28 leaves the
-morning to the 09:05 slot. The
+dispatched until 150 seconds (`WAIT_SECONDS`) after the newest dispatch of the
+morning check it judges (`WAITS_FOR`), this tool's or anyone's, by the
+dispatch's own `created_at`: the check's receipts landed on `main` 88 to 94
+seconds (23 October 2026) and 97 to 103 seconds (4 November 2026) after its
+dispatch was created, so 150 covers the 103 with margin. Ticks are on the
+minute and GitHub stamps a dispatch a few seconds after its tick, so the third
+tick after it clears the wait while the stamp is within 30 seconds of its
+tick: a catch-up that starts the check at 08:26 starts the watch at 08:29. A
+stamp later than that (08:26:40, say) defers the watch to 08:30, the open, and
+leaves the morning to the 09:05 slot, as a catch-up at 08:28 does. The
 evening's four starts are one publication and three no-ops: the workflow's
 `only_if_unpublished` guard publishes the newest completed session once,
 from its primary slot (18:16 ET) on, only while it is unpublished and only
@@ -92,7 +96,7 @@ This is the owner's step; nothing in the repository deploys it.
    prints one line per due slot:
    - `evening.yml@2026-11-20T18:20:00-05:00 dispatched: run 123456789`
    - `... already started: run 123456789`
-   - `service-watch.yml@2026-11-20T08:25:00-06:00 waits: morning.yml was dispatched at 2026-11-20T08:26:00-06:00, less than 180 seconds ago`
+   - `service-watch.yml@2026-11-20T08:25:00-06:00 waits: morning.yml was dispatched at 2026-11-20T08:26:07-06:00, less than 150 seconds ago`
    - `... not started: dispatching evening.yml: HTTP 403`
 
 ## Checking it without Railway

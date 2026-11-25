@@ -160,15 +160,23 @@ def posted(gh) -> list[tuple[str, str]]:
 
 
 class ClockedGitHub(FakeGitHub):
-    """FakeGitHub that remembers the clock each call was made at."""
+    """FakeGitHub that remembers the clock each call was made at, and stamps a dispatch's ``created_at``
+    ``stamp`` after the tick that asked for it, as GitHub does."""
 
-    def __init__(self, answers=None):
+    def __init__(self, answers=None, stamp=timedelta(0)):
         super().__init__(answers)
         self.clocks: list[str] = []
+        self.stamp = stamp
 
     def send(self, method, path, body=None):
         self.clocks.append(self.now.astimezone(CT).strftime("%H:%M"))
-        return super().send(method, path, body)
+        if method != "POST":
+            return super().send(method, path, body)
+        tick, self.now = self.now, self.now + self.stamp
+        try:
+            return super().send(method, path, body)
+        finally:
+            self.now = tick
 
 
 def ticks(gh, start: str, end: str, state=None, day="2026-11-20"):
@@ -182,10 +190,33 @@ def ticks(gh, start: str, end: str, state=None, day="2026-11-20"):
 
 def test_the_pre_open_watch_waits_wait_seconds_after_a_catch_up_morning_dispatch():
     """A catch-up at 8:26: the check is dispatched then, and the watch WAIT_SECONDS later, before the open."""
-    assert ds.WAIT_SECONDS == 180 and ds.WAITS_FOR == {"service-watch.yml": "morning.yml"}
+    assert ds.WAIT_SECONDS == 150 and ds.WAITS_FOR == {"service-watch.yml": "morning.yml"}
     gh = ClockedGitHub()
     ticks(gh, "08:26", "08:31", state=ds._fresh_state())
     assert posted(gh) == [("morning.yml", "08:26"), ("service-watch.yml", "08:29")]
+
+
+@pytest.mark.parametrize("state", [ds._fresh_state, lambda: None], ids=["ledger-in-memory", "no-ledger"])
+def test_a_catch_up_stamped_seven_seconds_after_its_tick_still_starts_the_watch_at_the_third_tick(state):
+    """The morning run's created_at is 8:26:07 AM CT, seven seconds after the 8:26 tick that dispatched it: at the
+    8:29:00 tick it is 173 seconds old, past WAIT_SECONDS, and the watch is dispatched before the open; at 8:28:00
+    it was 113 seconds old, and the watch waited."""
+    gh = ClockedGitHub(stamp=timedelta(seconds=7))
+    memory = state()
+    ticks(gh, "08:26", "08:31", state=memory)
+    assert gh.runs["morning.yml"][0][0] == at("2026-11-20", "08:26", CT) + timedelta(seconds=7)
+    assert posted(gh) == [("morning.yml", "08:26"), ("service-watch.yml", "08:29")]
+
+
+def test_a_catch_up_stamped_past_the_margin_defers_the_watch_to_the_open_and_so_to_its_next_slot():
+    """Stamped 8:26:40 AM CT, forty seconds after its tick: at 8:29:00 it is 140 seconds old and the watch waits;
+    8:30 is the open, where the pre-open slot is no longer due. The 9:05 slot judges the morning, as before."""
+    gh = ClockedGitHub(stamp=timedelta(seconds=40))
+    memory = ds._fresh_state()
+    ticks(gh, "08:26", "08:35", state=memory)
+    assert posted(gh) == [("morning.yml", "08:26")]
+    ticks(gh, "09:05", "09:06", state=memory)
+    assert posted(gh) == [("morning.yml", "08:26"), ("service-watch.yml", "09:05")]
 
 
 def test_a_catch_up_that_leaves_less_than_wait_seconds_before_the_open_leaves_the_watch_to_its_next_slot():
