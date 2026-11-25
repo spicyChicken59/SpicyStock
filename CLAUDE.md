@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 7528 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 7555 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -16368,3 +16368,49 @@ repository:
 
 **Not claimable:** the first night under the candidate checks; that a flag
 changes what a reader does; any trading edge.
+
+## Checkpoint, 25 Nov 2026 -- the publication gate reads a version 2 go-live block without the calendar library
+
+**Found by the feed's final review, before it happened.** On `main` since
+#230, `tools/publish_dashboard.py` asks `orders.check()` for the handoff,
+which asks `go_live.faults()` for a version 2 block, which imported
+`src.sessions` (the pinned `exchange_calendars`). `publish-dashboard.yml`
+installs no package. A version 1 record never reaches that validator, so
+nothing failed yet: the committed record is the 24 November one. Tonight's
+evening writes the first version 2 record, and the gate would have stopped
+with `ModuleNotFoundError` before it asked for the Pages build or verified a
+file. Reproduced here over the `full` fixture under `python -I -S`.
+
+**The fix** (`src/go_live.py`; no rule and no record moves):
+- `calendar_for(data)` is the pinned calendar where it imports
+  (`LibraryCalendar`), else the record's own archived schedule
+  (`ArchivedCalendar` over `run.calendar.schedule`).
+- Inside the schedule the archived answer is the pinned calendar's own.
+  Outside it the answer is None, never a guess.
+- `run_bounds()` gives the least and the most counted sessions a ledger can
+  end on. Under the pinned calendar they are one number, so the evening
+  writes and validates exactly what it did (`consecutive()`).
+- Where the schedule does not reach a row, the validator holds the count
+  between the run it can prove and the counted rows at the ledger's end, and
+  refuses nothing it cannot see.
+
+**Tests** (`tests/test_go_live.py`, 27 added):
+- the archived schedule against the pinned calendar on every day of the
+  fixture's schedule and four days either side;
+- eleven schedules a reader cannot hold, each answering nothing;
+- the bounds over a schedule that reaches every row, one that starts
+  mid-ledger, one that ends before tonight, and none;
+- the validator with the library made unimportable;
+- the gate itself under `python -I -S` over four records (paper, live, an
+  unmet condition, a forged count): it reads `live_ready` as the evening
+  wrote it and imports no third-party module.
+
+Fourteen runs in a detached worktree: 13 mutants die, the control survives.
+
+**Also read today.** A morning check ran inside its window on 25 November
+(generated 14:24 UTC, `no_tickets`), and its persist job wrote the first
+`orders-morning.json` a morning run has written: `no_check`, every ticket
+cancelled for `orders_earlier_version`, because the `orders.json` on `main`
+was written by the 24 November evening under version 5.
+
+**Not claimable:** the first version 2 night through the gate (tonight's).

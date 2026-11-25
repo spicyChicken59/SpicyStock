@@ -124,6 +124,16 @@ block, so a block edited to say ready never makes the handoff live. It re-reads:
 - `on_time_sessions` as the run of counted sessions its own ledger ends on
   before tonight, against the need the record's rules archived.
 
+The evening reads the run off the pinned XNYS calendar. The publication gate
+(`tools/publish_dashboard.py`) installs no package, so there the same
+validator reads the record's own archived schedule
+(`run.calendar.schedule`, `go_live.ArchivedCalendar`): inside that schedule
+its answer is the pinned calendar's own, and the two agree. Where the
+schedule does not reach a ledger row it cannot say whether two sessions were
+adjacent, so it holds the count between the run it can prove and the counted
+rows at the ledger's end (`go_live.run_bounds()`), and refuses nothing it
+cannot see.
+
 ### Version 1 of the gate
 
 From 19 to 24 November 2026 the gate had two more conditions:
