@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "5cb341cf2a8c"
+  "rules_version": "7f5dfcf28442"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -937,7 +937,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "51af72f9d6e1703436c4361891a5252a918e4825ef85466797539cacdf71a7ca"
+   "context_sha256": "0509d72fa3bd3cd4fa8175afef4f096f7c69211560f0f5da1e19fc20e01ff815"
   },
   "earnings": {
    "version": 2,
@@ -1367,7 +1367,7 @@
    "max_events": 128,
    "max_sources": 8,
    "max_text_length": 2000,
-   "registry_sha256": "dc486fa14b0afe7c50504208abbf803d8545a9798dc4c2d56a63e634d451285f",
+   "registry_sha256": "66926faa7715277d1103c79a8225e1ec8fcc0e643b9b7c5da7f890cc949a0660",
    "registry": {
     "version": 1,
     "coverage": "manual_known_events_only",
@@ -1483,10 +1483,10 @@
       "kind": "cash_acquisition",
       "announced_on": "2026-09-10",
       "active_from": "2026-09-10",
-      "active_until": null,
+      "active_until": "2026-10-16",
       "evidence_as_of": "2026-10-08",
-      "reviewed_on": "2026-10-09",
-      "review_due": "2026-10-15",
+      "reviewed_on": "2026-11-25",
+      "review_due": "2026-11-25",
       "reason": "ACV announced Copart's $10.50 per share cash tender offer and merger. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -1504,9 +1504,12 @@
         "quote": "has been further extended until 5:00 p.m., Eastern Time, on October 15, 2026"
        }
       ],
-      "review_note": {
-       "noted_on": "2026-11-19",
-       "text": "Re-reviewed 19 November 2026. Copart's release of 16 October 2026 (https://www.sec.gov/Archives/edgar/data/0000900075/000119312526423478/d129535dex991.htm, read as a search-result excerpt; page bytes not captured) says the acquisition completed and ACV's shares ceased trading, and the retained Nasdaq directory snapshots drop ACVA from 20 October 2026. The registry ends an entry only with a resolution carrying the SHA-256 of captured bytes, and none could be captured from this sandbox, so the entry stays listed and blocked with its review overdue. A stock that no longer trades prints no bars and can carry no ticket. To end it, capture the release from a network that reaches sec.gov and add the resolution."
+      "resolution": {
+       "title": "Copart, Inc. Form 8-K exhibit 99.1: Copart completes acquisition of ACV",
+       "published_on": "2026-10-16",
+       "url": "https://www.sec.gov/Archives/edgar/data/900075/000119312526423478/d129535dex991.htm",
+       "sha256": "5c50ee333fab78434492cc8f25821e83c9ef7a9e88f81e8bb45e5dfdee559327",
+       "quote": "With the completion of the acquisition, shares of ACV common stock have ceased trading on the New York Stock Exchange"
       }
      },
      {
@@ -2319,7 +2322,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "5cb341cf2a8c"
+  "replay_rules_version": "7f5dfcf28442"
  },
  "observations": {
   "as_of": "2026-09-10",

@@ -10,10 +10,10 @@
 ## 1. Identity and binding
 
 - Measured session: 2026-09-10 (open); plans are for **2026-09-11**, entry window 2026-09-11T09:30:00-04:00 to 2026-09-11T10:00:00-04:00 (America/New_York), full session closes 2026-09-11T16:00:00-04:00.
-- Published 2026-09-10T22:30:00+00:00 (evening, FIXTURE full); rules version `5cb341cf2a8c`.
-- Canonical record `data.json`: 354,920 bytes, SHA-256 `7eaa405a6cbe278fdc92f5bcea29d5e6bb2931ab7a872e5550d762a9fc4f7ff7`.
-- `picks.json`: 43,332 bytes, SHA-256 `d27bdea5107987e319680e914fa7c9e22e23e094ebc7b8b59a7f44c3d364dfae`.
-- This file renders `brief.json` (77,196 bytes, SHA-256 `e6fd05a7df231235099ee5eff1afbfc0f898228287dc2bac9263c232c42bf6c8`).
+- Published 2026-09-10T22:30:00+00:00 (evening, FIXTURE full); rules version `7f5dfcf28442`.
+- Canonical record `data.json`: 354,613 bytes, SHA-256 `8e668b175c60e9570a83129cf687618d650ca1afdeca10a4f922d8b8e3fce015`.
+- `picks.json`: 43,332 bytes, SHA-256 `cf7547be63259d91a47c2a50f04f93adbda750c5fedbcb5dfff7f79ac4c50d45`.
+- This file renders `brief.json` (77,204 bytes, SHA-256 `b2947623fc8e053515b5ec39a24fe24f25bf12ba4fab1b36e4b41a02a0dbe39e`).
 - Page https://spicychicken59.github.io/SpicyStock/ · record https://spicychicken59.github.io/SpicyStock/data.json · brief https://spicychicken59.github.io/SpicyStock/brief.json and https://spicychicken59.github.io/SpicyStock/brief.md.
 
 ## 2. Service state
@@ -254,15 +254,15 @@ Open MODEL plans walked on daily (and retained minute) bars; not holdings.
 
 ## 11. Event registry and coverage
 
-- Event registry (manual; known cash acquisitions only): 7 entries, last reviewed 2026-11-25, 76 days after the measured session 2026-09-10: the archived registry is newer than the session it is read against. None of its 7 unresolved entries is past its review date (next due 2026-10-15). None of the 8 listed rows (7 bursts, 1 setting up, 0 also quiet) is in the registry. A stock that is not in the registry has not been cleared: SpicyStock reads no company news, and its earnings and SEC checks ran for 5 of the 8 listed names (the tickets', and the candidate checks' flags for up to 80 names; a check that could not read a name says unknown, never clear).
-- Entries: MG (cash_acquisition, announced 2026-09-18, review due 2026-12-17); PRTH (cash_acquisition, announced 2026-09-21, review due 2026-12-17); ARX (cash_acquisition, announced 2026-08-13, review due 2026-12-17); BWIN (cash_acquisition, announced 2026-09-14, review due 2026-12-17); ACVA (cash_acquisition, announced 2026-09-10, review due 2026-10-15); ZIM (cash_acquisition, announced 2026-02-16, review due 2026-12-02); CCC (cash_acquisition, announced 2026-10-15, review due 2026-12-17).
+- Event registry (manual; known cash acquisitions only): 7 entries, last reviewed 2026-11-25, 76 days after the measured session 2026-09-10: the archived registry is newer than the session it is read against. None of its 6 unresolved entries is past its review date (next due 2026-12-02). None of the 8 listed rows (7 bursts, 1 setting up, 0 also quiet) is in the registry. A stock that is not in the registry has not been cleared: SpicyStock reads no company news, and its earnings and SEC checks ran for 5 of the 8 listed names (the tickets', and the candidate checks' flags for up to 80 names; a check that could not read a name says unknown, never clear).
+- Entries: MG (cash_acquisition, announced 2026-09-18, review due 2026-12-17); PRTH (cash_acquisition, announced 2026-09-21, review due 2026-12-17); ARX (cash_acquisition, announced 2026-08-13, review due 2026-12-17); BWIN (cash_acquisition, announced 2026-09-14, review due 2026-12-17); ACVA (cash_acquisition, announced 2026-09-10, review due 2026-11-25, ended 2026-10-16); ZIM (cash_acquisition, announced 2026-02-16, review due 2026-12-02); CCC (cash_acquisition, announced 2026-10-15, review due 2026-12-17).
 - Status words: `known_event` = in the registry and blocked for a SpicyStock ticket; its manual review is current; `review_required` = in the registry and blocked for a SpicyStock ticket; its manual review is overdue; `not_in_registry` = not in the registry: NOT a clearance, nothing was checked.
 - Earnings and 8-K check: status `checked`; 1 ticket rows; 3 of 8 listed names had no check at all.
 - Not checked by SpicyStock: company news and press releases, announced earnings dates, offerings and shelf takedowns, FDA and trial dates, halts outside the morning check, delisting notices beyond 8-K item 3.01 on the names checked, index changes, lockup expiries, ex-dividend dates.
 
 ## 12. Rules
 
-- Rules digest `5cb341cf2a8c`; without the universe membership identity `430f098bf9b9` (membership identity `1b97e33400ee217a`): the record's digest nests the universe membership identity, so it moves on any night the selection's membership moves; `digest_without_membership` is the same digest with that identity removed, and moves only when an archived rule changes.
+- Rules digest `7f5dfcf28442`; without the universe membership identity `63ff95fff12b` (membership identity `1b97e33400ee217a`): the record's digest nests the universe membership identity, so it moves on any night the selection's membership moves; `digest_without_membership` is the same digest with that identity removed, and moves only when an archived rule changes.
 - pipeline: trade_grades ["A+", "A"], yellow_grades ["A+"], max_reads 12, reader_policy "accepted_required_v1", reader_refusal_fraction 0.25, reader_refusal_min 1, stale_tolerance_fraction 0.01, stale_sessions_max 5, min_coverage_fraction 0.5
 - plan: entry_below_pct 2.0, entry_above_pct 4.0, skip_gap_pct 8.0, entry_window_minutes 30, assumed_slippage_pct 1.0, limit_rule "stop_constrained", sizing_basis "order_limit", max_stop_pct 4.0, ideal_stop_pct 2.0, stop_risk_multiplier 0.5, gain_ceiling_pct 15.0, extension_hazard_pct 20.0, hazard_multiplier 0.5, sell_half_pct 8.0, abnormal_day_pct 10.0, gap_exit_pct 20.0, sell_half_day 3, no_progress_day 3, trail_from_day 3, final_exit_day 5, allocation_policy "combined_stages_reserved_principal_v1"
 - admission: version 1, policy "burst_route_or_dollar_expansion_v1"

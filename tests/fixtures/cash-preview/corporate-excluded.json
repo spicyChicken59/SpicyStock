@@ -7,15 +7,15 @@
   "previous_observation_sha256": null,
   "dry_run": false,
   "publication": {
-    "data_sha256": "45aecead15cfa4ea81dc290e00525543077e4c39739f22f01020b11a356f44df",
-    "context_sha256": "4afe5e83a1cc384335bcbd50157f55a421d737a3adc84738e6e200723b2ab9fa",
+    "data_sha256": "83e3a250f488be6c468891d84fb58198e7451563a2c38ba36465a4d066d06b12",
+    "context_sha256": "3f6ebf1ad9b7cd106045a54ac482c0ee6858a867b67ff03adc884ec864da8191",
     "run_id": "synthetic-cash-preview",
-    "rules_version": "5cb341cf2a8c",
+    "rules_version": "7f5dfcf28442",
     "measured_session": "2026-09-10",
     "applicable_session": "2026-09-11",
     "published_at": "2026-09-10T22:30:00+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "1560b4a11e669b9b25c80c6ec8e9c885530e779bf7bec88ab53f33bb19980ae0"
+    "reader_sha256": "bb0bbbce896920e44703abac79051de4367c92ee957d4685a11d536a20baa1d2"
   },
   "policy": {
     "version": 1,
@@ -166,8 +166,8 @@
     {
       "ticker": "COIL",
       "kind": "anticipation",
-      "evidence_id": "b29f86edb6a8ed273237d8dce137681c8c24dfaea55501399824171ea971d8da",
-      "plan_sha256": "0df46d8ffaa502e525be74e0a090a3d5b193ca832659be54c071ba0f70d6ca72",
+      "evidence_id": "b2f4b84d4bbe56543435e2e9cb5e2ad3dd4df08bbf4037bcee81893f92d233a4",
+      "plan_sha256": "ad21322d7fa404574923ac35c9db20a01ed87b3fd5bec3145bb41f551296501a",
       "levels": {
         "trigger": 110.61,
         "limit": 111.72,
