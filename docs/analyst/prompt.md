@@ -268,7 +268,7 @@ The first two matter most. Read them twice.
   the iex bar for up to 80 of the night's candidates, whatever the light,
   as flags only: they change no ticket, and a name they could not read is
   unknown, never clear. The halt check still reads tickets alone, and the
-  issuer check only the plans the registry blocked.
+  issuer check only the tickets and the plans the registry blocked.
 - **What this means for you:** the event check of section 8.2 is yours, for
   every candidate, every time. "Not in the registry" is not "clear".
 - **Live value:** the brief's section "Event registry and coverage"

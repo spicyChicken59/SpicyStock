@@ -1677,9 +1677,10 @@ The night has ONE SEC reader. It asks each SEC URL once and keeps its answer,
 so the earnings warning, the SEC flags and the candidate checks read the same
 filing list and each block counts only the requests it made (an answer the
 reader already held is not one). The tickets are read first; the reader begins
-no request past 150 seconds from its first request or past the issuer
-transport's 96 requests for the night, and a name past either is unknown with
-its reason, never clear: 80 names cost one mapping and one filing list each,
+no request past 150 seconds from its first request, past the issuer
+transport's 96 requests for the night, or once that transport has downloaded
+its 33554432 bytes for the night (an answer past them could not be read), and
+a name past any of them is unknown with its reason, never clear: 80 names cost one mapping and one filing list each,
 plus an older file where one is needed. The candidate checks ask the iex feed
 in one batch of their own, after the record is composed, for every name no
 ticket's cross-check row stands behind (`candidate_checks.cross_symbols()`),
@@ -1695,7 +1696,8 @@ block with nothing read for it, and it never fails a night. The block is
 bounded at 262144 bytes: past that, rows no ticket's block stands behind are
 shed to not checked from the end. Its sentence carries counts and at most 3
 names for each kind of flag; the page's Method view and the mail print it
-verbatim, and the brief carries each candidate's row beside it. A closed night
+verbatim, and the brief carries a name's row beside each burst, listed setup
+and also-quiet coil it prints. A closed night
 carries the previous block while it still holds under tonight's record.
 `report.validate()` re-derives the names from the record and holds every row
 to its own fields under rules that archive the family; a record from before it

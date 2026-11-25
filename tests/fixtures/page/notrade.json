@@ -13788,7 +13788,7 @@
    "iex": 1
   },
   "status": "partial",
-  "sentence": "Candidate checks (flags only) for 5 of 5 names: 1 ticket, 4 reviewed bursts. SEC merger, tender or deal filings flagged for 1 (AAPL); a material 8-K item for 1 (AAPL); earnings reported after the signal or estimated in or near the hold window for 1 (AAPL). Unknown, and unknown is never clear: SEC filings of 2; the earnings date of 2. A flag is for a reader: it changes no plan, ticket or order, and only the manual event registry withholds a ticket."
+  "sentence": "Candidate checks (flags only) for 5 of 5 names: 1 ticket, 4 reviewed bursts. SEC merger, tender or deal filings flagged for 1 (AAPL); a material 8-K item for 1 (AAPL); earnings reported after the signal, estimated in or near the hold window, or overdue for 1 (AAPL). Unknown, and unknown is never clear: SEC filings of 2; the earnings date of 2. A flag is for a reader: it changes no plan, ticket or order, and only the manual event registry withholds a ticket."
  },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",

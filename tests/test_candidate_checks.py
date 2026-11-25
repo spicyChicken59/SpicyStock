@@ -126,8 +126,8 @@ def test_the_first_eighty_names_get_rows_and_the_rest_are_counted_by_role(fake_s
     forged["rows"] = forged["rows"][:-1]
     assert "candidate_checks rows are not the record's names" in checked(data, forged)
     forged = copy.deepcopy(block)
-    forged["unchecked"] = {}
-    assert unchecked == {} or "candidate_checks counts by role are not the record's names" in checked(data, forged)
+    forged["unchecked"] = {} if unchecked else {"candidate": 1}      # never the record's, in either case
+    assert "candidate_checks counts by role are not the record's names" in checked(data, forged)
 
 
 @pytest.mark.parametrize("name", ["red", "yellow", "full", "next"])
@@ -178,10 +178,14 @@ def test_the_tickets_are_read_first_and_a_spent_deadline_leaves_the_rest_unknown
         return clock["t"]
     reader = CC.SecReader(fake_sec, now=NOW, deadline_seconds=8, monotonic=tick)
     tickets = earnings_risk.tickets_of(data["bursts"], data["trades"], data["watchlist"]["top"])
-    earnings_risk.collect(tickets, data["run"]["session"], fetch=reader, now=NOW)
+    earn = earnings_risk.collect(tickets, data["run"]["session"], fetch=reader, now=NOW)
+    # the ticket's own reading, made through this reader before any candidate's, is the one its row carries
+    assert earn["rows"][0]["reason"] is None and earn["rows"][0]["error"] is None
+    data["run"]["earnings"] = earn
     block = CC.collect(data, reader=reader, iex=iex_for(data, names), frames=sip_for(data, names))
     ticket = block["rows"][0]
     assert ticket["role"] == "ticket" and ticket["earnings"]["reason"] is None
+    assert ticket["earnings"]["verdict"] == earn["rows"][0]["verdict"]
     late = [r for r in block["rows"] if r["sec"]["reason"] == "time_budget"]
     assert late and all(r["sec"]["state"] == "unknown" and r["earnings"]["verdict"] == "unknown"
                         and r["earnings"]["error"] == "time_budget" for r in late)
@@ -403,6 +407,8 @@ def test_the_night_reads_each_sec_url_once_and_its_ticket_rows_agree(night_marke
     ("sec", {"state": "clear", "filings": [], "filings_count": 0}, "sec"),
     ("cross_check", {"result": "fail", "reason": "differ: close",
                      "differences": {"open": 0.0, "high": 0.0, "low": 0.0, "close": 9.0, "volume": 0.0}}, "cross_check"),
+    ("items", {"codes": ["1.01", "9.99"]}, "items"),
+    ("source", {"bytes": 1}, "source"),
 ])
 def test_a_tickets_row_that_disagrees_with_its_own_run_row_is_named(part, change, words):
     data = page("full")
@@ -414,6 +420,23 @@ def test_a_tickets_row_that_disagrees_with_its_own_run_row_is_named(part, change
                                                               earnings_risk.window(data["run"]["session"])})
     found = CC.faults(data)
     assert f"candidate_checks {words} for AAPL is not its run.* row's" in found, found
+
+
+def test_a_tickets_cik_that_is_not_its_run_rows_is_named():
+    data = page("full")
+    row = data["candidate_checks"]["rows"][0]
+    assert row["role"] == "ticket" and row["cik"] == data["run"]["earnings"]["rows"][0]["cik"]
+    row["cik"] += 1
+    assert "candidate_checks cik for AAPL is not its run.* row's" in CC.faults(data)
+
+
+def test_a_rows_cik_is_the_earnings_readings_else_the_sec_flags():
+    name = {"stage": "anticipation", "ticker": "QQQ", "role": "listed", "rank": 1}
+    session = page("full")["run"]["session"]
+    er = CC._unread_earnings(name, session, earnings_risk.window(session), NOW)
+    sr = {**CC._unread_sec(name), "state": "clear", "reason": None, "cik": 4321}
+    assert er["cik"] is None and CC._lean(name, er, sr, CC._unread_cross())["cik"] == 4321
+    assert CC._lean(name, {**er, "cik": 99}, sr, CC._unread_cross())["cik"] == 99
 
 
 def test_a_listed_setups_sec_reading_is_held_to_its_run_sec_flags_row():
@@ -451,6 +474,18 @@ def max_row(data: dict, name: dict) -> dict:
     row["cross_check"] = {"result": "pass", "reason": None,
                           "differences": {k: 0.123456789012345 for k in ("open", "high", "low", "close", "volume")}}
     return row
+
+
+def test_a_row_keeps_the_newest_filings_and_the_first_material_items_with_their_counts():
+    filings = [{"accession": f"0000000001-26-00000{i}", "filing_date": f"2026-09-0{i}", "form": "SC TO-T", "items": []}
+               for i in range(1, 7)]                                         # oldest first, as sec_flags keeps them
+    part = CC._sec_part({"state": "flagged", "reason": None, "filings": filings})
+    assert part["filings"] == filings[-CC.MAX_FILINGS:] and part["filings_count"] == 6
+    material = [{**MATERIAL, "accession": f"0000000001-26-00001{i}"} for i in range(6)]   # material first, retained order
+    er = {"items": {"status": "material", "reason": None, "material": material, "codes": ["1.01"], "count": 6,
+                    "unread": 0, "after_hold": 0, "unretained_material": 0}}
+    items = CC._items_part(er)
+    assert items["material"] == material[:CC.MAX_MATERIAL] and items["material_count"] == 6
 
 
 def test_eighty_rows_at_their_bounds_fit_the_block_and_shedding_never_takes_a_ticket(monkeypatch):
@@ -518,7 +553,30 @@ def test_the_block_sentence_lists_at_most_three_names_a_flag_however_many_are_fl
     text = block["sentence"]
     named = [n["ticker"] for n in names if n["ticker"] in text.replace(",", " ").replace("(", " ").split()]
     assert len(set(named)) <= 3 * 4 and len(text) < 1500, text
-    assert "and 77 more" in text and "Not checked past the bound of 80: 5 admitted A+/A bursts" in text
+    assert "and 77 more" in text and "Not checked past the bound of 80: 5 discovery-admitted A+/A bursts" in text
+    # an overdue report is a flag of its own kind of words, named like the rest
+    for r in rows:
+        r["earnings"] = {**r["earnings"], "verdict": "estimate_outside"}
+    rows[3]["earnings"] = {**rows[3]["earnings"], "verdict": "overdue"}
+    text = CC._block(data, CC.record_names(data), rows, {"sec": 0, "sec_reused": 0, "iex": 0})["sentence"]
+    assert f"estimated in or near the hold window, or overdue for 1 ({rows[3]['ticker']})" in text, text
+
+
+def test_a_block_that_read_nothing_says_so_and_never_none_flagged():
+    data = page("full")
+    session = data["run"]["session"]
+    names = [{"stage": "burst", "ticker": t, "role": "candidate", "rank": i} for i, t in enumerate(("ZZA", "ZZB"))]
+    none = [CC._row_of(n, {"earnings": {}, "sec_flags": {}, "cross_check": {}}, session,
+                       earnings_risk.window(session), NOW) for n in names]
+    block = {"rows": none, "names": {"candidate": 2}, "unchecked": {}, "shed": 0, "max_names": CC.MAX_NAMES}
+    assert CC.status_of(none) == "unavailable"
+    text = CC.sentence(block, data)
+    assert "Nothing could be read for these names, so none is flagged and none is clear." in text
+    assert "None flagged" not in text and "Unknown, and unknown is never clear" in text
+    read = [r for r in data["candidate_checks"]["rows"] if r["ticker"] == "AMD"]
+    assert CC.status_of(read) == "checked"
+    text = CC.sentence({**block, "rows": read, "names": {"reviewed": 1}}, data)
+    assert "None flagged among the readings made." in text and "Nothing could be read" not in text
 
 
 def test_the_recovery_catalog_copies_no_candidate_row_into_its_context(tmp_path):
@@ -568,7 +626,6 @@ def test_a_record_from_before_the_rule_is_asked_for_no_block_and_one_beside_no_r
     (("candidate_checks", "rows", 2, "cross_check", "differences", "close"), 9.0,
      "candidate_checks cross-check for AMD is not what its differences give"),
     (("candidate_checks", "rows", 2, "items", "material_count"), 3, "candidate_checks current-report items for AMD"),
-    (("candidate_checks", "rows", 2, "sec", "filings_count"), 1, "candidate_checks SEC reading for AMD"),
     (("candidate_checks", "rows", 2, "role"), "boss", "candidate_checks row identity"),
     (("candidate_checks", "session"), "2026-09-11", "candidate_checks session differs from the run's"),
     (("candidate_checks", "max_names"), 81, "candidate_checks bound is not the rules it archived"),
@@ -587,6 +644,58 @@ def test_the_validator_names_a_forged_block_and_never_raises(path, value, words)
     assert words in found, found
     with pytest.raises(ValueError, match="candidate_checks"):
         report.validate(data)
+
+
+FILING = {"accession": "0000000001-26-000009", "form": "SC TO-T", "items": []}
+MATERIAL = {"item": "1.01", "title": earnings_risk.ITEM_TITLES["1.01"], "form": "8-K",
+            "accession": "0000000001-26-000010", "accepted_at": "2026-09-10T21:00:00Z",
+            "placement": "before_signal_close"}
+
+
+@pytest.mark.parametrize("part, change, words", [
+    # each keeps the length rule (the list as long as its count allows) so only the consistency clause can refuse
+    ("sec", {"state": "flagged"}, "SEC reading"),                                       # flagged, no filing
+    ("sec", {"state": "clear", "filings_count": 1, "filings": ["FILING"]}, "SEC reading"),  # a filing, called clear
+    ("sec", {"state": "unknown", "reason": None}, "SEC reading"),                       # unknown with no reason
+    ("sec", {"state": "clear", "reason": "not_checked"}, "SEC reading"),                # read, with a reason
+    ("items", {"status": "none", "material_count": 1, "material": ["MATERIAL"]}, "current-report items"),
+    ("items", {"status": "material"}, "current-report items"),                          # material, no item
+])
+def test_each_consistency_clause_of_a_row_is_held_on_its_own(part, change, words):
+    data = page("full")
+    row = data["candidate_checks"]["rows"][2]
+    assert row["ticker"] == "AMD" and row["sec"]["state"] == "clear" and row["items"]["status"] == "none"
+    for key, value in change.items():
+        if value == ["FILING"]:
+            value = [{**FILING, "filing_date": data["run"]["session"]}]
+        elif value == ["MATERIAL"]:
+            value = [{**MATERIAL, "filing_date": data["run"]["session"]}]
+        row[part][key] = value
+    found = CC.faults(data)
+    assert f"candidate_checks {words} for AMD" in found, found
+    # and the same row put back is refused for nothing
+    assert CC.faults(page("full")) == []
+
+
+def test_a_filing_in_the_window_of_a_form_and_items_the_flags_do_not_list_is_named():
+    data = page("full")
+    row = data["candidate_checks"]["rows"][2]
+    row["sec"] = {"state": "flagged", "reason": None, "filings_count": 1,
+                  "filings": [{**FILING, "form": "10-K", "filing_date": data["run"]["session"]}]}
+    assert any("of no listed form or item" in f for f in CC.faults(data))
+    row["sec"]["filings"][0].update(form="8-K", items=["2.02"])          # an 8-K item the flags do not list
+    assert any("of no listed form or item" in f for f in CC.faults(data))
+    row["sec"]["filings"][0]["items"] = ["1.01"]                          # one they do
+    assert not any("for AMD" in f for f in CC.faults(data))
+
+
+def test_the_window_is_the_sec_flags_archived_one_not_the_codes():
+    data = page("full")
+    assert CC.faults(data) == []
+    data["rules"]["sec_flags"]["window_days"] = sec_flags.WINDOW_DAYS + 1
+    assert "candidate_checks window is not the SEC flags' archived window" in CC.faults(data)
+    data["rules"]["sec_flags"]["window_days"] = "30"
+    assert "candidate_checks window is not the SEC flags' archived window" in CC.faults(data)
 
 
 def test_a_flagged_filing_outside_the_window_or_of_no_listed_form_is_named():
@@ -640,6 +749,53 @@ def test_a_candidates_earnings_sentence_names_the_hold_a_next_session_entry_woul
     assert earnings_risk.CANDIDATE_HOLD in amd["earnings"]["sentence"], amd["earnings"]["sentence"]
 
 
+@pytest.mark.parametrize("verdict, placement", [("reported_after_signal", "during_hold"), ("estimate_outside", None),
+                                                ("estimate_inside", "any_day"), ("estimate_near", None),
+                                                ("overdue", "any_day")])
+def test_every_earnings_sentence_a_candidate_can_carry_names_its_own_hold(verdict, placement):
+    data = page("full")
+    row = {**data["run"]["earnings"]["rows"][0], "verdict": verdict, "placement": placement,
+           "observed": {"filing_date": data["run"]["session"], "accepted_at": "2026-09-10T21:00:00Z"}}
+    ticket, candidate = earnings_risk.sentence(row), earnings_risk.sentence(row, hold=earnings_risk.CANDIDATE_HOLD)
+    assert earnings_risk.TICKET_HOLD in ticket and earnings_risk.CANDIDATE_HOLD in candidate
+    assert "this ticket" not in candidate and candidate == ticket.replace(earnings_risk.TICKET_HOLD,
+                                                                        earnings_risk.CANDIDATE_HOLD)
+
+
+def test_a_kept_answer_is_dated_when_sec_gave_it_not_when_it_was_read_again(fake_sec):
+    fake_sec.issuer("AAA", 1, "AAA Inc.", [], start="2024-01-02")
+    first, later = NOW, NOW + timedelta(minutes=2)
+    reader = CC.SecReader(fake_sec, now=first)
+    reader(issuer_evidence.MAPPING_URL)
+    reader._now = later
+    reader(earnings_risk.SUBMISSIONS_URL.format(cik=1))
+    assert reader.last_at == later
+    reader(issuer_evidence.MAPPING_URL)                                  # held: no request, SEC's own instant
+    assert reader.last_at == first and reader.made() == 2 and reader.reused == 1
+
+
+def test_no_sec_request_begins_once_the_transport_has_downloaded_its_bound():
+    class Budget:
+        requests = 0
+        bytes = 0
+
+    sent = []
+
+    def base(url):
+        sent.append(url)
+        base.budget.requests += 1
+        base.budget.bytes += 1000
+        return b"{}"
+    base.budget = Budget()
+    reader = CC.SecReader(base, now=NOW)
+    reader("https://www.sec.gov/a")
+    base.budget.bytes = issuer_evidence.MAX_DOWNLOAD_BYTES - 1
+    reader("https://www.sec.gov/b")                                       # under the bound: it goes out
+    with pytest.raises(earnings_risk.SourceError, match="size_limit"):
+        reader("https://www.sec.gov/c")                                    # at it: refused before it goes out
+    assert sent == ["https://www.sec.gov/a", "https://www.sec.gov/b"] and reader.made() == 2
+
+
 def test_the_earnings_sentences_default_words_are_the_tickets_unchanged():
     row = page("full")["run"]["earnings"]["rows"][0]
     assert earnings_risk.sentence(row) == row["sentence"] == earnings_risk.sentence(row, hold=earnings_risk.TICKET_HOLD)
@@ -682,7 +838,7 @@ def test_the_readme_and_the_env_example_quote_the_modules_own_numbers():
     assert f"up to {CC.MAX_NAMES} names a night" in section and CC.POLICY == "flag_only" and "policy `flag_only`" in section
     assert f"past {CC.DEADLINE_SECONDS} seconds from its first request" in section
     assert "a candidate's ticker the provider refuses never changes a ticket's row or `orders.json`" in section
-    assert f"or past the issuer transport's {CC.MAX_REQUESTS} requests for the night" in section
+    assert f"past the issuer transport's {CC.MAX_REQUESTS} requests for the night" in section
     assert CC.MAX_REQUESTS == issuer_evidence.MAX_REQUESTS
     assert f"bounded at {CC.MAX_BLOCK_BYTES} bytes" in section and CC.MAX_BLOCK_BYTES == 256 * 1024
     assert f"the newest {CC.MAX_FILINGS} kept" in section and f"the first {CC.MAX_MATERIAL} material items kept" in section
@@ -690,6 +846,16 @@ def test_the_readme_and_the_env_example_quote_the_modules_own_numbers():
     roles = "every ticket, every listed setup, every burst the review selected, every burst"
     assert roles in section and CC.ROLES == ("ticket", "listed", "reviewed", "candidate", "also_quiet")
     assert "`iex_unavailable` on every row, never `no_iex_bar`" in section
+    assert f"or once that transport has downloaded its {issuer_evidence.MAX_DOWNLOAD_BYTES} bytes for the night" in section
+    assert f"its {issuer_evidence.MAX_DOWNLOAD_BYTES} downloaded bytes" in env
+    assert "beside each burst, listed setup and also-quiet coil it prints" in section
+    coverage = " ".join((ROOT / "knowledge" / "event-coverage.md").read_text().split())
+    prompt = " ".join((ROOT / "docs" / "analyst" / "prompt.md").read_text().split())
+    assert f"for up to {CC.MAX_NAMES} of the night's candidates, whatever the light" in coverage
+    assert f"| up to {CC.MAX_NAMES} names a night in role order" in coverage
+    assert f"the iex bar for up to {CC.MAX_NAMES} of the night's candidates, whatever the light" in prompt
+    assert f"(`candidate_checks`, up to {CC.MAX_NAMES} names a night)" in prompt
+    assert "issuer check only the tickets and the plans the registry blocked" in prompt
     assert f"up to {CC.MAX_NAMES} of the night's candidates" in env
     assert f"within {CC.DEADLINE_SECONDS} seconds of its first request" in env
     assert f"the transport's {CC.MAX_REQUESTS} requests" in env and "No new variable or credential" in env
@@ -705,6 +871,19 @@ def test_the_mail_prints_the_blocks_own_sentence_and_nothing_for_a_record_before
     assert "// candidate checks" not in report.digest_html(data)
 
 
+def test_a_filing_with_no_issuer_or_no_accession_names_no_folder():
+    from src import brief
+    filing = {"accession": "0001193125-26-423478", "filing_date": "2026-10-16", "form": "8-K", "items": ["2.01"]}
+    row = {"cik": 900075, "sec": {"state": "flagged", "filings": [filing]}, "items": {"material": [filing]}}
+    assert brief.check_row(row)["sec"]["filings"][0]["filing_index"] == \
+        "https://www.sec.gov/Archives/edgar/data/900075/000119312526423478/"
+    for change in ({"cik": None}, {"cik": "900075"}):
+        assert brief.check_row({**row, **change})["sec"]["filings"][0]["filing_index"] is None
+    odd = {**row, "sec": {"filings": [{**filing, "accession": "1193125-26-423478"}]}}
+    assert brief.check_row(odd)["sec"]["filings"][0]["filing_index"] is None
+    assert brief.scanner_names(brief.check_row(row)) == []
+
+
 def test_the_brief_carries_each_candidates_row_and_counts_what_was_checked():
     from src import brief
     raw = (PAGE / "full.json").read_bytes()
@@ -718,20 +897,38 @@ def test_the_brief_carries_each_candidates_row_and_counts_what_was_checked():
         row = rows[("burst", c["ticker"])]
         carried = c["candidate_checks"]
         assert carried == brief.check_row(row), c["ticker"]
-        # the readings themselves, read off the record's row: nothing added, the accessions left out
+        # the readings themselves, read off the record's row: nothing added, each filing's EDGAR folder named
         assert (carried["role"], carried["cik"], carried["source"], carried["cross_check"]) == \
             (row["role"], row["cik"], row["source"], row["cross_check"])
         assert carried["sec"]["state"] == brief.SEC_STATE_WORDS[row["sec"]["state"]] != "clear"
         assert carried["sec"]["filings_count"] == row["sec"]["filings_count"]
-        assert [f["filing_date"] for f in carried["sec"]["filings"]] == [f["filing_date"] for f in row["sec"]["filings"]]
+
+        def folder(f):
+            return f"https://www.sec.gov/Archives/edgar/data/{row['cik']}/{f['accession'].replace('-', '')}/"
+        assert [(f["filing_index"], f["filing_date"]) for f in carried["sec"]["filings"]] == \
+            [(folder(f), f["filing_date"]) for f in row["sec"]["filings"]]
+        assert [m["filing_index"] for m in carried["items"]["material"]] == [folder(m) for m in row["items"]["material"]]
         assert carried["earnings"]["sentence"] == row["earnings"]["sentence"]
         assert carried["items"]["status"] == row["items"]["status"] and brief.scanner_names(carried) == []
     assert out["service"]["candidate_checks"]["sentence"] == record["candidate_checks"]["sentence"]
     assert record["candidate_checks"]["sentence"] in md_raw.decode()
+    # a setting-up row carries its own candidate-check row, as a burst does
+    for listed in out["setting_up"]["listed"] + out["setting_up"]["also_quiet"]:
+        row = rows.get(("anticipation", listed["ticker"]))
+        assert listed.get("candidate_checks") == (brief.check_row(row) if row else None), listed["ticker"]
+    assert any(l.get("candidate_checks") for l in out["setting_up"]["listed"])
     events = out["events"]
     assert events["earnings"]["candidate_rows"] == len(record["candidate_checks"]["rows"])
-    checked = {r["ticker"] for r in record["candidate_checks"]["rows"]}
-    assert events["earnings"]["listed_names_with_a_check"] == len(checked)
+    # a name counts as read only where its row records a reading, never for having a row
+    cand = record["candidate_checks"]["rows"]
+    earnings_read = {r["ticker"] for r in cand if r["earnings"]["verdict"] != "unknown"}
+    sec_read = {r["ticker"] for r in cand if r["sec"]["state"] != "unknown"}
+    assert {r["ticker"] for r in cand} - (earnings_read | sec_read), "the fixture has a row with nothing read"
+    assert events["earnings"]["listed_names_earnings_read"] == len(earnings_read)
+    assert events["earnings"]["listed_names_sec_read"] == len(sec_read)
+    assert events["earnings"]["listed_names_with_a_check"] == len(earnings_read | sec_read)
+    assert (f"an earnings date was read for {len(earnings_read)} and SEC filings for {len(sec_read)}"
+            in events["sentence"])
     assert "(they run for tickets only)" not in events["sentence"] and "candidate checks' flags" in events["sentence"]
     assert len(json_raw) <= brief.MAX_JSON_BYTES
 

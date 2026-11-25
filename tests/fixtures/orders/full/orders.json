@@ -8,7 +8,7 @@
   "risk_pct": 0.5,
   "slots_used": 4
  },
- "content_sha256": "4c54d80f22338d68f93e8ee2b4807be8006e29117608a03a3dcd972aca00e06b",
+ "content_sha256": "22c644faee791963f0efceb7821161c8ae4f318b22488aeaf5df451874e08366",
  "entry_window": {
   "cutoff_at": "2026-09-11T10:00:00-04:00",
   "opens_at": "2026-09-11T09:30:00-04:00",
@@ -110,7 +110,7 @@
  "source": {
   "applicable_session": "2026-09-11",
   "context_sha256": "daace7c81acd712f5272b887b7221babac91e21c2a384d43f32bcb6c2dce5306",
-  "data_sha256": "8e668b175c60e9570a83129cf687618d650ca1afdeca10a4f922d8b8e3fce015",
+  "data_sha256": "08fcc8d0c9e1396f5be04d2df78a2cfb0991d526183877da3ff1b812108293e5",
   "dry_run": false,
   "fixture": true,
   "picks_sha256": "cf7547be63259d91a47c2a50f04f93adbda750c5fedbcb5dfff7f79ac4c50d45",

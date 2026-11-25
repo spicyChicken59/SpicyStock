@@ -750,8 +750,12 @@ def test_coverage_is_counted_and_no_name_is_ever_called_clear():
     events = out["events"]
     assert events["listed"] == {"bursts": 7, "setting_up": 1, "also_quiet": 0}
     # the ticket's own warning and the candidate checks' rows (a ticket, a listed setup, three
-    # reviewed bursts): three listed names are in neither
-    assert events["earnings"]["listed_names"] == 8 and events["earnings"]["listed_names_not_checked"] == 3
+    # reviewed bursts) cover five of the eight listed names; of those, COIL and TSLA have a row and
+    # nothing read (no issuer SEC's list names), so five of the eight had nothing read
+    assert events["earnings"]["listed_names"] == 8 and events["earnings"]["listed_names_not_checked"] == 5
+    assert (events["earnings"]["listed_names_earnings_read"], events["earnings"]["listed_names_sec_read"]) == (3, 3)
+    assert "an earnings date was read for 3 and SEC filings for 3" in events["sentence"]
+    assert "5 of 8 listed names had nothing read (an earnings date read for 3, SEC filings for 3)" in md
     assert events["earnings"]["ticket_rows"] == 1 and events["earnings"]["status"] == "checked"
     assert events["earnings"]["candidate_rows"] == 5
     assert events["not_checked"] == list(brief.NOT_CHECKED) and len(brief.NOT_CHECKED) == 9

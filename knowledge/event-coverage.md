@@ -66,8 +66,8 @@ earnings calendar. So nothing reads:
 - lockup expiries;
 - ex-dividend dates.
 
-**How often the checks have anything to read.** The earnings, 8-K and halt
-checks read tickets only, and the issuer check reads tickets and
+**How often the checks had anything to read, before the candidate checks.**
+The earnings, 8-K and halt checks read tickets only, and the issuer check reads tickets and
 registry-blocked plans. Of the 48 sessions published from 11 September to 17
 November 2026 (54 publications), 11 carried a ticket and 15 carried a plan the
 registry blocked (4 sessions carried both). On 26 sessions there was neither,

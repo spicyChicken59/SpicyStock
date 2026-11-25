@@ -11,9 +11,9 @@
 
 - Measured session: 2026-09-10 (open); plans are for **2026-09-11**, entry window 2026-09-11T09:30:00-04:00 to 2026-09-11T10:00:00-04:00 (America/New_York), full session closes 2026-09-11T16:00:00-04:00.
 - Published 2026-09-10T22:30:00+00:00 (evening, FIXTURE full); rules version `7f5dfcf28442`.
-- Canonical record `data.json`: 354,613 bytes, SHA-256 `8e668b175c60e9570a83129cf687618d650ca1afdeca10a4f922d8b8e3fce015`.
+- Canonical record `data.json`: 354,623 bytes, SHA-256 `08fcc8d0c9e1396f5be04d2df78a2cfb0991d526183877da3ff1b812108293e5`.
 - `picks.json`: 43,332 bytes, SHA-256 `cf7547be63259d91a47c2a50f04f93adbda750c5fedbcb5dfff7f79ac4c50d45`.
-- This file renders `brief.json` (77,211 bytes, SHA-256 `b5e444e3f4a5638ef63c106fdf30b8e11ab053f9b0b018f88194773d6f7b2c12`).
+- This file renders `brief.json` (78,090 bytes, SHA-256 `09b4df6f9b3283aa80fed778287c9f1cde220215812d15e8f7ffc0dbd2f4ffe4`).
 - Page https://spicychicken59.github.io/SpicyStock/ · record https://spicychicken59.github.io/SpicyStock/data.json · brief https://spicychicken59.github.io/SpicyStock/brief.json and https://spicychicken59.github.io/SpicyStock/brief.md.
 
 ## 2. Service state
@@ -39,7 +39,7 @@
 - Review selection (`account_feasible_first_research_v2`): 3 feasible, 4 requested of 12; selected: AAPL (opportunity), AMD (opportunity), NVDA (opportunity), TSLA (research_ranked).
 - Admission: 7 reaction candidates, 5 admitted to the trade band and the chart reads (5 by the 4% scan, 0 by the dollar scan on a range-expansion, higher-volume day); 2 came through the dollar scan alone without one and are research only. Of the 5 mechanical A-band names without a veto, 4 are admitted and 1 is not. Admission is read off the recorded discovery route and the checklist's own range-expansion and volume checks; it is never a grade, and the chart reader never sees a name it stops.
 - Earnings and 8-K items (status `checked`): Earnings, estimated from SEC results filings for 1 ticket: 1 estimated inside the hold window. An estimate warns and never withholds a ticket. SEC current reports (8-K) in the 14 days before the signal or since: 1 with a material item; a material item names a kind of event and withholds nothing.
-- Candidate checks (flags only) for 5 of 5 names: 1 ticket, 1 listed setup, 3 reviewed bursts. SEC merger, tender or deal filings flagged for 1 (AAPL); a material 8-K item for 1 (AAPL); earnings reported after the signal or estimated in or near the hold window for 1 (AAPL). Unknown, and unknown is never clear: SEC filings of 2; the earnings date of 2. A flag is for a reader: it changes no plan, ticket or order, and only the manual event registry withholds a ticket.
+- Candidate checks (flags only) for 5 of 5 names: 1 ticket, 1 listed setup, 3 reviewed bursts. SEC merger, tender or deal filings flagged for 1 (AAPL); a material 8-K item for 1 (AAPL); earnings reported after the signal, estimated in or near the hold window, or overdue for 1 (AAPL). Unknown, and unknown is never clear: SEC filings of 2; the earnings date of 2. A flag is for a reader: it changes no plan, ticket or order, and only the manual event registry withholds a ticket.
 - Candidate funnel under a GREEN market: 7 reaction candidates discovered, 4 potentially usable (mechanical grade in the admitted band, no veto, discovery admitted), 1 reaction ticket. Reaction candidates stopped at: 2 mechanical grade below the regime's admitted band, 1 dollar scan alone, without a range-expansion, higher-volume day, 1 ticket withheld: stop rule at the limit, 2 slot cap. Anticipation: 10 momentum names, 4 quiet, 1 passing the coil checks, 1 listed, 0 tickets. Listed setups stopped at: 1 slot cap. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry.
 - Closest miss: PLUG came closest at B 8.5: fails close near the high.
 
@@ -254,10 +254,10 @@ Open MODEL plans walked on daily (and retained minute) bars; not holdings.
 
 ## 11. Event registry and coverage
 
-- Event registry (manual; known cash acquisitions only): 7 entries, last reviewed 2026-11-25, 76 days after the measured session 2026-09-10: the archived registry is newer than the session it is read against. None of its 6 unresolved entries is past its review date (next due 2026-12-02). None of the 8 listed rows (7 bursts, 1 setting up, 0 also quiet) is in the registry. A stock that is not in the registry has not been cleared: SpicyStock reads no company news, and its earnings and SEC checks have a row for 5 of the 8 listed names (the tickets', and the candidate checks' flags for up to 80 names; a check that could not read a name says unknown, never clear).
+- Event registry (manual; known cash acquisitions only): 7 entries, last reviewed 2026-11-25, 76 days after the measured session 2026-09-10: the archived registry is newer than the session it is read against. None of its 6 unresolved entries is past its review date (next due 2026-12-02). None of the 8 listed rows (7 bursts, 1 setting up, 0 also quiet) is in the registry. A stock that is not in the registry has not been cleared: SpicyStock reads no company news; of the 8 listed names, an earnings date was read for 3 and SEC filings for 3 (the tickets', and the candidate checks' flags for up to 80 names; a check that could not read a name says unknown, never clear).
 - Entries: MG (cash_acquisition, announced 2026-09-18, review due 2026-12-17); PRTH (cash_acquisition, announced 2026-09-21, review due 2026-12-17); ARX (cash_acquisition, announced 2026-08-13, review due 2026-12-17); BWIN (cash_acquisition, announced 2026-09-14, review due 2026-12-17); ACVA (cash_acquisition, announced 2026-09-10, review due 2026-11-25, ended 2026-10-16); ZIM (cash_acquisition, announced 2026-02-16, review due 2026-12-02); CCC (cash_acquisition, announced 2026-10-15, review due 2026-12-17).
 - Status words: `known_event` = in the registry and blocked for a SpicyStock ticket; its manual review is current; `review_required` = in the registry and blocked for a SpicyStock ticket; its manual review is overdue; `not_in_registry` = not in the registry: NOT a clearance, nothing was checked.
-- Earnings and 8-K check: status `checked`; 1 ticket rows; 3 of 8 listed names had no check at all.
+- Earnings and 8-K check: status `checked`; 1 ticket rows; 5 of 8 listed names had nothing read (an earnings date read for 3, SEC filings for 3).
 - Not checked by SpicyStock: company news and press releases, announced earnings dates, offerings and shelf takedowns, FDA and trial dates, halts outside the morning check, delisting notices beyond 8-K item 3.01 on the names checked, index changes, lockup expiries, ex-dividend dates.
 
 ## 12. Rules

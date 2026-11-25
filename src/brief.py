@@ -207,6 +207,8 @@ MODEL_MD_FIRST = ("picked", "ticker", "kind", "shares", "bucket", "r", "model_us
                   "issue_no", "issues", "withdrawn", "label", "tickets", "settled", "sum_r")
 #: A property name carrying one of these is read by the secret scan's generic rule as a credential's name.
 SCANNER_WORDS = ("key", "token", "secret", "auth", "api", "access", "credential", "creds", "passw")
+#: an SEC accession number: the filer's 10 digits, the year's 2, the sequence's 6
+ACCESSION = re.compile(r"\d{10}-\d{2}-\d{6}")
 
 
 class Refusal(ValueError):
@@ -790,10 +792,21 @@ BAR_EXTRA = ("gap_pct", "bar_range_pct", "close_pos", "volume_vs_avg50", "volume
 
 def check_row(row: dict) -> dict:
     """One candidate-check row (``src/candidate_checks.py``) as the brief carries it:
-    its readings without the fields its candidate row already names, and without the
-    SEC accession numbers, whose property name the secret scan reads as a credential's
-    (the record carries them)."""
+    its readings without the fields its candidate row already names. Each flagged
+    filing and material item carries its SEC Archives folder (``filing_index``),
+    built from the row's CIK and the filing's accession number, so a reader can
+    open it. The number itself is not a property here because this file's own
+    guard (``scanner_names()``) refuses any property name holding a word the
+    secret scan's generic rule keys on, ``access`` among them, whatever its
+    value; the record carries the numbers."""
     sec, earn, items = _dict(row.get("sec")), _dict(row.get("earnings")), _dict(row.get("items"))
+    cik = row.get("cik")
+
+    def folder(filing):
+        number = _dict(filing).get("accession")
+        if type(cik) is not int or not isinstance(number, str) or not ACCESSION.fullmatch(number):
+            return None
+        return f"https://www.sec.gov/Archives/edgar/data/{cik}/{number.replace('-', '')}/"
     projection, observed = earn.get("projection"), earn.get("observed")
     return {
         "role": row.get("role"), "cik": row.get("cik"), "source": row.get("source"),
@@ -801,13 +814,14 @@ def check_row(row: dict) -> dict:
         # the brief calls no name clear, so it says what was found
         "sec": {**_pick(sec, ("reason", "filings_count")),
                 "state": SEC_STATE_WORDS.get(sec.get("state"), sec.get("state")),
-                "filings": [_pick(_dict(f), ("filing_date", "form", "items")) for f in _list(sec.get("filings"))]},
+                "filings": [{**_pick(_dict(f), ("filing_date", "form", "items")), "filing_index": folder(f)}
+                            for f in _list(sec.get("filings"))]},
         "earnings": {**_pick(earn, ("verdict", "reason", "error", "placement", "sentence")),
                      "projection": _pick(projection, ("date", "low", "high")) if isinstance(projection, dict) else None,
                      "observed": _pick(observed, ("filing_date", "accepted_at")) if isinstance(observed, dict) else None},
         "items": {**_pick(items, ("status", "reason", "material_count", "codes", "count", "unread")),
-                  "material": [_pick(_dict(m), ("item", "form", "filing_date", "placement"))
-                               for m in _list(items.get("material"))]},
+                  "material": [{**_pick(_dict(m), ("item", "form", "filing_date", "placement")),
+                                "filing_index": folder(m)} for m in _list(items.get("material"))]},
         "cross_check": row.get("cross_check"),
     }
 
@@ -885,7 +899,8 @@ def compact(full: dict) -> dict:
     return {k: v for k, v in out.items() if v is not None}
 
 
-def setting_up(data: dict, modules, account, regime_multiplier, yellow_multiplier, earn) -> dict:
+def setting_up(data: dict, modules, account, regime_multiplier, yellow_multiplier, earn, checks=None) -> dict:
+    checks = checks or {}
     watch = _dict(data.get("watchlist"))
     plan = modules["plan"]
     stages = {r.get("ticker"): r.get("stage") for r in
@@ -922,6 +937,8 @@ def setting_up(data: dict, modules, account, regime_multiplier, yellow_multiplie
             "open_entry_note": ({"text": _text(p.get("open_entry")), "label": "a research note in the record; not the ticket"}
                                 if p.get("open_entry") else None),
             "event": event_state(p), "earnings": earn.get(("anticipation", row.get("ticker"))),
+            # the record's own candidate-check row, a flag and never a gate (`service.candidate_checks`)
+            "candidate_checks": checks.get(("anticipation", row.get("ticker"))),
             "link": _link("setting-up", row.get("ticker")),
         }.items() if v is not None})
     quiet = [r for r in _list(watch.get("also_quiet")) if isinstance(r, dict)]
@@ -936,6 +953,7 @@ def setting_up(data: dict, modules, account, regime_multiplier, yellow_multiplie
             "compress": r.get("compress"), "tight_n": r.get("tight_n"), "volume_ratio": r.get("volume_ratio"),
             "trigger": r.get("trigger"), "stop": r.get("stop_primary"), "risk_pct": r.get("risk_pct"),
             "why": r.get("why") or "; ".join(str(x) for x in _list(r.get("reasons_failed"))) or None,
+            "candidate_checks": checks.get(("anticipation", r.get("ticker"))),
             "link": _link("setting-up", r.get("ticker"))}.items() if v is not None} for r in quiet[:ALSO_QUIET_MAX]],
         "also_quiet_left_out": max(0, len(quiet) - ALSO_QUIET_MAX),
     }
@@ -1207,13 +1225,23 @@ def events_block(data: dict, event_risk) -> dict:
     earn = _dict(run.get("earnings"))
     cand = _dict(data.get("candidate_checks"))
     cand_rows = [r for r in _list(cand.get("rows")) if isinstance(r, dict)]
-    checked = ({r.get("ticker") for r in _list(earn.get("rows")) if isinstance(r, dict)}
-               | {r.get("ticker") for r in cand_rows}) & names
+    # a name counts as read only where its row records a reading: an unknown earnings date or an
+    # SEC state that could not be read is a row and no reading
+    earnings_read = ({r.get("ticker") for r in _list(earn.get("rows"))
+                      if isinstance(r, dict) and r.get("verdict") not in (None, "unknown")}
+                     | {r.get("ticker") for r in cand_rows
+                        if _dict(r.get("earnings")).get("verdict") not in (None, "unknown")}) & names
+    sec_read = ({r.get("ticker") for r in _list(_dict(run.get("sec_flags")).get("rows"))
+                 if isinstance(r, dict) and r.get("state") not in (None, "unknown")}
+                | {r.get("ticker") for r in cand_rows
+                   if _dict(r.get("sec")).get("state") not in (None, "unknown")}) & names
+    checked = earnings_read | sec_read
     earnings = {"status": earn.get("status") if earn else None,
                 "recorded": bool(earn),
                 "ticket_rows": len([r for r in _list(earn.get("rows")) if isinstance(r, dict)]),
                 "candidate_rows": len(cand_rows) if cand else None,
                 "listed_names": len(names), "listed_names_with_a_check": len(checked),
+                "listed_names_earnings_read": len(earnings_read), "listed_names_sec_read": len(sec_read),
                 "listed_names_not_checked": len(names) - len(checked),
                 "note": ("earnings and SEC 8-K items are read for published tickets, and for the night's other "
                          f"candidates as flags up to the candidate checks' bound of {cand.get('max_names')} names"
@@ -1221,8 +1249,9 @@ def events_block(data: dict, event_risk) -> dict:
     total = sum(listed.values())
     counts_words = (f"{total} listed rows ({listed['bursts']} bursts, {listed['setting_up']} setting up, "
                     f"{listed['also_quiet']} also quiet)")
-    coverage_words = (f"A stock that is not in the registry has not been cleared: SpicyStock reads no company news, "
-                      f"and its earnings and SEC checks have a row for {len(checked)} of the {len(names)} listed names "
+    coverage_words = (f"A stock that is not in the registry has not been cleared: SpicyStock reads no company news; "
+                      f"of the {len(names)} listed names, an earnings date was read for {len(earnings_read)} and "
+                      f"SEC filings for {len(sec_read)} "
                       + (f"(the tickets', and the candidate checks' flags for up to {cand.get('max_names')} names; "
                          "a check that could not read a name says unknown, never clear)." if cand
                          else "(they run for tickets only)."))
@@ -1485,7 +1514,7 @@ def build(data: dict, picks, canonical_raw: bytes, picks_raw: bytes | None, modu
                                      "stages": {k: v for k, v in _dict(_dict(funnel.get("anticipation")).get("stages")).items() if v}}}
                    if funnel else None),
         "closest_miss": data.get("closest_miss"),
-        "setting_up": setting_up(data, modules, account, multiplier, yellow_size, earn),
+        "setting_up": setting_up(data, modules, account, multiplier, yellow_size, earn, checks),
         "open_plans": {"rows": plans, "rows_left_out": plans_left,
                        "total": len([o for o in _list(data.get("open_plans")) if isinstance(o, dict)]),
                        "meaning": "Open MODEL plans walked on daily (and retained minute) bars; not holdings"},
@@ -2285,7 +2314,9 @@ def render_markdown(brief: dict, json_raw: bytes, md_detail=None, md_compact=Non
     add("- Status words: " + "; ".join(f"`{k}` = {v}" for k, v in _dict(ev.get("status_words")).items()) + ".")
     earn = _dict(ev.get("earnings"))
     add(f"- Earnings and 8-K check: status `{earn.get('status')}`; {_n(earn.get('ticket_rows'))} ticket rows; "
-        f"{_n(earn.get('listed_names_not_checked'))} of {_n(earn.get('listed_names'))} listed names had no check at all.")
+        f"{_n(earn.get('listed_names_not_checked'))} of {_n(earn.get('listed_names'))} listed names had nothing read "
+        f"(an earnings date read for {_n(earn.get('listed_names_earnings_read'))}, SEC filings for "
+        f"{_n(earn.get('listed_names_sec_read'))}).")
     add("- Not checked by SpicyStock: " + ", ".join(_list(ev.get("not_checked"))) + ".")
     add("")
     section(12)

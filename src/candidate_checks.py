@@ -68,7 +68,7 @@ RULES = {"candidate_checks.version": VERSION, "candidate_checks.policy": POLICY,
 
 ROLE_WORDS = {"ticket": ("ticket", "tickets"), "listed": ("listed setup", "listed setups"),
               "reviewed": ("reviewed burst", "reviewed bursts"),
-              "candidate": ("admitted {band} burst", "admitted {band} bursts"),
+              "candidate": ("discovery-admitted {band} burst", "discovery-admitted {band} bursts"),
               "also_quiet": ("also-quiet coil", "also-quiet coils")}
 BLOCK_KEYS = {"version", "policy", "session", "since", "max_names", "names", "unchecked", "rows", "shed",
               "requests", "status", "sentence"}
@@ -160,8 +160,10 @@ class SecReader:
     three read the same filing list and a ticket's two rows cannot disagree.
     ``made()`` is the requests it actually began (``earnings_risk.counted()``
     reads it): an answer it already held is not a request. A request is not
-    begun past ``deadline_seconds`` from the reader's first request or past
-    ``max_requests``; either is a named source error, never kept, so a later
+    begun past ``deadline_seconds`` from the reader's first request, past
+    ``max_requests``, or once the transport has downloaded its
+    ``issuer_evidence.MAX_DOWNLOAD_BYTES`` for the night (an answer past that
+    could not be read); each is a named source error, never kept, so a later
     name reads it as unknown, never clear. The clock starts at the first
     request, so work the evening does before it (the plans, the record) never
     spends the SEC reads' time."""
@@ -206,6 +208,9 @@ class SecReader:
             raise earnings_risk.SourceError("request_budget")
         base = self._base()
         budget = getattr(base, "budget", None)
+        downloaded = getattr(budget, "bytes", None)
+        if type(downloaded) is int and downloaded >= issuer_evidence.MAX_DOWNLOAD_BYTES:
+            raise earnings_risk.SourceError("size_limit")
         before = budget.requests if budget is not None else None
         try:
             body = base(url)
@@ -372,8 +377,8 @@ def _counts(names: list[dict]) -> dict:
     return {role: n for role in ROLES if (n := sum(1 for x in names if x["role"] == role))}
 
 
-def _since(session: str) -> str:
-    return (earnings_risk._day(session) - timedelta(days=sec_flags.WINDOW_DAYS)).isoformat()
+def _since(session: str, window_days: int = sec_flags.WINDOW_DAYS) -> str:
+    return (earnings_risk._day(session) - timedelta(days=window_days)).isoformat()
 
 
 def _compact(value) -> bytes:
@@ -562,11 +567,16 @@ def sentence(block: dict, data: dict) -> str:
         words += f" {block['shed']} shed to stay within the block's byte bound, not checked."
     flags = [("SEC merger, tender or deal filings flagged for", [r for r in rows if r["sec"]["state"] == sec_flags.FLAGGED]),
              ("a material 8-K item for", [r for r in rows if r["items"]["status"] == "material"]),
-             ("earnings reported after the signal or estimated in or near the hold window for",
+             ("earnings reported after the signal, estimated in or near the hold window, or overdue for",
               [r for r in rows if r["earnings"]["verdict"] in EARNINGS_FLAGS]),
              ("the iex feed's signal-day bar differs for", [r for r in rows if r["cross_check"]["result"] == cross_check.FAIL])]
     found = "; ".join(f"{what} {len(hit)} ({_named(hit)})" for what, hit in flags if hit)
-    words += f" {found[0].upper()}{found[1:]}." if found else " None flagged."
+    if found:
+        words += f" {found[0].upper()}{found[1:]}."
+    elif status_of(rows) == "unavailable":
+        words += " Nothing could be read for these names, so none is flagged and none is clear."
+    else:
+        words += " None flagged among the readings made."
     unknown = [(what, sum(1 for r in rows if not _read(r)[key])) for what, key in
                (("SEC filings", "sec"), ("the earnings date", "earnings"), ("the iex bar", "cross_check"))]
     unknown = [f"{what} of {n}" for what, n in unknown if n]
@@ -585,7 +595,8 @@ def faults(data: dict) -> list[str]:
     """The block one level in, under rules that archive it; a record whose
     rules archive none is asked for none. Its names are re-derived from the
     record, each row's earnings sentence and cross-check result from its own
-    fields, each flagged filing held to the SEC flags' archived window, and a
+    fields, each flagged filing held to the SEC flags' archived window, forms
+    and items (``rules.sec_flags``), and a
     name a run.* row stands behind is held to that row's reading. Names
     faults; never raises."""
     try:
@@ -635,10 +646,11 @@ def _faults(data: dict) -> list[str]:
     if not (_int(block["shed"]) and isinstance(block["requests"], dict) and set(block["requests"]) == REQUEST_KEYS
             and all(_int(v) for v in block["requests"].values())):
         out.append("candidate_checks shed or request counts")
-    if block["since"] != _since(session):
-        out.append("candidate_checks window is not the SEC flags' window")
-    days = earnings_risk.window(session)
     flags_rules = _dict(_dict(rules).get("sec_flags"))
+    window_days = flags_rules.get("window_days")
+    if not _int(window_days) or block["since"] != _since(session, window_days):
+        out.append("candidate_checks window is not the SEC flags' archived window")
+    days = earnings_risk.window(session)
     cross_rules = _dict(_dict(rules).get("cross_check"))
     runs = _run_rows(data)
     for r in rows:
