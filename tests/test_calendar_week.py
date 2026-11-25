@@ -898,3 +898,63 @@ def test_the_morning_alerts_are_true_at_8_25_and_mailed_before_the_8_30_open(cov
     # the morning's scheduler answer is asked at the same instant: none listed by 8:25 is not started
     assert sw.judge_morning(record, None, raw, alert, [], None)["judgement"] == sw.NOT_STARTED
     assert sw.judge_morning(record, None, raw, alert - ONE_SECOND, [], None)["judgement"] == sw.NOT_DUE
+
+
+# --------------------------------- a weekday holiday's evening crons ---
+def _cron_run(cron: str, created: datetime, run_id: int, **fields) -> dict:
+    return dispatch(f"Evening cron {cron}", created, event="schedule", id=run_id, **fields)
+
+
+def test_a_holidays_evening_crons_are_never_the_evening_runs_of_the_session_before_it():
+    """Wednesday 25 November unpublished, read at Friday's 6:00 AM CT watch: the dispatcher's four starts and
+    Wednesday's two backup crons all failed, and Thanksgiving's own crons -- the active pair, which the guard
+    skips because the 26th is no session -- ended success. The night is failed, not started on time, and
+    nothing is cleared."""
+    record = synthetic_record(TUESDAY)
+    runs = [dispatch(sw.EVENING_DISPATCH_TITLE, new_york(WEDNESDAY, hhmm) + timedelta(seconds=40), id=4300 + n,
+                     conclusion="failure") for n, hhmm in enumerate(("18:20", "19:20", "20:20", "21:20"))]
+    runs += [_cron_run(PRIMARY_EST, at("2026-11-26T04:30:00+00:00"), 4310, conclusion="failure"),
+             _cron_run(RETRY_EST, at("2026-11-26T07:10:00+00:00"), 4311, conclusion="failure")]
+    thanksgiving = [_cron_run(PRIMARY_EST, at("2026-11-27T03:40:00+00:00"), 4320),
+                    _cron_run(RETRY_EST, at("2026-11-27T06:05:00+00:00"), 4321)]
+    friday_watch = chicago(FRIDAY, "06:00")
+    for listed in (runs, runs + thanksgiving):
+        out = sw.judge_evening(record, friday_watch, listed, None)
+        assert (out["session"], out["judgement"], out["key"]) == ("2026-11-25", sw.FAILED, "evening:failed:2026-11-25")
+        assert {r["id"] for r in out["runs"]} == {r["id"] for r in runs}, "Thanksgiving's crons are no run of it"
+    result = {"scheduler": {"evening": sw.judge_evening(record, friday_watch, runs + thanksgiving, None)},
+              "start": {}, "alerts": []}
+    assert "scheduler:evening:started_late" not in sw.clears_of(result)
+    # each holiday cron is read as the guard reads it: skipped, and no session's
+    for skipped in thanksgiving:
+        assert sw.skipped_evening_cron(skipped) is True and sw.evening_cron_session(skipped) is None
+    # Wednesday's own crons, hours late, are Wednesday's
+    assert [sw.evening_cron_session(r) for r in runs[4:]] == ["2026-11-25", "2026-11-25"]
+
+
+#: Every weekday XNYS holiday from Thanksgiving 2026 to Christmas 2027, with the session before it.
+HOLIDAYS = [date(2026, 11, 26), date(2026, 12, 25), date(2027, 1, 1), date(2027, 1, 18), date(2027, 2, 15),
+            date(2027, 3, 26), date(2027, 5, 31), date(2027, 6, 18), date(2027, 7, 5), date(2027, 9, 6),
+            date(2027, 11, 25), date(2027, 12, 24)]
+
+
+@pytest.mark.parametrize("holiday", HOLIDAYS, ids=[str(h) for h in HOLIDAYS])
+def test_the_watch_reads_each_holidays_evening_crons_as_the_guard_runs_them(holiday, guard_code, tmp_path):
+    """For each weekday holiday and the session before it, both active crons, on time and five hours late: the
+    session the watch reads a cron run as (``evening_cron_session``) is the session the evening guard itself runs
+    it for, and a run the guard skips is one the watch skips."""
+    assert holiday.weekday() < 5 and not sessions.is_session(holiday)
+    before = sessions.previous_session(holiday)
+    for day in (before, holiday):
+        edt = new_york(day, "12:00").utcoffset() == timedelta(hours=-4)
+        for cron, hour, next_day in ((PRIMARY_EDT, 22, False), (RETRY_EDT, 0, True)) if edt else \
+                ((PRIMARY_EST, 23, False), (RETRY_EST, 1, True)):
+            slot = datetime.combine(day + timedelta(days=next_day), datetime.min.time().replace(hour=hour, minute=16),
+                                    tzinfo=UTC)
+            for late in (timedelta(seconds=40), timedelta(hours=5)):
+                created = slot + late
+                decision = rr.guard(tmp_path, created.isoformat(), cron, guard_code)
+                listed = _cron_run(cron, created, 4400)
+                assert sw.evening_cron_session(listed) == decision["session"], (day, cron, late, decision)
+                assert sw.skipped_evening_cron(listed) is (decision["go"] is False), (day, cron, late)
+                assert decision["session"] == (str(day) if day == before else None)

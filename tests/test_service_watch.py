@@ -731,11 +731,14 @@ DISPATCH = {"event": "workflow_dispatch", "display_title": sw.EVENING_DISPATCH_T
      "scheduler:evening:started_late"),                                            # created at completion: listed
     ([evening_run(EVENING_FIRST_SLOT + timedelta(minutes=1), conclusion="failure", **DISPATCH),
       evening_run(EVENING_FIRST_SLOT + timedelta(hours=1), id=7002, status="in_progress", conclusion=None)],
-     RETRY, sw.ON_TIME, None),                                                     # one still in progress
-    ([evening_run(EVENING_FIRST_SLOT + timedelta(minutes=1), conclusion="failure", **DISPATCH),
+     RETRY, sw.STARTED_LATE, "scheduler:evening:started_late"),   # one still in progress: not failed, and the
+    ([evening_run(EVENING_FIRST_SLOT + timedelta(minutes=1), conclusion="failure", **DISPATCH),     # first slot's
       evening_run(EVENING_FIRST_SLOT + timedelta(hours=1), id=7002, status="in_progress", conclusion="failure",
-                  run_attempt=2)],
-     RETRY, sw.ON_TIME, None),     # SYNTHETIC: a re-run in progress that still carries its first attempt's ending
+                  run_attempt=2)],                                 # own dispatch ended without its work
+     RETRY, sw.STARTED_LATE, "scheduler:evening:started_late"),   # SYNTHETIC: a re-run still carrying its ending
+    ([evening_run(EVENING_FIRST_SLOT + timedelta(minutes=1), conclusion="failure", **DISPATCH),
+      evening_run(EVENING_FIRST_SLOT + timedelta(minutes=2), id=7002, **DISPATCH)],
+     RETRY, sw.ON_TIME, None),                                     # a second dispatch in the first slot did its work
 ])
 def test_the_evenings_scheduler_answer_for_an_unpublished_session(record, runs, now, judgement, key):
     out = sw.judge_evening(record, now, runs, None)
@@ -743,7 +746,31 @@ def test_the_evenings_scheduler_answer_for_an_unpublished_session(record, runs, 
     assert out["alert"] is (key is not None)
     assert out["first_slot_at"] == "2026-09-11T18:20:00-04:00" and out["started_by_at"] == "2026-09-11T18:50:00-04:00"
     if judgement == sw.ON_TIME:
-        assert out["on_time_run"] == runs[0]["id"]
+        assert out["on_time_run"] == next(r["id"] for r in runs if not sw._without_work(r))
+
+
+def test_a_first_slot_dispatch_that_ended_without_its_work_did_not_start_the_evening_on_time(record):
+    """A failed or cancelled dispatch in the first slot is named, and the evening is not on time: neither when a
+    later start of the dispatcher's published it, nor when the backup cron did."""
+    failed = evening_run(EVENING_FIRST_SLOT + timedelta(minutes=1), conclusion="cancelled", **DISPATCH)
+    later = evening_run(EVENING_FIRST_SLOT + timedelta(hours=1), id=7002, **DISPATCH)
+    out = sw.judge_evening(record, RETRY, [failed, later], None)
+    assert (out["judgement"], out["key"], out["on_time_run"]) == (sw.STARTED_LATE, "scheduler:evening:started_late", None)
+    assert out["action"] == sw.FIRST_UNFINISHED_HINT
+    assert "the dispatch in its first slot ended without its work: run 7001" in out["sentence"]
+    assert "a later slot of the dispatcher's (2026-09-11T19:20:00-04:00)" in out["sentence"]
+    cron = evening_run(datetime(2026, 9, 12, 3, 30, tzinfo=UTC), id=7003)
+    out = sw.judge_evening(record, RETRY + timedelta(hours=4), [failed, cron], None)
+    assert out["judgement"] == sw.STARTED_LATE and out["action"] == sw.FIRST_UNFINISHED_HINT
+    assert out["sentence"].startswith("The 2026-09-11 evening was not started by a dispatch that did its work in any")
+    # a later dispatch that ended without its work is no start of the dispatcher's either
+    failed_later = evening_run(EVENING_FIRST_SLOT + timedelta(hours=1), id=7004, conclusion="failure", **DISPATCH)
+    out = sw.judge_evening(record, RETRY + timedelta(hours=4), [failed, failed_later, cron], None)
+    assert out["judgement"] == sw.STARTED_LATE and "a later slot" not in out["sentence"]
+    # a clean night keeps the plain words
+    out = sw.judge_evening(record, RETRY + timedelta(hours=4), [cron], None)
+    assert out["sentence"].startswith("The 2026-09-11 evening was not started by a dispatch in any of the dispatcher's")
+    assert out["action"] == sw.SCHEDULER_HINT
 
 
 def test_an_unreadable_listing_leaves_the_evenings_own_block_unknown_and_quiet(record):
@@ -1533,7 +1560,8 @@ def test_a_second_and_third_run_mail_nothing_and_exit_by_the_judgement(record, t
     assert len(sent) == 1
     err = capsys.readouterr().err
     assert f"Not mailed again: evening:not_published:2026-09-11 was mailed at {near.isoformat()}." in err
-    assert json.loads(ledger.read_text()) == {"version": sw.LEDGER_VERSION, "cleared": {},
+    assert json.loads(ledger.read_text()) == {"version": sw.LEDGER_VERSION, "cleared": {}, "failing_since": {},
+                                              "failed_at": {},
                                               "sent": {"evening:not_published:2026-09-11": near.isoformat()}}
 
 
@@ -1559,25 +1587,21 @@ def spoiled(change):
     return spoil
 
 
-@pytest.mark.parametrize("spoil", [
-    lambda p, now: p.unlink(),
-    lambda p, now: p.write_text("{not json"),
-    spoiled(lambda v, now: v.__setitem__("version", sw.LEDGER_VERSION + 1)),             # another version
-    spoiled(lambda v, now: v.__setitem__("version", True)),                                # not a version at all
-    spoiled(lambda v, now: v.__setitem__("sent", [list(item) for item in v["sent"].items()])),
-    spoiled(lambda v, now: v.__setitem__("cleared", [])),                                  # clears not a map
-    spoiled(lambda v, now: v.pop("cleared")),                                              # no clears at all
-    spoiled(lambda v, now: v["sent"].__setitem__(MAILED_KEY, (now + timedelta(minutes=1)).isoformat())),   # future
-    spoiled(lambda v, now: v["cleared"].__setitem__("scheduler:watch:not_started",
-                                                    (now + timedelta(minutes=1)).isoformat())),    # a future clear
-    spoiled(lambda v, now: v["sent"].__setitem__("Mail to owner@example.com", now.isoformat())),  # not a key
-    spoiled(lambda v, now: v["cleared"].__setitem__("owner@example.com", now.isoformat())),       # a clear, not a key
-    spoiled(lambda v, now: v["sent"].__setitem__("evening:not_published:2026-09-12", "yesterday")),   # not an instant
-    spoiled(lambda v, now: v.__setitem__("body", "<p>hi</p>")),                            # more than keys
-    lambda p, now: p.write_text(p.read_text() + " " * sw.MAX_LEDGER_BYTES),                # too large
+@pytest.mark.parametrize("spoil,named", [
+    (lambda p, now: p.unlink(), None),
+    (lambda p, now: p.write_text("{not json"), "The ledger could not be read (JSONDecodeError)"),
+    (spoiled(lambda v, now: v.__setitem__("version", sw.LEDGER_VERSION + 1)), "not of the version and shape"),
+    (spoiled(lambda v, now: v.__setitem__("version", True)), "not of the version and shape"),      # no version at all
+    (spoiled(lambda v, now: v.__setitem__("sent", [list(item) for item in v["sent"].items()])), "version and shape"),
+    (spoiled(lambda v, now: v.__setitem__("cleared", [])), "not of the version and shape"),    # clears not a map
+    (spoiled(lambda v, now: v.pop("cleared")), "not of the version and shape"),                # no clears at all
+    (spoiled(lambda v, now: v.pop("failing_since")), "not of the version and shape"),          # an older shape
+    (spoiled(lambda v, now: v.__setitem__("body", "<p>hi</p>")), "not of the version and shape"),   # more than keys
+    (lambda p, now: p.write_text(p.read_text() + " " * sw.MAX_LEDGER_BYTES), f"over the {sw.MAX_LEDGER_BYTES}"),
 ], ids=["deleted", "not-json", "other-version", "bool-version", "sent-not-a-map", "cleared-not-a-map", "no-cleared",
-        "future-dated", "future-clear", "not-a-key", "clear-not-a-key", "not-an-instant", "more-than-keys", "too-large"])
-def test_a_ledger_that_cannot_be_read_as_this_watchs_reads_empty_and_mails_again(record, tmp_path, monkeypatch, spoil):
+        "older-shape", "more-than-keys", "too-large"])
+def test_a_ledger_that_cannot_be_read_as_this_watchs_reads_empty_and_mails_again(record, tmp_path, monkeypatch, capsys,
+                                                                                 spoil, named):
     sent = deliveries(monkeypatch)
     docs, ledger = docs_with(tmp_path, record), tmp_path / "ledger.json"
     first = LIMIT - timedelta(hours=2)
@@ -1585,8 +1609,46 @@ def test_a_ledger_that_cannot_be_read_as_this_watchs_reads_empty_and_mails_again
     # unspoiled, it drops the repeat
     assert main_mail(docs, first + timedelta(minutes=15), ledger) == sw.EXIT_ALERT and len(sent) == 1
     spoil(ledger, first + timedelta(minutes=30))
+    capsys.readouterr()
     assert main_mail(docs, first + timedelta(minutes=30), ledger) == sw.EXIT_ALERT
     assert len(sent) == 2
+    err = capsys.readouterr().err
+    assert (named in err) if named else ("ledger" not in err.split("Mailed one message")[0])
+
+
+@pytest.mark.parametrize("spoil,part,shown,remailed", [
+    (spoiled(lambda v, now: v["sent"].__setitem__(MAILED_KEY, (now + timedelta(minutes=1)).isoformat())),
+     "sent", f'"{MAILED_KEY}"', True),                                            # its own mail, future-dated
+    (spoiled(lambda v, now: v["cleared"].__setitem__("scheduler:watch:not_started",
+                                                     (now + timedelta(minutes=1)).isoformat())),
+     "cleared", '"scheduler:watch:not_started"', False),                           # a future clear
+    (spoiled(lambda v, now: v["sent"].__setitem__("Mail to owner@example.com", now.isoformat())),
+     "sent", '"Mail to owner@example.com"', False),                                # not a key
+    (spoiled(lambda v, now: v["cleared"].__setitem__("owner@example.com", now.isoformat())),
+     "cleared", '"owner@example.com"', False),                                      # a clear, not a key
+    (spoiled(lambda v, now: v["sent"].__setitem__("evening:not_published:2026-09-12", "yesterday")),
+     "sent", '"evening:not_published:2026-09-12"', False),                          # not an instant
+    (spoiled(lambda v, now: v["failing_since"].__setitem__("handoff:unbound:20260910", now.isoformat())),
+     "failing_since", '"handoff:unbound:20260910"', False),                          # a key the reader refuses
+    (spoiled(lambda v, now: v["failed_at"].__setitem__("k" * 300, now.isoformat())),
+     "failed_at", '"' + "k" * 76 + '..."', False),                                    # a long one, cut short
+], ids=["future-dated", "future-clear", "not-a-key", "clear-not-a-key", "not-an-instant", "debounce-not-a-key",
+        "long-key"])
+def test_a_ledger_entry_the_reader_refuses_is_dropped_alone_and_named(record, tmp_path, monkeypatch, capsys, spoil,
+                                                                       part, shown, remailed):
+    """Never the whole ledger for one entry: the rest is read, so the alerts it holds stay repeats."""
+    sent = deliveries(monkeypatch)
+    docs, ledger = docs_with(tmp_path, record), tmp_path / "ledger.json"
+    first = LIMIT - timedelta(hours=2)
+    main_mail(docs, first, ledger)
+    spoil(ledger, first + timedelta(minutes=30))
+    capsys.readouterr()
+    assert main_mail(docs, first + timedelta(minutes=30), ledger) == sw.EXIT_ALERT
+    assert len(sent) == (2 if remailed else 1)
+    err = capsys.readouterr().err
+    assert f"The ledger's {part} entry {shown} was dropped" in err and "The rest of the ledger was read." in err
+    held = sw.read_ledger(ledger, first + timedelta(minutes=30))
+    assert held["notes"] == [] and MAILED_KEY in held["sent"]        # the run that read it wrote it back without it
 
 
 def test_a_linked_ledger_is_not_read(record, tmp_path, monkeypatch):
@@ -1595,7 +1657,10 @@ def test_a_linked_ledger_is_not_read(record, tmp_path, monkeypatch):
     first = LIMIT - timedelta(hours=2)
     main_mail(docs, first, real)
     ledger.symlink_to(real)
-    assert sw.read_ledger(ledger, first) == {"sent": {}, "cleared": {}}
+    linked = sw.read_ledger(ledger, first)
+    assert {part: linked[part] for part in sw.LEDGER_PARTS} == {part: {} for part in sw.LEDGER_PARTS}
+    assert linked["notes"] == ["The ledger is a link, not a file this watch wrote: it was not read, and every alert "
+                               "mails again."]
     assert len(sw.read_ledger(real, first)["sent"]) == 1
     main_mail(docs, first + timedelta(minutes=5), ledger)
     assert len(sent) == 2
@@ -1659,7 +1724,7 @@ def test_a_standing_key_that_clears_and_returns_inside_its_repeat_days_is_mailed
     # a second on-time run records nothing more and writes nothing
     assert sw.send([], first + timedelta(days=1, hours=1), ledger, cleared=["scheduler:watch:not_started"]) == {
         "mailed": [], "dropped": [], "failed": [], "cleared": [], "attempts": 0, "ledger_written": False,
-        "ledger_error": None}
+        "ledger_error": None, "refused_keys": [], "notes": [], "asked": True}
     back = sw.send([alert], first + timedelta(days=3), ledger)
     assert back["mailed"] == ["scheduler:watch:not_started"] and len(sent) == 2
     held = json.loads(ledger.read_text())
@@ -1749,8 +1814,8 @@ def test_the_ledger_holds_keys_and_instants_only(record, tmp_path, monkeypatch):
     main_mail(docs, CUTOFF + timedelta(hours=1), ledger)
     text = ledger.read_text()
     value = json.loads(text)
-    assert set(value) == {"version", "sent", "cleared"}
-    assert all(sw.KEY_PATTERN.fullmatch(k) and sw._instant(v) for part in ("sent", "cleared")
+    assert set(value) == {"version", "sent", "cleared", "failing_since", "failed_at"} == {"version", *sw.LEDGER_PARTS}
+    assert all(sw.KEY_PATTERN.fullmatch(k) and sw._instant(v) for part in sw.LEDGER_PARTS
                for k, v in value[part].items())
     assert "@" not in text and "<p>" not in text and "only_if_unpublished" not in text
 
@@ -1889,3 +1954,351 @@ def test_a_token_in_the_environment_is_what_the_watch_lists_runs_with(record, tm
     asked.clear()
     sw.main(["--docs", str(docs), "--now", STARTED_BY.isoformat()], env={})
     assert asked == []                                  # no token: nothing is asked
+
+
+# ------------------------------------------------- a morning run in progress ---
+def morning_run(created=MORNING_SLOT + timedelta(minutes=6), **fields) -> dict:
+    """SYNTHETIC: the morning check dispatched under its run name; a catch-up by default, at 8:26 AM CDT."""
+    return run(**{"id": 8300, "event": "workflow_dispatch", "display_title": sw.MORNING_DISPATCH_TITLE,
+                  "created_at": created, **fields})
+
+
+@pytest.mark.parametrize("status", ["queued", "in_progress", "waiting", "requested", "pending"])
+def test_a_morning_run_still_running_inside_its_window_is_in_progress_not_an_alert(record, tmp_path, monkeypatch,
+                                                                                 status):
+    """The pre-open watch reads main a minute or two before a catch-up check's receipt lands: no receipt for this
+    record is there yet, and the listing shows the run that will write it. That is no alert and no mail."""
+    sent = deliveries(monkeypatch)
+    raw = encode(record)
+    docs = docs_with(tmp_path, record, receipt(b"yesterday's record", COLLECT - timedelta(days=1)))
+    listing = Listing({"morning.yml": [morning_run(status=status, conclusion=None)]})
+    now = ALERT + timedelta(minutes=2, seconds=20)                       # 8:27:20 AM CDT
+    out = sw.watch(docs, now, github=listing)
+    assert out["scheduler"]["morning"]["running"] == {"id": 8300, "created_at": "2026-09-11T13:26:00Z",
+                                                      "status": status}
+    block = out["morning"]
+    assert (block["judgement"], block["alert"], block["key"], block["action"]) == (sw.IN_PROGRESS, False, None, None)
+    assert block["sentence"] == (f"A morning run for 2026-09-11 (run 8300, created 2026-09-11T13:26:00Z) is still "
+                                 f"{status} inside its collection window, so its receipt may not be on main yet. No "
+                                 "answer is given now: a later watch judges it.")
+    assert not [a for a in out["alerts"] if a["key"].startswith("morning:")]
+    main_mail_with(docs, now, tmp_path / "ledger.json", listing)
+    assert not [text for _, text in sent if "Alert key: morning:" in text]
+    # the same file with no run listed is not_landed, as before
+    out = sw.watch(docs, now, github=Listing())
+    assert out["morning"]["judgement"] == sw.NOT_LANDED and "morning:not_landed:2026-09-11" in [
+        a["key"] for a in out["alerts"]]
+    assert sw.morning(record, raw, None, "absent", now, orders_raw=None, orders_morning_raw=None)["judgement"] == \
+        sw.NOT_LANDED
+
+
+def test_a_check_that_landed_but_whose_go_cancel_file_is_not_yet_checked_is_in_progress_while_it_runs(record, tmp_path):
+    """The run commits its receipt and then its orders-morning.json: between the two, a watch reads a receipt that
+    landed beside a pending file, and the listing shows the run still going."""
+    raw = encode(record)
+    docs = docs_with(tmp_path, record, receipt(raw, COLLECT + timedelta(minutes=26)), checked=False)
+    now = ALERT + timedelta(minutes=2)
+    running = Listing({"morning.yml": [morning_run(status="in_progress", conclusion=None)]})
+    out = sw.watch(docs, now, github=running)
+    assert (out["morning"]["judgement"], out["morning"]["alert"]) == (sw.IN_PROGRESS, False)
+    assert "so its orders-morning.json may not be on main yet" in out["morning"]["sentence"]
+    done = Listing({"morning.yml": [morning_run()]})
+    assert sw.watch(docs, now, github=done)["morning"]["judgement"] == sw.NOT_CHECKED
+
+
+@pytest.mark.parametrize("created,why", [
+    (COLLECT - SECOND, "created before the collection window"),
+    (CUTOFF + SECOND, "created after the entry window closed"),
+], ids=["before-the-window", "after-the-cutoff"])
+def test_a_running_morning_run_outside_its_collection_window_is_not_in_progress(record, created, why):
+    raw = encode(record)
+    listed = [morning_run(created=created, status="in_progress", conclusion=None, event="schedule",
+                          display_title="Morning cron 20 13 * * 1-5")]
+    sched = sw.judge_morning(record, None, raw, CUTOFF + timedelta(seconds=5), listed, None)
+    assert sched["running"] is None, why
+    out = sw.morning(record, raw, None, "absent", CUTOFF + timedelta(seconds=5), orders_raw=None,
+                     orders_morning_raw=None, running=sched["running"])
+    assert out["judgement"] == sw.NOT_LANDED
+
+
+def test_an_in_progress_run_that_later_fails_is_flagged_by_the_next_watch(record, tmp_path, monkeypatch):
+    """8:27 AM CDT: in progress, nothing mailed. The 9:05 AM CDT watch: the run ended failed and no receipt
+    landed: the morning's alert is mailed then, once, with the scheduler's reason beside it."""
+    sent = deliveries(monkeypatch)
+    docs, ledger = docs_with(tmp_path, record), tmp_path / "ledger.json"
+    early = ALERT + timedelta(minutes=2, seconds=20)
+    main_mail_with(docs, early, ledger, Listing({"morning.yml": [morning_run(status="in_progress", conclusion=None)]}))
+    assert not [text for _, text in sent if "Alert key: morning:not_landed:2026-09-11." in text]
+    failed = Listing({"morning.yml": [morning_run(conclusion="failure")]})
+    out = sw.watch(docs, WATCH_SLOT, github=failed)
+    assert out["morning"]["judgement"] == sw.NOT_LANDED and out["scheduler"]["morning"]["judgement"] == sw.FAILED
+    (alert,) = [a for a in out["alerts"] if a["key"] == "morning:not_landed:2026-09-11"]
+    assert "ended without its work" in alert["detail"]
+    for clock_ in (WATCH_SLOT, WATCH_SLOT + timedelta(minutes=5)):
+        main_mail_with(docs, clock_, ledger, failed)
+    assert sum("Alert key: morning:not_landed:2026-09-11." in text for _, text in sent) == 1
+
+
+def test_the_morning_sentences_say_the_dispatcher_starts_the_check_once_it_is_deployed(record):
+    raw = encode(record)
+    early = sw.morning(record, raw, None, "absent", ALERT - SECOND, orders_raw=None, orders_morning_raw=None)
+    assert early["judgement"] == sw.NOT_DUE
+    assert early["sentence"] == ("A morning check for 2026-09-11 is judged from 2026-09-11T08:25:00-05:00, and this "
+                                 "watch's clock is before that; the on-time dispatcher, once it is deployed, starts "
+                                 "the check at 2026-09-11T08:20:00-05:00.")
+    assert "is started at" not in early["sentence"]
+    none = sw.judge_morning(record, None, raw, ALERT, [], None)
+    assert none["sentence"].endswith("the on-time dispatcher, once it is deployed, starts it at "
+                                     "2026-09-11T08:20:00-05:00.")
+    assert "the dispatcher starts it at" not in none["sentence"]
+
+
+def test_a_morning_dispatch_in_its_slot_that_ended_without_its_work_is_not_on_time(record):
+    raw = encode(record)
+    failed = morning_run(created=MORNING_SLOT, conclusion="failure")
+    later = morning_run(created=MORNING_SLOT + timedelta(minutes=40), id=8301, event="schedule",
+                        display_title="Morning cron 20 13 * * 1-5")
+    out = sw.judge_morning(record, None, raw, CUTOFF, [failed, later], None)
+    assert (out["judgement"], out["key"], out["on_time_run"]) == (sw.STARTED_LATE, "scheduler:morning:started_late",
+                                                                  None)
+    assert out["action"] == sw.MORNING_UNFINISHED_HINT
+    assert "not started by a dispatch that did its work in its slot's due window" in out["sentence"]
+    assert "the dispatch in its slot ended without its work: run 8300" in out["sentence"]
+    out = sw.judge_morning(record, None, raw, CUTOFF, [later], None)
+    assert out["action"] == sw.SCHEDULER_HINT and "that did its work" not in out["sentence"]
+
+
+# --------------------------------------------- the listing's debounce ---
+LISTING_ALERT = "Alert key: scheduler:listing:unreadable."
+QUIET_AT = CUTOFF + timedelta(hours=1)          # a check landed and bound, nothing else to flag
+
+
+def quiet_docs(tmp_path, record) -> Path:
+    raw = encode(record)
+    return docs_with(tmp_path, record, receipt(raw, COLLECT + timedelta(minutes=22)))
+
+
+def failing() -> Listing:
+    return Listing(raises=ds.HTTPFailure(502, "listing"))
+
+
+def listing_mails(sent) -> int:
+    return sum(LISTING_ALERT in text for _, text in sent)
+
+
+def test_the_debounce_constants_are_two_runs_in_a_row_and_a_day():
+    assert sw.LISTING_FAILURES_IN_A_ROW == 2 and sw.LISTING_CLEAR_HOURS == 24
+    assert sw.DEBOUNCED == (sw.LISTING_KEY,) == ("scheduler:listing:unreadable",)
+
+
+def test_a_single_transient_listing_failure_mails_nothing_and_the_ledger_records_it(record, tmp_path, monkeypatch,
+                                                                                  capsys):
+    sent = deliveries(monkeypatch)
+    docs, ledger, output = quiet_docs(tmp_path, record), tmp_path / "ledger.json", tmp_path / "output"
+    import unittest.mock
+    with unittest.mock.patch.object(sw, "github_from", lambda env: failing()):
+        assert main_mail(docs, QUIET_AT, ledger, env={"GITHUB_OUTPUT": str(output)}) == sw.EXIT_OK
+    assert sent == [] and listing_mails(sent) == 0
+    told = outputs(output)
+    assert told["alerts"] == "" and told["ledger"] == "written" and told["finished"] == "true"
+    held = json.loads(ledger.read_text())
+    assert held["failing_since"] == {sw.LISTING_KEY: QUIET_AT.isoformat()} and held["sent"] == {}
+    assert held["failed_at"] == {sw.LISTING_KEY: QUIET_AT.isoformat()}
+    assert "It is the first watch run in a row whose listing failed" in capsys.readouterr().out
+    # the next run reads it: the run of failures is over, and nothing was ever mailed
+    assert main_mail_with(docs, QUIET_AT + timedelta(minutes=45), ledger, Listing()) in (sw.EXIT_OK, sw.EXIT_ALERT)
+    assert listing_mails(sent) == 0 and json.loads(ledger.read_text())["failing_since"] == {}
+
+
+def test_two_listing_failures_in_a_row_mail_once_and_a_third_is_a_repeat(record, tmp_path, monkeypatch):
+    sent = deliveries(monkeypatch)
+    docs, ledger = quiet_docs(tmp_path, record), tmp_path / "ledger.json"
+    for n in range(3):
+        main_mail_with(docs, QUIET_AT + timedelta(minutes=45 * n), ledger, failing())
+        assert listing_mails(sent) == (0 if n == 0 else 1), n
+    out = sw.watch(docs, QUIET_AT + timedelta(minutes=45), github=failing(),
+                   ledger=sw.read_ledger(ledger, QUIET_AT + timedelta(minutes=45)))
+    assert out["exit_code"] == sw.EXIT_ALERT and [a["key"] for a in out["alerts"]] == [sw.LISTING_KEY]
+    assert f"Every watch run's listing has failed since {QUIET_AT.isoformat()}." in \
+        out["scheduler"]["listing_answer"]["sentence"]
+
+
+def test_failures_alternating_with_reads_for_a_day_mail_at_most_once(record, tmp_path, monkeypatch):
+    """The finding's own case: HTTP 502 on every other watch run, ten runs a day for a day and a half."""
+    sent = deliveries(monkeypatch)
+    docs, ledger = quiet_docs(tmp_path, record), tmp_path / "ledger.json"
+    for n in range(16):
+        main_mail_with(docs, QUIET_AT + timedelta(minutes=144 * n), ledger, failing() if n % 2 == 0 else Listing())
+    assert listing_mails(sent) <= 1
+
+
+def test_a_day_of_reads_clears_it_and_less_than_a_day_does_not(record, tmp_path, monkeypatch):
+    sent = deliveries(monkeypatch)
+    docs, ledger = quiet_docs(tmp_path, record), tmp_path / "ledger.json"
+    t = QUIET_AT
+    main_mail_with(docs, t, ledger, failing())
+    main_mail_with(docs, t + timedelta(minutes=30), ledger, failing())               # the second in a row: mailed
+    assert listing_mails(sent) == 1
+    last_failure = t + timedelta(minutes=30)
+    # reads for less than a day after the last failure record no clear
+    main_mail_with(docs, last_failure + timedelta(hours=sw.LISTING_CLEAR_HOURS) - SECOND, ledger, Listing())
+    assert sw.LISTING_KEY not in json.loads(ledger.read_text())["cleared"]
+    main_mail_with(docs, last_failure + timedelta(hours=sw.LISTING_CLEAR_HOURS, minutes=1), ledger, failing())
+    main_mail_with(docs, last_failure + timedelta(hours=sw.LISTING_CLEAR_HOURS, minutes=2), ledger, failing())
+    assert listing_mails(sent) == 1                                                # still the same condition
+    # a full day of reads after that clears it
+    again = last_failure + timedelta(hours=sw.LISTING_CLEAR_HOURS, minutes=2)
+    main_mail_with(docs, again + timedelta(hours=sw.LISTING_CLEAR_HOURS), ledger, Listing())
+    held = json.loads(ledger.read_text())
+    assert held["cleared"] == {sw.LISTING_KEY: (again + timedelta(hours=sw.LISTING_CLEAR_HOURS)).isoformat()}
+    # its return, two failures in a row, is mailed at once
+    back = again + timedelta(hours=sw.LISTING_CLEAR_HOURS, minutes=30)
+    main_mail_with(docs, back, ledger, failing())
+    assert listing_mails(sent) == 1
+    main_mail_with(docs, back + timedelta(minutes=30), ledger, failing())
+    assert listing_mails(sent) == 2
+
+
+def test_without_a_ledger_a_listing_failure_is_raised_at_once(record, tmp_path):
+    out = sw.watch(quiet_docs(tmp_path, record), QUIET_AT, github=failing())
+    assert [a["key"] for a in out["alerts"]] == [sw.LISTING_KEY] and out["exit_code"] == sw.EXIT_ALERT
+    assert out["ledger_updates"] == {"failing_since": {}, "failed_at": {sw.LISTING_KEY: QUIET_AT.isoformat()}}
+
+
+def test_a_listing_not_asked_neither_breaks_nor_extends_the_run_of_failures(record, tmp_path):
+    held = sw._empty_ledger()
+    held["failing_since"][sw.LISTING_KEY] = QUIET_AT
+    answer = {"listing": sw.LISTING_NOT_ASKED, "sentence": "x", "alert": False, "key": None}
+    assert sw.debounce(answer, held, QUIET_AT + timedelta(hours=1)) == {"failing_since": {}, "failed_at": {}}
+    unknown = {"listing": sw.UNKNOWN, "sentence": "x", "alert": False, "key": None}
+    assert sw.debounce(unknown, held, QUIET_AT + timedelta(hours=1)) == {"failing_since": {}, "failed_at": {}}
+
+
+def test_a_run_without_mail_records_the_listing_failure_all_the_same(record, tmp_path):
+    docs, ledger, output = quiet_docs(tmp_path, record), tmp_path / "ledger.json", tmp_path / "output"
+    import unittest.mock
+    with unittest.mock.patch.object(sw, "github_from", lambda env: failing()):
+        code = sw.main(["--docs", str(docs), "--now", QUIET_AT.isoformat(), "--ledger", str(ledger)],
+                       env={"GITHUB_OUTPUT": str(output)})
+    assert code == sw.EXIT_OK and json.loads(ledger.read_text())["failing_since"] == {
+        sw.LISTING_KEY: QUIET_AT.isoformat()}
+    assert outputs(output) == {"exit_code": "0", "alerts": "", "mail": "not_asked", "ledger": "written",
+                               "finished": "true"}
+
+
+# -------------------------------------------------- the ledger's own writes ---
+def test_a_ledger_that_cannot_be_written_makes_the_run_not_finish(record, tmp_path, monkeypatch, capsys):
+    """The ledger's path under a regular file: the message goes out, the ledger cannot keep it, and the next run
+    would mail it again. The run says so and does not finish."""
+    sent = deliveries(monkeypatch)
+    docs, blocker, output = docs_with(tmp_path, record), tmp_path / "blocker", tmp_path / "output"
+    blocker.write_text("a file, not a directory")
+    ledger = blocker / "ledger.json"
+    code = main_mail(docs, LIMIT - timedelta(hours=2), ledger, env={"GITHUB_OUTPUT": str(output)})
+    assert code == sw.EXIT_UNFINISHED and len(sent) == 1
+    told = outputs(output)
+    assert told["ledger"] == "failed" and told["exit_code"] == str(sw.EXIT_UNFINISHED) and "finished" not in told
+    err = capsys.readouterr().err
+    assert "The ledger could not be written (" in err and "This run did not finish." in err
+    # without mail, a ledger the run changed and could not write is the same
+    output.unlink()
+    (tmp_path / "q").mkdir()
+    import unittest.mock
+    with unittest.mock.patch.object(sw, "github_from", lambda env: failing()):
+        code = sw.main(["--docs", str(quiet_docs(tmp_path / "q", record)), "--now", QUIET_AT.isoformat(),
+                        "--ledger", str(ledger)], env={"GITHUB_OUTPUT": str(output)})
+    assert code == sw.EXIT_UNFINISHED and outputs(output)["ledger"] == "failed" and "finished" not in outputs(output)
+    # a run that has nothing to write does not touch it and finishes
+    output.unlink()
+    assert main_mail(docs, LIMIT - timedelta(hours=2) + timedelta(minutes=1), tmp_path / "fine.json",
+                     env={"GITHUB_OUTPUT": str(output)}) == sw.EXIT_ALERT
+
+
+def test_an_unreadable_record_whose_ledger_cannot_be_written_does_not_finish(tmp_path, monkeypatch):
+    deliveries(monkeypatch)
+    docs, blocker, output = tmp_path / "docs", tmp_path / "blocker", tmp_path / "output"
+    docs.mkdir()
+    (docs / sw.DATA_FILE).write_text("{truncated")
+    blocker.write_text("x")
+    code = main_mail(docs, datetime(2026, 9, 14, 11, 30, tzinfo=UTC), blocker / "ledger.json",
+                     env={"GITHUB_OUTPUT": str(output)})
+    assert code == sw.EXIT_UNFINISHED and outputs(output)["ledger"] == "failed" and "finished" not in outputs(output)
+
+
+def every_key_the_watch_writes(sha: str) -> list[str]:
+    """One key of every family and word the watch can write, each scope in the forms it can take."""
+    keys = [f"{family}:{word}:{scope}" for (family, word) in sw.SUBJECTS if not family.startswith("scheduler:")
+            for scope in ("2026-09-11", sha)]
+    keys += [f"{name}:{word}" for (name, word) in sw.SUBJECTS if name.startswith("scheduler:")]
+    keys += [f"record:unreadable:{sha}", "record:unreadable:absent", f"record:unknown:{sha}"]
+    return keys
+
+
+def test_every_key_the_watch_writes_is_read_back_from_its_ledger(tmp_path, monkeypatch):
+    """A round trip over every key family the watch can write, record:unknown among them: each one sent, cleared
+    and debounced is in the ledger the next run reads, and nothing of it is dropped."""
+    deliveries(monkeypatch)
+    sha = "ab" * 32
+    keys = every_key_the_watch_writes(sha)
+    assert len(keys) == len(set(keys)) == 2 * 7 + 4 + 3
+    now = datetime(2026, 9, 14, 11, 30, tzinfo=UTC)
+    ledger = tmp_path / "ledger.json"
+    out = sw.send([sw._alert(key, "words", None) for key in keys], now, ledger)
+    assert sorted(out["mailed"]) == sorted(keys) and out["refused_keys"] == []
+    sw.send([], now + timedelta(minutes=1), ledger, cleared=[k for k in keys if k.startswith("scheduler:")],
+            updates={"failing_since": {sw.LISTING_KEY: (now + timedelta(minutes=1)).isoformat()},
+                     "failed_at": {sw.LISTING_KEY: (now + timedelta(minutes=1)).isoformat()}})
+    held = sw.read_ledger(ledger, now + timedelta(minutes=2))
+    assert held["notes"] == [] and sorted(held["sent"]) == sorted(keys)
+    assert sorted(held["cleared"]) == sorted(k for k in keys if k.startswith("scheduler:"))
+    assert list(held["failing_since"]) == list(held["failed_at"]) == [sw.LISTING_KEY]
+
+
+def test_a_session_named_in_another_form_is_keyed_in_the_form_the_ledger_reads(record, tmp_path, monkeypatch):
+    """A record whose session the calendar names as 20260910 (which date.fromisoformat reads) is keyed as
+    2026-09-10, and one named in no date form by its record's SHA-256: each read back, so a repeat is dropped."""
+    sent = deliveries(monkeypatch)
+    sha = "cd" * 32
+    assert sw.canonical_key("handoff:unbound:20260910", sha) == "handoff:unbound:2026-09-10"
+    assert sw.canonical_key("evening:not_published:the eleventh", sha) == f"evening:not_published:{sha}"
+    assert sw.canonical_key("evening:not_published:2026-09-11", sha) == "evening:not_published:2026-09-11"
+    assert sw.canonical_key("scheduler:watch:not_started", sha) == "scheduler:watch:not_started"
+    odd = copy.deepcopy(record)
+    odd["run"]["session"] = "20260910"
+    docs, ledger = docs_with(tmp_path, odd, handoff_files=False), tmp_path / "ledger.json"
+    first = sw.watch(docs, ALERT - SECOND)
+    keys = [a["key"] for a in first["alerts"]]
+    assert all(sw.KEY_PATTERN.fullmatch(key) for key in keys), keys
+    assert first["handoff"]["key"] in keys
+    main_mail(docs, ALERT - timedelta(minutes=2), ledger)
+    main_mail(docs, ALERT - SECOND, ledger)
+    assert len(sent) == 1
+    assert sorted(sw.read_ledger(ledger, ALERT)["sent"]) == sorted(keys)
+
+
+def test_the_writer_never_writes_a_key_the_reader_refuses_and_names_it(tmp_path, monkeypatch, capsys):
+    deliveries(monkeypatch)
+    now = datetime(2026, 9, 14, 11, 30, tzinfo=UTC)
+    ledger = tmp_path / "ledger.json"
+    bad = {"key": "handoff:unbound:not a date", "subject": "SpicyStock watch: x", "sentence": "x", "action": None,
+           "detail": None, "standing": False, "scope": "x"}
+    out = sw.send([bad, sw._alert("scheduler:watch:not_started", "w", None)], now, ledger)
+    assert out["refused_keys"] == ["handoff:unbound:not a date"]
+    assert json.loads(ledger.read_text())["sent"] == {"scheduler:watch:not_started": now.isoformat()}
+    assert 'Not written to the ledger: "handoff:unbound:not a date" is not a key it reads' in \
+        "\n".join(sw.outcome_lines(out))
+
+
+# ------------------------------------------- the evening, two sessions behind ---
+def test_an_on_time_start_of_the_newest_session_is_no_9_45_pm_rule_for_the_first_missed_one(record, tmp_path):
+    """The record covers the 10th; at 9:46 PM EDT on Monday the 14th, the 11th is missing and the 14th was started
+    on time by a dispatch in its first slot. That start is the 14th's: the 9:45 PM rule is not applied to the
+    11th, and the result says so in its published_by field."""
+    docs = docs_with(tmp_path, record)
+    now = datetime(2026, 9, 15, 1, 46, tzinfo=UTC)
+    fourteenth = Listing({"evening.yml": [run(event="workflow_dispatch", display_title=sw.EVENING_DISPATCH_TITLE,
+                                              created_at=datetime(2026, 9, 14, 22, 21, tzinfo=UTC))]})
+    out = sw.watch(docs, now, github=fourteenth)
+    assert out["scheduler"]["evening"]["session"] == "2026-09-14" != out["evening"]["next_session"] == "2026-09-11"
+    assert out["scheduler"]["evening"]["judgement"] == sw.ON_TIME
+    assert out["evening"]["judgement"] == sw.MISSING and out["evening"]["published_by"] is None
