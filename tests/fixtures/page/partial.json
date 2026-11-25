@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "afb20aa72afc"
+  "rules_version": "7f5dfcf28442"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -954,7 +954,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "3e7e63a79f219bd9206d7a62ea79b211a1d65a8114f2385f273bc6bf4ca063f5"
+   "context_sha256": "6120846e00c8719a5ae85263361b76c76e35533b2500f2d43ade5e2ee6105865"
   },
   "earnings": {
    "version": 2,
@@ -1384,7 +1384,7 @@
    "max_events": 128,
    "max_sources": 8,
    "max_text_length": 2000,
-   "registry_sha256": "dc486fa14b0afe7c50504208abbf803d8545a9798dc4c2d56a63e634d451285f",
+   "registry_sha256": "66926faa7715277d1103c79a8225e1ec8fcc0e643b9b7c5da7f890cc949a0660",
    "registry": {
     "version": 1,
     "coverage": "manual_known_events_only",
@@ -1500,10 +1500,10 @@
       "kind": "cash_acquisition",
       "announced_on": "2026-09-10",
       "active_from": "2026-09-10",
-      "active_until": null,
+      "active_until": "2026-10-16",
       "evidence_as_of": "2026-10-08",
-      "reviewed_on": "2026-10-09",
-      "review_due": "2026-10-15",
+      "reviewed_on": "2026-11-25",
+      "review_due": "2026-11-25",
       "reason": "ACV announced Copart's $10.50 per share cash tender offer and merger. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -1521,9 +1521,12 @@
         "quote": "has been further extended until 5:00 p.m., Eastern Time, on October 15, 2026"
        }
       ],
-      "review_note": {
-       "noted_on": "2026-11-19",
-       "text": "Re-reviewed 19 November 2026. Copart's release of 16 October 2026 (https://www.sec.gov/Archives/edgar/data/0000900075/000119312526423478/d129535dex991.htm, read as a search-result excerpt; page bytes not captured) says the acquisition completed and ACV's shares ceased trading, and the retained Nasdaq directory snapshots drop ACVA from 20 October 2026. The registry ends an entry only with a resolution carrying the SHA-256 of captured bytes, and none could be captured from this sandbox, so the entry stays listed and blocked with its review overdue. A stock that no longer trades prints no bars and can carry no ticket. To end it, capture the release from a network that reaches sec.gov and add the resolution."
+      "resolution": {
+       "title": "Copart, Inc. Form 8-K exhibit 99.1: Copart completes acquisition of ACV",
+       "published_on": "2026-10-16",
+       "url": "https://www.sec.gov/Archives/edgar/data/900075/000119312526423478/d129535dex991.htm",
+       "sha256": "5c50ee333fab78434492cc8f25821e83c9ef7a9e88f81e8bb45e5dfdee559327",
+       "quote": "With the completion of the acquisition, shares of ACV common stock have ceased trading on the New York Stock Exchange"
       }
      },
      {
@@ -1696,6 +1699,25 @@
    "volume_pct": 10.0,
    "volume_basis": "ratio_to_prior_session",
    "max_names": 20
+  },
+  "candidate_checks": {
+   "version": 1,
+   "policy": "flag_only",
+   "max_names": 80,
+   "roles": [
+    "ticket",
+    "listed",
+    "reviewed",
+    "candidate",
+    "also_quiet"
+   ],
+   "deadline_seconds": 150,
+   "max_requests": 96,
+   "max_block_bytes": 262144,
+   "max_filings": 4,
+   "max_material": 4,
+   "sentence_names": 3,
+   "unknown_policy": "never_clearance"
   },
   "go_live": {
    "version": 2,
@@ -2296,7 +2318,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "afb20aa72afc"
+  "replay_rules_version": "7f5dfcf28442"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -2569,6 +2591,24 @@
    "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
   ]
  },
+ "candidate_checks": {
+  "version": 1,
+  "policy": "flag_only",
+  "session": "2026-09-10",
+  "since": "2026-08-11",
+  "max_names": 80,
+  "names": {},
+  "unchecked": {},
+  "rows": [],
+  "shed": 0,
+  "requests": {
+   "sec": 0,
+   "sec_reused": 0,
+   "iex": 0
+  },
+  "status": "not_applicable",
+  "sentence": "Candidate checks: no ticket, listed setup or admitted candidate to check."
+ },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
@@ -2588,6 +2628,7 @@
   "scorecard": "All retained published plans in the stated window, including pending and missing evidence. Disjoint outcome counts reconcile to plans; rates use resolved plans alone, with an explicit denominator and minimum sample. Public model results, independent of personal selections.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
   "scorecard_reading": "The scorecard read honestly, beside its own numbers, which do not move: the model record's distinct setups, the model account each ticket was sized against, the stopped tickets at the session's close and low beside the stop they were booked at, the breadth figures this record computes differently from the publication before it, and where real trades are compared with the model (privately). Its sentences are printed verbatim.",
+  "candidate_checks": "Each night's candidates read against SEC and a second price source, as flags for a reader: up to max_names names -- every ticket, every listed setup, every burst the review selected, every admitted burst in the trade band without a veto, then the also-quiet coils -- each with its recent merger, tender and deal filings, its earnings estimate from SEC results filings and its recent 8-K items, and its signal-day bar read again from the iex feed. A name past the bound is counted by role. A name the tickets' own blocks read carries their reading. It changes no plan, ticket or order, unknown is never clear, and its sentence is printed verbatim.",
   "funnel": "Where every discovered reaction candidate and every listed anticipation setup stopped: one terminal stage each, in the order the run applies its gates, so the stage counts sum to the discovered count. Derived from the fields above and re-derived by the validator; the labels the page and the mail print travel with it. A stage is the record's own accounting of its gates, never a judgement of the setup and never an entry.",
   "observations": "Public coverage of every published saveable signal, independent of local saves. Each signal keeps its own identity and 21-calendar-day window. Symbols carry the latest real bar plus up to 20 dated observations from already-fetched frames; missing bars stay missing, and missing frames retain earlier actual observations. This is research coverage, never a quote feed or personal trading history.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."

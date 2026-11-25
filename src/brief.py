@@ -155,8 +155,9 @@ LIMITS = (
     "scaling of its count thresholds, the admission rule, the checklist weights and the chart reader are this "
     "project's own rules (knowledge/method.md says whose number each is), and the record does not establish that "
     "the gate improves outcomes.",
-    "SpicyStock reads no company news. Earnings and SEC 8-K items are read for published tickets only, from SEC "
-    "filings: a projected date is an estimate, never an announced date, unknown is never clear, and filings are "
+    "SpicyStock reads no company news. Earnings and SEC 8-K items are read from SEC filings for published tickets, "
+    "and under the candidate checks (`service.candidate_checks`) as flags for the night's other candidates up to "
+    "its bound: a projected date is an estimate, never an announced date, unknown is never clear, and filings are "
     "not news coverage.",
     "The event registry is a hand-kept list of known cash acquisitions. A stock that is not in it has not been "
     "cleared: issuer news, offerings, guidance and other corporate events are not checked.",
@@ -174,9 +175,12 @@ LIMITS = (
 #: What SpicyStock does not check about a company, whatever the night. Fixed text.
 NOT_CHECKED = (
     "company news and press releases", "announced earnings dates", "offerings and shelf takedowns",
-    "FDA and trial dates", "halts outside the morning check", "delisting notices beyond 8-K item 3.01 on tickets",
+    "FDA and trial dates", "halts outside the morning check", "delisting notices beyond 8-K item 3.01 on the names checked",
     "index changes", "lockup expiries", "ex-dividend dates",
 )
+#: the SEC flags' states as a candidate's brief row names them: "clear" is a window
+#: with no flagged filing, which clears nothing (src/sec_flags.py, src/candidate_checks.py)
+SEC_STATE_WORDS = {"flagged": "flagged", "clear": "none_flagged_in_window", "unknown": "unknown"}
 EVENT_STATUS_WORDS = {
     "known_event": "in the registry and blocked for a SpicyStock ticket; its manual review is current",
     "review_required": "in the registry and blocked for a SpicyStock ticket; its manual review is overdue",
@@ -203,6 +207,8 @@ MODEL_MD_FIRST = ("picked", "ticker", "kind", "shares", "bucket", "r", "model_us
                   "issue_no", "issues", "withdrawn", "label", "tickets", "settled", "sum_r")
 #: A property name carrying one of these is read by the secret scan's generic rule as a credential's name.
 SCANNER_WORDS = ("key", "token", "secret", "auth", "api", "access", "credential", "creds", "passw")
+#: an SEC accession number: the filer's 10 digits, the year's 2, the sequence's 6
+ACCESSION = re.compile(r"\d{10}-\d{2}-\d{6}")
 
 
 class Refusal(ValueError):
@@ -418,6 +424,9 @@ def service(data: dict, canonical_sha: str) -> dict:
         },
         "earnings": _pick(earn, ("version", "policy", "source", "status", "counts", "items_counts", "requests",
                                  "sentence")) or None,
+        "candidate_checks": _pick(_dict(data.get("candidate_checks")),
+                                  ("version", "policy", "status", "max_names", "names", "unchecked", "shed",
+                                   "requests", "sentence")) or None,
         "admission": _pick(_dict(run.get("admission")), ("version", "policy", "candidates", "admitted", "by_basis",
                                                          "in_band", "sentence")) or None,
         "graded": run.get("graded"), "bursts": run.get("bursts"),
@@ -781,7 +790,52 @@ BAR = ("close", "prev_close", "open", "high", "low", "gain_pct", "volume", "prev
 BAR_EXTRA = ("gap_pct", "bar_range_pct", "close_pos", "volume_vs_avg50", "volume_rank_60")   # quality.burst, not repeated
 
 
-def candidate(row: dict, cls: str, stage, label, lv, lv_missing, event, earn, passes) -> dict:
+def check_row(row: dict) -> dict:
+    """One candidate-check row (``src/candidate_checks.py``) as the brief carries it:
+    its readings without the fields its candidate row already names. Each flagged
+    filing and material item carries its SEC Archives folder (``filing_index``),
+    built from the row's CIK and the filing's accession number, so a reader can
+    open it. The number itself is not a property here because this file's own
+    guard (``scanner_names()``) refuses any property name holding a word the
+    secret scan's generic rule keys on, ``access`` among them, whatever its
+    value; the record carries the numbers."""
+    sec, earn, items = _dict(row.get("sec")), _dict(row.get("earnings")), _dict(row.get("items"))
+    cik = row.get("cik")
+
+    def folder(filing):
+        number = _dict(filing).get("accession")
+        if type(cik) is not int or not isinstance(number, str) or not ACCESSION.fullmatch(number):
+            return None
+        return f"https://www.sec.gov/Archives/edgar/data/{cik}/{number.replace('-', '')}/"
+    projection, observed = earn.get("projection"), earn.get("observed")
+    return {
+        "role": row.get("role"), "cik": row.get("cik"), "source": row.get("source"),
+        # the record's "clear" is the SEC flags' word for a window with no flagged filing;
+        # the brief calls no name clear, so it says what was found
+        "sec": {**_pick(sec, ("reason", "filings_count")),
+                "state": SEC_STATE_WORDS.get(sec.get("state"), sec.get("state")),
+                "filings": [{**_pick(_dict(f), ("filing_date", "form", "items")), "filing_index": folder(f)}
+                            for f in _list(sec.get("filings"))]},
+        "earnings": {**_pick(earn, ("verdict", "reason", "error", "placement", "sentence")),
+                     "projection": _pick(projection, ("date", "low", "high")) if isinstance(projection, dict) else None,
+                     "observed": _pick(observed, ("filing_date", "accepted_at")) if isinstance(observed, dict) else None},
+        "items": {**_pick(items, ("status", "reason", "material_count", "codes", "count", "unread")),
+                  "material": [{**_pick(_dict(m), ("item", "form", "filing_date", "placement")),
+                                "filing_index": folder(m)} for m in _list(items.get("material"))]},
+        "cross_check": row.get("cross_check"),
+    }
+
+
+def candidate_check_rows(data: dict) -> dict:
+    """Each name's candidate-check row by stage and ticker, as ``check_row()`` carries it."""
+    out = {}
+    for row in _list(_dict(data.get("candidate_checks")).get("rows")):
+        if isinstance(row, dict):
+            out.setdefault((row.get("stage"), row.get("ticker")), check_row(row))
+    return out
+
+
+def candidate(row: dict, cls: str, stage, label, lv, lv_missing, event, earn, passes, checks=None) -> dict:
     quality = _dict(row.get("quality"))
     adm = _dict(row.get("admission"))
     ticket = cls == "ticket"
@@ -808,6 +862,8 @@ def candidate(row: dict, cls: str, stage, label, lv, lv_missing, event, earn, pa
         "research_levels_label": None if ticket or not lv else RESEARCH_LEVELS_LABEL,
         "levels_unavailable": lv_missing,
         "event": event, "earnings": earn,
+        # the record's own candidate-check row, a flag and never a gate (`service.candidate_checks`)
+        "candidate_checks": checks,
         "link": _link("bursts", row.get("ticker")),
     }
     return {k: v for k, v in out.items() if v is not None}
@@ -843,7 +899,8 @@ def compact(full: dict) -> dict:
     return {k: v for k, v in out.items() if v is not None}
 
 
-def setting_up(data: dict, modules, account, regime_multiplier, yellow_multiplier, earn) -> dict:
+def setting_up(data: dict, modules, account, regime_multiplier, yellow_multiplier, earn, checks=None) -> dict:
+    checks = checks or {}
     watch = _dict(data.get("watchlist"))
     plan = modules["plan"]
     stages = {r.get("ticker"): r.get("stage") for r in
@@ -880,6 +937,8 @@ def setting_up(data: dict, modules, account, regime_multiplier, yellow_multiplie
             "open_entry_note": ({"text": _text(p.get("open_entry")), "label": "a research note in the record; not the ticket"}
                                 if p.get("open_entry") else None),
             "event": event_state(p), "earnings": earn.get(("anticipation", row.get("ticker"))),
+            # the record's own candidate-check row, a flag and never a gate (`service.candidate_checks`)
+            "candidate_checks": checks.get(("anticipation", row.get("ticker"))),
             "link": _link("setting-up", row.get("ticker")),
         }.items() if v is not None})
     quiet = [r for r in _list(watch.get("also_quiet")) if isinstance(r, dict)]
@@ -894,6 +953,7 @@ def setting_up(data: dict, modules, account, regime_multiplier, yellow_multiplie
             "compress": r.get("compress"), "tight_n": r.get("tight_n"), "volume_ratio": r.get("volume_ratio"),
             "trigger": r.get("trigger"), "stop": r.get("stop_primary"), "risk_pct": r.get("risk_pct"),
             "why": r.get("why") or "; ".join(str(x) for x in _list(r.get("reasons_failed"))) or None,
+            "candidate_checks": checks.get(("anticipation", r.get("ticker"))),
             "link": _link("setting-up", r.get("ticker"))}.items() if v is not None} for r in quiet[:ALSO_QUIET_MAX]],
         "also_quiet_left_out": max(0, len(quiet) - ALSO_QUIET_MAX),
     }
@@ -1163,19 +1223,38 @@ def events_block(data: dict, event_risk) -> dict:
     listed = {stage: sum(1 for r in rows if isinstance(r, dict)) for stage, rows in stages}
     names = {r.get("ticker") for _, rows in stages for r in rows if isinstance(r, dict)}
     earn = _dict(run.get("earnings"))
-    checked = {r.get("ticker") for r in _list(earn.get("rows")) if isinstance(r, dict)} & names
+    cand = _dict(data.get("candidate_checks"))
+    cand_rows = [r for r in _list(cand.get("rows")) if isinstance(r, dict)]
+    # a name counts as read only where its row records a reading: an unknown earnings date or an
+    # SEC state that could not be read is a row and no reading
+    earnings_read = ({r.get("ticker") for r in _list(earn.get("rows"))
+                      if isinstance(r, dict) and r.get("verdict") not in (None, "unknown")}
+                     | {r.get("ticker") for r in cand_rows
+                        if _dict(r.get("earnings")).get("verdict") not in (None, "unknown")}) & names
+    sec_read = ({r.get("ticker") for r in _list(_dict(run.get("sec_flags")).get("rows"))
+                 if isinstance(r, dict) and r.get("state") not in (None, "unknown")}
+                | {r.get("ticker") for r in cand_rows
+                   if _dict(r.get("sec")).get("state") not in (None, "unknown")}) & names
+    checked = earnings_read | sec_read
     earnings = {"status": earn.get("status") if earn else None,
                 "recorded": bool(earn),
                 "ticket_rows": len([r for r in _list(earn.get("rows")) if isinstance(r, dict)]),
+                "candidate_rows": len(cand_rows) if cand else None,
                 "listed_names": len(names), "listed_names_with_a_check": len(checked),
+                "listed_names_earnings_read": len(earnings_read), "listed_names_sec_read": len(sec_read),
                 "listed_names_not_checked": len(names) - len(checked),
-                "note": "earnings and SEC 8-K items are read for published tickets only"}
+                "note": ("earnings and SEC 8-K items are read for published tickets, and for the night's other "
+                         f"candidates as flags up to the candidate checks' bound of {cand.get('max_names')} names"
+                         if cand else "earnings and SEC 8-K items are read for published tickets only")}
     total = sum(listed.values())
     counts_words = (f"{total} listed rows ({listed['bursts']} bursts, {listed['setting_up']} setting up, "
                     f"{listed['also_quiet']} also quiet)")
-    coverage_words = (f"A stock that is not in the registry has not been cleared: SpicyStock reads no company news, "
-                      f"and its earnings and SEC checks ran for {len(checked)} of the {len(names)} listed names "
-                      "(they run for tickets only).")
+    coverage_words = (f"A stock that is not in the registry has not been cleared: SpicyStock reads no company news; "
+                      f"of the {len(names)} listed names, an earnings date was read for {len(earnings_read)} and "
+                      f"SEC filings for {len(sec_read)} "
+                      + (f"(the tickets', and the candidate checks' flags for up to {cand.get('max_names')} names; "
+                         "a check that could not read a name says unknown, never clear)." if cand
+                         else "(they run for tickets only)."))
     if not reg:
         return {"registry": None, "listed": listed, "listed_matches": None, "earnings": earnings,
                 "status_words": EVENT_STATUS_WORDS, "not_checked": list(NOT_CHECKED),
@@ -1307,6 +1386,7 @@ def build(data: dict, picks, canonical_raw: bytes, picks_raw: bytes | None, modu
               if isinstance(r, dict)}
     labels = _dict(funnel.get("labels"))
     earn = earnings_rows(data)
+    checks = candidate_check_rows(data)
     trades = [t for t in _list(data.get("trades")) if isinstance(t, str)]
     bursts = [b for b in _list(data.get("bursts")) if isinstance(b, dict)]
     selected = {s.get("ticker") for s in _list(_dict(run.get("review_selection")).get("selected")) if isinstance(s, dict)}
@@ -1329,7 +1409,8 @@ def build(data: dict, picks, canonical_raw: bytes, picks_raw: bytes | None, modu
             lv = levels(p, source, plan, account, multiplier, yellow_size) if p else None
             stage = stages.get(b.get("ticker"))
             row = candidate(b, cls, stage, labels.get(stage), lv, missing, event_state(p),
-                            earn.get(("burst", b.get("ticker"))), would_pass(b, trade, yellow, admission))
+                            earn.get(("burst", b.get("ticker"))), would_pass(b, trade, yellow, admission),
+                            checks.get(("burst", b.get("ticker"))))
             row["_marks"] = check_marks(b)
             row["_in_band"] = bool(in_band(b) and admitted)
             cands.append(row)
@@ -1433,7 +1514,7 @@ def build(data: dict, picks, canonical_raw: bytes, picks_raw: bytes | None, modu
                                      "stages": {k: v for k, v in _dict(_dict(funnel.get("anticipation")).get("stages")).items() if v}}}
                    if funnel else None),
         "closest_miss": data.get("closest_miss"),
-        "setting_up": setting_up(data, modules, account, multiplier, yellow_size, earn),
+        "setting_up": setting_up(data, modules, account, multiplier, yellow_size, earn, checks),
         "open_plans": {"rows": plans, "rows_left_out": plans_left,
                        "total": len([o for o in _list(data.get("open_plans")) if isinstance(o, dict)]),
                        "meaning": "Open MODEL plans walked on daily (and retained minute) bars; not holdings"},
@@ -1946,6 +2027,8 @@ def render_markdown(brief: dict, json_raw: bytes, md_detail=None, md_compact=Non
         add(f"- {svc['admission']['sentence']}")
     if _dict(svc.get("earnings")).get("sentence"):
         add(f"- Earnings and 8-K items (status `{svc['earnings'].get('status')}`): {svc['earnings'].get('sentence')}")
+    if _dict(svc.get("candidate_checks")).get("sentence"):
+        add(f"- {svc['candidate_checks']['sentence']}")
     funnel = _dict(brief.get("funnel"))
     if funnel.get("sentence"):
         add(f"- {funnel['sentence']}")
@@ -2231,7 +2314,9 @@ def render_markdown(brief: dict, json_raw: bytes, md_detail=None, md_compact=Non
     add("- Status words: " + "; ".join(f"`{k}` = {v}" for k, v in _dict(ev.get("status_words")).items()) + ".")
     earn = _dict(ev.get("earnings"))
     add(f"- Earnings and 8-K check: status `{earn.get('status')}`; {_n(earn.get('ticket_rows'))} ticket rows; "
-        f"{_n(earn.get('listed_names_not_checked'))} of {_n(earn.get('listed_names'))} listed names had no check at all.")
+        f"{_n(earn.get('listed_names_not_checked'))} of {_n(earn.get('listed_names'))} listed names had nothing read "
+        f"(an earnings date read for {_n(earn.get('listed_names_earnings_read'))}, SEC filings for "
+        f"{_n(earn.get('listed_names_sec_read'))}).")
     add("- Not checked by SpicyStock: " + ", ".join(_list(ev.get("not_checked"))) + ".")
     add("")
     section(12)

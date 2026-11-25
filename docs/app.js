@@ -1355,6 +1355,11 @@
     if (run.earnings === undefined) line('Earnings: this record predates the earnings warning; no ticket’s report date was checked.');
     else if (text((run.earnings || {}).sentence)) line(run.earnings.sentence);
     else line('Earnings: this record carries an earnings block in a shape this page cannot read, so no ticket’s report date is said to be checked.');
+    // the night's candidates read against SEC and the iex feed, as flags, in the record's
+    // own sentence (src/candidate_checks.py); the page adds no flag of its own
+    if (data.candidate_checks === undefined) line('Candidate checks: this record predates the candidate checks; no name beyond its tickets and listed setups was read against SEC or the iex feed.').setAttribute('data-method-line', 'candidate-checks');
+    else if (text((data.candidate_checks || {}).sentence)) line(data.candidate_checks.sentence).setAttribute('data-method-line', 'candidate-checks');
+    else line('Candidate checks: this record carries a candidate-checks block in a shape this page cannot read, so no candidate is said to be checked.').setAttribute('data-method-line', 'candidate-checks');
     // the manual registry of known deals, as this record archived it (registryLine)
     line(registryLine(data)).setAttribute('data-method-line', 'event-registry');
     line(rulesDigestWords(data, true)).setAttribute('data-method-line', 'rules-digest');

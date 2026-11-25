@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "cbabdb923c61"
+  "rules_version": "d6bd08a3c383"
  },
  "cover": {
   "h1": "Stand aside.",
@@ -948,7 +948,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "8973f646895e784232b586073c80789b7c137ec41a1af1fe6bbfbfe2dabd35a6"
+   "context_sha256": "6c3ec53ab2adbd9084bb14aebb214e8629f3082c91f8d7cc8c7217ee93e8885a"
   },
   "earnings": {
    "version": 2,
@@ -1405,7 +1405,7 @@
    "max_events": 128,
    "max_sources": 8,
    "max_text_length": 2000,
-   "registry_sha256": "dc486fa14b0afe7c50504208abbf803d8545a9798dc4c2d56a63e634d451285f",
+   "registry_sha256": "66926faa7715277d1103c79a8225e1ec8fcc0e643b9b7c5da7f890cc949a0660",
    "registry": {
     "version": 1,
     "coverage": "manual_known_events_only",
@@ -1521,10 +1521,10 @@
       "kind": "cash_acquisition",
       "announced_on": "2026-09-10",
       "active_from": "2026-09-10",
-      "active_until": null,
+      "active_until": "2026-10-16",
       "evidence_as_of": "2026-10-08",
-      "reviewed_on": "2026-10-09",
-      "review_due": "2026-10-15",
+      "reviewed_on": "2026-11-25",
+      "review_due": "2026-11-25",
       "reason": "ACV announced Copart's $10.50 per share cash tender offer and merger. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -1542,9 +1542,12 @@
         "quote": "has been further extended until 5:00 p.m., Eastern Time, on October 15, 2026"
        }
       ],
-      "review_note": {
-       "noted_on": "2026-11-19",
-       "text": "Re-reviewed 19 November 2026. Copart's release of 16 October 2026 (https://www.sec.gov/Archives/edgar/data/0000900075/000119312526423478/d129535dex991.htm, read as a search-result excerpt; page bytes not captured) says the acquisition completed and ACV's shares ceased trading, and the retained Nasdaq directory snapshots drop ACVA from 20 October 2026. The registry ends an entry only with a resolution carrying the SHA-256 of captured bytes, and none could be captured from this sandbox, so the entry stays listed and blocked with its review overdue. A stock that no longer trades prints no bars and can carry no ticket. To end it, capture the release from a network that reaches sec.gov and add the resolution."
+      "resolution": {
+       "title": "Copart, Inc. Form 8-K exhibit 99.1: Copart completes acquisition of ACV",
+       "published_on": "2026-10-16",
+       "url": "https://www.sec.gov/Archives/edgar/data/900075/000119312526423478/d129535dex991.htm",
+       "sha256": "5c50ee333fab78434492cc8f25821e83c9ef7a9e88f81e8bb45e5dfdee559327",
+       "quote": "With the completion of the acquisition, shares of ACV common stock have ceased trading on the New York Stock Exchange"
       }
      },
      {
@@ -1717,6 +1720,25 @@
    "volume_pct": 10.0,
    "volume_basis": "ratio_to_prior_session",
    "max_names": 20
+  },
+  "candidate_checks": {
+   "version": 1,
+   "policy": "flag_only",
+   "max_names": 80,
+   "roles": [
+    "ticket",
+    "listed",
+    "reviewed",
+    "candidate",
+    "also_quiet"
+   ],
+   "deadline_seconds": 150,
+   "max_requests": 96,
+   "max_block_bytes": 262144,
+   "max_filings": 4,
+   "max_material": 4,
+   "sentence_names": 3,
+   "unknown_policy": "never_clearance"
   },
   "go_live": {
    "version": 2,
@@ -2479,8 +2501,8 @@
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2026-09-10",
-    "rules_version": "cbabdb923c61",
-    "context_sha256": "8973f646895e784232b586073c80789b7c137ec41a1af1fe6bbfbfe2dabd35a6",
+    "rules_version": "d6bd08a3c383",
+    "context_sha256": "6c3ec53ab2adbd9084bb14aebb214e8629f3082c91f8d7cc8c7217ee93e8885a",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "red",
@@ -2490,7 +2512,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "7fa1a7ae633865da02bf96c6a1f19650745697092df9dc0ce3c239799aaa5d58"
+    "id": "516e066700f8a1087bf6e493263e1ca496b3f5b83ab81107304923d805b1556b"
    },
    "series": [
     {
@@ -3735,8 +3757,8 @@
     "kind": "burst",
     "ticker": "AMD",
     "session": "2026-09-10",
-    "rules_version": "cbabdb923c61",
-    "context_sha256": "8973f646895e784232b586073c80789b7c137ec41a1af1fe6bbfbfe2dabd35a6",
+    "rules_version": "d6bd08a3c383",
+    "context_sha256": "6c3ec53ab2adbd9084bb14aebb214e8629f3082c91f8d7cc8c7217ee93e8885a",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "red",
@@ -3746,7 +3768,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "76ce2216d738d2a6e959bb8c3913950310c207747861da513bc15e6e910c1383"
+    "id": "f20e3a1bd2dec5d2e6b8b2816aaa22d3bb557978b75b3973ff7748ccd4adf235"
    },
    "series": [
     {
@@ -4959,8 +4981,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-10",
-    "rules_version": "cbabdb923c61",
-    "context_sha256": "8973f646895e784232b586073c80789b7c137ec41a1af1fe6bbfbfe2dabd35a6",
+    "rules_version": "d6bd08a3c383",
+    "context_sha256": "6c3ec53ab2adbd9084bb14aebb214e8629f3082c91f8d7cc8c7217ee93e8885a",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "red",
@@ -4970,7 +4992,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "107da14132d38c354d156356d4241bfb2c36ed0a30329fc2c719ca6631c96f7d"
+    "id": "742c19bd9bbe1c8e6ea492124ae4a65cb4f81d9934e8aad71902dc7866077f16"
    },
    "series": [
     {
@@ -6286,8 +6308,8 @@
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2026-09-10",
-    "rules_version": "cbabdb923c61",
-    "context_sha256": "8973f646895e784232b586073c80789b7c137ec41a1af1fe6bbfbfe2dabd35a6",
+    "rules_version": "d6bd08a3c383",
+    "context_sha256": "6c3ec53ab2adbd9084bb14aebb214e8629f3082c91f8d7cc8c7217ee93e8885a",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "red",
@@ -6297,7 +6319,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "5365d83c5dc57e9e922f6cec66fcdbc869577faf9d0b1b2ac2573fc743c2ad90"
+    "id": "cda6aa73f1d570fd00e84af64c86c1f24bf7aaa09e9fce4bc27468096e5ed3b5"
    },
    "series": [
     {
@@ -7544,8 +7566,8 @@
     "kind": "burst",
     "ticker": "MSFT",
     "session": "2026-09-10",
-    "rules_version": "cbabdb923c61",
-    "context_sha256": "8973f646895e784232b586073c80789b7c137ec41a1af1fe6bbfbfe2dabd35a6",
+    "rules_version": "d6bd08a3c383",
+    "context_sha256": "6c3ec53ab2adbd9084bb14aebb214e8629f3082c91f8d7cc8c7217ee93e8885a",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "red",
@@ -7555,7 +7577,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "a7cec9af60de4967c4989ac0e8809ae1791f7bad41ba2e7c20ed59fd20ede16c"
+    "id": "a86d84643bb306a58abd072d63a6f5893768a4937128521a1322e34995b65a49"
    },
    "series": [
     {
@@ -8801,8 +8823,8 @@
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2026-09-10",
-    "rules_version": "cbabdb923c61",
-    "context_sha256": "8973f646895e784232b586073c80789b7c137ec41a1af1fe6bbfbfe2dabd35a6",
+    "rules_version": "d6bd08a3c383",
+    "context_sha256": "6c3ec53ab2adbd9084bb14aebb214e8629f3082c91f8d7cc8c7217ee93e8885a",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "red",
@@ -8812,7 +8834,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "6504d65b3265b38b4dfd3224395d926ff5155049c0424bd98440f593c61204f4"
+    "id": "21600bf6aa29370167cd2b3954ac3f77185c4c16e81b3b331826bd08d3e5de31"
    },
    "series": [
     {
@@ -10060,8 +10082,8 @@
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2026-09-10",
-    "rules_version": "cbabdb923c61",
-    "context_sha256": "8973f646895e784232b586073c80789b7c137ec41a1af1fe6bbfbfe2dabd35a6",
+    "rules_version": "d6bd08a3c383",
+    "context_sha256": "6c3ec53ab2adbd9084bb14aebb214e8629f3082c91f8d7cc8c7217ee93e8885a",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "red",
@@ -10071,7 +10093,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "465952e26975a025cd10afa2e59f6d41ffee6984b146921c7661f85fb22defa7"
+    "id": "b6ec379c1ae856a124dcda70e5e9e4b173c46efe03b7e4ef16afbe72768ae5fe"
    },
    "series": [
     {
@@ -11318,7 +11340,7 @@
      "event_risk": {
       "version": 1,
       "coverage": "manual_known_events_only",
-      "registry_sha256": "dc486fa14b0afe7c50504208abbf803d8545a9798dc4c2d56a63e634d451285f",
+      "registry_sha256": "66926faa7715277d1103c79a8225e1ec8fcc0e643b9b7c5da7f890cc949a0660",
       "registry_reviewed_on": "2026-11-25",
       "session": "2026-09-10",
       "symbol": "COIL",
@@ -11334,9 +11356,9 @@
      },
      "evidence_ref": {
       "version": 1,
-      "id": "d4be1c3fa1c074d577f3a280f4ba96bf76bb83a79b2d11614d51e375d2092abc",
-      "context_sha256": "8973f646895e784232b586073c80789b7c137ec41a1af1fe6bbfbfe2dabd35a6",
-      "plan_sha256": "d40e1562de891dcd7074f24e57b073bda9197220149505fddbc46e95266f4d0d",
+      "id": "8ed80f92bb6d2d01e89110874e48575dcf232d74a9bc03494b525e2bbb8305c0",
+      "context_sha256": "6c3ec53ab2adbd9084bb14aebb214e8629f3082c91f8d7cc8c7217ee93e8885a",
+      "plan_sha256": "06dd8760bc45083db70bcf28f93a6d990d8064b027e909287d4d2ea29d05a8c3",
       "pick_sha256": "54966b85e25b3ea1e78f42fd652783d9efd61f338c6ad3b6fe9a7efa63f2a57f"
      }
     },
@@ -12335,7 +12357,7 @@
       },
       "regime_sha256": "dbc888fe8677250458f08ab076e361d494f1ab40f89c6600bdca46590cbdad07",
       "session": "2026-09-10",
-      "output_sha256": "d40e1562de891dcd7074f24e57b073bda9197220149505fddbc46e95266f4d0d",
+      "output_sha256": "06dd8760bc45083db70bcf28f93a6d990d8064b027e909287d4d2ea29d05a8c3",
       "error": null,
       "pick_sha256": "54966b85e25b3ea1e78f42fd652783d9efd61f338c6ad3b6fe9a7efa63f2a57f"
      },
@@ -12343,8 +12365,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2026-09-10",
-     "rules_version": "cbabdb923c61",
-     "context_sha256": "8973f646895e784232b586073c80789b7c137ec41a1af1fe6bbfbfe2dabd35a6",
+     "rules_version": "d6bd08a3c383",
+     "context_sha256": "6c3ec53ab2adbd9084bb14aebb214e8629f3082c91f8d7cc8c7217ee93e8885a",
      "gate": {
       "regime": "red",
       "final_grade": "watch",
@@ -12353,7 +12375,7 @@
       "reason": "regime_gate",
       "detail": null
      },
-     "id": "d4be1c3fa1c074d577f3a280f4ba96bf76bb83a79b2d11614d51e375d2092abc"
+     "id": "8ed80f92bb6d2d01e89110874e48575dcf232d74a9bc03494b525e2bbb8305c0"
     }
    }
   ],
@@ -12445,7 +12467,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "cbabdb923c61"
+  "replay_rules_version": "d6bd08a3c383"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -12736,116 +12758,116 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-09:cbabdb923c61": {
+   "burst:AAPL:2026-09-09:d6bd08a3c383": {
     "ticker": "AAPL",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-09:cbabdb923c61": {
+   "burst:AMD:2026-09-09:d6bd08a3c383": {
     "ticker": "AMD",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-09:cbabdb923c61": {
+   "burst:NVDA:2026-09-09:d6bd08a3c383": {
     "ticker": "NVDA",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-09:cbabdb923c61": {
+   "burst:TSLA:2026-09-09:d6bd08a3c383": {
     "ticker": "TSLA",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "burst:MSFT:2026-09-09:cbabdb923c61": {
+   "burst:MSFT:2026-09-09:d6bd08a3c383": {
     "ticker": "MSFT",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-09:cbabdb923c61": {
+   "burst:PLUG:2026-09-09:d6bd08a3c383": {
     "ticker": "PLUG",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-09:cbabdb923c61": {
+   "burst:DLLR:2026-09-09:d6bd08a3c383": {
     "ticker": "DLLR",
     "session": "2026-09-09",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-09:cbabdb923c61": {
+   "anticipation:COIL:2026-09-09:d6bd08a3c383": {
     "ticker": "COIL",
     "session": "2026-09-09",
     "kind": "anticipation",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "burst:AAPL:2026-09-10:cbabdb923c61": {
+   "burst:AAPL:2026-09-10:d6bd08a3c383": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:cbabdb923c61": {
+   "burst:AMD:2026-09-10:d6bd08a3c383": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:cbabdb923c61": {
+   "burst:NVDA:2026-09-10:d6bd08a3c383": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:cbabdb923c61": {
+   "burst:TSLA:2026-09-10:d6bd08a3c383": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "burst:MSFT:2026-09-10:cbabdb923c61": {
+   "burst:MSFT:2026-09-10:d6bd08a3c383": {
     "ticker": "MSFT",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:cbabdb923c61": {
+   "burst:PLUG:2026-09-10:d6bd08a3c383": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:cbabdb923c61": {
+   "burst:DLLR:2026-09-10:d6bd08a3c383": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:cbabdb923c61": {
+   "anticipation:COIL:2026-09-10:d6bd08a3c383": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "cbabdb923c61",
+    "rules_version": "d6bd08a3c383",
     "coverage": "observed"
    }
   },
@@ -13125,6 +13147,324 @@
    "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
   ]
  },
+ "candidate_checks": {
+  "version": 1,
+  "policy": "flag_only",
+  "session": "2026-09-10",
+  "since": "2026-08-11",
+  "max_names": 80,
+  "names": {
+   "listed": 1,
+   "reviewed": 2,
+   "candidate": 2
+  },
+  "unchecked": {},
+  "rows": [
+   {
+    "stage": "anticipation",
+    "ticker": "COIL",
+    "role": "listed",
+    "rank": 1,
+    "cik": null,
+    "source": null,
+    "sec": {
+     "state": "unknown",
+     "reason": "not_mapped",
+     "filings": [],
+     "filings_count": 0
+    },
+    "earnings": {
+     "verdict": "unknown",
+     "reason": "not_mapped",
+     "error": null,
+     "placement": null,
+     "projection": null,
+     "observed": null,
+     "sentence": "Earnings date not established: SEC's ticker list does not name this symbol. Check the company's announcement before entry."
+    },
+    "items": {
+     "status": "not_checked",
+     "reason": "not_mapped",
+     "material": [],
+     "material_count": 0,
+     "codes": [],
+     "count": null,
+     "unread": 0,
+     "after_hold": 0,
+     "unretained_material": 0
+    },
+    "cross_check": {
+     "result": "pass",
+     "reason": null,
+     "differences": {
+      "open": 0.0,
+      "high": 0.0,
+      "low": 0.0,
+      "close": 0.0,
+      "volume": 0.0
+     }
+    }
+   },
+   {
+    "stage": "burst",
+    "ticker": "AAPL",
+    "role": "reviewed",
+    "rank": 1,
+    "cik": 320193,
+    "source": {
+     "bytes": 1763,
+     "retrieved_at": "2026-09-10T22:30:00Z",
+     "sha256": "46588346c810b799dfdffc8bcbc3cf1f879064adf774b7c6fd546dfb85d8809c"
+    },
+    "sec": {
+     "state": "flagged",
+     "reason": null,
+     "filings": [
+      {
+       "accession": "0000320193-26-000001",
+       "filing_date": "2026-09-08",
+       "form": "8-K",
+       "items": [
+        "1.01"
+       ]
+      }
+     ],
+     "filings_count": 1
+    },
+    "earnings": {
+     "verdict": "estimate_inside",
+     "reason": null,
+     "error": null,
+     "placement": "held",
+     "projection": {
+      "date": "2026-09-14",
+      "low": "2026-09-07",
+      "high": "2026-09-21",
+      "from_accession": "0000320193-25-000005",
+      "from_filing_date": "2025-09-15",
+      "slack_days": 7,
+      "timing_last_year": "unknown"
+     },
+     "observed": null,
+     "sentence": "Earnings estimated about Mon 14 Sep (±7 days), from last year's results filing of 15 Sep 2025: inside the hold window a next-session entry would have Fri 11 Sep–Thu 17 Sep. An estimate from SEC filings, not an announced date: check the company's announcement before entry."
+    },
+    "items": {
+     "status": "material",
+     "reason": null,
+     "material": [
+      {
+       "item": "1.01",
+       "title": "Entry into a Material Definitive Agreement",
+       "form": "8-K",
+       "accession": "0000320193-26-000001",
+       "filing_date": "2026-09-08",
+       "accepted_at": "2026-09-08T21:05:00Z",
+       "placement": "before_signal_close"
+      }
+     ],
+     "material_count": 1,
+     "codes": [
+      "1.01",
+      "9.01"
+     ],
+     "count": 1,
+     "unread": 0,
+     "after_hold": 0,
+     "unretained_material": 0
+    },
+    "cross_check": {
+     "result": "pass",
+     "reason": null,
+     "differences": {
+      "open": 0.0,
+      "high": 0.0,
+      "low": 0.0,
+      "close": 0.0,
+      "volume": 0.0
+     }
+    }
+   },
+   {
+    "stage": "burst",
+    "ticker": "TSLA",
+    "role": "reviewed",
+    "rank": 4,
+    "cik": null,
+    "source": null,
+    "sec": {
+     "state": "unknown",
+     "reason": "not_mapped",
+     "filings": [],
+     "filings_count": 0
+    },
+    "earnings": {
+     "verdict": "unknown",
+     "reason": "not_mapped",
+     "error": null,
+     "placement": null,
+     "projection": null,
+     "observed": null,
+     "sentence": "Earnings date not established: SEC's ticker list does not name this symbol. Check the company's announcement before entry."
+    },
+    "items": {
+     "status": "not_checked",
+     "reason": "not_mapped",
+     "material": [],
+     "material_count": 0,
+     "codes": [],
+     "count": null,
+     "unread": 0,
+     "after_hold": 0,
+     "unretained_material": 0
+    },
+    "cross_check": {
+     "result": "pass",
+     "reason": null,
+     "differences": {
+      "open": 0.0,
+      "high": 0.0,
+      "low": 0.0,
+      "close": 0.0,
+      "volume": 0.0
+     }
+    }
+   },
+   {
+    "stage": "burst",
+    "ticker": "AMD",
+    "role": "candidate",
+    "rank": 2,
+    "cik": 2488,
+    "source": {
+     "bytes": 1665,
+     "retrieved_at": "2026-09-10T22:30:00Z",
+     "sha256": "9f60e256886ce3b5659381d344bcbbf67fa9c2ad46006b1aa4f7a57bc3938d02"
+    },
+    "sec": {
+     "state": "clear",
+     "reason": null,
+     "filings": [],
+     "filings_count": 0
+    },
+    "earnings": {
+     "verdict": "already_reported",
+     "reason": null,
+     "error": null,
+     "placement": null,
+     "projection": {
+      "date": "2026-07-21",
+      "low": "2026-07-14",
+      "high": "2026-07-28",
+      "from_accession": "0000002488-25-000005",
+      "from_filing_date": "2025-07-22",
+      "slack_days": 7,
+      "timing_last_year": "before_open"
+     },
+     "observed": {
+      "accession": "0000002488-26-000001",
+      "filing_date": "2026-07-21",
+      "accepted_at": "2026-07-21T11:00:00Z"
+     },
+     "sentence": "This quarter's results were filed 21 Jul 2026; the next earnings report is not estimated inside the hold window a next-session entry would have Fri 11 Sep–Thu 17 Sep (an inference from filing history, not clearance)."
+    },
+    "items": {
+     "status": "none",
+     "reason": null,
+     "material": [],
+     "material_count": 0,
+     "codes": [],
+     "count": 0,
+     "unread": 0,
+     "after_hold": 0,
+     "unretained_material": 0
+    },
+    "cross_check": {
+     "result": "pass",
+     "reason": null,
+     "differences": {
+      "open": 0.0,
+      "high": 0.0,
+      "low": 0.0,
+      "close": 0.0,
+      "volume": 0.0
+     }
+    }
+   },
+   {
+    "stage": "burst",
+    "ticker": "NVDA",
+    "role": "candidate",
+    "rank": 3,
+    "cik": 1045810,
+    "source": {
+     "bytes": 1765,
+     "retrieved_at": "2026-09-10T22:30:00Z",
+     "sha256": "b902762d93a7ea9ca0461e9a5b891b71908c84cb3c0839b1fad443eb2146d64f"
+    },
+    "sec": {
+     "state": "clear",
+     "reason": null,
+     "filings": [],
+     "filings_count": 0
+    },
+    "earnings": {
+     "verdict": "already_reported",
+     "reason": null,
+     "error": null,
+     "placement": null,
+     "projection": {
+      "date": "2026-09-02",
+      "low": "2026-08-26",
+      "high": "2026-09-09",
+      "from_accession": "0001045810-25-000006",
+      "from_filing_date": "2025-09-03",
+      "slack_days": 7,
+      "timing_last_year": "unknown"
+     },
+     "observed": {
+      "accession": "0001045810-26-000002",
+      "filing_date": "2026-09-02",
+      "accepted_at": "2026-09-02T20:20:00Z"
+     },
+     "sentence": "This quarter's results were filed 2 Sep 2026; the next earnings report is not estimated inside the hold window a next-session entry would have Fri 11 Sep–Thu 17 Sep (an inference from filing history, not clearance)."
+    },
+    "items": {
+     "status": "listed",
+     "reason": null,
+     "material": [],
+     "material_count": 0,
+     "codes": [
+      "2.02",
+      "7.01",
+      "9.01"
+     ],
+     "count": 2,
+     "unread": 0,
+     "after_hold": 0,
+     "unretained_material": 0
+    },
+    "cross_check": {
+     "result": "pass",
+     "reason": null,
+     "differences": {
+      "open": 0.0,
+      "high": 0.0,
+      "low": 0.0,
+      "close": 0.0,
+      "volume": 0.0
+     }
+    }
+   }
+  ],
+  "shed": 0,
+  "requests": {
+   "sec": 3,
+   "sec_reused": 4,
+   "iex": 1
+  },
+  "status": "partial",
+  "sentence": "Candidate checks (flags only) for 5 of 5 names: 1 listed setup, 2 reviewed bursts, 2 discovery-admitted A+/A bursts. SEC merger, tender or deal filings flagged for 1 (AAPL); a material 8-K item for 1 (AAPL); earnings reported after the signal, estimated in or near the hold window, or overdue for 1 (AAPL). Unknown, and unknown is never clear: SEC filings of 2; the earnings date of 2. A flag is for a reader: it changes no plan, ticket or order, and only the manual event registry withholds a ticket."
+ },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
@@ -13144,6 +13484,7 @@
   "scorecard": "All retained published plans in the stated window, including pending and missing evidence. Disjoint outcome counts reconcile to plans; rates use resolved plans alone, with an explicit denominator and minimum sample. Public model results, independent of personal selections.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
   "scorecard_reading": "The scorecard read honestly, beside its own numbers, which do not move: the model record's distinct setups, the model account each ticket was sized against, the stopped tickets at the session's close and low beside the stop they were booked at, the breadth figures this record computes differently from the publication before it, and where real trades are compared with the model (privately). Its sentences are printed verbatim.",
+  "candidate_checks": "Each night's candidates read against SEC and a second price source, as flags for a reader: up to max_names names -- every ticket, every listed setup, every burst the review selected, every admitted burst in the trade band without a veto, then the also-quiet coils -- each with its recent merger, tender and deal filings, its earnings estimate from SEC results filings and its recent 8-K items, and its signal-day bar read again from the iex feed. A name past the bound is counted by role. A name the tickets' own blocks read carries their reading. It changes no plan, ticket or order, unknown is never clear, and its sentence is printed verbatim.",
   "funnel": "Where every discovered reaction candidate and every listed anticipation setup stopped: one terminal stage each, in the order the run applies its gates, so the stage counts sum to the discovered count. Derived from the fields above and re-derived by the validator; the labels the page and the mail print travel with it. A stage is the record's own accounting of its gates, never a judgement of the setup and never an entry.",
   "observations": "Public coverage of every published saveable signal, independent of local saves. Each signal keeps its own identity and 21-calendar-day window. Symbols carry the latest real bar plus up to 20 dated observations from already-fetched frames; missing bars stay missing, and missing frames retain earlier actual observations. This is research coverage, never a quote feed or personal trading history.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."

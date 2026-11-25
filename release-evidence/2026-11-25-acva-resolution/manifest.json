@@ -1,0 +1,55 @@
+{
+  "purpose": "A dated review of one entry of the manual event registry (knowledge/event-risk.json): ACVA, whose cash acquisition by Copart a search excerpt said had completed (release-evidence/2026-11-19-acva-review-note). The release was captured from a GitHub runner that reaches sec.gov, and the entry is resolved with that capture's digest. It is not news coverage and clears no other stock.",
+  "reviewed_on": "2026-11-25",
+  "registry_before": {
+    "reviewed_on": "2026-11-25",
+    "sha256": "dc486fa14b0afe7c50504208abbf803d8545a9798dc4c2d56a63e634d451285f"
+  },
+  "registry_after": {
+    "reviewed_on": "2026-11-25",
+    "sha256": "66926faa7715277d1103c79a8225e1ec8fcc0e643b9b7c5da7f890cc949a0660"
+  },
+  "how_read": "One request, from a GitHub Actions runner, through the issuer collector's own transport (tools/capture_sec_document.py, dispatched as issuer-evidence.yml with dry_run, probe_sec, capture_url and capture_find on the branch claude/spicystock-gaps-audit-jrh8rl: run 45579165694, job 139084533742, 25 November 2026 08:46 UTC). SEC answered 11,347 bytes; the job log prints their SHA-256 and the excerpts below, and the bytes were kept as the run's artifact sec-capture-45579165694-1 (artifact 15006206076, zip SHA-256 09d42f72aab714a087216937cb787046b94393790e7afe30f01426e4dbfdd317, retained 30 days). This sandbox cannot download artifact blobs, so the response bytes were not retained in this repository; the digest and the job log are the record.",
+  "changes": [
+    "ACVA: active_until 2026-10-16, with a resolution carrying the release's digest; reviewed_on 2026-11-25, review_due 2026-11-25; the review_note of 19 November 2026 removed, its question answered; sources, evidence_as_of and reason unchanged",
+    "registry reviewed_on unchanged (2026-11-25)"
+  ],
+  "entries": [
+    {
+      "symbol": "ACVA",
+      "status_found": "completed on 16 October 2026: Copart completed the tender offer and the merger, and ACV's shares ceased trading on the New York Stock Exchange",
+      "basis": "captured bytes, read from a runner on 2026-11-25 (11,347 bytes, SHA-256 5c50ee333fab78434492cc8f25821e83c9ef7a9e88f81e8bb45e5dfdee559327)",
+      "source": {
+        "title": "Copart, Inc. Form 8-K exhibit 99.1: Copart completes acquisition of ACV",
+        "url": "https://www.sec.gov/Archives/edgar/data/900075/000119312526423478/d129535dex991.htm",
+        "published_on": "2026-10-16",
+        "sha256": "5c50ee333fab78434492cc8f25821e83c9ef7a9e88f81e8bb45e5dfdee559327",
+        "quote": "With the completion of the acquisition, shares of ACV common stock have ceased trading on the New York Stock Exchange",
+        "bytes": 11347,
+        "fetched_at": "2026-11-25T08:46:42.576229+00:00"
+      },
+      "also_in_that_capture": [
+        "Copart Completes Acquisition of ACV",
+        "today announced the successful completion of its acquisition of ACV Auctions Inc. (NYSE: ACVA)",
+        "Following the completion of the tender offer, Copart completed the acquisition of ACV through the merger of Purchaser with ACV."
+      ],
+      "registry_action": "resolved: active_until 2026-10-16, the release's date; the entry blocks no session on or after it",
+      "note": "The interval ends on the resolution's own date, as event_risk.classify() reads every interval. Sessions from 10 September to 15 October 2026 stay inside it, and each record archived the registry it was made under, so no published night changes."
+    }
+  ],
+  "not_reviewed_on_this_date": {
+    "symbols": [
+      "MG",
+      "PRTH",
+      "ARX",
+      "BWIN",
+      "CCC",
+      "ZIM"
+    ],
+    "why": "MG was reviewed earlier on 25 November 2026 (release-evidence/2026-11-25-event-review/manifest.json). PRTH, ARX, BWIN and CCC are due 17 December 2026, ZIM on 2 December 2026; none was due."
+  },
+  "limitations": [
+    "A resolution ends one entry's interval; it does not establish anything about any other stock. The registry is a manual list of known cash acquisitions, and a stock not in it has not been cleared.",
+    "The excerpts are the document's own text as the issuer collector reads a filing (tags dropped, whitespace collapsed); the digest is of the response bytes SEC served."
+  ]
+}

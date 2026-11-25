@@ -335,8 +335,9 @@ class Night:
         # the minute bars of earlier plans' first days go to the same endpoint and
         # are counted on their own, against the plans the night asked for
         minutes = len(self.fake.minute_requests) - counts[3]
-        # and the second-source cross-check reads the tickets' signal day from the iex feed,
-        # one request a night with tickets, counted on its own too
+        # and the second-source cross-check reads the signal day from the iex feed: one request
+        # for the tickets (src/cross_check.py) and one batch of the candidate checks' own for
+        # every other name they read (src/candidate_checks.py), counted on their own too
         cross = sum(1 for r in self.fake.bar_requests[counts[0]:]
                     if getattr(getattr(r, "feed", None), "value", None) == cross_check.FEED)
         bars = len(self.fake.bar_requests) - counts[0] - minutes - cross

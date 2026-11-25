@@ -1041,7 +1041,10 @@ def test_the_readme_dates_the_registry_review_as_the_registry_does():
     due = {event["symbol"]: event["review_due"] for event in event_risk.REGISTRY["events"]}
     assert "its next review is due 17 December" in README
     assert due == {"MG": "2026-12-17", "ZIM": "2026-12-02", "PRTH": "2026-12-17", "ARX": "2026-12-17",
-                   "BWIN": "2026-12-17", "CCC": "2026-12-17", "ACVA": "2026-10-15"}
-    for folder in ("2026-11-19-event-review", "2026-11-25-event-review"):
+                   "BWIN": "2026-12-17", "CCC": "2026-12-17", "ACVA": "2026-11-25"}
+    # ACVA is resolved, and the README says when its interval ends
+    acva = next(e for e in event_risk.REGISTRY["events"] if e["symbol"] == "ACVA")
+    assert acva["active_until"] == "2026-10-16" and "its interval\n  ends on 16 October" in README_RAW
+    for folder in ("2026-11-19-event-review", "2026-11-25-event-review", "2026-11-25-acva-resolution"):
         assert f"release-evidence/{folder}/manifest.json" in README_RAW
         assert (ROOT / "release-evidence" / folder / "manifest.json").is_file()

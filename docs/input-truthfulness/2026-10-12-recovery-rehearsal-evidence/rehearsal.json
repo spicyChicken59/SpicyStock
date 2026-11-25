@@ -9,7 +9,7 @@
    },
    "calls": {
     "bars_requests": 1,
-    "cross_check_requests": 1,
+    "cross_check_requests": 2,
     "mail_subjects": [
      "Trade next session. 2 A-quality bursts. \u00b7 2026-09-04"
     ],
@@ -99,8 +99,8 @@
     ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "9319721eeb376e0165f13577a5db5087c66fc3cf5371b9b760fb30b21e6da475",
-    "picks_json": "7893ea52915d6fbb37f6e73b08656afc8c6d7aa1a659993a7545aa162f158206"
+    "data_json_without_clock_fields": "eb21ffb455b30f1b7d6ee5aac1ee8f0905a05ed8f9cc35d6c89e6fc41fbeb4e9",
+    "picks_json": "b98716e6e9ed2c6c122acf1dee38c5f4d2cc1a2502d9c3e7e1a3541f7ede9480"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -167,8 +167,8 @@
    "previous": {
     "outcome": "preserved",
     "publication": {
-     "data_json_without_clock_fields": "9319721eeb376e0165f13577a5db5087c66fc3cf5371b9b760fb30b21e6da475",
-     "picks_json": "7893ea52915d6fbb37f6e73b08656afc8c6d7aa1a659993a7545aa162f158206"
+     "data_json_without_clock_fields": "eb21ffb455b30f1b7d6ee5aac1ee8f0905a05ed8f9cc35d6c89e6fc41fbeb4e9",
+     "picks_json": "b98716e6e9ed2c6c122acf1dee38c5f4d2cc1a2502d9c3e7e1a3541f7ede9480"
     }
    },
    "publication": null,
@@ -248,8 +248,8 @@
    "previous": {
     "outcome": "preserved",
     "publication": {
-     "data_json_without_clock_fields": "9319721eeb376e0165f13577a5db5087c66fc3cf5371b9b760fb30b21e6da475",
-     "picks_json": "7893ea52915d6fbb37f6e73b08656afc8c6d7aa1a659993a7545aa162f158206"
+     "data_json_without_clock_fields": "eb21ffb455b30f1b7d6ee5aac1ee8f0905a05ed8f9cc35d6c89e6fc41fbeb4e9",
+     "picks_json": "b98716e6e9ed2c6c122acf1dee38c5f4d2cc1a2502d9c3e7e1a3541f7ede9480"
     }
    },
    "publication": null,
@@ -283,7 +283,7 @@
    },
    "calls": {
     "bars_requests": 1,
-    "cross_check_requests": 1,
+    "cross_check_requests": 2,
     "mail_subjects": [
      "Trade next session. 2 A-quality bursts. \u00b7 2026-09-08"
     ],
@@ -337,8 +337,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "9319721eeb376e0165f13577a5db5087c66fc3cf5371b9b760fb30b21e6da475",
-     "picks_json": "7893ea52915d6fbb37f6e73b08656afc8c6d7aa1a659993a7545aa162f158206"
+     "data_json_without_clock_fields": "eb21ffb455b30f1b7d6ee5aac1ee8f0905a05ed8f9cc35d6c89e6fc41fbeb4e9",
+     "picks_json": "b98716e6e9ed2c6c122acf1dee38c5f4d2cc1a2502d9c3e7e1a3541f7ede9480"
     }
    },
    "publication": {
@@ -392,8 +392,8 @@
     ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "8d486ea06d642dec74374e65c4020ddd90a370d8d12ff8c5bd16724b9c1b7790",
-    "picks_json": "ee3f57fe781e6664f685afc91fec5eacd47e766a4928e61d10d5199ad867fb18"
+    "data_json_without_clock_fields": "db23d80b76803e2d466ee791849fdf68e4efd9ae4494bbad92540af07b3e150c",
+    "picks_json": "429b986441305e92e437178324b5202df1b278eceed5da8781c3447590add738"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -424,7 +424,7 @@
    },
    "calls": {
     "bars_requests": 1,
-    "cross_check_requests": 1,
+    "cross_check_requests": 2,
     "mail_subjects": [
      "No new burst tickets. Reader review incomplete. \u00b7 2026-09-09"
     ],
@@ -462,8 +462,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "8d486ea06d642dec74374e65c4020ddd90a370d8d12ff8c5bd16724b9c1b7790",
-     "picks_json": "ee3f57fe781e6664f685afc91fec5eacd47e766a4928e61d10d5199ad867fb18"
+     "data_json_without_clock_fields": "db23d80b76803e2d466ee791849fdf68e4efd9ae4494bbad92540af07b3e150c",
+     "picks_json": "429b986441305e92e437178324b5202df1b278eceed5da8781c3447590add738"
     }
    },
    "publication": {
@@ -516,8 +516,8 @@
     "trades": []
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "cadb7a7421002b5eda93a7e5f0f299fa08b9e4bb2301c621778f0d8534c827f1",
-    "picks_json": "69e4c10375eb20bba876a6231fe11cdcda6db44d32a185a45fd53dc2a71dc975"
+    "data_json_without_clock_fields": "bf1fa72df672df4a506deef74e98531122d3b4c93876f322b3f321397f6798e4",
+    "picks_json": "3e0880d477c63794abc8f7cd3c2f51217bb6184dd5b74035d6b31801d5961312"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -550,7 +550,7 @@
    },
    "calls": {
     "bars_requests": 1,
-    "cross_check_requests": 1,
+    "cross_check_requests": 2,
     "mail_subjects": [
      "No new burst tickets. Reader review incomplete. \u00b7 2026-09-10"
     ],
@@ -588,8 +588,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "cadb7a7421002b5eda93a7e5f0f299fa08b9e4bb2301c621778f0d8534c827f1",
-     "picks_json": "69e4c10375eb20bba876a6231fe11cdcda6db44d32a185a45fd53dc2a71dc975"
+     "data_json_without_clock_fields": "bf1fa72df672df4a506deef74e98531122d3b4c93876f322b3f321397f6798e4",
+     "picks_json": "3e0880d477c63794abc8f7cd3c2f51217bb6184dd5b74035d6b31801d5961312"
     }
    },
    "publication": {
@@ -642,8 +642,8 @@
     "trades": []
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "b5535c314728a25100a7d365f11d62b52723342800fb39354c339458325fb933",
-    "picks_json": "d39fdd1c7eca45d7191ec24d94faa136db85c37eeed41337b7290e51e717603a"
+    "data_json_without_clock_fields": "d0a632195375687779d467d0375860a4981346093a1b8fe688b4172355614a77",
+    "picks_json": "dc08031b09bf720e573e742601a094abf8b7af8c90d5bb7982cd567b2c679ce8"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -676,7 +676,7 @@
    },
    "calls": {
     "bars_requests": 1,
-    "cross_check_requests": 1,
+    "cross_check_requests": 2,
     "mail_subjects": [],
     "mails": 0,
     "minute_requests": 0,
@@ -712,8 +712,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "b5535c314728a25100a7d365f11d62b52723342800fb39354c339458325fb933",
-     "picks_json": "d39fdd1c7eca45d7191ec24d94faa136db85c37eeed41337b7290e51e717603a"
+     "data_json_without_clock_fields": "d0a632195375687779d467d0375860a4981346093a1b8fe688b4172355614a77",
+     "picks_json": "dc08031b09bf720e573e742601a094abf8b7af8c90d5bb7982cd567b2c679ce8"
     }
    },
    "publication": {
@@ -769,8 +769,8 @@
     ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "b27e0f8d5801b54717c5cdcc8b96608ecc3003ce90688d88c4c466c47b649cdb",
-    "picks_json": "f8483010e24c88186714c1cbde3b9fc02afe991cea2091129d6f0fc9770a56a3"
+    "data_json_without_clock_fields": "7fb8efdbad10db5bdaa30650dcc133892d6b4dc0c85165016765651083f1d541",
+    "picks_json": "c25f6ed7269d86ef3cc798b6513de51696f83ba3c841acfc9c4518047cf46a7e"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -849,8 +849,8 @@
    "previous": {
     "outcome": "preserved",
     "publication": {
-     "data_json_without_clock_fields": "b27e0f8d5801b54717c5cdcc8b96608ecc3003ce90688d88c4c466c47b649cdb",
-     "picks_json": "f8483010e24c88186714c1cbde3b9fc02afe991cea2091129d6f0fc9770a56a3"
+     "data_json_without_clock_fields": "7fb8efdbad10db5bdaa30650dcc133892d6b4dc0c85165016765651083f1d541",
+     "picks_json": "c25f6ed7269d86ef3cc798b6513de51696f83ba3c841acfc9c4518047cf46a7e"
     }
    },
    "publication": null,
@@ -884,7 +884,7 @@
    },
    "calls": {
     "bars_requests": 1,
-    "cross_check_requests": 1,
+    "cross_check_requests": 2,
     "mail_subjects": [
      "Trade next session. 2 A-quality bursts. \u00b7 2026-09-15"
     ],
@@ -922,8 +922,8 @@
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "b27e0f8d5801b54717c5cdcc8b96608ecc3003ce90688d88c4c466c47b649cdb",
-     "picks_json": "f8483010e24c88186714c1cbde3b9fc02afe991cea2091129d6f0fc9770a56a3"
+     "data_json_without_clock_fields": "7fb8efdbad10db5bdaa30650dcc133892d6b4dc0c85165016765651083f1d541",
+     "picks_json": "c25f6ed7269d86ef3cc798b6513de51696f83ba3c841acfc9c4518047cf46a7e"
     }
    },
    "publication": {
@@ -977,8 +977,8 @@
     ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "81edfe3656fe7d35ccb7a7201261b6f5d0f1cae02b5726e0f050fe4323218cee",
-    "picks_json": "9a52ff7d8318e22befb3945142ac6cd897060c12f4d7f09daed7dc9c802d592e"
+    "data_json_without_clock_fields": "5a742de32582fde51e22fcbcbc9dc650348960c23cf4b561472b089d6cc9cf71",
+    "picks_json": "c509da9ed66fe196221ddf4f7b3f04327df4eaf381cc998e8547dad36cb905bf"
    },
    "reader_calls_bound": {
     "attempts": 2,

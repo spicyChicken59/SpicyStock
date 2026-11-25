@@ -114,11 +114,18 @@ def _paths(data):
             for child in sorted(block):
                 yield (key, child)
                 grand = block[child]
-                if key == 'run' and isinstance(grand, dict):
+                if key in ('run', 'candidate_checks') and isinstance(grand, dict):
                     for leaf in sorted(grand):
                         yield (key, child, leaf)
                         if isinstance(grand[leaf], dict):
                             yield from (((key, child, leaf, deep),) for deep in sorted(grand[leaf]))
+                # the candidate checks' first row, each of its parts and each part's fields
+                if key == 'candidate_checks' and child == 'rows' and isinstance(grand, list) and grand:
+                    yield (key, child, 0)
+                    for part in sorted(grand[0]):
+                        yield (key, child, 0, part)
+                        if isinstance(grand[0][part], dict):
+                            yield from (((key, child, 0, part, leaf),) for leaf in sorted(grand[0][part]))
         elif isinstance(block, list) and block:
             yield (key, 0)
             if isinstance(block[0], dict):
@@ -140,6 +147,10 @@ def test_no_shape_substituted_anywhere_makes_validate_raise(name):
     # the walk reached past the top level: into run's great-grandchildren and into a list
     assert len(paths) > len(data) >= 20
     assert any(len(path) == 4 for path in paths) and any(path[1] == 0 for path in paths if len(path) > 1)
+    # and into the candidate checks' first row, down to each field of its parts
+    assert any(path[:3] == ('candidate_checks', 'rows', 0) and len(path) == 5 for path in paths)
+    # and into each of its counting objects, a request count among them
+    assert ('candidate_checks', 'requests', 'sec') in paths and ('candidate_checks', 'names', 'reviewed') in paths
     outcomes = {'refused': 0, 'passed': 0}
     already = 0  # a path whose value IS one of the shapes is not substituted with it
     for path in paths:

@@ -2026,9 +2026,9 @@
   {
    "evidence_ref": {
     "version": 1,
-    "id": "9658e8a71d1bad806720e453075bd51bde21ad489831b8c12f0ebf8ae41e41af",
-    "context_sha256": "d8edc226a768ea86001350b0b852edbd6a0ec2d6d39ed78ae3cd25741210198b",
-    "plan_sha256": "c44e7f094a94a4b7287add31fafb8cad4455f0582c4bc2fcf2f3c2b6769f601c",
+    "id": "60f88121c88da2c6afbe2403f6be422dab7c7bcefb0b05cc040a0dc2370fbc74",
+    "context_sha256": "daace7c81acd712f5272b887b7221babac91e21c2a384d43f32bcb6c2dce5306",
+    "plan_sha256": "b2c7baddf0fd0ae86206f434a35a10377758f89c8583d8fbb01a0621947553b8",
     "pick_sha256": "d61b9dc9c4f9b326d6040cc11ede22947c65e15fe7434f1f82c6bec390bf6ae5"
    },
    "ticker": "AAPL",

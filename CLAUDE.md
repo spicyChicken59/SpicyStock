@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 7437 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 7528 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -16279,3 +16279,92 @@ Each has its case now and all 22 die; the control survives.
 **Not claimable:** the first night under version 2 and orders version 6;
 the first morning file a morning run writes; that an execution agent applies
 the rule; any trading edge.
+
+## Checkpoint, 25 Nov 2026 -- the candidate checks: SEC flags, the earnings estimate and the iex bar for up to 80 names a night, as flags; ACVA resolved (item 4)
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` from `main` after
+#230 (PR C). Item 4 of the owner's 25 November list, and ACVA re-reviewed.
+`candidate_checks` is a new rules family and the registry moved, so
+`rules_version` moves and every cascaded generator was regenerated.
+`run.earnings`, `run.sec_flags`, `run.cross_check` and `orders.json` keep
+their shapes. The published record, picks, receipts, history, evidence and
+ledger are untouched; no run, mail or provider call beyond one dry-run SEC
+capture on the branch.
+
+**The block** (`src/candidate_checks.py`, version 1, policy `flag_only`).
+The names, in role order and once each by stage and ticker:
+- every ticket;
+- every listed setup;
+- every burst the review selected;
+- every discovery-admitted burst in the trade band with no veto, in rank order;
+- then the also-quiet coils.
+
+The first 80 get rows, and the rest are counted by role. Each row carries the
+tickets' three readings: the SEC flags' merger, tender and deal filings, the
+earnings estimate and its 8-K items against the hold a next-session entry
+would have, and the signal-day bar again from the iex feed. A name a ticket's
+own block read carries that reading, and the validator holds the two equal.
+- **One SEC reader a night** (`SecReader`): each URL once, its answer kept,
+  the tickets first. No request begins past 150 seconds from its first
+  request, past the transport's 96 requests, or once the transport has
+  downloaded its 33554432 bytes. A name past any of them is unknown with its
+  reason.
+- **One iex batch of the block's own** (`cross_symbols()`, `read_iex()`),
+  after the record is composed, for every name no ticket's cross-check row
+  stands behind. The tickets' cross-check keeps its own request.
+- It never fails a night (`night()`, `safe_collect()`): a collection that
+  raises, or that its validator refuses, is the block with nothing read. A
+  closed night carries the previous block while it holds. The block is
+  bounded at 262144 bytes, shedding rows no ticket's block stands behind from
+  the end.
+- `report.validate()` re-derives the names and every row from its own fields
+  under rules that archive the family. A reading SEC gave names its issuer.
+  An unknown earnings date is never a reading.
+
+The Method view and the mail print the sentence verbatim. The brief carries a
+name's row beside each burst, listed setup and also-quiet coil it prints, with
+each flagged filing's EDGAR folder. It counts a name as read only where its
+row records a reading.
+
+**ACVA.** Copart's 16 October release (Form 8-K exhibit 99.1) was captured
+once through the issuer transport by `tools/capture_sec_document.py`
+(`issuer-evidence.yml`, dry run, run 45579165694): 11,347 bytes, SHA-256
+`5c50ee33…9327`. It says the acquisition completed and ACV's shares ceased
+trading on the NYSE. The entry's interval ends on 16 October with that digest
+as its resolution; the dated manifest chains the registry's digests.
+
+**The review, worked.** A workflow by execution over the first tip, three
+lenses (safety, tests, words), returned 30 findings: 2 high, 14 medium and 14
+low. Nine skeptics, three for each lens, each judged a medium or high finding
+and upheld it. Every finding was reproduced here before it was touched, and
+each is fixed:
+- **the highs:**
+  - an unknown earnings date (`history_not_read`, `foreign_issuer`) counted
+    as read, so the block said checked and None flagged;
+  - the brief said the checks ran for names its rows read nothing for.
+- **the mediums, among them:**
+  - a candidate-only ticker the provider refused made every ticket's
+    cross-check unknown and moved `orders.json` (the shared iex batch);
+  - the reader's deadline ran from its construction, before the iex batch;
+  - a forged row with no issuer read SEC clear;
+  - the transport's download bound let every later name send a request;
+  - setting-up rows carried no row;
+  - validator clauses and `safe_collect()`'s own check held by no test.
+- **the lows:** an overdue report counted under the wrong words, the
+  unavailable sentence saying None flagged, the window held to the code's
+  constant rather than the archived one, the brief dropping accession
+  numbers on a false premise (gitleaks 8.24.3 flags none), and the prompt's
+  issuer-check sentence.
+
+**Mutation passes**, each mutant in a detached worktree outside the
+repository:
+- over the first tip: 41 mutants and 2 controls; 38 died, and three survived,
+  each a missing case (a backed row shed past the bound, no case with an
+  unavailable block, the fuzz not reaching the counting objects). Each has
+  its case.
+- over the review's fixes: 25 mutants and a control; 24 died, and the
+  download bound made strict survived (the test reached the bound only past
+  it). It is held at exactly its value now and dies. The control survives.
+
+**Not claimable:** the first night under the candidate checks; that a flag
+changes what a reader does; any trading edge.
