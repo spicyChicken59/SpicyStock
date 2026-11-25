@@ -1480,8 +1480,9 @@ def test_a_handoff_written_under_an_earlier_version_is_paper_or_refused(tmp_path
     docs.mkdir()
     raw = json.dumps(page("full")).encode()
     (docs / "data.json").write_bytes(raw)
-    assert orders.VERSION == 5
-    for version in (4, 3, 1):                                    # 4 is the four-condition gate's handoff
+    assert orders.VERSION == 6
+    # 5 is the two-condition gate's first handoff, 4 the four-condition gate's
+    for version in (5, 4, 3, 1):
         earlier = {"version": version, "mode": "paper", "live_ready": {"value": False, "reasons": []},
                    "source": {"data_sha256": hashlib.sha256(raw).hexdigest()}}
         (docs / "orders.json").write_text(json.dumps(earlier))
