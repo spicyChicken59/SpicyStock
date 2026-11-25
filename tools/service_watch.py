@@ -75,9 +75,11 @@ and answers each in one word and one sentence:
     and nothing is mailed for it; with one, each workflow's listing stands or
     falls alone, and a listing that cannot be read is an alert of its own
     (``scheduler:listing:unreadable``) -- with a ledger, only once
-    ``LISTING_FAILURES_IN_A_ROW`` watch runs in a row could not read it, and
-    cleared only after ``LISTING_CLEAR_HOURS`` with no failure. The file
-    answers stand either way.
+    ``LISTING_FAILURES_IN_A_ROW`` watch runs in a row could not read it,
+    cleared only after ``LISTING_CLEAR_HOURS`` with no failure, and raised
+    again after a clear only once as many runs in a row fail again. The file
+    answers stand either way; the evening's ``EVENING_PUBLISHED_BY_ET`` rule
+    alone needs the listing read on the run that applies it.
 
 Every alert has a key (``family:word:scope``). One about a session carries the
 session, in ISO form (a session the record names in another form a date can be
@@ -87,14 +89,18 @@ or read but cannot answer the evening, carries the SHA-256 of its bytes (or
 ``absent``). The judgement word is part of the key, so a change of state mails
 once. With ``--ledger FILE`` the watch keeps the keys it has mailed and when,
 the instant each standing key's condition last cleared, and when the listing
-began and last failed: a key it holds is dropped as a repeat only while its
-condition has not cleared since it was mailed, and mailed again after
-``REPEAT_DAYS`` while it stands. The ledger holds keys and instants only, is
-written when a run changed it (a mail accepted, a clear, the listing's
-failures) and never with a key its reader refuses, and reads as empty -- so
-every alert mails again -- when it is absent, corrupt or of another version or
-shape; one entry it refuses (a key it does not write, an instant it cannot
-read or one after the clock) is dropped alone and named.
+began and last failed and on how many watch runs in a row: a key it holds is
+dropped as a repeat only while its condition has not cleared since it was
+mailed, and mailed again after ``REPEAT_DAYS`` while it stands. The ledger
+holds keys, instants and that count only, is written when a run changed it (a
+mail accepted, a clear, the listing's failures) and never with a key its
+reader refuses, and reads as empty when it is absent, corrupt or of another
+version or shape -- so every alert mails again, except the listing's own,
+whose count starts over and holds it back until ``LISTING_FAILURES_IN_A_ROW``
+runs are counted again; one entry it refuses (a key it does not write, an
+instant it cannot read or one after the clock, a count that is not a whole
+number) is dropped alone and named. When the listing began to fail is never
+forgotten by age: the first run that reads it forgets it.
 
 One run sends at most one message, naming every new alert in it; a refused
 send is tried once more after ``MAIL_RETRY_SECONDS``, and a message the
@@ -222,6 +228,15 @@ BOUND, UNBOUND = "bound", "unbound"
 # the run listing's judgement when a token was given and a listing it asked for failed
 UNREADABLE = "unreadable"
 
+#: The key held back until its condition holds on consecutive runs, and cleared only after a day without it.
+LISTING_KEY = f"scheduler:listing:{UNREADABLE}"
+DEBOUNCED = (LISTING_KEY,)
+#: An Actions run listing that could not be read is an alert only when this many watch runs in a row (the runs
+#: that asked it) could not read it, counted in the ledger: one 5xx between good reads is no standing condition.
+LISTING_FAILURES_IN_A_ROW = 2
+#: ... and its condition is cleared only after this many hours with no listing failure.
+LISTING_CLEAR_HOURS = 24
+
 EXIT_OK, EXIT_ALERT, EXIT_UNKNOWN, EXIT_UNFINISHED = 0, 1, 2, 3
 
 EVENING_WORKFLOW, MORNING_WORKFLOW, WATCH_WORKFLOW = "evening.yml", "morning.yml", "service-watch.yml"
@@ -322,10 +337,13 @@ MORNING_STUCK_HINT = ("The dispatcher started the morning check in its slot, and
 FIRST_UNFINISHED_HINT = ("The dispatcher started the evening in its first slot, and that run ended without its work: "
                          "read its log (GitHub, Actions, Evening scan, the run named above) before the next start. "
                          + STANDING)
+#: The listing's own standing words: its return after clearing is debounced like its first failure, never at once.
+LISTING_RETURNS = f"once {LISTING_FAILURES_IN_A_ROW} watch runs in a row fail again"
 LISTING_HINT = ("The watch's token could not read the Actions run listing, so whether the scheduler started the "
                 "evening, the morning check and this watch is not known. Read this watch run's log, where each listing "
                 "that failed is named by its HTTP status or its error's type, and the workflow's permissions "
-                f"(actions: read). {STANDING}")
+                f"(actions: read). This is mailed once, again after {REPEAT_DAYS} days while it stands, and, when it "
+                f"returns after clearing, {LISTING_RETURNS}.")
 LATE_ITSELF = ("This watch may itself have been started late by GitHub's scheduler, which starts scheduled runs hours "
                "late: read the clock it names.")
 SUBJECTS = {
@@ -1572,7 +1590,8 @@ def lines(result: dict) -> list[str]:
 
 SUBJECT_PREFIX = "SpicyStock watch: "
 LEDGER_SENTENCE = (f"With its ledger the watch mails a key once, again only after {REPEAT_DAYS} days while it stands, "
-                   "and at once when a standing condition returns after clearing.")
+                   "and at once when a standing condition returns after clearing (the run listing's, "
+                   f"{LISTING_RETURNS}).")
 
 
 def _paragraphs(alert: dict) -> list[str]:
@@ -1610,10 +1629,12 @@ def messages(result: dict) -> list[dict]:
 #: and, for a debounced key (``DEBOUNCED``), when the run of consecutive failures it is about began and when it
 #: last failed.
 LEDGER_PARTS = ("sent", "cleared", "failing_since", "failed_at")
+#: ... and, a map of key to a whole number: how many watch runs in a row a debounced key's condition has held.
+LEDGER_COUNTS = ("failures",)
 
 
 def _empty_ledger(note: str | None = None) -> dict:
-    out: dict = {part: {} for part in LEDGER_PARTS}
+    out: dict = {part: {} for part in LEDGER_PARTS + LEDGER_COUNTS}
     out["notes"] = [note] if note else []
     return out
 
@@ -1625,11 +1646,12 @@ def _shown(key) -> str:
 
 
 def read_ledger(path: Path | None, now: datetime) -> dict:
-    """``{"sent", "cleared", "failing_since", "failed_at"}``, each a map of key to instant, and ``notes``: what of
-    the ledger was not read, in the run's own words. Empty -- so every alert mails again -- when there is no
-    ledger, or it is not a regular file this watch wrote: too large, not JSON, another version or shape. An entry
-    whose key is not one this watch writes, or whose instant it cannot read or is after ``now``, is dropped alone
-    and named; the rest of the ledger is read."""
+    """``{"sent", "cleared", "failing_since", "failed_at"}``, each a map of key to instant, ``failures``, a map of
+    key to a count of runs, and ``notes``: what of the ledger was not read, in the run's own words. Empty -- so
+    every alert mails again, and the listing's count starts over -- when there is no ledger, or it is not a
+    regular file this watch wrote: too large, not JSON, another version or shape. An entry whose key is not one
+    this watch writes, whose instant it cannot read or is after ``now``, or whose count is not a whole number of
+    one or more, is dropped alone and named; the rest of the ledger is read."""
     if path is None:
         return _empty_ledger()
     try:
@@ -1647,9 +1669,9 @@ def read_ledger(path: Path | None, now: datetime) -> dict:
         value = json.loads(path.read_bytes().decode("utf-8"))
     except (OSError, UnicodeDecodeError, ValueError, RecursionError) as exc:
         return _empty_ledger(f"The ledger could not be read ({type(exc).__name__}): every alert mails again.")
-    if not isinstance(value, dict) or set(value) != {"version", *LEDGER_PARTS} \
+    if not isinstance(value, dict) or set(value) != {"version", *LEDGER_PARTS, *LEDGER_COUNTS} \
             or type(value["version"]) is not int or value["version"] != LEDGER_VERSION \
-            or not all(isinstance(value[part], dict) for part in LEDGER_PARTS):
+            or not all(isinstance(value[part], dict) for part in LEDGER_PARTS + LEDGER_COUNTS):
         return _empty_ledger("The ledger is not of the version and shape this watch writes: it was not read, and "
                              "every alert mails again.")
     out = _empty_ledger()
@@ -1664,27 +1686,39 @@ def read_ledger(path: Path | None, now: datetime) -> dict:
                                     "ledger was read.")
                 continue
             out[part][key] = when
+    for part in LEDGER_COUNTS:
+        for key, count in value[part].items():
+            why = ("its key is not one this watch writes" if not KEY_PATTERN.fullmatch(key)
+                   else "its count cannot be read" if type(count) is not int or count < 1 else None)
+            if why is not None:
+                out["notes"].append(f"The ledger's {part} entry {_shown(key)} was dropped: {why}. The rest of the "
+                                    "ledger was read.")
+                continue
+            out[part][key] = count
     return out
 
 
 def write_ledger(path: Path, ledger: dict, now: datetime) -> list[str]:
-    """The keys and instants alone, written whole or not at all: a key mailed more than ``REPEAT_DAYS`` ago is
-    dropped, a clear is kept only beside the key it cleared, a debounced key's last failure only while it can still
-    hold back its clear (``LISTING_CLEAR_HOURS``). A key the reader would refuse (``KEY_PATTERN``) is never
-    written: it is returned instead, so the run can name it."""
-    refused = sorted({key for part in LEDGER_PARTS for key in ledger[part]
+    """The keys, their instants and the debounced key's count alone, written whole or not at all: a key mailed
+    more than ``REPEAT_DAYS`` ago is dropped, a clear is kept only beside the key it cleared, a debounced key's
+    last failure only while it can still hold back its clear (``LISTING_CLEAR_HOURS``). When its run of failures
+    began and how many runs it counts are never dropped by age: the first run that reads the listing forgets them
+    (``debounce()``). A key the reader would refuse (``KEY_PATTERN``) is never written: it is returned instead, so
+    the run can name it."""
+    refused = sorted({key for part in LEDGER_PARTS + LEDGER_COUNTS for key in ledger.get(part, {})
                       if not (isinstance(key, str) and KEY_PATTERN.fullmatch(key))}, key=str)
 
     def kept(part, keep):
-        return {key: at for key, at in ledger[part].items() if key not in refused and keep(key, at)}
+        return {key: at for key, at in ledger.get(part, {}).items() if key not in refused and keep(key, at)}
     sent = kept("sent", lambda key, at: now - at < timedelta(days=REPEAT_DAYS))
     parts = {"sent": sent,
              "cleared": kept("cleared", lambda key, at: key in sent),
-             "failing_since": kept("failing_since", lambda key, at: now - at < timedelta(days=REPEAT_DAYS)),
+             "failing_since": kept("failing_since", lambda key, at: True),
              "failed_at": kept("failed_at", lambda key, at: now - at < timedelta(hours=LISTING_CLEAR_HOURS))}
     payload = {"version": LEDGER_VERSION,
                **{part: {key: at.astimezone(timezone.utc).isoformat() for key, at in sorted(entries.items())}
-                  for part, entries in parts.items()}}
+                  for part, entries in parts.items()},
+               **{part: dict(sorted(kept(part, lambda key, count: True).items())) for part in LEDGER_COUNTS}}
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
     temporary.write_text(json.dumps(payload, indent=1, sort_keys=True) + "\n", encoding="utf-8")
@@ -1706,37 +1740,39 @@ def repeat_of(key: str, ledger: dict, now: datetime) -> datetime | None:
 
 
 # --------------------------------------------------------------- debounce ---
-#: The key held back until its condition holds on consecutive runs, and cleared only after a day without it.
-LISTING_KEY = f"scheduler:listing:{UNREADABLE}"
-DEBOUNCED = (LISTING_KEY,)
-#: An Actions run listing that could not be read is an alert only when this many watch runs in a row (the runs
-#: that asked it) could not read it: one 5xx between good reads is no standing condition.
-LISTING_FAILURES_IN_A_ROW = 2
-#: ... and its condition is cleared only after this many hours with no listing failure.
-LISTING_CLEAR_HOURS = 24
-
-
 def debounce(answer: dict, ledger: dict | None, now: datetime) -> dict:
     """Hold back the listing's alert until it has failed on ``LISTING_FAILURES_IN_A_ROW`` watch runs in a row,
-    read off the ledger. Changes ``answer`` (the listing's own block) and returns what the ledger must record:
-    ``{"failing_since": {key: instant or None}, "failed_at": {key: instant}}``, ISO instants, None to forget. With
-    no ledger there is no run before this one to read, and a failure is raised at once."""
-    updates: dict = {"failing_since": {}, "failed_at": {}}
+    counted in the ledger (``failures``). Changes ``answer`` (the listing's own block) and returns what the ledger
+    must record: ``{"failing_since": {key: instant or None}, "failed_at": {key: instant}, "failures": {key: count
+    or None}}``, ISO instants, None to forget. The first run that reads the listing forgets the count and when it
+    began; nothing else does. With no ledger there is no run before this one to count, and a failure is raised at
+    once; with an empty one the count starts at this run."""
+    updates: dict = {"failing_since": {}, "failed_at": {}, "failures": {}}
     if answer.get("listing") == LISTING_FAILED:
         updates["failed_at"][LISTING_KEY] = now.isoformat()
         if ledger is None:
             return updates
         since = ledger["failing_since"].get(LISTING_KEY)
+        # a run of failures the ledger dates but does not count (its count was dropped) is one run at least
+        before = ledger.get("failures", {}).get(LISTING_KEY) or (1 if since is not None else 0)
+        count = before + 1
+        updates["failures"][LISTING_KEY] = count
         if since is None:
+            since = now
             updates["failing_since"][LISTING_KEY] = now.isoformat()
+        if count < LISTING_FAILURES_IN_A_ROW:
+            which = "the first watch run" if count == 1 else f"watch run {count}"
             answer.update(alert=False, action=None, key=None, held=True,
                           sentence=answer["sentence"] + (
-                              " It is the first watch run in a row whose listing failed: it is raised only when "
+                              f" It is {which} in a row whose listing failed: it is raised only when "
                               f"{LISTING_FAILURES_IN_A_ROW} runs in a row fail, and nothing is mailed for it now."))
         else:
-            answer["sentence"] += f" Every watch run's listing has failed since {since.isoformat()}."
-    elif answer.get("listing") == LISTING_READ and ledger is not None and LISTING_KEY in ledger["failing_since"]:
+            answer["sentence"] += (f" Every watch run's listing has failed since {since.isoformat()}: {count} runs "
+                                   "in a row.")
+    elif answer.get("listing") == LISTING_READ and ledger is not None and (
+            LISTING_KEY in ledger["failing_since"] or LISTING_KEY in ledger.get("failures", {})):
         updates["failing_since"][LISTING_KEY] = None
+        updates["failures"][LISTING_KEY] = None
     return updates
 
 
@@ -1751,6 +1787,13 @@ def _apply(held: dict, updates: dict | None) -> bool:
                 when = _instant(at)
                 changed |= held[part].get(key) != when
                 held[part][key] = when
+    for part in LEDGER_COUNTS:
+        for key, count in ((updates or {}).get(part) or {}).items():
+            if count is None:
+                changed |= held.setdefault(part, {}).pop(key, None) is not None
+            else:
+                changed |= held.setdefault(part, {}).get(key) != count
+                held[part][key] = count
     return changed
 
 
@@ -1846,7 +1889,9 @@ def outcome_lines(outcome: dict) -> list[str]:
         keys = ", ".join(f["key"] for f in outcome["failed"])
         out.append(f"Mail failed twice for {keys} ({outcome['failed'][0]['error']}); it is not remembered, so the "
                    "next run mails it. This run did not finish.")
-    out += [f"Cleared: {key}; its next return is mailed at once." for key in outcome["cleared"]]
+    out += [f"Cleared: {key}; its next return is mailed "
+            f"{'when ' + LISTING_RETURNS.removeprefix('once ') if key in DEBOUNCED else 'at once'}."
+            for key in outcome["cleared"]]
     out += [f"Not written to the ledger: {_shown(key)} is not a key it reads; the next run mails it again."
             for key in outcome.get("refused_keys") or []]
     if outcome["ledger_error"]:

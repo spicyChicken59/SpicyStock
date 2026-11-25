@@ -1572,7 +1572,7 @@ def test_a_second_and_third_run_mail_nothing_and_exit_by_the_judgement(record, t
     err = capsys.readouterr().err
     assert f"Not mailed again: evening:not_published:2026-09-11 was mailed at {near.isoformat()}." in err
     assert json.loads(ledger.read_text()) == {"version": sw.LEDGER_VERSION, "cleared": {}, "failing_since": {},
-                                              "failed_at": {},
+                                              "failed_at": {}, "failures": {},
                                               "sent": {"evening:not_published:2026-09-11": near.isoformat()}}
 
 
@@ -1817,17 +1817,19 @@ def main_mail_with(docs, now, ledger, listing):
         return main_mail(docs, now, ledger)
 
 
-def test_the_ledger_holds_keys_and_instants_only(record, tmp_path, monkeypatch):
+def test_the_ledger_holds_keys_instants_and_the_listings_count_only(record, tmp_path, monkeypatch):
     monkeypatch.setenv("EMAIL_TO", "owner@example.com")
     deliveries(monkeypatch)
     docs, ledger = docs_with(tmp_path, record), tmp_path / "ledger.json"
     main_mail(docs, LIMIT - timedelta(hours=2), ledger)
-    main_mail(docs, CUTOFF + timedelta(hours=1), ledger)
+    main_mail_with(docs, CUTOFF + timedelta(hours=1), ledger, failing())
     text = ledger.read_text()
     value = json.loads(text)
-    assert set(value) == {"version", "sent", "cleared", "failing_since", "failed_at"} == {"version", *sw.LEDGER_PARTS}
+    assert set(value) == {"version", "sent", "cleared", "failing_since", "failed_at", "failures"} == {
+        "version", *sw.LEDGER_PARTS, *sw.LEDGER_COUNTS}
     assert all(sw.KEY_PATTERN.fullmatch(k) and sw._instant(v) for part in sw.LEDGER_PARTS
                for k, v in value[part].items())
+    assert value["failures"] == {sw.LISTING_KEY: 1} and sw.LEDGER_COUNTS == ("failures",)
     assert "@" not in text and "<p>" not in text and "only_if_unpublished" not in text
 
 
@@ -2378,11 +2380,12 @@ def test_a_single_transient_listing_failure_mails_nothing_and_the_ledger_records
     assert told["alerts"] == "" and told["ledger"] == "written" and told["finished"] == "true"
     held = json.loads(ledger.read_text())
     assert held["failing_since"] == {sw.LISTING_KEY: QUIET_AT.isoformat()} and held["sent"] == {}
-    assert held["failed_at"] == {sw.LISTING_KEY: QUIET_AT.isoformat()}
+    assert held["failed_at"] == {sw.LISTING_KEY: QUIET_AT.isoformat()} and held["failures"] == {sw.LISTING_KEY: 1}
     assert "It is the first watch run in a row whose listing failed" in capsys.readouterr().out
     # the next run reads it: the run of failures is over, and nothing was ever mailed
     assert main_mail_with(docs, QUIET_AT + timedelta(minutes=45), ledger, Listing()) in (sw.EXIT_OK, sw.EXIT_ALERT)
-    assert listing_mails(sent) == 0 and json.loads(ledger.read_text())["failing_since"] == {}
+    held = json.loads(ledger.read_text())
+    assert listing_mails(sent) == 0 and held["failing_since"] == {} == held["failures"]
 
 
 def test_two_listing_failures_in_a_row_mail_once_and_a_third_is_a_repeat(record, tmp_path, monkeypatch):
@@ -2394,8 +2397,9 @@ def test_two_listing_failures_in_a_row_mail_once_and_a_third_is_a_repeat(record,
     out = sw.watch(docs, QUIET_AT + timedelta(minutes=45), github=failing(),
                    ledger=sw.read_ledger(ledger, QUIET_AT + timedelta(minutes=45)))
     assert out["exit_code"] == sw.EXIT_ALERT and [a["key"] for a in out["alerts"]] == [sw.LISTING_KEY]
-    assert f"Every watch run's listing has failed since {QUIET_AT.isoformat()}." in \
-        out["scheduler"]["listing_answer"]["sentence"]
+    assert out["scheduler"]["listing_answer"]["sentence"].endswith(
+        f" Every watch run's listing has failed since {QUIET_AT.isoformat()}: 4 runs in a row.")
+    assert json.loads(ledger.read_text())["failures"] == {sw.LISTING_KEY: 3}
 
 
 def test_failures_alternating_with_reads_for_a_day_mail_at_most_once(record, tmp_path, monkeypatch):
@@ -2434,19 +2438,141 @@ def test_a_day_of_reads_clears_it_and_less_than_a_day_does_not(record, tmp_path,
     assert listing_mails(sent) == 2
 
 
+@pytest.mark.parametrize("in_a_row", [2, 3, 4])
+def test_the_listing_is_raised_at_the_count_the_constant_names(record, tmp_path, monkeypatch, capsys, in_a_row):
+    """The rule reads LISTING_FAILURES_IN_A_ROW: driven to 3 or 4, the alert is held one run or two runs longer,
+    each held run says which in a row it is, and the ledger counts them."""
+    monkeypatch.setattr(sw, "LISTING_FAILURES_IN_A_ROW", in_a_row)
+    sent = deliveries(monkeypatch)
+    docs, ledger = quiet_docs(tmp_path, record), tmp_path / "ledger.json"
+    for n in range(1, in_a_row + 2):
+        capsys.readouterr()
+        main_mail_with(docs, QUIET_AT + timedelta(minutes=45 * n), ledger, failing())
+        printed = capsys.readouterr().out
+        assert listing_mails(sent) == (0 if n < in_a_row else 1), n
+        assert json.loads(ledger.read_text())["failures"] == {sw.LISTING_KEY: n}
+        which = "the first watch run" if n == 1 else f"watch run {n}"
+        assert (f"It is {which} in a row whose listing failed: it is raised only when {in_a_row} runs in a row "
+                "fail, and nothing is mailed for it now." in printed) == (n < in_a_row), n
+        assert (f": {n} runs in a row." in printed) == (n >= in_a_row), n
+    # a read forgets the count: the next failure is the first again
+    main_mail_with(docs, QUIET_AT + timedelta(hours=10), ledger, Listing())
+    held = json.loads(ledger.read_text())
+    assert held["failures"] == {} == held["failing_since"]
+    main_mail_with(docs, QUIET_AT + timedelta(hours=11), ledger, failing())
+    assert json.loads(ledger.read_text())["failures"] == {sw.LISTING_KEY: 1} and listing_mails(sent) == 1
+
+
+def test_a_week_of_continuous_listing_failure_is_one_run_of_failures_repeated_on_its_day(record, tmp_path, monkeypatch,
+                                                                                       capsys):
+    """Every watch run's listing fails, every six hours for nine days: the first is held, the second mailed, and
+    the weekly repeat goes out REPEAT_DAYS after that mail to the run, never a run late. No run after the first
+    says it is the first in a row, and the count and where it began are never forgotten by age."""
+    sent = deliveries(monkeypatch)
+    docs, ledger = quiet_docs(tmp_path, record), tmp_path / "ledger.json"
+    start, step = QUIET_AT, timedelta(hours=6)
+    mailed_at, first_said = [], []
+    runs = 9 * 4
+    for n in range(runs):
+        capsys.readouterr()
+        before = listing_mails(sent)
+        main_mail_with(docs, start + n * step, ledger, failing())
+        if "the first watch run in a row whose listing failed" in capsys.readouterr().out:
+            first_said.append(n)
+        if listing_mails(sent) > before:
+            mailed_at.append(n)
+        held = json.loads(ledger.read_text())
+        assert held["failing_since"] == {sw.LISTING_KEY: start.isoformat()}, n
+        assert held["failures"] == {sw.LISTING_KEY: n + 1}, n
+    assert first_said == [0]
+    week = int(timedelta(days=sw.REPEAT_DAYS) / step)
+    assert mailed_at == [1, 1 + week] and 1 + week < runs
+    # the first read after it forgets both
+    main_mail_with(docs, start + runs * step, ledger, Listing())
+    held = json.loads(ledger.read_text())
+    assert held["failing_since"] == {} == held["failures"]
+
+
+def test_a_count_the_ledger_cannot_read_is_dropped_alone_and_a_dated_run_counts_one(record, tmp_path, monkeypatch,
+                                                                                  capsys):
+    """A failures entry that is not a whole number of one or more is dropped and named, the rest read; the run of
+    failures the ledger still dates then counts as one run before this one, so the listing is raised."""
+    sent = deliveries(monkeypatch)
+    docs, ledger = quiet_docs(tmp_path, record), tmp_path / "ledger.json"
+    main_mail_with(docs, QUIET_AT, ledger, failing())
+    for bad in (0, -1, True, 1.5, "2", None):
+        value = json.loads(ledger.read_text())
+        value["failures"] = {sw.LISTING_KEY: bad}
+        ledger.write_text(json.dumps(value))
+        held = sw.read_ledger(ledger, QUIET_AT + timedelta(minutes=1))
+        assert held["failures"] == {} and held["failing_since"] == {sw.LISTING_KEY: QUIET_AT}, bad
+        assert held["notes"] == ["The ledger's failures entry \"scheduler:listing:unreadable\" was dropped: its count "
+                                 "cannot be read. The rest of the ledger was read."], bad
+    value["failures"] = {"not a key": 2}
+    ledger.write_text(json.dumps(value))
+    assert "its key is not one this watch writes" in sw.read_ledger(ledger, QUIET_AT + timedelta(minutes=1))["notes"][0]
+    value["failures"] = {}
+    ledger.write_text(json.dumps(value))
+    main_mail_with(docs, QUIET_AT + timedelta(minutes=45), ledger, failing())
+    assert listing_mails(sent) == 1 and json.loads(ledger.read_text())["failures"] == {sw.LISTING_KEY: 2}
+    # a ledger of the shape before the count is not this watch's: refused whole, and the count starts over
+    value.pop("failures")
+    ledger.write_text(json.dumps(value))
+    held = sw.read_ledger(ledger, QUIET_AT + timedelta(hours=1))
+    assert held["failing_since"] == {} and "not of the version and shape this watch writes" in held["notes"][0]
+
+
+def test_the_cleared_line_and_the_hints_say_when_the_listing_key_returns(record, tmp_path, monkeypatch, capsys):
+    """F, F, a read a day later, F, F: the read clears the key, and its return is held one run, as its cleared line
+    says: 'at once' is said of the other standing keys only."""
+    sent = deliveries(monkeypatch)
+    docs, ledger = quiet_docs(tmp_path, record), tmp_path / "ledger.json"
+    t = QUIET_AT
+    for minutes in (0, 30):
+        main_mail_with(docs, t + timedelta(minutes=minutes), ledger, failing())
+    assert listing_mails(sent) == 1
+    capsys.readouterr()
+    cleared_at = t + timedelta(minutes=30, hours=sw.LISTING_CLEAR_HOURS)
+    main_mail_with(docs, cleared_at, ledger, Listing())
+    assert (f"Cleared: {sw.LISTING_KEY}; its next return is mailed when {sw.LISTING_FAILURES_IN_A_ROW} watch runs in "
+            "a row fail again.") in capsys.readouterr().err
+    main_mail_with(docs, cleared_at + timedelta(hours=1), ledger, failing())
+    assert listing_mails(sent) == 1                                   # the first failure after the clear: held
+    main_mail_with(docs, cleared_at + timedelta(hours=2), ledger, failing())
+    assert listing_mails(sent) == 2
+    # the other standing keys' line, and the words every message carries
+    out = {"mailed": [], "dropped": [], "failed": [], "cleared": ["scheduler:watch:not_started", sw.LISTING_KEY],
+           "attempts": 0, "ledger_error": None, "asked": False}
+    assert sw.outcome_lines(out) == [
+        "Cleared: scheduler:watch:not_started; its next return is mailed at once.",
+        f"Cleared: {sw.LISTING_KEY}; its next return is mailed when 2 watch runs in a row fail again."]
+    assert "at once when it returns after clearing" in sw.STANDING and sw.STANDING in sw.SCHEDULER_HINT
+    assert sw.STANDING not in sw.LISTING_HINT and "at once" not in sw.LISTING_HINT
+    assert sw.LISTING_HINT.endswith(
+        "This is mailed once, again after 7 days while it stands, and, when it returns after clearing, once 2 watch "
+        "runs in a row fail again.")
+    assert sw.LEDGER_SENTENCE == (
+        "With its ledger the watch mails a key once, again only after 7 days while it stands, and at once when a "
+        "standing condition returns after clearing (the run listing's, once 2 watch runs in a row fail again).")
+    assert html.escape(sw.LEDGER_SENTENCE) in sent[-1][1]
+
+
 def test_without_a_ledger_a_listing_failure_is_raised_at_once(record, tmp_path):
     out = sw.watch(quiet_docs(tmp_path, record), QUIET_AT, github=failing())
     assert [a["key"] for a in out["alerts"]] == [sw.LISTING_KEY] and out["exit_code"] == sw.EXIT_ALERT
-    assert out["ledger_updates"] == {"failing_since": {}, "failed_at": {sw.LISTING_KEY: QUIET_AT.isoformat()}}
+    assert out["ledger_updates"] == {"failing_since": {}, "failed_at": {sw.LISTING_KEY: QUIET_AT.isoformat()},
+                                     "failures": {}}
 
 
 def test_a_listing_not_asked_neither_breaks_nor_extends_the_run_of_failures(record, tmp_path):
     held = sw._empty_ledger()
     held["failing_since"][sw.LISTING_KEY] = QUIET_AT
+    held["failures"][sw.LISTING_KEY] = 1
+    nothing = {"failing_since": {}, "failed_at": {}, "failures": {}}
     answer = {"listing": sw.LISTING_NOT_ASKED, "sentence": "x", "alert": False, "key": None}
-    assert sw.debounce(answer, held, QUIET_AT + timedelta(hours=1)) == {"failing_since": {}, "failed_at": {}}
+    assert sw.debounce(answer, held, QUIET_AT + timedelta(hours=1)) == nothing
     unknown = {"listing": sw.UNKNOWN, "sentence": "x", "alert": False, "key": None}
-    assert sw.debounce(unknown, held, QUIET_AT + timedelta(hours=1)) == {"failing_since": {}, "failed_at": {}}
+    assert sw.debounce(unknown, held, QUIET_AT + timedelta(hours=1)) == nothing
 
 
 def test_a_run_without_mail_records_the_listing_failure_all_the_same(record, tmp_path):
@@ -2522,11 +2648,13 @@ def test_every_key_the_watch_writes_is_read_back_from_its_ledger(tmp_path, monke
     assert sorted(out["mailed"]) == sorted(keys) and out["refused_keys"] == []
     sw.send([], now + timedelta(minutes=1), ledger, cleared=[k for k in keys if k.startswith("scheduler:")],
             updates={"failing_since": {sw.LISTING_KEY: (now + timedelta(minutes=1)).isoformat()},
-                     "failed_at": {sw.LISTING_KEY: (now + timedelta(minutes=1)).isoformat()}})
+                     "failed_at": {sw.LISTING_KEY: (now + timedelta(minutes=1)).isoformat()},
+                     "failures": {sw.LISTING_KEY: 2}})
     held = sw.read_ledger(ledger, now + timedelta(minutes=2))
     assert held["notes"] == [] and sorted(held["sent"]) == sorted(keys)
     assert sorted(held["cleared"]) == sorted(k for k in keys if k.startswith("scheduler:"))
     assert list(held["failing_since"]) == list(held["failed_at"]) == [sw.LISTING_KEY]
+    assert held["failures"] == {sw.LISTING_KEY: 2}
 
 
 def test_a_session_named_in_another_form_is_keyed_in_the_form_the_ledger_reads(record, tmp_path, monkeypatch):
