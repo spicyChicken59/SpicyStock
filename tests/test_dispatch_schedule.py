@@ -54,38 +54,54 @@ def at(day: str, hhmm: str, zone=ET) -> datetime:
 
 
 # ------------------------------------------------------------- the slots ----
-def test_a_session_has_eight_slots_in_their_own_zones():
+def test_a_session_has_ten_slots_in_their_own_zones():
     day = date(2026, 11, 20)                         # a Friday, EST
     assert sessions.is_session(day)
     slots = ds.slots_on(day)
     assert [(s.workflow, s.at.astimezone(UTC).strftime("%H:%M")) for s in slots] == [
-        ("service-watch.yml", "12:00"), ("morning.yml", "14:20"), ("service-watch.yml", "14:45"),
-        ("service-watch.yml", "17:00"), ("evening.yml", "23:20"), ("evening.yml", "00:20"),
-        ("evening.yml", "01:20"), ("evening.yml", "02:20")]
+        ("service-watch.yml", "12:00"), ("morning.yml", "14:20"), ("service-watch.yml", "14:25"),
+        ("service-watch.yml", "15:05"), ("evening.yml", "23:20"), ("service-watch.yml", "00:00"),
+        ("evening.yml", "00:20"), ("evening.yml", "01:20"), ("evening.yml", "02:20"), ("service-watch.yml", "02:50")]
     evening = [s for s in slots if s.workflow == "evening.yml"]
     assert all(dict(s.inputs) == {"only_if_unpublished": "true"} for s in evening)
     assert dict(next(s for s in slots if s.workflow == "morning.yml").inputs) == {"dry_run": "false"}
+    assert all(dict(s.inputs) == {} for s in slots if s.workflow == "service-watch.yml")
 
 
-@pytest.mark.parametrize("day, evening_utc, morning_utc", [
-    ("2026-07-15", "22:20", "13:20"),                # EDT / CDT
-    ("2026-12-15", "23:20", "14:20"),                # EST / CST
-    ("2026-11-02", "23:20", "14:20"),                # the Monday after the clocks moved back
-    ("2026-03-09", "22:20", "13:20"),                # the Monday after they moved forward
+def test_the_watch_slots_are_in_both_zones_wall_clocks():
+    by_zone = {zone.key: times for workflow, _, zone, times in ds.SLOTS if workflow == "service-watch.yml"}
+    assert by_zone == {"America/New_York": ("19:00", "21:50"), "America/Chicago": ("06:00", "08:25", "09:05")}
+    assert ds.EVERY_DAY == frozenset({"evening.yml"})
+
+
+@pytest.mark.parametrize("day, evening_utc, morning_utc, watch_utc", [
+    ("2026-07-15", "22:20", "13:20", ["11:00", "13:25", "14:05", "23:00", "01:50"]),   # EDT / CDT
+    ("2026-12-15", "23:20", "14:20", ["12:00", "14:25", "15:05", "00:00", "02:50"]),   # EST / CST
+    ("2026-11-02", "23:20", "14:20", ["12:00", "14:25", "15:05", "00:00", "02:50"]),   # after the clocks moved back
+    ("2026-10-30", "22:20", "13:20", ["11:00", "13:25", "14:05", "23:00", "01:50"]),   # the Friday before it
+    ("2027-03-12", "23:20", "14:20", ["12:00", "14:25", "15:05", "00:00", "02:50"]),   # before they move forward
+    ("2027-03-15", "22:20", "13:20", ["11:00", "13:25", "14:05", "23:00", "01:50"]),   # the Monday after
 ])
-def test_the_local_times_hold_across_est_and_edt(day, evening_utc, morning_utc):
+def test_the_local_times_hold_across_est_and_edt(day, evening_utc, morning_utc, watch_utc):
     slots = ds.slots_on(date.fromisoformat(day))
     first = lambda wf: next(s for s in slots if s.workflow == wf).at.astimezone(UTC).strftime("%H:%M")
     assert first("evening.yml") == evening_utc and first("morning.yml") == morning_utc
-    assert all(s.at.astimezone(ET if s.workflow == "evening.yml" else CT).strftime("%H:%M")
-               in dict((w, t) for w, _, _, t in ds.SLOTS)[s.workflow] for s in slots)
+    assert [s.at.astimezone(UTC).strftime("%H:%M") for s in slots if s.workflow == "service-watch.yml"] == watch_utc
+    allowed = {(w, zone.key, t) for w, _, zone, times in ds.SLOTS for t in times}
+    assert all((s.workflow, s.at.tzinfo.key, s.at.strftime("%H:%M")) in allowed for s in slots)
 
 
-@pytest.mark.parametrize("day", ["2026-11-26", "2026-12-25", "2026-11-21", "2026-11-22"])
-def test_no_slot_on_a_holiday_or_a_weekend(day):
+@pytest.mark.parametrize("day", ["2026-11-26", "2026-12-25", "2026-11-21", "2026-11-22", "2027-01-01"])
+def test_a_closed_day_has_the_evenings_recovery_slots_alone(day):
+    """A weekend or a holiday keeps the four evening starts and nothing else: the evening's own guard publishes
+    the newest completed session then only if it is still unpublished before its next open."""
     assert not sessions.is_session(date.fromisoformat(day))
-    assert ds.slots_on(date.fromisoformat(day)) == []
-    assert ds.due(at(day, "18:25")) == [] and ds.due(at(day, "08:25", CT)) == []
+    slots = ds.slots_on(date.fromisoformat(day))
+    assert [(s.workflow, s.at.strftime("%H:%M")) for s in slots] == [
+        ("evening.yml", "18:20"), ("evening.yml", "19:20"), ("evening.yml", "20:20"), ("evening.yml", "21:20")]
+    assert all(dict(s.inputs) == {"only_if_unpublished": "true"} for s in slots)
+    assert [s.key for s in ds.due(at(day, "18:25"))] == [f"evening.yml@{day}T18:20:00-05:00"]
+    assert ds.due(at(day, "08:25", CT)) == [] and ds.due(at(day, "19:05")) == []
 
 
 def test_a_half_day_keeps_every_slot():
@@ -93,6 +109,7 @@ def test_a_half_day_keeps_every_slot():
     opens, closes, early = sessions.hours(day)
     assert early and closes.hour == 13
     assert [s.workflow for s in ds.slots_on(day)].count("evening.yml") == 4
+    assert [s.workflow for s in ds.slots_on(day)].count("service-watch.yml") == 5
     assert ds.slots_on(day)[0].at < ds.slots_on(day)[-1].at
 
 
@@ -101,10 +118,15 @@ def test_a_half_day_keeps_every_slot():
     (at("2026-11-20", "18:20"), ["evening.yml@2026-11-20T18:20:00-05:00"]),
     (at("2026-11-20", "18:49"), ["evening.yml@2026-11-20T18:20:00-05:00"]),
     (at("2026-11-20", "18:50"), []),
+    (at("2026-11-20", "19:05"), ["service-watch.yml@2026-11-20T19:00:00-05:00"]),
     (at("2026-11-20", "21:35"), ["evening.yml@2026-11-20T21:20:00-05:00"]),
+    (at("2026-11-20", "21:49"), ["evening.yml@2026-11-20T21:20:00-05:00"]),
+    (at("2026-11-20", "21:50"), ["service-watch.yml@2026-11-20T21:50:00-05:00"]),
     (at("2026-11-20", "08:20", CT), ["morning.yml@2026-11-20T08:20:00-06:00"]),
-    (at("2026-11-20", "08:46", CT), ["morning.yml@2026-11-20T08:20:00-06:00", "service-watch.yml@2026-11-20T08:45:00-06:00"]),
-    (at("2026-11-23", "00:05", CT), []),             # Monday just past midnight: Sunday had no session
+    (at("2026-11-20", "08:25", CT), ["morning.yml@2026-11-20T08:20:00-06:00", "service-watch.yml@2026-11-20T08:25:00-06:00"]),
+    (at("2026-11-20", "09:05", CT), ["service-watch.yml@2026-11-20T09:05:00-06:00"]),
+    (at("2026-11-23", "00:05", CT), []),             # Monday just past midnight: Sunday's evening slots are over
+    (at("2026-11-21", "18:21"), ["evening.yml@2026-11-21T18:20:00-05:00"]),      # Saturday: the recovery slot
 ])
 def test_a_slot_is_due_from_its_instant_for_the_due_window(now, expected):
     assert [s.key for s in ds.due(now)] == expected
@@ -143,7 +165,10 @@ def test_repeat_ticks_start_a_slot_once_with_or_without_a_ledger(tmp_path):
     # the next hour's slot is its own
     gh.now = at("2026-11-20", "19:20")
     assert ds.tick(gh.now, gh, state) == ds.EXIT_OK
-    assert sum(1 for c in gh.calls if c[0] == "POST") == 2
+    evenings = [c for c in gh.calls if c[0] == "POST" and "/evening.yml/" in c[1]]
+    assert len(evenings) == 2
+    # the 7:00 PM watch slot is still due at 7:20: started once with it
+    assert sum(1 for c in gh.calls if c[0] == "POST" and "/service-watch.yml/" in c[1]) == 1
 
 
 def test_with_a_ledger_a_started_slot_asks_github_nothing_again(tmp_path):
@@ -208,7 +233,84 @@ def test_no_token_is_refused_before_any_request(capsys):
 def test_the_plan_command_needs_no_token(capsys):
     assert ds.main(["plan", "--day", "2026-11-20"], env={}) == ds.EXIT_OK
     out = capsys.readouterr().out.splitlines()
-    assert len(out) == 8 and out[4].startswith("2026-11-20T18:20:00-05:00  evening.yml")
+    assert len(out) == 10 and out[4].startswith("2026-11-20T18:20:00-05:00  evening.yml")
+    assert ds.main(["plan", "--day", "2026-11-21"], env={}) == ds.EXIT_OK            # Saturday
+    assert [line.split()[1] for line in capsys.readouterr().out.splitlines()] == ["evening.yml"] * 4
+
+
+def test_a_tick_on_a_closed_day_starts_the_evenings_guarded_recovery_and_nothing_else():
+    gh = FakeGitHub()
+    gh.now = at("2026-11-21", "18:21")                # Saturday
+    assert ds.tick(gh.now, gh) == ds.EXIT_OK
+    assert [c for c in gh.calls if c[0] == "POST"] == [
+        ("POST", "/repos/spicyChicken59/SpicyStock/actions/workflows/evening.yml/dispatches",
+         {"ref": "main", "inputs": {"only_if_unpublished": "true"}})]
+    gh = FakeGitHub()
+    assert ds.tick(at("2026-11-21", "08:25", CT), gh) == ds.EXIT_OK and gh.calls == []
+
+
+# ------------------------------------------------------- the run listing ----
+class ListingGitHub(ds.GitHub):
+    """One canned answer to GET .../runs, recorded."""
+
+    def __init__(self, status=200, answer=None, raw=None):
+        super().__init__(TOKEN)
+        self.status, self.answer, self.raw, self.calls = status, answer, raw, []
+
+    def send(self, method, path, body=None):
+        self.calls.append((method, path, body))
+        return self.status, self.raw if self.raw is not None else json.dumps(self.answer).encode()
+
+
+def listed(**fields):
+    out = {"id": 1, "event": "workflow_dispatch", "display_title": "Morning publication", "created_at": "2026-11-20T14:20:05Z",
+           "status": "completed", "conclusion": "success", "head_branch": "main", "run_attempt": 1,
+           "actor": {"login": "someone"}, "head_commit": {"message": "x"}, "html_url": "https://example.invalid/run/1"}
+    out.update(fields)
+    return out
+
+
+def test_the_run_listing_asks_for_main_since_an_instant_and_keeps_only_its_fields():
+    gh = ListingGitHub(answer={"total_count": 1, "workflow_runs": [listed()]})
+    runs = gh.runs("morning.yml", at("2026-11-20", "08:00", CT))
+    (method, path, body), = gh.calls
+    assert method == "GET" and body is None
+    assert path.startswith("/repos/spicyChicken59/SpicyStock/actions/workflows/morning.yml/runs?")
+    assert "branch=main" in path and f"per_page={ds.LIST_PAGE}" in path and "created=%3E%3D2026-11-20T14%3A00%3A00Z" in path
+    assert "event=" not in path                       # every event: crons and dispatches alike
+    assert runs == [{name: listed()[name] for name in ds.RUN_FIELDS}]
+    assert set(runs[0]) == set(ds.RUN_FIELDS) and "actor" not in runs[0]
+
+
+@pytest.mark.parametrize("answer", [
+    {"total_count": ds.LIST_PAGE, "workflow_runs": [listed(id=i) for i in range(1, ds.LIST_PAGE + 1)]},   # a full page
+    {"total_count": 3, "workflow_runs": [listed()]},                                                     # more than listed
+    {"workflow_runs": [listed()]},                                                                       # no count
+    {"total_count": 1, "workflow_runs": [listed(id=True)]},
+    {"total_count": 1, "workflow_runs": [listed(created_at="2026-11-20 14:20")]},
+    {"total_count": 1, "workflow_runs": [listed(run_attempt=0)]},
+    {"total_count": 1, "workflow_runs": [listed(conclusion=7)]},
+    {"total_count": 1, "workflow_runs": ["a run"]},
+    {"total_count": 1, "workflow_runs": {"id": 1}},
+    [],
+])
+def test_a_listing_that_is_not_the_whole_of_it_is_refused_never_read_as_no_run(answer):
+    with pytest.raises(ds.Incomplete):
+        ListingGitHub(answer=answer).runs("evening.yml", at("2026-11-20", "18:00"))
+    with pytest.raises(ds.Incomplete):
+        ListingGitHub(raw=b"{not json").runs("evening.yml", at("2026-11-20", "18:00"))
+
+
+@pytest.mark.parametrize("status", [401, 403, 404, 500])
+def test_a_refused_listing_is_named_by_its_status(status):
+    with pytest.raises(ds.HTTPFailure, match=f"listing evening.yml runs: HTTP {status}"):
+        ListingGitHub(status=status, answer={}).runs("evening.yml", at("2026-11-20", "18:00"))
+
+
+def test_an_empty_listing_is_no_run_and_a_clock_without_an_offset_is_refused():
+    assert ListingGitHub(answer={"total_count": 0, "workflow_runs": []}).runs("evening.yml", at("2026-11-20", "18:00")) == []
+    with pytest.raises(ds.Refused):
+        ListingGitHub(answer={}).runs("evening.yml", datetime(2026, 11, 20, 18, 0))
 
 
 def test_the_dispatched_inputs_are_inputs_the_workflows_declare():

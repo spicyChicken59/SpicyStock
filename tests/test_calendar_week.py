@@ -128,7 +128,11 @@ def week(tmp_path_factory) -> Week:
         keep(name)
 
     def morning(name: str, generated: str) -> None:
-        (docs / "morning.json").write_text(json.dumps(receipt_for((docs / "data.json").read_bytes(), generated)))
+        receipt_raw = json.dumps(receipt_for((docs / "data.json").read_bytes(), generated)).encode()
+        (docs / "morning.json").write_bytes(receipt_raw)
+        # and the morning run's own go/cancel file, as its persist job writes it after the receipt
+        orders_raw = (docs / "orders.json").read_bytes()
+        (docs / "orders-morning.json").write_bytes(orders.encode(orders.build_morning(orders_raw, receipt_raw)))
         keep(name)
 
     env = dict(rr.ENV, SCAN_TRIGGER_EVENT="schedule", GITHUB_RUN_ID_FOR_RECORD=RUN_ID)
@@ -274,7 +278,13 @@ def test_no_evening_slot_runs_on_thanksgiving(week, guard_code, clock, cron):
     assert decision["go"] is False and decision["session"] is None, decision
 
 
-def test_nothing_else_is_due_or_flagged_on_thanksgiving(week):
+def guarded(week: Week, name: str, clock: str, code: str) -> dict:
+    """The evening guard for the dispatcher's own start (only_if_unpublished ticked) at ``clock``."""
+    with mock.patch.dict(os.environ, {"SCAN_ONLY_IF_UNPUBLISHED": "true"}):
+        return _dispatch_guard(week.states[name], clock, code)
+
+
+def test_nothing_else_is_due_or_flagged_on_thanksgiving(week, guard_code):
     data = week.raw("thanksgiving")
     # the scheduled morning slot knows the day has no session; a hand-started check is always let through
     # to the collector, which refuses the day itself
@@ -282,12 +292,20 @@ def test_nothing_else_is_due_or_flagged_on_thanksgiving(week):
         False, "not_exchange_session")
     assert pm.schedule_guard(data, "workflow_dispatch", "", at("2026-11-26T14:21:00+00:00")) == (
         True, "manual_dispatch")
-    # the on-time dispatcher starts nothing all day: no evening, no morning, no watch
-    assert ds.slots_on(THANKSGIVING) == []
+    # the on-time dispatcher starts no morning and no watch all day: only the evening's four guarded starts,
+    # its recovery for a missed Wednesday, and Wednesday is published, so the guard refuses every one of them
+    slots = ds.slots_on(THANKSGIVING)
+    assert [s.workflow for s in slots] == ["evening.yml"] * 4
+    assert all(dict(s.inputs) == {"only_if_unpublished": "true"} for s in slots)
     clock = at("2026-11-26T00:00:00-05:00")
     while clock < at("2026-11-27T00:00:00-05:00"):
-        assert ds.due(clock) == [], clock
+        assert all(s.workflow == "evening.yml" for s in ds.due(clock)), clock
         clock += timedelta(minutes=15)
+    for slot in slots:
+        start = (slot.at + timedelta(minutes=1)).astimezone(UTC).isoformat()
+        assert guarded(week, "thanksgiving", start, guard_code)["go"] is False, start
+        # had Wednesday not been published, the same start would publish it before Friday's open
+        assert guarded(week, "wednesday-morning", start, guard_code) == {"go": True, "session": "2026-11-25"}, start
     # and the watch, whenever it runs that day, has nothing to say: Wednesday's record is the newest
     # there can be, and the morning it is for is Friday's
     for clock in ("2026-11-26T05:07:00+00:00", "2026-11-26T12:00:00+00:00", "2026-11-26T14:45:00+00:00",
@@ -317,19 +335,33 @@ def test_the_friday_morning_check_is_let_through_for_wednesdays_record(week):
     assert due == [("morning.yml", "2026-11-27T08:20:00-06:00")]
 
 
-def test_the_watch_judges_the_friday_morning_from_its_due_time(week):
-    # before 8:45 AM Chicago the morning cannot be judged; Tuesday's receipt is still the one on disk
-    early = watch(week, "thanksgiving", "2026-11-27T14:44:59+00:00")
+def test_the_watch_judges_the_friday_morning_from_its_alert_time(week, tmp_path):
+    # before 8:25 AM Chicago the morning cannot be judged; Tuesday's receipt is still the one on disk
+    early = watch(week, "thanksgiving", "2026-11-27T14:24:59+00:00")
     assert early["morning"]["judgement"] == sw.NOT_DUE and early["alert"] is False
+    assert early["morning"]["alert_at"] == "2026-11-27T08:25:00-06:00"
     assert early["morning"]["due_at"] == "2026-11-27T08:45:00-06:00"
-    # from then on a receipt bound to another publication is no morning check for this one
-    stale = watch(week, "thanksgiving", "2026-11-27T14:45:00+00:00")
+    # from then on a receipt bound to another publication is no morning check for this one: five minutes
+    # before the 8:30 AM Chicago open, and under the same key through the gate's 8:45 line
+    stale = watch(week, "thanksgiving", "2026-11-27T14:25:00+00:00")
     assert stale["morning"]["judgement"] == sw.NOT_LANDED and stale["morning"]["alert"] is True
     assert "bound to another publication" in stale["morning"]["sentence"]
-    # the check that ran at 8:22 AM Chicago is inside its collection window (from 9:00 AM ET)
-    landed = watch(week, "friday-morning", "2026-11-27T14:45:00+00:00")
-    assert landed["morning"]["judgement"] == sw.LANDED and landed["alert"] is False
-    assert landed["morning"]["collection_starts_at"] == "2026-11-27T09:00:00-05:00"
+    assert stale["morning"]["key"] == watch(week, "thanksgiving", "2026-11-27T14:45:00+00:00")["morning"]["key"] \
+        == "morning:not_landed:2026-11-27"
+    # the check that ran at 8:22 AM Chicago is inside its collection window (from 9:00 AM ET), and its
+    # orders-morning.json is checked for this orders.json
+    for clock in ("2026-11-27T14:25:00+00:00", "2026-11-27T14:45:00+00:00"):
+        landed = watch(week, "friday-morning", clock)
+        assert landed["morning"]["judgement"] == sw.LANDED and landed["alert"] is False, clock
+        assert landed["morning"]["collection_starts_at"] == "2026-11-27T09:00:00-05:00"
+    # without the morning run's go/cancel file the evening's pending one stands: not checked
+    pending = tmp_path
+    shutil.copytree(week.docs("friday-morning"), pending / "docs")
+    (pending / "docs" / "orders-morning.json").write_bytes(
+        orders.encode(orders.pending_morning((pending / "docs" / "orders.json").read_bytes())))
+    unchecked = sw.watch(pending / "docs", at("2026-11-27T14:25:00+00:00"))
+    assert (unchecked["morning"]["judgement"], unchecked["morning"]["key"]) == (
+        sw.NOT_CHECKED, "morning:not_checked:2026-11-27")
     # the evening answer on Friday morning: nothing is expected until the 1:15 PM completion
     assert landed["evening"]["state"] == freshness.NEWEST
 
@@ -368,13 +400,21 @@ def test_the_weekend_starts_nothing_and_flags_nothing(week, guard_code):
     assert retry["go"] is False and "already published" in retry["reason"]
     late = evening_guard(week, "friday", "2026-11-28T09:00:00+00:00", PRIMARY_EST, guard_code)
     assert late["go"] is False and "already published" in late["reason"]
-    assert ds.slots_on(SATURDAY) == [] and ds.slots_on(SUNDAY) == []
+    # the dispatcher's only weekend starts are the evening's guarded recovery, and Friday is published:
+    # every one of them does nothing; had Friday been missed, each would publish it before Monday's open
+    for day in (SATURDAY, SUNDAY):
+        slots = ds.slots_on(day)
+        assert [s.workflow for s in slots] == ["evening.yml"] * 4, day
+        for slot in slots:
+            start = (slot.at + timedelta(minutes=1)).astimezone(UTC).isoformat()
+            assert guarded(week, "friday", start, guard_code)["go"] is False, start
+            assert guarded(week, "friday-morning", start, guard_code) == {"go": True, "session": "2026-11-27"}, start
     data = week.raw("friday")
     for clock in ("2026-11-28T14:21:00+00:00", "2026-11-29T14:21:00+00:00"):
         assert pm.schedule_guard(data, "schedule", MORNING_EST, at(clock)) == (False, "inactive_schedule")
         assert ds.due(at(clock)) == []
     for clock in ("2026-11-28T05:07:00+00:00", "2026-11-28T15:00:00+00:00", "2026-11-29T09:07:00+00:00",
-                  "2026-11-29T23:00:00+00:00", "2026-11-30T08:00:00+00:00", "2026-11-30T14:44:59+00:00"):
+                  "2026-11-29T23:00:00+00:00", "2026-11-30T08:00:00+00:00", "2026-11-30T14:24:59+00:00"):
         result = watch(week, "friday", clock)
         assert result["alert"] is False and result["exit_code"] == sw.EXIT_OK, clock
         assert result["evening"]["state"] == freshness.NEWEST and result["morning"]["judgement"] == sw.NOT_DUE
@@ -399,23 +439,27 @@ def test_mondays_morning_is_fridays_record(week, guard_code):
     assert run["timing"]["applicable_session"] == "2026-12-01"
 
 
-def test_a_friday_that_was_never_published_is_flagged_before_mondays_open(week, guard_code):
+def test_a_friday_that_was_never_published_is_flagged_on_saturday_morning_not_mondays(week, guard_code):
     """Wednesday's record is still the one on main: Friday's session completed at 1:15 PM ET and may
-    be published until Monday's open. The watch stays quiet through the weekend, flags it from six
-    hours before that open, and calls it missing from the open on."""
+    be published until Monday's open. The watch flags it from ten hours after Friday's 6:16 PM ET
+    primary slot, which over a weekend is earlier than six hours before Monday's open, keeps the same
+    answer (and so the same key) until the open, and calls it missing from the open on."""
     limit = at("2026-11-30T09:30:00-05:00")
-    # six hours before Monday's open is 3:30 AM New York, written out so the bound itself is held
-    quiet = ("2026-11-27T23:30:00+00:00", "2026-11-28T15:00:00+00:00", "2026-11-29T15:00:00+00:00",
-             "2026-11-30T03:29:59-05:00")
+    # ten hours after 6:16 PM New York on Friday is 4:16 AM on Saturday, written out so the bound itself is held
+    quiet = ("2026-11-27T23:30:00+00:00", "2026-11-28T04:15:59-05:00")
     for clock in quiet:
         result = watch(week, "friday-morning", clock)
         assert result["evening"]["judgement"] == sw.OK and result["evening"]["alert"] is False, clock
         assert result["evening"]["next_session"] == "2026-11-27"
-    near = watch(week, "friday-morning", "2026-11-30T03:30:00-05:00")
-    assert near["evening"]["judgement"] == sw.LATE_NEAR_LIMIT and near["evening"]["alert"] is True
-    assert near["evening"]["recovery_until"] == "2026-11-30T09:30:00-05:00"
+    for clock in ("2026-11-28T04:16:00-05:00", "2026-11-29T15:00:00+00:00", "2026-11-30T03:30:00-05:00",
+                  "2026-11-30T09:29:59-05:00"):
+        near = watch(week, "friday-morning", clock)
+        assert near["evening"]["judgement"] == sw.NOT_PUBLISHED and near["evening"]["alert"] is True, clock
+        assert near["evening"]["key"] == "evening:not_published:2026-11-27"
+        assert near["evening"]["recovery_until"] == "2026-11-30T09:30:00-05:00"
     missing = watch(week, "friday-morning", limit.isoformat())
     assert missing["evening"]["judgement"] == sw.MISSING and missing["evening"]["alert"] is True
+    assert missing["evening"]["key"] == "evening:missing:2026-11-27"
     # all weekend a guarded dispatch would still publish Friday; from Monday's open it will not
     code = guard_code
     root = week.states["friday-morning"]
@@ -609,12 +653,12 @@ def test_exactly_one_morning_cron_pair_is_active_on_each_side_of_a_clock_change(
 
 
 @pytest.mark.parametrize("day,evening_utc,morning_utc,watch_utc", [
-    ("2026-10-30", "22:20", "13:20", ["11:00", "13:45", "16:00"]),      # daylight time
-    ("2026-11-02", "23:20", "14:20", ["12:00", "14:45", "17:00"]),      # standard time
-    ("2027-03-12", "23:20", "14:20", ["12:00", "14:45", "17:00"]),
-    ("2027-03-15", "22:20", "13:20", ["11:00", "13:45", "16:00"]),
-    ("2026-11-27", "23:20", "14:20", ["12:00", "14:45", "17:00"]),      # the half day: no slot moves
-    ("2026-11-30", "23:20", "14:20", ["12:00", "14:45", "17:00"]),      # the Monday after it
+    ("2026-10-30", "22:20", "13:20", ["11:00", "13:25", "14:05", "23:00", "01:50"]),      # daylight time
+    ("2026-11-02", "23:20", "14:20", ["12:00", "14:25", "15:05", "00:00", "02:50"]),      # standard time
+    ("2027-03-12", "23:20", "14:20", ["12:00", "14:25", "15:05", "00:00", "02:50"]),
+    ("2027-03-15", "22:20", "13:20", ["11:00", "13:25", "14:05", "23:00", "01:50"]),
+    ("2026-11-27", "23:20", "14:20", ["12:00", "14:25", "15:05", "00:00", "02:50"]),      # the half day: no slot moves
+    ("2026-11-30", "23:20", "14:20", ["12:00", "14:25", "15:05", "00:00", "02:50"]),      # the Monday after it
 ])
 def test_the_dispatchers_slots_are_wall_clock_times_whatever_the_offset(day, evening_utc, morning_utc, watch_utc):
     slots = ds.slots_on(date.fromisoformat(day))
@@ -643,3 +687,146 @@ def test_the_watchs_morning_due_time_is_chicagos_wall_clock(day, due_utc):
     assert due.strftime("%H:%M") == sw.MORNING_DUE_CT == go_live.MORNING_DUE_CT
     # 8:45 AM Chicago is 9:45 AM New York on both sides: fifteen minutes into the entry window
     assert due.astimezone(sessions.MARKET_TZ).strftime("%H:%M") == "09:45"
+
+
+@pytest.mark.parametrize("day,alert_utc", [("2026-10-30", "13:25"), ("2026-11-02", "14:25"),
+                                           ("2027-03-12", "14:25"), ("2027-03-15", "13:25")])
+def test_the_watchs_morning_alert_is_chicagos_wall_clock_before_the_open(day, alert_utc):
+    alert = sw.morning_alert(day)
+    assert alert.astimezone(UTC).strftime("%Y-%m-%d %H:%M") == f"{day} {alert_utc}"
+    # 8:25 AM Chicago is 9:25 AM New York on both sides: five minutes before the entry window opens
+    assert alert.astimezone(sessions.MARKET_TZ).strftime("%H:%M") == "09:25"
+    assert alert < sessions.hours(date.fromisoformat(day))[0]
+
+
+# ------------------------------------- every alert before the 8:30 AM CT open ---
+CHICAGO = sw.CHICAGO
+ONE_SECOND = timedelta(seconds=1)
+
+
+def synthetic_record(covers: date) -> dict:
+    """SYNTHETIC record covering ``covers``: only the blocks the watch reads, each written by the module that
+    writes it in a real record (the calendar, the delivery block of an on-time 6:20 PM ET run, the entry
+    window, a funnel with no ticket)."""
+    published = (delivery.slots(covers)[0] + timedelta(minutes=4)).isoformat()
+    return {"run": {"session": str(covers), "status": "ok", "dry_run": False, "run_id": "1",
+                    "published_at": published, "calendar": sessions.publication(covers),
+                    "delivery": delivery.block(covers, published),
+                    "timing": pipeline.plan_timing(covers, covers, False)},
+            "funnel": {"reaction": {"stages": {"ticket": 0}}, "anticipation": {"stages": {"ticket": 0}}}}
+
+
+#: (the session the record covers, the session its evening publishes S, the session after it A). The record's
+#: plans and its morning check are for S; S's absence is to be known before A's 8:30 AM CT open.
+SCENARIOS = [
+    pytest.param(date(2026, 11, 13), date(2026, 11, 16), date(2026, 11, 17), id="monday"),
+    pytest.param(date(2026, 11, 24), date(2026, 11, 25), date(2026, 11, 27), id="wednesday-before-thanksgiving"),
+    pytest.param(date(2026, 11, 25), date(2026, 11, 27), date(2026, 11, 30), id="friday-half-day"),
+    pytest.param(date(2026, 10, 29), date(2026, 10, 30), date(2026, 11, 2), id="friday-before-1-november"),
+    pytest.param(date(2026, 10, 30), date(2026, 11, 2), date(2026, 11, 3), id="monday-after-1-november"),
+    pytest.param(date(2027, 3, 11), date(2027, 3, 12), date(2027, 3, 15), id="friday-before-14-march"),
+    pytest.param(date(2027, 3, 12), date(2027, 3, 15), date(2027, 3, 16), id="monday-after-14-march"),
+]
+
+
+def first_watch_slot(after: datetime) -> datetime:
+    """The first of the dispatcher's watch slots at or after ``after``."""
+    day = after.astimezone(CHICAGO).date() - timedelta(days=1)
+    for _ in range(12):
+        found = [s.at for s in ds.slots_on(day) if s.workflow == "service-watch.yml" and s.at >= after]
+        if found:
+            return min(found)
+        day += timedelta(days=1)
+    raise AssertionError(f"no watch slot after {after}")
+
+
+def chicago(day: date, hhmm: str) -> datetime:
+    return datetime.combine(day, datetime.strptime(hhmm, "%H:%M").time(), tzinfo=CHICAGO)
+
+
+def new_york(day: date, hhmm: str) -> datetime:
+    return datetime.combine(day, datetime.strptime(hhmm, "%H:%M").time(), tzinfo=sessions.MARKET_TZ)
+
+
+@pytest.mark.parametrize("covers,session,after", SCENARIOS)
+def test_every_evening_alert_is_true_and_mailed_before_the_next_open(covers, session, after):
+    """For each alert about S, its first true instant -- held one second either side -- and the first watch
+    slot of the on-time dispatcher at or after it are both before A's 8:30 AM Chicago open, and the alert
+    still holds at that slot. ``missing`` is the one at the open itself, and ``not_published`` precedes it."""
+    record = synthetic_record(covers)
+    opens = sessions.hours(after)[0]
+    assert opens.astimezone(CHICAGO).strftime("%H:%M") == "08:30"
+    expected = freshness.expected(record)
+    assert (expected["next_session"], sw._instant(expected["recovery_until"])) == (str(session), opens)
+    name = str(session)
+
+    # the evening has not started: 6:50 PM New York on S, with no run listed
+    started_by = new_york(session, sw.EVENING_STARTED_BY_ET)
+    assert sw.judge_evening(record, started_by - ONE_SECOND, [], None)["judgement"] == sw.NOT_DUE
+    out = sw.judge_evening(record, started_by, [], None)
+    assert (out["judgement"], out["key"]) == (sw.NOT_STARTED, f"evening:not_started:{name}")
+    slot = first_watch_slot(started_by)
+    assert started_by <= slot < opens and slot == new_york(session, "19:00")
+    assert sw.judge_evening(record, slot, [], None)["key"] == out["key"]
+
+    # every run failed: true from the failed run's own listing, here an hour after the primary slot
+    primary = delivery.slots(session)[0]
+    failed = {"id": 9, "event": "workflow_dispatch", "display_title": sw.EVENING_DISPATCH_TITLE,
+              "created_at": (primary + timedelta(minutes=4)).astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "status": "completed", "conclusion": "failure", "head_branch": "main", "run_attempt": 1}
+    out = sw.judge_evening(record, primary + timedelta(hours=1), [failed], None)
+    assert (out["judgement"], out["key"]) == (sw.FAILED, f"evening:failed:{name}")
+    assert first_watch_slot(primary + timedelta(hours=1)) < opens
+
+    # not published: the earlier of six hours before the open and ten hours after the primary slot
+    deadline = sw.not_published_from(record, name, opens)
+    assert deadline == min(opens - timedelta(hours=sw.ALERT_WITHIN_HOURS),
+                           primary + timedelta(hours=sw.NOT_PUBLISHED_AFTER_PRIMARY_HOURS))
+    assert sw.evening(record, deadline - ONE_SECOND)["judgement"] == sw.OK
+    out = sw.evening(record, deadline)
+    assert (out["judgement"], out["key"]) == (sw.NOT_PUBLISHED, f"evening:not_published:{name}")
+    slot = first_watch_slot(deadline)
+    assert deadline <= slot < opens and sw.evening(record, slot)["key"] == out["key"]
+    if after - session > timedelta(days=1):
+        # over a weekend or a holiday the alert is the morning after the evening, not hours before the next open
+        local = deadline.astimezone(sessions.MARKET_TZ)
+        assert (local.date(), local.strftime("%H:%M")) == (session + timedelta(days=1), "04:16")
+    else:
+        assert deadline == opens - timedelta(hours=sw.ALERT_WITHIN_HOURS)
+
+    # not published although the dispatcher started it on time: 9:45 PM New York on S
+    published_by = new_york(session, sw.EVENING_PUBLISHED_BY_ET)
+    assert sw.evening(record, published_by - ONE_SECOND, on_time_start=True)["judgement"] == sw.OK
+    assert sw.evening(record, published_by, on_time_start=True)["key"] == f"evening:not_published:{name}"
+    assert published_by <= first_watch_slot(published_by) == new_york(session, "21:50") < opens
+
+    # missing: at the open itself, never before it
+    assert sw.evening(record, opens - ONE_SECOND)["judgement"] == sw.NOT_PUBLISHED
+    assert sw.evening(record, opens)["key"] == f"evening:missing:{name}"
+
+
+@pytest.mark.parametrize("covers,session,after", SCENARIOS)
+def test_the_morning_alerts_are_true_at_8_25_and_mailed_before_the_8_30_open(covers, session, after):
+    record = synthetic_record(covers)
+    raw = json.dumps(record).encode()
+    assert freshness.morning_window(record)["applicable_session"] == str(session)
+    alert = chicago(session, sw.MORNING_ALERT_CT)
+    opens = sessions.hours(session)[0]
+    assert opens == chicago(session, "08:30")
+    files = {"orders_raw": None, "orders_morning_raw": None}
+    early = sw.morning(record, raw, None, "morning.json is not a regular file", alert - ONE_SECOND, **files)
+    assert early["judgement"] == sw.NOT_DUE
+    out = sw.morning(record, raw, None, "morning.json is not a regular file", alert, **files)
+    assert (out["judgement"], out["key"]) == (sw.NOT_LANDED, f"morning:not_landed:{session}")
+    # a receipt that landed with no checked orders-morning.json beside it: not checked, from the same instant
+    landed = receipt_for(raw, chicago(session, "08:22").isoformat())
+    assert sw.morning(record, raw, landed, None, alert - ONE_SECOND, **files)["judgement"] == sw.NOT_DUE
+    out = sw.morning(record, raw, landed, None, alert, **files)
+    assert (out["judgement"], out["key"]) == (sw.NOT_CHECKED, f"morning:not_checked:{session}")
+    # the dispatcher's watch is started at that very minute, five minutes before the open
+    assert first_watch_slot(alert) == alert < opens
+    # and the gate's 8:45 line gives the same answer under the same key
+    assert sw.morning(record, raw, landed, None, chicago(session, sw.MORNING_DUE_CT), **files)["key"] == out["key"]
+    # the morning's scheduler answer is asked at the same instant: none listed by 8:25 is not started
+    assert sw.judge_morning(record, None, raw, alert, [], None)["judgement"] == sw.NOT_STARTED
+    assert sw.judge_morning(record, None, raw, alert - ONE_SECOND, [], None)["judgement"] == sw.NOT_DUE

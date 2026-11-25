@@ -1007,27 +1007,44 @@ def test_the_readme_quotes_the_briefs_bounds_from_the_module():
 def test_the_readme_quotes_the_service_watch_from_the_tool_and_its_workflow():
     import yaml
     from tools import service_watch as sw
-    assert f"still absent {sw.ALERT_WITHIN_HOURS} hours before its recovery limit" in README
-    assert f"or, for {sw.MISSING_ALERT_HOURS} hours, once it is past it" in README
-    assert f"Flagged, for {sw.MORNING_ALERT_HOURS} hours after it was due, on every session, ticket or not" in README
-    assert sw.MORNING_DUE_CT == "08:45" and "From 8:45 AM CT on the applicable session (`MORNING_DUE_CT`)" in README
+    assert (f"still absent at the earlier of {sw.ALERT_WITHIN_HOURS} hours before its recovery limit (the next "
+            f"session's open) and {sw.NOT_PUBLISHED_AFTER_PRIMARY_HOURS} hours after its primary slot") in README
+    assert f"Past the limit it is `missing`, flagged for {sw.MISSING_ALERT_HOURS} hours" in README
+    assert sw.EVENING_PUBLISHED_BY_ET == "21:45" and "from 9:45 PM ET as well (`EVENING_PUBLISHED_BY_ET`)" in README
+    assert sw.EVENING_STARTED_BY_ET == "18:50" and "by 6:50 PM ET (`EVENING_STARTED_BY_ET`)" in README
+    assert f"Flagged, for {sw.MORNING_ALERT_HOURS} hours after the alert time, on every session, ticket or not" in README
+    assert sw.MORNING_ALERT_CT == "08:25" and "From 8:25 AM CT on the applicable session (`MORNING_ALERT_CT`)" in README
+    assert sw.MORNING_DUE_CT == "08:45" and "through 8:45 AM CT (`MORNING_DUE_CT`, the go-live gate's own line)" in README
     assert f"start within {sw.LATE_START_MINUTES} minutes of its primary slot" in README
     assert f"Flagged for {sw.LATE_START_ALERT_HOURS} hours after the run started" in README
+    assert f"again only after {sw.REPEAT_DAYS} days (`REPEAT_DAYS`)" in README
+    assert "`scheduler:evening:started_late`" in README and sw.KEY_PATTERN.fullmatch("scheduler:evening:started_late")
+    assert "`evening:not_started:2026-11-20`" in README and sw.KEY_PATTERN.fullmatch("evening:not_started:2026-11-20")
+    for word in (sw.ON_TIME, sw.STARTED_LATE, sw.NOT_STARTED, sw.FAILED, sw.UNKNOWN, sw.NOT_PUBLISHED, sw.MISSING,
+                 sw.NOT_CHECKED, sw.NOT_LANDED):
+        assert f"`{word}`" in README, word
     assert (sw.EXIT_OK, sw.EXIT_ALERT, sw.EXIT_UNKNOWN) == (0, 1, 2)
     assert "exits 0 with nothing to flag, 1 on an alert and 2 when the record cannot answer" in README
     wf = yaml.safe_load((ROOT / ".github" / "workflows" / "service-watch.yml").read_text())
     crons = [c["cron"] for c in (wf.get("on") or wf.get(True))["schedule"]]
-    assert crons == ["7 5 * * *", "7 9 * * *", "7 16 * * 1-5"]
-    assert "at 05:07 and 09:07 UTC daily and 16:07 UTC on weekdays" in README
+    assert crons == ["7 5 * * *", "7 7 * * *", "7 9 * * *", "7 16 * * 1-5"]
+    assert "at 05:07, 07:07 and 09:07 UTC daily and 16:07 UTC on weekdays" in README
+    assert wf["permissions"] == {"contents": "read", "actions": "read"} and "`actions: read`" in README
     assert "only_if_unpublished" in sw.DISPATCH_HINT and "**only_if_unpublished**" in README_RAW
+    assert "Nothing outside GitHub watches the watch" in README
 
 
 def test_the_readme_quotes_the_dispatchers_slots_from_the_tool():
     from tools import dispatch_schedule as ds
+    seen = set()
     for workflow, _, zone, times in ds.SLOTS:
         when = ", ".join(times[:-1]) + (" and " if len(times) > 1 else "") + times[-1]
-        assert f"`{workflow}` at {when} {zone.key}" in README, workflow
+        # a workflow with slots in two zones is quoted once, its second zone after "and at"
+        lead = f"and at {when}" if workflow in seen else f"`{workflow}` at {when}"
+        assert f"{lead} {zone.key}" in README, workflow
+        seen.add(workflow)
     assert f"A slot is due for {ds.DUE_MINUTES} minutes from its instant" in README
+    assert sorted(ds.EVERY_DAY) == ["evening.yml"] and "on every calendar day (`EVERY_DAY`)" in README
     assert ds.TOKEN_ENV == "GITHUB_TOKEN" and "GITHUB_TOKEN" in ENV and "Actions read and write" in ENV
 
 

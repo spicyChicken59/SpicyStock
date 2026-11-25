@@ -5,16 +5,23 @@ GitHub created every scheduled evening run of 2 to 18 November 2026 3.56 to
 7.99 hours after its slot, and every scheduled morning run after its entry
 window had closed (CLAUDE.md, the 19 November checkpoint). A
 ``workflow_dispatch`` is created when it is asked for. This tool asks for
-one at each slot below, on XNYS sessions only (``src/sessions.py``, the one
+one at each slot below, on XNYS sessions (``src/sessions.py``, the one
 calendar the run itself reads), and does nothing else:
 
 * ``evening.yml`` at 18:20, 19:20, 20:20 and 21:20 America/New_York, with
   ``only_if_unpublished`` ticked, so the four starts publish the newest
   completed session once and the later three do nothing when the first did
-  (the workflow's own guard);
+  (the workflow's own guard). These four are started on EVERY calendar day
+  (``EVERY_DAY``): on a weekend or a holiday the guard publishes the newest
+  completed session only if it is still unpublished and its next session
+  has not opened, and refuses otherwise, so they are a missed Friday's (or
+  an eve's) recovery before the next open and a no-op after a published one;
 * ``morning.yml`` at 08:20 America/Chicago, ``dry_run`` false, inside the
   collector's own window (it opens 30 minutes before the 8:30 open);
-* ``service-watch.yml`` at 06:00, 08:45 and 11:00 America/Chicago.
+* ``service-watch.yml`` at 19:00 and 21:50 America/New_York and at 06:00,
+  08:25 and 09:05 America/Chicago: after the evening's first start is due,
+  after its last, before the open, five minutes after the morning check
+  (``tools/service_watch.MORNING_ALERT_CT``) and after the entry window.
 
 GitHub's own crons stay in each workflow as the backup; every workflow's
 guard already makes a second start harmless.
@@ -71,12 +78,25 @@ REF = "main"
 API = "https://api.github.com"
 ET = ZoneInfo("America/New_York")
 CT = ZoneInfo("America/Chicago")
-#: (workflow file, inputs, zone, local times). Each is started on XNYS sessions only.
+#: (workflow file, inputs, zone, local times). Each is started on XNYS sessions; a
+#: workflow in ``EVERY_DAY`` is started on every calendar day.
 SLOTS: tuple[tuple[str, dict[str, str], ZoneInfo, tuple[str, ...]], ...] = (
     ("evening.yml", {"only_if_unpublished": "true"}, ET, ("18:20", "19:20", "20:20", "21:20")),
     ("morning.yml", {"dry_run": "false"}, CT, ("08:20",)),
-    ("service-watch.yml", {}, CT, ("06:00", "08:45", "11:00")),
+    ("service-watch.yml", {}, ET, ("19:00", "21:50")),
+    ("service-watch.yml", {}, CT, ("06:00", "08:25", "09:05")),
 )
+#: The workflows started on every calendar day, session or not. The evening's
+#: ``only_if_unpublished`` guard publishes the newest completed session only from
+#: its primary slot, only while it is unpublished and only before its next session
+#: opens, and does nothing otherwise (``.github/workflows/evening.yml``): on a
+#: weekend or a holiday that is a missed session's one recovery before the open.
+EVERY_DAY = frozenset({"evening.yml"})
+#: One page of the run listing ``GitHub.runs()`` reads. A page this full may not be
+#: all of it, so it is never read as complete.
+LIST_PAGE = 50
+#: The fields kept of each run GitHub lists; nothing else of the answer is read.
+RUN_FIELDS = ("id", "event", "display_title", "created_at", "status", "conclusion", "head_branch", "run_attempt")
 #: A slot is due from its instant for this long: a tick missed by a restart
 #: still starts it, and a slot this old is left to the next one or the backup.
 DUE_MINUTES = 30
@@ -99,6 +119,11 @@ class HTTPFailure(RuntimeError):
         self.status = status
 
 
+class Incomplete(RuntimeError):
+    """A run listing that answered 200 but cannot be read as the whole of what was
+    asked: a full page, a count larger than the page, or a run this cannot read."""
+
+
 @dataclass(frozen=True)
 class Slot:
     workflow: str
@@ -119,12 +144,23 @@ def _aware(now: datetime) -> datetime:
     return now
 
 
+def _created(value) -> datetime | None:
+    """A run's ``created_at`` as GitHub writes it (``2026-11-20T23:20:05Z``), or None."""
+    try:
+        parsed = datetime.fromisoformat(value) if isinstance(value, str) else None
+    except ValueError:
+        return None
+    return parsed if parsed is not None and parsed.tzinfo is not None and parsed.utcoffset() is not None else None
+
+
 def slots_on(day: date) -> list[Slot]:
-    """Every slot of one calendar day, in time order; none off a session."""
-    if not sessions.is_session(day):
-        return []
+    """Every slot of one calendar day, in time order; off a session, only the
+    slots of the workflows in ``EVERY_DAY``."""
+    session = sessions.is_session(day)
     out = []
     for workflow, inputs, zone, times in SLOTS:
+        if not session and workflow not in EVERY_DAY:
+            continue
         for hhmm in times:
             local = datetime.combine(day, time.fromisoformat(hhmm), tzinfo=zone)
             out.append(Slot(workflow, tuple(sorted(inputs.items())), local))
@@ -146,8 +182,9 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 class GitHub:
-    """The two calls this tool makes, over ``urllib`` with the environment's
-    proxy settings. ``send`` is replaced in the tests."""
+    """The two calls this tool makes, and the run listing the service watch
+    reads (``runs()``), over ``urllib`` with the environment's proxy settings.
+    ``send`` is replaced in the tests."""
 
     def __init__(self, token: str, repository: str = REPOSITORY):
         self.token, self.repository = token, repository
@@ -177,6 +214,41 @@ class GitHub:
             return [int(r["id"]) for r in runs if isinstance(r, dict) and isinstance(r.get("id"), int)]
         except (ValueError, AttributeError, TypeError):
             raise HTTPFailure(status, f"listing {slot.workflow} runs (an unreadable answer)") from None
+
+    def runs(self, workflow: str, since: datetime) -> list[dict]:
+        """The workflow's runs on ``REF`` created at or after ``since``, every event,
+        each cut to ``RUN_FIELDS``. Read by the service watch (``tools/service_watch.py``)
+        with the workflow's own read-only token. A status other than 200 raises
+        ``HTTPFailure``; an answer that is not the whole listing, or a run in it that
+        cannot be read, raises ``Incomplete``: neither is ever read as no run."""
+        since = _aware(since)
+        query = urllib.parse.urlencode({"branch": REF, "per_page": LIST_PAGE,
+                                        "created": ">=" + since.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")})
+        status, raw = self.send("GET", f"/repos/{self.repository}/actions/workflows/{workflow}/runs?{query}")
+        if status != 200:
+            raise HTTPFailure(status, f"listing {workflow} runs")
+        try:
+            answer = json.loads(raw)
+        except (ValueError, UnicodeDecodeError, RecursionError):
+            raise Incomplete(f"listing {workflow} runs: an unreadable answer") from None
+        rows = answer.get("workflow_runs") if isinstance(answer, dict) else None
+        total = answer.get("total_count") if isinstance(answer, dict) else None
+        if not isinstance(rows, list) or type(total) is not int or total < 0:
+            raise Incomplete(f"listing {workflow} runs: an unreadable answer")
+        if len(rows) >= LIST_PAGE or total > len(rows):
+            raise Incomplete(f"listing {workflow} runs: {total} runs, more than one page holds")
+        out = []
+        for row in rows:
+            kept = {name: row.get(name) for name in RUN_FIELDS} if isinstance(row, dict) else None
+            if (kept is None or type(kept["id"]) is not int or kept["id"] < 1
+                    or not all(isinstance(kept[name], str) for name in ("event", "display_title", "status"))
+                    or not isinstance(kept["created_at"], str) or _created(kept["created_at"]) is None
+                    or not (kept["conclusion"] is None or isinstance(kept["conclusion"], str))
+                    or not (kept["head_branch"] is None or isinstance(kept["head_branch"], str))
+                    or type(kept["run_attempt"]) is not int or kept["run_attempt"] < 1):
+                raise Incomplete(f"listing {workflow} runs: a run this cannot read")
+            out.append(kept)
+        return out
 
     def dispatch(self, slot: Slot) -> None:
         status, _ = self.send("POST", f"/repos/{self.repository}/actions/workflows/{slot.workflow}/dispatches",
