@@ -761,6 +761,9 @@ def test_the_session_is_judged_from_its_own_primary_slot(record):
     ("16 1 * * 2-6", datetime(2026, 12, 5, 1, 16, 30, tzinfo=UTC), False),         # EST retry in EST
     ("16 23 * * 1-5", datetime(2026, 12, 5, 6, 0, tzinfo=UTC), False),             # hours late, in season
     ("7 22 * * 1-5", datetime(2026, 9, 11, 22, 7, tzinfo=UTC), True),              # a cron the guard does not know
+    # created more than a day late, the guard's nominal slot falls on a weekday the cron does not cover
+    ("16 22 * * 1-5", datetime(2026, 9, 12, 23, 0, tzinfo=UTC), True),             # read as Saturday's 22:16
+    ("16 0 * * 2-6", datetime(2026, 9, 14, 0, 30, tzinfo=UTC), True),              # read as Monday's 00:16
 ])
 def test_an_evening_cron_its_guard_skips_is_read_off_its_title_and_creation(cron, created, skipped):
     assert sw.skipped_evening_cron(run(display_title=f"Evening cron {cron}", created_at=created)) is skipped
@@ -1094,6 +1097,22 @@ def test_the_listing_says_it_was_read_only_when_it_was(record, tmp_path):
         "evening.yml", "morning.yml", "service-watch.yml"]
     none = sw.watch(docs, ALERT)["scheduler"]
     assert (none["listing"], none["reason"], none["listing_answer"]["alert"]) == (sw.UNKNOWN, sw.NO_TOKEN, False)
+
+
+def test_a_listing_never_asked_is_never_said_to_have_been_read(record, monkeypatch):
+    """With a token but nothing to ask from -- the record gives no instant, no morning is due, no watch slot is
+    behind -- the listing is ``not_asked``: neither read, nor an alert."""
+    bare = copy.deepcopy(record)
+    del bare["run"]["calendar"], bare["run"]["delivery"]
+    monkeypatch.setattr(sw, "previous_watch_slot", lambda now: None)
+    sched = sw.scheduler(bare, None, encode(bare), ALERT - SECOND, github=Listing())
+    answer = sched["listing_answer"]
+    assert (sched["listing"], answer["judgement"], answer["alert"]) == (sw.LISTING_NOT_ASKED, sw.LISTING_NOT_ASKED, False)
+    assert "the record gives no instant to list the runs from" in sched["reason"]
+    assert not [c for c in answer["calls"] if c["asked"]]
+    # and one that was asked and read says read
+    read = sw._listing_answer(Listing(), [{"workflow": "evening.yml", "asked": True, "read": True, "reason": None}])
+    assert (read["listing"], read["alert"]) == (sw.LISTING_READ, False)
 
 
 @pytest.mark.parametrize("raises", [http.client.IncompleteRead(b"cut"), http.client.BadStatusLine("x"),
