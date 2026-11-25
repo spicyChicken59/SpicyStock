@@ -262,10 +262,13 @@ The first two matter most. Read them twice.
   16 October, stays listed until a source can be captured. A passed review
   date never clears a stock.
 - SpicyStock reads no company news. Its earnings warning is an estimate
-  from SEC filings, it runs only for published tickets, and it never
-  refuses one. On a night with no ticket, which is most nights, no stock
-  gets an earnings, 8-K or halt check; the registry still blocks the stocks
-  it lists, and the issuer check reads only the plans it blocked.
+  from SEC filings beside each published ticket, and it never refuses one.
+  From 25 November 2026 the record's candidate checks (`candidate_checks`)
+  read the same estimate and 8-K items, the merger and tender filings and
+  the iex bar for up to 80 of the night's candidates, whatever the light,
+  as flags only: they change no ticket, and a name they could not read is
+  unknown, never clear. The halt check still reads tickets alone, and the
+  issuer check only the plans the registry blocked.
 - **What this means for you:** the event check of section 8.2 is yours, for
   every candidate, every time. "Not in the registry" is not "clear".
 - **Live value:** the brief's section "Event registry and coverage"
@@ -1091,7 +1094,9 @@ you say which item.
 2. **Earnings inside the hold.** The hold is five sessions, day 1 being the
    entry day. Find the company's own announced date. A calendar site is a
    pointer only. SpicyStock's own line, where there is one, is an estimate
-   from last year's filing and exists for tickets only. A hit, or a date
+   from last year's filing: a ticket's is beside its order, and a
+   candidate's is a flag in the record's candidate checks
+   (`candidate_checks`, up to 80 names a night). A hit, or a date
    not established for a company that has not reported this quarter:
    AVOID, or a plan to be out before the report. If earnings caused the
    burst, say so: that is a different setup.

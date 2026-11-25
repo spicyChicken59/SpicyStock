@@ -43,7 +43,7 @@ from pathlib import Path
 
 import pytest
 
-from src import morning_service_journal, morning_service_report, quality_ledger, reader, report
+from src import candidate_checks, morning_service_journal, morning_service_report, quality_ledger, reader, report
 
 ROOT = Path(__file__).resolve().parents[1]
 #: The 22 October publication, by its whole object id: a shallow checkout can
@@ -67,8 +67,13 @@ BASELINE = {"burst": (4, 28641), "funnel_row": (6, 203), "signal": (7, 1027), "b
 #: fixed number of sentences and a bounded list of revisions -- added after the ceiling was
 #: measured. Each is carried once, in the record and the projection, and is taken out of the
 #: record's rest, which would otherwise spread it over every burst of the design point. A block
-#: that grows with the candidates does not belong here.
-NIGHTLY = (("scorecard_reading",), ("run", "sec_flags"), ("run", "cross_check"), ("run", "go_live"), ("run", "trigger"))
+#: that grows with the candidates belongs here only at its own byte bound (``AT_BOUND``).
+NIGHTLY = (("scorecard_reading",), ("run", "sec_flags"), ("run", "cross_check"), ("run", "go_live"), ("run", "trigger"),
+           ("candidate_checks",))
+#: A nightly block that grows with the night's candidates up to a byte bound of its own, whatever
+#: the burst count: carried at that bound, never at the fixture's size, so the design point holds
+#: the night on which every one of its rows is at its longest (src/candidate_checks.py).
+AT_BOUND = {("candidate_checks",): candidate_checks.MAX_BLOCK_BYTES}
 BASELINE_COMMIT = "3ee0e427ecb42a972715736cd893e74ab8bedfaa"
 BASELINE_BLOB = "579481ffe341f904568bc38d237cdf179d567269"
 #: The components whose total is a whole record's rest: their growth is spread over its bursts.
@@ -154,7 +159,8 @@ def components(data) -> dict:
         if len(path) == 2:
             rest[path[0]] = holder = dict(holder)
         if path[-1] in holder:
-            nightly += len(compact(holder.pop(path[-1])))
+            value = holder.pop(path[-1])
+            nightly += AT_BOUND.get(path, len(compact(value)))
     ledger_rest = quality_ledger.build({**data, "bursts": [], "rules": {}}, "0" * 64, [])
     return {"burst": (len(bursts), sum(bursts)),
             "funnel_row": (len(funnel), sum(len(compact(r)) for r in funnel)),

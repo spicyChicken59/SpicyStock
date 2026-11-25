@@ -7,6 +7,9 @@
    SEC current-report items (src/earnings_risk.py items_of), printed verbatim
    under the earnings sentence; a version-1 record says the check predates it,
    and a row without a readable items sentence is never read as no item.
+   The candidate checks (src/candidate_checks.py) are one Method line, the
+   block's own sentence; a record from before them says what it did not read,
+   and the page prints no per-candidate flag of its own.
    Lane B: writes no scratch record, reads no clipboard. */
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -70,6 +73,10 @@ export async function checkEarnings({ browser, base, open, check, eq, shotsDir }
       const method = await methodOf(page);
       check(`${where}: Method prints the block's own sentence`, method.includes(full.run.earnings.sentence), full.run.earnings.sentence);
       check(`${where}: which counts the tickets by their current reports`, /SEC current reports \(8-K\)[^.]*1 with a material item/.test(full.run.earnings.sentence), full.run.earnings.sentence);
+      // the candidate checks (src/candidate_checks.py): the block's own sentence, once, and no flag of the page's
+      const cand = await page.locator('[data-method-line="candidate-checks"]').evaluateAll((n) => n.map((x) => x.textContent));
+      eq(`${where}: Method prints the candidate checks' own sentence, once`, cand, [full.candidate_checks.sentence]);
+      check(`${where}: which names the non-ticket names it read`, /3 reviewed bursts/.test(full.candidate_checks.sentence) && /flags only/.test(full.candidate_checks.sentence), full.candidate_checks.sentence);
       check(`${where}: nothing scrolls sideways`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
       const body = await page.locator('body').innerText();
       check(`${where}: nothing prints undefined or NaN`, !/\bundefined\b|\bNaN\b/.test(body), (body.match(/.{0,40}(undefined|NaN).{0,40}/) || [''])[0]);
@@ -145,6 +152,30 @@ export async function checkEarnings({ browser, base, open, check, eq, shotsDir }
         const method = await methodOf(page);
         check(`${name}: Method says so in its own words`, method.includes(methodWords), method.slice(0, 200));
       }
+      const body = await page.locator('body').innerText();
+      check(`${name}: nothing prints undefined or NaN`, !/\bundefined\b|\bNaN\b/.test(body), (body.match(/.{0,40}(undefined|NaN).{0,40}/) || [''])[0]);
+      eq(`${name}: page errors`, [...errors], []);
+    } finally { await context.close(); }
+  }
+
+  // ---- the candidate checks under shapes the generator never writes: a record
+  // from before the block says what it did not read; a block the page cannot
+  // read is said so, and no candidate is said to be checked
+  const candidateCases = [
+    ['cand-before', (d) => { delete d.candidate_checks; delete d.rules.candidate_checks; }, 'this record predates the candidate checks; no name beyond its tickets and listed setups was read'],
+    ['cand-block', (d) => { d.candidate_checks = 'x'; }, 'a candidate-checks block in a shape this page cannot read'],
+    ['cand-blank', (d) => { d.candidate_checks.sentence = ''; }, 'a candidate-checks block in a shape this page cannot read'],
+  ];
+  for (const [name, mutate, words] of candidateCases) {
+    const record = clone(full); mutate(record);
+    const r = routed(name, record);
+    const { page, context, errors } = await open(browser, base, r.url, NOW, 1280,
+      { reducedMotion: 'reduce', lens: 'all', hash: '#/method', beforeLoad: r.beforeLoad });
+    try {
+      await page.waitForTimeout(250);
+      const cand = await page.locator('[data-method-line="candidate-checks"]').evaluateAll((n) => n.map((x) => x.textContent));
+      check(`${name}: Method says so in one line of its own words`, cand.length === 1 && cand[0].includes(words), JSON.stringify(cand));
+      check(`${name}: and never the fixture's sentence`, !cand.includes(full.candidate_checks.sentence));
       const body = await page.locator('body').innerText();
       check(`${name}: nothing prints undefined or NaN`, !/\bundefined\b|\bNaN\b/.test(body), (body.match(/.{0,40}(undefined|NaN).{0,40}/) || [''])[0]);
       eq(`${name}: page errors`, [...errors], []);

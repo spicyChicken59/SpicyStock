@@ -76,6 +76,32 @@ def names_of(tickets: list[dict], top: list) -> list[dict]:
     return out
 
 
+def read_name(get, mapping, mapping_error, name: dict, since: str) -> dict:
+    """One name's row from the night's mapping and its SEC filing list, through
+    ``get(url)``: what ``collect()`` writes for each name, and what the
+    candidate checks read for every other one. A source failure is an unknown
+    row, never a raise."""
+    from src import earnings_risk
+    if mapping_error is not None:
+        return _row(name, UNKNOWN, reason=mapping_error)
+    identities = mapping.get(name["ticker"], [])
+    if len(identities) != 1:
+        return _row(name, UNKNOWN, reason="not_mapped" if not identities else "identity_ambiguous")
+    cik = identities[0]["cik"]
+    try:
+        raw = get(earnings_risk.SUBMISSIONS_URL.format(cik=cik))
+        value = earnings_risk._decode(raw)
+        if not isinstance(value.get("tickers"), list) or name["ticker"] not in value["tickers"]:
+            raise earnings_risk.SourceError("not_mapped")
+        recent = value["filings"]["recent"]
+        flags = [r for r in _rows(recent) if r["filing_date"] >= since]
+    except earnings_risk.SourceError as exc:
+        return _row(name, UNKNOWN, reason=exc.code, cik=cik)
+    except (KeyError, TypeError, AttributeError):
+        return _row(name, UNKNOWN, reason="rows_unreadable", cik=cik)
+    return _row(name, FLAGGED if flags else CLEAR, cik=cik, filings=flags)
+
+
 def collect(names: list[dict], session: str, *, fetch=None, now=None, deadline_seconds: float | None = None) -> dict:
     """One night's flags. A source failure is an unknown row, never a raise."""
     import time
@@ -91,11 +117,12 @@ def collect(names: list[dict], session: str, *, fetch=None, now=None, deadline_s
         fetch = fetch or earnings_risk.FETCH or earnings_risk._default_fetch(deadline)
         started = time.monotonic()
 
+        call = earnings_risk.counted(block, fetch)
+
         def get(url):
             if time.monotonic() - started >= deadline:
                 raise earnings_risk.SourceError("time_budget")
-            block["requests"] += 1
-            return fetch(url)
+            return call(url)
 
         try:
             mapping, mapping_error = earnings_risk.parse_mapping(get(issuer_evidence.MAPPING_URL)), None
@@ -105,28 +132,7 @@ def collect(names: list[dict], session: str, *, fetch=None, now=None, deadline_s
             if i >= MAX_NAMES:
                 block["rows"].append(_row(name, UNKNOWN, reason="not_checked"))
                 continue
-            if mapping_error is not None:
-                block["rows"].append(_row(name, UNKNOWN, reason=mapping_error))
-                continue
-            identities = mapping.get(name["ticker"], [])
-            if len(identities) != 1:
-                block["rows"].append(_row(name, UNKNOWN, reason="not_mapped" if not identities else "identity_ambiguous"))
-                continue
-            cik = identities[0]["cik"]
-            try:
-                raw = get(earnings_risk.SUBMISSIONS_URL.format(cik=cik))
-                value = earnings_risk._decode(raw)
-                if not isinstance(value.get("tickers"), list) or name["ticker"] not in value["tickers"]:
-                    raise earnings_risk.SourceError("not_mapped")
-                recent = value["filings"]["recent"]
-                flags = [r for r in _rows(recent) if r["filing_date"] >= since]
-            except earnings_risk.SourceError as exc:
-                block["rows"].append(_row(name, UNKNOWN, reason=exc.code, cik=cik))
-                continue
-            except (KeyError, TypeError, AttributeError):
-                block["rows"].append(_row(name, UNKNOWN, reason="rows_unreadable", cik=cik))
-                continue
-            block["rows"].append(_row(name, FLAGGED if flags else CLEAR, cik=cik, filings=flags))
+            block["rows"].append(read_name(get, mapping, mapping_error, name, since))
         block["retrieved_at"] = clock().astimezone(timezone.utc).isoformat()
     block["status"] = status_of(block["rows"])
     block["sentence"] = sentence(block)

@@ -8,7 +8,7 @@
   "risk_pct": 0.5,
   "slots_used": 4
  },
- "content_sha256": "296c1ea5486f12e402d49f322239056a090bbf36d8eac8aa2b9aec27f4fa696b",
+ "content_sha256": "4242baa6938ea19fae21d897ad7f96b25e590e73d1d5a87c69ec081911f43366",
  "entry_window": {
   "cutoff_at": "2026-09-11T10:00:00-04:00",
   "opens_at": "2026-09-11T09:30:00-04:00",
@@ -109,13 +109,13 @@
  },
  "source": {
   "applicable_session": "2026-09-11",
-  "context_sha256": "d8edc226a768ea86001350b0b852edbd6a0ec2d6d39ed78ae3cd25741210198b",
-  "data_sha256": "44c4b75c20b929ce3a00fb968235cc4aa428ce3636514cd0867c33d0263b3c7b",
+  "context_sha256": "acb56d48f9b252786ac8bb45fc37a7ad6fcfb788643c77724e8be84d17a2ab36",
+  "data_sha256": "7eaa405a6cbe278fdc92f5bcea29d5e6bb2931ab7a872e5550d762a9fc4f7ff7",
   "dry_run": false,
   "fixture": true,
-  "picks_sha256": "82503bdf5b1821ab7c71cb5d6a50bf4f14a5286d5d8b5065b8a7731c9883f952",
+  "picks_sha256": "d27bdea5107987e319680e914fa7c9e22e23e094ebc7b8b59a7f44c3d364dfae",
   "published_at": "2026-09-10T22:30:00+00:00",
-  "rules_version": "afb20aa72afc",
+  "rules_version": "5cb341cf2a8c",
   "run_id": null,
   "run_problems": [],
   "run_status": "ok",
@@ -174,7 +174,7 @@
      "status": "pass"
     }
    ],
-   "content_sha256": "36d15134aee189f286cf1c2601842f37a35206fbbec1ca55a92b088e9fd75a49",
+   "content_sha256": "38d4fdf77afb5908cc6f14730f21dd700e132bdc367a21e73f1cf4f1f1955d7f",
    "entry": {
     "cancel_if_unfilled_at": "2026-09-11T10:00:00-04:00",
     "limit_price": 126.47,
@@ -189,7 +189,7 @@
     "valid_until": "2026-09-11T10:00:00-04:00"
    },
    "evidence": {
-    "evidence_id": "9658e8a71d1bad806720e453075bd51bde21ad489831b8c12f0ebf8ae41e41af",
+    "evidence_id": "eaea3f894a27d7ef6332dd0664f71cd4ba0182a518904043cc3f7d9649424306",
     "plan_sha256": "c44e7f094a94a4b7287add31fafb8cad4455f0582c4bc2fcf2f3c2b6769f601c"
    },
    "exit_plan": {
@@ -490,7 +490,7 @@
     "risk_budget_usd": 25.0,
     "risk_usd": 20.2
    },
-   "rules_version": "afb20aa72afc",
+   "rules_version": "5cb341cf2a8c",
    "session": "2026-09-10",
    "setup_type": "burst",
    "shares": 4,

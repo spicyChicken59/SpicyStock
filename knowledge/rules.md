@@ -251,12 +251,13 @@ Written by `burst_plan()` from the signal bar's close, low and high.
 
 > Example (production account since the 4 Nov 2026 session: `ACCOUNT_EQUITY` 30,000 and `RISK_PCT` 0.5): the full budget is $150. A burst ticket risks $75 on a GREEN night and $37.50 on a YELLOW night, half of that again with a hazard.
 
-## 11. Events and earnings (`src/event_risk.py`, `src/earnings_risk.py`)
+## 11. Events and earnings (`src/event_risk.py`, `src/earnings_risk.py`, `src/candidate_checks.py`)
 
 | Rule | Class |
 |---|---|
 | A stock in the hand-kept registry `knowledge/event-risk.json` loses its order: the plan stays for research and no ticket is offered (`event_risk.apply()`). The registry lists pending cash acquisitions someone found and sourced. It is not a news feed, and a stock that is not in it has not been cleared. | P |
 | Each ticket carries an earnings warning and a list of the issuer's recent current reports, read from its regulatory filings (`earnings_risk.collect()`). The warning never withholds, sizes or cuts a ticket. A stock the filings could not be read for is unknown, never clear. | P |
+| Up to `candidate_checks.MAX_NAMES` = 80 of the night's candidates -- the tickets, the listed setups, the reviewed bursts, the admitted trade-band bursts without a veto, then the also-quiet coils -- carry the same earnings estimate and recent current reports, their recent merger and tender filings and their signal-day bar read again from a second price feed, as flags (`candidate_checks.collect()`). A flag changes no plan, ticket or order; a name it could not read is unknown, never clear. | P |
 
 ## 12. Setting up, the anticipation list (`src/watchlist.py`, `src/plan.py`)
 

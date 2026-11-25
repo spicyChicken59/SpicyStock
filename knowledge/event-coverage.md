@@ -11,6 +11,16 @@ One rule holds throughout: **"not established" is never "clear".** A check
 that did not run, could not read its source or found nothing in a bounded
 window has cleared nothing.
 
+**Since 25 November 2026: the candidate checks.** Every evening also reads, as
+flags for a reader, the same earnings estimate and 8-K items, the SEC flags'
+merger, tender and deal filings and the signal-day bar again from the iex feed
+for up to 80 of the night's candidates, whatever the light: the tickets, the
+listed setups, the reviewed bursts, the admitted trade-band bursts without a
+veto, then the also-quiet coils (`candidate_checks` in the record,
+`src/candidate_checks.py`). A flag changes no plan, ticket or order; a name it
+could not read is unknown, never clear. Sections 1 and 2 below describe the
+code of 19 November, before it; the row the table adds names it.
+
 ## 1. What SpicyStock checks, and for whom
 
 **What SpicyStock checks about events, and for whom.** (1) A manual registry
@@ -34,6 +44,7 @@ The same, check by check:
 | Earnings estimate | published tickets only, at most 8 a night | SEC's filing list for the issuer: its quarterly-results reports (Form 8-K, item 2.02) | A warning beside the ticket. Last year's report date moved forward 364 days, give or take 7, is placed against the ticket's five-session hold. It is an estimate, never an announced date; `unknown` is never clear. The policy is `warn_only`: it never refuses, sizes or cuts a ticket. | `src/earnings_risk.py` |
 | Recent 8-K items | the same tickets, from the same filing list | the item codes of each Form 8-K filed in the 14 days before the signal or since | A warning. It names the report when one carries item 1.01, 1.03, 2.01, 3.01 or 5.01 (a material agreement, a bankruptcy, a completed acquisition or disposition, a delisting notice, a change in control). An item names a kind of event, not what the filing says. | `src/earnings_risk.py` (`MATERIAL_ITEMS`) |
 | Issuer documents | tickets and registry-blocked plans, at most 8 issuers | SEC only: up to 3 current reports (8-K, 6-K and their amendments) from the last 365 days with up to 2 exhibits each, and the merger and tender forms on file (PREM14A, DEFM14A, SC TO-T, SC 14D9 and their amendments) | Excerpts and a list on the Morning desk. The receipt's own coverage block says issuer news is `not_cleared` and the earnings calendar `not_checked`. | `src/issuer_evidence.py` |
+| Candidate checks (from 25 November 2026) | up to 80 names a night in role order: tickets, listed setups, reviewed bursts, admitted trade-band bursts without a veto, also-quiet coils | the same SEC filing list (one shared reader, each URL asked once) and one iex batch | Flags for a reader beside the record: SEC merger, tender and deal filings, the earnings estimate and 8-K items against the hold a next-session entry would have, the iex bar against the sip bar. It changes no plan, ticket or order; unknown is never clear. | `src/candidate_checks.py` |
 | Halts | admitted tickets, on the morning the check runs | Nasdaq Trader's trading-halt feed | A halt reported with no trading resumption marks the ticket as blocked for entry, and the page withholds its order-copy control. Nothing is read when no morning check runs inside its window. | `src/morning_halts.py` |
 | Directory flags | every stock in the universe | the exchange directory's sector, industry and country | Two warnings, `biotech` and `foreign`. `biotech` is set for the whole Health Care sector and is not a classification of the company. Neither refuses anything. | `src/universe.py` (`flags_for()`) |
 

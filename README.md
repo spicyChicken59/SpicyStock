@@ -1562,17 +1562,21 @@ nothing. Use the separate morning-observation path for dated quote checks.
 
 `knowledge/event-coverage.md` says it check by check. (1) A manual registry of
 known cash acquisitions blocks a ticket; it is reviewed by hand, and a passed
-review date never clears an entry. (2) For published tickets only: an earnings
+review date never clears an entry. (2) For published tickets: an earnings
 estimate from SEC results filings (a warning, never a refusal) and the 8-K item
-codes of the last 14 days. (3) For tickets and registry-blocked plans only: up
-to three recent SEC current reports and the merger and tender forms on file.
-(4) On the morning of a ticket, if a morning check runs: Nasdaq's halt feed.
-Nothing reads company press releases, news wires, announced earnings dates,
-offerings, FDA dates, index changes, lockups or dividends, and on a night with
-no ticket and no registry-blocked plan (26 of the 48 sessions published from
-11 September to 17 November 2026) checks 2 to 4 run for no stock at all. Every
-candidate needs the outside analyst's ten-item event check before a trade;
-"not established" is never "clear".
+codes of the last 14 days; and, as flags for a reader, the same estimate and
+items, the merger, tender and deal filings and the signal-day bar read again
+from the iex feed for up to 80 of the night's candidates, whatever the light
+(see *Candidate checks* below). (3) For tickets and registry-blocked plans
+only: up to three recent SEC current reports and the merger and tender forms
+on file. (4) On the morning of a ticket, if a morning check runs: Nasdaq's
+halt feed. Nothing reads company press releases, news wires, announced
+earnings dates, offerings, FDA dates, index changes, lockups or dividends, and
+on a night with no ticket and no registry-blocked plan (26 of the 48 sessions
+published from 11 September to 17 November 2026, before the candidate checks)
+checks 2 to 4 ran for no stock at all. Every candidate needs the outside
+analyst's ten-item event check before a trade; "not established" is never
+"clear".
 
 ### Earnings warnings
 
@@ -1644,6 +1648,50 @@ the page says the check predates it. A closed night carries the previous
 publication's block only when it validates under the current rules, so the
 first closed night after a version change reads SEC again for the carried
 tickets rather than carry a shape its own rules do not write.
+
+### Candidate checks
+
+The tickets' own checks read the names the record publishes an order or a
+listed setup for. The candidate checks (`candidate_checks`,
+`src/candidate_checks.py`, policy `flag_only`) read the same three things for
+up to 80 names a night, taken in this order and once each by stage and ticker:
+every ticket, every listed setup, every burst the review selected, every burst
+whose mechanical grade is in the archived trade band with no quality veto that
+the discovery admission admits (each in the record's rank order), then the
+also-quiet coils. A name past the bound is counted by role and gets no row.
+Each row carries the name's recent merger, tender and deal filings (the SEC
+flags' forms, items and window; the newest 4 kept, with the count beside
+them), its earnings estimate and recent 8-K items (the earnings warning's own
+rule, read against the hold window a next-session entry would have; the first
+4 material items kept, with the count), and its signal-day bar read again from
+the iex feed (the cross-check's own tolerances). A name a ticket's block
+already read carries that block's reading, and the validator holds the two
+equal.
+
+The night has ONE SEC reader and ONE iex batch. The reader asks each SEC URL
+once and keeps its answer, so the earnings warning, the SEC flags and the
+candidate checks read the same filing list and each block counts only the
+requests it made (an answer the reader already held is not one). The tickets
+are read first; the reader begins no request past 150 seconds from its start
+or past the issuer transport's 96 requests for the night, and a name past
+either is unknown with its reason, never clear: 80 names cost one mapping and
+one filing list each, plus an older file where one is needed. The iex batch is
+one request for every distinct name, retried once as every bars request is; a
+batch that failed twice reads `iex_unavailable` on every row, never
+`no_iex_bar`, and the tickets' own cross-check reads the same batch.
+
+It is a flag and nothing else: it is read once the plans and the allocation are
+final, it changes no plan, ticket, funnel stage, cash budget or `orders.json`
+field, a collection that fails or that its validator refuses becomes the
+block with nothing read for it, and it never fails a night. The block is
+bounded at 262144 bytes: past that, rows no ticket's block stands behind are
+shed to not checked from the end. Its sentence carries counts and at most 3
+names for each kind of flag; the page's Method view and the mail print it
+verbatim, and the brief carries each candidate's row beside it. A closed night
+carries the previous block while it still holds under tonight's record.
+`report.validate()` re-derives the names from the record and holds every row
+to its own fields under rules that archive the family; a record from before it
+is asked for none.
 
 ### Morning observations
 
@@ -3297,6 +3345,7 @@ src/            history.py (public recovery and coverage)
                 orders.py (the execution handoff: orders.json and its positions template each night, and the morning's go/cancel file, from committed bytes and no clock) · schema_check.py (the JSON Schema subset the handoff's schema uses; any other keyword is refused)
                 sec_flags.py (each ticket's and listed setup's recent tender-offer, merger-proxy and deal 8-K filings, named by form and item; a flag that holds a ticket for review in orders.json, never a refusal or a clearance)
                 cross_check.py (each ticket's signal-day bar read again from the iex feed; prices within 0.5% and the two feeds' volume ratios within 10%, or the ticket is blocked in orders.json)
+                candidate_checks.py (the night's candidates, up to 80, read against SEC filings, the earnings estimate and the iex feed through one shared SEC reader and one iex batch; flags for a reader, never a gate; unknown never clear)
                 brief.py (the analyst's daily brief: brief.json and brief.md, a function of the record's bytes, the pick ledger's bytes and the run's model-record block; no clock, no network)
                 model_record.py (a reading of the model's own record for the daily brief: tickets against distinct setups, the model account each ticket was sized against, a stop booked at the stop beside its close and its low; held to the scorecard's rows, changes nothing; python -m src.model_record --docs docs)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · morning_service.py · morning_service_worker.py · morning_service_journal.py · morning_service_report.py · morning_host.py · morning_host_wsgi.py · reader.py · issuer_evidence.py

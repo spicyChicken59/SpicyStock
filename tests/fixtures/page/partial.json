@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "afb20aa72afc"
+  "rules_version": "5cb341cf2a8c"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -954,7 +954,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "3e7e63a79f219bd9206d7a62ea79b211a1d65a8114f2385f273bc6bf4ca063f5"
+   "context_sha256": "bb2721845db6e1b57d9222556378bd09b4ff01f7581a7f0c3259bd1ffad57bc7"
   },
   "earnings": {
    "version": 2,
@@ -1697,6 +1697,25 @@
    "volume_basis": "ratio_to_prior_session",
    "max_names": 20
   },
+  "candidate_checks": {
+   "version": 1,
+   "policy": "flag_only",
+   "max_names": 80,
+   "roles": [
+    "ticket",
+    "listed",
+    "reviewed",
+    "candidate",
+    "also_quiet"
+   ],
+   "deadline_seconds": 150,
+   "max_requests": 96,
+   "max_block_bytes": 262144,
+   "max_filings": 4,
+   "max_material": 4,
+   "sentence_names": 3,
+   "unknown_policy": "never_clearance"
+  },
   "go_live": {
    "version": 2,
    "on_time_sessions": 10,
@@ -2296,7 +2315,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "afb20aa72afc"
+  "replay_rules_version": "5cb341cf2a8c"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -2569,6 +2588,24 @@
    "Real trades are not public: an execution agent fills a private copy of docs/positions-template.json, and tools/positions_compare.py reads it beside the published record on the owner's computer, real R beside model R."
   ]
  },
+ "candidate_checks": {
+  "version": 1,
+  "policy": "flag_only",
+  "session": "2026-09-10",
+  "since": "2026-08-11",
+  "max_names": 80,
+  "names": {},
+  "unchecked": {},
+  "rows": [],
+  "shed": 0,
+  "requests": {
+   "sec": 0,
+   "sec_reused": 0,
+   "iex": 0
+  },
+  "status": "not_applicable",
+  "sentence": "Candidate checks: no ticket, listed setup or admitted candidate to check."
+ },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
@@ -2588,6 +2625,7 @@
   "scorecard": "All retained published plans in the stated window, including pending and missing evidence. Disjoint outcome counts reconcile to plans; rates use resolved plans alone, with an explicit denominator and minimum sample. Public model results, independent of personal selections.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
   "scorecard_reading": "The scorecard read honestly, beside its own numbers, which do not move: the model record's distinct setups, the model account each ticket was sized against, the stopped tickets at the session's close and low beside the stop they were booked at, the breadth figures this record computes differently from the publication before it, and where real trades are compared with the model (privately). Its sentences are printed verbatim.",
+  "candidate_checks": "Each night's candidates read against SEC and a second price source, as flags for a reader: up to max_names names -- every ticket, every listed setup, every burst the review selected, every admitted burst in the trade band without a veto, then the also-quiet coils -- each with its recent merger, tender and deal filings, its earnings estimate from SEC results filings and its recent 8-K items, and its signal-day bar read again from the iex feed. A name past the bound is counted by role. A name the tickets' own blocks read carries their reading. It changes no plan, ticket or order, unknown is never clear, and its sentence is printed verbatim.",
   "funnel": "Where every discovered reaction candidate and every listed anticipation setup stopped: one terminal stage each, in the order the run applies its gates, so the stage counts sum to the discovered count. Derived from the fields above and re-derived by the validator; the labels the page and the mail print travel with it. A stage is the record's own accounting of its gates, never a judgement of the setup and never an entry.",
   "observations": "Public coverage of every published saveable signal, independent of local saves. Each signal keeps its own identity and 21-calendar-day window. Symbols carry the latest real bar plus up to 20 dated observations from already-fetched frames; missing bars stay missing, and missing frames retain earlier actual observations. This is research coverage, never a quote feed or personal trading history.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."

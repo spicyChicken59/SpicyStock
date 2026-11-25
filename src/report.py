@@ -192,6 +192,13 @@ CONTRACT: dict[str, str] = {
                          "tickets at the session's close and low beside the stop they were booked at, the breadth "
                          "figures this record computes differently from the publication before it, and where real "
                          "trades are compared with the model (privately). Its sentences are printed verbatim.",
+    "candidate_checks": "Each night's candidates read against SEC and a second price source, as flags for a reader: "
+                        "up to max_names names -- every ticket, every listed setup, every burst the review selected, "
+                        "every admitted burst in the trade band without a veto, then the also-quiet coils -- each with "
+                        "its recent merger, tender and deal filings, its earnings estimate from SEC results filings "
+                        "and its recent 8-K items, and its signal-day bar read again from the iex feed. A name past "
+                        "the bound is counted by role. A name the tickets' own blocks read carries their reading. It "
+                        "changes no plan, ticket or order, unknown is never clear, and its sentence is printed verbatim.",
     "funnel": "Where every discovered reaction candidate and every listed anticipation setup stopped: one "
               "terminal stage each, in the order the run applies its gates, so the stage counts sum to the "
               "discovered count. Derived from the fields above and re-derived by the validator; the labels "
@@ -204,6 +211,10 @@ CONTRACT: dict[str, str] = {
                     "This is research coverage, never a quote feed or personal trading history.",
     "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused.",
 }
+
+#: the keys a record carries only under rules that write them; every other key of
+#: CONTRACT is in every record
+OPTIONAL_KEYS = ("scorecard_reading", "candidate_checks")
 
 # --- small formatters ----------------------------------------------------------
 
@@ -734,10 +745,11 @@ def validate(data: dict) -> None:
     faults.extend(funnel.faults(data))
     faults.extend(intraday.record_faults(data))
     faults.extend(earnings_risk.record_faults(data))
-    from src import scorecard_reading, sec_flags, cross_check, go_live
+    from src import scorecard_reading, sec_flags, cross_check, go_live, candidate_checks
     faults.extend(scorecard_reading.faults(data))
     faults.extend(sec_flags.faults(data))
     faults.extend(cross_check.faults(data))
+    faults.extend(candidate_checks.faults(data))
     faults.extend(go_live.faults(data))
     verdict = _get(data, "breadth", "regime", "verdict")
     if verdict is not None and verdict not in REGIMES:
@@ -864,8 +876,12 @@ def build(run: dict, account: dict, rules: dict, breadth: dict, bursts: list[dic
         # the pipeline replaces this with the block it computes from the night's bars
         # (pipeline.read_scorecard()); a record built without them says it was not computed
         data["scorecard_reading"] = scorecard_reading.build(None, None, data)
-    data["_contract"] = dict(CONTRACT) if "scorecard_reading" in data else \
-        {k: v for k, v in CONTRACT.items() if k != "scorecard_reading"}
+    if isinstance(rules.get("candidate_checks"), dict):
+        # the pipeline replaces this with the block it reads once the record is composed
+        # (candidate_checks.night()); a record built without a reader carries nothing read
+        from src import candidate_checks   # lazy, as funnel above
+        data["candidate_checks"] = candidate_checks.unread(data)
+    data["_contract"] = {k: v for k, v in CONTRACT.items() if k not in OPTIONAL_KEYS or k in data}
     validate(data)
     return data
 
@@ -1258,6 +1274,16 @@ def _funnel_block(data: dict) -> str:
     return f'<div><p style="{_S_MUTED}">// where the candidates stopped</p><p style="{_S_MUTED}">{esc(sentence)}</p></div>'
 
 
+def _candidate_checks_block(data: dict) -> str:
+    """The night's candidates read against SEC and the iex feed, in the
+    record's own sentence (src/candidate_checks.py): the same words the page
+    prints, and nothing for a record from before the block."""
+    sentence = _text(_get(data, "candidate_checks", "sentence"))
+    if not sentence:
+        return ""
+    return f'<div><p style="{_S_MUTED}">// candidate checks</p><p style="{_S_MUTED}">{esc(sentence)}</p></div>'
+
+
 def _scorecard_reading_block(data: dict) -> str:
     """The scorecard read honestly, in the record's own sentences: the same
     words the page prints beside the scorecard, whose numbers do not move."""
@@ -1375,6 +1401,7 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
     out.append(_admission_block(run))
     out.append(_delivery_block(run))
     out.append(_funnel_block(data))
+    out.append(_candidate_checks_block(data))
     out.append(_scorecard_reading_block(data))
     out.append(f'<p style="margin:16px 0 0">Full plan, charts and the order sheet: '
                f'<a href="{esc(PAGE_URL)}" style="{_S_LINK}">{esc(PAGE_URL)}</a></p>')

@@ -749,8 +749,11 @@ def test_coverage_is_counted_and_no_name_is_ever_called_clear():
     out, md = json.loads(json_raw), md_raw.decode()
     events = out["events"]
     assert events["listed"] == {"bursts": 7, "setting_up": 1, "also_quiet": 0}
-    assert events["earnings"]["listed_names"] == 8 and events["earnings"]["listed_names_not_checked"] == 7
+    # the ticket's own warning and the candidate checks' rows (a ticket, a listed setup, three
+    # reviewed bursts): three listed names are in neither
+    assert events["earnings"]["listed_names"] == 8 and events["earnings"]["listed_names_not_checked"] == 3
     assert events["earnings"]["ticket_rows"] == 1 and events["earnings"]["status"] == "checked"
+    assert events["earnings"]["candidate_rows"] == 5
     assert events["not_checked"] == list(brief.NOT_CHECKED) and len(brief.NOT_CHECKED) == 9
     assert events["status_words"] == brief.EVENT_STATUS_WORDS
     assert "NOT a clearance" in brief.EVENT_STATUS_WORDS["not_in_registry"]

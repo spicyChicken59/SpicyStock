@@ -519,8 +519,16 @@ def _et(value) -> str:
     return f"{_short(moment.date().isoformat())} {hour}:{moment.minute:02d} {'AM' if moment.hour < 12 else 'PM'} ET"
 
 
-def sentence(row) -> str:
-    """What the page and the mail print beside the ticket, verbatim."""
+#: the words for the hold window: a ticket's own, and the one a next-session entry would have
+#: for a candidate the record published no ticket for (``src/candidate_checks.py``)
+TICKET_HOLD = "this ticket's hold window"
+CANDIDATE_HOLD = "the hold window a next-session entry would have"
+
+
+def sentence(row, hold: str = TICKET_HOLD) -> str:
+    """What the page and the mail print beside the ticket, verbatim. ``hold``
+    names the hold window: a ticket's by default, and ``CANDIDATE_HOLD`` for a
+    candidate the record published no ticket for."""
     days = row["window"]
     span = f"{_short(days[0])}–{_short(days[-1])}"
     verdict, projection = row["verdict"], row.get("projection")
@@ -528,7 +536,7 @@ def sentence(row) -> str:
     if verdict == "reported_after_signal":
         when = _et(row["observed"]["accepted_at"])
         where = ("after the signal session's close and before day 1's open" if row["placement"] == "pre_entry"
-                 else f"during this ticket's hold window {span}")
+                 else f"during {hold} {span}")
         return (f"Quarterly results (8-K item 2.02) were accepted by the SEC {where} ({when}). The release they "
                 "furnish may have come earlier, even before the signal session's open; if it came after that "
                 "close, the entry opens on the reaction. Check the release time before entry.")
@@ -541,25 +549,25 @@ def sentence(row) -> str:
     about = (f"about {_short(projection['date'])} (±{projection['slack_days']} days)" if projection else "")
     if verdict == "estimate_inside":
         where = ("before day 1, so the entry may open on the reaction" if row["placement"] == "pre_entry"
-                 else f"inside this ticket's hold window {span}")
+                 else f"inside {hold} {span}")
         return f"Earnings estimated {about}, {source}: {where}.{tail}"
     if verdict == "estimate_near":
-        return f"Earnings estimated {about}, {source}: its range reaches this ticket's hold window {span}.{tail}"
+        return f"Earnings estimated {about}, {source}: its range reaches {hold} {span}.{tail}"
     if verdict == "overdue":
         if projection is None:
             return (f"No results filing (8-K item 2.02) has come since {_long(row['observed']['filing_date'])}, "
                     "longer than any gap between its earlier results filings: a report could come any day, "
-                    f"including inside this ticket's hold window {span}. Check the company's announcement before entry.")
+                    f"including inside {hold} {span}. Check the company's announcement before entry.")
         return (f"Earnings were estimated {about}, {source}, and no results filing has come since: "
-                f"a report could come any day, including inside this ticket's hold window {span}.{tail}")
+                f"a report could come any day, including inside {hold} {span}.{tail}")
     if verdict == "already_reported":
         return (f"This quarter's results were filed {_long(row['observed']['filing_date'])}; the next earnings report is "
-                f"not estimated inside this ticket's hold window {span} (an inference from filing history, "
+                f"not estimated inside {hold} {span} (an inference from filing history, "
                 "not clearance).")
     if projection is None:
-        return (f"No earnings report is estimated inside this ticket's hold window {span} from its results filings "
+        return (f"No earnings report is estimated inside {hold} {span} from its results filings "
                 "(an inference, not clearance).")
-    return (f"The next earnings report is estimated {about}, {source}: outside this ticket's hold window {span} "
+    return (f"The next earnings report is estimated {about}, {source}: outside {hold} {span} "
             "(an inference, not clearance).")
 
 
@@ -716,6 +724,10 @@ def _default_fetch(seconds):
         except Exception:  # noqa: BLE001 - a bound or a shape the transport refused
             raise SourceError("invalid_response") from None
     fetch.remaining = budget.remaining
+    # the transport's own count of the requests it began, which the night's
+    # shared reader reads (``src/candidate_checks.py``): a refusal of the
+    # transport's bounds before a request went out is not one
+    fetch.budget = budget
     return fetch
 
 
@@ -814,6 +826,55 @@ def _read(get, cik, ticker, session, clock_now):
             "retrieved": retrieved, "error": error, "reports": reports, "window": window}
 
 
+def counted(block, fetch):
+    """``fetch`` with the block's request count kept truthfully: a request is
+    counted when one was made. A fetch that says how many it made
+    (``fetch.made()``, the night's shared SEC reader,
+    ``src/candidate_checks.py``) is read for it, so an answer it already held
+    is not a request; any other fetch counts every call, as before."""
+    made = getattr(fetch, "made", None)
+
+    def call(url):
+        if made is None:
+            block["requests"] += 1
+            return fetch(url)
+        before = made()
+        try:
+            return fetch(url)
+        finally:
+            block["requests"] += made() - before
+    return call
+
+
+def read_row(get, mapping, mapping_error, ticket, session, days, clock_now, read=None) -> dict:
+    """One name's row from the night's mapping and its SEC filing list, through
+    ``get(url)``: what ``collect()`` writes for each ticket, and what the
+    candidate checks read for every other name. A source failure is an
+    unknown row, never a raise."""
+    read = {} if read is None else read
+    if mapping_error is not None:
+        return _row(ticket, session, days, clock_now(), reason="source_unavailable", error=mapping_error)
+    identities = mapping.get(ticket["ticker"], [])
+    if len(identities) != 1:
+        return _row(ticket, session, days, clock_now(),
+                    reason="not_mapped" if not identities else "identity_ambiguous")
+    cik, issuer = identities[0]["cik"], identities[0]["name"]
+    try:
+        if ticket["ticker"] not in read:
+            read[ticket["ticker"]] = _read(get, cik, ticket["ticker"], session, clock_now)
+        got = read[ticket["ticker"]]
+        result = assess(got["filings"], session, days, _iso(got["retrieved"]), got["coverage_start"],
+                        got["foreign"], got["error"])
+        return _row(ticket, session, days, got["retrieved"], result, cik=cik, issuer=issuer,
+                    sources=got["sources"], error=got["error"], filings=got["filings"],
+                    coverage_start=got["coverage_start"], foreign=got["foreign"],
+                    reports=got["reports"], window=got["window"])
+    except SourceError as exc:
+        reason = exc.code if exc.code in ("not_mapped", "rows_unreadable") else "source_unavailable"
+        return _row(ticket, session, days, clock_now(), reason=reason, cik=cik, issuer=issuer,
+                    error=exc.code if reason == "source_unavailable" else None)
+
+
 def collect(tickets, session, *, fetch=None, now=None, deadline_seconds=DEADLINE_SECONDS, _state=None) -> dict:
     """One evening's warnings. ``fetch(url) -> bytes`` raises
     :class:`SourceError` on failure; None reads SEC. A source failure is an
@@ -830,11 +891,12 @@ def collect(tickets, session, *, fetch=None, now=None, deadline_seconds=DEADLINE
         started = time.monotonic()
         fetch = fetch or FETCH or _default_fetch(deadline_seconds)
 
+        call = counted(block, fetch)
+
         def get(url):
             if time.monotonic() - started >= deadline_seconds:
                 raise SourceError("time_budget")
-            block["requests"] += 1
-            return fetch(url)
+            return call(url)
 
         mapping, mapping_error, read = None, None, {}
         try:
@@ -847,31 +909,7 @@ def collect(tickets, session, *, fetch=None, now=None, deadline_seconds=DEADLINE
             if i >= MAX_TICKETS:
                 block["rows"].append(_row(ticket, session, days, clock_now(), reason="not_checked"))
                 continue
-            if mapping_error is not None:
-                block["rows"].append(_row(ticket, session, days, clock_now(), reason="source_unavailable",
-                                          error=mapping_error))
-                continue
-            identities = mapping.get(ticket["ticker"], [])
-            if len(identities) != 1:
-                block["rows"].append(_row(ticket, session, days, clock_now(),
-                                          reason="not_mapped" if not identities else "identity_ambiguous"))
-                continue
-            cik, issuer = identities[0]["cik"], identities[0]["name"]
-            try:
-                if ticket["ticker"] not in read:
-                    read[ticket["ticker"]] = _read(get, cik, ticket["ticker"], session, clock_now)
-                got = read[ticket["ticker"]]
-                result = assess(got["filings"], session, days, _iso(got["retrieved"]), got["coverage_start"],
-                                got["foreign"], got["error"])
-                row = _row(ticket, session, days, got["retrieved"], result, cik=cik, issuer=issuer,
-                           sources=got["sources"], error=got["error"], filings=got["filings"],
-                           coverage_start=got["coverage_start"], foreign=got["foreign"],
-                           reports=got["reports"], window=got["window"])
-            except SourceError as exc:
-                reason = exc.code if exc.code in ("not_mapped", "rows_unreadable") else "source_unavailable"
-                row = _row(ticket, session, days, clock_now(), reason=reason, cik=cik, issuer=issuer,
-                           error=exc.code if reason == "source_unavailable" else None)
-            block["rows"].append(row)
+            block["rows"].append(read_row(get, mapping, mapping_error, ticket, session, days, clock_now, read))
     block["status"] = _status(block["rows"])
     block["counts"] = _counts(block["rows"])
     block["items_counts"] = _items_counts(block["rows"])

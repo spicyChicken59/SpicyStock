@@ -23,7 +23,7 @@ from src import history, breadth, charts, clock, discovery, grader, market_data,
 from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
 from src import universe, reader_coverage, followup
 from src import watchlist, allocation, event_risk, review_selection, funnel, delivery, intraday, earnings_risk, admission
-from src import sec_flags, cross_check, go_live
+from src import sec_flags, cross_check, go_live, candidate_checks
 from src import scorecard_reading
 
 log = logging.getLogger("spicystock.pipeline")
@@ -694,7 +694,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, discovery.RULES, admission.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, funnel.RULES, intraday.RULES, earnings_risk.RULES, sec_flags.RULES, cross_check.RULES, go_live.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, admission.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, funnel.RULES, intraday.RULES, earnings_risk.RULES, sec_flags.RULES, cross_check.RULES, candidate_checks.RULES, go_live.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.session_min_price": universe.MIN_PRICE,
@@ -1005,6 +1005,14 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         # a warning beside the ticket, never a refusal (src/earnings_risk.py)
         tickets = earnings_risk.tickets_of(published_carried if carried else bursts, trades, lists.get("top", []))
         clock_kw = {"now": now} if clock_pinned else {}
+        # the night's one SEC reader and one iex batch, shared by the tickets' checks below
+        # and the candidate checks after the record is composed (src/candidate_checks.py):
+        # each SEC URL is asked once, the tickets first, and the iex feed once for every name
+        names = candidate_checks.names_of(published_carried if carried else bursts, trades, lists,
+                                          rules_block["pipeline"]["trade_grades"])
+        sec_reader = candidate_checks.SecReader(now=now if clock_pinned else None)
+        iex_read = candidate_checks.read_iex(client, candidate_checks.symbols(names), session)
+        clock_kw["fetch"] = sec_reader
         run_block["earnings"] = (earnings_risk.carried((carried.get("run") or {}).get("earnings"), session, tickets, **clock_kw)
                                  if carried else earnings_risk.safe_collect(tickets, session, **clock_kw))
         log.info("Earnings: %s", run_block["earnings"]["sentence"])
@@ -1018,7 +1026,8 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         log.info("SEC flags: %s", run_block["sec_flags"]["sentence"])
         # each ticket's signal-day bar read again from the iex feed; a ticket
         # whose two readings differ is blocked in orders.json (src/cross_check.py)
-        run_block["cross_check"] = cross_check.safe_collect(client, tickets, frames, session)
+        run_block["cross_check"] = cross_check.safe_collect(client, tickets, frames, session,
+                                                            fetch=candidate_checks.ticket_fetch(iex_read))
         log.info("Cross-check: %s", run_block["cross_check"]["sentence"])
         if not closed and not dry_run:
             picks = [pick_of(b["plan"], "burst", b["grade"], b["score"]) for b in bursts if b["ticker"] in trades]
@@ -1069,6 +1078,14 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         data = report.build(run_block, account_block, build_rules(uni), breadth_block, published_bursts,
                             trades, beyond_cap, budget, lists, open_plans, scorecard, nights, generated,
                             observations=observed)
+        if "candidate_checks" in data:
+            # the tickets', listed setups' and admitted candidates' SEC filings, earnings
+            # estimates and iex bars, read once plans and allocation are final: flags for a
+            # reader that change nothing above and never fail the night (src/candidate_checks.py)
+            data["candidate_checks"] = candidate_checks.night(
+                data, reader=sec_reader, iex=iex_read, frames=frames,
+                previous=carried.get("candidate_checks") if carried else None)
+            log.info("Candidate checks: %s", data["candidate_checks"]["sentence"])
         data["scorecard_reading"] = read_scorecard(rec, frames, minutes, data, docs, previous)
         report.validate(data)
         retention = provenance.publish_bundle(data, rec, docs, evidence_objects, dry_run=dry_run)

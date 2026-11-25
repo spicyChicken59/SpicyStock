@@ -10,10 +10,10 @@
 ## 1. Identity and binding
 
 - Measured session: 2026-09-10 (open); plans are for **2026-09-11**, entry window 2026-09-11T09:30:00-04:00 to 2026-09-11T10:00:00-04:00 (America/New_York), full session closes 2026-09-11T16:00:00-04:00.
-- Published 2026-09-10T22:30:00+00:00 (evening, FIXTURE full); rules version `afb20aa72afc`.
-- Canonical record `data.json`: 345,856 bytes, SHA-256 `44c4b75c20b929ce3a00fb968235cc4aa428ce3636514cd0867c33d0263b3c7b`.
-- `picks.json`: 43,332 bytes, SHA-256 `82503bdf5b1821ab7c71cb5d6a50bf4f14a5286d5d8b5065b8a7731c9883f952`.
-- This file renders `brief.json` (72,494 bytes, SHA-256 `4d42c80cd92acf1f33fbfa6560d096eaa3dd0c30150076e66b65a110faefb35b`).
+- Published 2026-09-10T22:30:00+00:00 (evening, FIXTURE full); rules version `5cb341cf2a8c`.
+- Canonical record `data.json`: 354,920 bytes, SHA-256 `7eaa405a6cbe278fdc92f5bcea29d5e6bb2931ab7a872e5550d762a9fc4f7ff7`.
+- `picks.json`: 43,332 bytes, SHA-256 `d27bdea5107987e319680e914fa7c9e22e23e094ebc7b8b59a7f44c3d364dfae`.
+- This file renders `brief.json` (77,196 bytes, SHA-256 `e6fd05a7df231235099ee5eff1afbfc0f898228287dc2bac9263c232c42bf6c8`).
 - Page https://spicychicken59.github.io/SpicyStock/ · record https://spicychicken59.github.io/SpicyStock/data.json · brief https://spicychicken59.github.io/SpicyStock/brief.json and https://spicychicken59.github.io/SpicyStock/brief.md.
 
 ## 2. Service state
@@ -39,6 +39,7 @@
 - Review selection (`account_feasible_first_research_v2`): 3 feasible, 4 requested of 12; selected: AAPL (opportunity), AMD (opportunity), NVDA (opportunity), TSLA (research_ranked).
 - Admission: 7 reaction candidates, 5 admitted to the trade band and the chart reads (5 by the 4% scan, 0 by the dollar scan on a range-expansion, higher-volume day); 2 came through the dollar scan alone without one and are research only. Of the 5 mechanical A-band names without a veto, 4 are admitted and 1 is not. Admission is read off the recorded discovery route and the checklist's own range-expansion and volume checks; it is never a grade, and the chart reader never sees a name it stops.
 - Earnings and 8-K items (status `checked`): Earnings, estimated from SEC results filings for 1 ticket: 1 estimated inside the hold window. An estimate warns and never withholds a ticket. SEC current reports (8-K) in the 14 days before the signal or since: 1 with a material item; a material item names a kind of event and withholds nothing.
+- Candidate checks (flags only) for 5 of 5 names: 1 ticket, 1 listed setup, 3 reviewed bursts. SEC merger, tender or deal filings flagged for 1 (AAPL); a material 8-K item for 1 (AAPL); earnings reported after the signal or estimated in or near the hold window for 1 (AAPL). Unknown, and unknown is never clear: SEC filings of 2; the earnings date of 2. A flag is for a reader: it changes no plan, ticket or order, and only the manual event registry withholds a ticket.
 - Candidate funnel under a GREEN market: 7 reaction candidates discovered, 4 potentially usable (mechanical grade in the admitted band, no veto, discovery admitted), 1 reaction ticket. Reaction candidates stopped at: 2 mechanical grade below the regime's admitted band, 1 dollar scan alone, without a range-expansion, higher-volume day, 1 ticket withheld: stop rule at the limit, 2 slot cap. Anticipation: 10 momentum names, 4 quiet, 1 passing the coil checks, 1 listed, 0 tickets. Listed setups stopped at: 1 slot cap. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry.
 - Closest miss: PLUG came closest at B 8.5: fails close near the high.
 
@@ -253,15 +254,15 @@ Open MODEL plans walked on daily (and retained minute) bars; not holdings.
 
 ## 11. Event registry and coverage
 
-- Event registry (manual; known cash acquisitions only): 7 entries, last reviewed 2026-11-25, 76 days after the measured session 2026-09-10: the archived registry is newer than the session it is read against. None of its 7 unresolved entries is past its review date (next due 2026-10-15). None of the 8 listed rows (7 bursts, 1 setting up, 0 also quiet) is in the registry. A stock that is not in the registry has not been cleared: SpicyStock reads no company news, and its earnings and SEC checks ran for 1 of the 8 listed names (they run for tickets only).
+- Event registry (manual; known cash acquisitions only): 7 entries, last reviewed 2026-11-25, 76 days after the measured session 2026-09-10: the archived registry is newer than the session it is read against. None of its 7 unresolved entries is past its review date (next due 2026-10-15). None of the 8 listed rows (7 bursts, 1 setting up, 0 also quiet) is in the registry. A stock that is not in the registry has not been cleared: SpicyStock reads no company news, and its earnings and SEC checks ran for 5 of the 8 listed names (the tickets', and the candidate checks' flags for up to 80 names; a check that could not read a name says unknown, never clear).
 - Entries: MG (cash_acquisition, announced 2026-09-18, review due 2026-12-17); PRTH (cash_acquisition, announced 2026-09-21, review due 2026-12-17); ARX (cash_acquisition, announced 2026-08-13, review due 2026-12-17); BWIN (cash_acquisition, announced 2026-09-14, review due 2026-12-17); ACVA (cash_acquisition, announced 2026-09-10, review due 2026-10-15); ZIM (cash_acquisition, announced 2026-02-16, review due 2026-12-02); CCC (cash_acquisition, announced 2026-10-15, review due 2026-12-17).
 - Status words: `known_event` = in the registry and blocked for a SpicyStock ticket; its manual review is current; `review_required` = in the registry and blocked for a SpicyStock ticket; its manual review is overdue; `not_in_registry` = not in the registry: NOT a clearance, nothing was checked.
-- Earnings and 8-K check: status `checked`; 1 ticket rows; 7 of 8 listed names had no check at all.
-- Not checked by SpicyStock: company news and press releases, announced earnings dates, offerings and shelf takedowns, FDA and trial dates, halts outside the morning check, delisting notices beyond 8-K item 3.01 on tickets, index changes, lockup expiries, ex-dividend dates.
+- Earnings and 8-K check: status `checked`; 1 ticket rows; 3 of 8 listed names had no check at all.
+- Not checked by SpicyStock: company news and press releases, announced earnings dates, offerings and shelf takedowns, FDA and trial dates, halts outside the morning check, delisting notices beyond 8-K item 3.01 on the names checked, index changes, lockup expiries, ex-dividend dates.
 
 ## 12. Rules
 
-- Rules digest `afb20aa72afc`; without the universe membership identity `db6a152f5e8c` (membership identity `1b97e33400ee217a`): the record's digest nests the universe membership identity, so it moves on any night the selection's membership moves; `digest_without_membership` is the same digest with that identity removed, and moves only when an archived rule changes.
+- Rules digest `5cb341cf2a8c`; without the universe membership identity `430f098bf9b9` (membership identity `1b97e33400ee217a`): the record's digest nests the universe membership identity, so it moves on any night the selection's membership moves; `digest_without_membership` is the same digest with that identity removed, and moves only when an archived rule changes.
 - pipeline: trade_grades ["A+", "A"], yellow_grades ["A+"], max_reads 12, reader_policy "accepted_required_v1", reader_refusal_fraction 0.25, reader_refusal_min 1, stale_tolerance_fraction 0.01, stale_sessions_max 5, min_coverage_fraction 0.5
 - plan: entry_below_pct 2.0, entry_above_pct 4.0, skip_gap_pct 8.0, entry_window_minutes 30, assumed_slippage_pct 1.0, limit_rule "stop_constrained", sizing_basis "order_limit", max_stop_pct 4.0, ideal_stop_pct 2.0, stop_risk_multiplier 0.5, gain_ceiling_pct 15.0, extension_hazard_pct 20.0, hazard_multiplier 0.5, sell_half_pct 8.0, abnormal_day_pct 10.0, gap_exit_pct 20.0, sell_half_day 3, no_progress_day 3, trail_from_day 3, final_exit_day 5, allocation_policy "combined_stages_reserved_principal_v1"
 - admission: version 1, policy "burst_route_or_dollar_expansion_v1"
@@ -285,7 +286,7 @@ Open MODEL plans walked on daily (and retained minute) bars; not holdings.
 - Research levels are never tickets. For a burst they are what the record's own plan rule gives for the recorded bar at the archived model account; for a setting-up row they are the record's own plan, which the plan rule may have refused (`plan_rule_eligible` false) or left without shares. No chart review accepted them unless the row's reader state says so.
 - A model ticket is sized for the archived model account (`account`), not for the reader's account. Shares, cost and risk are planned price-to-stop arithmetic at the limit, not a maximum loss.
 - The market regime is SpicyStock's gate for its own model tickets: an input to weigh, not an instruction. The scaling of its count thresholds, the admission rule, the checklist weights and the chart reader are this project's own rules (knowledge/method.md says whose number each is), and the record does not establish that the gate improves outcomes.
-- SpicyStock reads no company news. Earnings and SEC 8-K items are read for published tickets only, from SEC filings: a projected date is an estimate, never an announced date, unknown is never clear, and filings are not news coverage.
+- SpicyStock reads no company news. Earnings and SEC 8-K items are read from SEC filings for published tickets, and under the candidate checks (`service.candidate_checks`) as flags for the night's other candidates up to its bound: a projected date is an estimate, never an announced date, unknown is never clear, and filings are not news coverage.
 - The event registry is a hand-kept list of known cash acquisitions. A stock that is not in it has not been cleared: issuer news, offerings, guidance and other corporate events are not checked.
 - One provider's bars as of the run's fetch; a session's volume can be revised afterwards. The universe is the selection named in `service.universe`, not point-in-time membership, and a stock named stale had no bar for the session: its inputs are unknown, not a measured non-match.
 - Whether the broker accepts the printed order form (a day buy stop-limit with a one-triggers-the-other sell stop) is unconfirmed; see knowledge/broker-fidelity.md.
