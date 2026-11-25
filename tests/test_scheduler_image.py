@@ -99,8 +99,12 @@ def test_the_workflow_kept_on_its_old_checkout_is_the_one_retained_evidence_pins
 def test_the_operations_note_names_the_slots_the_tool_runs():
     from tools import dispatch_schedule as ds
     note = re.sub(r"\s+", " ", (ROOT / "docs" / "operations" / "external-scheduler.md").read_text())
+    cells: dict[str, list[str]] = {}
     for workflow, inputs, zone, times in ds.SLOTS:
         when = ", ".join(times[:-1]) + (" and " if len(times) > 1 else "") + times[-1]
-        assert f"| `{workflow}` | {when} {zone.key} |" in note, workflow
+        cells.setdefault(workflow, []).append(f"{when} {zone.key}")
+    for workflow, zones in cells.items():
+        days = "every day" if workflow in ds.EVERY_DAY else "sessions"
+        assert f"| `{workflow}` | {'; '.join(zones)} | {days} |" in note, workflow
     assert f"for {ds.DUE_MINUTES} minutes (`DUE_MINUTES`)" in note
     assert "**Actions: Read and write**" in note and "`deploy/scheduler/railway.json`" in note

@@ -631,6 +631,10 @@ DISPATCH = {"event": "workflow_dispatch", "display_title": sw.EVENING_DISPATCH_T
     ([evening_run(EVENING_FIRST_SLOT + timedelta(minutes=1), conclusion="failure", **DISPATCH),
       evening_run(EVENING_FIRST_SLOT + timedelta(hours=1), id=7002, status="in_progress", conclusion=None)],
      RETRY, sw.ON_TIME, None),                                                     # one still in progress
+    ([evening_run(EVENING_FIRST_SLOT + timedelta(minutes=1), conclusion="failure", **DISPATCH),
+      evening_run(EVENING_FIRST_SLOT + timedelta(hours=1), id=7002, status="in_progress", conclusion="failure",
+                  run_attempt=2)],
+     RETRY, sw.ON_TIME, None),     # SYNTHETIC: a re-run in progress that still carries its first attempt's ending
 ])
 def test_the_evenings_scheduler_answer_for_an_unpublished_session(record, runs, now, judgement, key):
     out = sw.judge_evening(record, now, runs, None)
@@ -1011,6 +1015,60 @@ def test_the_log_lines_carry_each_action_under_its_answer(record, tmp_path):
     assert "Alert evening:not_published:2026-09-11: SpicyStock watch: 2026-09-11 is not published" in printed
 
 
+# ------------------------------------------------------------------ start ---
+#: the record's own primary slot: the 10 September evening that wrote it
+STARTED_SLOT = datetime(2026, 9, 10, 22, 16, tzinfo=UTC)
+
+
+def late(record, minutes):
+    changed = copy.deepcopy(record)
+    changed["run"]["delivery"]["after_primary_minutes"] = minutes
+    return changed
+
+
+def test_an_evening_that_started_near_its_slot_is_on_time(record):
+    assert sw._instant(record["run"]["delivery"]["primary_slot_at"]) == STARTED_SLOT
+    out = sw.start(record, STARTED_SLOT + timedelta(hours=1))
+    assert record["run"]["delivery"]["after_primary_minutes"] <= sw.LATE_START_MINUTES
+    assert (out["judgement"], out["alert"], out["session"], out["key"]) == (sw.ON_TIME, False, "2026-09-10", None)
+    assert out["sentence"].startswith("The 2026-09-10 evening run started 14 minutes after its primary slot")
+
+
+@pytest.mark.parametrize("minutes, judgement", [(sw.LATE_START_MINUTES, sw.ON_TIME),
+                                                (sw.LATE_START_MINUTES + 0.1, sw.STARTED_LATE),
+                                                (298.3, sw.STARTED_LATE)])
+def test_an_evening_that_started_more_than_an_hour_late_is_flagged_under_the_standing_key(record, minutes, judgement):
+    out = sw.start(late(record, minutes), STARTED_SLOT + timedelta(minutes=minutes, hours=1))
+    assert out["judgement"] == judgement and out["alert"] is (judgement == sw.STARTED_LATE)
+    if judgement == sw.STARTED_LATE:
+        assert f"more than {sw.LATE_START_MINUTES} minutes late" in out["sentence"] and out["action"] == sw.START_HINT
+        assert out["key"] == "scheduler:evening:started_late"                # no session: a standing condition
+
+
+@pytest.mark.parametrize("hours, alert", [(sw.LATE_START_ALERT_HOURS, False), (sw.LATE_START_ALERT_HOURS - 0.01, True)])
+def test_a_late_start_is_flagged_for_a_bounded_time(record, hours, alert):
+    started = STARTED_SLOT + timedelta(minutes=200)
+    out = sw.start(late(record, 200), started + timedelta(hours=hours))
+    assert (out["judgement"], out["alert"], out["key"] is not None) == (sw.STARTED_LATE, alert, alert)
+
+
+@pytest.mark.parametrize("value", [None, True, "298"])
+def test_a_record_without_a_readable_start_says_so_and_flags_nothing(record, value):
+    out = sw.start(late(record, value), STARTED_SLOT)
+    assert (out["judgement"], out["alert"], out["key"]) == (sw.UNKNOWN, False, None)
+
+
+def test_a_late_start_reaches_the_watchs_exit_code_and_its_mail(record, tmp_path, bound_handoff):
+    raw = encode(late(record, 298.3))
+    changed = json.loads(raw)
+    docs = docs_with(tmp_path, changed, receipt(raw, COLLECT + timedelta(minutes=22)), handoff_files=False)
+    out = sw.watch(docs, STARTED_SLOT + timedelta(hours=6))
+    assert out["start"]["alert"] is True and out["exit_code"] == sw.EXIT_ALERT
+    assert [m["subject"] for m in sw.messages(out)] == [
+        "SpicyStock watch: the evening was not started by the on-time dispatcher"]
+    assert any(line.startswith("Start: started_late. ") for line in sw.lines(out))
+
+
 # ----------------------------------------------------------------- ledger ---
 def main_mail(docs, now, ledger, env=None, extra=()):
     return sw.main(["--docs", str(docs), "--now", now.isoformat(), "--mail", "--ledger", str(ledger), *extra],
@@ -1040,24 +1098,39 @@ def test_a_change_of_state_mails_once_more(record, tmp_path, monkeypatch):
                                     "SpicyStock watch: 2026-09-11 was not published before the next open"]
 
 
+MAILED_KEY = "evening:not_published:2026-09-11"
+
+
+def spoiled(change):
+    """The real ledger with one thing about it changed: the key it holds stays in it, so the ledger reads empty
+    for that one fault and not for an incidental one."""
+    def spoil(path, now):
+        value = json.loads(path.read_text())
+        change(value, now)
+        path.write_text(json.dumps(value))
+    return spoil
+
+
 @pytest.mark.parametrize("spoil", [
     lambda p, now: p.unlink(),
     lambda p, now: p.write_text("{not json"),
-    lambda p, now: p.write_text(json.dumps({"version": 2, "sent": {}})),
-    lambda p, now: p.write_text(json.dumps({"version": True, "sent": {}})),
-    lambda p, now: p.write_text(json.dumps({"version": 1, "sent": []})),
-    lambda p, now: p.write_text(json.dumps({"version": 1, "sent": {"evening:not_published:2026-09-11":
-                                                                    (now + timedelta(minutes=1)).isoformat()}})),
-    lambda p, now: p.write_text(json.dumps({"version": 1, "sent": {"Mail to owner@example.com": now.isoformat()}})),
-    lambda p, now: p.write_text(json.dumps({"version": 1, "sent": {"evening:not_published:2026-09-11": "yesterday"}})),
-    lambda p, now: p.write_text(json.dumps({"version": 1, "sent": {}, "body": "<p>hi</p>"})),
-    lambda p, now: p.write_bytes(b" " * (sw.MAX_LEDGER_BYTES + 1)),
-])
+    spoiled(lambda v, now: v.__setitem__("version", 2)),                                   # another version
+    spoiled(lambda v, now: v.__setitem__("version", True)),                                # not a version at all
+    spoiled(lambda v, now: v.__setitem__("sent", [list(item) for item in v["sent"].items()])),
+    spoiled(lambda v, now: v["sent"].__setitem__(MAILED_KEY, (now + timedelta(minutes=1)).isoformat())),   # future
+    spoiled(lambda v, now: v["sent"].__setitem__("Mail to owner@example.com", now.isoformat())),  # not a key
+    spoiled(lambda v, now: v["sent"].__setitem__("evening:not_published:2026-09-12", "yesterday")),   # not an instant
+    spoiled(lambda v, now: v.__setitem__("body", "<p>hi</p>")),                            # more than keys
+    lambda p, now: p.write_text(p.read_text() + " " * sw.MAX_LEDGER_BYTES),                # too large
+], ids=["deleted", "not-json", "other-version", "bool-version", "sent-not-a-map", "future-dated", "not-a-key",
+        "not-an-instant", "more-than-keys", "too-large"])
 def test_a_ledger_that_cannot_be_read_as_this_watchs_reads_empty_and_mails_again(record, tmp_path, monkeypatch, spoil):
     sent = deliveries(monkeypatch)
     docs, ledger = docs_with(tmp_path, record), tmp_path / "ledger.json"
     first = LIMIT - timedelta(hours=2)
     main_mail(docs, first, ledger)
+    # unspoiled, it drops the repeat
+    assert main_mail(docs, first + timedelta(minutes=15), ledger) == sw.EXIT_OK and len(sent) == 1
     spoil(ledger, first + timedelta(minutes=30))
     assert main_mail(docs, first + timedelta(minutes=30), ledger) == sw.EXIT_ALERT
     assert len(sent) == 2
