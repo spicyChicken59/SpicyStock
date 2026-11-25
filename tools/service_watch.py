@@ -34,10 +34,15 @@ and answers each in one word and one sentence:
     inside its collection window, and is ``orders-morning.json`` ``checked``
     for this exact ``orders.json``? The same answer stands under the same key
     through ``MORNING_DUE_CT`` (8:45, the go-live gate's line), so nothing more
-    is mailed for it. While the run listing shows a morning run queued or in
-    progress, created inside the collection window, a check that has not
-    landed or not been checked is ``in_progress``: no alert, and a later watch
-    judges it.
+    is mailed for it. While the run listing shows a morning run still queued or
+    running that is not yet late -- a dispatch, or a cron its guard runs for
+    this session, created less than ``IN_PROGRESS_GRACE_SECONDS`` (the
+    dispatcher's ``WAIT_SECONDS``) before the watch's clock, and that clock
+    before the entry cutoff -- a check that has not landed or not been checked
+    is ``in_progress``: no alert, and a later watch judges it. A run older than
+    that holds nothing: the check is said not landed (or not checked) with the
+    run, its status and whether it can still land, and at or after the cutoff
+    nothing is in progress.
 
 ``handoff``
     Do ``orders.json``, ``positions-template.json`` and ``orders-morning.json``
@@ -52,10 +57,15 @@ and answers each in one word and one sentence:
     for it: the listing cannot tell the dispatcher's dispatch from one made by
     hand), ``started_late``, ``not_started``, ``failed`` or ``unknown``. A later
     slot of the dispatcher's is named as its own start and is still not on
-    time; a dispatch in a slot that ended without its work is no start in it;
-    an evening cron its guard skips (not the active UTC slot, or a nominal date
-    that is no exchange session: a weekday holiday's crons) is no evening run,
-    and one the guard runs for another session is that session's. The runs are
+    time; a dispatch in a slot that ended without its work is no start in it,
+    and neither is one in the morning's slot still queued or running at the
+    entry cutoff; an evening cron its guard skips (not the active UTC slot, or
+    a nominal date that is no exchange session: a weekday holiday's crons) is
+    no evening run, and one the guard runs for another session is that
+    session's; a morning cron is read the same way through the morning guard's
+    own rules (``tools/publish_morning.schedule_guard()``: the other season's
+    pair, one created at or after the entry cutoff or on a later day is
+    skipped and is no morning run). The runs are
     tied to the files by ``run.run_id`` and the receipt's
     ``observation_run_id``. The watch reports a gap in its own previous slot
     after the fact: only a watch dispatched in one of the dispatcher's slots is
@@ -126,6 +136,7 @@ if str(ROOT) not in sys.path:
 
 from src import freshness, orders, sessions  # noqa: E402  (freshness and orders are standard library only at import)
 from tools import dispatch_schedule as ds  # noqa: E402  (the dispatcher's slots and its GitHub client)
+from tools import publish_morning  # noqa: E402  (the morning guard's own table of crons; standard library at import)
 
 VERSION = 2
 DATA_FILE = "data.json"
@@ -201,7 +212,8 @@ WATCH_LOOKBACK_DAYS = 10
 OK, NOT_PUBLISHED, MISSING, UNKNOWN = "ok", "not_published", "missing", "unknown"
 # morning judgements
 NOT_DUE, LANDED, NOT_LANDED, NOT_CHECKED = "not_due", "landed", "not_landed", "not_checked"
-#: a morning run is still queued or running inside its collection window: no answer yet, a later watch judges it
+#: a morning run the listing shows queued or running, not yet late (``IN_PROGRESS_GRACE_SECONDS``, before the entry
+#: cutoff): no answer yet, a later watch judges it
 IN_PROGRESS = "in_progress"
 # start and scheduler judgements
 ON_TIME, STARTED_LATE, NOT_STARTED, FAILED = "on_time", "started_late", "not_started", "failed"
@@ -269,6 +281,15 @@ UNKNOWN_HINT = ("The record on main carries no calendar or delivery block the wa
 RAN_STATUSES = ("observed", "partial", "no_tickets")
 #: A listed run with one of these statuses has not finished (GitHub's own words; ``completed`` is the other).
 RUNNING_STATUSES = ("queued", "in_progress", "requested", "waiting", "pending")
+#: A morning run the listing shows queued or running holds the morning's answer (``in_progress``, no alert) only
+#: while it is not yet late: created less than this many seconds before the watch's clock, and that clock before
+#: the entry cutoff. It is the dispatcher's own wait for the check's receipt (``tools/dispatch_schedule.WAIT_SECONDS``:
+#: the receipts have landed 88 to 103 seconds after the dispatch), read there and typed nowhere else. A run older
+#: than that is late, and a check that has not landed is said so: the 8:25 AM CT watch is the only one before the
+#: 8:30 AM CT open.
+IN_PROGRESS_GRACE_SECONDS = ds.WAIT_SECONDS
+#: The title a scheduled morning run gives itself: this, then the cron that fired (morning.yml's ``run-name:``).
+MORNING_CRON_PREFIX = "Morning cron "
 RECENT = "recent"
 MORNING_HINT = ("The morning check is started from outside GitHub's scheduler by the on-time dispatcher "
                 "(tools/dispatch_schedule.py) at 8:20 AM CT, once it is deployed on Railway; until then, or while "
@@ -295,6 +316,9 @@ START_HINT = ("The evening is started at 6:20 PM ET by the on-time dispatcher (t
               f"evening, and evening.yml's run. {STANDING}")
 MORNING_UNFINISHED_HINT = ("The dispatcher started the morning check in its slot, and that run ended without its "
                            "work: read its log (GitHub, Actions, Morning publication, the run named above). " + STANDING)
+MORNING_STUCK_HINT = ("The dispatcher started the morning check in its slot, and that run had not finished when the "
+                      "entry window closed: read its log and its queue (GitHub, Actions, Morning publication, the run "
+                      "named above). " + STANDING)
 FIRST_UNFINISHED_HINT = ("The dispatcher started the evening in its first slot, and that run ended without its work: "
                          "read its log (GitHub, Actions, Evening scan, the run named above) before the next start. "
                          + STANDING)
@@ -676,20 +700,44 @@ def orders_morning_problem(record_raw: bytes, orders_raw: bytes | None, orders_m
 def _in_progress(out: dict, running: dict, what: str) -> dict:
     out.update(judgement=IN_PROGRESS, alert=False, action=None, key=None,
                sentence=(f"A morning run for {out['applicable_session']} (run {running.get('id')}, created "
-                         f"{running.get('created_at')}) is still {running.get('status')} inside its collection "
-                         f"window, so {what} may not be on main yet. No answer is given now: a later watch judges "
-                         "it."))
+                         f"{running.get('created_at')}) is still {running.get('status')}, less than "
+                         f"{IN_PROGRESS_GRACE_SECONDS} seconds after it was created and before the entry window "
+                         f"closes ({out['window_cutoff_at']}), so {what} may not be on main yet. No answer is given "
+                         "now: a later watch judges it."))
     return out
 
 
+def _listed_words(overdue: dict | None, just_finished: dict | None, now: datetime, cutoff: datetime) -> str:
+    """What a check that has not landed, or not been checked, says of the morning run the listing shows: one still
+    queued or running that is late (``overdue``: its status, when it was created, and whether it can still land),
+    or one that finished less than ``IN_PROGRESS_GRACE_SECONDS`` after it was created (``just_finished``: this watch read
+    main before it read the listing, so that run's files may have reached main in between)."""
+    if overdue is not None:
+        named = (f" The run listing shows run {overdue.get('id')} still {overdue.get('status')}, created "
+                 f"{overdue.get('created_at')}")
+        if now < cutoff:
+            return f"{named}: it can still land until the entry window closes at {cutoff.isoformat()}."
+        return f"{named}: the entry window closed at {cutoff.isoformat()}, so it can no longer land inside it."
+    if just_finished is not None:
+        return (f" The run listing shows run {just_finished.get('id')} finished ({just_finished.get('conclusion')}), "
+                f"created {just_finished.get('created_at')}, less than {IN_PROGRESS_GRACE_SECONDS} seconds before this watch's "
+                "clock: this watch read main before it read the listing, so what that run wrote may have reached "
+                "main in between. Read main before acting on this.")
+    return ""
+
+
 def morning(record: dict, record_raw: bytes, receipt: dict | None, receipt_problem: str | None, now: datetime, *,
-            orders_raw: bytes | None, orders_morning_raw: bytes | None, running: dict | None = None) -> dict:
+            orders_raw: bytes | None, orders_morning_raw: bytes | None, running: dict | None = None,
+            overdue: dict | None = None, just_finished: dict | None = None) -> dict:
     """Whether a morning check for this record landed inside its collection
     window and orders-morning.json is checked for this orders.json, from
     MORNING_ALERT_CT on the applicable session. ``running`` is a morning run the
-    listing shows queued or in progress inside its collection window
-    (``judge_morning()``): a check that has not landed, or not been checked, while
-    it runs is ``in_progress``, not an alert."""
+    listing shows queued or running that is not yet late (``judge_morning()``:
+    created less than ``IN_PROGRESS_GRACE_SECONDS`` before ``now``, before the
+    entry cutoff): a check that has not landed, or not been checked, while it
+    runs is ``in_progress``, not an alert. ``overdue`` is one still queued or
+    running that is late, and ``just_finished`` one that finished inside that
+    grace: neither holds the answer, and the alert names it."""
     window = freshness.morning_window(record)
     session = window.get("applicable_session")
     tickets = ticket_count(record)
@@ -777,7 +825,8 @@ def morning(record: dict, record_raw: bytes, receipt: dict | None, receipt_probl
         if running is not None:
             return _in_progress(out, running, "its orders-morning.json")
         out["judgement"] = NOT_CHECKED
-        out["sentence"] = f"{landed}, but by {judged_by.isoformat()} {checked}; {counted}."
+        out["sentence"] = (f"{landed}, but by {judged_by.isoformat()} {checked}; {counted}."
+                           + _listed_words(overdue, just_finished, now, cutoff))
         out["alert"] = flagged
         out["action"] = NOT_CHECKED_HINT if flagged else None
         out["key"] = f"morning:{NOT_CHECKED}:{session}" if flagged else None
@@ -786,7 +835,7 @@ def morning(record: dict, record_raw: bytes, receipt: dict | None, receipt_probl
         return _in_progress(out, running, "its receipt")
     out["judgement"] = NOT_LANDED
     out["sentence"] = (f"No morning check for {session} landed by {judged_by.isoformat()} inside its collection window: "
-                       f"{problem}; {counted}.")
+                       f"{problem}; {counted}." + _listed_words(overdue, just_finished, now, cutoff))
     out["alert"] = flagged
     out["action"] = MORNING_HINT if flagged else None
     out["key"] = f"morning:{NOT_LANDED}:{session}" if flagged else None
@@ -899,6 +948,50 @@ def evening_cron_session(run: dict) -> str | None:
     is no scheduled evening run or its guard skips it."""
     target = _cron_target(run)
     return target if isinstance(target, str) else None
+
+
+def _morning_cron_target(run: dict, session: str | None = None, cutoff: datetime | None = None):
+    """What the morning guard (``tools/publish_morning.schedule_guard()``) does with a scheduled morning run, read
+    off its title and ``created_at`` by the guard's own table (``publish_morning.SCHEDULES``) and rules: None when
+    the run is no scheduled morning run (or its instant cannot be read); ``_SKIPPED`` when the guard skips it -- a
+    cron it does not know, the inactive season's pair or a weekend's, one created on a later New York day than its
+    nominal slot, one whose nominal date is not an XNYS session, or one for ``session`` created at or after
+    ``cutoff`` (that session's entry cutoff) -- and otherwise the session (its nominal New York date) the guard
+    runs it for. The guard reads its own clock, some seconds after ``created_at``; this reads ``created_at``."""
+    title = run.get("display_title") or ""
+    if run.get("event") != SCHEDULE_EVENT or not title.startswith(MORNING_CRON_PREFIX):
+        return None
+    slot = publish_morning.SCHEDULES.get(title[len(MORNING_CRON_PREFIX):])
+    if slot is None:
+        return _SKIPPED
+    created = _created(run)
+    if created is None:
+        return None
+    hour, minute, offset = slot
+    fired = created.astimezone(timezone.utc)
+    nominal = fired.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    if nominal > fired:
+        nominal -= timedelta(days=1)
+    intended = nominal.astimezone(sessions.MARKET_TZ)
+    target = intended.date()
+    if nominal.weekday() not in range(5) or intended.strftime("%z") != offset:
+        return _SKIPPED                                # a weekend, or the other season's pair
+    if fired.astimezone(sessions.MARKET_TZ).date() != target:
+        return _SKIPPED                                # created on a later day than its slot
+    try:
+        if not sessions.is_session(target):
+            return _SKIPPED
+    except ValueError:                                 # outside the calendar's range: the guard could not run it
+        return _SKIPPED
+    if target.isoformat() == session and cutoff is not None and created >= cutoff:
+        return _SKIPPED                                # at or after the entry cutoff: the guard runs nothing
+    return target.isoformat()
+
+
+def skipped_morning_cron(run: dict, session: str | None = None, cutoff: datetime | None = None) -> bool:
+    """A scheduled morning run its guard skips, which ends ``success`` and does no morning's work
+    (``_morning_cron_target()``, the guard's own rules)."""
+    return _morning_cron_target(run, session, cutoff) is _SKIPPED
 
 
 def _summary(runs: list[dict]) -> list[dict]:
@@ -1082,14 +1175,19 @@ def _judge_record_run(record: dict, now: datetime, runs: list[dict] | None, reas
 
 def judge_morning(record: dict, receipt: dict | None, record_raw: bytes, now: datetime, runs: list[dict] | None,
                   reason: str | None) -> dict:
-    """The morning check's scheduler answer on the record's applicable session, from MORNING_ALERT_CT."""
+    """The morning check's scheduler answer on the record's applicable session, from MORNING_ALERT_CT. A scheduled
+    run is read through the morning guard's own rules (``_morning_cron_target()``): one the guard skips is no
+    morning run, and one it runs for another session is that session's. ``running`` is the run that holds the
+    morning's answer (``IN_PROGRESS_GRACE_SECONDS``), ``overdue`` one still queued or running that does not, and
+    ``just_finished`` one that finished inside that grace."""
     window = freshness.morning_window(record)
     session = window.get("applicable_session")
     alert_at, collection = morning_alert(session), _instant(window.get("collection_starts_at"))
     cutoff = _instant(window.get("window_cutoff_at"))
     slot = dispatcher_slot(MORNING_WORKFLOW, session)
     out = _block(MORNING_WORKFLOW, about="session", session=session, since=_iso(collection),
-                 slot_at=_iso(slot), on_time_run=None, receipt_run=None, running=None)
+                 slot_at=_iso(slot), on_time_run=None, receipt_run=None, running=None, overdue=None,
+                 just_finished=None, skipped=[])
     if window.get("unknown") or alert_at is None or collection is None or slot is None or cutoff is None:
         out["sentence"] = "The record gives no entry window, so its morning runs cannot be judged."
         return out
@@ -1099,33 +1197,72 @@ def judge_morning(record: dict, receipt: dict | None, record_raw: bytes, now: da
     if runs is None:
         out["sentence"] = f"The {session} morning's runs cannot be judged: {reason}."
         return out
-    relevant = [r for r in runs if r.get("head_branch") == MAIN and r.get("display_title") != MORNING_REHEARSAL_TITLE
-                and _created(r) is not None and _created(r) >= collection
-                and _created(r).astimezone(CHICAGO).date().isoformat() == session]
-    out["runs"] = _summary(relevant)
+    relevant, skipped, by_guard = [], [], set()
+    for r in runs:
+        created = _created(r)
+        if r.get("head_branch") != MAIN or r.get("display_title") == MORNING_REHEARSAL_TITLE or created is None \
+                or created < collection:
+            continue
+        today = created.astimezone(CHICAGO).date().isoformat() == session
+        target = _morning_cron_target(r, session, cutoff)
+        if target is _SKIPPED:
+            if today:
+                skipped.append(r)                      # its guard skips it: it does no morning's work
+            continue
+        if target is not None:
+            if target != session:
+                continue                               # a cron its guard runs for another session is that session's
+            by_guard.add(r.get("id"))
+        elif not today:
+            continue
+        relevant.append(r)
+    out["runs"], out["skipped"] = _summary(relevant), _summary(skipped)
     bound = (isinstance(receipt, dict) and _dict(receipt.get("publication")).get("data_sha256")
              == hashlib.sha256(record_raw).hexdigest())
     writer = [r for r in relevant if bound and str(r.get("id")) == str(receipt.get("observation_run_id"))]
     if writer:
         out["receipt_run"] = writer[0]["id"]
     wrote = f" The receipt on main was written by run {writer[0]['id']}." if writer else ""
-    # a run still queued or running, created inside the collection window: its receipt may not be on main yet
-    running = [r for r in relevant if r.get("status") in RUNNING_STATUSES and _created(r) <= cutoff]
-    if running:
-        out["running"] = {name: running[0].get(name) for name in ("id", "created_at", "status")}
+    grace = timedelta(seconds=IN_PROGRESS_GRACE_SECONDS)
+    unfinished_runs = sorted((r for r in relevant if r.get("status") in RUNNING_STATUSES), key=_created)
+    # a run holds the morning's answer only while it is not yet late: a dispatch, or a cron its guard runs for this
+    # session, created less than the grace before this clock, and this clock before the entry cutoff
+    holding = [r for r in unfinished_runs if now < cutoff and now - _created(r) < grace
+               and (r.get("event") == DISPATCH_EVENT or r.get("id") in by_guard)]
+    if holding:
+        out["running"] = {name: holding[-1].get(name) for name in ("id", "created_at", "status")}
+    elif unfinished_runs:
+        out["overdue"] = {name: unfinished_runs[-1].get(name) for name in ("id", "created_at", "status")}
+    else:
+        # one that finished inside the grace: this watch read main before the listing, and may have read it first
+        finished = sorted((r for r in relevant if r.get("status") == "completed" and not _without_work(r)
+                           and now - _created(r) < grace), key=_created)
+        if finished:
+            out["just_finished"] = {name: finished[-1].get(name) for name in ("id", "created_at", "conclusion")}
+
+    def stuck(r):                                      # still queued or running when the entry window closed
+        return r.get("status") in RUNNING_STATUSES and now >= cutoff
+
     in_slot = [r for r in relevant if _on_time(r, MORNING_DISPATCH_TITLE, slot)]
-    # a dispatch in the slot that ended without its work did not start the check on time
-    on_time = [r for r in in_slot if not _without_work(r)]
+    # a dispatch in the slot that ended without its work, or had not finished by the entry cutoff, did not start
+    # the check on time
+    on_time = [r for r in in_slot if not _without_work(r) and not stuck(r)]
     unfinished = [r for r in in_slot if _without_work(r)]
+    late = [r for r in in_slot if stuck(r)]
     end = slot + timedelta(minutes=ds.DUE_MINUTES)
     if not relevant:
+        guarded = (f" The scheduled runs listed there did no morning's work: their guard skips a cron that is not "
+                   f"the active pair, is not this session's or was created at or after the entry cutoff "
+                   f"({_named(skipped)})." if skipped else "")
         out.update(judgement=NOT_STARTED,
                    sentence=(f"No morning run for {session} is listed on main from the collection window's start "
                              f"({collection.isoformat()}) by this watch's clock; the on-time dispatcher, once it is "
-                             f"deployed, starts it at {slot.isoformat()}."))
+                             f"deployed, starts it at {slot.isoformat()}.{guarded}"))
         return out
-    if _failed(relevant):
-        out.update(judgement=FAILED, sentence=f"Every morning run for {session} listed on main ended without its work: "
+    if all(_without_work(r) or stuck(r) for r in relevant):
+        how = ("ended without its work" if _failed(relevant) else
+               f"ended without its work or had not finished when the entry window closed ({cutoff.isoformat()})")
+        out.update(judgement=FAILED, sentence=f"Every morning run for {session} listed on main {how}: "
                                                f"{_named(relevant)}.{wrote}")
         return out
     if on_time:
@@ -1135,11 +1272,13 @@ def judge_morning(record: dict, receipt: dict | None, record_raw: bytes, now: da
         return out
     alert = now - alert_at < timedelta(hours=MORNING_ALERT_HOURS)
     ended = (f"; the dispatch in its slot ended without its work: {_named(unfinished)}" if unfinished else "")
-    out.update(judgement=STARTED_LATE, alert=alert,
-               action=(MORNING_UNFINISHED_HINT if unfinished else SCHEDULER_HINT) if alert else None,
+    ended += (f"; the dispatch in its slot had not finished when the entry window closed ({cutoff.isoformat()}): "
+              f"{_named(late)}" if late else "")
+    hint = MORNING_UNFINISHED_HINT if unfinished else MORNING_STUCK_HINT if late else SCHEDULER_HINT
+    out.update(judgement=STARTED_LATE, alert=alert, action=hint if alert else None,
                key=f"scheduler:morning:{STARTED_LATE}" if alert else None,
                sentence=(f"The {session} morning check was not started by a dispatch "
-                         f"{'that did its work ' if unfinished else ''}in its slot's due window "
+                         f"{'that did its work ' if unfinished or late else ''}in its slot's due window "
                          f"({slot.isoformat()} to {end.isoformat()}){ended}: the runs listed are "
                          f"{_named(relevant)}.{wrote}"))
     return out
@@ -1383,7 +1522,9 @@ def watch(docs: Path, now: datetime, github=None, ledger: dict | None = None) ->
                      and sched["evening"].get("on_time_run") is not None)
     first = evening(record, now, on_time_start=on_time_start)
     second = morning(record, record_raw, receipt, receipt_problem, now, orders_raw=orders_raw,
-                     orders_morning_raw=orders_morning_raw, running=sched["morning"].get("running"))
+                     orders_morning_raw=orders_morning_raw, running=sched["morning"].get("running"),
+                     overdue=sched["morning"].get("overdue"),
+                     just_finished=sched["morning"].get("just_finished"))
     third = start(record, now)
     fourth = handoff(docs, record, record_raw)
     result = {"version": VERSION, "clock": now.astimezone(timezone.utc).isoformat(),

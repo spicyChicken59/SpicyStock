@@ -23,6 +23,7 @@ import pytest
 
 from src import freshness, morning as morning_module, orders, reader
 from tools import dispatch_schedule as ds
+from tools import publish_morning
 from tools import service_watch as sw
 
 FULL = Path(__file__).parent / "fixtures" / "page" / "full.json"
@@ -938,7 +939,17 @@ MORNING_SLOT = datetime(2026, 9, 11, 13, 20, tzinfo=UTC)        # 8:20 AM CDT
     ([], ALERT, sw.NOT_STARTED, None),                              # folded into the morning's own alert
     ([run(event="workflow_dispatch", display_title=sw.MORNING_DISPATCH_TITLE, created_at=MORNING_SLOT)], ALERT,
      sw.ON_TIME, None),
+    # GitHub's own cron, created 15 minutes late and before the entry cutoff: its guard runs it, and it is no
+    # dispatch in the slot
     ([run(event="schedule", display_title="Morning cron 20 13 * * 1-5",
+          created_at=datetime(2026, 9, 11, 13, 35, tzinfo=UTC))], datetime(2026, 9, 11, 13, 40, tzinfo=UTC),
+     sw.STARTED_LATE, "scheduler:morning:started_late"),
+    # the same cron created hours late, after the entry cutoff: its guard skips it, and it is no morning run
+    ([run(event="schedule", display_title="Morning cron 20 13 * * 1-5",
+          created_at=datetime(2026, 9, 11, 18, 0, tzinfo=UTC))], datetime(2026, 9, 11, 18, 5, tzinfo=UTC),
+     sw.NOT_STARTED, None),
+    # a dispatch under the morning's run name hours after its slot is a run, and a late one
+    ([run(event="workflow_dispatch", display_title=sw.MORNING_DISPATCH_TITLE,
           created_at=datetime(2026, 9, 11, 18, 0, tzinfo=UTC))], datetime(2026, 9, 11, 18, 5, tzinfo=UTC),
      sw.STARTED_LATE, "scheduler:morning:started_late"),
     ([run(event="workflow_dispatch", display_title=sw.MORNING_REHEARSAL_TITLE, created_at=MORNING_SLOT)], ALERT,
@@ -969,17 +980,17 @@ def test_a_later_days_morning_run_is_not_this_sessions(record):
 
 def test_a_morning_run_created_at_the_collection_windows_start_is_this_mornings(record):
     raw = encode(record)
-    at_start = run(event="schedule", display_title="Morning cron 0 13 * * 1-5", created_at=COLLECT)
+    at_start = run(event="workflow_dispatch", display_title=sw.MORNING_DISPATCH_TITLE, created_at=COLLECT)
     out = sw.judge_morning(record, None, raw, ALERT, [at_start], None)
     assert out["judgement"] == sw.STARTED_LATE and [r["id"] for r in out["runs"]] == [at_start["id"]]
-    early = run(event="schedule", display_title="Morning cron 0 13 * * 1-5", created_at=COLLECT - SECOND)
+    early = run(event="workflow_dispatch", display_title=sw.MORNING_DISPATCH_TITLE, created_at=COLLECT - SECOND)
     assert sw.judge_morning(record, None, raw, ALERT, [early], None)["judgement"] == sw.NOT_STARTED
 
 
 @pytest.mark.parametrize("hours,alert", [(sw.MORNING_ALERT_HOURS - 0.01, True), (sw.MORNING_ALERT_HOURS, False)])
 def test_a_morning_check_started_late_is_flagged_for_a_bounded_time(record, hours, alert):
     raw = encode(record)
-    late_run = run(event="schedule", display_title="Morning cron 20 13 * * 1-5",
+    late_run = run(event="workflow_dispatch", display_title=sw.MORNING_DISPATCH_TITLE,
                    created_at=datetime(2026, 9, 11, 18, 0, tzinfo=UTC))
     out = sw.judge_morning(record, None, raw, ALERT + timedelta(hours=hours), [late_run], None)
     assert (out["judgement"], out["alert"]) == (sw.STARTED_LATE, alert)
@@ -1240,7 +1251,7 @@ def test_the_morning_alert_carries_the_scheduler_reason_beside_it(record, tmp_pa
     (Listing({"evening.yml": [run(created_at=EVENING_FIRST_SLOT + timedelta(minutes=1), conclusion="failure",
                                   event="workflow_dispatch", display_title=sw.EVENING_DISPATCH_TITLE)]}),
      RETRY + timedelta(hours=1), "evening:failed:2026-09-11"),
-    (Listing({"morning.yml": [run(event="schedule", display_title="Morning cron 20 13 * * 1-5",
+    (Listing({"morning.yml": [run(event="workflow_dispatch", display_title=sw.MORNING_DISPATCH_TITLE,
                                   created_at=datetime(2026, 9, 11, 18, 0, tzinfo=UTC))]}),
      datetime(2026, 9, 11, 18, 5, tzinfo=UTC), "scheduler:morning:started_late"),
     (Listing(), WATCH_SLOT + timedelta(minutes=ds.DUE_MINUTES), "scheduler:watch:not_started"),
@@ -1957,17 +1968,32 @@ def test_a_token_in_the_environment_is_what_the_watch_lists_runs_with(record, tm
 
 
 # ------------------------------------------------- a morning run in progress ---
+GRACE = timedelta(seconds=sw.IN_PROGRESS_GRACE_SECONDS)
+OPEN = datetime(2026, 9, 11, 13, 30, tzinfo=UTC)                # 8:30 AM CDT
+PRE_OPEN = ALERT + timedelta(seconds=40)                        # the 8:25 AM CT watch's own clock: 8:25:40
+POST_WINDOW = datetime(2026, 9, 11, 14, 5, 40, tzinfo=UTC)      # the 9:05 AM CT watch's: 9:05:40, after the cutoff
+NEXT = FULL.parent / "next.json"                                # Friday's record: its plans are for Monday the 14th
+EARLY = FULL.parent / "early.json"                              # standard time: plans for Friday 29 November 2024
+
+
 def morning_run(created=MORNING_SLOT + timedelta(minutes=6), **fields) -> dict:
     """SYNTHETIC: the morning check dispatched under its run name; a catch-up by default, at 8:26 AM CDT."""
     return run(**{"id": 8300, "event": "workflow_dispatch", "display_title": sw.MORNING_DISPATCH_TITLE,
                   "created_at": created, **fields})
 
 
+def test_the_grace_is_the_dispatchers_wait_read_from_the_dispatcher():
+    import inspect
+    assert sw.IN_PROGRESS_GRACE_SECONDS == ds.WAIT_SECONDS == 150
+    assert "IN_PROGRESS_GRACE_SECONDS = ds.WAIT_SECONDS" in inspect.getsource(sw)
+    assert GRACE < OPEN - ALERT                    # an on-time 8:20 dispatch is past it at the 8:25 watch
+
+
 @pytest.mark.parametrize("status", ["queued", "in_progress", "waiting", "requested", "pending"])
-def test_a_morning_run_still_running_inside_its_window_is_in_progress_not_an_alert(record, tmp_path, monkeypatch,
-                                                                                 status):
+def test_a_morning_run_younger_than_the_grace_is_in_progress_not_an_alert(record, tmp_path, monkeypatch, status):
     """The pre-open watch reads main a minute or two before a catch-up check's receipt lands: no receipt for this
-    record is there yet, and the listing shows the run that will write it. That is no alert and no mail."""
+    record is there yet, and the listing shows the run that will write it, 80 seconds old. That is no alert and
+    no mail."""
     sent = deliveries(monkeypatch)
     raw = encode(record)
     docs = docs_with(tmp_path, record, receipt(b"yesterday's record", COLLECT - timedelta(days=1)))
@@ -1978,9 +2004,11 @@ def test_a_morning_run_still_running_inside_its_window_is_in_progress_not_an_ale
     assert (block["judgement"], block["alert"], block["key"], block["action"]) == (sw.IN_PROGRESS, False, None, None)
     assert out["scheduler"]["morning"]["running"] == {"id": 8300, "created_at": "2026-09-11T13:26:00Z",
                                                       "status": status}
+    assert out["scheduler"]["morning"]["overdue"] is None
     assert block["sentence"] == (f"A morning run for 2026-09-11 (run 8300, created 2026-09-11T13:26:00Z) is still "
-                                 f"{status} inside its collection window, so its receipt may not be on main yet. No "
-                                 "answer is given now: a later watch judges it.")
+                                 f"{status}, less than 150 seconds after it was created and before the entry window "
+                                 "closes (2026-09-11T10:00:00-04:00), so its receipt may not be on main yet. No answer "
+                                 "is given now: a later watch judges it.")
     assert not [a for a in out["alerts"] if a["key"].startswith("morning:")]
     main_mail_with(docs, now, tmp_path / "ledger.json", listing)
     assert not [text for _, text in sent if "Alert key: morning:" in text]
@@ -2002,23 +2030,270 @@ def test_a_check_that_landed_but_whose_go_cancel_file_is_not_yet_checked_is_in_p
     out = sw.watch(docs, now, github=running)
     assert (out["morning"]["judgement"], out["morning"]["alert"]) == (sw.IN_PROGRESS, False)
     assert "so its orders-morning.json may not be on main yet" in out["morning"]["sentence"]
-    done = Listing({"morning.yml": [morning_run()]})
+    done = Listing({"morning.yml": [morning_run(created=COLLECT + timedelta(minutes=20))]})
     assert sw.watch(docs, now, github=done)["morning"]["judgement"] == sw.NOT_CHECKED
+    # the same run still going, older than the grace: not checked is said, and the run is named in it
+    old = Listing({"morning.yml": [morning_run(created=now - GRACE, status="in_progress", conclusion=None)]})
+    late = sw.watch(docs, now, github=old)["morning"]
+    assert (late["judgement"], late["alert"], late["key"]) == (sw.NOT_CHECKED, True, "morning:not_checked:2026-09-11")
+    assert late["sentence"].endswith(" The run listing shows run 8300 still in_progress, created "
+                                     "2026-09-11T13:24:30Z: it can still land until the entry window closes at "
+                                     "2026-09-11T10:00:00-04:00.")
 
 
-@pytest.mark.parametrize("created,why", [
-    (COLLECT - SECOND, "created before the collection window"),
-    (CUTOFF + SECOND, "created after the entry window closed"),
-], ids=["before-the-window", "after-the-cutoff"])
-def test_a_running_morning_run_outside_its_collection_window_is_not_in_progress(record, created, why):
+@pytest.mark.parametrize("now,age,held", [
+    (ALERT + timedelta(minutes=3), GRACE - SECOND, True),            # a second inside the grace
+    (ALERT + timedelta(minutes=3), GRACE, False),                    # exactly the grace: late
+    (ALERT + timedelta(minutes=3), GRACE + SECOND, False),
+    (CUTOFF - SECOND, timedelta(seconds=10), True),                  # the last second before the entry cutoff
+    (CUTOFF, timedelta(seconds=10), False),                          # at the cutoff nothing is in progress
+    (CUTOFF + timedelta(minutes=5), timedelta(seconds=10), False),
+], ids=["a-second-inside", "exactly-the-grace", "past-the-grace", "before-the-cutoff", "at-the-cutoff",
+        "after-the-cutoff"])
+@pytest.mark.parametrize("status", ["queued", "in_progress"])
+def test_a_run_holds_the_answer_only_inside_the_grace_and_before_the_entry_cutoff(record, now, age, held, status):
     raw = encode(record)
-    listed = [morning_run(created=created, status="in_progress", conclusion=None, event="schedule",
-                          display_title="Morning cron 20 13 * * 1-5")]
-    sched = sw.judge_morning(record, None, raw, CUTOFF + timedelta(seconds=5), listed, None)
-    assert sched["running"] is None, why
-    out = sw.morning(record, raw, None, "absent", CUTOFF + timedelta(seconds=5), orders_raw=None,
-                     orders_morning_raw=None, running=sched["running"])
-    assert out["judgement"] == sw.NOT_LANDED
+    listed = [morning_run(created=now - age, status=status, conclusion=None)]
+    sched = sw.judge_morning(record, None, raw, now, listed, None)
+    named = {"id": 8300, "created_at": (now - age).strftime("%Y-%m-%dT%H:%M:%SZ"), "status": status}
+    assert (sched["running"], sched["overdue"]) == ((named, None) if held else (None, named))
+    out = sw.morning(record, raw, None, "absent", now, orders_raw=None, orders_morning_raw=None,
+                     running=sched["running"], overdue=sched["overdue"])
+    assert (out["judgement"], out["alert"]) == ((sw.IN_PROGRESS, False) if held else (sw.NOT_LANDED, True))
+    assert ("can still land until" in out["sentence"]) == (not held and now < CUTOFF)
+    assert ("can no longer land inside it" in out["sentence"]) == (now >= CUTOFF)
+
+
+@pytest.mark.parametrize("status", ["queued", "in_progress"])
+def test_an_on_time_dispatch_still_unfinished_at_the_pre_open_watch_is_mailed_before_the_open(record, tmp_path,
+                                                                                            monkeypatch, status):
+    """The dispatcher's 8:20 AM CT check, dispatched on time and never finished. 8:25:40, the only watch before the
+    open: it is past the grace, the check has not landed, and that is mailed, the run named. 9:05:40, after the
+    window: the same answer, a repeat, and nothing says in progress. After the evening publication the record is the
+    next one: the alert was mailed once, for its own session."""
+    sent = deliveries(monkeypatch)
+    docs, ledger = docs_with(tmp_path, record), tmp_path / "ledger.json"
+    unfinished = Listing({"morning.yml": [morning_run(created=MORNING_SLOT + 3 * SECOND, status=status,
+                                                      conclusion=None)]})
+    named = {"id": 8300, "created_at": "2026-09-11T13:20:03Z", "status": status}
+    key = "morning:not_landed:2026-09-11"
+
+    def mails():
+        return sum(f"Alert key: {key}." in text for _, text in sent)
+    out = sw.watch(docs, PRE_OPEN, github=unfinished)
+    block, sched = out["morning"], out["scheduler"]["morning"]
+    assert (block["judgement"], block["alert"], block["key"]) == (sw.NOT_LANDED, True, key)
+    assert block["sentence"] == (
+        "No morning check for 2026-09-11 landed by 2026-09-11T08:25:00-05:00 inside its collection window: "
+        "morning.json is not a regular file; the record published 1 ticket. The run listing shows run 8300 still "
+        f"{status}, created 2026-09-11T13:20:03Z: it can still land until the entry window closes at "
+        "2026-09-11T10:00:00-04:00.")
+    assert (sched["running"], sched["overdue"]) == (None, named)
+    assert sched["judgement"] == sw.ON_TIME                 # before the cutoff the dispatch in its slot is a start
+    main_mail_with(docs, PRE_OPEN, ledger, unfinished)
+    assert mails() == 1 and PRE_OPEN < OPEN                 # mailed, and before the 8:30 AM CT open
+    # 9:05:40 AM CDT, after the entry window closed
+    out = sw.watch(docs, POST_WINDOW, github=unfinished)
+    block, sched = out["morning"], out["scheduler"]["morning"]
+    assert (block["judgement"], block["key"]) == (sw.NOT_LANDED, key)
+    assert block["sentence"].endswith(
+        f" The run listing shows run 8300 still {status}, created 2026-09-11T13:20:03Z: the entry window closed at "
+        "2026-09-11T10:00:00-04:00, so it can no longer land inside it.")
+    assert (sched["running"], sched["overdue"]) == (None, named)
+    assert sw.IN_PROGRESS not in {out[name]["judgement"] for name in ("evening", "morning", "start", "handoff")}
+    assert (sched["judgement"], sched["on_time_run"]) == (sw.FAILED, None)
+    assert "scheduler:morning:started_late" not in out["clears"]
+    main_mail_with(docs, POST_WINDOW, ledger, unfinished)
+    assert mails() == 1                                     # a repeat: dropped
+    # 7:00 PM EDT: the evening published Friday's record, and the run ended long after its window
+    (tmp_path / "evening").mkdir()
+    friday = docs_with(tmp_path / "evening", json.loads(NEXT.read_bytes()))
+    ended = Listing({"morning.yml": [morning_run(created=MORNING_SLOT + 3 * SECOND)]})
+    evening_clock = datetime(2026, 9, 11, 23, 0, 40, tzinfo=UTC)
+    out = sw.watch(friday, evening_clock, github=ended)
+    assert (out["morning"]["judgement"], out["morning"]["applicable_session"]) == (sw.NOT_DUE, "2026-09-14")
+    main_mail_with(friday, evening_clock, ledger, ended)
+    assert mails() == 1 and key in json.loads(ledger.read_text())["sent"]
+
+
+@pytest.mark.parametrize("status", sw.RUNNING_STATUSES)
+def test_a_slot_dispatch_still_unfinished_at_the_entry_cutoff_is_no_on_time_start_and_clears_nothing(record, status):
+    raw = encode(record)
+    stuck = morning_run(created=MORNING_SLOT, status=status, conclusion=None)
+    before = sw.judge_morning(record, None, raw, CUTOFF - SECOND, [stuck], None)
+    assert (before["judgement"], before["on_time_run"]) == (sw.ON_TIME, 8300)
+    assert "scheduler:morning:started_late" in sw.clears_of({"scheduler": {"morning": before}, "alerts": []})
+    at = sw.judge_morning(record, None, raw, CUTOFF, [stuck], None)
+    assert (at["judgement"], at["on_time_run"], at["key"], at["alert"]) == (sw.FAILED, None, None, False)
+    assert at["sentence"] == ("Every morning run for 2026-09-11 listed on main ended without its work or had not "
+                              "finished when the entry window closed (2026-09-11T10:00:00-04:00): run 8300 (Morning "
+                              f"publication, workflow_dispatch, created 2026-09-11T13:20:00Z, {status}).")
+    assert "scheduler:morning:started_late" not in sw.clears_of({"scheduler": {"morning": at}, "alerts": []})
+    # beside a later run that did the work: started late, under the standing key, with the stuck run's own hint
+    done = morning_run(created=MORNING_SLOT + timedelta(minutes=35), id=8301)
+    out = sw.judge_morning(record, None, raw, CUTOFF, [stuck, done], None)
+    assert (out["judgement"], out["key"], out["action"]) == (sw.STARTED_LATE, "scheduler:morning:started_late",
+                                                             sw.MORNING_STUCK_HINT)
+    assert "not started by a dispatch that did its work in its slot's due window" in out["sentence"]
+    assert ("the dispatch in its slot had not finished when the entry window closed (2026-09-11T10:00:00-04:00): "
+            "run 8300") in out["sentence"]
+    assert "scheduler:morning:started_late" not in sw.clears_of({"scheduler": {"morning": out}, "alerts": []})
+    # a run that failed keeps its own words and its own hint
+    failed = sw.judge_morning(record, None, raw, CUTOFF, [morning_run(created=MORNING_SLOT, conclusion="failure")], None)
+    assert failed["sentence"].startswith("Every morning run for 2026-09-11 listed on main ended without its work: ")
+
+
+def test_a_run_that_finished_inside_the_grace_is_named_in_the_alert_it_does_not_hold(record, tmp_path):
+    """The watch reads main, then the listing. A catch-up check that finished between the two is listed completed
+    while this watch's copy of main may lack its receipt: the answer is not held, and its sentence says so."""
+    docs = docs_with(tmp_path, record)
+    now = ALERT + timedelta(minutes=4, seconds=45)                        # 8:29:45 AM CDT, the last-tick watch
+    quick = Listing({"morning.yml": [morning_run(created=now - GRACE + SECOND)]})
+    out = sw.watch(docs, now, github=quick)
+    block, sched = out["morning"], out["scheduler"]["morning"]
+    assert (block["judgement"], block["alert"]) == (sw.NOT_LANDED, True)
+    assert sched["just_finished"] == {"id": 8300, "created_at": "2026-09-11T13:27:16Z", "conclusion": "success"}
+    assert block["sentence"].endswith(
+        " The run listing shows run 8300 finished (success), created 2026-09-11T13:27:16Z, less than 150 seconds "
+        "before this watch's clock: this watch read main before it read the listing, so what that run wrote may have "
+        "reached main in between. Read main before acting on this.")
+    # one that finished at the grace or before it, or failed, is not named so
+    for listed in ([morning_run(created=now - GRACE)], [morning_run(created=now - GRACE + SECOND, conclusion="failure")]):
+        again = sw.watch(docs, now, github=Listing({"morning.yml": listed}))
+        assert again["scheduler"]["morning"]["just_finished"] is None
+        assert "finished (" not in again["morning"]["sentence"]
+
+
+# ---------------------------------- a scheduled morning run, as its guard reads it ---
+@pytest.fixture
+def guard(monkeypatch):
+    """``tools/publish_morning.schedule_guard()`` itself, over a page fixture: the collector's own binding refuses a
+    fixture, so the record's applicable session is read off its own timing block, as the guard's tests read it."""
+    monkeypatch.setattr(morning_module, "bind_record",
+                        lambda raw: {"applicable_session": json.loads(raw)["run"]["timing"]["applicable_session"]})
+    return publish_morning.schedule_guard
+
+
+def cron_run(cron: str, created, **fields) -> dict:
+    return run(**{"id": 8400, "event": "schedule", "display_title": f"Morning cron {cron}", "created_at": created,
+                  **fields})
+
+
+def fixture_window(path: Path):
+    record = json.loads(path.read_bytes())
+    window = freshness.morning_window(record)
+    return (record, encode(record), window["applicable_session"], sw._instant(window["collection_starts_at"]),
+            sw._instant(window["window_cutoff_at"]))
+
+
+@pytest.mark.parametrize("path", [FULL, EARLY], ids=["daylight-time", "standard-time"])
+def test_a_scheduled_morning_run_is_read_as_the_morning_guard_itself_reads_it(guard, path):
+    """Every cron of morning.yml and one the guard does not know, created every seven minutes over the three days
+    around the session, in each clock season: what the watch reads off the run's title and created_at is what the
+    guard answers at that instant."""
+    _, raw, session, _, cutoff = fixture_window(path)
+    assert sw.MORNING_CRON_PREFIX == "Morning cron " and set(publish_morning.SCHEDULES) == {
+        "20 13 * * 1-5", "28 13 * * 1-5", "20 14 * * 1-5", "28 14 * * 1-5"}
+    start = datetime.fromisoformat(session).replace(tzinfo=UTC) - timedelta(days=1)
+    seen = set()
+    for cron in (*publish_morning.SCHEDULES, "0 13 * * 1-5"):
+        for minutes in range(0, 3 * 24 * 60, 7):
+            created = start + timedelta(minutes=minutes, seconds=13)
+            go, reason = guard(raw, "schedule", cron, created)
+            target = sw._morning_cron_target(cron_run(cron, created), session, cutoff)
+            seen.add(reason)
+            if go:
+                assert target == session, (cron, created)
+            elif reason == "record_for_another_session":
+                assert isinstance(target, str) and target != session, (cron, created)
+            else:
+                assert target is sw._SKIPPED, (cron, created, reason)
+                assert sw.skipped_morning_cron(cron_run(cron, created), session, cutoff)
+    assert {"scheduled_morning", "inactive_schedule", "entry_window_ended", "scheduled_day_expired",
+            "unknown_schedule"} <= seen
+    assert ("record_for_another_session" if path is FULL else "not_exchange_session") in seen
+    # a dispatch, a rehearsal and an evening cron are no scheduled morning run at all
+    for other in (morning_run(), run(event="schedule", display_title="Evening cron 16 22 * * 1-5")):
+        assert sw._morning_cron_target(other, session, cutoff) is None
+        assert sw.skipped_morning_cron(other, session, cutoff) is False
+
+
+@pytest.mark.parametrize("path,cron,created,reason", [
+    # the other season's pair. In standard time it is due an hour before the active one, so a run of it created 64
+    # minutes late is inside the collection window (the finding's case: 8:24:40 AM CST)
+    (EARLY, "20 13 * * 1-5", datetime(2024, 11, 29, 14, 24, 40, tzinfo=UTC), "inactive_schedule"),
+    (EARLY, "28 13 * * 1-5", datetime(2024, 11, 29, 14, 25, 10, tzinfo=UTC), "inactive_schedule"),
+    # in daylight time it is due at 9:20 AM CDT, after the cutoff
+    (FULL, "20 14 * * 1-5", datetime(2026, 9, 11, 14, 20, 5, tzinfo=UTC), "inactive_schedule"),
+    # the active pair, created late: at the entry cutoff, and hours after it
+    (FULL, "20 13 * * 1-5", datetime(2026, 9, 11, 14, 0, tzinfo=UTC), "entry_window_ended"),
+    (FULL, "28 13 * * 1-5", datetime(2026, 9, 11, 19, 31, tzinfo=UTC), "entry_window_ended"),
+    (EARLY, "20 14 * * 1-5", datetime(2024, 11, 29, 15, 0, tzinfo=UTC), "entry_window_ended"),
+    (EARLY, "28 14 * * 1-5", datetime(2024, 11, 29, 20, 31, tzinfo=UTC), "entry_window_ended"),
+], ids=["standard-inactive-20", "standard-inactive-28", "daylight-inactive", "daylight-at-the-cutoff",
+        "daylight-hours-late", "standard-at-the-cutoff", "standard-hours-late"])
+def test_a_morning_cron_its_guard_skips_is_never_in_progress_and_never_the_sessions_run(guard, bound_handoff, tmp_path,
+                                                                                      path, cron, created, reason):
+    record, raw, session, _, cutoff = fixture_window(path)
+    assert guard(raw, "schedule", cron, created) == (False, reason)
+    listed = cron_run(cron, created, status="in_progress", conclusion=None)
+    now = created + timedelta(seconds=40)
+    sched = sw.judge_morning(record, None, raw, now, [listed], None)
+    assert (sched["judgement"], sched["runs"], sched["running"], sched["overdue"]) == (sw.NOT_STARTED, [], None, None)
+    assert [r["id"] for r in sched["skipped"]] == [8400]
+    assert sched["sentence"].endswith(
+        " The scheduled runs listed there did no morning's work: their guard skips a cron that is not the active "
+        f"pair, is not this session's or was created at or after the entry cutoff (run 8400 (Morning cron {cron}, "
+        f"schedule, created {listed['created_at']}, in_progress)).")
+    docs = docs_with(tmp_path, record, handoff_files=False)
+    out = sw.watch(docs, now, github=Listing({"morning.yml": [listed]}))
+    assert (out["morning"]["judgement"], out["morning"]["alert"]) == (sw.NOT_LANDED, True)
+    assert out["morning"]["key"] == f"morning:not_landed:{session}"
+    # beside the dispatcher's own check, which landed nothing: the skipped cron hides nothing of it
+    failed = morning_run(created=sw.dispatcher_slot("morning.yml", session), conclusion="failure")
+    both = sw.judge_morning(record, None, raw, now, [failed, listed], None)
+    assert (both["judgement"], [r["id"] for r in both["runs"]], both["running"]) == (sw.FAILED, [8300], None)
+
+
+@pytest.mark.parametrize("path,cron,created", [
+    (FULL, "20 13 * * 1-5", datetime(2026, 9, 11, 13, 26, tzinfo=UTC)),       # 8:26 AM CDT, six minutes late
+    (FULL, "28 13 * * 1-5", datetime(2026, 9, 11, 13, 59, 59, tzinfo=UTC)),   # a second before the cutoff
+    (EARLY, "20 14 * * 1-5", datetime(2024, 11, 29, 14, 26, tzinfo=UTC)),     # 8:26 AM CST
+    (EARLY, "28 14 * * 1-5", datetime(2024, 11, 29, 14, 59, 59, tzinfo=UTC)),
+], ids=["daylight", "daylight-before-the-cutoff", "standard", "standard-before-the-cutoff"])
+def test_a_morning_cron_its_guard_runs_for_this_session_is_its_run_and_holds_the_answer_while_young(guard, path, cron,
+                                                                                                  created):
+    record, raw, session, _, cutoff = fixture_window(path)
+    assert guard(raw, "schedule", cron, created) == (True, "scheduled_morning")
+    listed = cron_run(cron, created, status="in_progress", conclusion=None)
+    now = min(created + timedelta(seconds=80), cutoff - SECOND)
+    sched = sw.judge_morning(record, None, raw, now, [listed], None)
+    assert [r["id"] for r in sched["runs"]] == [8400] and sched["skipped"] == []
+    assert sched["running"] == {"id": 8400, "created_at": listed["created_at"], "status": "in_progress"}
+    assert sched["judgement"] == sw.STARTED_LATE                  # a cron is no dispatch in the dispatcher's slot
+    out = sw.morning(record, raw, None, "absent", now, orders_raw=None, orders_morning_raw=None,
+                     running=sched["running"])
+    assert out["judgement"] == sw.IN_PROGRESS
+    # a run GitHub lists under another event or a title no guard reads is a run of the day, and holds nothing
+    odd = run(id=8401, event="push", display_title="Morning observation (best effort)", created_at=created,
+              status="in_progress", conclusion=None)
+    sched = sw.judge_morning(record, None, raw, now, [odd], None)
+    assert ([r["id"] for r in sched["runs"]], sched["running"]) == ([8401], None)
+    assert sched["overdue"] == {"id": 8401, "created_at": odd["created_at"], "status": "in_progress"}
+
+
+def test_a_morning_cron_its_guard_runs_for_another_session_is_that_sessions(guard, record):
+    """Monday's own cron, created on time on Monday, listed while main still carries the record whose plans were
+    for Friday: the guard refuses it this record (record_for_another_session). It is Monday's run: no run of
+    Friday's morning, and no skipped cron of Friday's either."""
+    raw = encode(record)
+    created = datetime(2026, 9, 14, 13, 21, tzinfo=UTC)
+    monday = cron_run("20 13 * * 1-5", created, status="in_progress", conclusion=None)
+    assert guard(raw, "schedule", "20 13 * * 1-5", created) == (False, "record_for_another_session")
+    assert sw._morning_cron_target(monday, "2026-09-11", CUTOFF) == "2026-09-14"
+    sched = sw.judge_morning(record, None, raw, created + timedelta(seconds=40), [monday], None)
+    assert (sched["judgement"], sched["runs"], sched["skipped"], sched["running"]) == (sw.NOT_STARTED, [], [], None)
+    assert "did no morning's work" not in sched["sentence"]
 
 
 def test_an_in_progress_run_that_later_fails_is_flagged_by_the_next_watch(record, tmp_path, monkeypatch):
@@ -2056,7 +2331,7 @@ def test_the_morning_sentences_say_the_dispatcher_starts_the_check_once_it_is_de
 def test_a_morning_dispatch_in_its_slot_that_ended_without_its_work_is_not_on_time(record):
     raw = encode(record)
     failed = morning_run(created=MORNING_SLOT, conclusion="failure")
-    later = morning_run(created=MORNING_SLOT + timedelta(minutes=40), id=8301, event="schedule",
+    later = morning_run(created=CUTOFF - SECOND, id=8301, event="schedule",
                         display_title="Morning cron 20 13 * * 1-5")
     out = sw.judge_morning(record, None, raw, CUTOFF, [failed, later], None)
     assert (out["judgement"], out["key"], out["on_time_run"]) == (sw.STARTED_LATE, "scheduler:morning:started_late",
