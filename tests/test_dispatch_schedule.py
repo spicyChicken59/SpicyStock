@@ -344,12 +344,13 @@ def test_the_wait_after_a_dispatch_runs_wait_seconds_past_the_end_of_the_checks_
 def test_the_ledger_keeps_a_week_of_slots():
     now = at("2026-11-20", "18:21")
     state = {"version": ds.VERSION,
-             "started": {"evening.yml@2026-11-13T18:20:00-05:00": 1, "evening.yml@2026-11-13T18:22:00-05:00": 2,
-                         "not a slot": 3},
+             "started": {"evening.yml@2026-11-13T18:20:00-05:00": 1, "evening.yml@2026-11-13T18:21:00-05:00": 2,
+                         "evening.yml@2026-11-13T18:22:00-05:00": 3, "not a slot": 4},
              "dispatched": {"evening.yml@2026-11-12T18:20:00-05:00": "2026-11-12T18:20:01-05:00",
                             "evening.yml@2026-11-19T18:20:00-05:00": "2026-11-19T18:20:01-05:00"}}
     ds.write_state(None, state, now)
-    assert state["started"] == {"evening.yml@2026-11-13T18:22:00-05:00": 2}       # a week and a minute old is dropped
+    # a week and a minute old is dropped; a week old exactly is kept, and so is anything newer
+    assert state["started"] == {"evening.yml@2026-11-13T18:21:00-05:00": 2, "evening.yml@2026-11-13T18:22:00-05:00": 3}
     assert state["dispatched"] == {"evening.yml@2026-11-19T18:20:00-05:00": "2026-11-19T18:20:01-05:00"}
 
 

@@ -1209,7 +1209,8 @@ def test_the_operations_note_and_the_example_quote_the_watch_from_the_tool_and_i
     assert ("every alert mails again, except the run listing's own, which an empty or missing ledger holds back "
             "until two failing runs in a row are counted again") in workflow
     assert "Keys, instants and the listing's count of failing runs only" in workflow
-    assert "an empty or missing ledger starts that count over" in comments(ROOT / ".env.example")
+    assert ("raised (with the ledger) only when two watch runs in a row could not read it; an empty or missing "
+            "ledger starts that count over") in comments(ROOT / ".env.example")
     assert (f"{sw.LISTING_FAILURES_IN_A_ROW} watch runs in a row could not read it (`LISTING_FAILURES_IN_A_ROW`)"
             in note and f"{sw.LISTING_CLEAR_HOURS} hours with no listing failure (`LISTING_CLEAR_HOURS`)" in note)
     assert "a red run that GitHub's cron started is read by no watch, and is seen only in Actions" in note
