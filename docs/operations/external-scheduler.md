@@ -16,18 +16,39 @@ calendar the run reads (`src/sessions.py`).
 
 A slot is due from its instant for 30 minutes (`DUE_MINUTES`), except the
 watch's 08:25 America/Chicago slot, which is due only until the session's open
-and is never dispatched at or after it (`BEFORE_OPEN`). That watch is not
-dispatched until 150 seconds (`WAIT_SECONDS`) after the newest dispatch of the
-morning check it judges (`WAITS_FOR`), this tool's or anyone's, by the
-dispatch's own `created_at`: the check's receipts landed on `main` 88 to 94
-seconds (23 October 2026) and 97 to 103 seconds (4 November 2026) after its
-dispatch was created, so 150 covers the 103 with margin. Ticks are on the
-minute and GitHub stamps a dispatch a few seconds after its tick, so the third
-tick after it clears the wait while the stamp is within 30 seconds of its
-tick: a catch-up that starts the check at 08:26 starts the watch at 08:29. A
-stamp later than that (08:26:40, say) defers the watch to 08:30, the open, and
-leaves the morning to the 09:05 slot, as a catch-up at 08:28 does. The
-evening's four starts are one publication and three no-ops: the workflow's
+and is never dispatched at or after it (`BEFORE_OPEN`). That watch waits for
+the morning check it judges (`WAITS_FOR`):
+
+- while the check's own slot is due and nothing has started it: no dispatch of
+  it is listed since 08:20, and this tool's ledger holds none. A dispatch
+  GitHub refused at 08:20 to 08:25 and accepted at 08:26 is waited for, not
+  overtaken;
+- until 150 seconds (`WAIT_SECONDS`) after the newest dispatch of the morning
+  check, this tool's or anyone's, by the dispatch's own `created_at`: the
+  check's receipts landed on `main` 88 to 94 seconds (23 October 2026) and 97
+  to 103 seconds (4 November 2026) after its dispatch was created, so 150
+  covers the 103 with margin. Ticks are on the minute and GitHub stamps a
+  dispatch a few seconds after its tick, so the third tick after it clears
+  the wait while the stamp is within 30 seconds of its tick: a catch-up that
+  starts the check at 08:25 starts the watch at 08:28;
+- never past its last tick before the open. At 08:29 the watch is dispatched
+  whatever the wait says, and without asking about the check: a catch-up at
+  08:26:40, at 08:28 or at 08:29 still starts a watch before the open. Such a
+  watch may read `main` before the check's receipt lands. A run the listing
+  still shows queued or running, less than 150 seconds old, is then
+  `in_progress` and the 09:05 watch judges it; one that finished in between
+  is named in the alert, which says to read `main` before acting on it.
+
+The pre-open watch is not started only when no tick could start it: the
+dispatcher made no tick from 08:25 to 08:29 (it was down, or not deployed), it
+stopped ticking before 08:29 while the watch still waited, or GitHub refused
+the watch's own listing or dispatch on every tick that tried. Nothing is
+mailed before the open then. The 09:05 watch mails
+`scheduler:watch:not_started` (a standing key) and judges the morning check
+for the first time, after the entry window: `morning:not_landed` for that
+session if it did not land.
+
+The evening's four starts are one publication and three no-ops: the workflow's
 `only_if_unpublished` guard publishes the newest completed session once,
 from its primary slot (18:16 ET) on, only while it is unpublished and only
 before its next session opens. On a weekend or a holiday the same four starts
@@ -59,7 +80,7 @@ already makes a second start harmless.
 
   One more read after a dispatch finds the run's id, and the pre-open watch
   slot reads the morning check's dispatched runs once a tick while it waits
-  (`WAIT_SECONDS`); no other slot asks about another workflow.
+  (not at its last tick, 08:29); no other slot asks about another workflow.
 - **What it logs:** the workflow, the slot, the run id GitHub listed, a slot
   that waits and for what, and, when GitHub refuses a request, its HTTP
   status. It never logs a token, a
@@ -97,6 +118,7 @@ This is the owner's step; nothing in the repository deploys it.
    - `evening.yml@2026-11-20T18:20:00-05:00 dispatched: run 123456789`
    - `... already started: run 123456789`
    - `service-watch.yml@2026-11-20T08:25:00-06:00 waits: morning.yml was dispatched at 2026-11-20T08:26:07-06:00, less than 150 seconds ago`
+   - `service-watch.yml@2026-11-20T08:25:00-06:00 waits: morning.yml is due since 2026-11-20T08:20:00-06:00 and has not been dispatched yet`
    - `... not started: dispatching evening.yml: HTTP 403`
 
 ## Checking it without Railway
@@ -138,29 +160,45 @@ It reads the Actions run listing of `evening.yml`, `morning.yml` and its own
 - `not_started`: for the evening, no run listed by 18:50 ET (an evening cron
   whose guard skips it -- not the active UTC slot, or a weekday holiday's own
   crons, whose nominal date is no session -- is no run, and one its guard runs
-  for another session is that session's); for the watch, no run dispatched in
+  for another session is that session's); for the morning, no run listed that
+  its guard would run (the other season's cron pair, and a cron created at or
+  after the entry cutoff or on a later day, are skipped by the morning guard
+  and are no run), said beside the morning's own alert; for the watch, no run dispatched in
   its own previous slot, or one dispatched there that ended failed or
   cancelled, said after the fact by a later watch. A watch run GitHub's cron
   started, red or green, is read by no watch: a red one is seen only in
   Actions;
 - `failed`: every run of the evening ended without publishing; a dispatch in a
   first slot that ended without its work, beside a run that did not, is named
-  and makes the start `started_late`;
+  and makes the start `started_late`, before the publication and after it. A
+  dispatch in the morning's slot still queued or running at the entry cutoff
+  is read the same way: it is no on-time start, and clears nothing;
 - `unknown`: no token, or that workflow's listing could not be read. Without
   a token it is never an alert; with one, a listing that cannot be read is an
   alert of its own, `scheduler:listing:unreadable`, standing, raised only when
   2 watch runs in a row could not read it (`LISTING_FAILURES_IN_A_ROW`) and
   cleared only after 24 hours with no listing failure (`LISTING_CLEAR_HOURS`).
+  The watch's ledger counts the failing runs, and an empty or missing ledger
+  starts the count over. The 21:45 ET rule (an evening started on time and
+  not published) needs a readable listing on the 21:50 ET run: when the
+  listing first fails on that run, nothing is mailed for it that night.
 
-While the listing shows the morning check's run still queued or in progress
-inside its collection window, a check whose receipt or go/cancel file is not
-on `main` yet is `in_progress`: no alert, and a later watch judges it.
+While the listing shows the morning check's run still queued or running and
+not yet late, a check whose receipt or go/cancel file is not on `main` yet is
+`in_progress`: no alert, and a later watch judges it, which is the 09:05 CT
+one, after the entry window. A run is not yet late when it is a dispatch (or
+a cron its guard runs for the session) created less than 150 seconds before
+the watch's clock (`IN_PROGRESS_GRACE_SECONDS`, this tool's `WAIT_SECONDS`)
+and that clock is before the entry cutoff. The 08:20 check still queued or
+running at the 08:25 watch is older than that: it is mailed as not landed
+before the open, with the run, its status and whether it can still land.
 
 A `started_late` evening or morning, a watch slot with no dispatched run and a
 listing that cannot be read are standing conditions: each is mailed once,
 again only after 7 days (`REPEAT_DAYS`) while it stands, and at once when it
 returns after clearing (the watch's ledger records when each was last answered
-on time). An evening `not_started` or `failed` is about one session and
+on time), except the listing's own key, which returns only once 2 watch runs
+in a row fail again. An evening `not_started` or `failed` is about one session and
 is mailed once for it. It also still flags an evening run that started more
 than 60 minutes after its 18:16 ET primary slot (`LATE_START_MINUTES`, read
 off the record when no listing answers), and a morning check that had not

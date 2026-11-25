@@ -1036,6 +1036,31 @@ def test_the_readme_quotes_the_service_watch_from_the_tool_and_its_workflow():
             "(`LISTING_FAILURES_IN_A_ROW`; the first is recorded and mails nothing)") in README
     assert f"cleared only after {sw.LISTING_CLEAR_HOURS} hours with no listing failure (`LISTING_CLEAR_HOURS`)" in README
     assert "`in_progress`" in README and sw.IN_PROGRESS == "in_progress"
+    # the listing key's return, the count's home and the one rule that needs the listing
+    assert (f"after a clear the key returns only once {sw.LISTING_FAILURES_IN_A_ROW} runs in a row fail again, never at "
+            "once") in README
+    assert "The ledger counts the failing runs, so the rule is the constant's" in README
+    assert "when the failures began is never forgotten by age" in README
+    assert (f"(the run listing's own key only once {sw.LISTING_FAILURES_IN_A_ROW} watch runs in a row fail again)"
+            in README)
+    assert "The ledger holds keys, instants and that count only, no address and no message" in README
+    assert ("so every alert mails again, while the listing's own key is held back by an empty or missing ledger "
+            "until its count is recorded again") in README
+    from tools import dispatch_schedule as dispatcher
+    last_watch_et = [times for name, _, zone, times in dispatcher.SLOTS
+                     if name == "service-watch.yml" and zone == dispatcher.ET][0][-1]
+    assert (sw.EVENING_PUBLISHED_BY_ET, last_watch_et) == ("21:45", "21:50")
+    assert ("the evening's 9:45 PM ET rule needs a readable listing on the 9:50 PM ET run that applies it"
+            in README)
+    # a morning run holds the answer only while it is not yet late, by the dispatcher's own wait
+    assert sw.IN_PROGRESS_GRACE_SECONDS == dispatcher.WAIT_SECONDS
+    assert (f"created less than {sw.IN_PROGRESS_GRACE_SECONDS} seconds before the watch's clock "
+            "(`IN_PROGRESS_GRACE_SECONDS`, the dispatcher's own `WAIT_SECONDS`, read there), and only before the entry "
+            "cutoff") in README
+    assert "At or after the cutoff nothing is in progress" in README
+    assert "through the morning guard's own table and rules (`tools/publish_morning.schedule_guard()`)" in README
+    assert ("A dispatch in the morning's slot still queued or running at the entry cutoff is no start in it either, "
+            "and clears nothing") in README
     assert "a watch run GitHub's own cron started, red or green, is read by no watch" in README
     assert "a red run GitHub's cron started is read by no watch, and is seen only in Actions" in README
     assert "with or without `--mail`, and never with a key its own reader refuses" in README
@@ -1065,18 +1090,34 @@ def test_the_readme_quotes_the_service_watch_from_the_tool_and_its_workflow():
     morning = next(times for wf_name, _, _, times in ds.SLOTS if wf_name == "morning.yml")[0]
     assert _clock(datetime.combine(date(2026, 11, 20), time.fromisoformat(morning))) == "8:20 AM"
     assert "the on-time dispatcher, once it is deployed, starts the check at 8:20 AM CT" in README
-    # the pre-open watch's wait after a catch-up dispatch of the check, from the dispatcher's own numbers
-    assert ds.WAIT_SECONDS == 150 and "not dispatched until\n150 seconds (`WAIT_SECONDS`)" in README_RAW
+    # the pre-open watch's wait for the check, from the dispatcher's own numbers
+    assert ds.WAIT_SECONDS == 150 and f"and until {ds.WAIT_SECONDS} seconds (`WAIT_SECONDS`) after the newest dispatch " \
+                                      "of it" in README
+    assert "while that check's own slot is due and nothing has started it (no dispatch listed, none in the ledger)" \
+        in README
     open_at = datetime.combine(date(2026, 11, 20), time(8, 30))
-    catch_up, late = (datetime.combine(date(2026, 11, 20), time(8, m)) for m in (26, 28))
+    catch_up = datetime.combine(date(2026, 11, 20), time.fromisoformat(sw.MORNING_ALERT_CT))
     # ticks are on the minute: the watch goes at the first tick the wait has passed, the stamp up to 30 s late
     skew = timedelta(seconds=30)
-    first_tick = catch_up + timedelta(minutes=-(-(ds.WAIT_SECONDS + skew.seconds) // 60))
-    assert first_tick < open_at <= late + timedelta(seconds=ds.WAIT_SECONDS)
-    assert first_tick - (catch_up + skew) >= timedelta(seconds=ds.WAIT_SECONDS)
-    assert (f"a catch-up that starts the\ncheck at {_clock(catch_up)} CT starts the watch at "
-            f"{_clock(first_tick).removesuffix(' AM')} (GitHub stamping the dispatch up\nto 30 seconds after its "
-            f"tick), and one at {_clock(late).removesuffix(' AM')} leaves the\nmorning to the 09:05 slot") in README_RAW
+    ticks_to_clear = -(-(ds.WAIT_SECONDS + skew.seconds) // ds.TICK_SECONDS)
+    first_tick = catch_up + timedelta(seconds=ticks_to_clear * ds.TICK_SECONDS)
+    last_tick = open_at - timedelta(seconds=ds.TICK_SECONDS)
+    assert first_tick < last_tick and first_tick - (catch_up + skew) >= timedelta(seconds=ds.WAIT_SECONDS)
+    assert (f"a catch-up that starts the check at {_clock(catch_up)} CT starts the watch at "
+            f"{_clock(first_tick).removesuffix(' AM')} (GitHub stamping the dispatch up to 30 seconds after its "
+            "tick)") in README
+    # a later catch-up cannot always clear the wait before the last tick, and goes there whatever is left of it
+    earliest = last_tick - timedelta(seconds=(ticks_to_clear - 1) * ds.TICK_SECONDS) - timedelta(seconds=ds.TICK_SECONDS)
+    assert earliest == catch_up + timedelta(seconds=ds.TICK_SECONDS)
+    assert (f"It never waits past its last tick before the open: at {_clock(last_tick).removesuffix(' AM')} it is "
+            f"dispatched whatever the wait says, so a catch-up at {_clock(earliest).removesuffix(' AM')} to "
+            f"{_clock(last_tick).removesuffix(' AM')} still starts a watch before the open") in README
+    assert "The pre-open watch is not started only when no tick of the dispatcher could start it" in README
+    assert (f"it made none from {_clock(catch_up).removesuffix(' AM')} to {_clock(last_tick)} CT (it was down, or not "
+            f"deployed), it stopped ticking before {_clock(last_tick).removesuffix(' AM')} while the watch still "
+            "waited, or GitHub refused the watch's own listing or dispatch on every tick that tried") in README
+    assert ("Nothing is mailed before the open then: the 09:05 watch mails `scheduler:watch:not_started` (standing) "
+            "and judges the morning check for the first time, after the entry window") in README
     # how late a backup cron may be and still land in the alert window before the open, per season
     coverage = _backup_coverage_hours([int(c.split()[1]) * 60 + int(c.split()[0]) for c in crons if c.endswith("* * *")],
                                       sw.ALERT_WITHIN_HOURS)
@@ -1133,6 +1174,42 @@ def test_the_operations_note_and_the_example_quote_the_watch_from_the_tool_and_i
     assert ds.WAIT_SECONDS > 103                                   # it covers the latest landing recorded
     assert "so 150 covers the 103 with margin" in note and f"{ds.WAIT_SECONDS} covers" in note
     assert "while the stamp is within 30 seconds of its tick" in note
+    # the two reasons the pre-open watch waits, as the tool logs them, and its last tick
+    (pre,) = [slot for slot in ds.slots_on(date(2026, 11, 20)) if (slot.workflow, slot.at.strftime("%H:%M")) ==
+              ("service-watch.yml", sw.MORNING_ALERT_CT)]
+
+    class Unlisted:
+        def dispatches_since(self, workflow, since):
+            return []
+    assert f"`{pre.key} waits: {ds._waits(pre, pre.at, Unlisted(), ds._fresh_state())}`" in note
+    made = ds._fresh_state()
+    made["dispatched"]["morning.yml@2026-11-20T08:20:00-06:00"] = "2026-11-20T08:26:07-06:00"
+    assert f"`{pre.key} waits: {ds._waits(pre, pre.at + timedelta(minutes=2), Unlisted(), made)}`" in note
+    last = (pre.end - timedelta(seconds=ds.TICK_SECONDS)).astimezone(ds.CT)
+    assert ds.last_tick(pre, last) and not ds.last_tick(pre, last - timedelta(seconds=1))
+    assert ds._waits(pre, last, Unlisted(), made) is None
+    assert (f"never past its last tick before the open. At {last.strftime('%H:%M')} the watch is dispatched "
+            "whatever the wait says, and without asking about the check") in note
+    assert "The pre-open watch is not started only when no tick could start it" in note
+    assert (f"the dispatcher made no tick from {sw.MORNING_ALERT_CT} to {last.strftime('%H:%M')} (it was down, or not "
+            f"deployed), it stopped ticking before {last.strftime('%H:%M')} while the watch still waited, or GitHub "
+            "refused the watch's own listing or dispatch on every tick that tried") in note
+    assert ("The 09:05 watch mails `scheduler:watch:not_started` (a standing key) and judges the morning check for "
+            "the first time, after the entry window") in note
+    assert (f"created less than {sw.IN_PROGRESS_GRACE_SECONDS} seconds before the watch's clock "
+            "(`IN_PROGRESS_GRACE_SECONDS`, this tool's `WAIT_SECONDS`)") in note
+    last_watch_et = [times for name, _, zone, times in ds.SLOTS if name == "service-watch.yml" and zone == ds.ET][0][-1]
+    assert (f"The {sw.EVENING_PUBLISHED_BY_ET} ET rule (an evening started on time and not published) needs a "
+            f"readable listing on the {last_watch_et} ET run") in note
+    assert (f"except the listing's own key, which returns only once {sw.LISTING_FAILURES_IN_A_ROW} watch runs in a "
+            "row fail again") in note
+    assert "The watch's ledger counts the failing runs, and an empty or missing ledger starts the count over" in note
+    workflow = comments(ROOT / ".github" / "workflows" / "service-watch.yml")
+    assert sw.LISTING_FAILURES_IN_A_ROW == 2
+    assert ("every alert mails again, except the run listing's own, which an empty or missing ledger holds back "
+            "until two failing runs in a row are counted again") in workflow
+    assert "Keys, instants and the listing's count of failing runs only" in workflow
+    assert "an empty or missing ledger starts that count over" in comments(ROOT / ".env.example")
     assert (f"{sw.LISTING_FAILURES_IN_A_ROW} watch runs in a row could not read it (`LISTING_FAILURES_IN_A_ROW`)"
             in note and f"{sw.LISTING_CLEAR_HOURS} hours with no listing failure (`LISTING_CLEAR_HOURS`)" in note)
     assert "a red run that GitHub's cron started is read by no watch, and is seen only in Actions" in note

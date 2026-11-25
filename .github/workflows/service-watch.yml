@@ -7,10 +7,11 @@ name: Service watch
 # and writes nothing to the repository. Each run mails its NEW alerts as one
 # message through the evening's own transport: the sent-alert ledger, kept in a
 # main-only Actions cache, holds the keys already mailed, when each standing
-# condition last cleared and when the run listing last failed, so a repeat is
-# dropped, a standing condition is mailed again weekly or at once when it
-# returns after clearing, and a listing failure is mailed only when two watch
-# runs in a row had it.
+# condition last cleared, and when the run listing began and last failed and on
+# how many watch runs in a row, so a repeat is dropped, a standing condition is
+# mailed again weekly or at once when it returns after clearing, and a listing
+# failure is mailed only when two watch runs in a row had it, after a clear as
+# at first.
 #
 # A run that judged and mailed is green: its judgement is in the job summary and
 # the watch step's outputs (exit_code, alerts, mail, ledger). Red means the watch
@@ -72,8 +73,10 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install -r requirements.txt -c constraints.txt
-      # Keys and instants only: no address, no message, nothing secret. A cache
-      # that is gone reads as an empty ledger, and every alert mails again.
+      # Keys, instants and the listing's count of failing runs only: no address,
+      # no message, nothing secret. A cache that is gone reads as an empty ledger:
+      # every alert mails again, except the run listing's own, which an empty or
+      # missing ledger holds back until two failing runs in a row are counted again.
       - name: Restore the sent-alert ledger
         uses: actions/cache/restore@v4
         with:
