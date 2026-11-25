@@ -16078,3 +16078,100 @@ all 93 retained records raises nothing, counts none and reads none live.
 **Not claimable:** a live-ready night, which needs the owner's protocol
 record, ten on-time sessions from the first one this gate counts, and twenty
 settled plans under the standing rules; any trading edge.
+
+## Checkpoint, 25 Nov 2026 -- a nine-item program from the owner; the registry reviewed on the day MG fell due; calendar tests (item 6)
+
+**The owner's message of 25 November.** It was the summary another agent
+wrote of a builder prompt, not the prompt itself: the prompt file and the
+audit it cites (`/workspace/spicystock/scan-audit-2026-11-24.md`) are on
+another machine, and no session in this account holds them. The work is done
+from the summary, which lists nine items:
+
+1. the go-live gate operational only: the Fidelity test plus 10 on-time
+   nights, every outcome and ablation requirement removed;
+2. data quality checked per ticket, not one degraded flag for the night;
+3. one stable, versioned, archived feed at `docs/agent/`: every candidate
+   whatever the light, chart links, 60 days of bars, hashes;
+4. SEC, earnings and cross-checks on up to 80 candidates, and ACVA
+   re-reviewed;
+5. monitoring: alerts before the entry window, a check that the scheduler
+   ran, repeat alerts dropped;
+6. tests for Mondays, Thanksgiving, Friday's half day and DST;
+7. the morning go/cancel file always published, and every ticket cancelled
+   when it is missing;
+8. the strategy page's missing parts filled in;
+9. universe changes and breadth revisions as fields in the feed.
+
+It also says: never add an edge or outcome gate, never change the scan
+rules, keep everything paper-only. The ground rules of the 19 November
+program stand (small pull requests, each green before the next; no published
+record rewritten; no order, mail or secret).
+
+**The morning check is paused.** At 05:04 UTC on 25 November the owner told
+the 8:21 CT dispatcher session to pause its routine, and it did. GitHub's own
+morning crons arrive hours after the entry window, so from 25 November no
+morning check runs inside its window until the routine is re-enabled or the
+Railway dispatcher is deployed. That session told him GitHub's schedule
+"still runs"; it runs late, which is the point.
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` restarted from
+`main` at `a00d3a30` (the 24 November source-recovery receipt). No rule of
+the run moves. The registry is nested in every record's rules, so the rules
+digest moves and every record-derived fixture was regenerated through its own
+generator, the first-trade backup and its parity corpus after them. The
+published record, picks, receipts, history, evidence and ledger are untouched;
+no run, mail, dispatch or provider call.
+
+**The registry.** MG's review was due 25 November, the day after its special
+meeting; CI's review check would have turned red on the 26th. Search results
+for the company's 24 November release say stockholders approved the merger
+and that it has not closed. That is a summary of search results, not a
+source: no source was added, the entry stays listed and blocked, and its next
+review is 17 December (`release-evidence/2026-11-25-event-review/`). This
+sandbox still reaches neither sec.gov nor any issuer or wire site, so ACVA
+cannot be resolved from here; its note answers until 3 December, and item 4
+carries its re-review. One registry test read MG's old due date as a literal
+and reads the entry's own date now.
+
+**The calendar tests** (`tests/test_calendar_week.py`, 66 tests). One fixture
+drives `pipeline.run_evening()` through Thanksgiving week 2026 with the
+rehearsal's doubles: Tuesday 24, Wednesday 25, Thursday 26 (closed), Friday 27
+(1:00 PM close) and Monday 30 November. Each day is then read as the service
+reads it:
+- Wednesday's plans are for Friday; the entry window is the ordinary 9:30 to
+  10:00 AM ET, and only the close moves (1:00 PM).
+- The handoff's hold days skip Thursday and mark Friday's early close.
+- Thursday's run skips at the calendar, asks no provider, sends no mail and
+  leaves every file byte for byte; no evening slot runs, no morning slot, no
+  dispatcher slot, and the watch flags nothing.
+- Friday's session completes at 1:15 PM ET and publishes at the ordinary
+  6:16 PM slot; nothing is due in between.
+- The weekend starts nothing; Monday's morning check is for Friday's record.
+- A Friday that was never published is flagged from 3:30 AM ET on Monday, six
+  hours before the open, and called missing from the open on.
+- The gate's ledger closes 24, 25 and 27 November as three consecutive
+  sessions.
+The clock changes of 1 November 2026 and 14 March 2027 are read at the
+evening guard's two cron pairs, the morning guard's, the dispatcher's slots,
+the timing and delivery blocks, the watch's due time and the gate's two
+deadlines.
+
+**What the walk found.** No wrong answer. One gap, recorded for the
+monitoring work (item 5) and not changed here: no scheduled slot recovers a
+session on a closed day. Thursday's two slots refuse because Thursday is not
+a session, though Wednesday may be published until Friday's open; over a
+weekend no scheduled event exists after Saturday 01:16 UTC. Only a dispatch
+with `only_if_unpublished` recovers, and the dispatcher has no slot on a
+closed day either.
+
+**Mutation passes**, each mutant in a detached worktree outside the
+repository, judged by the whole new file: 27 mutants over the gate's
+deadlines and ledger, the watch's due time and alert bound, the dispatcher's
+closed-day rule and zone, both guards' holiday, offset, cutoff and limit
+rules, the handoff's early close and window, and the timing, delivery and
+freshness constants. 23 died at once. **Two survived, each a hole in the new
+tests**: a run that finished on the wrong date (no case had one), and the
+six-hour alert bound, which the test had written with the constant it tests.
+Both have their case and die, and so does the bound moved the other way. One
+mutant's anchor missed the workflow's indentation; run again, it dies. The
+three controls survive.
