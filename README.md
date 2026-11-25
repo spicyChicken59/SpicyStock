@@ -2024,6 +2024,20 @@ and QGEN read `observed_window` is for the next collection with them as
 candidates to show; it changes an index's coverage, not an issuer's status,
 and both left current reports unselected (4 and 9) when last collected.
 
+The same dispatch with **capture_url** set fetches one SEC Archives document
+instead of the probe (`tools/capture_sec_document.py`), for a review of the
+event registry: a registry entry ends only with a resolution that carries the
+SHA-256 of captured bytes, and a review made from a network that cannot reach
+sec.gov has none to give. It asks once, through the collector's own
+transport, and prints the URL, the outcome, the byte count, the SHA-256 and,
+for each of up to 6 phrases in **capture_find** (separated by `|`), how many
+times the document's own text carries it with at most 3 excerpts of 240
+characters either side. The exact bytes are kept as a 30-day artifact beside
+the result. It refuses any URL that is not a filing document the collector's
+transport fetches, before any request; it decides nothing, resolves nothing,
+writes nothing under `docs/` and is never persisted. The registry edit that
+cites it is a reviewed change of its own, with a dated manifest.
+
 `issuer-evidence.yml` follows an actual committed evening or morning publication;
 the guard identifies the parent by its exact workflow file path, then checks
 its repository, main branch and current publication binding. Dynamic run titles
@@ -3294,6 +3308,7 @@ knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose 
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/ · fixtures/brief/ (the brief's golden pair from the page fixture full; generate.py --check holds it) · fixtures/model-record/ (the 17 November 2026 record with its bars, frozen from git by its build.py; --check holds it)
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py · publish_morning.py · probe_morning_sources.py · sync_morning_service.py
                 probe_sec_access.py (a dispatch-only diagnostic: SEC requests for AAPL and ZIM, or up to four named tickers, through the issuer collector's transport, and the index rows its row rules refuse, printed to the log; never published)
+                capture_sec_document.py (dispatch-only: one SEC Archives document's byte count, SHA-256 and bounded excerpts through the same transport, for a review of the event registry; resolves nothing, never published)
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)
                 entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)
                 historical_backtest.py (offline: the run's own stages replayed over a recovered archive; reader not run; `--burst-trigger-rule` names the burst buy stop's rule)
