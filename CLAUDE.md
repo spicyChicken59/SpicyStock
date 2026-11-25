@@ -16175,3 +16175,12 @@ six-hour alert bound, which the test had written with the constant it tests.
 Both have their case and die, and so does the bound moved the other way. One
 mutant's anchor missed the workflow's indentation; run again, it dies. The
 three controls survive.
+
+**CI found what the local runs had not.** The page job on `7dc19ace7`
+passed 19,190 of 19,191 checks. The one failure was the page-text suite's
+*the fixture registry line, as a literal*, which spelled the registry's review
+date (19 November) where the regenerated fixtures now archive 25 November. The
+date is read off the record the fixture archives now, so the next review does
+not turn it red; the entry counts and the next due date stay spelled out. The
+suite passes 344 of 344 here. The browser smoke was not run locally before
+the first push; after a registry review it is part of the cascade.
