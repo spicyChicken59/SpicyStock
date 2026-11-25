@@ -108,6 +108,22 @@ A publication that is not itself forward never reads live: that night its
 `on_time_sessions` count is zero, whatever the ledger holds, and the
 condition's detail says so.
 
+### What the validator reads again
+
+`report.validate()` refuses a record whose gate block says more than its own
+facts give (`go_live.faults()`), and `orders.json` reads a gate as live only
+when the record archives this version of it and that validator accepts the
+block, so a block edited to say ready never makes the handoff live. It re-reads:
+
+- each ledger row's `counted` from the row's own `on_time`, `automatic` and
+  `morning_on_time` (counted only when all three are true), and the ledger as
+  one row a session, oldest first, every row before tonight;
+- `forward` from the record's own session and clock: of the newest session,
+  and made before the open its plans are for (`run.timing.opens_at`);
+- a met `fidelity_protocol` from its date: recorded on or before tonight;
+- `on_time_sessions` as the run of counted sessions its own ledger ends on
+  before tonight, against the need the record's rules archived.
+
 ### Version 1 of the gate
 
 From 19 to 24 November 2026 the gate had two more conditions:
