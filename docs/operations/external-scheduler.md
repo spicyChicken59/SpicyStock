@@ -14,7 +14,11 @@ calendar the run reads (`src/sessions.py`).
 | `morning.yml` | 08:20 America/Chicago | sessions | `dry_run` false |
 | `service-watch.yml` | 19:00 and 21:50 America/New_York; 06:00, 08:25 and 09:05 America/Chicago | sessions | none |
 
-A slot is due from its instant for 30 minutes (`DUE_MINUTES`). The
+A slot is due from its instant for 30 minutes (`DUE_MINUTES`), except the
+watch's 08:25 America/Chicago slot, which is due only until the session's open
+and is never dispatched at or after it (`BEFORE_OPEN`). A watch slot due in the
+tick that dispatched the morning check waits for the next tick (`WAITS_FOR`):
+the watch is never started in the same tick as the check it judges. The
 evening's four starts are one publication and three no-ops: the workflow's
 `only_if_unpublished` guard publishes the newest completed session once,
 from its primary slot (18:16 ET) on, only while it is unpublished and only
@@ -27,7 +31,11 @@ The watch's slots are where its alerts become true: 19:00 ET after an
 evening not started by 18:50 ET, 21:50 ET after one started on time but not
 published by 21:45 ET, 06:00 CT after a night not published by 3:30 AM ET,
 08:25 CT for the morning check (five minutes after it is started, five before
-the 8:30 CT open) and 09:05 CT after the entry window.
+the 8:30 CT open) and 09:05 CT after the entry window. The dispatcher starts
+no watch on a weekend or a holiday: a missed Friday is not published from
+4:16 AM ET on Saturday, only GitHub's backup crons (hours late) run the watch
+before Monday, and the dispatcher's first watch to mail it is Monday's 06:00 CT
+slot.
 
 GitHub's own crons stay in every workflow as the backup. Each workflow's guard
 already makes a second start harmless.
@@ -102,17 +110,29 @@ It reads the Actions run listing of `evening.yml`, `morning.yml` and its own
 
 - `on_time`: a `workflow_dispatch` under the dispatcher's run name
   (`Evening dispatch (only if unpublished)`, `Morning publication`,
-  `Service watch (manual)`) created inside its slot's 30-minute window;
-- `started_late`: the work started, but not that way (the backup cron, or a
-  hand dispatch);
-- `not_started`: no run at all (for the evening, by 18:50 ET; for the watch,
-  in its own previous slot, said after the fact by a later watch);
+  `Service watch (manual)`) created inside its first slot's due window. That
+  is a dispatch in the slot, whoever asked for it: the listing cannot tell this
+  dispatcher's dispatch from one made by hand under the same name (the owner's
+  own routine, say), and the watch claims nothing more;
+- `started_late`: the work started, but not by a dispatch in that first slot.
+  A dispatch in one of the dispatcher's later evening slots (19:20, 20:20 or
+  21:20 ET, or a weekend's or a holiday's recovery start) is named as that
+  start; anything else (the backup cron, a dispatch outside every slot) is
+  said to be no dispatch in any of its slots;
+- `not_started`: for the evening, no run listed by 18:50 ET (an evening cron
+  whose guard skips it as not the active UTC slot is no run); for the watch, no
+  run dispatched in its own previous slot, or one dispatched there that ended
+  failed or cancelled, said after the fact by a later watch;
 - `failed`: every run of the evening ended without publishing;
-- `unknown`: no token, or a listing it cannot read whole; never an alert.
+- `unknown`: no token, or that workflow's listing could not be read. Without
+  a token it is never an alert; with one, a listing that cannot be read is an
+  alert of its own, `scheduler:listing:unreadable`, standing.
 
-A `started_late` evening or morning and a watch slot with no dispatched run
-are standing conditions: each is mailed once and again only after seven days
-while it stands. An evening `not_started` or `failed` is about one session and
+A `started_late` evening or morning, a watch slot with no dispatched run and a
+listing that cannot be read are standing conditions: each is mailed once,
+again only after 7 days (`REPEAT_DAYS`) while it stands, and at once when it
+returns after clearing (the watch's ledger records when each was last answered
+on time). An evening `not_started` or `failed` is about one session and
 is mailed once for it. It also still flags an evening run that started more
 than 60 minutes after its 18:16 ET primary slot (`LATE_START_MINUTES`, read
 off the record when no listing answers), and a morning check that had not
@@ -129,7 +149,9 @@ outside GitHub: once it is deployed it starts the watch at its five slots, and
 the watch in turn says whether the dispatcher started the evening and the
 morning on time. It holds no mail credential and adds no account: a dispatcher
 that is itself down is seen only by the watch's scheduler answers, from
-GitHub's backup crons.
+GitHub's backup crons. A watch run that judged and mailed ends green; a red one
+did not finish (it crashed, or a message it owed was refused twice), and a later
+watch reads it as one that did not start.
 
 ## Removing it
 
