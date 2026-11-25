@@ -10,10 +10,10 @@
 ## 1. Identity and binding
 
 - Measured session: 2026-09-10 (open); plans are for **2026-09-11**, entry window 2026-09-11T09:30:00-04:00 to 2026-09-11T10:00:00-04:00 (America/New_York), full session closes 2026-09-11T16:00:00-04:00.
-- Published 2026-09-10T22:30:00+00:00 (evening, FIXTURE full); rules version `795e33f0209f`.
-- Canonical record `data.json`: 346,437 bytes, SHA-256 `a81ccb3205a19dec2cdeeb04b6c1280496ce946caef5692d89ffb9d4f15a8634`.
-- `picks.json`: 43,332 bytes, SHA-256 `d21a77a64adfde6e9b8acf3ecf78bba879ab0b6ffeec271d3dd512f3e0042b55`.
-- This file renders `brief.json` (72,494 bytes, SHA-256 `c5514f37a20cbbf2acfc8c2a500e8db652e4beaee193ac40b5bde33c56d4f391`).
+- Published 2026-09-10T22:30:00+00:00 (evening, FIXTURE full); rules version `5ebf755b1d7b`.
+- Canonical record `data.json`: 346,437 bytes, SHA-256 `ae018af34bf91075960d5d633e330901e73641e98ed8569221b78df0dcb0f3dc`.
+- `picks.json`: 43,332 bytes, SHA-256 `b2c0d0eb39d045c522b24337f0226ba5c589c8fa8ea79714a1f8df3b6b008597`.
+- This file renders `brief.json` (72,494 bytes, SHA-256 `88c2ea0b55c17c351154d6f924fcf2bff2ff14c700293f93636f9eb7d666d80d`).
 - Page https://spicychicken59.github.io/SpicyStock/ · record https://spicychicken59.github.io/SpicyStock/data.json · brief https://spicychicken59.github.io/SpicyStock/brief.json and https://spicychicken59.github.io/SpicyStock/brief.md.
 
 ## 2. Service state
@@ -253,15 +253,15 @@ Open MODEL plans walked on daily (and retained minute) bars; not holdings.
 
 ## 11. Event registry and coverage
 
-- Event registry (manual; known cash acquisitions only): 7 entries, last reviewed 2026-11-19, 70 days after the measured session 2026-09-10: the archived registry is newer than the session it is read against. None of its 7 unresolved entries is past its review date (next due 2026-10-15). None of the 8 listed rows (7 bursts, 1 setting up, 0 also quiet) is in the registry. A stock that is not in the registry has not been cleared: SpicyStock reads no company news, and its earnings and SEC checks ran for 1 of the 8 listed names (they run for tickets only).
-- Entries: MG (cash_acquisition, announced 2026-09-18, review due 2026-11-25); PRTH (cash_acquisition, announced 2026-09-21, review due 2026-12-17); ARX (cash_acquisition, announced 2026-08-13, review due 2026-12-17); BWIN (cash_acquisition, announced 2026-09-14, review due 2026-12-17); ACVA (cash_acquisition, announced 2026-09-10, review due 2026-10-15); ZIM (cash_acquisition, announced 2026-02-16, review due 2026-12-02); CCC (cash_acquisition, announced 2026-10-15, review due 2026-12-17).
+- Event registry (manual; known cash acquisitions only): 7 entries, last reviewed 2026-11-25, 76 days after the measured session 2026-09-10: the archived registry is newer than the session it is read against. None of its 7 unresolved entries is past its review date (next due 2026-10-15). None of the 8 listed rows (7 bursts, 1 setting up, 0 also quiet) is in the registry. A stock that is not in the registry has not been cleared: SpicyStock reads no company news, and its earnings and SEC checks ran for 1 of the 8 listed names (they run for tickets only).
+- Entries: MG (cash_acquisition, announced 2026-09-18, review due 2026-12-17); PRTH (cash_acquisition, announced 2026-09-21, review due 2026-12-17); ARX (cash_acquisition, announced 2026-08-13, review due 2026-12-17); BWIN (cash_acquisition, announced 2026-09-14, review due 2026-12-17); ACVA (cash_acquisition, announced 2026-09-10, review due 2026-10-15); ZIM (cash_acquisition, announced 2026-02-16, review due 2026-12-02); CCC (cash_acquisition, announced 2026-10-15, review due 2026-12-17).
 - Status words: `known_event` = in the registry and blocked for a SpicyStock ticket; its manual review is current; `review_required` = in the registry and blocked for a SpicyStock ticket; its manual review is overdue; `not_in_registry` = not in the registry: NOT a clearance, nothing was checked.
 - Earnings and 8-K check: status `checked`; 1 ticket rows; 7 of 8 listed names had no check at all.
 - Not checked by SpicyStock: company news and press releases, announced earnings dates, offerings and shelf takedowns, FDA and trial dates, halts outside the morning check, delisting notices beyond 8-K item 3.01 on tickets, index changes, lockup expiries, ex-dividend dates.
 
 ## 12. Rules
 
-- Rules digest `795e33f0209f`; without the universe membership identity `4ba4434239c5` (membership identity `1b97e33400ee217a`): the record's digest nests the universe membership identity, so it moves on any night the selection's membership moves; `digest_without_membership` is the same digest with that identity removed, and moves only when an archived rule changes.
+- Rules digest `5ebf755b1d7b`; without the universe membership identity `9a87f76b0078` (membership identity `1b97e33400ee217a`): the record's digest nests the universe membership identity, so it moves on any night the selection's membership moves; `digest_without_membership` is the same digest with that identity removed, and moves only when an archived rule changes.
 - pipeline: trade_grades ["A+", "A"], yellow_grades ["A+"], max_reads 12, reader_policy "accepted_required_v1", reader_refusal_fraction 0.25, reader_refusal_min 1, stale_tolerance_fraction 0.01, stale_sessions_max 5, min_coverage_fraction 0.5
 - plan: entry_below_pct 2.0, entry_above_pct 4.0, skip_gap_pct 8.0, entry_window_minutes 30, assumed_slippage_pct 1.0, limit_rule "stop_constrained", sizing_basis "order_limit", max_stop_pct 4.0, ideal_stop_pct 2.0, stop_risk_multiplier 0.5, gain_ceiling_pct 15.0, extension_hazard_pct 20.0, hazard_multiplier 0.5, sell_half_pct 8.0, abnormal_day_pct 10.0, gap_exit_pct 20.0, sell_half_day 3, no_progress_day 3, trail_from_day 3, final_exit_day 5, allocation_policy "combined_stages_reserved_principal_v1"
 - admission: version 1, policy "burst_route_or_dollar_expansion_v1"

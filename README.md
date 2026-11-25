@@ -1478,7 +1478,13 @@ archived, and a record from before the block is asked for none. The run:
   none of them added a source. ACV Auctions, whose acquisition a search excerpt
   says Copart completed on 16 October, stays listed and blocked until a captured
   source resolves it; its entry carries a `review_note`, dated after its review
-  fell due, saying so. A review date says someone looked that day and how; it
+  fell due, saying so. MG was reviewed again on 25 November 2026, the day its
+  review fell due: search results for the company's 24 November release say
+  its stockholders approved the merger that day and that it has not closed, so
+  the entry stays listed and blocked; its next review is due 17 December. That
+  finding is a summary of search results, not a source, and added none (the
+  [25 November manifest](release-evidence/2026-11-25-event-review/manifest.json)
+  says how it was read). A review date says someone looked that day and how; it
   does not establish that a deal is still pending today. The daily brief and
   the Method view state how old the review is. CI runs
   `tools/check_event_reviews.py` on the real New York date

@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "795e33f0209f"
+  "rules_version": "5ebf755b1d7b"
  },
  "cover": {
   "h1": "Trade next session. 2 A-quality bursts.",
@@ -946,7 +946,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "d8fee5d461d876c2644d7e6d2a9211a8165fdbfff2dea114b579b91f8b6ac479"
+   "context_sha256": "82653505cd4c16ecad3c050d1c9aaf1cf1f91a2f36ec4a6f9939ea5a12cb9d0f"
   },
   "earnings": {
    "version": 2,
@@ -1628,11 +1628,11 @@
    "max_events": 128,
    "max_sources": 8,
    "max_text_length": 2000,
-   "registry_sha256": "ce77e748e1d7b603fe84543b53ca0d6a0c23dcaa9bd19f21f8be483432eebbfa",
+   "registry_sha256": "dc486fa14b0afe7c50504208abbf803d8545a9798dc4c2d56a63e634d451285f",
    "registry": {
     "version": 1,
     "coverage": "manual_known_events_only",
-    "reviewed_on": "2026-11-19",
+    "reviewed_on": "2026-11-25",
     "coverage_note": "A bounded manual registry of known cash-acquisition events, not a live news feed, exhaustive corporate-action screen, or clearance of unlisted stocks. Each event records its own source dates and manual review date. Unresolved events stay excluded after review_due and require a new source review; expected closing dates and go-shop deadlines never automatically clear a stock.",
     "events": [
      {
@@ -1644,8 +1644,8 @@
       "active_from": "2026-09-18",
       "active_until": null,
       "evidence_as_of": "2026-10-28",
-      "reviewed_on": "2026-11-19",
-      "review_due": "2026-11-25",
+      "reviewed_on": "2026-11-25",
+      "review_due": "2026-12-17",
       "reason": "MISTRAS announced an agreement for H.I.G. affiliates to acquire its shares for $20.35 in cash. The announced go-shop runs through October 27, 2026. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
       "sources": [
        {
@@ -2846,8 +2846,8 @@
     "event_risk": {
      "version": 1,
      "coverage": "manual_known_events_only",
-     "registry_sha256": "ce77e748e1d7b603fe84543b53ca0d6a0c23dcaa9bd19f21f8be483432eebbfa",
-     "registry_reviewed_on": "2026-11-19",
+     "registry_sha256": "dc486fa14b0afe7c50504208abbf803d8545a9798dc4c2d56a63e634d451285f",
+     "registry_reviewed_on": "2026-11-25",
      "session": "2026-09-11",
      "symbol": "NVDA",
      "blocked": false,
@@ -2862,9 +2862,9 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "be7abb2c5f616ec0c4f07276becf381325c7e8c8d3f1453ca72296894956646f",
-     "context_sha256": "d8fee5d461d876c2644d7e6d2a9211a8165fdbfff2dea114b579b91f8b6ac479",
-     "plan_sha256": "d3104f2a34fcb650373035567b336d2da083d7059d707b8b99df75c6d182d4f3",
+     "id": "0f334bb7466dfc50b4babe4d176cc1e8c38cea8d7d8fb8e8e134b6c132a1cebf",
+     "context_sha256": "82653505cd4c16ecad3c050d1c9aaf1cf1f91a2f36ec4a6f9939ea5a12cb9d0f",
+     "plan_sha256": "3c399bf022383356980c7b019da915582491244a9b61a72641e60fb2950d0bf7",
      "pick_sha256": "ac99e3cc725c2f225d5b9a458e526ade8fd1a822562f3930a1c9b72fb4c4d0f3"
     }
    },
@@ -2969,7 +2969,7 @@
      },
      "regime_sha256": "230dd18557aab52477f733659567a590601fcd4c1ce6ec48a9b7e74989193906",
      "session": "2026-09-11",
-     "output_sha256": "d3104f2a34fcb650373035567b336d2da083d7059d707b8b99df75c6d182d4f3",
+     "output_sha256": "3c399bf022383356980c7b019da915582491244a9b61a72641e60fb2950d0bf7",
      "error": null,
      "pick_sha256": "ac99e3cc725c2f225d5b9a458e526ade8fd1a822562f3930a1c9b72fb4c4d0f3"
     },
@@ -2996,8 +2996,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-11",
-    "rules_version": "795e33f0209f",
-    "context_sha256": "d8fee5d461d876c2644d7e6d2a9211a8165fdbfff2dea114b579b91f8b6ac479",
+    "rules_version": "5ebf755b1d7b",
+    "context_sha256": "82653505cd4c16ecad3c050d1c9aaf1cf1f91a2f36ec4a6f9939ea5a12cb9d0f",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -3010,7 +3010,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "be7abb2c5f616ec0c4f07276becf381325c7e8c8d3f1453ca72296894956646f"
+    "id": "0f334bb7466dfc50b4babe4d176cc1e8c38cea8d7d8fb8e8e134b6c132a1cebf"
    },
    "series": [
     {
@@ -4476,8 +4476,8 @@
     "event_risk": {
      "version": 1,
      "coverage": "manual_known_events_only",
-     "registry_sha256": "ce77e748e1d7b603fe84543b53ca0d6a0c23dcaa9bd19f21f8be483432eebbfa",
-     "registry_reviewed_on": "2026-11-19",
+     "registry_sha256": "dc486fa14b0afe7c50504208abbf803d8545a9798dc4c2d56a63e634d451285f",
+     "registry_reviewed_on": "2026-11-25",
      "session": "2026-09-11",
      "symbol": "COIL",
      "blocked": false,
@@ -4492,9 +4492,9 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "0170c4b1ba6a170dc8cfbf03cec446db716b2d80e49899096f44c115c030d070",
-     "context_sha256": "d8fee5d461d876c2644d7e6d2a9211a8165fdbfff2dea114b579b91f8b6ac479",
-     "plan_sha256": "3e848c016328b563b85703a610d71dbd2db34b36b3fa873c67f642158b240a91",
+     "id": "61295c908320ff05451d63ce8871baf370cf76284eda8b931791b034e4c31524",
+     "context_sha256": "82653505cd4c16ecad3c050d1c9aaf1cf1f91a2f36ec4a6f9939ea5a12cb9d0f",
+     "plan_sha256": "beec02e08df4f60759118e8a638f97403ede443a96da30b84c47269f6b6b7852",
      "pick_sha256": "9fdb24beebd58088eabaa9d1b32428e95984b77ddc18cae3d144100b84865f81"
     }
    },
@@ -4599,7 +4599,7 @@
      },
      "regime_sha256": "230dd18557aab52477f733659567a590601fcd4c1ce6ec48a9b7e74989193906",
      "session": "2026-09-11",
-     "output_sha256": "3e848c016328b563b85703a610d71dbd2db34b36b3fa873c67f642158b240a91",
+     "output_sha256": "beec02e08df4f60759118e8a638f97403ede443a96da30b84c47269f6b6b7852",
      "error": null,
      "pick_sha256": "9fdb24beebd58088eabaa9d1b32428e95984b77ddc18cae3d144100b84865f81"
     },
@@ -4626,8 +4626,8 @@
     "kind": "burst",
     "ticker": "COIL",
     "session": "2026-09-11",
-    "rules_version": "795e33f0209f",
-    "context_sha256": "d8fee5d461d876c2644d7e6d2a9211a8165fdbfff2dea114b579b91f8b6ac479",
+    "rules_version": "5ebf755b1d7b",
+    "context_sha256": "82653505cd4c16ecad3c050d1c9aaf1cf1f91a2f36ec4a6f9939ea5a12cb9d0f",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -4640,7 +4640,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "0170c4b1ba6a170dc8cfbf03cec446db716b2d80e49899096f44c115c030d070"
+    "id": "61295c908320ff05451d63ce8871baf370cf76284eda8b931791b034e4c31524"
    },
    "series": [
     {
@@ -5959,9 +5959,9 @@
    "limit": 126.47,
    "evidence_ref": {
     "version": 1,
-    "id": "9be04bf9f9390115005cceea28a4fdd240be4a6a6a0957d64ff16a509735717e",
-    "context_sha256": "f1ac0b25eaa25ce5a13c4b29b96b427ac03724df9aedd304240f76ba9a2c41c2",
-    "plan_sha256": "08a8f474c99587f085faadc5c6120ec7b9d6f176c5fc208ac7a26946df22b96c",
+    "id": "3ee98f936ad2fb0938215b8371f1cb559c2a098cf26d155a64005a874a1829eb",
+    "context_sha256": "e5dbcd5efe0705a2ea10feec61b01c1af47dbbcedd6062a16c33212b46107800",
+    "plan_sha256": "c44e7f094a94a4b7287add31fafb8cad4455f0582c4bc2fcf2f3c2b6769f601c",
     "pick_sha256": "d61b9dc9c4f9b326d6040cc11ede22947c65e15fe7434f1f82c6bec390bf6ae5"
    }
   }
@@ -6021,7 +6021,7 @@
    "expected_session": "2026-09-11",
    "evaluated_session": "2026-09-11"
   },
-  "replay_rules_version": "795e33f0209f"
+  "replay_rules_version": "5ebf755b1d7b"
  },
  "observations": {
   "as_of": "2026-09-11",
@@ -6360,81 +6360,81 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:795e33f0209f": {
+   "burst:AAPL:2026-09-10:5ebf755b1d7b": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "795e33f0209f",
+    "rules_version": "5ebf755b1d7b",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:795e33f0209f": {
+   "burst:AMD:2026-09-10:5ebf755b1d7b": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "795e33f0209f",
+    "rules_version": "5ebf755b1d7b",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:795e33f0209f": {
+   "burst:NVDA:2026-09-10:5ebf755b1d7b": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "795e33f0209f",
+    "rules_version": "5ebf755b1d7b",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:795e33f0209f": {
+   "burst:TSLA:2026-09-10:5ebf755b1d7b": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "795e33f0209f",
+    "rules_version": "5ebf755b1d7b",
     "coverage": "observed"
    },
-   "burst:MSFT:2026-09-10:795e33f0209f": {
+   "burst:MSFT:2026-09-10:5ebf755b1d7b": {
     "ticker": "MSFT",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "795e33f0209f",
+    "rules_version": "5ebf755b1d7b",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:795e33f0209f": {
+   "burst:PLUG:2026-09-10:5ebf755b1d7b": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "795e33f0209f",
+    "rules_version": "5ebf755b1d7b",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:795e33f0209f": {
+   "burst:DLLR:2026-09-10:5ebf755b1d7b": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "795e33f0209f",
+    "rules_version": "5ebf755b1d7b",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:795e33f0209f": {
+   "anticipation:COIL:2026-09-10:5ebf755b1d7b": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "795e33f0209f",
+    "rules_version": "5ebf755b1d7b",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-11:795e33f0209f": {
+   "burst:NVDA:2026-09-11:5ebf755b1d7b": {
     "ticker": "NVDA",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "795e33f0209f",
+    "rules_version": "5ebf755b1d7b",
     "coverage": "observed"
    },
-   "burst:COIL:2026-09-11:795e33f0209f": {
+   "burst:COIL:2026-09-11:5ebf755b1d7b": {
     "ticker": "COIL",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "795e33f0209f",
+    "rules_version": "5ebf755b1d7b",
     "coverage": "observed"
    },
-   "anticipation:VRT:2026-09-11:795e33f0209f": {
+   "anticipation:VRT:2026-09-11:5ebf755b1d7b": {
     "ticker": "VRT",
     "session": "2026-09-11",
     "kind": "anticipation",
-    "rules_version": "795e33f0209f",
+    "rules_version": "5ebf755b1d7b",
     "coverage": "observed"
    }
   },
