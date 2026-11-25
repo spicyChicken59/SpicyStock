@@ -1,0 +1,40 @@
+{
+  "purpose": "A dated review of one entry of the manual event registry (knowledge/event-risk.json): MG, whose review fell due on 25 November 2026, the day after its special meeting. It records what the entry's status was found to be on that date and how it was read. It is not news coverage, clears no stock, and resolves no entry.",
+  "reviewed_on": "2026-11-25",
+  "registry_before": {
+    "reviewed_on": "2026-11-19",
+    "sha256": "ce77e748e1d7b603fe84543b53ca0d6a0c23dcaa9bd19f21f8be483432eebbfa"
+  },
+  "registry_after": {
+    "reviewed_on": "2026-11-25",
+    "sha256": "dc486fa14b0afe7c50504208abbf803d8545a9798dc4c2d56a63e634d451285f"
+  },
+  "how_read": "This review ran in a sandbox that reaches neither sec.gov nor issuer sites (each request was refused at the proxy on 25 November 2026). Its one finding is a web-search result summary, named as such below; no page bytes were captured and no source was added to the registry.",
+  "changes": [
+    "registry reviewed_on 2026-11-19 -> 2026-11-25",
+    "MG: reviewed_on 2026-11-25, review_due 2026-12-17; sources, evidence_as_of, reason and status unchanged"
+  ],
+  "entries": [
+    {
+      "symbol": "MG",
+      "status_found": "pending; stockholder approval reported for 24 November 2026",
+      "basis": "read as a search-result summary on 2026-11-25; page bytes not captured",
+      "pointer": {
+        "url": "https://www.sec.gov/Archives/edgar/data/0001436126/000114036126045518/ef20086431_ex99-1.htm",
+        "dated": "2026-11-24"
+      },
+      "summary": "The search results for the company's release of 24 November 2026 say its stockholders approved the merger agreement with H.I.G. Capital affiliates at the special meeting held that day, and that the merger is still expected to close in late 2026 or early 2027, subject to customary closing conditions including required regulatory approvals.",
+      "registry_action": "review dates moved; no source added",
+      "note": "A summary of search results is not the release's own words and is not a source. The deal is pending by this reading, so the entry stays listed and blocked. The next review is set for 17 December 2026, with PRTH, ARX, BWIN and CCC, because no closing date has been announced; a closing found before then needs a captured source to resolve the entry."
+    }
+  ],
+  "not_reviewed_on_this_date": {
+    "symbols": ["PRTH", "ARX", "BWIN", "CCC", "ZIM", "ACVA"],
+    "why": "None of them was due: PRTH, ARX, BWIN and CCC are due 17 December 2026, ZIM on 2 December 2026 (the day after its annual meeting), and ACVA's review_note of 19 November 2026 answers for 14 days. Their findings of 19 November stand as release-evidence/2026-11-19-event-review/manifest.json records them."
+  },
+  "limitations": [
+    "A review date says a person or agent looked on that day and how; it is not a source. Only the dated sources in the registry, each with the digest of captured bytes, are evidence the run prints.",
+    "A passed review date never clears an entry, and a current one does not establish that a deal is still pending today.",
+    "The registry is a manual list of known cash acquisitions. A stock that is not in it has not been cleared: nothing here reads company news."
+  ]
+}

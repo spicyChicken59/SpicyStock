@@ -1034,10 +1034,14 @@ def test_the_readme_quotes_the_dispatchers_slots_from_the_tool():
 def test_the_readme_dates_the_registry_review_as_the_registry_does():
     from src import event_risk
     reviewed = event_risk.REGISTRY["reviewed_on"]
-    assert reviewed == "2026-11-19" and "reviewed again on 19 November 2026" in README
-    due = {event["symbol"]: event["review_due"] for event in event_risk.REGISTRY["events"]}
+    # the 19 November review, as the README dates it, and the review since
+    assert "reviewed again on 19 November 2026" in README
     assert "MG to 25 November, ZIM to 2 December, PRTH, ARX, BWIN and CCC to 17 December" in README
-    assert due == {"MG": "2026-11-25", "ZIM": "2026-12-02", "PRTH": "2026-12-17", "ARX": "2026-12-17",
+    assert reviewed == "2026-11-25" and "MG was reviewed again on 25 November 2026" in README
+    due = {event["symbol"]: event["review_due"] for event in event_risk.REGISTRY["events"]}
+    assert "its next review is due 17 December" in README
+    assert due == {"MG": "2026-12-17", "ZIM": "2026-12-02", "PRTH": "2026-12-17", "ARX": "2026-12-17",
                    "BWIN": "2026-12-17", "CCC": "2026-12-17", "ACVA": "2026-10-15"}
-    assert "release-evidence/2026-11-19-event-review/manifest.json" in README_RAW
-    assert (ROOT / "release-evidence" / "2026-11-19-event-review" / "manifest.json").is_file()
+    for folder in ("2026-11-19-event-review", "2026-11-25-event-review"):
+        assert f"release-evidence/{folder}/manifest.json" in README_RAW
+        assert (ROOT / "release-evidence" / folder / "manifest.json").is_file()

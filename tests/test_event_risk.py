@@ -164,8 +164,10 @@ def test_unlisted_stock_does_not_restore_an_existing_refusal():
 
 
 def test_review_expiry_retains_block_and_names_uncertainty():
-    assert event_risk.classify("MG", "2026-11-25")["status"] == "known_event"
-    overdue = event_risk.classify("MG", "2026-11-26")
+    # the entry's own due date, so a later review moves this test with the registry
+    due = date.fromisoformat(next(e for e in event_risk.REGISTRY["events"] if e["symbol"] == "MG")["review_due"])
+    assert event_risk.classify("MG", due.isoformat())["status"] == "known_event"
+    overdue = event_risk.classify("MG", (due + timedelta(days=1)).isoformat())
     assert overdue["blocked"] is True and overdue["status"] == "review_required"
     assert overdue["matches"][0]["review_overdue"] is True
     assert "review is overdue" in overdue["reason"]
@@ -183,11 +185,12 @@ def test_the_november_review_adds_one_dated_source_and_resolves_nothing():
     assert after["evidence_as_of"] == "2026-10-28"
     # the reason a ticket prints names the announcement alone, at every session
     assert before["reason"] == after["reason"] and "2026-10-28" not in after["reason"]
-    assert event_risk.REGISTRY["reviewed_on"] == "2026-11-19"
+    # the 25 November review moved MG's two dates and the registry's own, and nothing else
+    assert event_risk.REGISTRY["reviewed_on"] == "2026-11-25"
     events = {event["symbol"]: event for event in event_risk.REGISTRY["events"]}
     assert all(event["active_until"] is None and "resolution" not in event for event in events.values())
     assert {symbol: (event["reviewed_on"], event["review_due"]) for symbol, event in events.items()} == {
-        "MG": ("2026-11-19", "2026-11-25"), "ZIM": ("2026-11-19", "2026-12-02"),
+        "MG": ("2026-11-25", "2026-12-17"), "ZIM": ("2026-11-19", "2026-12-02"),
         "PRTH": ("2026-11-19", "2026-12-17"), "ARX": ("2026-11-19", "2026-12-17"),
         "BWIN": ("2026-11-19", "2026-12-17"), "CCC": ("2026-11-19", "2026-12-17"),
         "ACVA": ("2026-10-09", "2026-10-15")}
@@ -195,15 +198,66 @@ def test_the_november_review_adds_one_dated_source_and_resolves_nothing():
     assert closed["blocked"] is True and closed["status"] == "review_required"
 
 
+def _review_of_25_november():
+    return json.loads((ROOT / "release-evidence" / "2026-11-25-event-review" / "manifest.json").read_text())
+
+
+def _before_the_review_of_25_november():
+    """The registry with the 25 November review undone: its own date, and MG's two."""
+    before = copy.deepcopy(event_risk.REGISTRY)
+    before["reviewed_on"] = "2026-11-19"
+    mg = next(e for e in before["events"] if e["symbol"] == "MG")
+    mg["reviewed_on"], mg["review_due"] = "2026-11-19", "2026-11-25"
+    return event_risk.validate_registry(before)
+
+
+def test_the_review_of_25_november_moved_dates_and_added_no_source():
+    """MG's review fell due the day after its special meeting. The finding is a search-result
+    summary, so it is no source: the entry keeps the two sources it had, stays unresolved and
+    blocked, and the manifest names every entry it did not look at."""
+    manifest = _review_of_25_november()
+    assert manifest["reviewed_on"] == event_risk.REGISTRY["reviewed_on"] == "2026-11-25"
+    assert [entry["symbol"] for entry in manifest["entries"]] == ["MG"]
+    entry = manifest["entries"][0]
+    assert entry["basis"] == "read as a search-result summary on 2026-11-25; page bytes not captured"
+    assert "source" not in entry and "quote" not in entry and "excerpt" not in entry
+    assert entry["registry_action"] == "review dates moved; no source added"
+    assert "no page bytes were captured" in manifest["how_read"]
+    symbols = [event["symbol"] for event in event_risk.REGISTRY["events"]]
+    assert sorted(manifest["not_reviewed_on_this_date"]["symbols"] + ["MG"]) == sorted(symbols)
+    now = next(e for e in event_risk.REGISTRY["events"] if e["symbol"] == "MG")
+    was = next(e for e in _before_the_review_of_25_november()["events"] if e["symbol"] == "MG")
+    assert {k: v for k, v in now.items() if k not in ("reviewed_on", "review_due")} == \
+        {k: v for k, v in was.items() if k not in ("reviewed_on", "review_due")}
+    assert [s["published_on"] for s in now["sources"]] == ["2026-09-18", "2026-10-28"]
+    # every other entry is byte for byte what it was
+    others = lambda registry: [e for e in registry["events"] if e["symbol"] != "MG"]  # noqa: E731
+    assert others(event_risk.REGISTRY) == others(_before_the_review_of_25_november())
+    # still blocked after the vote, at its new review date and past it
+    for session, status in (("2026-11-25", "known_event"), ("2026-12-17", "known_event"),
+                            ("2026-12-18", "review_required")):
+        read = event_risk.classify("MG", session)
+        assert read["blocked"] is True and read["status"] == status, session
+    # CI's own rule: nothing lapses on the review's date, and MG's next date is the first to pass
+    assert event_risk.lapsed_reviews(event_risk.REGISTRY, "2026-11-26") == []
+    assert event_risk.lapsed_reviews(event_risk.REGISTRY, "2026-12-03") == ["ZIM"]
+
+
 def test_the_review_manifest_says_how_each_entry_was_read():
     manifest = json.loads((ROOT / "release-evidence" / "2026-11-19-event-review" / "manifest.json").read_text())
-    assert manifest["reviewed_on"] == event_risk.REGISTRY["reviewed_on"]
-    # the registry has moved once since, by ACVA's review note alone, and that
-    # change's own manifest names this one's registry as the one it began from
+    assert manifest["reviewed_on"] == "2026-11-19"
+    # the registry has moved twice since: by ACVA's review note, then by the 25 November review of
+    # MG. Each change's own manifest names the registry it began from, and undoing exactly what a
+    # manifest says it changed gives the registry the one before it ended on
     note = json.loads((ROOT / "release-evidence" / "2026-11-19-acva-review-note" / "manifest.json").read_text())
+    later = _review_of_25_november()
     assert note["registry_before"] == manifest["registry_after"]
-    assert note["registry_after"]["sha256"] == event_risk.registry_digest(event_risk.REGISTRY)
-    before = copy.deepcopy(event_risk.REGISTRY)
+    assert later["registry_before"] == note["registry_after"]
+    assert later["registry_after"] == {"reviewed_on": event_risk.REGISTRY["reviewed_on"],
+                                       "sha256": event_risk.registry_digest(event_risk.REGISTRY)}
+    before = _before_the_review_of_25_november()
+    assert note["registry_after"] == {"reviewed_on": before["reviewed_on"],
+                                      "sha256": event_risk.registry_digest(before)}
     acva = next(e for e in before["events"] if e["symbol"] == "ACVA")
     assert note["note"] == acva.pop("review_note")
     assert manifest["registry_after"]["sha256"] == event_risk.registry_digest(before)
