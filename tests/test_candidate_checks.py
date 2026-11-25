@@ -471,6 +471,36 @@ def test_eighty_rows_at_their_bounds_fit_the_block_and_shedding_never_takes_a_ti
     assert "candidate_checks is over its archived byte bound" in checked(data, shed)
 
 
+def test_a_row_a_tickets_block_stands_behind_is_never_shed_even_past_the_bound(monkeypatch):
+    """Past every row that can give way, the rows the tickets' own blocks stand behind
+    keep their reading and are not counted as shed: the block stays over its bound,
+    which the validator names."""
+    data = with_candidates(CC.MAX_NAMES)
+    names = CC.record_names(data)
+    runs = CC._run_rows(data)
+    session = data["run"]["session"]
+    rows = [CC._row_of(n, runs, session, earnings_risk.window(session), NOW) for n in names[:CC.MAX_NAMES]]
+    monkeypatch.setattr(CC, "MAX_BLOCK_BYTES", 1000)
+    block = CC._bounded(data, names, list(rows), {"sec": 0, "sec_reused": 0, "iex": 0})
+    backed = [i for i, n in enumerate(names[:CC.MAX_NAMES]) if any((n["stage"], n["ticker"]) in runs[k] for k in runs)]
+    assert backed and block["shed"] == CC.MAX_NAMES - len(backed)
+    assert [block["rows"][i] for i in backed] == [rows[i] for i in backed]
+    assert f"{CC.MAX_NAMES - len(backed)} shed to stay within" in block["sentence"]
+
+
+def test_the_blocks_status_is_checked_partial_or_unavailable_by_what_its_rows_read():
+    data = page("full")
+    rows = {r["ticker"]: r for r in data["candidate_checks"]["rows"]}
+    read, half = rows["AMD"], rows["TSLA"]
+    assert all(CC._read(read).values()) and not all(CC._read(half).values()) and any(CC._read(half).values())
+    session = data["run"]["session"]
+    none = CC._row_of({"stage": "burst", "ticker": "ZZZ", "role": "candidate", "rank": 9},
+                      {"earnings": {}, "sec_flags": {}, "cross_check": {}}, session, earnings_risk.window(session), NOW)
+    assert not any(CC._read(none).values())
+    assert (CC.status_of([]), CC.status_of([read]), CC.status_of([read, half]), CC.status_of([none]),
+            CC.status_of([none, read])) == ("not_applicable", "checked", "partial", "unavailable", "partial")
+
+
 def test_the_block_sentence_lists_at_most_three_names_a_flag_however_many_are_flagged():
     data = with_candidates(CC.MAX_NAMES)
     names = CC.record_names(data)[:CC.MAX_NAMES]

@@ -149,6 +149,8 @@ def test_no_shape_substituted_anywhere_makes_validate_raise(name):
     assert any(len(path) == 4 for path in paths) and any(path[1] == 0 for path in paths if len(path) > 1)
     # and into the candidate checks' first row, down to each field of its parts
     assert any(path[:3] == ('candidate_checks', 'rows', 0) and len(path) == 5 for path in paths)
+    # and into each of its counting objects, a request count among them
+    assert ('candidate_checks', 'requests', 'sec') in paths and ('candidate_checks', 'names', 'reviewed') in paths
     outcomes = {'refused': 0, 'passed': 0}
     already = 0  # a path whose value IS one of the shapes is not substituted with it
     for path in paths:
