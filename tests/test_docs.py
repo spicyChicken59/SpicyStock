@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
 import pytest
@@ -1007,27 +1008,231 @@ def test_the_readme_quotes_the_briefs_bounds_from_the_module():
 def test_the_readme_quotes_the_service_watch_from_the_tool_and_its_workflow():
     import yaml
     from tools import service_watch as sw
-    assert f"still absent {sw.ALERT_WITHIN_HOURS} hours before its recovery limit" in README
-    assert f"or, for {sw.MISSING_ALERT_HOURS} hours, once it is past it" in README
-    assert f"Flagged, for {sw.MORNING_ALERT_HOURS} hours after it was due, on every session, ticket or not" in README
-    assert sw.MORNING_DUE_CT == "08:45" and "From 8:45 AM CT on the applicable session (`MORNING_DUE_CT`)" in README
+    assert (f"still absent at the earlier of {sw.ALERT_WITHIN_HOURS} hours before its recovery limit (the next "
+            f"session's open) and {sw.NOT_PUBLISHED_AFTER_PRIMARY_HOURS} hours after its primary slot") in README
+    assert f"Past the limit it is `missing`, flagged for {sw.MISSING_ALERT_HOURS} hours" in README
+    assert sw.EVENING_PUBLISHED_BY_ET == "21:45" and "from 9:45 PM ET as well (`EVENING_PUBLISHED_BY_ET`)" in README
+    assert sw.EVENING_STARTED_BY_ET == "18:50" and "by 6:50 PM ET (`EVENING_STARTED_BY_ET`)" in README
+    assert f"Flagged, for {sw.MORNING_ALERT_HOURS} hours after the alert time, on every session, ticket or not" in README
+    assert sw.MORNING_ALERT_CT == "08:25" and "From 8:25 AM CT on the applicable session (`MORNING_ALERT_CT`)" in README
+    assert sw.MORNING_DUE_CT == "08:45" and "through 8:45 AM CT (`MORNING_DUE_CT`, the go-live gate's own line)" in README
     assert f"start within {sw.LATE_START_MINUTES} minutes of its primary slot" in README
     assert f"Flagged for {sw.LATE_START_ALERT_HOURS} hours after the run started" in README
-    assert (sw.EXIT_OK, sw.EXIT_ALERT, sw.EXIT_UNKNOWN) == (0, 1, 2)
-    assert "exits 0 with nothing to flag, 1 on an alert and 2 when the record cannot answer" in README
+    assert f"again only after {sw.REPEAT_DAYS} days (`REPEAT_DAYS`)" in README
+    assert "`scheduler:evening:started_late`" in README and sw.KEY_PATTERN.fullmatch("scheduler:evening:started_late")
+    assert "`evening:not_started:2026-11-20`" in README and sw.KEY_PATTERN.fullmatch("evening:not_started:2026-11-20")
+    for word in (sw.ON_TIME, sw.STARTED_LATE, sw.NOT_STARTED, sw.FAILED, sw.UNKNOWN, sw.NOT_PUBLISHED, sw.MISSING,
+                 sw.NOT_CHECKED, sw.NOT_LANDED):
+        assert f"`{word}`" in README, word
+    assert (sw.EXIT_OK, sw.EXIT_ALERT, sw.EXIT_UNKNOWN, sw.EXIT_UNFINISHED) == (0, 1, 2, 3)
+    assert ("it exits 0 with nothing to flag, 1 on an alert and 2 when the record cannot answer, whatever else it "
+            "flags; it exits 3 when the run did not finish: with `--mail` the message it owed was refused twice, or "
+            "the ledger it changed could not be written, so the next run would mail again") in README
+    assert "`ledger=written` or `ledger=failed`" in README
+    assert "accepted and the ledger it changed was written" in README
+    # the listing's debounce, from the module's own numbers
+    assert (sw.LISTING_FAILURES_IN_A_ROW, sw.LISTING_CLEAR_HOURS) == (2, 24)
+    assert (f"when {sw.LISTING_FAILURES_IN_A_ROW} watch runs in a row could not read the listing "
+            "(`LISTING_FAILURES_IN_A_ROW`; the first is recorded and mails nothing)") in README
+    assert f"cleared only after {sw.LISTING_CLEAR_HOURS} hours with no listing failure (`LISTING_CLEAR_HOURS`)" in README
+    assert "`in_progress`" in README and sw.IN_PROGRESS == "in_progress"
+    # the listing key's return, the count's home and the one rule that needs the listing
+    assert (f"after a clear the key returns only once {sw.LISTING_FAILURES_IN_A_ROW} runs in a row fail again, never at "
+            "once") in README
+    assert "The ledger counts the failing runs, so the rule is the constant's" in README
+    assert "when the failures began is never forgotten by age" in README
+    assert (f"(the run listing's own key only once {sw.LISTING_FAILURES_IN_A_ROW} watch runs in a row fail again)"
+            in README)
+    assert "The ledger holds keys, instants and that count only, no address and no message" in README
+    assert ("so every alert mails again, while the listing's own key is held back by an empty or missing ledger "
+            "until its count is recorded again") in README
+    from tools import dispatch_schedule as dispatcher
+    last_watch_et = [times for name, _, zone, times in dispatcher.SLOTS
+                     if name == "service-watch.yml" and zone == dispatcher.ET][0][-1]
+    assert (sw.EVENING_PUBLISHED_BY_ET, last_watch_et) == ("21:45", "21:50")
+    assert ("the evening's 9:45 PM ET rule needs a readable listing on the 9:50 PM ET run that applies it"
+            in README)
+    # a morning run holds the answer only while it is not yet late, by the dispatcher's own wait
+    assert sw.IN_PROGRESS_GRACE_SECONDS == dispatcher.WAIT_SECONDS
+    assert (f"created less than {sw.IN_PROGRESS_GRACE_SECONDS} seconds before the watch's clock "
+            "(`IN_PROGRESS_GRACE_SECONDS`, the dispatcher's own `WAIT_SECONDS`, read there), and only before the entry "
+            "cutoff") in README
+    assert "At or after the cutoff nothing is in progress" in README
+    assert "through the morning guard's own table and rules (`tools/publish_morning.schedule_guard()`)" in README
+    assert ("A dispatch in the morning's slot still queued or running at the entry cutoff is no start in it either, "
+            "and clears nothing") in README
+    assert "a watch run GitHub's own cron started, red or green, is read by no watch" in README
+    assert "a red run GitHub's cron started is read by no watch, and is seen only in Actions" in README
+    assert "with or without `--mail`, and never with a key its own reader refuses" in README
+    assert "is dropped alone and named in the run's output" in README
+    assert "Its exit code follows the judgement, mailed or dropped as a repeat alike" in README
+    assert "exits 2 too, and with `--mail` is mailed once per bytes and again weekly while those bytes stand" in README
+    assert sw.MAIL_RETRY_SECONDS == 20 and "once more after 20 seconds (`MAIL_RETRY_SECONDS`)" in README
+    assert "`record:unreadable`" in README and "`record:unknown`" in README and "`scheduler:listing:unreadable`" in README
+    for key in ("record:unknown:" + "a" * 64, "scheduler:listing:unreadable"):
+        assert sw.KEY_PATTERN.fullmatch(key), key
     wf = yaml.safe_load((ROOT / ".github" / "workflows" / "service-watch.yml").read_text())
     crons = [c["cron"] for c in (wf.get("on") or wf.get(True))["schedule"]]
-    assert crons == ["7 5 * * *", "7 9 * * *", "7 16 * * 1-5"]
-    assert "at 05:07 and 09:07 UTC daily and 16:07 UTC on weekdays" in README
+    assert crons == ["7 3 * * *", "7 5 * * *", "7 7 * * *", "7 9 * * *", "7 16 * * 1-5"]
+    daily = [f"{int(c.split()[1]):02d}:{int(c.split()[0]):02d}" for c in crons if c.endswith("* * *")]
+    assert f"at {', '.join(daily[:-1])} and {daily[-1]} UTC daily and 16:07 UTC on weekdays" in README
+    assert wf["permissions"] == {"contents": "read", "actions": "read"} and "`actions: read`" in README
     assert "only_if_unpublished" in sw.DISPATCH_HINT and "**only_if_unpublished**" in README_RAW
+    assert "Nothing outside GitHub watches the watch" in README
+    # the instants the README spells out, derived from the module's own rules
+    from src import delivery
+    assert _clock(datetime.combine(date(2026, 11, 20), time(9, 30)) - timedelta(hours=sw.ALERT_WITHIN_HOURS)) \
+        == "3:30 AM" and "on an ordinary night that is 3:30 AM ET" in README
+    after_primary = datetime.combine(date(2026, 11, 20), delivery.EVENING_PRIMARY_ET) + timedelta(
+        hours=sw.NOT_PUBLISHED_AFTER_PRIMARY_HOURS)
+    assert _clock(after_primary) == "4:16 AM" and "it is 4:16 AM ET the morning after" in README
+    from tools import dispatch_schedule as ds
+    morning = next(times for wf_name, _, _, times in ds.SLOTS if wf_name == "morning.yml")[0]
+    assert _clock(datetime.combine(date(2026, 11, 20), time.fromisoformat(morning))) == "8:20 AM"
+    assert "the on-time dispatcher, once it is deployed, starts the check at 8:20 AM CT" in README
+    # the pre-open watch's wait for the check, from the dispatcher's own numbers
+    assert ds.WAIT_SECONDS == 150 and f"and until {ds.WAIT_SECONDS} seconds (`WAIT_SECONDS`) after the newest dispatch " \
+                                      "of it" in README
+    assert "while that check's own slot is due and nothing has started it (no dispatch listed, none in the ledger)" \
+        in README
+    open_at = datetime.combine(date(2026, 11, 20), time(8, 30))
+    catch_up = datetime.combine(date(2026, 11, 20), time.fromisoformat(sw.MORNING_ALERT_CT))
+    # ticks are on the minute: the watch goes at the first tick the wait has passed, the stamp up to 30 s late
+    skew = timedelta(seconds=30)
+    ticks_to_clear = -(-(ds.WAIT_SECONDS + skew.seconds) // ds.TICK_SECONDS)
+    first_tick = catch_up + timedelta(seconds=ticks_to_clear * ds.TICK_SECONDS)
+    last_tick = open_at - timedelta(seconds=ds.TICK_SECONDS)
+    assert first_tick < last_tick and first_tick - (catch_up + skew) >= timedelta(seconds=ds.WAIT_SECONDS)
+    assert (f"a catch-up that starts the check at {_clock(catch_up)} CT starts the watch at "
+            f"{_clock(first_tick).removesuffix(' AM')} (GitHub stamping the dispatch up to 30 seconds after its "
+            "tick)") in README
+    # a later catch-up cannot always clear the wait before the last tick, and goes there whatever is left of it
+    earliest = last_tick - timedelta(seconds=(ticks_to_clear - 1) * ds.TICK_SECONDS) - timedelta(seconds=ds.TICK_SECONDS)
+    assert earliest == catch_up + timedelta(seconds=ds.TICK_SECONDS)
+    assert (f"It never waits past its last tick before the open: at {_clock(last_tick).removesuffix(' AM')} it is "
+            f"dispatched whatever the wait says, so a catch-up at {_clock(earliest).removesuffix(' AM')} to "
+            f"{_clock(last_tick).removesuffix(' AM')} still starts a watch before the open") in README
+    assert "The pre-open watch is not started only when no tick of the dispatcher could start it" in README
+    assert (f"it made none from {_clock(catch_up).removesuffix(' AM')} to {_clock(last_tick)} CT (it was down, or not "
+            f"deployed), it stopped ticking before {_clock(last_tick).removesuffix(' AM')} while the watch still "
+            "waited, or GitHub refused the watch's own listing or dispatch on every tick that tried") in README
+    assert ("Nothing is mailed before the open then: the 09:05 watch mails `scheduler:watch:not_started` (standing) "
+            "and judges the morning check for the first time, after the entry window") in README
+    # how late a backup cron may be and still land in the alert window before the open, per season
+    coverage = _backup_coverage_hours([int(c.split()[1]) * 60 + int(c.split()[0]) for c in crons if c.endswith("* * *")],
+                                      sw.ALERT_WITHIN_HOURS)
+    assert coverage == ("10.3", "11.3")
+    assert f"up to {coverage[0]} hours late in daylight time and {coverage[1]} in standard time" in README
+    workflow = comments(ROOT / ".github" / "workflows" / "service-watch.yml")
+    assert f"up to {coverage[0]} hours late in daylight time and {coverage[1]} in standard time" in workflow
+    assert "With GitHub's crons alone the morning alert cannot arrive before the open" in README
+
+
+def comments(path: Path) -> str:
+    """A file's ``#`` comments as one line of prose: each comment's marker dropped and the wraps collapsed."""
+    return re.sub(r"\s+", " ", " ".join(line.split("#", 1)[1] for line in path.read_text().splitlines() if "#" in line))
+
+
+def _clock(value) -> str:
+    return value.strftime("%I:%M %p").lstrip("0")
+
+
+def _backup_coverage_hours(daily_utc_minutes, alert_hours) -> tuple[str, str]:
+    """For the 9:30 AM ET open in daylight and standard time (13:30 and 14:30 UTC), the longest whole-minute delay
+    from zero up to which one of the daily crons always lands in the alert window before the open, in hours to one
+    decimal place, rounded down."""
+    out = []
+    for open_at in (13 * 60 + 30, 14 * 60 + 30):
+        delay = 0
+        while any(open_at - alert_hours * 60 <= slot + delay < open_at for slot in daily_utc_minutes):
+            delay += 1
+        out.append(f"{(delay - 1) // 6 / 10:.1f}")
+    return tuple(out)
+
+
+def test_the_operations_note_and_the_example_quote_the_watch_from_the_tool_and_its_workflow():
+    import yaml
+    from tools import dispatch_schedule as ds
+    from tools import service_watch as sw
+    note = prose(ROOT / "docs" / "operations" / "external-scheduler.md")
+    assert f"an evening not started by {sw.EVENING_STARTED_BY_ET} ET" in note
+    assert f"one started on time but not published by {sw.EVENING_PUBLISHED_BY_ET} ET" in note
+    deadline = _clock(datetime.combine(date(2026, 11, 20), time(9, 30)) - timedelta(hours=sw.ALERT_WITHIN_HOURS))
+    assert deadline == "3:30 AM" and f"a night not published by {deadline} ET" in note
+    assert f"{sw.MORNING_ALERT_CT} CT for the morning check" in note
+    assert f"landed by {sw.MORNING_ALERT_CT} CT (`MORNING_ALERT_CT`)" in note
+    assert f"again only after {sw.REPEAT_DAYS} days (`REPEAT_DAYS`) while it stands" in note
+    assert f"more than {sw.LATE_START_MINUTES} minutes after its 18:16 ET primary slot" in note
+    first = next(times for name, _, _, times in ds.SLOTS if name == "evening.yml")
+    assert f"evening not started by {sw.EVENING_STARTED_BY_ET}" in note and first[0] < sw.EVENING_STARTED_BY_ET
+    assert f"{', '.join(first[1:-1])} or {first[-1]} ET" in note                # the dispatcher's later evening slots
+    assert ("service-watch.yml", "America/Chicago", sw.MORNING_ALERT_CT) in ds.BEFORE_OPEN
+    assert "08:25 America/Chicago slot, which is due only until the session's open" in note
+    assert "`BEFORE_OPEN`" in note and "`WAITS_FOR`" in note
+    assert f"{ds.WAIT_SECONDS} seconds (`WAIT_SECONDS`) after the newest dispatch of the morning check" in note
+    assert "88 to 94 seconds (23 October 2026) and 97 to 103 seconds (4 November 2026)" in note
+    assert ds.WAIT_SECONDS > 103                                   # it covers the latest landing recorded
+    assert "so 150 covers the 103 with margin" in note and f"{ds.WAIT_SECONDS} covers" in note
+    assert "while the stamp is within 30 seconds of its tick" in note
+    # the two reasons the pre-open watch waits, as the tool logs them, and its last tick
+    (pre,) = [slot for slot in ds.slots_on(date(2026, 11, 20)) if (slot.workflow, slot.at.strftime("%H:%M")) ==
+              ("service-watch.yml", sw.MORNING_ALERT_CT)]
+
+    class Unlisted:
+        def dispatches_since(self, workflow, since):
+            return []
+    assert f"`{pre.key} waits: {ds._waits(pre, pre.at, Unlisted(), ds._fresh_state())}`" in note
+    made = ds._fresh_state()
+    made["dispatched"]["morning.yml@2026-11-20T08:20:00-06:00"] = "2026-11-20T08:26:07-06:00"
+    assert f"`{pre.key} waits: {ds._waits(pre, pre.at + timedelta(minutes=2), Unlisted(), made)}`" in note
+    last = (pre.end - timedelta(seconds=ds.TICK_SECONDS)).astimezone(ds.CT)
+    assert ds.last_tick(pre, last) and not ds.last_tick(pre, last - timedelta(seconds=1))
+    assert ds._waits(pre, last, Unlisted(), made) is None
+    assert (f"never past its last tick before the open. At {last.strftime('%H:%M')} the watch is dispatched "
+            "whatever the wait says, and without asking about the check") in note
+    assert "The pre-open watch is not started only when no tick could start it" in note
+    assert (f"the dispatcher made no tick from {sw.MORNING_ALERT_CT} to {last.strftime('%H:%M')} (it was down, or not "
+            f"deployed), it stopped ticking before {last.strftime('%H:%M')} while the watch still waited, or GitHub "
+            "refused the watch's own listing or dispatch on every tick that tried") in note
+    assert ("The 09:05 watch mails `scheduler:watch:not_started` (a standing key) and judges the morning check for "
+            "the first time, after the entry window") in note
+    assert (f"created less than {sw.IN_PROGRESS_GRACE_SECONDS} seconds before the watch's clock "
+            "(`IN_PROGRESS_GRACE_SECONDS`, this tool's `WAIT_SECONDS`)") in note
+    last_watch_et = [times for name, _, zone, times in ds.SLOTS if name == "service-watch.yml" and zone == ds.ET][0][-1]
+    assert (f"The {sw.EVENING_PUBLISHED_BY_ET} ET rule (an evening started on time and not published) needs a "
+            f"readable listing on the {last_watch_et} ET run") in note
+    assert (f"except the listing's own key, which returns only once {sw.LISTING_FAILURES_IN_A_ROW} watch runs in a "
+            "row fail again") in note
+    assert "The watch's ledger counts the failing runs, and an empty or missing ledger starts the count over" in note
+    workflow = comments(ROOT / ".github" / "workflows" / "service-watch.yml")
+    assert sw.LISTING_FAILURES_IN_A_ROW == 2
+    assert ("every alert mails again, except the run listing's own, which an empty or missing ledger holds back "
+            "until two failing runs in a row are counted again") in workflow
+    assert "Keys, instants and the listing's count of failing runs only" in workflow
+    assert ("raised (with the ledger) only when two watch runs in a row could not read it; an empty or missing "
+            "ledger starts that count over") in comments(ROOT / ".env.example")
+    assert (f"{sw.LISTING_FAILURES_IN_A_ROW} watch runs in a row could not read it (`LISTING_FAILURES_IN_A_ROW`)"
+            in note and f"{sw.LISTING_CLEAR_HOURS} hours with no listing failure (`LISTING_CLEAR_HOURS`)" in note)
+    assert "a red run that GitHub's cron started is read by no watch, and is seen only in Actions" in note
+    # the example names the workflow's own crons
+    wf = yaml.safe_load((ROOT / ".github" / "workflows" / "service-watch.yml").read_text())
+    crons = [c["cron"] for c in (wf.get("on") or wf.get(True))["schedule"]]
+    daily = [f"{int(c.split()[1]):02d}:{int(c.split()[0]):02d}" for c in crons if c.endswith("* * *")]
+    weekday = [f"{int(c.split()[1]):02d}:{int(c.split()[0]):02d}" for c in crons if c.endswith("1-5")]
+    assert f"at {', '.join(daily)} and (weekdays) {weekday[0]} UTC" in comments(ROOT / ".env.example")
 
 
 def test_the_readme_quotes_the_dispatchers_slots_from_the_tool():
     from tools import dispatch_schedule as ds
+    seen = set()
     for workflow, _, zone, times in ds.SLOTS:
         when = ", ".join(times[:-1]) + (" and " if len(times) > 1 else "") + times[-1]
-        assert f"`{workflow}` at {when} {zone.key}" in README, workflow
+        # a workflow with slots in two zones is quoted once, its second zone after "and at"
+        lead = f"and at {when}" if workflow in seen else f"`{workflow}` at {when}"
+        assert f"{lead} {zone.key}" in README, workflow
+        seen.add(workflow)
     assert f"A slot is due for {ds.DUE_MINUTES} minutes from its instant" in README
+    assert sorted(ds.EVERY_DAY) == ["evening.yml"] and "on every calendar day (`EVERY_DAY`)" in README
     assert ds.TOKEN_ENV == "GITHUB_TOKEN" and "GITHUB_TOKEN" in ENV and "Actions read and write" in ENV
 
 

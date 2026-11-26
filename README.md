@@ -2834,71 +2834,239 @@ prompt are as of 19 November 2026; the bot is told to prefer the live brief.
 
 GitHub starts this repository's scheduled runs hours after their slots, and
 until 19 November 2026 nothing said so when a night had not arrived.
-`tools/service_watch.py` asks three questions of the files on disk and a clock:
+`tools/service_watch.py` asks five questions of the files on `main`, a clock
+and, with a token, GitHub's own list of the workflows' runs:
 
 - **Evening.** Has the session after the one `data.json` covers been published?
-  The answer is `src/freshness.py`'s. It is flagged only when the publication is
-  still absent 6 hours before its recovery limit (the next session's open),
-  or, for 12 hours, once it is past it. The limit decides, not the state word: a
+  The answer is `src/freshness.py`'s. It is `not_published` once the
+  publication is still absent at the earlier of 6 hours before its recovery
+  limit (the next session's open) and 10 hours after its primary slot
+  (6:16 PM ET): on an ordinary night that is 3:30 AM ET, and over a weekend or
+  a holiday it is 4:16 AM ET the morning after, so a missed Friday is
+  `not_published` from Saturday and not six hours before Monday's open. On a
+  closed day only GitHub's backup crons run the watch, hours late; the
+  dispatcher starts no watch then, and its first watch to mail it is the next
+  session's 6:00 AM CT slot. When the run listing shows a dispatch in the
+  dispatcher's first evening slot started that evening, it is `not_published`
+  from 9:45 PM ET as well (`EVENING_PUBLISHED_BY_ET`). Past the limit it is
+  `missing`, flagged for 12 hours. The limit decides, not the state word: a
   record with no readable delivery policy reads `pending` until its limit and
-  is flagged the same way. Late alone is never flagged: read off the landing
-  commits, the 23 first publications from 19 October to 18 November 2026 landed
-  9.36 hours or more before the next open. A second missed night in a row has
-  no `missing` of its own, because the record still names the first, so the
-  watch also counts the sessions that have completed since the record
-  (`sessions_behind`) and judges the newest of them by the same two bounds.
+  is flagged by the limit rule alone. A late publication alone is not an
+  evening alert: read off the landing commits, the 23 first publications from
+  19 October to 18 November 2026 landed 9.36 hours or more before the next
+  open. A late start is flagged, by Start and Scheduler below. A second missed
+  night in a row has no `missing` of its own, because the record still names
+  the first, so the watch also counts the sessions that have completed since
+  the record (`sessions_behind`) and judges the newest of them, under that
+  session's own key, by two rules: its own deadline (the earlier of the two
+  above) and its own 12-hour `missing` window. The 9:45 PM ET rule is not
+  applied to it.
 - **Start.** Did the evening run that wrote the record start within 60
   minutes of its primary slot (6:16 PM ET), read off the record's own
   `run.delivery.after_primary_minutes`? The on-time dispatcher (below) starts
-  it at 6:20 PM ET, so a start more than 60 minutes late is GitHub's own cron,
-  the backup. Flagged for 14 hours after the run started.
-- **Morning.** From 8:45 AM CT on the applicable session (`MORNING_DUE_CT`):
-  did a morning check bound to this record's bytes land inside its collection
-  window? Flagged, for 12 hours after it was due, on every session, ticket or
-  not: the dispatcher starts the check at 8:20 AM CT, so one that is not there
-  by 8:45 is the service's, whatever the night published. A receipt whose status says it quoted nothing
-  (`provider_unavailable`, `inapplicable`) has not landed. A check that landed
-  is said with when it ran and what it priced: every real ticket morning from
-  3 to 16 November 2026 reads "generated before the entry window opened, and 0
-  of its N ticket rows carried a recent price", which is what a dispatch before
-  the 8:30 AM CT open gives, and is reported, not flagged. A receipt bound to
-  an earlier publication of the same session (the session was published again
-  after the morning) is a check that landed.
+  it first at 6:20 PM ET, so a start more than 60 minutes late was not that
+  first start: a later one of the dispatcher's, GitHub's own cron (the backup,
+  hours late) or a hand dispatch. Flagged for 14 hours after the run started.
+  When the run listing reads that run, the listing's answer is said instead.
+- **Morning.** From 8:25 AM CT on the applicable session (`MORNING_ALERT_CT`),
+  five minutes before the 8:30 AM CT open: did a morning check bound to this
+  record's bytes land inside its collection window, and is
+  `orders-morning.json` `checked` for that exact `orders.json`? A check with no
+  checked go/cancel file beside it is `not_checked`, one that did not land
+  `not_landed`. The same answer stands under the same key through 8:45 AM CT
+  (`MORNING_DUE_CT`, the go-live gate's own line), so it is mailed once.
+  Flagged, for 12 hours after the alert time, on every session, ticket or not:
+  the on-time dispatcher, once it is deployed, starts the check at 8:20 AM CT,
+  so one that is not there by 8:25 is the service's, whatever the night
+  published (until then GitHub's own cron starts it hours late, and every
+  morning is flagged). A receipt whose status
+  says it quoted nothing (`provider_unavailable`, `inapplicable`) has not
+  landed. A check that landed is said with when it ran and what it priced: the
+  pricing clause is reported and never flagged, and what is flagged is a check
+  that did not land or whose `orders-morning.json` is not `checked` for it
+  (every real ticket morning from 3 to 16 November 2026 was priced "generated
+  before the entry window opened, and 0 of its N ticket rows carried a recent
+  price", which is what a dispatch before the 8:30 AM CT open gives). A
+  receipt bound to an earlier publication of the same session (the session
+  was published again after the morning) is a check that landed, when it ran
+  inside its window and is not a rehearsal or one that quoted nothing. While
+  the run listing shows a morning run still queued or running that is not yet
+  late, a check that has not landed, or whose `orders-morning.json` is not yet
+  `checked`, is `in_progress`: no alert and no mail, and a later watch judges
+  it. A run holds the answer so only when it is a dispatch, or a cron its
+  guard runs for this session, created less than 150 seconds before the
+  watch's clock (`IN_PROGRESS_GRACE_SECONDS`, the dispatcher's own
+  `WAIT_SECONDS`, read there), and only before the entry cutoff. A run older
+  than that holds nothing: the dispatcher's 8:20 AM CT check still queued or
+  running at the 8:25 watch, the only watch before the open, is mailed then
+  as not landed, and the sentence names the run the listing shows, its
+  status, when it was created and whether it can still land. At or after the
+  cutoff nothing is in progress. The watch that judges an `in_progress`
+  morning is the dispatcher's next one, at 9:05 AM CT, after the entry
+  window. A run that finished inside those 150 seconds is named in the alert
+  as well: the watch reads `main` before it reads the listing, so that run's
+  files may have reached `main` in between.
+- **Handoff.** Do `orders.json`, `positions-template.json` and
+  `orders-morning.json` pass `src/orders.check()` against this record? Each
+  problem is said in a fixed phrase, never with a path or an exception's text.
+- **Scheduler.** Did the scheduler run? Read off the Actions run listing of
+  `evening.yml`, `morning.yml` and `service-watch.yml` itself, with the
+  workflow's own read-only token (`GitHub.runs()` in
+  `tools/dispatch_schedule.py`, every event, on `main`, the fields it keeps
+  named in `RUN_FIELDS`): each is `on_time` (a `workflow_dispatch` under the
+  dispatcher's run name inside its first slot's due window), `started_late`,
+  `not_started`, `failed` or `unknown`. The run name and the window identify a
+  dispatch in the slot, not the dispatcher: the listing cannot tell the
+  dispatcher's dispatch from one made by hand under the same name, and the
+  watch claims nothing more. A dispatch in one of the dispatcher's later
+  evening slots (7:20, 8:20 or 9:20 PM ET, or a weekend's or a holiday's
+  recovery) is named as that start and is still not on time, and a dispatch
+  in a slot that ended without its work (failed, cancelled) is named and is no
+  start in it. A rehearsal, another session's backfill, another branch's run,
+  an evening cron whose guard skips it (not the active UTC slot, or a nominal
+  date that is no exchange session, as a weekday holiday's own crons are) and
+  one its guard runs for another session are not the night's: a session's
+  evening runs are those of its own evening. A scheduled morning run is read
+  the same way, through the morning guard's own table and rules
+  (`tools/publish_morning.schedule_guard()`): the other season's pair, a cron
+  created at or after the entry cutoff or on a later day, and one the guard
+  does not know are skipped by it, do no morning's work, are never in
+  progress and are no morning run, and one it runs for another session is
+  that session's; with nothing else listed the morning's start is
+  `not_started`, said beside the morning's own alert. A dispatch in the
+  morning's slot still queued or running at the entry cutoff is no start in
+  it either, and clears nothing. The runs are tied to the files
+  by `run.run_id` and the receipt's `observation_run_id`. An evening with no
+  run listed by 6:50 PM ET (`EVENING_STARTED_BY_ET`) is `not_started`; one
+  whose every run failed is `failed`; the watch reports a gap in its own
+  previous slot, after the fact. Only a watch dispatched in one of the
+  dispatcher's slots is judged so: one that ended failed or cancelled did not
+  finish and is not a start, and a watch run GitHub's own cron started, red or
+  green, is read by no watch. Without a token every scheduler answer that
+  needs the listing is `unknown` and nothing is mailed for it; with one, each
+  workflow's listing stands or falls alone, and a listing that cannot be read
+  (a refused, cut or garbled answer, or a fault of the transport, never one
+  that stops the run) leaves its answers `unknown` and is an alert of its own,
+  standing (`scheduler:listing:unreadable`): with a ledger it is raised only
+  when 2 watch runs in a row could not read the listing
+  (`LISTING_FAILURES_IN_A_ROW`; the first is recorded and mails nothing), and
+  its condition is cleared only after 24 hours with no listing failure
+  (`LISTING_CLEAR_HOURS`), so one 5xx between good reads mails nothing. The
+  ledger counts the failing runs, so the rule is the constant's; when the
+  failures began is never forgotten by age (the first run that reads the
+  listing forgets it), so a failure that lasts a week is one run of failures,
+  mailed again on its seventh day; and after a clear the key returns only
+  once 2 runs in a row fail again, never at once. The file answers stand
+  either way, with one exception: the evening's 9:45 PM ET rule needs a
+  readable listing on the 9:50 PM ET run that applies it, so when the
+  listing first fails on that run nothing is mailed for it that night, and
+  the first alert is the next run's.
 
-It calls no provider and writes nothing. With `--mail` each run mails each
-alert it finds through the evening's own transport; it keeps no memory, so one
-late night can mail from two runs and a missed one from two or three. It exits
-0 with nothing to flag, 1 on an alert and 2 when the record cannot answer, and
-with `--mail` a record on `main` that cannot be read at all is mailed too.
-`service-watch.yml` runs it on
-`main` at 05:07 and 09:07 UTC daily and 16:07 UTC on weekdays, read-only, with
-the three mail secrets and no other; an alert turns that run red. The watch is
-itself a scheduled run and so itself hours late on most days: the two morning
-slots are placed so that one of them lands inside the alert window before the
-open while the scheduler is up to 8.3 hours late in daylight time and 9.3 in
-standard time (the longest delay the 13 October schedule reading recorded was
-8.4 hours), and nothing here can make GitHub's scheduler punctual. A missing
-night's alert says what can still publish it: the scheduled slots and a
-dispatch with **only_if_unpublished** ticked cannot, and a plain dispatch with
-the session box filled can, for an entry window that may have ended. When
-more than one session is unpublished it names the first missed one beside
-that, and says the newest can still be published by a dispatch with
-**only_if_unpublished** ticked while its own limit is ahead (such a dispatch
-does nothing before the session's primary slot, 6:16 PM ET). The same
-answers are printed for anything else with a clock:
+Every alert has a key, `family:word:scope`. One about a session carries the
+session in ISO form (`evening:not_started:2026-11-20`; a session the record
+names in another form a date is read from is written so, and one it names in
+none is keyed by the record's SHA-256); a standing one about the scheduler
+carries none (`scheduler:evening:started_late`); a record that cannot be read
+carries the SHA-256 of its bytes, or `absent` (`record:unreadable`), and one
+read but unable to say whether its next session is published carries its
+SHA-256 (`record:unknown`). The judgement word is part of the key, so a change
+of state mails once. With `--mail` a run mails its new alerts as one message
+through the evening's own transport, trying a refused send once more after 20
+seconds (`MAIL_RETRY_SECONDS`), and with `--ledger FILE` it mails a key it has
+already mailed again only after 7 days (`REPEAT_DAYS`): a session's alert is
+mailed once, a standing one weekly while it stands, and a standing one at
+once when it returns after its condition cleared (the run listing's own key
+only once 2 watch runs in a row fail again), because the ledger also
+records when each standing key's condition was last answered on time, and
+when the run listing began and last failed and on how many watch runs in a
+row. The ledger holds keys, instants and that count only, no address and no
+message; it is written when a run changed it (a
+message accepted, a clear, the listing's failures), with or without `--mail`,
+and never with a key its own reader refuses, so a message the transport
+refused twice is mailed again by the next run; an absent, corrupt or
+other-version ledger reads as empty, so every alert mails again, while the
+listing's own key is held back by an empty or missing ledger until its count
+is recorded again; and one entry
+it refuses (a key it does not write, an instant it cannot read or one dated
+after the clock, a count that is not a whole number) is dropped alone and
+named in the run's output, the rest of
+the ledger read. It calls no provider and writes nothing to the repository.
+Its exit code follows the judgement, mailed or dropped as a repeat alike: it
+exits 0 with nothing to flag, 1 on an alert and 2 when the record cannot
+answer, whatever else it flags; it exits 3 when the run did not finish: with
+`--mail` the message it owed was refused twice, or the ledger it changed could
+not be written, so the next run would mail again. A record on `main` that
+cannot be read at all exits 2 too, and with `--mail` is mailed once per bytes
+and again weekly while those bytes stand. In a workflow it writes its exit
+code, its alerts' keys, its mail outcome and `ledger=written` or
+`ledger=failed` to the step's outputs and its lines to the job summary, and,
+as its last act, `finished=true` when it judged, every message it owed was
+accepted and the ledger it changed was written. `service-watch.yml` runs it on `main` at 03:07,
+05:07, 07:07 and 09:07 UTC daily and 16:07 UTC on weekdays, with the three
+mail secrets, its own token and `actions: read`, nothing else; the ledger
+lives in a main-only Actions cache (restored by its prefix before the watch,
+saved under the run's id after it, only when the watch wrote it). A run that
+judged and mailed is green; a red run is one that did not finish (it crashed,
+a message it owed was refused twice, or its ledger could not be written). Only
+a watch the dispatcher started in one of its slots is judged by the next
+watch, which reads one that ended red as a watch that did not start; a red run
+GitHub's cron started is read by no watch, and is seen only in Actions. The
+on-time dispatcher (below) starts it at its own
+slots; these crons are the backup and are hours late on most days: the four
+daily crons are placed so that one of them lands inside the alert window
+before the open while the scheduler is up to 10.3 hours late in daylight time
+and 11.3 in standard time (the longest delay the 13 October schedule reading
+recorded was 504.9 minutes, 8.4 hours), and nothing here can make GitHub's
+scheduler punctual. With GitHub's crons alone the morning alert cannot arrive
+before the open: it is due five minutes before it, and no cron lands there.
+Nothing outside GitHub watches the watch: the dispatcher on Railway, once the
+owner deploys it, is that outside clock, and until then a watch GitHub never
+starts raises nothing. A missing night's alert says what can still publish it:
+the scheduled slots and a dispatch with **only_if_unpublished** ticked cannot,
+and a plain dispatch with the session box filled can, for an entry window that
+may have ended. When more than one session is unpublished it names the first
+missed one beside that, and says the newest can still be published by a
+dispatch with **only_if_unpublished** ticked while its own limit is ahead
+(such a dispatch does nothing before the session's primary slot, 6:16 PM ET).
+The same answers are printed for anything else with a clock:
 `python tools/service_watch.py --docs docs`.
 
 ### On-time starts
 
 `tools/dispatch_schedule.py` starts the runs GitHub's scheduler starts hours
-late, by `workflow_dispatch`, on XNYS sessions only (`src/sessions.py`):
+late, by `workflow_dispatch`, on XNYS sessions (`src/sessions.py`):
 `evening.yml` at 18:20, 19:20, 20:20 and 21:20 America/New_York with
 **only_if_unpublished** ticked, so the four starts publish the newest session
-once; `morning.yml` at 08:20 America/Chicago; `service-watch.yml` at 06:00,
-08:45 and 11:00 America/Chicago. A slot is due for 30 minutes from its
-instant, and before it asks for a run it reads the workflow's dispatched runs
-created since the slot, so a repeat tick, a restart or a second copy starts
-nothing twice. It holds one credential, `GITHUB_TOKEN`, a fine-grained token
+once; `morning.yml` at 08:20 America/Chicago; `service-watch.yml` at 19:00 and 21:50 America/New_York
+and at 06:00, 08:25 and 09:05 America/Chicago. The evening's four starts run on
+every calendar day (`EVERY_DAY`): on a weekend or a holiday its guard publishes
+the newest completed session only if it is still unpublished and its next
+session has not opened, so they are a missed Friday's (or an eve's) recovery
+and a no-op after a published one. A slot is due for 30 minutes from its
+instant; the watch's 08:25 America/Chicago slot is due only until the session's
+open and never at or after it (`BEFORE_OPEN`). It waits for the morning check
+it judges (`WAITS_FOR`): while that check's own slot is due and nothing has
+started it (no dispatch listed, none in the ledger), and until
+150 seconds (`WAIT_SECONDS`) after the newest dispatch of it, its own or
+anyone's, by that dispatch's own `created_at`:
+the check's receipts have landed on `main` 88 to 103 seconds after its
+dispatch, and ticks are on the minute, so a catch-up that starts the
+check at 8:25 AM CT starts the watch at 8:28 (GitHub stamping the dispatch up
+to 30 seconds after its tick). It never waits past its last tick before the
+open: at 8:29 it is dispatched whatever the wait says, so a catch-up at 8:26
+to 8:29 still starts a watch before the open, which may read `main` before
+that check's receipt lands (a run the listing still shows queued or running is
+then `in_progress`, and the 09:05 slot judges it). The pre-open watch is not
+started only when no tick of the dispatcher could start it: it made none from
+8:25 to 8:29 AM CT (it was down, or not deployed), it stopped ticking before
+8:29 while the watch still waited, or GitHub refused the watch's own listing
+or dispatch on every tick that tried. Nothing is mailed before the open then:
+the 09:05 watch mails `scheduler:watch:not_started` (standing) and judges the
+morning check for the first time, after the entry window. Before it asks for a run it reads the workflow's
+dispatched runs created since the slot, and its ledger (`--state`, or held in
+memory by `loop`, which is how the Railway service runs it) records each
+dispatch it made, so a repeat tick, a restart or a second copy starts nothing
+twice, and a dispatch GitHub has not listed yet is not made again. It holds one credential, `GITHUB_TOKEN`, a fine-grained token
 with Actions read and write on this repository alone, and logs the workflow,
 the slot, the run id and an HTTP status, never a token or a body. It runs as
 its own Railway service (`deploy/scheduler/Dockerfile`,
@@ -3393,8 +3561,8 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots (the ones each record's rules archived, else the current policy's) by the landing commit's time with the record's own clock beside it, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
                 recovery_rehearsal.py (a rehearsal, not a reading: run_evening() through the suite's doubles over one synthetic market, one injected failure a night -- the bars endpoint, every frame stale, the reader's credit, the reader's transport, the mail -- with the evening workflow's own guard executed before and after each night under a frozen clock; the exit codes, what was published, whether the previous publication's bytes survived, how often each boundary was asked and what the guard decided; --check runs it again and holds its two files; calls no provider and changes nothing)
                 schedule_reliability.py (a reading of GitHub's scheduler, not the service: the public Actions listing of scheduled runs, each placed at its cron slot, the minutes from slot to creation per workflow, cron and week, expected slots with no run, the first run more than an hour late, and push runs on main as the contrast; --fetch is its only network path and --check holds its two files to the committed snapshot; changes nothing)
-                dispatch_schedule.py (the on-time dispatcher: a workflow_dispatch of evening.yml, morning.yml and service-watch.yml at their slots on XNYS sessions, idempotent against GitHub's own runs listing; one fine-grained GITHUB_TOKEN; plan needs none)
-                service_watch.py (a watch, not a reading: the record on disk and a clock -- is the session after it published, late near its recovery limit or missing, did its evening run start more than an hour after its primary slot, and did a morning check for this record land by 8:45 AM CT inside its collection window; mails through the evening's transport only with --mail and only on an alert; exit 0, 1 an alert, 2 a record that cannot answer)
+                dispatch_schedule.py (the on-time dispatcher: a workflow_dispatch of evening.yml, morning.yml and service-watch.yml at their slots on XNYS sessions, the evening's guarded starts on every day, the pre-open watch once the morning check is started and WAIT_SECONDS after its newest dispatch, at its last tick before the open at the latest, idempotent against GitHub's own runs listing and its ledger (in memory under loop); one fine-grained GITHUB_TOKEN; plan needs none; GitHub.runs() is the run listing the service watch reads)
+                service_watch.py (a watch, not a reading: the files on main, a clock and the Actions run listing -- is the session after the record published, not published by its deadline or missing, did its evening run start on time, did a morning check for this record land by 8:25 AM CT with the morning go/cancel file checked, are the handoff files bound, and did the scheduler start the evening, the morning check and the watch itself; each alert a key, a run's new alerts mailed as one message through the evening's transport with --mail and --ledger, a standing one weekly and at once when it returns after clearing, an unreadable run listing only after two runs in a row, counted in the ledger; a morning run still queued or running holds the morning's answer only while it is not yet late; exit 0, 1 an alert, 2 a record that cannot answer, 3 a message refused twice or a ledger it could not write)
                 stale_inputs.py (a reading of the stale stocks across nights: each session's newest publication's named stock-sessions joined to every later follow-up reading and source-recovery row, each in one class -- would have been listed, scanned and not listed, under the $3 policy, a later bar read for its volume only against the 4%, breakdown and $ scans' floor, a later bar whose volume could not be read, no later bar; --check holds its two files; establishes no cause, changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
                 page_text_cases.mjs (the page smoke's page-text suite: the page's own words for vetoes, Method, Market, the stock detail, a known deal and the Record view, held to the record and the modules; `--only page-text`, or one part such as `page-text:market`)

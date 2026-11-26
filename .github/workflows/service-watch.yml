@@ -1,23 +1,44 @@
 name: Service watch
-# Is the evening publication late near its limit or missing, and did the
-# morning check land (tools/service_watch.py)? It reads the two files on main
-# and a clock, calls no provider, and writes nothing. Each run mails each alert
-# it finds through the evening's own transport and turns red; the watch keeps
-# no memory, so one late night can mail from two runs.
+# Is the evening publication late, not published or missing, did the morning
+# check land and its go/cancel file get checked, are the handoff files bound,
+# and did the scheduler run (tools/service_watch.py)? It reads the files on
+# main, a clock and, with this workflow's own read-only token, the Actions run
+# listing of evening.yml, morning.yml and this workflow. It calls no provider
+# and writes nothing to the repository. Each run mails its NEW alerts as one
+# message through the evening's own transport: the sent-alert ledger, kept in a
+# main-only Actions cache, holds the keys already mailed, when each standing
+# condition last cleared, and when the run listing began and last failed and on
+# how many watch runs in a row, so a repeat is dropped, a standing condition is
+# mailed again weekly or at once when it returns after clearing, and a listing
+# failure is mailed only when two watch runs in a row had it, after a clear as
+# at first.
 #
-# Three daily slots, because Actions starts scheduled runs hours late and this
-# watch is no exception: 05:07 and 09:07 UTC are meant to land inside the six
-# hours before the next session's open (13:30 UTC, 14:30 in winter) while the
-# scheduler is up to 8.3 hours late in daylight time and 9.3 in standard time,
-# and 16:07 UTC on weekdays lands after the entry window has closed, when the
-# morning check can be judged. A slot that lands outside those windows flags
-# nothing.
+# A run that judged and mailed is green: its judgement is in the job summary and
+# the watch step's outputs (exit_code, alerts, mail, ledger). Red means the watch
+# did not finish -- it crashed, a message it owed was refused twice, or the
+# ledger it changed could not be written. Only a watch the dispatcher started in
+# one of its slots is judged by the next watch, which reads such a run that ended
+# red as one that did not start; a red run one of these crons started is read by
+# no watch, and is seen only here in Actions.
+#
+# The on-time dispatcher (tools/dispatch_schedule.py, on Railway) starts this
+# watch at its five slots on every session; these crons are the backup, and
+# Actions starts scheduled runs hours late. 03:07, 05:07, 07:07 and 09:07 UTC
+# are placed so that one of them lands inside the hours before the next
+# session's open (13:30 UTC, 14:30 in winter) while the scheduler is up to 10.3
+# hours late in daylight time and 11.3 in standard time, and 16:07 UTC on
+# weekdays lands after the entry window has closed. None of them can land in the
+# five minutes before the open in which the morning alert is due: with GitHub's
+# crons alone that alert arrives after the open. Nothing outside GitHub watches
+# this watch: the dispatcher, once deployed, is that clock.
 run-name: >-
   ${{ github.event_name == 'workflow_dispatch' && 'Service watch (manual)'
       || format('Service watch cron {0}', github.event.schedule) }}
 on:
   schedule:
+    - cron: "7 3 * * *"
     - cron: "7 5 * * *"
+    - cron: "7 7 * * *"
     - cron: "7 9 * * *"
     - cron: "7 16 * * 1-5"
   workflow_dispatch:
@@ -30,6 +51,7 @@ on:
 
 permissions:
   contents: read
+  actions: read   # the run listing the scheduler answers are read off; nothing is written
 
 concurrency:
   group: service-watch
@@ -37,7 +59,7 @@ concurrency:
 
 jobs:
   watch:
-    # The record the watch judges is main's.
+    # The record the watch judges is main's, and the ledger's cache is main's alone.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -51,11 +73,43 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install -r requirements.txt -c constraints.txt
+      # Keys, instants and the listing's count of failing runs only: no address,
+      # no message, nothing secret. A cache that is gone reads as an empty ledger:
+      # every alert mails again, except the run listing's own, which an empty or
+      # missing ledger holds back until two failing runs in a row are counted again.
+      - name: Restore the sent-alert ledger
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/service-watch-ledger
+          key: service-watch-ledger-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: service-watch-ledger-v1-
       - name: Watch the evening publication and the morning check
+        id: watch
+        # Its exit code is the judgement (0 nothing, 1 an alert, 2 a record that could not answer, 3 a message
+        # refused twice or a ledger it could not write); the last step below decides the run's conclusion by
+        # whether the watch finished.
+        continue-on-error: true
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM: ${{ secrets.RESEND_FROM }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          GITHUB_TOKEN: ${{ github.token }}
           WATCH_MAIL_FLAG: ${{ (github.event_name != 'workflow_dispatch' || inputs.mail == true) && '--mail' || '' }}
-        # Exit 1 is an alert and 2 a record that could not answer: both turn the run red.
-        run: python tools/service_watch.py --docs docs $WATCH_MAIL_FLAG
+        run: python tools/service_watch.py --docs docs $WATCH_MAIL_FLAG --ledger "$RUNNER_TEMP/service-watch-ledger/ledger.json"
+      - name: Save the sent-alert ledger
+        if: (success() || failure()) && steps.watch.outputs.ledger == 'written'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/service-watch-ledger
+          key: service-watch-ledger-v1-${{ github.run_id }}-${{ github.run_attempt }}
+      # The watch writes finished=true as its last act, once it has judged, every message it owed was
+      # accepted (or dropped as a repeat) and the ledger it changed was written. Without it the run is red: the
+      # watch did not finish.
+      - name: The watch finished
+        if: success() || failure()
+        env:
+          WATCH_FINISHED: ${{ steps.watch.outputs.finished }}
+          WATCH_EXIT: ${{ steps.watch.outputs.exit_code }}
+        run: |
+          echo "The watch's exit code: ${WATCH_EXIT:-none}"
+          test "$WATCH_FINISHED" = "true"

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import datetime as datetime_module
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -707,12 +708,17 @@ def test_the_publisher_only_reads_committed_main_after_the_evening_workflow():
 
 
 # ------------------------------------------------------ service watch -----
+WATCH_STEP = 'Watch the evening publication and the morning check'
+
+
 def test_the_service_watch_reads_main_mails_through_the_evenings_transport_and_writes_nothing():
     wf = load('service-watch.yml')
-    assert [c['cron'] for c in triggers(wf)['schedule']] == ['7 5 * * *', '7 9 * * *', '7 16 * * 1-5']
+    assert [c['cron'] for c in triggers(wf)['schedule']] == ['7 3 * * *', '7 5 * * *', '7 7 * * *', '7 9 * * *',
+                                                            '7 16 * * 1-5']
     mail = triggers(wf)['workflow_dispatch']['inputs']['mail']
     assert mail['type'] == 'boolean' and mail['default'] is True
-    assert wf['permissions'] == {'contents': 'read'}             # it commits nothing and dispatches nothing
+    # it commits nothing and dispatches nothing: the run listing is read, never written
+    assert wf['permissions'] == {'contents': 'read', 'actions': 'read'}
     assert wf['concurrency'] == {'group': 'service-watch', 'cancel-in-progress': False}
     assert list(wf['jobs']) == ['watch']
     job = wf['jobs']['watch']
@@ -720,12 +726,20 @@ def test_the_service_watch_reads_main_mails_through_the_evenings_transport_and_w
     named = steps(wf, 'watch')
     assert named['actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1']['with'] == {'ref': 'main', 'persist-credentials': False}
     assert named['Install dependencies']['run'] == 'pip install -r requirements.txt -c constraints.txt'
-    step = named['Watch the evening publication and the morning check']
-    assert step['run'] == 'python tools/service_watch.py --docs docs $WATCH_MAIL_FLAG'
+    step = named[WATCH_STEP]
+    assert step['id'] == 'watch' and step['continue-on-error'] is True     # the last step decides the conclusion
+    assert step['run'] == ('python tools/service_watch.py --docs docs $WATCH_MAIL_FLAG '
+                           '--ledger "$RUNNER_TEMP/service-watch-ledger/ledger.json"')
     env = step['env']
-    assert set(env) == {'RESEND_API_KEY', 'RESEND_FROM', 'EMAIL_TO', 'WATCH_MAIL_FLAG'}
+    assert set(env) == {'RESEND_API_KEY', 'RESEND_FROM', 'EMAIL_TO', 'GITHUB_TOKEN', 'WATCH_MAIL_FLAG'}
     for secret in ('RESEND_API_KEY', 'RESEND_FROM', 'EMAIL_TO'):
         assert env[secret] == f"${{{{ secrets.{secret} }}}}"
+    # the workflow's own token, under the name the watch reads it by, and nowhere else in the job
+    from tools import service_watch
+    assert env['GITHUB_TOKEN'] == '${{ github.token }}' and service_watch.ds.TOKEN_ENV == 'GITHUB_TOKEN'
+    for other in job['steps']:
+        if other is not step:
+            assert 'GITHUB_TOKEN' not in json.dumps(other) and 'github.token' not in json.dumps(other)
     # a scheduled run mails; a hand-started one mails unless its box is unticked
     assert env['WATCH_MAIL_FLAG'] == "${{ (github.event_name != 'workflow_dispatch' || inputs.mail == true) && '--mail' || '' }}"
     # CI's semantic gate reads it, and the evening workflow whose guard it tells the reader to start
@@ -733,35 +747,101 @@ def test_the_service_watch_reads_main_mails_through_the_evenings_transport_and_w
     assert '.github/workflows/service-watch.yml' in lint and '.github/workflows/evening.yml' in lint
     # no market-data, model or repository-write credential is anywhere in it
     text = (WORKFLOWS / 'service-watch.yml').read_text()
-    for word in ('ALPACA', 'ANTHROPIC', 'contents: write', 'git push', 'gh workflow', 'upload-artifact'):
+    for word in ('ALPACA', 'ANTHROPIC', 'contents: write', 'actions: write', 'git push', 'gh workflow',
+                 'upload-artifact'):
         assert word not in text
 
 
+def test_the_run_names_the_watch_reads_are_the_ones_the_workflows_give_themselves():
+    """The scheduler answers tell the dispatcher's start from a cron, a rehearsal or a backfill by the run's
+    name; each name the watch reads is spelled in that workflow's ``run-name:``, on the branch the dispatcher
+    takes (a dispatch with its own inputs)."""
+    from tools import dispatch_schedule as ds
+    from tools import service_watch as sw
+    names = {wf: load(wf)['run-name'] for wf in ('evening.yml', 'morning.yml', 'service-watch.yml')}
+    assert f"inputs.only_if_unpublished == true && '{sw.EVENING_DISPATCH_TITLE}'" in names['evening.yml']
+    assert f"inputs.dry_run == true && '{sw.EVENING_REHEARSAL_TITLE}'" in names['evening.yml']
+    assert f"format('{sw.EVENING_BACKFILL_PREFIX}{{0}}', inputs.session)" in names['evening.yml']
+    assert f"inputs.dry_run == true && '{sw.MORNING_REHEARSAL_TITLE}' || '{sw.MORNING_DISPATCH_TITLE}'" in names['morning.yml']
+    assert f"github.event_name == 'workflow_dispatch' && '{sw.WATCH_DISPATCH_TITLE}'" in names['service-watch.yml']
+    # the dispatcher's inputs are the ones that give those names: only_if_unpublished, and dry_run false
+    inputs = {wf: dict(i) for wf, i, _, _ in ds.SLOTS}
+    assert inputs['evening.yml'] == {'only_if_unpublished': 'true'} and inputs['morning.yml'] == {'dry_run': 'false'}
+    assert inputs['service-watch.yml'] == {}
+    assert sw.DISPATCH_EVENT == 'workflow_dispatch'
+    assert (sw.EVENING_WORKFLOW, sw.MORNING_WORKFLOW, sw.WATCH_WORKFLOW) == tuple(names)
+
+
+FINISHED_STEP = 'The watch finished'
+
+
+def test_a_watch_run_is_red_only_when_the_watch_did_not_finish():
+    """The watch's exit code is its judgement, so the watch step continues on error; the last step reads the
+    output the watch writes as its last act (``finished=true``, only when it judged and every message it owed was
+    accepted) and fails the run without it. A crash writes no output at all, and is red."""
+    from tools import service_watch
+    wf = load('service-watch.yml')
+    order = [s.get('name') or s.get('uses') for s in wf['jobs']['watch']['steps']]
+    assert order[-1] == FINISHED_STEP and order.index(WATCH_STEP) < order.index(FINISHED_STEP)
+    step = steps(wf, 'watch')[FINISHED_STEP]
+    assert step['if'] == 'success() || failure()'
+    assert step['env']['WATCH_FINISHED'] == '${{ steps.watch.outputs.finished }}'
+    assert step['run'].strip().splitlines()[-1] == 'test "$WATCH_FINISHED" = "true"'
+    assert 'continue-on-error' not in step
+    # the output the step reads is the one the watch writes, and the code it echoes is the watch's own
+    import inspect
+    source = inspect.getsource(service_watch.github_report)
+    assert 'finished=true' in source and 'exit_code=' in source
+    assert step['env']['WATCH_EXIT'] == '${{ steps.watch.outputs.exit_code }}'
+
+
+def test_the_service_watchs_ledger_is_a_main_only_cache_restored_before_and_saved_after_it_mails():
+    wf = load('service-watch.yml')
+    order = [s.get('name') or s.get('uses') for s in wf['jobs']['watch']['steps']]
+    restore, save = 'Restore the sent-alert ledger', 'Save the sent-alert ledger'
+    assert order.index(restore) < order.index(WATCH_STEP) < order.index(save) == len(order) - 2
+    named = steps(wf, 'watch')
+    key = 'service-watch-ledger-v1-${{ github.run_id }}-${{ github.run_attempt }}'
+    path = '${{ runner.temp }}/service-watch-ledger'
+    assert named[restore]['uses'] == 'actions/cache/restore@v4'
+    assert named[restore]['with'] == {'path': path, 'key': key, 'restore-keys': 'service-watch-ledger-v1-'}
+    assert named[save]['uses'] == 'actions/cache/save@v4' and named[save]['with'] == {'path': path, 'key': key}
+    # saved only when the watch wrote it (a mail was accepted), even when the run is red for that mail
+    assert named[save]['if'] == "(success() || failure()) && steps.watch.outputs.ledger == 'written'"
+    # the ledger the watch is given is the one the cache restores and saves
+    assert '"$RUNNER_TEMP/service-watch-ledger/ledger.json"' in named[WATCH_STEP]['run']
+    # main only: the job runs on main alone, so no other branch reads or writes this cache
+    assert wf['jobs']['watch']['if'] == "github.ref == 'refs/heads/main'"
+    assert 'GITHUB_TOKEN' not in json.dumps(named[restore]) + json.dumps(named[save])
+
+
 def test_the_service_watch_slots_land_where_its_judgements_can_answer():
-    """The watch flags a late publication only inside ``ALERT_WITHIN_HOURS`` before the
-    next open, and judges the morning check only after the entry window has closed.
-    Actions starts scheduled runs anywhere from on time to about eight hours late
-    (3.56 to 7.99 hours for the evening crons from 2 to 18 November 2026), so the two
-    daily slots together must cover that range for both opens, and the weekday slot
-    must start after the window in both seasons."""
+    """The watch flags a late publication from the earlier of ``ALERT_WITHIN_HOURS`` before the next
+    open and ten hours after the primary slot; on a weekday the first is the earlier. Actions starts
+    scheduled runs anywhere from on time to hours late: the 13 October 2026 schedule reading's worst
+    delay is 504.9 minutes, 8.4 hours. So for every whole minute of delay up to it one of the four
+    daily slots (03:07, 05:07, 07:07 and 09:07 UTC) must land inside the alert window before the
+    open, in both seasons -- they cover up to 10.3 hours in daylight time and 11.3 in standard time --
+    and the weekday slot must start after the entry window."""
     from src import morning
     from tools import service_watch
 
     wf = load('service-watch.yml')
     crons = [c['cron'] for c in triggers(wf)['schedule']]
     minutes = [int(c.split()[1]) * 60 + int(c.split()[0]) for c in crons]
-    early, late, afternoon = minutes
+    *daily, afternoon = minutes
+    assert all(c.endswith('* * *') for c in crons[:-1]) and crons[-1].endswith('1-5')
+    assert len(daily) == 4 and [f"{m // 60:02d}:{m % 60:02d}" for m in daily] == ["03:07", "05:07", "07:07", "09:07"]
     opens = (13 * 60 + 30, 14 * 60 + 30)                          # 9:30 AM ET in UTC, daylight and standard time
     alert = service_watch.ALERT_WITHIN_HOURS * 60
-    observed_worst = 8 * 60
+    # the worst delay the 13 October 2026 schedule reading recorded, read off its committed evidence (504.9 min)
+    reading = json.loads((ROOT / 'docs' / 'input-truthfulness' / '2026-10-13-schedule-reliability-evidence'
+                          / 'schedule-reliability.json').read_text())
+    observed_worst = math.ceil(reading['change']['since']['delay_minutes']['max'])
+    assert observed_worst == 505
     for open_at in opens:
-        # started on time, the later slot is already inside the alert window and before the open
-        assert 0 < open_at - late <= alert
-        # started as late as observed, the earlier slot still lands before the open
-        assert early + observed_worst < open_at
-        # between them no delay from zero to the observed worst leaves both slots outside the window:
-        # the later slot covers delays up to (open - late), the earlier one from (open - alert - early) on
-        assert open_at - alert - early <= open_at - late
+        for delay in range(observed_worst + 1):
+            assert any(open_at - alert <= slot + delay < open_at for slot in daily), (open_at, delay)
     # the entry window closes 30 minutes after the open; the weekday slot starts after it in both seasons
-    assert crons[2].endswith('1-5') and all(afternoon > open_at + 30 for open_at in opens)
+    assert all(afternoon > open_at + 30 for open_at in opens)
     assert morning.POLICY['preopen_minutes'] == 30

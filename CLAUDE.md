@@ -376,7 +376,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 7555 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 7938 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -16414,3 +16414,89 @@ cancelled for `orders_earlier_version`, because the `orders.json` on `main`
 was written by the 24 November evening under version 5.
 
 **Not claimable:** the first version 2 night through the gate (tonight's).
+
+## Checkpoint, 25 Nov 2026 -- monitoring: the morning alert before the open, a check that the scheduler ran, repeats dropped (item 5)
+
+**Revision.** Branch `claude/spicystock-gaps-audit-jrh8rl` from `main` after
+#232. Item 5 of the owner's 25 November list. What moves:
+`tools/service_watch.py`, `tools/dispatch_schedule.py`, `service-watch.yml`,
+their tests, README, `.env.example` and
+`docs/operations/external-scheduler.md`. Nothing under `src/` moves and no
+rule moves. The published record, picks, receipts, history, evidence and
+ledger are untouched. No run, mail, dispatch or provider call.
+
+**Alerts before the entry window.**
+- The morning is judged from `MORNING_ALERT_CT` (8:25 AM Chicago), five
+  minutes before the open, where it was judged from 8:45.
+- The dispatcher starts the watch at 6:00, 8:25 and 9:05 AM CT and at 7:00
+  and 9:50 PM ET. The 8:25 slot is due only until the open (`BEFORE_OPEN`).
+- That slot waits for the morning check it judges (`WAITS_FOR`): while the
+  check's own slot is due and unstarted, and until `WAIT_SECONDS` (150) after
+  its newest dispatch. It never waits past its last tick before the open
+  (8:29).
+- A morning run still queued or running holds the answer (`in_progress`, no
+  alert) only while it is not yet late: a dispatch, or a cron its guard runs
+  for this session, younger than the dispatcher's wait, before the entry
+  cutoff. An older one is named in the alert.
+- The evening is `not_published` at the earlier of 6 hours before its limit
+  and 10 hours after its primary slot, and from 9:45 PM ET when a dispatch in
+  the dispatcher's first slot started it. A second missed night is judged
+  under its own key.
+
+**A check that the scheduler ran** (the `scheduler` answers).
+- The watch reads the Actions run listing of `evening.yml`, `morning.yml`
+  and `service-watch.yml` with the workflow's own read-only token
+  (`actions: read`).
+- Each start is `on_time`, `started_late`, `not_started`, `failed` or
+  `unknown`. A later slot of the dispatcher's is named as its own start.
+- A cron its guard skips is no run: the other season's pair, a holiday's,
+  and a morning cron created at or after the entry cutoff.
+- The watch judges its own previous dispatcher slot, after the fact.
+- A listing that cannot be read is an alert of its own, raised only when
+  `LISTING_FAILURES_IN_A_ROW` (2) watch runs in a row could not read it.
+- The listing cannot tell the dispatcher's dispatch from one made by hand,
+  and the watch says so.
+
+**Repeats dropped.**
+- Every alert has a key. With `--ledger` the watch keeps the keys it mailed,
+  when each standing condition last cleared, and the listing's failures.
+- A key is mailed once, again after `REPEAT_DAYS` (7) while it stands, and at
+  once when it returns after clearing.
+- One run sends at most one message. A refused send is tried once more.
+- The ledger holds keys, instants and one count, in a main-only Actions
+  cache. A ledger that is gone reads as empty.
+- `service-watch.yml` is green when the watch finished and red when it did
+  not. Its crons are 03:07, 05:07, 07:07 and 09:07 UTC daily and 16:07 UTC
+  on weekdays.
+
+**Three reviews by execution, every finding reproduced before it was fixed.**
+- Round 1, four lenses (timing, scheduler, words, tests): 37 findings, 2
+  high. A second dispatcher outage inside a week was never mailed, and one
+  transport error in the listing aborted the whole watch before any alert.
+- Round 2: 11 findings and one of round 1's not closed. The listing's alert
+  mailed on every return, so it is debounced.
+- Round 3: 13 findings, 2 high, and the same one not closed. A run left
+  queued read as in progress at every later watch, so the morning alert was
+  never mailed; and a slow run withheld the only pre-open alert.
+- Two are documented and not changed. The 9:45 PM ET rule needs a readable
+  listing on the 9:50 PM ET run. An empty ledger holds the listing's own
+  alert back one more run.
+
+**Mutation pass over the last round**, each mutant in a detached worktree,
+judged by the seven monitoring test files: 74 mutants, 73 dead and 1
+equivalent (a weekend clause the session rule below it repeats). Seven
+survivors along the way were missing cases, and each has its case now. The
+control survives.
+
+**Known limits.**
+- With GitHub's crons alone the morning alert cannot arrive before the open.
+  The dispatcher on Railway, once the owner deploys it, is that clock.
+  Nothing outside GitHub watches the watch until then.
+- A watch dispatched at its last tick can read `main` before a check that
+  has just finished. Its alert names that run and says to read `main`.
+- An earlier builder's probe made three read-only requests to the real
+  Actions run listing with the sandbox's token. Nothing was written. Every
+  run since used no token and a dead proxy.
+
+**Not claimable:** a watch run on a runner under this code; the ledger's
+cache surviving between runs; the dispatcher deployed; any on-time start.
