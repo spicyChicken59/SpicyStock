@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-11-26T14:22:46.932873+00:00",
-  "generated_at": "2026-11-26T14:22:50.350378+00:00",
-  "expires_at": "2026-11-26T14:27:50.350378+00:00",
-  "observation_run_id": "45838217336",
-  "previous_observation_sha256": "4344760633f9312cf86edfc8098c93e1c19606ea5a23b954c9d9f8e8d3c1faa1",
+  "collection_started_at": "2026-11-27T14:22:26.730185+00:00",
+  "generated_at": "2026-11-27T14:22:29.275750+00:00",
+  "expires_at": "2026-11-27T14:27:29.275750+00:00",
+  "observation_run_id": "46015194126",
+  "previous_observation_sha256": "94f0c71b0e81fa0adfcdda907c3ff4df50e7fc1d4baf5ae4af3f4534b9436985",
   "dry_run": false,
   "publication": {
     "data_sha256": "eb1b2cf4de83289fb4554ddd1f4a9f2f9023c5d5d6d255e37396b5ae442aa49b",
@@ -43,8 +43,8 @@
     "max_collection_seconds": 180,
     "market_timezone": "America/New_York"
   },
-  "status": "inapplicable",
-  "reason": "wrong_session",
+  "status": "no_research_rows",
+  "reason": null,
   "entry_phase": "upcoming",
   "source": {
     "status": "not_requested",
