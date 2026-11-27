@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-11-26T14:22:37.200195+00:00",
-  "generated_at": "2026-11-26T14:22:40.832014+00:00",
-  "expires_at": "2026-11-26T14:27:40.832014+00:00",
-  "observation_run_id": "45838217336",
-  "previous_observation_sha256": "e9659e9f0650b32c009407a8dd44acb1ccc40945f0689aad99b690ce0ae50721",
+  "collection_started_at": "2026-11-27T14:22:14.730715+00:00",
+  "generated_at": "2026-11-27T14:22:19.868839+00:00",
+  "expires_at": "2026-11-27T14:27:19.868839+00:00",
+  "observation_run_id": "46015194126",
+  "previous_observation_sha256": "38d140840884339e5ebd64f35b8c1456063ac1483862e41e043773af9fbe17cf",
   "dry_run": false,
   "publication": {
     "data_sha256": "eb1b2cf4de83289fb4554ddd1f4a9f2f9023c5d5d6d255e37396b5ae442aa49b",
@@ -80,8 +80,8 @@
       ]
     }
   },
-  "status": "inapplicable",
-  "reason": "wrong_session",
+  "status": "no_tickets",
+  "reason": null,
   "entry_phase": "upcoming",
   "sources": {
     "iex": {
@@ -109,7 +109,7 @@
       "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
       "scope": "Nasdaq and other exchange-listed securities reported in this RSS snapshot; absence is not clearance.",
       "status": "not_requested",
-      "checked_at": "2026-11-26T14:22:40.831951Z",
+      "checked_at": "2026-11-27T14:22:19.868791Z",
       "fetched_at": null,
       "source_published_at": null,
       "expires_at": null,
